@@ -27,6 +27,7 @@ val DauntlessScrapbot = card("Dauntless Scrapbot") {
             Effects.ExileOpponentsGraveyards(),
             Effects.CreateLander()
         ))
+        description = "When this creature enters, exile each opponent's graveyard. Create a Lander token."
     }
 
     metadata {

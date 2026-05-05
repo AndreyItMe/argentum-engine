@@ -28,6 +28,7 @@ val ChromeCompanion = card("Chrome Companion") {
     triggeredAbility {
         trigger = Triggers.BecomesTapped
         effect = Effects.GainLife(1)
+        description = "Whenever this creature becomes tapped, you gain 1 life."
     }
 
     activatedAbility {
@@ -41,6 +42,7 @@ val ChromeCompanion = card("Chrome Companion") {
             destination = Zone.LIBRARY,
             placement = ZonePlacement.Bottom
         )
+        description = "Put target card from a graveyard on the bottom of its owner's library."
     }
 
     metadata {

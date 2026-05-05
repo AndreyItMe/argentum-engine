@@ -49,6 +49,7 @@ val WedgelightRammer = card("Wedgelight Rammer") {
             artifactToken = true,
             imageUri = "https://cards.scryfall.io/normal/front/c/4/c46f9a07-005c-44b7-8057-b2f00b274dd6.jpg?1756281130"
         )
+        description = "When this Spacecraft enters, create a 2/2 colorless Robot artifact creature token."
     }
 
     // Station activated ability: tap another creature → add charge counters equal to its power

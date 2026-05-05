@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
+import com.wingedsheep.sdk.scripting.targets.TargetCreatureOrPlaneswalker
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -58,7 +59,7 @@ val DawnsireSunstarDreadnought = card("Dawnsire, Sunstar Dreadnought") {
     // 10+ charge counters: Whenever you attack, deal 100 damage to target
     triggeredAbility {
         trigger = Triggers.YouAttack
-        val target = target("up to one target creature or planeswalker", Targets.CreatureOrPlaneswalker)
+        val target = target("up to one target creature or planeswalker", TargetCreatureOrPlaneswalker(optional = true))
         effect = com.wingedsheep.sdk.scripting.effects.ConditionalEffect(
             condition = Compare(
                 left = DynamicAmount.EntityProperty(
@@ -70,6 +71,7 @@ val DawnsireSunstarDreadnought = card("Dawnsire, Sunstar Dreadnought") {
             ),
             effect = Effects.DealDamage(100, target)
         )
+        description = "Whenever you attack, Dawnsire deals 100 damage to up to one target creature or planeswalker."
     }
 
     // 20+ charge counters
