@@ -2,11 +2,11 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 227 / 273
+**Implemented:** 228 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 39    | 33   |
+| White      | 39    | 34   |
 | Blue       | 39    | 34   |
 | Black      | 38    | 32   |
 | Red        | 39    | 29   |
@@ -29,7 +29,7 @@
 - [ ] Champion of the Clachan
 - [x] Clachan Festival
 - [x] Crib Swap
-- [ ] Curious Colossus
+- [x] Curious Colossus
 - [x] Encumbered Reejerey
 - [x] Evershrike's Gift
 - [ ] Flock Impostor

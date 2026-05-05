@@ -66,6 +66,7 @@ object LorwynEclipsedSet {
         ClachanFestival,
         CreakwoodSafewright,
         CribSwap,
+        CuriousColossus,
         DarknessDescends,
         DawnhandDissident,
         DawnhandEulogist,
