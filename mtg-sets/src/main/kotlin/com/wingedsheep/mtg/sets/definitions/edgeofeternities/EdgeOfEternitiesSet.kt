@@ -82,6 +82,7 @@ object EdgeOfEternitiesSet {
         MmmenonUthrosExile,
         MonoistSentry,
         NanoformSentinel,
+        NebulaDragon,
         RadiantStrike,
         RemnantElemental,
         RerouteSystems,
