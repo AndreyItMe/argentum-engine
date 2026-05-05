@@ -33,6 +33,7 @@ object EdgeOfEternitiesSet {
         BloomingStinger,
         Bombard,
         BreedingPool,
+        BiotechSpecialist,
         CerebralDownload,
         ChromeCompanion,
         CloudsculptTechnician,
