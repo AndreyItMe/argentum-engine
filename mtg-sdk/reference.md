@@ -717,6 +717,7 @@ constructors.
 - `Costs.RemoveCounterFromSelf(counterType: String)` — remove a counter of the specified type from this permanent (e.g., "gem", "charge")
 - `Costs.TapAttachedCreature` — tap the creature this is attached to
 - `Costs.TapPermanents(count, filter)` — tap N permanents
+- `Costs.TapAnotherPermanent(filter)` — tap another untapped permanent you control (excludes the source)
 - `Costs.TapXPermanents(filter)` — tap X permanents (where X is the ability's chosen X value)
 - `Costs.Loyalty(change)` — planeswalker loyalty
 - `Costs.ReturnToHand(filter, count)` — return N permanents matching filter to owner's hand (default count=1)

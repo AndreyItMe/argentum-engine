@@ -168,6 +168,13 @@ object Costs {
         AbilityCost.TapPermanents(count, filter)
 
     /**
+     * Tap another untapped permanent you control (e.g., "Tap another untapped creature you control").
+     * Excludes the source permanent from the tap candidates.
+     */
+    fun TapAnotherPermanent(filter: GameObjectFilter = GameObjectFilter.Creature): AbilityCost =
+        AbilityCost.TapPermanents(count = 1, filter = filter, excludeSelf = true)
+
+    /**
      * Tap X permanents you control, where X is the ability's chosen X value.
      * Example: "Tap X untapped Knights you control" for Aryel, Knight of Windgrace.
      */

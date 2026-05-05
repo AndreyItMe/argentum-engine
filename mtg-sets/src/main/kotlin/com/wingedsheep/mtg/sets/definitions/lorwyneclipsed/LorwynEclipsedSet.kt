@@ -236,6 +236,7 @@ object LorwynEclipsedSet {
         VirulentEmissary,
         VoraciousTomeSkimmer,
         WanderbrinePreacher,
+        WanderbrineTrapper,
         WanderwineDistracter,
         WanderwineFarewell,
         WarrenTorchmaster,
