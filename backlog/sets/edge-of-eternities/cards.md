@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 70 / 261
+**Implemented:** 71 / 261
 
 ---
 
@@ -42,7 +42,7 @@
 - [ ] Command Bridge
 - [ ] Consult the Star Charts
 - [ ] Cosmogoyf
-- [ ] Cosmogrand Zenith
+- [x] Cosmogrand Zenith
 - [x] Cryogen Relic
 - [x] Cryoshatter
 - [ ] Cut Propulsion
