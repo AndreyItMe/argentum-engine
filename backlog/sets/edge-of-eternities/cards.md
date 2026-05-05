@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 73 / 261
+**Implemented:** 74 / 261
 
 ---
 
@@ -215,7 +215,7 @@
 - [x] Stomping Ground
 - [ ] Sunset Saboteur
 - [ ] Sunstar Chaplain
-- [ ] Sunstar Expansionist
+- [x] Sunstar Expansionist
 - [ ] Sunstar Lightsmith
 - [ ] Survey Mechan
 - [ ] Susurian Dirgecraft

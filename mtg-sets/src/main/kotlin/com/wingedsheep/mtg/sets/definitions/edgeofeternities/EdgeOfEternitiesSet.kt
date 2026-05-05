@@ -89,6 +89,7 @@ object EdgeOfEternitiesSet {
         SledgeClassSeedship,
         StompingGround,
         StarfighterPilot,
+        SunstarExpansionist,
         SystemsOverride,
         Thawbringer,
         VirusBeetle,
