@@ -2,14 +2,14 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 238 / 273
+**Implemented:** 239 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 39    | 36   |
 | Blue       | 39    | 36   |
 | Black      | 38    | 33   |
-| Red        | 39    | 31   |
+| Red        | 39    | 32   |
 | Green      | 39    | 32   |
 | Multicolor | 49    | 44   |
 | Colorless  | 18    | 15   |
@@ -153,7 +153,7 @@
 - [x] Burning Curiosity
 - [ ] Champion of the Path
 - [x] Cinder Strike
-- [ ] Collective Inferno
+- [x] Collective Inferno
 - [ ] Elder Auntie
 - [x] End-Blaze Epiphany
 - [x] Enraged Flamecaster

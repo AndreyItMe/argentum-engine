@@ -65,6 +65,7 @@ object LorwynEclipsedSet {
         ChronicleOfVictory,
         CinderStrike,
         ClachanFestival,
+        CollectiveInferno,
         CreakwoodSafewright,
         CribSwap,
         CuriousColossus,

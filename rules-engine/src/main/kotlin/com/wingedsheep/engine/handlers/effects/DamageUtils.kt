@@ -693,7 +693,7 @@ object DamageUtils {
                     is SourceFilter.Matching -> {
                         if (sourceId == null) false
                         else {
-                            val context = PredicateContext(controllerId = sourceControllerId)
+                            val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
                             predicateEvaluator.matchesWithProjection(state, projected, sourceId, sourceFilter.filter, context)
                         }
                     }
@@ -705,7 +705,7 @@ object DamageUtils {
                 val recipientMatches = when (val recipient = damageEvent.recipient) {
                     is RecipientFilter.Any -> true
                     is RecipientFilter.Matching -> {
-                        val context = PredicateContext(controllerId = sourceControllerId)
+                        val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
                         predicateEvaluator.matchesWithProjection(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {
