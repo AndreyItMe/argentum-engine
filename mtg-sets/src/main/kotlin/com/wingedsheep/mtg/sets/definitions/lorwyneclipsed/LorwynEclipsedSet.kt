@@ -240,6 +240,7 @@ object LorwynEclipsedSet {
         WanderwineDistracter,
         WanderwineFarewell,
         WarrenTorchmaster,
+        WaryFarmer,
         WildUnraveling,
         WildvinePummeler,
         Winnowing,
