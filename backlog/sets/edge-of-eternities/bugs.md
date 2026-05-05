@@ -4,3 +4,5 @@
 - Secluded Starforge: 2,T: can not tap artifacts.
 - Chrome Companion should keep the bottom of the library visible.
 - Intrepid Tenderfoot, stacks pumps, but it's sorcery.
+- Rust Harvester, cannot choose from graveyard, card gets picked automatically
+- Rust Harvester, +1/+1 counter is not applied if target is invalid
