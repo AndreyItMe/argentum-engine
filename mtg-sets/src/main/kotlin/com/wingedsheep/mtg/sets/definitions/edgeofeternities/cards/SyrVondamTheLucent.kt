@@ -27,26 +27,24 @@ val SyrVondamTheLucent = card("Syr Vondam, the Lucent") {
     keywords(Keyword.DEATHTOUCH, Keyword.LIFELINK)
 
     // Whenever Syr Vondam enters the battlefield or attacks, other creatures you control get +1/+0 and gain deathtouch until end of turn
+    val pumpOtherCreatures = CompositeEffect(
+        listOf(
+            EffectPatterns.modifyStatsForAll(1, 0, GroupFilter.OtherCreaturesYouControl),
+            EffectPatterns.grantKeywordToAll(Keyword.DEATHTOUCH, GroupFilter.OtherCreaturesYouControl)
+        )
+    )
+    val pumpDescription = "other creatures you control get +1/+0 and gain deathtouch until end of turn"
+
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
-        effect = CompositeEffect(
-            listOf(
-                EffectPatterns.modifyStatsForAll(1, 0, GroupFilter.OtherCreaturesYouControl),
-                EffectPatterns.grantKeywordToAll(Keyword.DEATHTOUCH, GroupFilter.OtherCreaturesYouControl)
-            )
-        )
-        description = "other creatures you control get +1/+0 and gain deathtouch until end of turn"
+        effect = pumpOtherCreatures
+        description = pumpDescription
     }
 
     triggeredAbility {
         trigger = Triggers.Attacks
-        effect = CompositeEffect(
-            listOf(
-                EffectPatterns.modifyStatsForAll(1, 0, GroupFilter.OtherCreaturesYouControl),
-                EffectPatterns.grantKeywordToAll(Keyword.DEATHTOUCH, GroupFilter.OtherCreaturesYouControl)
-            )
-        )
-        description = "other creatures you control get +1/+0 and gain deathtouch until end of turn"
+        effect = pumpOtherCreatures
+        description = pumpDescription
     }
 
     metadata {

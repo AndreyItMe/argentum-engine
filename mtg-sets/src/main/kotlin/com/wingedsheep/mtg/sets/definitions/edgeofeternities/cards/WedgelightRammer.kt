@@ -69,42 +69,31 @@ val WedgelightRammer = card("Wedgelight Rammer") {
         timing = TimingRule.SorcerySpeed
     }
 
+    // Station threshold: 9+ charge counters on this Spacecraft
+    val charge9 = Compare(
+        left = DynamicAmount.EntityProperty(
+            entity = EntityReference.Source,
+            numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
+        ),
+        operator = ComparisonOperator.GTE,
+        right = DynamicAmount.Fixed(9)
+    )
+
     // Conditional type change: artifact creature at 9+ charge counters
     staticAbility {
-        condition = Compare(
-            left = DynamicAmount.EntityProperty(
-                entity = EntityReference.Source,
-                numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-            ),
-            operator = ComparisonOperator.GTE,
-            right = DynamicAmount.Fixed(9)
-        )
+        condition = charge9
         ability = GrantCardType("CREATURE", StaticTarget.SourceCreature)
     }
 
     // Conditional keyword: flying at 9+ charge counters
     staticAbility {
-        condition = Compare(
-            left = DynamicAmount.EntityProperty(
-                entity = EntityReference.Source,
-                numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-            ),
-            operator = ComparisonOperator.GTE,
-            right = DynamicAmount.Fixed(9)
-        )
+        condition = charge9
         ability = GrantKeyword(Keyword.FLYING.name, StaticTarget.SourceCreature)
     }
 
     // Conditional keyword: first strike at 9+ charge counters
     staticAbility {
-        condition = Compare(
-            left = DynamicAmount.EntityProperty(
-                entity = EntityReference.Source,
-                numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-            ),
-            operator = ComparisonOperator.GTE,
-            right = DynamicAmount.Fixed(9)
-        )
+        condition = charge9
         ability = GrantKeyword(Keyword.FIRST_STRIKE.name, StaticTarget.SourceCreature)
     }
 

@@ -28,7 +28,7 @@ val NanoformSentinel = card("Nanoform Sentinel") {
         trigger = Triggers.BecomesTapped
         oncePerTurn = true
         val targetPermanent = target("another target permanent", TargetPermanent(
-            filter = TargetFilter(GameObjectFilter.Permanent.youControl(), excludeSelf = true)
+            filter = TargetFilter(GameObjectFilter.Permanent, excludeSelf = true)
         ))
         effect = Effects.Untap(targetPermanent)
     }
