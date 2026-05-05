@@ -94,6 +94,7 @@ object LorwynEclipsedSet {
         FeistySpikeling,
         FigureOfFable,
         FirdochCore,
+        Flamebraider,
         FlameChainMauler,
         FlamekinGildweaver,
         FlaringCinder,
