@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 74 / 261
+**Implemented:** 75 / 261
 
 ---
 
@@ -216,7 +216,7 @@
 - [ ] Sunset Saboteur
 - [ ] Sunstar Chaplain
 - [x] Sunstar Expansionist
-- [ ] Sunstar Lightsmith
+- [x] Sunstar Lightsmith
 - [ ] Survey Mechan
 - [ ] Susurian Dirgecraft
 - [ ] Susurian Voidborn

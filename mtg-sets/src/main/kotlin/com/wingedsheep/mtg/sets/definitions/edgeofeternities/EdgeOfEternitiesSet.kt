@@ -90,6 +90,7 @@ object EdgeOfEternitiesSet {
         StompingGround,
         StarfighterPilot,
         SunstarExpansionist,
+        SunstarLightsmith,
         SystemsOverride,
         Thawbringer,
         VirusBeetle,
