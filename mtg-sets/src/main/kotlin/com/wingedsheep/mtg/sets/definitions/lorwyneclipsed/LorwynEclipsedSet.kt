@@ -54,6 +54,7 @@ object LorwynEclipsedSet {
         BurningCuriosity,
         Catharsis,
         CelestialReunion,
+        ChampionOfTheClachan,
         ChampionOfTheWeird,
         ChampionsOfThePerfect,
         ChampionsOfTheShoal,
