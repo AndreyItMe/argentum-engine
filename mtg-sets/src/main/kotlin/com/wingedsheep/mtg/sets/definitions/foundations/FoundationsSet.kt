@@ -24,6 +24,7 @@ object FoundationsSet {
      */
     val allCards = listOf(
         Bushwhack,
+        MossbornHydra,
         Negate,
         SnakeskinVeil,
         SpringbloomDruid,
