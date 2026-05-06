@@ -2,14 +2,14 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 242 / 273
+**Implemented:** 243 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 39    | 36   |
 | Blue       | 39    | 36   |
 | Black      | 38    | 33   |
-| Red        | 39    | 34   |
+| Red        | 39    | 35   |
 | Green      | 39    | 33   |
 | Multicolor | 49    | 44   |
 | Colorless  | 18    | 15   |
@@ -182,7 +182,7 @@
 - [x] Sourbread Auntie
 - [x] Spinerock Tyrant
 - [x] Squawkroaster
-- [ ] Sting-Slinger
+- [x] Sting-Slinger
 - [x] Tweeze
 - [x] Warren Torchmaster
 
