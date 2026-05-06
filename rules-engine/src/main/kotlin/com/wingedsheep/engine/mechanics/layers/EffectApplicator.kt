@@ -87,6 +87,9 @@ internal class EffectApplicator(
                     values.types.add(mod.subtype)
                     values.subtypes.add(mod.subtype)
                 }
+                is Modification.AddAllCreatureTypes -> {
+                    values.subtypes.addAll(com.wingedsheep.sdk.core.Subtype.ALL_CREATURE_TYPES)
+                }
                 is Modification.RemoveType -> {
                     values.types.remove(mod.type)
                 }

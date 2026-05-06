@@ -401,6 +401,16 @@ sealed interface Modification {
     }
 
     /**
+     * Add every creature type to the affected entity, in addition to its other
+     * subtypes. Used for cards that say "is all creature types" without granting
+     * the Changeling keyword (e.g., Stalactite Dagger).
+     */
+    @Serializable
+    data object AddAllCreatureTypes : Modification {
+        override val layer get() = Layer.TYPE
+    }
+
+    /**
      * Replace all creature subtypes with the given set.
      * Used by "becomes the creature type of your choice" effects.
      */

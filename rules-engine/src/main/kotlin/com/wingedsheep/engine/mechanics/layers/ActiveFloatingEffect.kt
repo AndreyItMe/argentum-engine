@@ -248,6 +248,14 @@ sealed interface SerializableModification {
     data class AddSubtype(val subtype: String) : SerializableModification
 
     /**
+     * Add every creature type in addition to existing types, without granting the
+     * Changeling keyword. Used by cards like Stalactite Dagger that say "is all
+     * creature types" but don't print the Changeling keyword.
+     */
+    @Serializable
+    data object AddAllCreatureTypes : SerializableModification
+
+    /**
      * Attack restriction: creature can't attack this turn.
      * Used by CantAttackGroupEffect and similar effects.
      */
@@ -421,6 +429,7 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.PreventAllCombatDamage -> Modification.NoOp
     is SerializableModification.SetCreatureSubtypes -> Modification.SetCreatureSubtypes(subtypes)
     is SerializableModification.AddSubtype -> Modification.AddSubtype(subtype)
+    is SerializableModification.AddAllCreatureTypes -> Modification.AddAllCreatureTypes
     // SetCantAttack maps to the layer modification for "can't attack" projection
     is SerializableModification.SetCantAttack -> Modification.SetCantAttack
     // SetCantBlock maps to the layer modification for "can't block" projection

@@ -29,6 +29,25 @@ data class GrantSubtype(
 }
 
 /**
+ * Grants every creature type to the target, in addition to its existing types,
+ * without granting the Changeling keyword. Used for cards like Stalactite Dagger:
+ * "Equipped creature ... is all creature types." The card text doesn't say
+ * "changeling", so the equipped creature shouldn't display a Changeling badge.
+ *
+ * This is a Layer 4 (type-changing) continuous effect.
+ *
+ * @property target What this ability applies to (typically AttachedCreature for Equipment)
+ */
+@SerialName("IsAllCreatureTypes")
+@Serializable
+data class IsAllCreatureTypes(
+    val target: StaticTarget = StaticTarget.AttachedCreature
+) : StaticAbility {
+    override val description: String = "is all creature types"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Adds a card type (e.g., "CREATURE") to the target permanent, in addition to its other types.
  * Used for Spacecraft Station mechanic: "It's an artifact creature at 7+."
  *
