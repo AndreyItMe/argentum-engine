@@ -108,6 +108,7 @@ object EdgeOfEternitiesSet {
         SecludedStarforge,
         SeedshipAgrarian,
         SeedshipBroodtender,
+        SeedshipImpact,
         ShatteredWings,
         SlagdrillScrapper,
         SledgeClassSeedship,

@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 102 / 261
+**Implemented:** 103 / 261
 
 ---
 
@@ -192,7 +192,7 @@
 - [x] Secluded Starforge
 - [x] Seedship Agrarian
 - [x] Seedship Broodtender
-- [ ] Seedship Impact
+- [x] Seedship Impact
 - [ ] Selfcraft Mechan
 - [x] Shattered Wings
 - [ ] Singularity Rupture
