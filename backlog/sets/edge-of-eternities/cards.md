@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 118 / 261
+**Implemented:** 121 / 261
 
 ---
 
@@ -158,7 +158,7 @@
 - [x] Nutrient Block
 - [ ] Orbital Plunge
 - [x] Oreplate Pangolin
-- [ ] Ouroboroid
+- [x] Ouroboroid
 - [ ] Pain for All
 - [ ] Perigee Beckoner
 - [ ] Pinnacle Emissary
