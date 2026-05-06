@@ -115,6 +115,7 @@ object EdgeOfEternitiesSet {
         SquiresLightblade,
         StarfighterPilot,
         StompingGround,
+        SunsetSaboteur,
         SunstarExpansionist,
         SunstarLightsmith,
         SyrVondamTheLucent,
