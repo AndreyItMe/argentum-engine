@@ -200,6 +200,15 @@ object ZoneTransitionService {
         val removeZoneKey = currentZoneKey
         newState = newState.removeFromZone(removeZoneKey, entityId)
 
+        // Drop any remaining linked-exile reference held by a granter still on the
+        // battlefield (e.g. Maralen, Fae Ascendant). The card has just left exile by
+        // some non-cast path — return, blink, exile-elsewhere — so the granter must
+        // forget it. Cast paths through StackResolver.removeFromCurrentZone unlink
+        // separately because they bypass this service.
+        if (fromZone == Zone.EXILE) {
+            newState = ZoneMovementUtils.unlinkFromAllLinkedExiles(newState, entityId)
+        }
+
         // Strip battlefield components and remove floating effects AFTER removal
         if (leavingBattlefield) {
             // Capture LinkedExileComponent BEFORE stripping so LTB triggers (e.g. Seam Rip's

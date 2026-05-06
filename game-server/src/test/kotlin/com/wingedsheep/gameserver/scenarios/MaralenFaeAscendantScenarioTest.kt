@@ -288,6 +288,153 @@ class MaralenFaeAscendantScenarioTest : ScenarioTestBase() {
                     secondResult.error shouldNotBe null
                 }
             }
+
+            test("once per turn — permission resets on the next turn") {
+                // Maralen's "exiled with Maralen this turn" clause means each turn's
+                // free-cast must be backed by a fresh exile from a fresh trigger.
+                // Cast Maralen on turn 1 → exile 2 → free-cast 1 → advance to P1's next
+                // turn → cast a Sample Faerie to retrigger the ETB exile → free-cast
+                // again. The once-per-turn marker must be cleared by cleanup; otherwise
+                // the second free cast is silently rejected.
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardInHand(1, "Maralen, Fae Ascendant")
+                    .withCardInHand(1, "Sample Faerie")
+                    .withLandsOnBattlefield(1, "Swamp", 2)
+                    .withLandsOnBattlefield(1, "Forest", 1)
+                    .withLandsOnBattlefield(1, "Island", 2)
+                    .withCardInLibrary(1, "Forest")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Maralen, Fae Ascendant")
+                game.resolveStack()
+                game.resolveStack()
+
+                val firstCheap = findCardInExile(game, 2, "Cheap Filler")!!
+                game.execute(CastSpell(game.player1Id, firstCheap)).error shouldBe null
+                game.resolveStack()
+
+                val maralenId = game.findPermanent("Maralen, Fae Ascendant")!!
+                game.state.getEntity(maralenId)
+                    ?.get<MayCastFromLinkedExileUsedThisTurnComponent>() shouldNotBe null
+
+                // Advance through P1's end step + cleanup → P2's turn → P1's next turn main.
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+
+                game.state.getEntity(maralenId)
+                    ?.get<MayCastFromLinkedExileUsedThisTurnComponent>() shouldBe null
+
+                // Cast a Faerie on turn 3 to re-trigger Maralen so two more cards land in
+                // exile this turn — the only ones eligible under exiledThisTurnOnly.
+                game.castSpell(1, "Sample Faerie")
+                game.resolveStack()  // Sample Faerie resolves
+                game.resolveStack()  // Maralen ETB exiles top 2 of P2's library
+
+                val freshCheap = freshlyExiledCard(game, 2, "Cheap Filler")!!
+                val secondResult = game.execute(CastSpell(game.player1Id, freshCheap))
+                secondResult.error shouldBe null
+            }
+
+            test("client view marks an exiled card playableFromExile only on the turn it was exiled") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardInHand(1, "Maralen, Fae Ascendant")
+                    .withCardInHand(1, "Sample Faerie")
+                    .withLandsOnBattlefield(1, "Swamp", 2)
+                    .withLandsOnBattlefield(1, "Forest", 1)
+                    .withLandsOnBattlefield(1, "Island", 2)
+                    .withCardInLibrary(1, "Forest")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Maralen, Fae Ascendant")
+                game.resolveStack()
+                game.resolveStack()
+
+                val turn1Cheap = findCardInExile(game, 2, "Cheap Filler")!!
+
+                // While still on turn 1, the freshly-exiled card surfaces as castable.
+                game.getClientState(1).cards[turn1Cheap]
+                    ?.playableFromExile shouldBe true
+
+                // End P1's turn → P2's turn. Even though the engine reuses turnNumber
+                // across both players within a round, "exiled this turn" must not leak
+                // into the opponent's turn — the entry's eligibility expires at cleanup.
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+
+                game.getClientState(1).cards[turn1Cheap]
+                    ?.playableFromExile shouldBe false
+
+                // Roll forward to P1's turn 3; still no fresh ETB exile, still unflagged.
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+
+                game.getClientState(1).cards[turn1Cheap]
+                    ?.playableFromExile shouldBe false
+
+                // Cast a Faerie on turn 3 to retrigger the ETB. New exile entries land
+                // with turn 3 timestamps and should be flagged castable; the stale
+                // turn-1 entry must remain unflagged in the same view.
+                game.castSpell(1, "Sample Faerie")
+                game.resolveStack()
+                game.resolveStack()
+
+                val freshCheap = freshlyExiledCard(game, 2, "Cheap Filler")!!
+                val view = game.getClientState(1)
+                view.cards[freshCheap]?.playableFromExile shouldBe true
+                view.cards[turn1Cheap]?.playableFromExile shouldBe false
+            }
+
+            test("linked exile drops the cast card from the granter") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardInHand(1, "Maralen, Fae Ascendant")
+                    .withLandsOnBattlefield(1, "Swamp", 2)
+                    .withLandsOnBattlefield(1, "Forest", 1)
+                    .withLandsOnBattlefield(1, "Island", 2)
+                    .withCardInLibrary(1, "Forest")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Cheap Filler")
+                    .withCardInLibrary(2, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Maralen, Fae Ascendant")
+                game.resolveStack()
+                game.resolveStack()
+
+                val maralenId = game.findPermanent("Maralen, Fae Ascendant")!!
+                game.state.getEntity(maralenId)?.get<LinkedExileComponent>()
+                    ?.exiledIds?.size shouldBe 2
+
+                val firstCheap = findCardInExile(game, 2, "Cheap Filler")!!
+                game.execute(CastSpell(game.player1Id, firstCheap)).error shouldBe null
+                game.resolveStack()
+
+                // Cast card has left exile — Maralen's link must drop it.
+                val linkedAfter = game.state.getEntity(maralenId)?.get<LinkedExileComponent>()
+                linkedAfter shouldNotBe null
+                linkedAfter!!.exiledIds.size shouldBe 1
+                (firstCheap in linkedAfter.exiledIds) shouldBe false
+            }
         }
     }
 
@@ -302,6 +449,17 @@ class MaralenFaeAscendantScenarioTest : ScenarioTestBase() {
         val playerId = if (playerNumber == 1) game.player1Id else game.player2Id
         return game.state.getExile(playerId).find { entityId ->
             game.state.getEntity(entityId)?.get<CardComponent>()?.name == cardName
+        }
+    }
+
+    private fun freshlyExiledCard(game: TestGame, playerNumber: Int, cardName: String): EntityId? {
+        val playerId = if (playerNumber == 1) game.player1Id else game.player2Id
+        val turn = game.state.turnNumber
+        return game.state.getExile(playerId).find { entityId ->
+            val container = game.state.getEntity(entityId) ?: return@find false
+            container.get<CardComponent>()?.name == cardName &&
+                container.get<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>()
+                    ?.turnNumber == turn
         }
     }
 }

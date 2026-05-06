@@ -1038,7 +1038,8 @@ class StackResolver(
                 val pausedSelfExile = pausedCardDef?.script?.selfExileOnResolve == true
                 val pausedFlashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
                     pausedCardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
-                val pausedExileAfterResolve = effectResult.state.getEntity(spellId)?.has<ExileAfterResolveComponent>() == true
+                val pausedExileAfterResolveComp = effectResult.state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
+                val pausedExileAfterResolve = pausedExileAfterResolveComp != null
                 val pausedIntended = if (pausedSelfExile || pausedFlashbackExile || pausedExileAfterResolve) Zone.EXILE else Zone.GRAVEYARD
 
                 // Apply RedirectZoneChange replacement effects (e.g., Festival of Embers).
@@ -1054,6 +1055,11 @@ class StackResolver(
                 }
                 pausedState = pausedState.addToZone(pausedDestZoneKey, spellId)
 
+                val pausedCounterEvents = mutableListOf<GameEvent>()
+                if (pausedDestZone == Zone.EXILE && pausedExileAfterResolveComp != null && pausedExileAfterResolveComp.withCounters.isNotEmpty()) {
+                    pausedState = applyExileCounters(pausedState, spellId, pausedExileAfterResolveComp.withCounters, pausedCounterEvents)
+                }
+
                 pausedRedirect.additionalEffect?.let { extra ->
                     pausedState = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils.applyReplacementAdditionalEffect(
                         pausedState, extra, pausedRedirect.effectControllerId, spellId
@@ -1067,7 +1073,7 @@ class StackResolver(
                     null,
                     pausedDestZone,
                     ownerId
-                )
+                ) + pausedCounterEvents
 
                 return ExecutionResult.paused(
                     pausedState,
@@ -1098,7 +1104,8 @@ class StackResolver(
         val selfExile = cardDef?.script?.selfExileOnResolve == true
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
             cardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
-        val exileAfterResolve = newState.getEntity(spellId)?.has<ExileAfterResolveComponent>() == true
+        val exileAfterResolveComp = newState.getEntity(spellId)?.get<ExileAfterResolveComponent>()
+        val exileAfterResolve = exileAfterResolveComp != null
         val intendedDestination = if (selfExile || flashbackExile || exileAfterResolve) Zone.EXILE else Zone.GRAVEYARD
 
         // Apply RedirectZoneChange replacement effects (e.g., Festival of Embers
@@ -1119,6 +1126,11 @@ class StackResolver(
         }
         newState = newState.addToZone(destZoneKey, spellId)
 
+        // Add counters granted by ExileAfterResolveComponent (e.g., Goliath Daydreamer's dream counter).
+        if (destinationZone == Zone.EXILE && exileAfterResolveComp != null && exileAfterResolveComp.withCounters.isNotEmpty()) {
+            newState = applyExileCounters(newState, spellId, exileAfterResolveComp.withCounters, events)
+        }
+
         redirect.additionalEffect?.let { extra ->
             newState = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils.applyReplacementAdditionalEffect(
                 newState, extra, redirect.effectControllerId, spellId
@@ -1136,6 +1148,29 @@ class StackResolver(
         )
 
         return ExecutionResult.success(newState, events)
+    }
+
+    /**
+     * Add counters to a card that was just exiled because of ExileAfterResolveComponent.
+     * Used by Goliath Daydreamer to put a dream counter on cast spells as they're exiled.
+     */
+    private fun applyExileCounters(
+        state: GameState,
+        cardId: EntityId,
+        counters: List<com.wingedsheep.sdk.core.CounterType>,
+        events: MutableList<GameEvent>
+    ): GameState {
+        val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: ""
+        var updated = state
+        for (counterType in counters) {
+            updated = updated.updateEntity(cardId) { c ->
+                val current = c.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                    ?: com.wingedsheep.engine.state.components.battlefield.CountersComponent()
+                c.with(current.withAdded(counterType, 1))
+            }
+            events.add(CountersAddedEvent(cardId, counterType.name, 1, cardName))
+        }
+        return updated
     }
 
     /**
@@ -1163,7 +1198,10 @@ class StackResolver(
         val cardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
             cardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
-        val exileAfterResolve = state.getEntity(spellId)?.has<ExileAfterResolveComponent>() == true
+        val exileAfterResolveComp = state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
+        // Goliath Daydreamer-style components only exile on actual resolution; if the spell
+        // fizzles or is countered they go to graveyard normally.
+        val exileAfterResolve = exileAfterResolveComp != null && !exileAfterResolveComp.onlyIfResolved
         val destZone = if (flashbackExile || exileAfterResolve) Zone.EXILE else Zone.GRAVEYARD
         val destZoneKey = ZoneKey(ownerId, destZone)
 
@@ -1465,7 +1503,10 @@ class StackResolver(
         var newState = state.removeFromStack(spellId)
 
         // Put in graveyard (or exile if ExileAfterResolveComponent is present)
-        val exileAfterResolve = container.has<ExileAfterResolveComponent>()
+        // Goliath Daydreamer-style components only exile on actual resolution; if the spell
+        // is countered they go to graveyard normally.
+        val exileComp = container.get<ExileAfterResolveComponent>()
+        val exileAfterResolve = exileComp != null && !exileComp.onlyIfResolved
         val destZone = if (exileAfterResolve) Zone.EXILE else Zone.GRAVEYARD
         val destZoneKey = ZoneKey(ownerId, destZone)
         newState = newState.addToZone(destZoneKey, spellId)
@@ -1770,7 +1811,9 @@ class StackResolver(
         for (pid in state.turnOrder) {
             val exileZone = ZoneKey(pid, Zone.EXILE)
             if (cardId in state.getZone(exileZone)) {
-                return state.removeFromZone(exileZone, cardId)
+                val removed = state.removeFromZone(exileZone, cardId)
+                return com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+                    .unlinkFromAllLinkedExiles(removed, cardId)
             }
         }
 

@@ -414,6 +414,10 @@ class CleanupPhaseManager(
         // 9. Remove MayPlayFromExileComponent and PlayWithoutPayingCostComponent (expire at end of turn)
         // Skip permanent ones (used by "for as long as it remains exiled" effects)
         // For expiresAfterTurn: keep alive until that turn number's end step
+        // Also clear ExileEntryTurnComponent so "exiled with [granter] this turn" effects
+        // (e.g. Maralen, Fae Ascendant) reset between turns. The engine's turnNumber only
+        // increments per round, not per active player, so simply comparing turn numbers
+        // would let an exile entry leak across the opponent's turn.
         for ((entityId, container) in newState.entities) {
             val mayPlay = container.get<MayPlayFromExileComponent>()
             val playFree = container.get<PlayWithoutPayingCostComponent>()
@@ -423,12 +427,14 @@ class CleanupPhaseManager(
             }
             val removePlayFree = playFree != null && !playFree.permanent
             val removeLinkedExileUsed = container.get<com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExileUsedThisTurnComponent>() != null
-            if (removeMayPlay || removePlayFree || removeLinkedExileUsed) {
+            val removeExileEntryTurn = container.get<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>() != null
+            if (removeMayPlay || removePlayFree || removeLinkedExileUsed || removeExileEntryTurn) {
                 newState = newState.updateEntity(entityId) { c ->
                     var updated = c
                     if (removeMayPlay) updated = updated.without<MayPlayFromExileComponent>()
                     if (removePlayFree) updated = updated.without<PlayWithoutPayingCostComponent>()
                     if (removeLinkedExileUsed) updated = updated.without<com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExileUsedThisTurnComponent>()
+                    if (removeExileEntryTurn) updated = updated.without<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>()
                     updated
                 }
             }

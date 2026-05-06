@@ -107,6 +107,28 @@ object ZoneMovementUtils {
     }
 
     /**
+     * Remove an entity from every battlefield permanent's [LinkedExileComponent].
+     * Called when a card leaves the exile zone (cast, returned, blinked, etc.) so the
+     * granter (e.g. Maralen, Fae Ascendant) no longer treats the now-departed card as
+     * eligible for its linked-exile permission. Granters whose own LTB triggers consume
+     * the link directly are unaffected — they leave the battlefield first, taking the
+     * component with them.
+     */
+    fun unlinkFromAllLinkedExiles(state: GameState, leavingEntityId: EntityId): GameState {
+        var newState = state
+        for (entityId in state.getBattlefield()) {
+            val container = newState.getEntity(entityId) ?: continue
+            val linked = container.get<LinkedExileComponent>() ?: continue
+            if (leavingEntityId !in linked.exiledIds) continue
+            val remaining = linked.exiledIds.filter { it != leavingEntityId }
+            newState = newState.updateEntity(entityId) { c ->
+                c.with(LinkedExileComponent(remaining))
+            }
+        }
+        return newState
+    }
+
+    /**
      * Clean up combat references to a leaving entity on other creatures.
      * When a blocker leaves the battlefield, remove it from each attacker's
      * BlockedComponent.blockerIds and DamageAssignmentOrderComponent.orderedBlockers.

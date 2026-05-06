@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
+import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -289,6 +290,15 @@ class ClientStateTransformer(
                 .filterIsInstance<com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile>()
                 .firstOrNull() ?: continue
             if (grant.ownedByYou && cardComp.ownerId != viewingPlayerId) continue
+            // "exiled with [granter] this turn" gates eligibility on the turn the card
+            // entered exile (e.g. Maralen). Cards exiled on prior turns aren't castable,
+            // so they shouldn't appear as ghost-castables in the viewer's hand either.
+            if (grant.exiledThisTurnOnly) {
+                val turn = cardContainer
+                    .get<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>()
+                    ?.turnNumber
+                if (turn == null || turn != state.turnNumber) continue
+            }
             // Filter check mirrors the enumerator's CardPredicate loop for parity.
             val passesFilter = grant.filter.cardPredicates.all { pred ->
                 when (pred) {
@@ -858,12 +868,15 @@ class ClientStateTransformer(
         val typeLine = cardComponent.typeLine
         val projectedSubtypes = projectedValues?.subtypes?.toList()
         val displaySubtypes = projectedSubtypes ?: typeLine.subtypes.map { it.value }
-        // When CHANGELING is granted (natively or via floating effect), the projected
-        // subtypes contain every creature type — listing them all in the type line bloats
-        // it to ~150 entries. Render the base subtypes instead and let the CHANGELING
-        // keyword badge convey "every creature type". The DTO `subtypes` field still
-        // carries the full projected set for any client-side filtering.
-        val typeLineSubtypes = if (rawKeywords.contains(Keyword.CHANGELING)) {
+        // When the projected subtypes contain every creature type — either via CHANGELING
+        // (natively or granted) or via "is all creature types" (Stalactite Dagger) —
+        // listing them all in the type line bloats it to ~150 entries. Render the base
+        // subtypes instead. The CHANGELING badge (if any) or the source's static ability
+        // already conveys "every creature type" to the player. The DTO `subtypes` field
+        // still carries the full projected set for any client-side filtering.
+        val hasAllCreatureTypes = projectedSubtypes != null &&
+            Subtype.ALL_CREATURE_TYPES.all { it in projectedSubtypes }
+        val typeLineSubtypes = if (rawKeywords.contains(Keyword.CHANGELING) || hasAllCreatureTypes) {
             typeLine.subtypes.map { it.value }
         } else {
             displaySubtypes
