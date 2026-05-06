@@ -112,6 +112,7 @@ object EdgeOfEternitiesSet {
         ShatteredWings,
         SlagdrillScrapper,
         SledgeClassSeedship,
+        SquiresLightblade,
         StarfighterPilot,
         StompingGround,
         SunstarExpansionist,
