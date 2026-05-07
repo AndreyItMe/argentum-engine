@@ -2,7 +2,7 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 248 / 273
+**Implemented:** 249 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 39    | 36   |
 | Black      | 38    | 33   |
 | Red        | 39    | 35   |
-| Green      | 39    | 34   |
+| Green      | 39    | 35   |
 | Multicolor | 49    | 45   |
 | Colorless  | 18    | 17   |
 | Land       | 12    | 11   |
@@ -197,7 +197,7 @@
 - [x] Celestial Reunion
 - [x] Champions of the Perfect
 - [x] Chomping Changeling
-- [ ] Crossroads Watcher
+- [x] Crossroads Watcher
 - [x] Dawn's Light Archer
 - [ ] Dundoolin Weaver
 - [x] Formidable Speaker

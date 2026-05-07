@@ -70,6 +70,7 @@ object LorwynEclipsedSet {
         CollectiveInferno,
         CreakwoodSafewright,
         CribSwap,
+        CrossroadsWatcher,
         CuriousColossus,
         DarknessDescends,
         DawnBlessedPennant,
