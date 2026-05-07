@@ -212,6 +212,7 @@ object LorwynEclipsedSet {
         SafewrightCavalry,
         SanarInnovativeFirstYear,
         SaplingNursery,
+        ScarbladeScout,
         ScarbladesMalice,
         ScuzzbackScrounger,
         Sear,

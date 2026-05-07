@@ -2,13 +2,13 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 267 / 273
+**Implemented:** 268 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 39    | 39   |
 | Blue       | 39    | 38   |
-| Black      | 38    | 37   |
+| Black      | 38    | 38   |
 | Red        | 39    | 39   |
 | Green      | 39    | 38   |
 | Multicolor | 49    | 48   |
@@ -137,7 +137,7 @@
 - [x] Perfect Intimidation
 - [x] Requiting Hex
 - [x] Retched Wretch
-- [ ] Scarblade Scout
+- [x] Scarblade Scout
 - [x] Scarblade's Malice
 - [x] Shimmercreep
 - [x] Taster of Wares
