@@ -109,6 +109,7 @@ object LorwynEclipsedSet {
         FlamekinGildweaver,
         FlaringCinder,
         FlitterwingNuisance,
+        FlockImpostor,
         ForagingWickermaw,
         FormidableSpeaker,
         GallantFowlknight,

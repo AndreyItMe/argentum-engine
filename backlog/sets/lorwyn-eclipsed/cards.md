@@ -2,11 +2,11 @@
 
 **Set Size:** 273 cards (main set, per Scryfall `set:ecl`)
 **Release Date:** January 23, 2026
-**Implemented:** 253 / 273
+**Implemented:** 254 / 273
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 39    | 37   |
+| White      | 39    | 38   |
 | Blue       | 39    | 36   |
 | Black      | 38    | 34   |
 | Red        | 39    | 36   |
@@ -32,7 +32,7 @@
 - [x] Curious Colossus
 - [x] Encumbered Reejerey
 - [x] Evershrike's Gift
-- [ ] Flock Impostor
+- [x] Flock Impostor
 - [x] Gallant Fowlknight
 - [x] Goldmeadow Nomad
 - [x] Keep Out
