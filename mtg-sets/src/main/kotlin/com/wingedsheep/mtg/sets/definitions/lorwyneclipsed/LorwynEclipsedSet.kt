@@ -71,6 +71,7 @@ object LorwynEclipsedSet {
         CribSwap,
         CuriousColossus,
         DarknessDescends,
+        DawnBlessedPennant,
         DawnhandDissident,
         DawnhandEulogist,
         DawnsLightArcher,
