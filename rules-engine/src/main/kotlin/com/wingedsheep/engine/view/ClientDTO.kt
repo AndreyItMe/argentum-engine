@@ -60,7 +60,14 @@ data class ClientGameState(
     val combat: ClientCombatState?,
 
     /** Accumulated game log entries for this player */
-    val gameLog: List<ClientEvent> = emptyList()
+    val gameLog: List<ClientEvent> = emptyList(),
+
+    /**
+     * Whether the global Void condition is satisfied this turn (a nonland permanent left
+     * the battlefield this turn or a spell was warped this turn). Drives UI cues for cards
+     * with Void abilities (Edge of Eternities).
+     */
+    val voidActive: Boolean = false
 )
 
 /**

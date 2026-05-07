@@ -85,6 +85,9 @@ export function GameCard({
   hideKeywordIcons = false,
   isGhost = false,
 }: GameCardProps) {
+  const voidActive = useGameStore(
+    (state) => (state.spectatingState?.gameState ?? state.gameState)?.voidActive ?? false
+  )
   const selectCard = useGameStore((state) => state.selectCard)
   const selectedCardId = useGameStore((state) => state.selectedCardId)
   const hoverCard = useGameStore((state) => state.hoverCard)
@@ -899,6 +902,27 @@ export function GameCard({
     boxShadow = `0 0 12px ${TARGET_GLOW}, 0 0 24px ${TARGET_SHADOW}`
   }
 
+  // Void ability word (Edge of Eternities): when the global void condition is satisfied this
+  // turn and this card has a "Void —" ability, render an eerie cosmic halo — a tight dark
+  // indigo rim with a soft violet/starlight bloom layered on top of any other state glow.
+  // The em dash check covers both U+2014 ("—") and the ASCII fallback "--".
+  const hasVoidAbility =
+    card.oracleText.includes('Void —') || card.oracleText.includes('Void --')
+  const voidEligible = inHand && !faceDown && voidActive && hasVoidAbility
+  if (voidEligible) {
+    // Inner: razor-thin near-black ring (the "edge of nothing").
+    // Mid:   cool violet bloom.
+    // Outer: faint cyan-purple starlight diffused into the dark.
+    const voidHalo = [
+      '0 0 0 1px rgba(8, 4, 20, 0.95)',
+      '0 0 8px rgba(60, 22, 120, 0.7)',
+      '0 0 22px rgba(96, 44, 180, 0.55)',
+      '0 0 44px rgba(150, 100, 230, 0.28)',
+      '0 0 72px rgba(80, 60, 200, 0.18)',
+    ].join(', ')
+    boxShadow = boxShadow ? `${boxShadow}, ${voidHalo}` : voidHalo
+  }
+
   // Determine cursor
   const canInteract = interactive || isValidTarget || isValidDecisionTarget || isValidDecisionSelection || isValidAttacker || isValidBlocker || isAttackingInBlockerMode || isValidPlaneswalkerTarget || canDragToPlay || isDistributeTarget || isManaValidSource || isValidCrewCreature || isValidConvokeCreature
   const baseCursor = canInteract ? 'pointer' : 'default'
@@ -939,6 +963,7 @@ export function GameCard({
         boxShadow,
         opacity: isBeingDragged ? 0.6 : isGhost ? 0.55 : (inHand && isInTargetingMode && !isValidTarget && !isBeingCast) ? 0.35 : 1,
         userSelect: 'none',
+        ...(voidEligible ? { outline: '1px solid rgba(140, 90, 220, 0.55)', outlineOffset: '2px' } : {}),
         ...(isBeheldPulsing ? { animation: 'beholdPulse 1.1s ease-in-out infinite alternate' } : {}),
       }}
     >

@@ -259,7 +259,8 @@ class ClientStateTransformer(
             turnNumber = state.turnNumber,
             isGameOver = state.gameOver,
             winnerId = state.winnerId,
-            combat = combat
+            combat = combat,
+            voidActive = state.nonlandPermanentLeftBattlefieldThisTurn || state.spellWarpedThisTurn
         )
     }
 

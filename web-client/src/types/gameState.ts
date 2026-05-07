@@ -43,6 +43,13 @@ export interface ClientGameState {
 
   /** Accumulated game log entries from the server */
   readonly gameLog?: readonly ClientEvent[]
+
+  /**
+   * Whether the global Void condition is satisfied this turn (a nonland permanent left
+   * the battlefield this turn or a spell was warped this turn). Drives UI cues for cards
+   * with Void abilities (Edge of Eternities).
+   */
+  readonly voidActive?: boolean
 }
 
 /**
