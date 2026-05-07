@@ -158,6 +158,7 @@ object LorwynEclipsedSet {
         LiminalHold,
         LluwenImperfectNaturalist,
         LochMare,
+        LoftyDreams,
         Luminollusk,
         LysAlanaDignitary,
         LysAlanaInformant,
