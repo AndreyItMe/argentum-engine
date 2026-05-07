@@ -122,6 +122,7 @@ object EdgeOfEternitiesSet {
         SyrVondamTheLucent,
         SystemsOverride,
         Thawbringer,
+        UmbralCollarZealot,
         VirusBeetle,
         WateryGrave,
         WedgelightRammer,

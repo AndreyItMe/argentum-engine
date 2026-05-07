@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 106 / 261
+**Implemented:** 107 / 261
 
 ---
 
@@ -245,7 +245,7 @@
 - [ ] Timeline Culler
 - [ ] Tractor Beam
 - [ ] Tragic Trajectory
-- [ ] Umbral Collar Zealot
+- [x] Umbral Collar Zealot
 - [ ] Unravel
 - [ ] Uthros Psionicist
 - [ ] Uthros Scanship
