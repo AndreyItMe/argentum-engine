@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 99 / 261
+**Implemented:** 115 / 261
 
 ---
 
@@ -57,7 +57,7 @@
 - [ ] Devastating Onslaught
 - [x] Diplomatic Relations
 - [ ] Divert Disaster
-- [ ] Dockworker Drone
+- [x] Dockworker Drone
 - [x] Drill Too Deep
 - [ ] Drix Fatemaker
 - [x] Dual-Sun Adepts
@@ -157,7 +157,7 @@
 - [ ] Nova Hellkite
 - [x] Nutrient Block
 - [ ] Orbital Plunge
-- [ ] Oreplate Pangolin
+- [x] Oreplate Pangolin
 - [ ] Ouroboroid
 - [ ] Pain for All
 - [ ] Perigee Beckoner
@@ -167,7 +167,7 @@
 - [ ] Plasma Bolt
 - [ ] Possibility Technician
 - [ ] Pull Through the Weft
-- [ ] Pulsar Squadron Ace
+- [x] Pulsar Squadron Ace
 - [ ] Quantum Riddler
 - [x] Radiant Strike
 - [ ] Ragost, Deft Gastronaut
@@ -185,14 +185,14 @@
 - [x] Sami's Curiosity
 - [ ] Sami, Ship's Engineer
 - [ ] Sami, Wildcat Captain
-- [ ] Scour for Scrap
+- [x] Scour for Scrap
 - [ ] Scout for Survivors
-- [ ] Scrounge for Eternity
+- [x] Scrounge for Eternity
 - [x] Seam Rip
 - [x] Secluded Starforge
 - [x] Seedship Agrarian
-- [ ] Seedship Broodtender
-- [ ] Seedship Impact
+- [x] Seedship Broodtender
+- [x] Seedship Impact
 - [ ] Selfcraft Mechan
 - [x] Shattered Wings
 - [ ] Singularity Rupture
@@ -203,7 +203,7 @@
 - [ ] Sothera, the Supervoid
 - [ ] Space-Time Anomaly
 - [ ] Specimen Freighter
-- [ ] Squire's Lightblade
+- [x] Squire's Lightblade
 - [ ] Starbreach Whale
 - [ ] Starfield Shepherd
 - [ ] Starfield Vocalist
@@ -213,15 +213,15 @@
 - [ ] Station Monitor
 - [ ] Steelswarm Operator
 - [x] Stomping Ground
-- [ ] Sunset Saboteur
+- [x] Sunset Saboteur
 - [ ] Sunstar Chaplain
 - [x] Sunstar Expansionist
 - [x] Sunstar Lightsmith
 - [ ] Survey Mechan
-- [ ] Susurian Dirgecraft
+- [x] Susurian Dirgecraft
 - [ ] Susurian Voidborn
 - [ ] Susur Secundi, Void Altar
-- [ ] Swarm Culler
+- [x] Swarm Culler
 - [ ] Synthesizer Labship
 - [ ] Syr Vondam, Sunstar Exemplar
 - [x] Syr Vondam, the Lucent
@@ -245,16 +245,16 @@
 - [ ] Timeline Culler
 - [ ] Tractor Beam
 - [ ] Tragic Trajectory
-- [ ] Umbral Collar Zealot
+- [x] Umbral Collar Zealot
 - [ ] Unravel
 - [ ] Uthros Psionicist
-- [ ] Uthros Scanship
+- [x] Uthros Scanship
 - [ ] Uthros, Titanic Godcore
 - [ ] Vaultguard Trooper
 - [ ] Virulent Silencer
 - [x] Virus Beetle
 - [ ] Voidforged Titan
-- [ ] Vote Out
+- [x] Vote Out
 - [ ] Warmaker Gunship
 - [x] Watery Grave
 - [ ] Weapons Manufacturing
@@ -262,8 +262,8 @@
 - [ ] Weftblade Enhancer
 - [ ] Weftstalker Ardent
 - [ ] Weftwalking
-- [ ] Wurmwall Sweeper
+- [x] Wurmwall Sweeper
 - [ ] Xu-Ifit, Osteoharmonist
-- [ ] Zealous Display
+- [x] Zealous Display
 - [ ] Zero Point Ballad
 - [x] Zookeeper Mechan

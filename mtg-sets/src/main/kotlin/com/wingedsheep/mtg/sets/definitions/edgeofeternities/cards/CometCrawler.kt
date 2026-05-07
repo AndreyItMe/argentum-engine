@@ -35,7 +35,7 @@ val CometCrawler = card("Comet Crawler") {
             "another creature or artifact",
             com.wingedsheep.sdk.scripting.targets.TargetPermanent(
                 filter = TargetFilter(
-                    GameObjectFilter.Creature.or(GameObjectFilter.Artifact)
+                    GameObjectFilter.Creature.youControl().or(GameObjectFilter.Artifact.youControl())
                 ).other()
             )
         )
