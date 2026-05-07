@@ -180,6 +180,7 @@ object LorwynEclipsedSet {
         MudbuttonCursetosser,
         MutableExplorer,
         NamelessInversion,
+        NightmareSower,
         NoggleRobber,
         NoggleTheMind,
         OkoLorwynLiege,
