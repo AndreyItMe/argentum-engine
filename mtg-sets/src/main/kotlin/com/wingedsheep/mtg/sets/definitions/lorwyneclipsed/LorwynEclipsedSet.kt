@@ -208,6 +208,7 @@ object LorwynEclipsedSet {
         RimefireTorque,
         RiverguardsReflexes,
         RunAwayTogether,
+        SafewrightCavalry,
         SaplingNursery,
         ScarbladesMalice,
         ScuzzbackScrounger,
