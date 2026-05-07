@@ -9,8 +9,8 @@
  * Decoupled from gameStore — runs offline. Persistence is via useDeckLibrary
  * (localStorage). Server validation reuses POST /api/decks/validate.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useDeckLibrary, type SavedDeck } from '@/store/deckLibrary'
 import { ManaCost } from '@/components/ui/ManaSymbols'
 import { HoverCardPreview } from '@/components/ui/HoverCardPreview'
@@ -129,6 +129,14 @@ interface ValidationResult {
 export function DeckbuilderPage() {
   const navigate = useNavigate()
   const { deckId } = useParams<{ deckId?: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Preserve the current filter querystring across deck-route navigations so
+  // changing/loading a deck doesn't wipe the user's filters.
+  const searchSuffix = useCallback(() => {
+    const s = searchParams.toString()
+    return s ? `?${s}` : ''
+  }, [searchParams])
 
   const decks = useDeckLibrary((s) => s.decks)
   const hydrate = useDeckLibrary((s) => s.hydrate)
@@ -183,9 +191,42 @@ export function DeckbuilderPage() {
   // Import-from-text modal visibility.
   const [importOpen, setImportOpen] = useState(false)
 
-  // Search & filters.
-  const [query, setQuery] = useState('')
-  const [sortMode, setSortMode] = useState<SortMode>('name')
+  // Search & filters live in the URL (?q=…&sort=…) so they're shareable and
+  // survive refreshes. `query` and `sortMode` are derived from searchParams.
+  const query = searchParams.get('q') ?? ''
+  const sortParam = searchParams.get('sort')
+  const sortMode: SortMode =
+    sortParam === 'cmc' || sortParam === 'color' || sortParam === 'rarity' ? sortParam : 'name'
+
+  const setQuery = useCallback(
+    (next: string) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev)
+          if (next) params.set('q', next)
+          else params.delete('q')
+          return params
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
+
+  const setSortMode = useCallback(
+    (next: SortMode) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev)
+          if (next === 'name') params.delete('sort')
+          else params.set('sort', next)
+          return params
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
 
   const predicate = useMemo(() => parseQuery(query), [query])
   const filtered = useMemo(() => {
@@ -258,7 +299,7 @@ export function DeckbuilderPage() {
     setDeckName('Untitled deck')
     setDeckCards({})
     setActiveDeckId(null)
-    navigate('/deckbuilder')
+    navigate(`/deckbuilder${searchSuffix()}`)
   }
 
   const handleSave = () => {
@@ -268,7 +309,7 @@ export function DeckbuilderPage() {
       cards: deckCards,
     })
     setActiveDeckId(saved.id)
-    if (saved.id !== deckId) navigate(`/deckbuilder/${saved.id}`, { replace: true })
+    if (saved.id !== deckId) navigate(`/deckbuilder/${saved.id}${searchSuffix()}`, { replace: true })
   }
 
   const handleSaveAs = () => {
@@ -277,7 +318,7 @@ export function DeckbuilderPage() {
     const saved = saveDeck({ name: name.trim(), cards: deckCards })
     setDeckName(saved.name)
     setActiveDeckId(saved.id)
-    navigate(`/deckbuilder/${saved.id}`, { replace: true })
+    navigate(`/deckbuilder/${saved.id}${searchSuffix()}`, { replace: true })
   }
 
   const handleDelete = () => {
@@ -291,7 +332,7 @@ export function DeckbuilderPage() {
     setDeckName(deck.name)
     setDeckCards(deck.cards)
     setActiveDeckId(deck.id)
-    navigate(`/deckbuilder/${deck.id}`)
+    navigate(`/deckbuilder/${deck.id}${searchSuffix()}`)
   }
 
   const handleRenameSaved = (deck: SavedDeck) => {
@@ -311,7 +352,7 @@ export function DeckbuilderPage() {
     setDeckCards(cards)
     setActiveDeckId(null)
     if (suggestedName) setDeckName(suggestedName)
-    navigate('/deckbuilder')
+    navigate(`/deckbuilder${searchSuffix()}`)
     setImportOpen(false)
   }
 
