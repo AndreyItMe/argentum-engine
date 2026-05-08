@@ -3,6 +3,7 @@ package com.wingedsheep.gameserver.controller
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.gameserver.deck.DeckValidationResult
 import com.wingedsheep.gameserver.deck.DeckValidator
+import com.wingedsheep.mtg.sets.tokens.PredefinedTokens
 import com.wingedsheep.sdk.model.CardDefinition
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -62,9 +63,12 @@ class DecksController(
     @GetMapping("/cards")
     fun getCards(): List<CardSummaryDTO> =
         cardRegistry.allCardNames()
+            .asSequence()
+            .filter { it !in TOKEN_NAMES }
             .mapNotNull { cardRegistry.getCard(it) }
             .map { it.toSummary() }
             .sortedBy { it.name }
+            .toList()
 
     @GetMapping("/examples")
     fun getExamples(): List<ExampleDeckDTO> = EXAMPLE_DECKS
@@ -93,6 +97,12 @@ class DecksController(
     )
 
     companion object {
+        // Predefined tokens are registered in the CardRegistry so the engine can resolve
+        // token abilities by name (e.g., a created Treasure → its mana ability), but they
+        // are not real cards and must not appear in the deckbuilder catalog.
+        private val TOKEN_NAMES: Set<String> =
+            PredefinedTokens.allTokens.flatMap { listOfNotNull(it.name, it.backFace?.name) }.toSet()
+
         // Bloomburrow-only tribal decks. Selesnya Rabbits, Rakdos Lizards, Golgari Squirrels,
         // and Simic Frogs are taken from the Bloomburrow Constructed Midweek Magic decklists
         // (https://mtgazone.com/midweek-magic-bloomburrow-constructed/). Boros Mice and Orzhov
