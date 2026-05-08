@@ -16,27 +16,32 @@ data class HandSmootherProperties(
     val candidates: Int = 3
 )
 
+/**
+ * Set enablement is configured by set code (e.g. "EOE", "DOM").
+ *
+ * - All sets are enabled by default.
+ * - Codes in [disabledByDefault] are off unless explicitly enabled in [enabled].
+ * - Codes in [enabled] override [disabledByDefault].
+ *
+ * Example application.yml:
+ * ```
+ * game:
+ *   sets:
+ *     enabled:
+ *       EOE: true
+ * ```
+ */
 data class SetsProperties(
-    val onslaughtEnabled: Boolean = true,
-    val scourgeEnabled: Boolean = true,
-    val legionsEnabled: Boolean = true,
-    val khansEnabled: Boolean = true,
-    val phyrexiaAllWillBeOneEnabled: Boolean = true,
-    val dominariaEnabled: Boolean = false,
-    val dominariaUnitedEnabled: Boolean = true,
-    val bloomburrowEnabled: Boolean = true,
-    val brothersWarEnabled: Boolean = true,
-    val aetherdriftEnabled: Boolean = true,
-    val edgeOfEternitiesEnabled: Boolean = false,
-    val lorwynEclipsedEnabled: Boolean = true,
-    val lostCavernsOfIxalanEnabled: Boolean = true,
-    val murdersAtKarlovManorEnabled: Boolean = true,
-    val foundationsEnabled: Boolean = true,
-    val duskmournEnabled: Boolean = true,
-    val innistradMidnightHuntEnabled: Boolean = true,
-    val spiderManEnabled: Boolean = true,
-    val wildsOfEldrainEnabled: Boolean = true
-)
+    val disabledByDefault: Set<String> = setOf("DOM", "EOE"),
+    val enabled: Map<String, Boolean> = emptyMap(),
+) {
+    fun isEnabled(setCode: String): Boolean {
+        val key = setCode.uppercase()
+        enabled[key]?.let { return it }
+        enabled[setCode]?.let { return it }
+        return disabledByDefault.none { it.equals(setCode, ignoreCase = true) }
+    }
+}
 
 data class AdminProperties(
     val password: String = ""

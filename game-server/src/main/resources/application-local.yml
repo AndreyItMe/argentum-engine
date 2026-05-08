@@ -4,9 +4,10 @@
 game:
   debug-mode: true
   sets:
-    bloomburrow-enabled: true
-    edge-of-eternities-enabled: true
-    lorwyn-eclipsed-enabled: true
+    enabled:
+      BLB: true
+      EOE: true
+      ECL: true
   ai:
     mode: engine
     base-url: ${GAME_AI_BASE_URL:http://localhost:11434/v1}
