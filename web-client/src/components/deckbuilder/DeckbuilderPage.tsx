@@ -190,6 +190,8 @@ export function DeckbuilderPage() {
 
   // Import-from-text modal visibility.
   const [importOpen, setImportOpen] = useState(false)
+  // Saved-decks browser overlay visibility.
+  const [decksBrowserOpen, setDecksBrowserOpen] = useState(false)
 
   // Search & filters live in the URL (?q=…&sort=…) so they're shareable and
   // survive refreshes. `query` and `sortMode` are derived from searchParams.
@@ -333,6 +335,7 @@ export function DeckbuilderPage() {
     setDeckCards(deck.cards)
     setActiveDeckId(deck.id)
     navigate(`/deckbuilder/${deck.id}${searchSuffix()}`)
+    setDecksBrowserOpen(false)
   }
 
   const handleRenameSaved = (deck: SavedDeck) => {
@@ -386,14 +389,24 @@ export function DeckbuilderPage() {
         />
       )}
 
-      {/* Left rail */}
-      <aside className={styles.left}>
-        <SavedDecksSection
+      {decksBrowserOpen && (
+        <SavedDecksBrowser
           decks={decks}
+          catalog={catalogIndex}
           activeDeckId={activeDeckId}
+          onClose={() => setDecksBrowserOpen(false)}
           onLoad={handleLoadSaved}
           onRename={handleRenameSaved}
           onDelete={handleDeleteSaved}
+        />
+      )}
+
+      {/* Left rail */}
+      <aside className={styles.left}>
+        <SavedDecksSummary
+          decks={decks}
+          activeDeckId={activeDeckId}
+          onOpen={() => setDecksBrowserOpen(true)}
         />
         <FilterSection query={query} onQueryChange={setQuery} catalog={catalog} />
       </aside>
@@ -663,69 +676,374 @@ function ImportPreview({
 // Left rail sections
 // ---------------------------------------------------------------------------
 
-function SavedDecksSection({
+function SavedDecksSummary({
   decks,
   activeDeckId,
+  onOpen,
+}: {
+  decks: SavedDeck[]
+  activeDeckId: string | null
+  onOpen: () => void
+}) {
+  const active = useMemo(() => decks.find((d) => d.id === activeDeckId) ?? null, [decks, activeDeckId])
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionLabel}>My decks</h2>
+      <div className={styles.savedSummary}>
+        <div className={styles.savedSummaryActive}>
+          {active ? (
+            <>
+              <span className={styles.savedSummaryLabel}>Editing</span>
+              <span className={styles.savedSummaryName}>{active.name}</span>
+            </>
+          ) : (
+            <>
+              <span className={styles.savedSummaryLabel}>Editing</span>
+              <span className={styles.savedSummaryNameMuted}>Unsaved deck</span>
+            </>
+          )}
+        </div>
+        <button
+          className={styles.savedBrowseButton}
+          onClick={onOpen}
+          type="button"
+          disabled={decks.length === 0}
+          title={decks.length === 0 ? 'No saved decks yet' : 'Browse saved decks'}
+        >
+          {decks.length === 0
+            ? 'No saved decks yet'
+            : `Browse decks (${decks.length}) →`}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+type DecksBrowserSort = 'updated' | 'name' | 'size' | 'colors'
+
+function SavedDecksBrowser({
+  decks,
+  catalog,
+  activeDeckId,
+  onClose,
   onLoad,
   onRename,
   onDelete,
 }: {
   decks: SavedDeck[]
+  catalog: Record<string, CardSummary>
   activeDeckId: string | null
+  onClose: () => void
   onLoad: (d: SavedDeck) => void
   onRename: (d: SavedDeck) => void
   onDelete: (d: SavedDeck) => void
 }) {
-  const sorted = useMemo(() => [...decks].sort((a, b) => b.updatedAt - a.updatedAt), [decks])
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionLabel}>My decks ({decks.length})</h2>
-      {sorted.length === 0 ? (
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-          No saved decks yet. Build one and click Save.
-        </p>
-      ) : (
-        <ul className={styles.savedList}>
-          {sorted.map((d) => {
-            const total = Object.values(d.cards).reduce((a, b) => a + b, 0)
-            const isActive = d.id === activeDeckId
-            return (
-              <li
-                key={d.id}
-                className={`${styles.savedItem} ${isActive ? styles.savedItemSelected : ''}`}
-                onClick={() => onLoad(d)}
-              >
-                <div className={styles.savedItemMeta}>
-                  <span className={styles.savedItemName}>{d.name}</span>
-                  <span className={styles.savedItemCount}>{total} cards</span>
-                </div>
-                <button
-                  className={styles.linkButton}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onRename(d)
-                  }}
-                  type="button"
-                >
-                  Rename
-                </button>
-                <button
-                  className={styles.dangerLink}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(d)
-                  }}
-                  type="button"
-                >
-                  ✕
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
+  const [filter, setFilter] = useState('')
+  const [sort, setSort] = useState<DecksBrowserSort>('updated')
+  const [colorFilter, setColorFilter] = useState<Set<string>>(new Set())
+
+  // Close on Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  // Pre-compute per-deck metadata once. Doing this up front keeps sort/filter
+  // O(n) for hundreds of decks even when the user types fast.
+  const enriched = useMemo(
+    () =>
+      decks.map((d) => {
+        const total = Object.values(d.cards).reduce((a, b) => a + b, 0)
+        const colors = deckColors(d.cards, catalog)
+        return { deck: d, total, colors }
+      }),
+    [decks, catalog]
   )
+
+  const filtered = useMemo(() => {
+    const f = filter.trim().toLowerCase()
+    let out = enriched
+    if (f) out = out.filter((e) => e.deck.name.toLowerCase().includes(f))
+    if (colorFilter.size > 0) {
+      out = out.filter((e) => {
+        const has = (k: string) =>
+          k === 'COLORLESS' ? e.colors.length === 0 : e.colors.includes(k)
+        // OR semantics: keep decks that match any selected colour bucket.
+        for (const k of colorFilter) if (has(k)) return true
+        return false
+      })
+    }
+    return [...out].sort((a, b) => {
+      switch (sort) {
+        case 'name':
+          return a.deck.name.localeCompare(b.deck.name)
+        case 'size':
+          return b.total - a.total || a.deck.name.localeCompare(b.deck.name)
+        case 'colors':
+          return colorBucketKey(a.colors) - colorBucketKey(b.colors)
+            || a.deck.name.localeCompare(b.deck.name)
+        case 'updated':
+        default:
+          return b.deck.updatedAt - a.deck.updatedAt
+      }
+    })
+  }, [enriched, filter, colorFilter, sort])
+
+  const toggleColor = (key: string) => {
+    setColorFilter((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  return (
+    <>
+      <div className={styles.browserBackdrop} onClick={onClose} />
+      <div className={styles.browserDialog} role="dialog" aria-label="Saved decks">
+        <header className={styles.browserHeader}>
+          <div>
+            <strong className={styles.browserTitle}>Saved decks</strong>
+            <span className={styles.browserSubtitle}>
+              {filtered.length === decks.length
+                ? `${decks.length} deck${decks.length === 1 ? '' : 's'}`
+                : `${filtered.length} of ${decks.length}`}
+            </span>
+          </div>
+          <button className={styles.linkButton} onClick={onClose} type="button">
+            Close (Esc)
+          </button>
+        </header>
+
+        <div className={styles.browserToolbar}>
+          <input
+            className={styles.browserSearch}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Search decks by name…"
+            autoFocus
+          />
+          <select
+            className={styles.sortSelect}
+            value={sort}
+            onChange={(e) => setSort(e.target.value as DecksBrowserSort)}
+            aria-label="Sort decks"
+          >
+            <option value="updated">Recently updated</option>
+            <option value="name">Name (A→Z)</option>
+            <option value="size">Card count</option>
+            <option value="colors">Colour</option>
+          </select>
+          <div className={styles.browserColorChips} role="group" aria-label="Filter by colour">
+            {COLOR_TOKENS.map(({ label, key }) => {
+              const active = colorFilter.has(key)
+              return (
+                <button
+                  key={key}
+                  className={`${styles.chip} ${active ? styles.chipActive : ''}`}
+                  onClick={() => toggleColor(key)}
+                  type="button"
+                  aria-pressed={active}
+                  title={key.toLowerCase()}
+                >
+                  <span
+                    className={styles.savedItemColorDot}
+                    style={{ background: COLOR_DOT[key] ?? '#888' }}
+                  />
+                  {label}
+                </button>
+              )
+            })}
+            <button
+              className={`${styles.chip} ${colorFilter.has('COLORLESS') ? styles.chipActive : ''}`}
+              onClick={() => toggleColor('COLORLESS')}
+              type="button"
+              aria-pressed={colorFilter.has('COLORLESS')}
+              title="colourless"
+            >
+              C
+            </button>
+            {colorFilter.size > 0 && (
+              <button
+                className={styles.linkButton}
+                onClick={() => setColorFilter(new Set())}
+                type="button"
+              >
+                clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.browserGrid}>
+          {filtered.length === 0 ? (
+            <div className={styles.savedEmpty}>
+              {decks.length === 0
+                ? 'No saved decks yet. Build one and click Save.'
+                : 'No decks match the current filters.'}
+            </div>
+          ) : (
+            filtered.map(({ deck, total, colors }) => (
+              <DeckCard
+                key={deck.id}
+                deck={deck}
+                total={total}
+                colors={colors}
+                isActive={deck.id === activeDeckId}
+                onLoad={onLoad}
+                onRename={onRename}
+                onDelete={onDelete}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function DeckCard({
+  deck,
+  total,
+  colors,
+  isActive,
+  onLoad,
+  onRename,
+  onDelete,
+}: {
+  deck: SavedDeck
+  total: number
+  colors: string[]
+  isActive: boolean
+  onLoad: (d: SavedDeck) => void
+  onRename: (d: SavedDeck) => void
+  onDelete: (d: SavedDeck) => void
+}) {
+  const updated = useMemo(() => formatRelativeTime(deck.updatedAt), [deck.updatedAt])
+  // Banner gradient derived from the deck's colour identity. Falls back to a
+  // neutral gradient for colourless / empty decks.
+  const banner = useMemo(() => deckBannerGradient(colors), [colors])
+
+  return (
+    <button
+      type="button"
+      className={`${styles.deckCard} ${isActive ? styles.deckCardActive : ''}`}
+      onClick={() => onLoad(deck)}
+      title={`Load ${deck.name}`}
+    >
+      <div className={styles.deckCardBanner} style={{ background: banner }}>
+        {colors.length > 0 ? (
+          <div className={styles.deckCardColors}>
+            {colors.map((c) => (
+              <span
+                key={c}
+                className={styles.deckCardColorDot}
+                style={{ background: COLOR_DOT[c] ?? '#888' }}
+                title={c}
+              />
+            ))}
+          </div>
+        ) : (
+          <span className={styles.deckCardColorless}>colourless</span>
+        )}
+        <span className={styles.deckCardCount}>{total}</span>
+      </div>
+      <div className={styles.deckCardBody}>
+        <div className={styles.deckCardName}>{deck.name}</div>
+        <div className={styles.deckCardMeta}>
+          <span>{updated}</span>
+        </div>
+      </div>
+      <div className={styles.deckCardActions} onClick={(e) => e.stopPropagation()}>
+        <button
+          className={styles.savedIconButton}
+          onClick={() => onRename(deck)}
+          type="button"
+          title="Rename"
+          aria-label={`Rename ${deck.name}`}
+        >
+          ✎
+        </button>
+        <button
+          className={styles.savedIconButtonDanger}
+          onClick={() => onDelete(deck)}
+          type="button"
+          title="Delete"
+          aria-label={`Delete ${deck.name}`}
+        >
+          ✕
+        </button>
+      </div>
+      {isActive && <span className={styles.deckCardActiveBadge}>Editing</span>}
+    </button>
+  )
+}
+
+function deckBannerGradient(colors: string[]): string {
+  if (colors.length === 0) {
+    return 'linear-gradient(135deg, rgba(120,120,140,0.5), rgba(60,60,80,0.6))'
+  }
+  if (colors.length === 1) {
+    const c = COLOR_DOT[colors[0]!] ?? '#888'
+    return `linear-gradient(135deg, ${c}aa, ${c}55)`
+  }
+  const stops = colors.map((c, i) => {
+    const hex = COLOR_DOT[c] ?? '#888'
+    return `${hex} ${Math.round((i / (colors.length - 1)) * 100)}%`
+  })
+  return `linear-gradient(135deg, ${stops.join(', ')})`
+}
+
+function colorBucketKey(colors: string[]): number {
+  if (colors.length === 0) return 99
+  if (colors.length > 1) return 90 + colors.length
+  switch (colors[0]) {
+    case 'WHITE': return 0
+    case 'BLUE': return 1
+    case 'BLACK': return 2
+    case 'RED': return 3
+    case 'GREEN': return 4
+    default: return 5
+  }
+}
+
+function deckColors(
+  cards: Record<string, number>,
+  catalog: Record<string, CardSummary>
+): string[] {
+  const counts: Record<string, number> = {}
+  for (const [name, n] of Object.entries(cards)) {
+    if (n <= 0) continue
+    const c = catalog[name.split('#')[0] ?? name]
+    if (!c) continue
+    for (const col of c.colors) counts[col] = (counts[col] ?? 0) + n
+  }
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([color]) => color)
+}
+
+function formatRelativeTime(ts: number): string {
+  const now = Date.now()
+  const diff = Math.max(0, now - ts)
+  const sec = Math.floor(diff / 1000)
+  if (sec < 60) return 'just now'
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const day = Math.floor(hr / 24)
+  if (day < 7) return `${day}d ago`
+  const wk = Math.floor(day / 7)
+  if (wk < 5) return `${wk}w ago`
+  const mo = Math.floor(day / 30)
+  if (mo < 12) return `${mo}mo ago`
+  const yr = Math.floor(day / 365)
+  return `${yr}y ago`
 }
 
 function SearchBar({
@@ -1425,6 +1743,24 @@ function DeckListPanel({
   onRemove: (name: string) => void
 }) {
   const grouped = useMemo(() => groupForDeckList(deckCards, catalog), [deckCards, catalog])
+  const [hoverCard, setHoverCard] = useState<CardSummary | null>(null)
+  const [hoverName, setHoverName] = useState<string | null>(null)
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null)
+
+  const handleEnter = (entry: { name: string; card: CardSummary | undefined }, e: React.MouseEvent) => {
+    setHoverName(entry.name)
+    setHoverCard(entry.card ?? null)
+    setHoverPos({ x: e.clientX, y: e.clientY })
+  }
+  const handleMove = (e: React.MouseEvent) => {
+    setHoverPos({ x: e.clientX, y: e.clientY })
+  }
+  const handleLeave = () => {
+    setHoverName(null)
+    setHoverCard(null)
+    setHoverPos(null)
+  }
+
   return (
     <div className={styles.deckList}>
       {grouped.map((group) => (
@@ -1433,7 +1769,13 @@ function DeckListPanel({
             {group.label} ({group.entries.reduce((a, e) => a + e.count, 0)})
           </h3>
           {group.entries.map((entry) => (
-            <div key={entry.name} className={styles.deckRow}>
+            <div
+              key={entry.name}
+              className={styles.deckRow}
+              onMouseEnter={(e) => handleEnter(entry, e)}
+              onMouseMove={handleMove}
+              onMouseLeave={handleLeave}
+            >
               <span className={styles.deckRowCount}>{entry.count}×</span>
               <span className={styles.deckRowName}>{entry.name}</span>
               <span className={styles.deckRowCost}>
@@ -1455,6 +1797,13 @@ function DeckListPanel({
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', margin: 'var(--space-4) 0' }}>
           Click cards in the grid to add them.
         </p>
+      )}
+      {hoverName && (
+        <HoverCardPreview
+          name={hoverName}
+          imageUri={hoverCard?.imageUri ?? null}
+          pos={hoverPos}
+        />
       )}
     </div>
   )
