@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.ons.cards
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Fallen Cleric
@@ -19,7 +20,7 @@ val FallenCleric = card("Fallen Cleric") {
     toughness = 2
     oracleText = "Protection from Clerics\nMorph {4}{B}"
 
-    keywordAbility(KeywordAbility.ProtectionFromCreatureSubtype("Cleric"))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Subtype("Cleric")))
     morph = "{4}{B}"
 
     metadata {

@@ -49,6 +49,7 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 import io.kotest.core.spec.style.FunSpec
 import java.util.concurrent.atomic.AtomicLong
 
@@ -368,26 +369,25 @@ abstract class ScenarioTestBase : FunSpec() {
             }
 
             // Attach ProtectionComponent for cards with static protection from color/subtype
-            val protectionColors = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.ProtectionFromColor>()
-                .map { it.color }
-                .toSet() +
-                cardDef.keywordAbilities
-                    .filterIsInstance<KeywordAbility.ProtectionFromColors>()
-                    .flatMap { it.colors }
-                    .toSet()
-            val protectionSubtypes = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.ProtectionFromCreatureSubtype>()
-                .map { it.subtype }
-                .toSet()
+            val protections = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Protection>()
+            val protectionColors = protections.flatMap { p ->
+                when (val s = p.scope) {
+                    is ProtectionScope.Color -> listOf(s.color)
+                    is ProtectionScope.Colors -> s.colors
+                    else -> emptyList()
+                }
+            }.toSet()
+            val protectionSubtypes = protections.mapNotNull {
+                (it.scope as? ProtectionScope.Subtype)?.subtype
+            }.toSet()
             if (protectionColors.isNotEmpty() || protectionSubtypes.isNotEmpty()) {
                 container = container.with(ProtectionComponent(protectionColors, protectionSubtypes))
             }
 
             // Attach HexproofFromColorComponent for cards with hexproof from color
             val hexproofFromColors = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.HexproofFromColor>()
-                .map { it.color }
+                .filterIsInstance<KeywordAbility.Hexproof>()
+                .mapNotNull { (it.scope as? ProtectionScope.Color)?.color }
                 .toSet()
             if (hexproofFromColors.isNotEmpty()) {
                 container = container.with(HexproofFromColorComponent(hexproofFromColors))

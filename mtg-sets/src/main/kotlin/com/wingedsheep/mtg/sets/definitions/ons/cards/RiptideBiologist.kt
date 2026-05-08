@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.ons.cards
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Riptide Biologist
@@ -19,7 +20,7 @@ val RiptideBiologist = card("Riptide Biologist") {
     toughness = 2
     oracleText = "Protection from Beasts\nMorph {2}{U}"
 
-    keywordAbility(KeywordAbility.ProtectionFromCreatureSubtype("Beast"))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Subtype("Beast")))
     morph = "{2}{U}"
 
     metadata {

@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.sdk.scripting.references.Player
 
 /**
@@ -26,7 +27,7 @@ val GoblinPiledriver = card("Goblin Piledriver") {
     toughness = 2
     oracleText = "Protection from blue\nWhenever Goblin Piledriver attacks, it gets +2/+0 until end of turn for each other attacking Goblin."
 
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.BLUE))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.BLUE)))
 
     triggeredAbility {
         trigger = Triggers.Attacks

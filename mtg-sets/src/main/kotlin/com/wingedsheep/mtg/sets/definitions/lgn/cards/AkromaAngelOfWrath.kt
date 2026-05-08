@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Akroma, Angel of Wrath
@@ -21,8 +22,8 @@ val AkromaAngelOfWrath = card("Akroma, Angel of Wrath") {
     oracleText = "Flying, first strike, vigilance, trample, haste, protection from black and from red"
 
     keywords(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE)
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.BLACK))
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.RED))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.BLACK)))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.RED)))
 
     metadata {
         rarity = Rarity.RARE

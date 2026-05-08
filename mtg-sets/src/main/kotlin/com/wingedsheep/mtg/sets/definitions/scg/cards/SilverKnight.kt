@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Silver Knight
@@ -21,7 +22,7 @@ val SilverKnight = card("Silver Knight") {
     oracleText = "First strike, protection from red"
 
     keywords(Keyword.FIRST_STRIKE)
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.RED))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.RED)))
 
     metadata {
         rarity = Rarity.UNCOMMON

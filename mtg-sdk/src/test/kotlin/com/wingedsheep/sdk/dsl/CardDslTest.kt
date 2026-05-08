@@ -147,12 +147,13 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Kor Soldier"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.ProtectionFromColor(Color.RED))
+                keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.RED)))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.ProtectionFromColor>()
-            (creature.keywordAbilities[0] as KeywordAbility.ProtectionFromColor).color shouldBe Color.RED
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Protection>()
+            val protectionScope = (creature.keywordAbilities[0] as KeywordAbility.Protection).scope
+            (protectionScope as ProtectionScope.Color).color shouldBe Color.RED
             creature.keywordAbilities[0].description shouldBe "Protection from red"
         }
 
@@ -162,12 +163,12 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Spirit"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.ProtectionFromColors(setOf(Color.WHITE, Color.GREEN)))
+                keywordAbility(KeywordAbility.Protection(ProtectionScope.Colors(setOf(Color.WHITE, Color.GREEN))))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.ProtectionFromColors>()
-            val protection = creature.keywordAbilities[0] as KeywordAbility.ProtectionFromColors
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Protection>()
+            val protection = (creature.keywordAbilities[0] as KeywordAbility.Protection).scope as ProtectionScope.Colors
             protection.colors shouldContain Color.WHITE
             protection.colors shouldContain Color.GREEN
         }
@@ -214,7 +215,7 @@ class CardDslTest : DescribeSpec({
                 keywords(Keyword.FLYING, Keyword.VIGILANCE)
                 keywordAbilities(
                     KeywordAbility.Ward(WardCost.Mana("{3}")),
-                    KeywordAbility.ProtectionFromColor(Color.BLACK)
+                    KeywordAbility.Protection(ProtectionScope.Color(Color.BLACK))
                 )
             }
 
@@ -222,7 +223,7 @@ class CardDslTest : DescribeSpec({
             creature.keywords shouldContain Keyword.VIGILANCE
             creature.keywordAbilities shouldHaveSize 2
             creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Ward>()
-            creature.keywordAbilities[1].shouldBeInstanceOf<KeywordAbility.ProtectionFromColor>()
+            creature.keywordAbilities[1].shouldBeInstanceOf<KeywordAbility.Protection>()
         }
 
         it("should define a creature with Bushido") {

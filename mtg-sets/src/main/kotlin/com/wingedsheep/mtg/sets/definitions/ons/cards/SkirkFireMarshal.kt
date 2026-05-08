@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Skirk Fire Marshal
@@ -28,7 +29,7 @@ val SkirkFireMarshal = card("Skirk Fire Marshal") {
     toughness = 2
     oracleText = "Protection from red\nTap five untapped Goblins you control: Skirk Fire Marshal deals 10 damage to each creature and each player."
 
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.RED))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.RED)))
 
     activatedAbility {
         cost = Costs.TapPermanents(5, GameObjectFilter.Creature.withSubtype("Goblin"))

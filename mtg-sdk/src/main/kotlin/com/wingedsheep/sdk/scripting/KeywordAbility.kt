@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
  * ```kotlin
  * KeywordAbility.Simple(Keyword.FLYING)
  * KeywordAbility.Ward(WardCost.Mana("{2}"))
- * KeywordAbility.ProtectionFromColor(Color.BLUE)
+ * KeywordAbility.Protection(ProtectionScope.Color(Color.BLUE))
  * KeywordAbility.Annihilator(2)
  * ```
  */
@@ -74,87 +74,56 @@ sealed interface KeywordAbility {
     }
 
     // =========================================================================
-    // Hexproof Variants
+    // Protection / Hexproof
     // =========================================================================
 
     /**
-     * Hexproof from a color.
-     * "Hexproof from white" - This creature can't be the target of white spells
-     * or abilities your opponents control.
+     * Protection from a quality. Parameterized by [ProtectionScope].
+     *
+     * Examples:
+     * - `Protection(ProtectionScope.Color(Color.BLUE))`            — "Protection from blue"
+     * - `Protection(ProtectionScope.Colors(setOf(W, U)))`           — "Protection from white and from blue"
+     * - `Protection(ProtectionScope.Subtype("Goblin"))`             — "Protection from Goblins"
+     * - `Protection(ProtectionScope.Everything)`                    — "Protection from everything"
+     * - `Protection(ProtectionScope.EachOpponent)`                  — "Protection from each opponent" (Rule 702.16e)
      */
-    @SerialName("HexproofFromColor")
+    @SerialName("Protection")
     @Serializable
-    data class HexproofFromColor(val color: Color) : KeywordAbility {
-        override val description: String = "Hexproof from ${color.displayName.lowercase()}"
-    }
-
-    // =========================================================================
-    // Protection Variants
-    // =========================================================================
-
-    /**
-     * Protection from a color.
-     * "Protection from blue"
-     */
-    @SerialName("ProtectionFromColor")
-    @Serializable
-    data class ProtectionFromColor(val color: Color) : KeywordAbility {
-        override val description: String = "Protection from ${color.displayName.lowercase()}"
-    }
-
-    /**
-     * Protection from multiple colors.
-     * "Protection from white and from blue"
-     */
-    @SerialName("ProtectionFromColors")
-    @Serializable
-    data class ProtectionFromColors(val colors: Set<Color>) : KeywordAbility {
-        override val description: String = "Protection from " +
-                colors.joinToString(" and from ") { it.displayName.lowercase() }
+    data class Protection(val scope: ProtectionScope) : KeywordAbility {
+        override val keyword: Keyword? = when (scope) {
+            is ProtectionScope.EachOpponent -> Keyword.PROTECTION_FROM_EACH_OPPONENT
+            else -> null
+        }
+        override val description: String = when (scope) {
+            is ProtectionScope.Color -> "Protection from ${scope.color.displayName.lowercase()}"
+            is ProtectionScope.Colors -> "Protection from " +
+                scope.colors.joinToString(" and from ") { it.displayName.lowercase() }
+            is ProtectionScope.CardType -> "Protection from ${scope.cardType.lowercase()}"
+            is ProtectionScope.Subtype -> "Protection from ${scope.subtype}s"
+            is ProtectionScope.Everything -> "Protection from everything"
+            is ProtectionScope.EachOpponent -> "Protection from each opponent"
+        }
     }
 
     /**
-     * Protection from a card type.
-     * "Protection from creatures"
+     * Hexproof from a quality. Parameterized by [ProtectionScope]; today only
+     * `ProtectionScope.Color` is engine-supported (the other scopes format the
+     * oracle text but have no rules-engine wiring yet).
+     *
+     * Example: `Hexproof(ProtectionScope.Color(Color.WHITE))` — "Hexproof from white".
      */
-    @SerialName("ProtectionFromCardType")
+    @SerialName("Hexproof")
     @Serializable
-    data class ProtectionFromCardType(val cardType: String) : KeywordAbility {
-        override val description: String = "Protection from ${cardType.lowercase()}"
-    }
-
-    /**
-     * Protection from a creature subtype.
-     * "Protection from Goblins"
-     */
-    @SerialName("ProtectionFromCreatureSubtype")
-    @Serializable
-    data class ProtectionFromCreatureSubtype(val subtype: String) : KeywordAbility {
-        override val description: String = "Protection from ${subtype}s"
-    }
-
-    /**
-     * Protection from everything.
-     * "Protection from everything"
-     */
-    @SerialName("ProtectionFromEverything")
-    @Serializable
-    data object ProtectionFromEverything : KeywordAbility {
-        override val description: String = "Protection from everything"
-    }
-
-    /**
-     * Protection from each of the controller's opponents (Rule 702.16e).
-     * Damage from sources controlled by an opponent is prevented; the permanent
-     * can't be targeted by an opponent's spells/abilities, can't be blocked by
-     * creatures controlled by an opponent, and can't be enchanted/equipped by
-     * Auras or Equipment controlled by an opponent.
-     */
-    @SerialName("ProtectionFromEachOpponent")
-    @Serializable
-    data object ProtectionFromEachOpponent : KeywordAbility {
-        override val keyword: Keyword = Keyword.PROTECTION_FROM_EACH_OPPONENT
-        override val description: String = "Protection from each opponent"
+    data class Hexproof(val scope: ProtectionScope) : KeywordAbility {
+        override val description: String = when (scope) {
+            is ProtectionScope.Color -> "Hexproof from ${scope.color.displayName.lowercase()}"
+            is ProtectionScope.Colors -> "Hexproof from " +
+                scope.colors.joinToString(" and from ") { it.displayName.lowercase() }
+            is ProtectionScope.CardType -> "Hexproof from ${scope.cardType.lowercase()}"
+            is ProtectionScope.Subtype -> "Hexproof from ${scope.subtype}s"
+            is ProtectionScope.Everything -> "Hexproof from everything"
+            is ProtectionScope.EachOpponent -> "Hexproof from each opponent"
+        }
     }
 
     // =========================================================================
@@ -578,24 +547,25 @@ sealed interface KeywordAbility {
         /**
          * Create Hexproof from a color.
          */
-        fun hexproofFrom(color: Color): KeywordAbility = HexproofFromColor(color)
+        fun hexproofFrom(color: Color): KeywordAbility = Hexproof(ProtectionScope.Color(color))
 
         /**
          * Create Protection from a color.
          */
-        fun protectionFrom(color: Color): KeywordAbility = ProtectionFromColor(color)
+        fun protectionFrom(color: Color): KeywordAbility =
+            Protection(ProtectionScope.Color(color))
 
         /**
          * Create Protection from multiple colors.
          */
         fun protectionFrom(vararg colors: Color): KeywordAbility =
-            ProtectionFromColors(colors.toSet())
+            Protection(ProtectionScope.Colors(colors.toSet()))
 
         /**
          * Create Protection from a creature subtype.
          */
         fun protectionFromSubtype(subtype: String): KeywordAbility =
-            ProtectionFromCreatureSubtype(subtype)
+            Protection(ProtectionScope.Subtype(subtype))
 
         /**
          * Create Cycling with mana cost from string.
