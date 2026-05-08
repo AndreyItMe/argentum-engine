@@ -55,4 +55,11 @@ sealed interface EntityReference {
     data object AffectedEntity : EntityReference {
         override val description: String = "it"
     }
+
+    /** The current entity being iterated in a ForEachInGroupEffect. */
+    @SerialName("IterationEntity")
+    @Serializable
+    data object IterationEntity : EntityReference {
+        override val description: String = "it"
+    }
 }

@@ -140,5 +140,6 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
             is EntityReference.TappedAsCost -> context.tappedPermanents.getOrNull(ref.index)
             is EntityReference.Triggering -> context.triggeringEntityId
             is EntityReference.AffectedEntity -> context.affectedEntityId
+            is EntityReference.IterationEntity -> context.pipeline.iterationTarget
         }
 }

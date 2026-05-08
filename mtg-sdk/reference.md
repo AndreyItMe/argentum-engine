@@ -837,6 +837,7 @@ constructors.
   `.sumManaValue()`
 - Math: `DynamicAmount.Add(l, r)` / `.Subtract(l, r)` / `.Multiply(amt, n)` / `.Max(l, r)` / `.Min(l, r)` /
   `.IfPositive(amt)`
+- `DynamicAmount.EntityProperty(EntityReference.IterationEntity, property)` — read a property of the current iteration entity inside `ForEachInGroupEffect` (e.g., counter count for doubling)
 
 ---
 

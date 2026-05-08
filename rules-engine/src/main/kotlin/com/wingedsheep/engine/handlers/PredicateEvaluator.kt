@@ -691,6 +691,7 @@ class PredicateEvaluator {
             is EntityReference.Sacrificed -> null
             is EntityReference.TappedAsCost -> null
             is EntityReference.AffectedEntity -> null // Only available during projection
+            is EntityReference.IterationEntity -> null // Only available during ForEachInGroup iteration
         }
     }
 
