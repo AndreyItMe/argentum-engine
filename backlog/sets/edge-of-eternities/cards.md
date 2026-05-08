@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 121 / 261
+**Implemented:** 131 / 261
 
 ---
 
@@ -71,7 +71,7 @@
 - [x] Emissary Escort
 - [ ] Entropic Battlecruiser
 - [x] Eumidian Terrabotanist
-- [ ] Eusocial Engineering
+- [x] Eusocial Engineering
 - [x] Evendo, Waking Haven
 - [ ] Exalted Sunborn
 - [x] Exosuit Savior
@@ -89,7 +89,7 @@
 - [x] Galvanizing Sawship
 - [ ] Genemorph Imago
 - [ ] Gene Pollinator
-- [ ] Germinating Wurm
+- [x] Germinating Wurm
 - [ ] Gigastorm Titan
 - [x] Glacier Godmaw
 - [x] Godless Shrine
@@ -122,7 +122,7 @@
 - [ ] Kavaron Skywarden
 - [x] Kavaron Turbodrone
 - [ ] Kav Landseeker
-- [ ] Knight Luminary
+- [x] Knight Luminary
 - [ ] Larval Scoutlander
 - [ ] Lashwhip Predator
 - [x] Lightless Evangel
@@ -134,13 +134,13 @@
 - [ ] Luxknight Breacher
 - [x] Mechan Assembler
 - [x] Mechan Navigator
-- [ ] Mechanozoa
+- [x] Mechanozoa
 - [ ] Mechan Shieldmate
 - [x] Melded Moxite
 - [ ] Meltstrider Eulogist
 - [x] Meltstrider's Gear
 - [x] Meltstrider's Resolve
-- [ ] Memorial Team Leader
+- [x] Memorial Team Leader
 - [ ] Memorial Vault
 - [ ] Mental Modulation
 - [ ] Mightform Harmonizer
@@ -154,7 +154,7 @@
 - [ ] Mutinous Massacre
 - [x] Nanoform Sentinel
 - [x] Nebula Dragon
-- [ ] Nova Hellkite
+- [x] Nova Hellkite
 - [x] Nutrient Block
 - [ ] Orbital Plunge
 - [x] Oreplate Pangolin
@@ -172,7 +172,7 @@
 - [x] Radiant Strike
 - [ ] Ragost, Deft Gastronaut
 - [ ] Rayblade Trooper
-- [ ] Red Tiger Mechan
+- [x] Red Tiger Mechan
 - [x] Remnant Elemental
 - [ ] Requiem Monolith
 - [x] Reroute Systems
@@ -196,7 +196,7 @@
 - [ ] Selfcraft Mechan
 - [x] Shattered Wings
 - [ ] Singularity Rupture
-- [ ] Sinister Cryologist
+- [x] Sinister Cryologist
 - [ ] Skystinger
 - [x] Slagdrill Scrapper
 - [x] Sledge-Class Seedship
@@ -204,7 +204,7 @@
 - [ ] Space-Time Anomaly
 - [ ] Specimen Freighter
 - [x] Squire's Lightblade
-- [ ] Starbreach Whale
+- [x] Starbreach Whale
 - [ ] Starfield Shepherd
 - [ ] Starfield Vocalist
 - [x] Starfighter Pilot
@@ -259,7 +259,7 @@
 - [x] Watery Grave
 - [ ] Weapons Manufacturing
 - [x] Wedgelight Rammer
-- [ ] Weftblade Enhancer
+- [x] Weftblade Enhancer
 - [ ] Weftstalker Ardent
 - [ ] Weftwalking
 - [x] Wurmwall Sweeper

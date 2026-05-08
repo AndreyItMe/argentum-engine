@@ -5,41 +5,29 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 ## Warp, and related
 
+- [x] Bygone Colossus
+- [ ] Mightform Harmonizer
+- [ ] Weftstalker Ardent
+- [ ] Starfield Shepherd
 - [ ] Anticausal Vestige
 - [ ] All-Fates Stalker
 - [ ] Astelli Reclaimer
 - [ ] Blade of the Swarm
-- [x] Bygone Colossus
 - [ ] Exalted Sunborn
 - [ ] Haliya, Guided by Light
-- [ ] Knight Luminary
 - [ ] Rayblade Trooper
-- [ ] Starfield Shepherd
-- [ ] Weftblade Enhancer
 - [ ] Codecracker Hound
-- [ ] Mechanozoa
 - [ ] Quantum Riddler
-- [ ] Sinister Cryologist
-- [ ] Starbreach Whale
 - [ ] Starfield Vocalist
 - [ ] Starwinder
 - [ ] Perigee Beckoner
 - [ ] Full Bore
-- [ ] Memorial Team Leader
-- [ ] Nova Hellkite
 - [ ] Possibility Technician
 - [ ] Tannuk, Steadfast Second
-- [ ] Weftstalker Ardent
 - [ ] Broodguard Elite
 - [ ] Close Encounter
 - [ ] Drix Fatemaker
-- [ ] Eusocial Engineering
-- [ ] Germinating Wurm
 - [ ] Loading Zone
-- [ ] Mightform Harmonizer
-- [ ] Interceptor Mechan
-- [ ] Pinnacle Emissary
-- [ ] Red Tiger Mechan
 - [ ] Susurian Voidborn
 - [ ] Timeline Culler
 
@@ -59,6 +47,7 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 - [ ] Kavaron Skywarden
 - [x] Plasma Bolt
 - [ ] Roving Actuator
+- [ ] Interceptor Mechan
 
 ## Differently named lands:
 - [x] All-Fates Scroll
@@ -77,6 +66,7 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 ## Drone token:
 - [ ] Desculpting Blast
 - [ ] Station Monitor
+- [ ] Pinnacle Emissary
 
 ## Complex:
 - [ ] Consult the Star Charts
