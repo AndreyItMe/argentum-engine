@@ -504,6 +504,49 @@ data class SelectFromCollectionEffect(
 }
 
 /**
+ * Present a binary choice between two named collections (piles) and route them
+ * to caller-specified destination collections. Used after a partition step like
+ * [SelectFromCollectionEffect] to ask a (typically different) player which
+ * pile is which.
+ *
+ * Concrete example — Fact or Fiction (CR 700.3):
+ *  1. Reveal top 5.
+ *  2. Opponent partitions them into [pileA] and [pileB] via SelectFromCollection.
+ *  3. **Caster** picks which pile is the "keep" pile via ChoosePile — the chosen
+ *     pile goes into [storeChosenAs], the other into [storeOtherAs].
+ *  4. Subsequent MoveCollection effects route each named collection to its zone.
+ *
+ * Empty piles are legal — the chooser still gets to assign the empty pile to
+ * either side.
+ *
+ * @property pileA Name of the first pre-existing collection (e.g. "pileA")
+ * @property pileB Name of the second pre-existing collection (e.g. "pileB")
+ * @property pileALabel Display label for pile A (defaults to "Pile 1")
+ * @property pileBLabel Display label for pile B (defaults to "Pile 2")
+ * @property chooser Who picks (defaults to the controller of the source spell/ability)
+ * @property storeChosenAs Collection name to store the picked pile under
+ * @property storeOtherAs Collection name to store the non-picked pile under
+ * @property prompt Custom prompt for the decision; defaults to a generic one
+ */
+@SerialName("ChoosePile")
+@Serializable
+data class ChoosePileEffect(
+    val pileA: String,
+    val pileB: String,
+    val pileALabel: String = "Pile 1",
+    val pileBLabel: String = "Pile 2",
+    val chooser: Chooser = Chooser.Controller,
+    val storeChosenAs: String,
+    val storeOtherAs: String,
+    val prompt: String? = null
+) : Effect {
+    override val description: String =
+        "Choose one pile: $pileALabel or $pileBLabel"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Move all cards in a named collection to a destination zone.
  *
  * This is the final step in a pipeline: it takes a named collection and

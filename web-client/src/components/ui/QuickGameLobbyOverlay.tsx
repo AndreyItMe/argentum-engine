@@ -23,6 +23,7 @@ export function QuickGameLobbyOverlay() {
   const submitDeck = useGameStore((s) => s.submitQuickGameLobbyDeck)
   const setReady = useGameStore((s) => s.setQuickGameLobbyReady)
   const setSetCode = useGameStore((s) => s.setQuickGameLobbySetCode)
+  const setPublic = useGameStore((s) => s.setQuickGameLobbyPublic)
   const leave = useGameStore((s) => s.leaveQuickGameLobby)
 
   // Throttle deck submissions: the picker fires several times per keystroke, but we only
@@ -71,6 +72,8 @@ export function QuickGameLobbyOverlay() {
   const you = lobby.players.find((p) => p.playerId === lobby.youPlayerId)
   const others = lobby.players.filter((p) => p.playerId !== lobby.youPlayerId)
   const youReady = you?.ready ?? false
+  // Host (first non-AI player) controls visibility — matches the leave/close convention.
+  const isHost = lobby.players.find((p) => !p.isAi)?.playerId === lobby.youPlayerId
 
   const copyLobbyId = () => {
     navigator.clipboard.writeText(lobby.lobbyId)
@@ -112,6 +115,34 @@ export function QuickGameLobbyOverlay() {
             <span className={`${styles.inviteCopyLabel} ${copied ? styles.inviteCopyLabelCopied : ''}`} style={{ flexShrink: 0, marginLeft: 12 }}>
               {copied ? 'Copied!' : 'Copy'}
             </span>
+          </div>
+        )}
+
+        {!lobby.vsAi && (
+          <div className={styles.settingsPanel}>
+            <div className={styles.settingsRow}>
+              <span className={styles.settingsLabel}>Visibility</span>
+              <div className={styles.settingsButtons}>
+                <button
+                  type="button"
+                  onClick={() => isHost && setPublic(false)}
+                  disabled={!isHost}
+                  className={`${styles.settingsButton} ${!lobby.isPublic ? styles.settingsButtonActive : ''}`}
+                  title={isHost ? '' : 'Only the host can change visibility'}
+                >
+                  Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => isHost && setPublic(true)}
+                  disabled={!isHost}
+                  className={`${styles.settingsButton} ${lobby.isPublic ? styles.settingsButtonActive : ''}`}
+                  title={isHost ? '' : 'Only the host can change visibility'}
+                >
+                  Public
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

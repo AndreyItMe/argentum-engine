@@ -37,7 +37,10 @@ class StateCloneBenchmark : FunSpec({
     val benchmarkEnabled = System.getProperty("benchmark") == "true"
 
     test("state clone/modify microbenchmark").config(enabled = benchmarkEnabled) {
-        val registry = CardRegistry().apply { register(PortalSet.cards) }
+        val registry = CardRegistry().apply {
+            register(PortalSet.cards)
+            register(PortalSet.basicLands)
+        }
         val initializer = GameInitializer(registry)
 
         // 60-card deck: 30 lands + 30 simple creatures (mostly 1- and 2-drops).

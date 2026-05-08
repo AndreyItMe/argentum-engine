@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.*
@@ -632,8 +633,8 @@ class ClientStateTransformer(
             ?: emptyList()
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
         val staticProtections = cardDef?.keywordAbilities
-            ?.filterIsInstance<KeywordAbility.ProtectionFromColor>()
-            ?.map { it.color }
+            ?.filterIsInstance<KeywordAbility.Protection>()
+            ?.mapNotNull { (it.scope as? ProtectionScope.Color)?.color }
             ?: emptyList()
         val protections = (projectedProtections.ifEmpty { staticProtections }).distinct()
 

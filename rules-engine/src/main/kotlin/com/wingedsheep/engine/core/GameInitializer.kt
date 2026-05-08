@@ -14,6 +14,7 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Configuration for a player joining a game.
@@ -183,19 +184,17 @@ class GameInitializer(
      * Create a card entity from a card definition.
      */
     private fun createCardEntity(cardDef: CardDefinition, ownerId: EntityId): ComponentContainer {
-        val protectionColors = cardDef.keywordAbilities
-            .filterIsInstance<KeywordAbility.ProtectionFromColor>()
-            .map { it.color }
-            .toSet() +
-            cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.ProtectionFromColors>()
-                .flatMap { it.colors }
-                .toSet()
-
-        val protectionSubtypes = cardDef.keywordAbilities
-            .filterIsInstance<KeywordAbility.ProtectionFromCreatureSubtype>()
-            .map { it.subtype }
-            .toSet()
+        val protections = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Protection>()
+        val protectionColors = protections.flatMap { p ->
+            when (val s = p.scope) {
+                is ProtectionScope.Color -> listOf(s.color)
+                is ProtectionScope.Colors -> s.colors
+                else -> emptyList()
+            }
+        }.toSet()
+        val protectionSubtypes = protections.mapNotNull {
+            (it.scope as? ProtectionScope.Subtype)?.subtype
+        }.toSet()
 
         // Use Name#SetCode-CollectorNumber as the definition ID when available, so that
         // cards with the same name but different art variants (basic lands across sets)
@@ -239,8 +238,8 @@ class GameInitializer(
         }
 
         val hexproofFromColors = cardDef.keywordAbilities
-            .filterIsInstance<KeywordAbility.HexproofFromColor>()
-            .map { it.color }
+            .filterIsInstance<KeywordAbility.Hexproof>()
+            .mapNotNull { (it.scope as? ProtectionScope.Color)?.color }
             .toSet()
         if (hexproofFromColors.isNotEmpty()) {
             container = container.with(HexproofFromColorComponent(hexproofFromColors))

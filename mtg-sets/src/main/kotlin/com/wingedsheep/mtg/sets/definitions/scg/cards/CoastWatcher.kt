@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Coast Watcher
@@ -21,7 +22,7 @@ val CoastWatcher = card("Coast Watcher") {
     oracleText = "Flying, protection from green"
 
     keywords(Keyword.FLYING)
-    keywordAbility(KeywordAbility.ProtectionFromColor(Color.GREEN))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.GREEN)))
 
     metadata {
         rarity = Rarity.COMMON

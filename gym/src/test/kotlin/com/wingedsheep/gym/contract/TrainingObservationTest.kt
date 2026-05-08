@@ -25,6 +25,7 @@ class TrainingObservationTest : FunSpec({
     fun createRegistry(): CardRegistry {
         val registry = CardRegistry()
         registry.register(PortalSet.cards)
+        registry.register(PortalSet.basicLands)
         return registry
     }
 

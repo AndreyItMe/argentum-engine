@@ -64,8 +64,12 @@ class ModalEffectExecutor(
             state.getEntity(sourceId)?.get<CardComponent>()?.name
         }
 
-        val modeDescriptions = effect.modes.map { it.description }
+        val baseOptions = effect.modes.map { it.description }
         val availableIndices = effect.modes.indices.toList()
+        // "Choose up to N" — allow declining a mode pick when minChooseCount has
+        // already been satisfied (here, before any picks, when minChooseCount = 0).
+        val canDecline = effect.minChooseCount < effect.chooseCount
+        val modeDescriptions = if (canDecline) baseOptions + DECLINE_MODE_LABEL else baseOptions
 
         val basePrompt = "Choose a mode for ${sourceName ?: "modal spell"}"
         val prompt = if (effect.chooseCount > 1) "$basePrompt (1 of ${effect.chooseCount})" else basePrompt
@@ -97,6 +101,7 @@ class ModalEffectExecutor(
             opponentId = context.opponentId,
             triggeringEntityId = context.triggeringEntityId,
             chooseCount = effect.chooseCount,
+            minChooseCount = effect.minChooseCount,
             selectedModeIndices = emptyList(),
             availableIndices = availableIndices,
             outerTargets = context.targets,
@@ -149,6 +154,12 @@ class ModalEffectExecutor(
     }
 
     companion object {
+        /**
+         * Label for the synthetic "no mode" option appended when a modal effect
+         * allows declining (minChooseCount < chooseCount, e.g., "choose up to one").
+         */
+        const val DECLINE_MODE_LABEL: String = "Don't choose a mode"
+
         /** Build the drain queue from pre-chosen modes / targets. */
         fun buildModeEntries(
             effect: ModalEffect,

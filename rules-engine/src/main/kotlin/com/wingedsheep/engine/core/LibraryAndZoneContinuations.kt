@@ -112,6 +112,35 @@ data class ChooseOptionPipelineContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after the chooser picks one of two pre-existing pipeline collections
+ * (a "pile"). Index 0 = pile A, index 1 = pile B. Used by [ChoosePileEffect]
+ * (Fact or Fiction's "you choose which pile is which" step).
+ *
+ * @property playerId The chooser
+ * @property pileAIds The cards currently stored under [pileAName]
+ * @property pileBIds The cards currently stored under [pileBName]
+ * @property pileAName Original collection name for pile A
+ * @property pileBName Original collection name for pile B
+ * @property storeChosenAs Collection name where the picked pile's cards land
+ * @property storeOtherAs Collection name where the non-picked pile's cards land
+ * @property storedCollections Snapshot of pipeline collections at pause time
+ */
+@Serializable
+data class ChoosePileContinuation(
+    override val decisionId: String,
+    val playerId: EntityId,
+    val sourceId: EntityId?,
+    val sourceName: String?,
+    val pileAIds: List<EntityId>,
+    val pileBIds: List<EntityId>,
+    val pileAName: String,
+    val pileBName: String,
+    val storeChosenAs: String,
+    val storeOtherAs: String,
+    val storedCollections: Map<String, List<EntityId>> = emptyMap()
+) : ContinuationFrame
+
+/**
  * Resume after the controller chooses a target for an Aura being moved to the battlefield
  * via MoveCollectionEffect (atomic pipeline path).
  *

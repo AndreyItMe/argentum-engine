@@ -50,6 +50,12 @@ data class ModalContinuation(
     val opponentId: EntityId? = null,
     val triggeringEntityId: EntityId? = null,
     val chooseCount: Int = 1,
+    /**
+     * Minimum modes the player must pick (rule 700.2). When < [chooseCount], the
+     * player may decline subsequent picks once this threshold is met — supports
+     * "choose up to one" / "choose one or more" patterns.
+     */
+    val minChooseCount: Int = chooseCount,
     val selectedModeIndices: List<Int> = emptyList(),
     val availableIndices: List<Int>? = null,
     val outerTargets: List<ChosenTarget> = emptyList(),

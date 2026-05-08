@@ -23,6 +23,12 @@ class QuickGameLobby(
     val vsAi: Boolean,
     /** Set used for "Random" sealed-pool decks. Mutable: the host can change it from the lobby UI. */
     @Volatile var setCode: String?,
+    /**
+     * If true the lobby is listed by `GET /api/quick-games/public` so other players can find it
+     * from the home screen without needing the invite code. AI lobbies cannot be public — there
+     * is no second seat for a stranger to join.
+     */
+    @Volatile var isPublic: Boolean = false,
 ) {
     val players: MutableList<QuickGameLobbyPlayer> = mutableListOf()
 

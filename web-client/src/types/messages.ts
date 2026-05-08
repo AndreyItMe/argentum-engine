@@ -72,6 +72,8 @@ export type ServerMessage =
   // Quick Game Lobby Messages
   | QuickGameLobbyStateMessage
   | QuickGameLobbyClosedMessage
+  // Presence
+  | OnlinePlayersCountMessage
 
 /**
  * Connection confirmed with assigned player ID.
@@ -836,7 +838,6 @@ export interface AvailableSet {
   readonly incomplete?: boolean
   readonly block?: string
   readonly implementedCount?: number
-  readonly totalCount?: number
 }
 
 export interface LobbySettings {
@@ -1332,6 +1333,7 @@ export type ClientMessage =
   | SubmitQuickGameLobbyDeckMessage
   | SetQuickGameLobbyReadyMessage
   | SetQuickGameLobbySetCodeMessage
+  | SetQuickGameLobbyPublicMessage
 
 /**
  * Connect to the server with a player name.
@@ -1995,6 +1997,7 @@ export interface QuickGameLobbyStateMessage {
   readonly players: readonly QuickGameLobbyPlayerView[]
   readonly youPlayerId: string
   readonly canStart: boolean
+  readonly isPublic: boolean
 }
 
 export interface QuickGameLobbyClosedMessage {
@@ -2002,10 +2005,16 @@ export interface QuickGameLobbyClosedMessage {
   readonly reason: string
 }
 
+export interface OnlinePlayersCountMessage {
+  readonly type: 'onlinePlayersCount'
+  readonly count: number
+}
+
 export interface CreateQuickGameLobbyMessage {
   readonly type: 'createQuickGameLobby'
   readonly vsAi?: boolean
   readonly setCode?: string
+  readonly isPublic?: boolean
 }
 
 export interface JoinQuickGameLobbyMessage {
@@ -2032,11 +2041,17 @@ export interface SetQuickGameLobbySetCodeMessage {
   readonly setCode: string | null
 }
 
-export function createCreateQuickGameLobbyMessage(vsAi?: boolean, setCode?: string): CreateQuickGameLobbyMessage {
+export interface SetQuickGameLobbyPublicMessage {
+  readonly type: 'setQuickGameLobbyPublic'
+  readonly isPublic: boolean
+}
+
+export function createCreateQuickGameLobbyMessage(vsAi?: boolean, setCode?: string, isPublic?: boolean): CreateQuickGameLobbyMessage {
   return {
     type: 'createQuickGameLobby',
     ...(vsAi ? { vsAi } : {}),
     ...(setCode ? { setCode } : {}),
+    ...(isPublic ? { isPublic } : {}),
   }
 }
 export function createJoinQuickGameLobbyMessage(lobbyId: string): JoinQuickGameLobbyMessage {
@@ -2053,6 +2068,9 @@ export function createSetQuickGameLobbyReadyMessage(ready: boolean): SetQuickGam
 }
 export function createSetQuickGameLobbySetCodeMessage(setCode: string | null): SetQuickGameLobbySetCodeMessage {
   return { type: 'setQuickGameLobbySetCode', setCode }
+}
+export function createSetQuickGameLobbyPublicMessage(isPublic: boolean): SetQuickGameLobbyPublicMessage {
+  return { type: 'setQuickGameLobbyPublic', isPublic }
 }
 
 export function isQuickGameLobbyStateMessage(msg: ServerMessage): msg is QuickGameLobbyStateMessage {

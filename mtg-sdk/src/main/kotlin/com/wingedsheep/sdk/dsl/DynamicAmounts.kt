@@ -124,6 +124,18 @@ object DynamicAmounts {
         battlefield(Player.You, GameObjectFilter.Land).count()
 
     /**
+     * Domain — the number of basic land types (Plains, Island, Swamp, Mountain, Forest)
+     * among lands [player] controls. Capped at 5 by the size of the basic-subtype set.
+     * Reads subtypes via projected state, so type-changed lands and dual lands count.
+     */
+    fun domain(player: Player = Player.You): DynamicAmount =
+        DynamicAmount.AggregateBattlefield(
+            player = player,
+            filter = GameObjectFilter.Land,
+            aggregation = Aggregation.DISTINCT_BASIC_LAND_SUBTYPES
+        )
+
+    /**
      * Number of differently named lands [player] controls.
      * Used for cards like All-Fates Scroll: counts each land you control once,
      * but only if its English name isn't shared with another already-counted land.
@@ -265,4 +277,7 @@ object DynamicAmounts {
 
     fun numberOfBlockers(): DynamicAmount =
         DynamicAmount.EntityProperty(EntityReference.Triggering, EntityNumericProperty.BlockerCount)
+
+    fun triggeringManaValue(): DynamicAmount =
+        DynamicAmount.EntityProperty(EntityReference.Triggering, EntityNumericProperty.ManaValue)
 }

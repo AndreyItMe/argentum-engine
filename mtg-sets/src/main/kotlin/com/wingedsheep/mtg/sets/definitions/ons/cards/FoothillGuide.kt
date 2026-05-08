@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.ons.cards
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Foothill Guide
@@ -19,7 +20,7 @@ val FoothillGuide = card("Foothill Guide") {
     toughness = 1
     oracleText = "Protection from Goblins\nMorph {W}"
 
-    keywordAbility(KeywordAbility.ProtectionFromCreatureSubtype("Goblin"))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Subtype("Goblin")))
     morph = "{W}"
 
     metadata {

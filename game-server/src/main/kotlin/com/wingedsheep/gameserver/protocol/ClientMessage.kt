@@ -351,7 +351,8 @@ sealed interface ClientMessage {
     @SerialName("createQuickGameLobby")
     data class CreateQuickGameLobby(
         val vsAi: Boolean = false,
-        val setCode: String? = null
+        val setCode: String? = null,
+        val isPublic: Boolean = false
     ) : ClientMessage
 
     /** Join an existing quick-game lobby by its short code. */
@@ -385,4 +386,12 @@ sealed interface ClientMessage {
     @Serializable
     @SerialName("setQuickGameLobbySetCode")
     data class SetQuickGameLobbySetCode(val setCode: String?) : ClientMessage
+
+    /**
+     * Toggle whether the quick-game lobby is publicly listed so other players can find it
+     * without the invite code. Host-only; AI lobbies cannot be made public.
+     */
+    @Serializable
+    @SerialName("setQuickGameLobbyPublic")
+    data class SetQuickGameLobbyPublic(val isPublic: Boolean) : ClientMessage
 }

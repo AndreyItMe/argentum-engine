@@ -24,7 +24,10 @@ import kotlin.io.path.readLines
  */
 class SelfPlayLoopTest : FunSpec({
 
-    fun registry(): CardRegistry = CardRegistry().apply { register(PortalSet.cards) }
+    fun registry(): CardRegistry = CardRegistry().apply {
+        register(PortalSet.cards)
+        register(PortalSet.basicLands)
+    }
     fun miniDeck() = Deck.of("Mountain" to 17, "Raging Goblin" to 3)
 
     fun config() = GameConfig(

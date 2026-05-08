@@ -9,12 +9,13 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToCreatureGroup
+import com.wingedsheep.sdk.scripting.GrantActivatedAbility
 import com.wingedsheep.sdk.scripting.GrantAdditionalTypesToGroup
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.TriggerSpec
 import com.wingedsheep.sdk.scripting.GameEvent.ZoneChangeEvent
+import com.wingedsheep.sdk.scripting.effects.WardCost
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -37,7 +38,7 @@ val YgraEaterOfAll = card("Ygra, Eater of All") {
     oracleText = "Ward—Sacrifice a Food.\nOther creatures are Food artifacts in addition to their other types and have \"{2}, {T}, Sacrifice this permanent: You gain 3 life.\"\nWhenever a Food is put into a graveyard from the battlefield, put two +1/+1 counters on Ygra."
 
     // Ward — Sacrifice a Food
-    keywordAbility(KeywordAbility.WardSacrifice(GameObjectFilter.Any.withSubtype("Food")))
+    keywordAbility(KeywordAbility.Ward(WardCost.Sacrifice(GameObjectFilter.Any.withSubtype("Food"))))
 
     // Other creatures are Food artifacts in addition to their other types
     staticAbility {
@@ -50,7 +51,7 @@ val YgraEaterOfAll = card("Ygra, Eater of All") {
 
     // Other creatures have "{2}, {T}, Sacrifice this permanent: You gain 3 life."
     staticAbility {
-        ability = GrantActivatedAbilityToCreatureGroup(
+        ability = GrantActivatedAbility(
             ability = ActivatedAbility(
                 cost = Costs.Composite(Costs.Mana("{2}"), Costs.Tap, Costs.SacrificeSelf),
                 effect = Effects.GainLife(3)

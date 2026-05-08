@@ -25,6 +25,8 @@ import com.wingedsheep.sdk.scripting.references.Player
 import kotlin.math.max
 import kotlin.math.min
 
+private val BASIC_LAND_SUBTYPES: Set<String> = setOf("Plains", "Island", "Swamp", "Mountain", "Forest")
+
 /**
  * Evaluates DynamicAmount values against the current game state.
  *
@@ -394,6 +396,14 @@ class DynamicAmountEvaluator(
                     state.getEntity(entityId)?.get<CardComponent>()?.name
                 }.size
             }
+            Aggregation.DISTINCT_BASIC_LAND_SUBTYPES -> {
+                matchingEntities.flatMapTo(mutableSetOf<String>()) { entityId ->
+                    val subtypes: Set<String> = projected?.getSubtypes(entityId)
+                        ?: state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.subtypes?.map { it.value }?.toSet()
+                        ?: emptySet()
+                    subtypes.intersect(BASIC_LAND_SUBTYPES)
+                }.size
+            }
         }
     }
 
@@ -446,6 +456,13 @@ class DynamicAmountEvaluator(
             Aggregation.DISTINCT_NAMES -> {
                 matchingEntities.mapNotNullTo(mutableSetOf()) { entityId ->
                     state.getEntity(entityId)?.get<CardComponent>()?.name
+                }.size
+            }
+            Aggregation.DISTINCT_BASIC_LAND_SUBTYPES -> {
+                matchingEntities.flatMapTo(mutableSetOf<String>()) { entityId ->
+                    val subtypes: Set<String> = state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.subtypes?.map { it.value }?.toSet()
+                        ?: emptySet()
+                    subtypes.intersect(BASIC_LAND_SUBTYPES)
                 }.size
             }
         }

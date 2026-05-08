@@ -371,8 +371,7 @@ sealed interface ServerMessage {
         val name: String,
         val incomplete: Boolean = false,
         val block: String? = null,
-        val implementedCount: Int? = null,
-        val totalCount: Int? = null
+        val implementedCount: Int? = null
     )
 
     /**
@@ -916,7 +915,8 @@ sealed interface ServerMessage {
         val setCode: String?,
         val players: List<QuickGameLobbyPlayerView>,
         val youPlayerId: EntityId,
-        val canStart: Boolean
+        val canStart: Boolean,
+        val isPublic: Boolean = false
     ) : ServerMessage
 
     /**
@@ -942,6 +942,11 @@ sealed interface ServerMessage {
     @Serializable
     @SerialName("quickGameLobbyClosed")
     data class QuickGameLobbyClosed(val reason: String) : ServerMessage
+
+    /** Broadcast number of human players currently connected via WebSocket. */
+    @Serializable
+    @SerialName("onlinePlayersCount")
+    data class OnlinePlayersCount(val count: Int) : ServerMessage
 }
 
 @Serializable

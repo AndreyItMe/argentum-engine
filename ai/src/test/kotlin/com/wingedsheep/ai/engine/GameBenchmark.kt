@@ -37,7 +37,10 @@ class GameBenchmark : FunSpec({
     val benchmarkEnabled = System.getProperty("benchmark") == "true"
 
     test("benchmark: $numGames AI-vs-AI games in parallel (random sealed decks)").config(enabled = benchmarkEnabled) {
-        val registry = CardRegistry().apply { register(PortalSet.cards) }
+        val registry = CardRegistry().apply {
+            register(PortalSet.cards)
+            register(PortalSet.basicLands)
+        }
         val allCards = PortalSet.cards
         val cores = Runtime.getRuntime().availableProcessors()
         val pool = Executors.newFixedThreadPool(cores)

@@ -15,7 +15,7 @@
                 "amount": 1
             },
             {
-                "type": "GrantKeywordToCreatureGroup",
+                "type": "GrantKeyword",
                 "keyword": "HASTE",
                 "filter": {
                     "baseFilter": "creature Goblin"

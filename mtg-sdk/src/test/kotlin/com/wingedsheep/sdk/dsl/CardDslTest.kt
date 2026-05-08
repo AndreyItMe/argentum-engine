@@ -26,6 +26,7 @@ import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.StoreCountEffect
 import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
 import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
+import com.wingedsheep.sdk.scripting.effects.WardCost
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.events.DamageType
@@ -128,14 +129,15 @@ class CardDslTest : DescribeSpec({
                 power = 2
                 toughness = 2
                 keywords(Keyword.FLASH)
-                keywordAbility(KeywordAbility.WardMana(ManaCost.parse("{2}")))
+                keywordAbility(KeywordAbility.Ward(WardCost.Mana("{2}")))
             }
 
             creature.name shouldBe "Nimble Seafarer"
             creature.keywords shouldContain Keyword.FLASH
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.WardMana>()
-            (creature.keywordAbilities[0] as KeywordAbility.WardMana).cost.cmc shouldBe 2
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Ward>()
+            val ward = creature.keywordAbilities[0] as KeywordAbility.Ward
+            (ward.cost as WardCost.Mana).manaCost shouldBe "{2}"
             creature.keywordAbilities[0].description shouldBe "Ward {2}"
         }
 
@@ -145,12 +147,13 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Kor Soldier"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.ProtectionFromColor(Color.RED))
+                keywordAbility(KeywordAbility.Protection(ProtectionScope.Color(Color.RED)))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.ProtectionFromColor>()
-            (creature.keywordAbilities[0] as KeywordAbility.ProtectionFromColor).color shouldBe Color.RED
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Protection>()
+            val protectionScope = (creature.keywordAbilities[0] as KeywordAbility.Protection).scope
+            (protectionScope as ProtectionScope.Color).color shouldBe Color.RED
             creature.keywordAbilities[0].description shouldBe "Protection from red"
         }
 
@@ -160,12 +163,12 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Spirit"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.ProtectionFromColors(setOf(Color.WHITE, Color.GREEN)))
+                keywordAbility(KeywordAbility.Protection(ProtectionScope.Colors(setOf(Color.WHITE, Color.GREEN))))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.ProtectionFromColors>()
-            val protection = creature.keywordAbilities[0] as KeywordAbility.ProtectionFromColors
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Protection>()
+            val protection = (creature.keywordAbilities[0] as KeywordAbility.Protection).scope as ProtectionScope.Colors
             protection.colors shouldContain Color.WHITE
             protection.colors shouldContain Color.GREEN
         }
@@ -176,14 +179,15 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Horror"
                 power = 3
                 toughness = 3
-                keywordAbility(KeywordAbility.WardDiscard(count = 1, random = true))
+                keywordAbility(KeywordAbility.Ward(WardCost.Discard(count = 1, random = true)))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.WardDiscard>()
-            val ward = creature.keywordAbilities[0] as KeywordAbility.WardDiscard
-            ward.count shouldBe 1
-            ward.random shouldBe true
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Ward>()
+            val ward = creature.keywordAbilities[0] as KeywordAbility.Ward
+            val discard = ward.cost as WardCost.Discard
+            discard.count shouldBe 1
+            discard.random shouldBe true
             ward.description shouldBe "Ward—Discard a card at random"
         }
 
@@ -210,16 +214,16 @@ class CardDslTest : DescribeSpec({
                 toughness = 4
                 keywords(Keyword.FLYING, Keyword.VIGILANCE)
                 keywordAbilities(
-                    KeywordAbility.WardMana(ManaCost.parse("{3}")),
-                    KeywordAbility.ProtectionFromColor(Color.BLACK)
+                    KeywordAbility.Ward(WardCost.Mana("{3}")),
+                    KeywordAbility.Protection(ProtectionScope.Color(Color.BLACK))
                 )
             }
 
             creature.keywords shouldContain Keyword.FLYING
             creature.keywords shouldContain Keyword.VIGILANCE
             creature.keywordAbilities shouldHaveSize 2
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.WardMana>()
-            creature.keywordAbilities[1].shouldBeInstanceOf<KeywordAbility.ProtectionFromColor>()
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Ward>()
+            creature.keywordAbilities[1].shouldBeInstanceOf<KeywordAbility.Protection>()
         }
 
         it("should define a creature with Bushido") {
@@ -937,7 +941,7 @@ class CardDslTest : DescribeSpec({
                 keywords(Keyword.FLYING, Keyword.VIGILANCE, Keyword.TRAMPLE)
 
                 staticAbility {
-                    ability = GrantKeyword(Keyword.HEXPROOF, StaticTarget.SourceCreature)
+                    ability = GrantKeyword(Keyword.HEXPROOF, GroupFilter.source())
                     condition = NotCondition(SourceHasDealtDamage)
                 }
             }
@@ -954,7 +958,7 @@ class CardDslTest : DescribeSpec({
 
             val grantKeyword = conditional.ability.shouldBeInstanceOf<GrantKeyword>()
             grantKeyword.keyword shouldBe Keyword.HEXPROOF.name
-            grantKeyword.target shouldBe StaticTarget.SourceCreature
+            grantKeyword.filter shouldBe GroupFilter.source()
 
             val notCondition = conditional.condition.shouldBeInstanceOf<NotCondition>()
             notCondition.condition shouldBe SourceHasDealtDamage
@@ -969,7 +973,7 @@ class CardDslTest : DescribeSpec({
 
                 // Gets +2/+2 while attacking
                 staticAbility {
-                    ability = ModifyStats(2, 2, StaticTarget.SourceCreature)
+                    ability = ModifyStats(2, 2, GroupFilter.source())
                     condition = SourceIsAttacking
                 }
             }
@@ -993,7 +997,7 @@ class CardDslTest : DescribeSpec({
 
                 // Can't block unless you have more life than an opponent
                 staticAbility {
-                    ability = CantBlock(StaticTarget.SourceCreature)
+                    ability = CantBlock(GroupFilter.source())
                     condition = Conditions.Not(Conditions.MoreLifeThanOpponent)
                 }
             }
@@ -1007,11 +1011,11 @@ class CardDslTest : DescribeSpec({
 
         it("should describe conditional abilities correctly") {
             val conditional = ConditionalStaticAbility(
-                ability = GrantKeyword(Keyword.HEXPROOF, StaticTarget.SourceCreature),
+                ability = GrantKeyword(Keyword.HEXPROOF, GroupFilter.source()),
                 condition = NotCondition(SourceHasDealtDamage)
             )
 
-            conditional.description shouldBe "Grants hexproof if not (this creature has dealt damage)"
+            conditional.description shouldBe "this creature have hexproof if not (this creature has dealt damage)"
         }
     }
 })

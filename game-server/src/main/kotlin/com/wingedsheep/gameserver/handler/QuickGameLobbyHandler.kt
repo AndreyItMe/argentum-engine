@@ -69,7 +69,31 @@ class QuickGameLobbyHandler(
             is ClientMessage.SubmitQuickGameLobbyDeck -> handleSubmitDeck(session, message)
             is ClientMessage.SetQuickGameLobbyReady -> handleSetReady(session, message)
             is ClientMessage.SetQuickGameLobbySetCode -> handleSetSetCode(session, message)
+            is ClientMessage.SetQuickGameLobbyPublic -> handleSetPublic(session, message)
             else -> {}
+        }
+    }
+
+    private fun handleSetPublic(session: WebSocketSession, message: ClientMessage.SetQuickGameLobbyPublic) {
+        val playerSession = sessionRegistry.getPlayerSession(session.id) ?: run {
+            sender.sendError(session, ErrorCode.NOT_CONNECTED, "Not connected"); return
+        }
+        val lobby = lobbyRepository.findContainingPlayer(playerSession.playerId) ?: run {
+            sender.sendError(session, ErrorCode.GAME_NOT_FOUND, "Not in a lobby"); return
+        }
+        lobbyRepository.withLock(lobby.lobbyId) { current ->
+            if (current == null) return@withLock
+            // Host-only: first non-AI player is the host (matches the leave/close convention).
+            val host = current.players.firstOrNull { !it.isAi }
+            if (host?.playerId != playerSession.playerId) {
+                sender.sendError(session, ErrorCode.INVALID_ACTION, "Only the host can change visibility")
+                return@withLock
+            }
+            // AI lobbies are single-player — there's no second seat to discover.
+            val effective = message.isPublic && !current.vsAi
+            if (current.isPublic == effective) return@withLock
+            current.isPublic = effective
+            broadcastState(current)
         }
     }
 
@@ -102,7 +126,12 @@ class QuickGameLobbyHandler(
             return
         }
 
-        val lobby = QuickGameLobby(vsAi = message.vsAi, setCode = message.setCode)
+        val lobby = QuickGameLobby(
+            vsAi = message.vsAi,
+            setCode = message.setCode,
+            // AI lobbies are single-player — never publicly listed.
+            isPublic = message.isPublic && !message.vsAi
+        )
         lobby.players += QuickGameLobbyPlayer(
             playerId = playerSession.playerId,
             playerName = playerSession.playerName
@@ -345,7 +374,8 @@ class QuickGameLobbyHandler(
             setCode = lobby.setCode,
             players = lobby.players.map { it.toView() },
             youPlayerId = playerId,
-            canStart = lobby.allReady()
+            canStart = lobby.allReady(),
+            isPublic = lobby.isPublic
         )
         sender.send(session, msg)
     }
@@ -373,7 +403,8 @@ class QuickGameLobbyHandler(
                 setCode = lobby.setCode,
                 players = lobby.players.map { it.toView() },
                 youPlayerId = player.playerId,
-                canStart = lobby.allReady()
+                canStart = lobby.allReady(),
+                isPublic = lobby.isPublic
             )
             sender.send(ws, msg)
         }

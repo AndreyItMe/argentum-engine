@@ -455,11 +455,14 @@ export function createGameplayHandlers(set: SetState, get: GetState): Pick<Messa
         },
       })
 
-      set({
+      set((state) => ({
         opponentName: msg.opponentName,
         mulliganState: null,
-        deckBuildingState: null,
-      })
+        // Preserve the drafted deck in tournament mode so the player can still
+        // view or save it from the standings screen between rounds and after
+        // the tournament completes.
+        deckBuildingState: state.tournamentState ? state.deckBuildingState : null,
+      }))
     },
 
     onGameCancelled: () => {

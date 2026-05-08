@@ -1,5 +1,8 @@
 package com.wingedsheep.sdk.model
 
+import com.wingedsheep.sdk.limited.BoosterStrategy
+import com.wingedsheep.sdk.limited.StandardBooster
+
 /**
  * A Magic: The Gathering set: a named collection of card definitions that can be
  * registered into the engine and (optionally) used for sealed/draft.
@@ -25,14 +28,16 @@ interface MtgSet {
     /** Block (e.g. "Onslaught") if the set is part of one, otherwise null. */
     val block: String? get() = null
 
-    /** Total card count in the official set (used by booster generation when set is incomplete). */
-    val totalSetSize: Int? get() = null
-
     /** True when this set's [cards] list is incomplete relative to the official set. */
     val incomplete: Boolean get() = false
 
-    /** Booster packs for this set guarantee a legendary creature. */
-    val guaranteedLegendary: Boolean get() = false
+    /**
+     * Strategy that turns the set's card pool into a single booster pack.
+     * Defaults to a standard 11C / 3U / 1R(or mythic) pack; sets override
+     * this to express custom slot rules (guaranteed legendary, extra slots,
+     * etc.).
+     */
+    val boosterStrategy: BoosterStrategy get() = StandardBooster()
 
     /**
      * If this set has no basic lands of its own, the set whose lands should be

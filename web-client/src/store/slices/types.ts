@@ -622,6 +622,7 @@ export type GameStore = {
   pendingTournamentId: string | null
   aiEnabled: boolean
   availableSets: readonly AvailableSet[]
+  onlinePlayers: number | null
   connect: (playerName: string) => void
   disconnect: () => void
   setPendingTournamentId: (lobbyId: string | null) => void
@@ -707,12 +708,13 @@ export type GameStore = {
 
   // Quick Game Lobby slice
   quickGameLobbyState: QuickGameLobbyStateMessage | null
-  createQuickGameLobby: (vsAi?: boolean, setCode?: string) => void
+  createQuickGameLobby: (vsAi?: boolean, setCode?: string, isPublic?: boolean) => void
   joinQuickGameLobby: (lobbyId: string) => void
   leaveQuickGameLobby: () => void
   submitQuickGameLobbyDeck: (deckList: Record<string, number>) => void
   setQuickGameLobbyReady: (ready: boolean) => void
   setQuickGameLobbySetCode: (setCode: string | null) => void
+  setQuickGameLobbyPublic: (isPublic: boolean) => void
 
   // Draft slice
   deckBuildingState: DeckBuildingState | null

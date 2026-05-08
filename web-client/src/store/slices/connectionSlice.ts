@@ -22,6 +22,7 @@ export interface ConnectionSliceState {
   pendingTournamentId: string | null
   aiEnabled: boolean
   availableSets: readonly AvailableSet[]
+  onlinePlayers: number | null
 }
 
 export interface ConnectionSliceActions {
@@ -40,6 +41,7 @@ export const createConnectionSlice: SliceCreator<ConnectionSlice> = (set, get) =
   pendingTournamentId: null,
   aiEnabled: false,
   availableSets: [],
+  onlinePlayers: null,
 
   // Actions
   connect: (playerName) => {

@@ -22,6 +22,7 @@ class LibraryAndZoneContinuationResumer(
         resumer(PutOnBottomOfLibraryContinuation::class, ::resumePutOnBottomOfLibrary),
         resumer(PutFromHandContinuation::class, ::resumePutFromHand),
         resumer(SelectFromCollectionContinuation::class, ::resumeSelectFromCollection),
+        resumer(ChoosePileContinuation::class, ::resumeChoosePile),
         resumer(SelectTargetPipelineContinuation::class, ::resumeSelectTargetPipeline),
         resumer(MoveCollectionAuraTargetContinuation::class, ::resumeMoveCollectionAuraTarget),
         resumer(PutOnTopOrBottomContinuation::class, ::resumePutOnTopOrBottom)
@@ -420,6 +421,47 @@ class LibraryAndZoneContinuationResumer(
         }
 
         // Inject updated collections into the next EffectContinuation on the stack (if present)
+        val nextFrame = state.peekContinuation()
+        val newState = if (nextFrame is EffectContinuation) {
+            val (_, stateAfterPop) = state.popContinuation()
+            stateAfterPop.pushContinuation(
+                nextFrame.copy(effectContext = nextFrame.effectContext.copy(pipeline = nextFrame.effectContext.pipeline.copy(storedCollections = updatedCollections)))
+            )
+        } else {
+            state
+        }
+
+        return checkForMore(newState, emptyList())
+    }
+
+    /**
+     * Resume after the chooser picked one of two pre-existing piles via
+     * [com.wingedsheep.sdk.scripting.effects.ChoosePileEffect]. Routes pile A
+     * or pile B (per [OptionChosenResponse.optionIndex]) to [storeChosenAs],
+     * and the other to [storeOtherAs], on the next [EffectContinuation].
+     */
+    fun resumeChoosePile(
+        state: GameState,
+        continuation: ChoosePileContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is OptionChosenResponse) {
+            return ExecutionResult.error(state, "Expected option choice response for ChoosePile")
+        }
+        val (chosen, other) = when (response.optionIndex) {
+            0 -> continuation.pileAIds to continuation.pileBIds
+            1 -> continuation.pileBIds to continuation.pileAIds
+            else -> return ExecutionResult.error(
+                state,
+                "Invalid pile index for ChoosePile: ${response.optionIndex}"
+            )
+        }
+
+        val updatedCollections = continuation.storedCollections.toMutableMap()
+        updatedCollections[continuation.storeChosenAs] = chosen
+        updatedCollections[continuation.storeOtherAs] = other
+
         val nextFrame = state.peekContinuation()
         val newState = if (nextFrame is EffectContinuation) {
             val (_, stateAfterPop) = state.popContinuation()

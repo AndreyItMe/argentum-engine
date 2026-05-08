@@ -16,6 +16,7 @@ import {
   createSubmitQuickGameLobbyDeckMessage,
   createSetQuickGameLobbyReadyMessage,
   createSetQuickGameLobbySetCodeMessage,
+  createSetQuickGameLobbyPublicMessage,
 } from '@/types'
 import type { SliceCreator } from './types'
 import { getWebSocket } from './shared'
@@ -25,12 +26,13 @@ export interface QuickGameLobbySliceState {
 }
 
 export interface QuickGameLobbySliceActions {
-  createQuickGameLobby: (vsAi?: boolean, setCode?: string) => void
+  createQuickGameLobby: (vsAi?: boolean, setCode?: string, isPublic?: boolean) => void
   joinQuickGameLobby: (lobbyId: string) => void
   leaveQuickGameLobby: () => void
   submitQuickGameLobbyDeck: (deckList: Record<string, number>) => void
   setQuickGameLobbyReady: (ready: boolean) => void
   setQuickGameLobbySetCode: (setCode: string | null) => void
+  setQuickGameLobbyPublic: (isPublic: boolean) => void
 }
 
 export type QuickGameLobbySlice = QuickGameLobbySliceState & QuickGameLobbySliceActions
@@ -38,8 +40,8 @@ export type QuickGameLobbySlice = QuickGameLobbySliceState & QuickGameLobbySlice
 export const createQuickGameLobbySlice: SliceCreator<QuickGameLobbySlice> = (set) => ({
   quickGameLobbyState: null,
 
-  createQuickGameLobby: (vsAi, setCode) => {
-    getWebSocket()?.send(createCreateQuickGameLobbyMessage(vsAi, setCode))
+  createQuickGameLobby: (vsAi, setCode, isPublic) => {
+    getWebSocket()?.send(createCreateQuickGameLobbyMessage(vsAi, setCode, isPublic))
   },
 
   joinQuickGameLobby: (lobbyId) => {
@@ -61,5 +63,9 @@ export const createQuickGameLobbySlice: SliceCreator<QuickGameLobbySlice> = (set
 
   setQuickGameLobbySetCode: (setCode) => {
     getWebSocket()?.send(createSetQuickGameLobbySetCodeMessage(setCode))
+  },
+
+  setQuickGameLobbyPublic: (isPublic) => {
+    getWebSocket()?.send(createSetQuickGameLobbyPublicMessage(isPublic))
   },
 })

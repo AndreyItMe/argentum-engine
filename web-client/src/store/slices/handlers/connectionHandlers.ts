@@ -6,7 +6,7 @@ import { entityId, createJoinLobbyMessage } from '@/types'
 import { getWebSocket, clearLobbyId, loadLobbyId } from '../shared'
 import type { SetState, GetState } from './types'
 
-type ConnectionHandlerKeys = 'onConnected' | 'onReconnected'
+type ConnectionHandlerKeys = 'onConnected' | 'onReconnected' | 'onOnlinePlayersCount'
 
 export function createConnectionHandlers(set: SetState, get: GetState): Pick<MessageHandlers, ConnectionHandlerKeys> {
   return {
@@ -48,6 +48,10 @@ export function createConnectionHandlers(set: SetState, get: GetState): Pick<Mes
           getWebSocket()?.send(createJoinLobbyMessage(savedLobbyId))
         }
       }
+    },
+
+    onOnlinePlayersCount: (msg) => {
+      set({ onlinePlayers: msg.count })
     },
   }
 }

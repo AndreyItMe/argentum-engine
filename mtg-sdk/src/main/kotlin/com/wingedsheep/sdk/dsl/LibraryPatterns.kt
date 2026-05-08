@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeEffect
+import com.wingedsheep.sdk.scripting.effects.ChoosePileEffect
 import com.wingedsheep.sdk.scripting.effects.Chooser
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
@@ -443,6 +444,65 @@ object LibraryPatterns {
                 destination = CardDestination.ToZone(Zone.BATTLEFIELD)
             ),
             ShuffleLibraryEffect()
+        )
+    )
+
+    /**
+     * "Divvy" pattern (Fact or Fiction shape, CR 700.3): reveal cards from the top
+     * of the controller's library, **an opponent partitions them into two piles**,
+     * then **the controller chooses which pile is the "keep" pile**; that pile
+     * goes to [keepZone] and the other to [otherZone].
+     *
+     * Two pauses, two players:
+     *  1. Opponent — `SelectFromCollection` over `revealed` → `pileA` + `pileB`.
+     *     Empty piles are legal (CR 700.3d).
+     *  2. Controller — `ChoosePile` between `pileA` and `pileB` → `keepPile` +
+     *     `otherPile`.
+     *
+     * Then `MoveCollection` routes each pile to its zone.
+     */
+    fun factOrFiction(
+        count: Int = 5,
+        keepZone: Zone = Zone.HAND,
+        otherZone: Zone = Zone.GRAVEYARD,
+        keepLabel: String = "Hand",
+        otherLabel: String = "Graveyard"
+    ): CompositeEffect = CompositeEffect(
+        listOf(
+            GatherCardsEffect(
+                source = CardSource.TopOfLibrary(DynamicAmount.Fixed(count)),
+                storeAs = "revealed",
+                revealed = true
+            ),
+            SelectFromCollectionEffect(
+                from = "revealed",
+                selection = SelectionMode.ChooseAnyNumber,
+                chooser = Chooser.Opponent,
+                storeSelected = "pileA",
+                storeRemainder = "pileB",
+                selectedLabel = "Pile 1",
+                remainderLabel = "Pile 2",
+                prompt = "Separate the revealed cards into two piles. The cards you select form Pile 1; the rest form Pile 2.",
+                alwaysPrompt = true
+            ),
+            ChoosePileEffect(
+                pileA = "pileA",
+                pileB = "pileB",
+                pileALabel = "Pile 1",
+                pileBLabel = "Pile 2",
+                chooser = Chooser.Controller,
+                storeChosenAs = "keepPile",
+                storeOtherAs = "otherPile",
+                prompt = "Choose which pile goes to your $keepLabel; the other goes to your $otherLabel."
+            ),
+            MoveCollectionEffect(
+                from = "keepPile",
+                destination = CardDestination.ToZone(keepZone)
+            ),
+            MoveCollectionEffect(
+                from = "otherPile",
+                destination = CardDestination.ToZone(otherZone)
+            )
         )
     )
 

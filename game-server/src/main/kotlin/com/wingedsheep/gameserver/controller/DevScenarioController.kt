@@ -14,6 +14,7 @@ import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.*
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.view.ClientStateTransformer
@@ -793,26 +794,25 @@ class DevScenarioController(
             }
 
             // Add ProtectionComponent for cards with protection from color/subtype
-            val protectionColors = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.ProtectionFromColor>()
-                .map { it.color }
-                .toSet() +
-                cardDef.keywordAbilities
-                    .filterIsInstance<KeywordAbility.ProtectionFromColors>()
-                    .flatMap { it.colors }
-                    .toSet()
-            val protectionSubtypes = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.ProtectionFromCreatureSubtype>()
-                .map { it.subtype }
-                .toSet()
+            val protections = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Protection>()
+            val protectionColors = protections.flatMap { p ->
+                when (val s = p.scope) {
+                    is ProtectionScope.Color -> listOf(s.color)
+                    is ProtectionScope.Colors -> s.colors
+                    else -> emptyList()
+                }
+            }.toSet()
+            val protectionSubtypes = protections.mapNotNull {
+                (it.scope as? ProtectionScope.Subtype)?.subtype
+            }.toSet()
             if (protectionColors.isNotEmpty() || protectionSubtypes.isNotEmpty()) {
                 container = container.with(ProtectionComponent(protectionColors, protectionSubtypes))
             }
 
             // Add HexproofFromColorComponent for cards with hexproof from color
             val hexproofFromColors = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.HexproofFromColor>()
-                .map { it.color }
+                .filterIsInstance<KeywordAbility.Hexproof>()
+                .mapNotNull { (it.scope as? ProtectionScope.Color)?.color }
                 .toSet()
             if (hexproofFromColors.isNotEmpty()) {
                 container = container.with(HexproofFromColorComponent(hexproofFromColors))

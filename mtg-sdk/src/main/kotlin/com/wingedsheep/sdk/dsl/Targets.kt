@@ -254,6 +254,12 @@ object Targets {
     val InstantOrSorcerySpellYouControl: TargetRequirement = TargetSpell(filter = TargetFilter.InstantOrSorcerySpellOnStack.youControl())
 
     /**
+     * Target spell you don't control.
+     * In multiplayer this matches any spell controlled by an opponent.
+     */
+    val SpellYouDontControl: TargetRequirement = TargetSpell(filter = TargetFilter.SpellOnStack.opponentControls())
+
+    /**
      * Target spell with mana value exactly N.
      */
     fun SpellWithManaValue(manaValue: Int): TargetRequirement =

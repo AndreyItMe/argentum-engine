@@ -13,16 +13,15 @@ import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
 import com.wingedsheep.sdk.scripting.GameEvent
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.GrantTriggeredAbilityToAttachedCreature
-import com.wingedsheep.sdk.scripting.GrantTriggeredAbilityToCreatureGroup
+import com.wingedsheep.sdk.scripting.GrantTriggeredAbility
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.sdk.scripting.GrantWard
-import com.wingedsheep.sdk.scripting.GrantWardToGroup
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.TriggeredAbility
 import com.wingedsheep.sdk.scripting.effects.WardCost
 import com.wingedsheep.sdk.scripting.effects.WardCounterEffect
+import com.wingedsheep.sdk.scripting.filters.unified.Scope
 import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
 
 /**
@@ -63,7 +62,7 @@ class TriggerAbilityResolver(
         val staticGrantedAbilities = getStaticGrantedTriggeredAbilities(entityId, state)
         val attachedGrantedAbilities = getAttachedGrantedTriggeredAbilities(entityId, state)
 
-        // Generate ward triggered abilities from intrinsic keyword abilities and GrantWardToGroup
+        // Generate ward triggered abilities from intrinsic keyword abilities and GrantWard
         val wardAbilities = getWardTriggeredAbilities(entityId, cardDefinitionId, state)
 
         val allGranted = grantedAbilities + staticGrantedAbilities + attachedGrantedAbilities + wardAbilities
@@ -81,7 +80,7 @@ class TriggerAbilityResolver(
     /**
      * Get triggered abilities granted by static abilities on battlefield permanents.
      * E.g., Hunter Sliver grants provoke to all Sliver creatures via
-     * GrantTriggeredAbilityToCreatureGroup.
+     * GrantTriggeredAbility.
      *
      * Scans all battlefield permanents for this static ability type, checks if the
      * target entity matches the filter using its projected card data.
@@ -105,7 +104,8 @@ class TriggerAbilityResolver(
 
             val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.staticAbilities) {
-                if (ability !is GrantTriggeredAbilityToCreatureGroup) continue
+                if (ability !is GrantTriggeredAbility) continue
+                if (ability.filter.scope !is Scope.Battlefield) continue
 
                 // Check if the target entity matches the filter's card predicates
                 val filter = ability.filter.baseFilter
@@ -138,7 +138,7 @@ class TriggerAbilityResolver(
 
     /**
      * Variant of getTriggeredAbilities that uses pre-computed grant providers
-     * instead of scanning the battlefield for GrantTriggeredAbilityToCreatureGroup.
+     * instead of scanning the battlefield for GrantTriggeredAbility.
      * Reduces O(N^2) to O(N*P) where P = number of grant providers (typically 0-2).
      */
     fun getTriggeredAbilitiesWithProviders(
@@ -174,7 +174,7 @@ class TriggerAbilityResolver(
         }
         val attachedGrantedAbilities = getAttachedGrantedTriggeredAbilities(entityId, state)
 
-        // Generate ward triggered abilities from intrinsic keyword abilities and GrantWardToGroup
+        // Generate ward triggered abilities from intrinsic keyword abilities and GrantWard
         val wardAbilities = if (hasLostAbilities) emptyList()
             else getWardTriggeredAbilities(entityId, cardDefinitionId, state)
 
@@ -247,7 +247,9 @@ class TriggerAbilityResolver(
             val allStaticAbilities = sourceDef.script.effectiveStaticAbilities(classLevel)
 
             for (ability in allStaticAbilities) {
-                if (ability is GrantTriggeredAbilityToAttachedCreature) {
+                if (ability is GrantTriggeredAbility &&
+                    ability.filter.scope is Scope.AttachedTo
+                ) {
                     result.add(ability.ability)
                 }
             }
@@ -260,8 +262,8 @@ class TriggerAbilityResolver(
      * Generate ward triggered abilities for an entity.
      *
      * Checks two sources:
-     * 1. Intrinsic ward from the card's keywordAbilities (e.g., KeywordAbility.WardMana)
-     * 2. Ward granted by GrantWardToGroup static abilities on other permanents
+     * 1. Intrinsic ward from the card's keywordAbilities (KeywordAbility.Ward)
+     * 2. Ward granted by GrantWard static abilities on other permanents
      *
      * Each found ward produces a TriggeredAbility that fires on BecomesTargetEvent
      * by an opponent, with a WardCounterEffect for the appropriate cost.
@@ -277,18 +279,13 @@ class TriggerAbilityResolver(
         val cardDef = cardRegistry.getCard(cardDefinitionId)
         if (cardDef != null) {
             for (ka in cardDef.keywordAbilities) {
-                val cost: WardCost? = when (ka) {
-                    is KeywordAbility.WardMana -> WardCost.Mana(ka.cost.toString())
-                    is KeywordAbility.WardLife -> WardCost.Life(ka.amount)
-                    else -> null
-                }
-                if (cost != null) {
-                    result.add(createWardTriggeredAbility(cost, "intrinsic"))
+                if (ka is KeywordAbility.Ward) {
+                    result.add(createWardTriggeredAbility(ka.cost, "intrinsic"))
                 }
             }
         }
 
-        // 2. Ward granted by GrantWardToGroup static abilities on battlefield permanents
+        // 2. Ward granted by battlefield-scoped GrantWard static abilities
         val targetContainer = state.getEntity(entityId) ?: return result
         val targetCard = targetContainer.get<CardComponent>() ?: return result
         val projected = state.projectedState
@@ -307,7 +304,8 @@ class TriggerAbilityResolver(
             val allStaticAbilities = sourceDef.script.effectiveStaticAbilities(classLevel)
 
             for (ability in allStaticAbilities) {
-                if (ability !is GrantWardToGroup) continue
+                if (ability !is GrantWard) continue
+                if (ability.filter.scope !is Scope.Battlefield) continue
 
                 // Use the generic filter resolver to check if entity matches
                 val filter = ability.filter.baseFilter
@@ -351,7 +349,7 @@ class TriggerAbilityResolver(
             }
         }
 
-        // 3. Ward granted by GrantWard static abilities on permanents attached to this entity (Auras/Equipment)
+        // 3. Ward granted by attach-scoped GrantWard static abilities (Auras/Equipment)
         for (permanentId in state.getBattlefield()) {
             val container = state.getEntity(permanentId) ?: continue
             val attachedTo = container.get<AttachedToComponent>()?.targetId ?: continue
@@ -366,9 +364,10 @@ class TriggerAbilityResolver(
 
             for (ability in allStaticAbilities) {
                 val ward = when (ability) {
-                    is GrantWard -> ability
+                    is GrantWard -> if (ability.filter.scope is Scope.AttachedTo) ability else continue
                     is ConditionalStaticAbility -> {
                         val conditionalWard = ability.ability as? GrantWard ?: continue
+                        if (conditionalWard.filter.scope !is Scope.AttachedTo) continue
                         val controllerId = state.projectedState.getController(permanentId) ?: continue
                         val context = EffectContext(
                             sourceId = permanentId,

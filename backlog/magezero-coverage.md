@@ -22,10 +22,11 @@ additional baseline opponents. Those deck lists aren't public; start with the th
 
 ## Coverage summary
 
-**Implemented** (7 / 44 unique cards): Kitsa, Otterball Elite · Iridescent Vinelasher ·
-Malcolm, Alluring Scoundrel · Negate · Consider · Island · Swamp.
+**Implemented** (9 / 44 unique cards): Kitsa, Otterball Elite · Iridescent Vinelasher ·
+Malcolm, Alluring Scoundrel · Negate · Consider · Chrome Host Seedshark ·
+Hullbreaker Horror · Island · Swamp.
 
-**Missing** (37 unique cards — 6 creatures + 1 planeswalker + 12 instants + 1 sorcery +
+**Missing** (35 unique cards — 4 creatures + 1 planeswalker + 12 instants + 1 sorcery +
 4 enchantments + 6 nonbasic lands + 7 more creatures). One card (Cecil, Dark Knight) and
 one enchantment (Unholy Annex) are double-faced / modal DFCs and depend on DFC support.
 
@@ -62,9 +63,9 @@ one enchantment (Unholy Annex) are double-faced / modal DFCs and depend on DFC s
 - [x] Teferi, Temporal Pilgrim ×1
 
 ### Creatures (10)
-- [ ] Chrome Host Seedshark ×1
+- [x] Chrome Host Seedshark ×1 *(March of the Machine)*
 - [x] Haughty Djinn ×4
-- [ ] Hullbreaker Horror ×2
+- [x] Hullbreaker Horror ×2 *(Innistrad: Crimson Vow)*
 - [x] Tolarian Terror ×3
 
 ### Sorceries (1)

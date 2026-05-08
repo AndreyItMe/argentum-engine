@@ -25,5 +25,12 @@ enum class Aggregation {
     /** Count distinct colors across all matched entities */
     DISTINCT_COLORS,
     /** Count distinct English card names across all matched entities */
-    DISTINCT_NAMES
+    DISTINCT_NAMES,
+    /**
+     * Count distinct basic land subtypes (Plains, Island, Swamp, Mountain, Forest)
+     * across all matched entities. Used for the Domain ability word.
+     * Bounded by 5; nonbasic lands with basic subtypes (e.g., Tundra → Plains+Island)
+     * contribute each of their basic subtypes.
+     */
+    DISTINCT_BASIC_LAND_SUBTYPES
 }

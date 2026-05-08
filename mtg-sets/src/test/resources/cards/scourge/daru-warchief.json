@@ -15,7 +15,7 @@
                 "amount": 1
             },
             {
-                "type": "ModifyStatsForCreatureGroup",
+                "type": "ModifyStats",
                 "powerBonus": 1,
                 "toughnessBonus": 2,
                 "filter": {

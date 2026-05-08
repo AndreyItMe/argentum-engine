@@ -29,7 +29,9 @@ class MultiEnvServiceTest : FunSpec({
 
     fun registry(): CardRegistry = CardRegistry().apply {
         register(PortalSet.cards)
+        register(PortalSet.basicLands)
         register(BloomburrowSet.cards)
+        register(BloomburrowSet.basicLands)
     }
 
     fun boosterGen(): BoosterGenerator = BoosterGenerator(

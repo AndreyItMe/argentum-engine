@@ -25,6 +25,7 @@ class StackExecutors(
         CopyEachSpellCastExecutor(),
         ReselectTargetRandomlyExecutor(),
         GrantKeywordToSpellExecutor(),
-        MarkSpellExileWithCountersExecutor()
+        MarkSpellExileWithCountersExecutor(),
+        ReturnSpellToOwnersHandExecutor()
     )
 }

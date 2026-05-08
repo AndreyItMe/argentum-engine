@@ -527,6 +527,11 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
                     if (excludeSelf) append("other ")
                     append(pluralize(filter.description))
                 }
+                Aggregation.DISTINCT_BASIC_LAND_SUBTYPES -> {
+                    append("the number of basic land types among ")
+                    if (excludeSelf) append("other ")
+                    append(pluralize(filter.description))
+                }
             }
             append(" ")
             when (player) {
@@ -603,6 +608,10 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
                 }
                 Aggregation.DISTINCT_NAMES -> {
                     append("the number of differently named ")
+                    append(pluralize(filter.description))
+                }
+                Aggregation.DISTINCT_BASIC_LAND_SUBTYPES -> {
+                    append("the number of basic land types among ")
                     append(pluralize(filter.description))
                 }
             }

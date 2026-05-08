@@ -20,7 +20,9 @@ class GameEnvironmentTest : FunSpec({
     fun createRegistry(): CardRegistry {
         val registry = CardRegistry()
         registry.register(PortalSet.cards)
+        registry.register(PortalSet.basicLands)
         registry.register(BloomburrowSet.cards)
+        registry.register(BloomburrowSet.basicLands)
         return registry
     }
 

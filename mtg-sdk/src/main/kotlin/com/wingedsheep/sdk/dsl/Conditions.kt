@@ -126,6 +126,17 @@ object Conditions {
         )
 
     /**
+     * Domain threshold: if [count] or more basic land types are among lands you control.
+     * Reads via projected state, so type-changed lands and dual lands count.
+     */
+    fun BasicLandTypesAtLeast(count: Int): ConditionInterface =
+        Compare(
+            DynamicAmounts.domain(Player.You),
+            ComparisonOperator.GTE,
+            DynamicAmount.Fixed(count)
+        )
+
+    /**
      * If you control N or more creatures.
      */
     fun ControlCreaturesAtLeast(count: Int): ConditionInterface =

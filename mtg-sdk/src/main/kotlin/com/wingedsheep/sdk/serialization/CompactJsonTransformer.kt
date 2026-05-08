@@ -70,6 +70,27 @@ object CompactJsonTransformer {
     )
 
     /**
+     * Known singleton serial names that can appear in a `scope` field carrying a
+     * polymorphic sealed type ([com.wingedsheep.sdk.scripting.filters.unified.Scope],
+     * [com.wingedsheep.sdk.scripting.ProtectionScope], or
+     * [com.wingedsheep.sdk.scripting.references.Player]).
+     *
+     * `scope` cannot be added to [POLYMORPHIC_OBJECT_KEYS] unconditionally because
+     * other effects use the same key for plain enums (`PreventionScope`,
+     * `FaceDownLookScope`); their enum string values must NOT be expanded into
+     * `{"type": "..."}` objects.
+     */
+    private val POLYMORPHIC_SCOPE_SINGLETONS = setOf(
+        // GroupFilter.Scope
+        "Battlefield", "AttachedTo", "Self",
+        // ProtectionScope (namespaced serial names)
+        "ProtectionScope.Everything", "ProtectionScope.EachOpponent",
+        // Player (used as DynamicAmount.CountPlayersWith.scope)
+        "You", "Opponent", "EachOpponent", "Each", "ActivePlayerFirst",
+        "Any", "TargetPlayer", "TargetOpponent", "TriggeringPlayer"
+    )
+
+    /**
      * Known singleton names for CounterTypeFilter. Used to disambiguate
      * CounterTypeFilter objects from standard String counter types.
      */
@@ -149,6 +170,13 @@ object CompactJsonTransformer {
                     // Special case for counterType due to name collision (String vs CounterTypeFilter)
                     key == "counterType" && value is JsonPrimitive && value.isString
                             && value.content in COUNTER_FILTER_SINGLETONS ->
+                        buildJsonObject { put("type", value.content) }
+
+                    // Special case for scope: polymorphic when it carries a known
+                    // sealed-type singleton; left as a string when it's an enum
+                    // (PreventionScope, FaceDownLookScope).
+                    key == "scope" && value is JsonPrimitive && value.isString
+                            && value.content in POLYMORPHIC_SCOPE_SINGLETONS ->
                         buildJsonObject { put("type", value.content) }
 
                     // String value under a polymorphic key → expand to {"type": "..."}

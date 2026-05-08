@@ -10,8 +10,10 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.model.CardDefinition.Companion.doubleFacedPermanent
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
+import com.wingedsheep.sdk.scripting.effects.TransformEffect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -228,9 +230,50 @@ object PredefinedTokens {
         }
 
         metadata {
-            imageUri = "https://product-images.s3.cardmarket.com/1/TOK26/749289/749289.png"
+            imageUri = "https://cards.scryfall.io/normal/front/6/b/6b8a810b-8538-41c3-a792-dbd1a1845faa.jpg?1694737457"
+            artist = "Rovina Cai"
         }
     }
+
+    /**
+     * Phyrexian — back face of the Incubator token.
+     * Colorless 0/0 Phyrexian artifact creature.
+     */
+    val Phyrexian = card("Phyrexian") {
+        typeLine = "Artifact Creature — Phyrexian"
+        power = 0
+        toughness = 0
+
+        metadata {
+            imageUri = "https://cards.scryfall.io/normal/back/c/c/cca1decc-90fd-4df8-997e-52f8789032f8.jpg?1682207112"
+            artist = "Johann Bodin"
+        }
+    }
+
+    /**
+     * Incubator — front face of the Incubator token created by [Effects.Incubate].
+     * Colorless artifact with "{2}: Transform this token." Transforms into [Phyrexian].
+     *
+     * Per CR 701.53b the token is a transforming double-faced permanent. The
+     * `+1/+1` counters from "Incubate N" are placed by the [Effects.Incubate] composite,
+     * not declared here.
+     */
+    val Incubator = doubleFacedPermanent(
+        frontFace = card("Incubator") {
+            typeLine = "Artifact — Incubator"
+
+            activatedAbility {
+                cost = Costs.Mana("{2}")
+                effect = TransformEffect(EffectTarget.Self)
+            }
+
+            metadata {
+                imageUri = "https://cards.scryfall.io/normal/front/c/c/cca1decc-90fd-4df8-997e-52f8789032f8.jpg?1682207112"
+                artist = "Johann Bodin"
+            }
+        },
+        backFace = Phyrexian
+    )
 
     /**
      * All predefined token definitions.
@@ -244,6 +287,7 @@ object PredefinedTokens {
         Sword,
         Cragflame,
         Mutavault,
-        SorcererRole
+        SorcererRole,
+        Incubator
     )
 }

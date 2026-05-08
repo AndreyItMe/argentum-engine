@@ -17,7 +17,6 @@ class SetsController(
         val setCode: String,
         val setName: String,
         val implementedCount: Int,
-        val totalCount: Int?,
         val incomplete: Boolean
     )
 
@@ -43,7 +42,6 @@ class SetsController(
                     setCode = config.setCode,
                     setName = config.setName,
                     implementedCount = config.cards.size,
-                    totalCount = config.totalSetSize,
                     incomplete = config.incomplete
                 )
             }

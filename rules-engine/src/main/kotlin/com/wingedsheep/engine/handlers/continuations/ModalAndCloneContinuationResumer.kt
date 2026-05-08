@@ -44,8 +44,18 @@ class ModalAndCloneContinuationResumer(
 
         val availableIndices = continuation.availableIndices ?: continuation.modes.indices.toList()
         val optionIndex = response.optionIndex
-        if (optionIndex < 0 || optionIndex >= availableIndices.size) {
+        // "Choose up to N" — a synthetic decline option is appended after the
+        // mode options when minChooseCount is satisfied. Picking it short-circuits
+        // execution with no chosen modes.
+        val canDecline = continuation.selectedModeIndices.size >= continuation.minChooseCount &&
+            continuation.selectedModeIndices.size < continuation.chooseCount
+        val declineIndex = if (canDecline) availableIndices.size else -1
+        val maxIndex = if (canDecline) availableIndices.size else availableIndices.size - 1
+        if (optionIndex < 0 || optionIndex > maxIndex) {
             return ExecutionResult.error(state, "Invalid mode option index: $optionIndex")
+        }
+        if (optionIndex == declineIndex) {
+            return resolveChosenModes(state, continuation, continuation.selectedModeIndices, checkForMore)
         }
         val originalModeIndex = availableIndices[optionIndex]
         val newSelectedIndices = continuation.selectedModeIndices + originalModeIndex
@@ -56,6 +66,11 @@ class ModalAndCloneContinuationResumer(
             val sourceName = continuation.sourceName ?: "modal spell"
             val decisionId = java.util.UUID.randomUUID().toString()
             val prompt = "Choose a mode for $sourceName (${newSelectedIndices.size + 1} of ${continuation.chooseCount})"
+            val nextCanDecline = newSelectedIndices.size >= continuation.minChooseCount
+            val baseOptions = newAvailableIndices.map { continuation.modes[it].description }
+            val decisionOptions = if (nextCanDecline) {
+                baseOptions + com.wingedsheep.engine.handlers.effects.composite.ModalEffectExecutor.DECLINE_MODE_LABEL
+            } else baseOptions
             val decision = ChooseOptionDecision(
                 id = decisionId,
                 playerId = continuation.controllerId,
@@ -65,7 +80,7 @@ class ModalAndCloneContinuationResumer(
                     sourceName = continuation.sourceName,
                     phase = DecisionPhase.RESOLUTION
                 ),
-                options = newAvailableIndices.map { continuation.modes[it].description }
+                options = decisionOptions
             )
             val nextContinuation = continuation.copy(
                 decisionId = decisionId,
@@ -88,11 +103,23 @@ class ModalAndCloneContinuationResumer(
             )
         }
 
-        // All modes chosen (or no more available) — execute them in the order they were picked.
-        val chosenModes = newSelectedIndices.map { continuation.modes[it] }
+        return resolveChosenModes(state, continuation, newSelectedIndices, checkForMore)
+    }
+
+    /**
+     * Execute the modes selected so far, in pick order. Used both when the player
+     * has met `chooseCount` and when they decline a "choose up to N" pick.
+     */
+    private fun resolveChosenModes(
+        state: GameState,
+        continuation: ModalContinuation,
+        selectedModeIndices: List<Int>,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        val chosenModes = selectedModeIndices.map { continuation.modes[it] }
         // For single-mode flow, preserve revert-to-mode-selection by passing the full modes list
         // when there's only one chosen mode and it needs targets. For multi-mode, don't allow cancel.
-        val allowCancelBackToModes = continuation.chooseCount == 1
+        val allowCancelBackToModes = continuation.chooseCount == 1 && chosenModes.size == 1
         return processChosenModeQueue(
             state = state,
             queue = chosenModes,

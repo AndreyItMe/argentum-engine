@@ -68,6 +68,5 @@ private fun MtgSet.toBoosterSetConfig(): BoosterGenerator.SetConfig =
         basicLands = (basicLandsFallback ?: this).basicLands,
         incomplete = incomplete,
         block = block,
-        totalSetSize = totalSetSize,
-        guaranteedLegendary = guaranteedLegendary,
+        boosterStrategy = boosterStrategy,
     )

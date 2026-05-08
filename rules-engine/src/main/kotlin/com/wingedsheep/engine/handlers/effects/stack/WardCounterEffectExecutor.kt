@@ -35,6 +35,7 @@ import kotlin.reflect.KClass
  * 3. Branch on the ward cost:
  *    - WardCost.Mana → SelectManaSourcesDecision (canDecline=true)
  *    - WardCost.Life → YesNoDecision ("Pay N life?")
+ *    - WardCost.Discard / WardCost.Sacrifice → not yet implemented; trigger no-ops.
  *    If the controller can't possibly pay, counter immediately.
  */
 class WardCounterEffectExecutor(
@@ -65,6 +66,7 @@ class WardCounterEffectExecutor(
         return when (val cost = effect.cost) {
             is WardCost.Mana -> handleManaCost(state, context, spellEntityId, container, payingPlayerId, cost.manaCost)
             is WardCost.Life -> handleLifeCost(state, context, spellEntityId, container, payingPlayerId, cost.amount)
+            is WardCost.Discard, is WardCost.Sacrifice -> EffectResult.success(state)
         }
     }
 

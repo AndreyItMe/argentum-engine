@@ -24,6 +24,18 @@ interface PublicTournamentSummary {
   gamesPerMatch: number
 }
 
+interface PublicQuickGameSummary {
+  lobbyId: string
+  playerCount: number
+  maxPlayers: number
+  setCode: string | null
+  hostName: string | null
+}
+
+type PublicLobbyEntry =
+  | ({ kind: 'tournament' } & PublicTournamentSummary)
+  | ({ kind: 'quickGame' } & PublicQuickGameSummary)
+
 /**
  * Connection/lobby UI - shown when not in a game.
  * Combat mode and game UI are handled in App.tsx and GameBoard.tsx.
@@ -67,7 +79,6 @@ function ConnectionOverlay({
   const navigate = useNavigate()
   const connect = useGameStore((state) => state.connect)
   const aiEnabled = useGameStore((state) => state.aiEnabled)
-  const joinLobby = useGameStore((state) => state.joinLobby)
   const createTournamentLobby = useGameStore((state) => state.createTournamentLobby)
   const createQuickGameLobby = useGameStore((state) => state.createQuickGameLobby)
   const joinQuickGameLobby = useGameStore((state) => state.joinQuickGameLobby)
@@ -79,8 +90,9 @@ function ConnectionOverlay({
 
   const [nameConfirmed, setNameConfirmed] = useState(() => !!localStorage.getItem('argentum-player-name'))
   const [showReplays, setShowReplays] = useState(false)
-  const [publicTournaments, setPublicTournaments] = useState<PublicTournamentSummary[]>([])
-  const [publicTournamentsError, setPublicTournamentsError] = useState<string | null>(null)
+  const [publicLobbies, setPublicLobbies] = useState<PublicLobbyEntry[]>([])
+  const [publicLobbiesError, setPublicLobbiesError] = useState<string | null>(null)
+  const onlinePlayers = useGameStore((state) => state.onlinePlayers)
 
   const confirmName = () => {
     if (playerName.trim()) {
@@ -118,35 +130,59 @@ function ConnectionOverlay({
 
   useEffect(() => {
     if (sessionId || lobbyState) {
-      setPublicTournaments([])
+      setPublicLobbies([])
       return
     }
 
     let cancelled = false
-    const loadPublicTournaments = async () => {
+    const loadPublicLobbies = async () => {
       try {
-        const res = await fetch('/api/tournaments/public')
-        if (!res.ok) throw new Error(`Server error: ${res.status}`)
-        const data = await res.json() as PublicTournamentSummary[]
+        const [tournamentsRes, quickGamesRes] = await Promise.all([
+          fetch('/api/tournaments/public'),
+          fetch('/api/quick-games/public'),
+        ])
+        if (!tournamentsRes.ok) throw new Error(`Tournaments: ${tournamentsRes.status}`)
+        if (!quickGamesRes.ok) throw new Error(`Quick games: ${quickGamesRes.status}`)
+        const tournaments = await tournamentsRes.json() as PublicTournamentSummary[]
+        const quickGames = await quickGamesRes.json() as PublicQuickGameSummary[]
         if (!cancelled) {
-          setPublicTournaments(data)
-          setPublicTournamentsError(null)
+          const merged: PublicLobbyEntry[] = [
+            ...quickGames.map((q) => ({ kind: 'quickGame' as const, ...q })),
+            ...tournaments.map((t) => ({ kind: 'tournament' as const, ...t })),
+          ]
+          setPublicLobbies(merged)
+          setPublicLobbiesError(null)
         }
       } catch {
         if (!cancelled) {
-          setPublicTournaments([])
-          setPublicTournamentsError('Could not load public tournaments.')
+          setPublicLobbies([])
+          setPublicLobbiesError('Could not load public lobbies.')
         }
       }
     }
 
-    void loadPublicTournaments()
-    const interval = window.setInterval(loadPublicTournaments, 10_000)
+    void loadPublicLobbies()
+    const interval = window.setInterval(loadPublicLobbies, 10_000)
     return () => {
       cancelled = true
       window.clearInterval(interval)
     }
   }, [sessionId, lobbyState])
+
+  // Bootstrap the online-players count via REST so the badge appears before the
+  // user has a WebSocket session. Once connected, the server pushes
+  // OnlinePlayersCount on every connect/disconnect (see ConnectionHandler).
+  useEffect(() => {
+    if (sessionId || lobbyState || onlinePlayers !== null) return
+    let cancelled = false
+    fetch('/api/players/online')
+      .then((res) => (res.ok ? res.json() as Promise<{ count: number }> : null))
+      .then((data) => {
+        if (!cancelled && data) useGameStore.setState({ onlinePlayers: data.count })
+      })
+      .catch(() => { /* ignore — WS push will populate */ })
+    return () => { cancelled = true }
+  }, [sessionId, lobbyState, onlinePlayers])
 
   const fetchPlayerGames = useCallback(async (): Promise<GameSummary[]> => {
     const token = localStorage.getItem('argentum-token')
@@ -190,7 +226,7 @@ function ConnectionOverlay({
     )
   }
 
-  const showPublicTournaments = !sessionId && !lobbyState && (publicTournaments.length > 0 || publicTournamentsError)
+  const showPublicLobbies = !sessionId && !lobbyState && (publicLobbies.length > 0 || publicLobbiesError || (onlinePlayers ?? 0) > 0)
 
   return (
     <div className={styles.connectionOverlay} style={{ backgroundImage: `url(${randomBackground})` }}>
@@ -329,18 +365,21 @@ function ConnectionOverlay({
           )}
         </div>
 
-        {showPublicTournaments && (
-          <PublicTournamentList
-            tournaments={publicTournaments}
-            error={publicTournamentsError}
-            onJoin={(lobbyId) => {
-              setGameMode('tournament')
-              setJoinSessionId(lobbyId)
+        {showPublicLobbies && (
+          <PublicLobbyList
+            lobbies={publicLobbies}
+            error={publicLobbiesError}
+            onlinePlayers={onlinePlayers}
+            onJoin={(entry) => {
+              setJoinSessionId(entry.lobbyId)
+              if (entry.kind === 'tournament') setGameMode('tournament')
               if (status === 'connected') {
-                joinLobby(lobbyId)
+                // QuickGameLobbyHandler routes by lobby kind — works for both.
+                joinQuickGameLobby(entry.lobbyId)
               } else if (playerName.trim()) {
                 localStorage.setItem('argentum-player-name', playerName.trim())
-                setPendingTournamentId(lobbyId)
+                // pendingTournamentId triggers a JoinLobby on connect — works only for tournaments.
+                if (entry.kind === 'tournament') setPendingTournamentId(entry.lobbyId)
                 setNameConfirmed(true)
                 connect(playerName.trim())
               }
@@ -348,45 +387,61 @@ function ConnectionOverlay({
           />
         )}
       </div>
-      <span className={styles.attribution}>
-        Mana symbols by <a href="https://mana.andrewgioia.com" target="_blank" rel="noopener noreferrer" className={styles.attributionLink}>Mana Font</a> (SIL OFL 1.1 / MIT)
-      </span>
+      <div className={styles.attribution}>
+        <span>
+          Card images via <a href="https://scryfall.com" target="_blank" rel="noopener noreferrer" className={styles.attributionLink}>Scryfall</a>
+          {' · '}
+          Mana symbols by <a href="https://mana.andrewgioia.com" target="_blank" rel="noopener noreferrer" className={styles.attributionLink}>Mana Font</a> (SIL OFL 1.1 / MIT)
+        </span>
+        <span className={styles.attributionDisclaimer}>
+          Fan-made project. Not affiliated with, endorsed, or sponsored by Wizards of the Coast. Magic: The Gathering is © Wizards of the Coast LLC.
+        </span>
+      </div>
     </div>
   )
 }
 
-function PublicTournamentList({
-  tournaments,
+function PublicLobbyList({
+  lobbies,
   error,
+  onlinePlayers,
   onJoin,
 }: {
-  tournaments: PublicTournamentSummary[]
+  lobbies: PublicLobbyEntry[]
   error: string | null
-  onJoin: (lobbyId: string) => void
+  onlinePlayers: number | null
+  onJoin: (entry: PublicLobbyEntry) => void
 }) {
-  if (tournaments.length === 0 && !error) return null
+  if (lobbies.length === 0 && !error && (onlinePlayers ?? 0) === 0) return null
 
   return (
     <div className={styles.publicTournamentPanel}>
       <div className={styles.publicTournamentHeader}>
-        <span className={styles.publicTournamentTitle}>Public Tournaments</span>
-        {tournaments.length > 0 && (
-          <span className={styles.publicTournamentCount}>{tournaments.length}</span>
-        )}
+        <span className={styles.publicTournamentTitle}>Public Lobbies</span>
+        <div className={styles.publicTournamentHeaderRight}>
+          {onlinePlayers !== null && onlinePlayers > 0 && (
+            <span className={styles.onlinePlayersBadge}>
+              <span className={styles.onlinePlayersDot} />
+              {onlinePlayers} online
+            </span>
+          )}
+          {lobbies.length > 0 && (
+            <span className={styles.publicTournamentCount}>{lobbies.length}</span>
+          )}
+        </div>
       </div>
-      {error && tournaments.length === 0 ? (
+      {lobbies.length === 0 && !error ? (
+        <p className={styles.publicTournamentEmpty}>No public lobbies right now.</p>
+      ) : error && lobbies.length === 0 ? (
         <p className={styles.publicTournamentEmpty}>{error}</p>
       ) : (
-        tournaments.map((tournament) => (
-          <div key={tournament.lobbyId} className={styles.publicTournamentRow}>
+        lobbies.map((entry) => (
+          <div key={`${entry.kind}-${entry.lobbyId}`} className={styles.publicTournamentRow}>
             <div className={styles.publicTournamentInfo}>
-              <span className={styles.publicTournamentName}>{tournament.setNames.join(' + ') || 'Tournament'}</span>
-              <span className={styles.publicTournamentMeta}>
-                {formatTournamentFormat(tournament.format)} · {tournament.boosterCount} {tournament.format === 'DRAFT' ? 'packs' : 'boosters'} · {tournament.playerCount}/{tournament.maxPlayers} players
-                {tournament.gamesPerMatch > 1 && ` · ${tournament.gamesPerMatch} games per matchup`}
-              </span>
+              <span className={styles.publicTournamentName}>{publicLobbyName(entry)}</span>
+              <span className={styles.publicTournamentMeta}>{publicLobbyMeta(entry)}</span>
             </div>
-            <button onClick={() => onJoin(tournament.lobbyId)} className={styles.publicTournamentJoinButton}>
+            <button onClick={() => onJoin(entry)} className={styles.publicTournamentJoinButton}>
               Join
             </button>
           </div>
@@ -394,6 +449,22 @@ function PublicTournamentList({
       )}
     </div>
   )
+}
+
+function publicLobbyName(entry: PublicLobbyEntry): string {
+  if (entry.kind === 'tournament') {
+    return entry.setNames.join(' + ') || 'Tournament'
+  }
+  return entry.hostName ? `${entry.hostName}'s Quick Game` : 'Quick Game'
+}
+
+function publicLobbyMeta(entry: PublicLobbyEntry): string {
+  if (entry.kind === 'tournament') {
+    const base = `${formatTournamentFormat(entry.format)} · ${entry.boosterCount} ${entry.format === 'DRAFT' ? 'packs' : 'boosters'} · ${entry.playerCount}/${entry.maxPlayers} players`
+    return entry.gamesPerMatch > 1 ? `${base} · ${entry.gamesPerMatch} games per matchup` : base
+  }
+  const setLabel = entry.setCode ?? 'Random set'
+  return `Quick Game · ${setLabel} · ${entry.playerCount}/${entry.maxPlayers} players`
 }
 
 function formatTournamentFormat(format: PublicTournamentSummary['format']): string {
@@ -651,9 +722,6 @@ function LobbyOverlay({
                   }
                   const renderSetButton = (set: typeof sets[number]) => {
                     const isSelected = lobbyState.settings.setCodes.includes(set.code)
-                    const pct = set.incomplete && set.implementedCount != null && set.totalCount != null
-                      ? Math.round((set.implementedCount / set.totalCount) * 100)
-                      : null
                     return (
                       <button
                         key={set.code}
@@ -663,25 +731,11 @@ function LobbyOverlay({
                             : [...lobbyState.settings.setCodes, set.code]
                           updateLobbySettings({ setCodes: newCodes })
                         }}
-                        className={`${styles.settingsButton} ${pct != null ? styles.settingsButtonWithProgress : ''} ${isSelected ? (isAnyDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : styles.settingsButtonActive) : ''}`}
+                        className={`${styles.settingsButton} ${isSelected ? (isAnyDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : styles.settingsButtonActive) : ''}`}
                       >
-                        {pct != null ? (
-                          <>
-                            <span className={styles.setButtonName}>{set.name}</span>
-                            <span className={styles.setButtonFooter}>
-                              <span className={styles.setButtonProgressBar}>
-                                <span className={styles.setButtonProgressFill} style={{ width: `${pct}%` }} />
-                              </span>
-                              <span className={styles.setButtonProgress}>{set.implementedCount}/{set.totalCount}</span>
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{set.name}</span>
-                            {set.implementedCount != null && (
-                              <span className={styles.setButtonCardCount}>{set.implementedCount} cards</span>
-                            )}
-                          </>
+                        <span>{set.name}</span>
+                        {set.implementedCount != null && (
+                          <span className={styles.setButtonCardCount}>{set.implementedCount} cards</span>
                         )}
                       </button>
                     )

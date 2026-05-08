@@ -692,6 +692,32 @@
   border-radius: 999px;
 }
 
+.publicTournamentHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.onlinePlayersBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary, #c8c8d0);
+  font-size: 11px;
+  padding: 2px 8px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 999px;
+}
+
+.onlinePlayersDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.7);
+}
+
 .publicTournamentRow {
   display: flex;
   align-items: center;
@@ -2269,18 +2295,40 @@
  * ========================================================================= */
 .attribution {
   position: absolute;
-  bottom: 8px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  max-width: min(720px, calc(100% - 24px));
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(8, 8, 16, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   pointer-events: auto;
+  text-align: center;
+}
+
+.attributionDisclaimer {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .attributionLink {
-  color: rgba(255, 255, 255, 0.35);
-  text-decoration: none;
+  color: rgba(159, 213, 255, 0.95);
+  text-decoration: underline;
+  text-decoration-color: rgba(159, 213, 255, 0.4);
+  text-underline-offset: 2px;
 }
 
 .attributionLink:hover {
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: underline;
+  color: #cfe7ff;
+  text-decoration-color: rgba(207, 231, 255, 0.9);
 }

@@ -12,8 +12,11 @@
     ],
     "keywordAbilities": [
         {
-            "type": "ProtectionFromColor",
-            "color": "GREEN"
+            "type": "Protection",
+            "scope": {
+                "type": "ProtectionScope.Color",
+                "color": "GREEN"
+            }
         }
     ],
     "metadata": {

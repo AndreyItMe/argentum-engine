@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.ProtectionScope
 
 /**
  * Dragonstalker
@@ -21,7 +22,7 @@ val Dragonstalker = card("Dragonstalker") {
     oracleText = "Flying\nProtection from Dragons"
 
     keywords(Keyword.FLYING)
-    keywordAbility(KeywordAbility.ProtectionFromCreatureSubtype("Dragon"))
+    keywordAbility(KeywordAbility.Protection(ProtectionScope.Subtype("Dragon")))
 
     metadata {
         rarity = Rarity.UNCOMMON

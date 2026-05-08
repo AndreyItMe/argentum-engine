@@ -124,7 +124,8 @@ class GameWebSocketHandler(
                 is ClientMessage.LeaveQuickGameLobby,
                 is ClientMessage.SubmitQuickGameLobbyDeck,
                 is ClientMessage.SetQuickGameLobbyReady,
-                is ClientMessage.SetQuickGameLobbySetCode -> quickGameLobbyHandler.handle(session, clientMessage)
+                is ClientMessage.SetQuickGameLobbySetCode,
+                is ClientMessage.SetQuickGameLobbyPublic -> quickGameLobbyHandler.handle(session, clientMessage)
             }
         } catch (e: Exception) {
             logger.error("Error handling message from ${session.id}", e)

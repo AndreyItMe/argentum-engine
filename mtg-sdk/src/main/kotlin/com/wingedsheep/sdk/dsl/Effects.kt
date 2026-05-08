@@ -103,12 +103,14 @@ import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfEquippedCreatureEf
 import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfSourceEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfTargetEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
+import com.wingedsheep.sdk.scripting.effects.CREATED_TOKENS
 import com.wingedsheep.sdk.scripting.effects.CreatePredefinedTokenEffect
 import com.wingedsheep.sdk.scripting.effects.CreateRoleTokenEffect
 import com.wingedsheep.sdk.scripting.effects.CounterAllOnStackEffect
 import com.wingedsheep.sdk.scripting.effects.CounterCondition
 import com.wingedsheep.sdk.scripting.effects.CounterDestination
 import com.wingedsheep.sdk.scripting.effects.CounterEffect
+import com.wingedsheep.sdk.scripting.effects.ReturnSpellToOwnersHandEffect
 import com.wingedsheep.sdk.scripting.effects.CounterTarget
 import com.wingedsheep.sdk.scripting.effects.CounterTargetSource
 import com.wingedsheep.sdk.scripting.effects.ChangeSpellTargetEffect
@@ -1082,6 +1084,23 @@ object Effects {
     fun CreateRoleToken(roleName: String, target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
         CreateRoleTokenEffect(roleName, target)
 
+    /**
+     * Incubate N (CR 701.53). Create an Incubator token with N +1/+1 counters on it
+     * and "{2}: Transform this token." It transforms into a 0/0 Phyrexian artifact creature.
+     *
+     * Implemented purely as composition: the predefined token executor publishes the
+     * created token's entity ID into pipeline collection [CREATED_TOKENS], and a
+     * subsequent [AddCountersEffect] places the +1/+1 counters via [EffectTarget.PipelineTarget].
+     */
+    fun Incubate(n: Int): Effect = EffectPatterns.incubate(n)
+
+    /**
+     * Incubate X (CR 701.53), where the +1/+1 counter count is a [DynamicAmount]
+     * resolved at resolution time (e.g., the triggering spell's mana value).
+     */
+    fun Incubate(amount: com.wingedsheep.sdk.scripting.values.DynamicAmount): Effect =
+        EffectPatterns.incubate(amount)
+
     // =========================================================================
     // Protection Effects
     // =========================================================================
@@ -1268,6 +1287,14 @@ object Effects {
      */
     fun CounterAbility(): Effect =
         CounterEffect(target = CounterTarget.Ability)
+
+    /**
+     * Return target spell to its owner's hand.
+     *
+     * Distinct from a counter — "this spell can't be countered" does not
+     * prevent the bounce. Used by cards like Hullbreaker Horror.
+     */
+    fun ReturnSpellToOwnersHand(): Effect = ReturnSpellToOwnersHandEffect
 
     /**
      * Counter all spells and abilities your opponents control on the stack.
