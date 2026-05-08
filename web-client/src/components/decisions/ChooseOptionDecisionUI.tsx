@@ -43,6 +43,7 @@ export function ChooseOptionDecisionUI({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(initialIndex)
   const [isHoveringSource, setIsHoveringSource] = useState(false)
   const submitOptionDecision = useGameStore((s) => s.submitOptionDecision)
+  const submitCancelDecision = useGameStore((s) => s.submitCancelDecision)
   const gameState = useGameStore((s) => s.gameState)
   const responsive = useResponsive()
 
@@ -191,6 +192,14 @@ export function ChooseOptionDecisionUI({
         >
           View Battlefield
         </button>
+        {decision.canCancel && (
+          <button
+            onClick={() => submitCancelDecision()}
+            className={styles.confirmButton}
+          >
+            Cancel
+          </button>
+        )}
         <button
           onClick={handleConfirm}
           disabled={selectedIndex === null}

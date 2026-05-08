@@ -403,6 +403,8 @@ export interface ChooseOptionDecision extends PendingDecisionBase {
   readonly defaultSearch?: string | null
   /** Maps option index to entity IDs of cards associated with that option (for preview) */
   readonly optionCardIds?: Record<number, readonly EntityId[]> | null
+  /** Whether the player may abort this decision (e.g., cast-time modal mode pick before any cost is paid). */
+  readonly canCancel?: boolean
 }
 
 /**
