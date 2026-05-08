@@ -5,6 +5,7 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 ## Warp, and related
 
+- [ ] Starfield Shepherd
 - [ ] Anticausal Vestige
 - [ ] All-Fates Stalker
 - [ ] Astelli Reclaimer
@@ -12,9 +13,8 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 - [x] Bygone Colossus
 - [ ] Exalted Sunborn
 - [ ] Haliya, Guided by Light
-- [ ] Knight Luminary
+- [x] Knight Luminary
 - [ ] Rayblade Trooper
-- [ ] Starfield Shepherd
 - [ ] Weftblade Enhancer
 - [ ] Codecracker Hound
 - [ ] Mechanozoa

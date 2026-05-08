@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 122 / 261
+**Implemented:** 123 / 261
 
 ---
 
@@ -259,7 +259,7 @@
 - [x] Watery Grave
 - [ ] Weapons Manufacturing
 - [x] Wedgelight Rammer
-- [ ] Weftblade Enhancer
+- [x] Weftblade Enhancer
 - [ ] Weftstalker Ardent
 - [ ] Weftwalking
 - [x] Wurmwall Sweeper
