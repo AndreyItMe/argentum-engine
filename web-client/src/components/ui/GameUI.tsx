@@ -92,7 +92,7 @@ function ConnectionOverlay({
   const [showReplays, setShowReplays] = useState(false)
   const [publicLobbies, setPublicLobbies] = useState<PublicLobbyEntry[]>([])
   const [publicLobbiesError, setPublicLobbiesError] = useState<string | null>(null)
-  const [onlinePlayers, setOnlinePlayers] = useState<number | null>(null)
+  const onlinePlayers = useGameStore((state) => state.onlinePlayers)
 
   const confirmName = () => {
     if (playerName.trim()) {
@@ -131,17 +131,15 @@ function ConnectionOverlay({
   useEffect(() => {
     if (sessionId || lobbyState) {
       setPublicLobbies([])
-      setOnlinePlayers(null)
       return
     }
 
     let cancelled = false
     const loadPublicLobbies = async () => {
       try {
-        const [tournamentsRes, quickGamesRes, onlineRes] = await Promise.all([
+        const [tournamentsRes, quickGamesRes] = await Promise.all([
           fetch('/api/tournaments/public'),
           fetch('/api/quick-games/public'),
-          fetch('/api/players/online'),
         ])
         if (!tournamentsRes.ok) throw new Error(`Tournaments: ${tournamentsRes.status}`)
         if (!quickGamesRes.ok) throw new Error(`Quick games: ${quickGamesRes.status}`)
@@ -154,10 +152,6 @@ function ConnectionOverlay({
           ]
           setPublicLobbies(merged)
           setPublicLobbiesError(null)
-        }
-        if (onlineRes.ok) {
-          const online = await onlineRes.json() as { count: number }
-          if (!cancelled) setOnlinePlayers(online.count)
         }
       } catch {
         if (!cancelled) {
@@ -174,6 +168,21 @@ function ConnectionOverlay({
       window.clearInterval(interval)
     }
   }, [sessionId, lobbyState])
+
+  // Bootstrap the online-players count via REST so the badge appears before the
+  // user has a WebSocket session. Once connected, the server pushes
+  // OnlinePlayersCount on every connect/disconnect (see ConnectionHandler).
+  useEffect(() => {
+    if (sessionId || lobbyState || onlinePlayers !== null) return
+    let cancelled = false
+    fetch('/api/players/online')
+      .then((res) => (res.ok ? res.json() as Promise<{ count: number }> : null))
+      .then((data) => {
+        if (!cancelled && data) useGameStore.setState({ onlinePlayers: data.count })
+      })
+      .catch(() => { /* ignore — WS push will populate */ })
+    return () => { cancelled = true }
+  }, [sessionId, lobbyState, onlinePlayers])
 
   const fetchPlayerGames = useCallback(async (): Promise<GameSummary[]> => {
     const token = localStorage.getItem('argentum-token')

@@ -289,6 +289,7 @@ export type {
   SetQuickGameLobbyReadyMessage,
   SetQuickGameLobbySetCodeMessage,
   SetQuickGameLobbyPublicMessage,
+  OnlinePlayersCountMessage,
 } from './messages'
 export {
   isConnectedMessage,

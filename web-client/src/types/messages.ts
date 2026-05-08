@@ -72,6 +72,8 @@ export type ServerMessage =
   // Quick Game Lobby Messages
   | QuickGameLobbyStateMessage
   | QuickGameLobbyClosedMessage
+  // Presence
+  | OnlinePlayersCountMessage
 
 /**
  * Connection confirmed with assigned player ID.
@@ -2001,6 +2003,11 @@ export interface QuickGameLobbyStateMessage {
 export interface QuickGameLobbyClosedMessage {
   readonly type: 'quickGameLobbyClosed'
   readonly reason: string
+}
+
+export interface OnlinePlayersCountMessage {
+  readonly type: 'onlinePlayersCount'
+  readonly count: number
 }
 
 export interface CreateQuickGameLobbyMessage {

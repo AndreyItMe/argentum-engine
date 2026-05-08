@@ -622,6 +622,7 @@ export type GameStore = {
   pendingTournamentId: string | null
   aiEnabled: boolean
   availableSets: readonly AvailableSet[]
+  onlinePlayers: number | null
   connect: (playerName: string) => void
   disconnect: () => void
   setPendingTournamentId: (lobbyId: string | null) => void

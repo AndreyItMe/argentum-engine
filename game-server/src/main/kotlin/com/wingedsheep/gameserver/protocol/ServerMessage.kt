@@ -942,6 +942,11 @@ sealed interface ServerMessage {
     @Serializable
     @SerialName("quickGameLobbyClosed")
     data class QuickGameLobbyClosed(val reason: String) : ServerMessage
+
+    /** Broadcast number of human players currently connected via WebSocket. */
+    @Serializable
+    @SerialName("onlinePlayersCount")
+    data class OnlinePlayersCount(val count: Int) : ServerMessage
 }
 
 @Serializable

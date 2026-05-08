@@ -77,6 +77,18 @@ class ConnectionHandler(
             aiEnabled = aiGameManager.isEnabled,
             availableSets = buildAvailableSetsList()
         ))
+        broadcastOnlinePlayersCount()
+    }
+
+    private fun broadcastOnlinePlayersCount() {
+        val identities = sessionRegistry.getAllIdentities()
+        val count = identities.count { !it.isAi && it.webSocketSession?.isOpen == true }
+        val msg = ServerMessage.OnlinePlayersCount(count)
+        identities.forEach { identity ->
+            if (identity.isAi) return@forEach
+            val ws = identity.webSocketSession
+            if (ws != null && ws.isOpen) sender.send(ws, msg)
+        }
     }
 
     private fun handleReconnect(session: WebSocketSession, identity: PlayerIdentity) {
@@ -174,6 +186,7 @@ class ConnectionHandler(
             aiEnabled = aiGameManager.isEnabled,
             availableSets = buildAvailableSetsList()
         ))
+        broadcastOnlinePlayersCount()
 
         // Quick-game lobby reconnect is independent of the main context: even if the player has
         // a stale `currentGameSessionId` or no other context, we still want to put them back in
@@ -278,6 +291,7 @@ class ConnectionHandler(
                 // If handleReconnect already swapped in a new session, don't overwrite it.
                 if (identity.webSocketSession == null || identity.webSocketSession?.id == session.id) {
                     identity.webSocketSession = null
+                    broadcastOnlinePlayersCount()
                 } else {
                     logger.info("Player ${identity.playerName} reconnected during disconnect processing (session changed), ignoring stale disconnect")
                     return
