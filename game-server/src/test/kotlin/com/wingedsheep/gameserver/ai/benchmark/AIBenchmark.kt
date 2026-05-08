@@ -19,7 +19,7 @@ import com.wingedsheep.engine.view.LegalActionEnricher
 import com.wingedsheep.engine.view.LegalActionInfo
 import com.wingedsheep.engine.legalactions.LegalActionEnumerator
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.BloomburrowSet
+import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId

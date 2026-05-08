@@ -7,8 +7,8 @@ import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.ThornvaultForager
-import com.wingedsheep.mtg.sets.definitions.portal.cards.ScorchingSpear
+import com.wingedsheep.mtg.sets.definitions.blb.cards.ThornvaultForager
+import com.wingedsheep.mtg.sets.definitions.por.cards.ScorchingSpear
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

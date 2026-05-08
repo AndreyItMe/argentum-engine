@@ -9,7 +9,7 @@ import com.wingedsheep.gym.trainer.defaults.JsonlSelfPlaySink
 import com.wingedsheep.gym.trainer.defaults.StructuralFeatures
 import com.wingedsheep.gym.trainer.defaults.StructuralStateFeaturizer
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.booleans.shouldBeTrue

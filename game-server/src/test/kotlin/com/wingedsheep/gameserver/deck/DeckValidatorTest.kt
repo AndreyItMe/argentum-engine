@@ -1,7 +1,7 @@
 package com.wingedsheep.gameserver.deck
 
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain

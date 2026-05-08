@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets
 
-import com.wingedsheep.mtg.sets.definitions.onslaught.OnslaughtSet
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.ons.OnslaughtSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import com.wingedsheep.sdk.model.CardDefinition
 import io.kotest.core.annotation.EnabledIf
 import io.kotest.core.spec.style.FunSpec

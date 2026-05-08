@@ -7,7 +7,7 @@ import com.wingedsheep.engine.core.CardsSelectedResponse
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.ChainOfPlasma
+import com.wingedsheep.mtg.sets.definitions.ons.cards.ChainOfPlasma
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step

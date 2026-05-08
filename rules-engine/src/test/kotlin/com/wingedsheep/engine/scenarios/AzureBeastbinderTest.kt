@@ -4,9 +4,9 @@ import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.AzureBeastbinder
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.CarrotCake
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.LifecreedDuo
+import com.wingedsheep.mtg.sets.definitions.blb.cards.AzureBeastbinder
+import com.wingedsheep.mtg.sets.definitions.blb.cards.CarrotCake
+import com.wingedsheep.mtg.sets.definitions.blb.cards.LifecreedDuo
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

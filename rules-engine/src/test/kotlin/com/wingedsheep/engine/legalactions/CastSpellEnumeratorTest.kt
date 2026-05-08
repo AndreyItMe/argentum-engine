@@ -8,9 +8,9 @@ import com.wingedsheep.engine.legalactions.support.shouldContainCastOf
 import com.wingedsheep.engine.legalactions.support.shouldNotContainCastOf
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.StrongholdConfessor
-import com.wingedsheep.mtg.sets.definitions.khans.cards.TormentingVoice
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.BrigidsCommand
+import com.wingedsheep.mtg.sets.definitions.dom.cards.StrongholdConfessor
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.TormentingVoice
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.BrigidsCommand
 import com.wingedsheep.sdk.core.Step
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty

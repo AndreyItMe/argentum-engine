@@ -4,9 +4,9 @@ import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.BrightbladeStoat
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.PawpatchRecruit
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.GlorySeeker
+import com.wingedsheep.mtg.sets.definitions.blb.cards.BrightbladeStoat
+import com.wingedsheep.mtg.sets.definitions.blb.cards.PawpatchRecruit
+import com.wingedsheep.mtg.sets.definitions.ons.cards.GlorySeeker
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

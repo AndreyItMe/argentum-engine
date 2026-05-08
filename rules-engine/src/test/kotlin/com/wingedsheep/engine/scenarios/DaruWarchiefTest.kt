@@ -5,8 +5,8 @@ import com.wingedsheep.engine.mechanics.mana.CostCalculator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.GlorySeeker
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.DaruWarchief
+import com.wingedsheep.mtg.sets.definitions.ons.cards.GlorySeeker
+import com.wingedsheep.mtg.sets.definitions.scg.cards.DaruWarchief
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

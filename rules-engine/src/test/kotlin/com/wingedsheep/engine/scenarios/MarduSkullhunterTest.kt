@@ -2,7 +2,7 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.khans.cards.MarduSkullhunter
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.MarduSkullhunter
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

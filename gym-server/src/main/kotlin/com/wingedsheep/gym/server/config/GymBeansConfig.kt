@@ -3,8 +3,8 @@ package com.wingedsheep.gym.server.config
 import com.wingedsheep.engine.limited.BoosterGenerator
 import com.wingedsheep.gym.service.MultiEnvService
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.BloomburrowSet
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

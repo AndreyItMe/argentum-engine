@@ -4,7 +4,7 @@ import com.wingedsheep.engine.core.PlayLand
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.TendrilsOfAgony
+import com.wingedsheep.mtg.sets.definitions.scg.cards.TendrilsOfAgony
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.effects.StormCopyEffect

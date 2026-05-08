@@ -5,8 +5,8 @@ import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.GreatForestDruid
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.NoggleTheMind
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.GreatForestDruid
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.NoggleTheMind
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.*
 import io.kotest.core.spec.style.FunSpec

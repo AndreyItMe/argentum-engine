@@ -3,22 +3,22 @@ package com.wingedsheep.gameserver
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.core.DistributionResponse
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.BloomburrowSet
-import com.wingedsheep.mtg.sets.definitions.brotherswar.TheBrothersWarSet
-import com.wingedsheep.mtg.sets.definitions.duskmourn.DuskmournSet
-import com.wingedsheep.mtg.sets.definitions.spiderman.SpiderManSet
-import com.wingedsheep.mtg.sets.definitions.wildsofeldraineset.WildsOfEldrainSet
-import com.wingedsheep.mtg.sets.definitions.edgeofeternities.EdgeOfEternitiesSet
-import com.wingedsheep.mtg.sets.definitions.dominaria.DominariaSet
-import com.wingedsheep.mtg.sets.definitions.khans.KhansOfTarkirSet
-import com.wingedsheep.mtg.sets.definitions.legions.LegionsSet
-import com.wingedsheep.mtg.sets.definitions.onslaught.OnslaughtSet
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.LorwynEclipsedSet
-import com.wingedsheep.mtg.sets.definitions.lostcavernsofixalan.LostCavernsOfIxalanSet
-import com.wingedsheep.mtg.sets.definitions.foundations.FoundationsSet
+import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
+import com.wingedsheep.mtg.sets.definitions.bro.BrothersWarSet
+import com.wingedsheep.mtg.sets.definitions.dsk.DuskmournSet
+import com.wingedsheep.mtg.sets.definitions.spm.SpiderManSet
+import com.wingedsheep.mtg.sets.definitions.woe.WildsOfEldrainSet
+import com.wingedsheep.mtg.sets.definitions.eoe.EdgeOfEternitiesSet
+import com.wingedsheep.mtg.sets.definitions.dom.DominariaSet
+import com.wingedsheep.mtg.sets.definitions.ktk.KhansOfTarkirSet
+import com.wingedsheep.mtg.sets.definitions.lgn.LegionsSet
+import com.wingedsheep.mtg.sets.definitions.ons.OnslaughtSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
+import com.wingedsheep.mtg.sets.definitions.ecl.LorwynEclipsedSet
+import com.wingedsheep.mtg.sets.definitions.lci.LostCavernsOfIxalanSet
+import com.wingedsheep.mtg.sets.definitions.fdn.FoundationsSet
 import com.wingedsheep.mtg.sets.definitions.one.PhyrexiaAllWillBeOneSet
-import com.wingedsheep.mtg.sets.definitions.scourge.ScourgeSet
+import com.wingedsheep.mtg.sets.definitions.scg.ScourgeSet
 import com.wingedsheep.mtg.sets.tokens.PredefinedTokens
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
@@ -69,7 +69,7 @@ abstract class ScenarioTestBase : FunSpec() {
         register(KhansOfTarkirSet.cards)
         register(DominariaSet.cards)
         register(BloomburrowSet.cards)
-        register(TheBrothersWarSet.cards)
+        register(BrothersWarSet.cards)
         register(DuskmournSet.cards)
         register(SpiderManSet.cards)
         register(WildsOfEldrainSet.cards)

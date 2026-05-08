@@ -4,8 +4,8 @@ import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.AphettoVulture
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.FesteringGoblin
+import com.wingedsheep.mtg.sets.definitions.ons.cards.AphettoVulture
+import com.wingedsheep.mtg.sets.definitions.ons.cards.FesteringGoblin
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript

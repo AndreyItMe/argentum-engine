@@ -1,0 +1,29 @@
+package com.wingedsheep.mtg.sets.definitions.por.cards
+
+import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Rarity
+
+/**
+ * Raging Cougar
+ * {2}{R}
+ * Creature — Cat
+ * 2/2
+ * Haste
+ */
+val RagingCougar = card("Raging Cougar") {
+    manaCost = "{2}{R}"
+    typeLine = "Creature — Cat"
+    power = 2
+    toughness = 2
+
+    keywords(Keyword.HASTE)
+
+    metadata {
+        rarity = Rarity.COMMON
+        collectorNumber = "144"
+        artist = "Una Fricker"
+        flavorText = "Swift as thought, deadly as action."
+        imageUri = "https://cards.scryfall.io/normal/front/f/d/fd9d126a-9db9-4adc-9cf6-11408c63201d.jpg"
+    }
+}

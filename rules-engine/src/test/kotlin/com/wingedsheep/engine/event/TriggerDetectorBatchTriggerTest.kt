@@ -7,11 +7,11 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.BuildersTalent
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.CamelliaTheSeedmiser
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.DourPortMage
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.KastralTheWindcrested
-import com.wingedsheep.mtg.sets.definitions.khans.cards.SidisiBroodTyrant
+import com.wingedsheep.mtg.sets.definitions.blb.cards.BuildersTalent
+import com.wingedsheep.mtg.sets.definitions.blb.cards.CamelliaTheSeedmiser
+import com.wingedsheep.mtg.sets.definitions.blb.cards.DourPortMage
+import com.wingedsheep.mtg.sets.definitions.blb.cards.KastralTheWindcrested
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.SidisiBroodTyrant
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone

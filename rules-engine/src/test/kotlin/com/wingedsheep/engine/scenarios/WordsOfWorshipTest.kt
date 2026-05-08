@@ -4,8 +4,8 @@ import com.wingedsheep.engine.core.ActivateAbility
 import com.wingedsheep.engine.core.SelectManaSourcesDecision
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.WordsOfWorship
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.CallToTheGrave
+import com.wingedsheep.mtg.sets.definitions.ons.cards.WordsOfWorship
+import com.wingedsheep.mtg.sets.definitions.scg.cards.CallToTheGrave
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step

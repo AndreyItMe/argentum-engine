@@ -2,10 +2,10 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.MoonriseCleric
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.SunspineLynx
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.Biorhythm
-import com.wingedsheep.mtg.sets.definitions.portal.cards.PathOfPeace
+import com.wingedsheep.mtg.sets.definitions.blb.cards.MoonriseCleric
+import com.wingedsheep.mtg.sets.definitions.blb.cards.SunspineLynx
+import com.wingedsheep.mtg.sets.definitions.ons.cards.Biorhythm
+import com.wingedsheep.mtg.sets.definitions.por.cards.PathOfPeace
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step

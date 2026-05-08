@@ -2,7 +2,7 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.FormOfTheDragon
+import com.wingedsheep.mtg.sets.definitions.scg.cards.FormOfTheDragon
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId

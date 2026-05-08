@@ -5,8 +5,8 @@ import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComp
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.BonebindOrator
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.OsteomancerAdept
+import com.wingedsheep.mtg.sets.definitions.blb.cards.BonebindOrator
+import com.wingedsheep.mtg.sets.definitions.blb.cards.OsteomancerAdept
 import com.wingedsheep.mtg.sets.tokens.PredefinedTokens
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step

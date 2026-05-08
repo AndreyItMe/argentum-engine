@@ -3,9 +3,9 @@ package com.wingedsheep.gym
 import com.wingedsheep.ai.engine.buildHeuristicSealedDeck
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.BloomburrowSet
+import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.booleans.shouldBeFalse

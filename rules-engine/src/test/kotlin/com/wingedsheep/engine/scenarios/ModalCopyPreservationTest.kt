@@ -17,7 +17,7 @@ import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import io.kotest.matchers.types.shouldBeInstanceOf
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.BrigidsCommand
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.BrigidsCommand
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step

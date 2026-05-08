@@ -1,0 +1,319 @@
+package com.wingedsheep.mtg.sets.definitions.ktk
+
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.*
+import com.wingedsheep.sdk.model.CardDefinition
+import com.wingedsheep.sdk.model.MtgSet
+
+/**
+ * Khans of Tarkir Set (2014)
+ *
+ * Khans of Tarkir is the first set in the Khans of Tarkir block, featuring
+ * the morph mechanic's return, wedge-colored clans, and the prowess mechanic.
+ *
+ * Set Code: KTK
+ * Release Date: September 26, 2014
+ * Card Count: 269
+ */
+object KhansOfTarkirSet : MtgSet {
+
+    override val code = "KTK"
+    override val displayName = "Khans of Tarkir"
+    override val totalSetSize = 249
+    override val sealedSupported = true
+
+    override val cards: List<CardDefinition> = listOf(
+        // White creatures
+        AbzanBattlePriest,
+        AbzanFalconer,
+        AinokBondKin,
+        AlabasterKirin,
+        DazzlingRamparts,
+        FirehoofCavalry,
+        HeraldOfAnafenza,
+        JeskaiStudent,
+        MarduHateblade,
+        MarduHordechief,
+        MasterOfPearls,
+        SageEyeHarrier,
+        SaltRoadPatrol,
+        SeekerOfTheWay,
+        TimelyHordemate,
+        VenerableLammasu,
+        WarBehemoth,
+        WatcherOfTheRoost,
+        WingmateRoc,
+
+        HighSentinelsOfArashin,
+
+        // White enchantments
+        BraveTheSands,
+        SuspensionField,
+
+        // White spells
+        DefiantStrike,
+        EndHostilities,
+        Erase,
+        FeatOfResistance,
+        KillShot,
+        RushOfBattle,
+        Siegecraft,
+        SmiteTheMonstrous,
+        TakeUpArms,
+
+        // Blue creatures
+        DragonsEyeSavants,
+        EmbodimentOfSpring,
+        GlacialStalker,
+        JeskaiElder,
+        JeskaiWindscout,
+        MonasteryFlock,
+        MysticOfTheHiddenWay,
+        RiverwheelAerialists,
+        Scaldkin,
+        ScionOfGlaciers,
+        WetlandSambar,
+        PearlLakeAncient,
+        WhirlwindAdept,
+        MistfireWeaver,
+
+        // Blue spells
+        BlindingSpray,
+        ForceAway,
+        IcyBlast,
+        Cancel,
+        CleverImpersonator,
+        CripplingChill,
+        DigThroughTime,
+        DisdainfulStroke,
+        SetAdrift,
+        StubbornDenial,
+        TaigamsScheming,
+        ThousandWinds,
+        TreasureCruise,
+        Waterwhirl,
+        WeaveFate,
+
+        // Blue enchantments
+        QuietContemplation,
+        SingingBellStrike,
+
+        // Black creatures
+        BloodsoakedChampion,
+        DisownedAncestor,
+        BellowingSaddlebrute,
+        GrimHaruspex,
+        GurmagSwiftwing,
+        KheruBloodsucker,
+        KheruDreadmaw,
+        KheruSpellsnatcher,
+        KrumarBondKin,
+        MarduSkullhunter,
+        MerEkNightblade,
+        RottingMastodon,
+        RuthlessRipper,
+        SidisisPet,
+        ShamblingAttendants,
+        SultaiScavenger,
+        SwarmOfBloodflies,
+        UnyieldingKrumar,
+
+        // Black enchantments
+        RaidersSpoils,
+
+        // Black spells
+        BitterRevelation,
+        EmptyThePits,
+        MoltingSnakeskin,
+        DeadDrop,
+        DeathFrenzy,
+        DebilitatingInjury,
+        Despise,
+        DutifulReturn,
+        MurderousCut,
+        NecropolisFiend,
+        RakshasasSecret,
+        RetributionOfTheAncients,
+        RiteOfTheSerpent,
+        Throttle,
+
+        // Green creatures
+        AlpineGrizzly,
+        ArchersParapet,
+        HeirOfTheWilds,
+        HighlandGame,
+        HoodedHydra,
+        KinTreeWarden,
+        HootingMandrills,
+        LongshotSquad,
+        SaguArcher,
+        SmokeTeller,
+        SultaiFlayer,
+        TemurCharger,
+        TuskedColossodon,
+        TuskguardCaptain,
+        MeanderingTowershell,
+        PineWalker,
+        RattleclawMystic,
+        WoollyLoxodon,
+
+        // Green enchantments
+        HardenedScales,
+        TrailOfMystery,
+
+        // Green spells
+        AwakenTheBear,
+        BecomeImmense,
+        DragonscaleBoon,
+        FeedTheClan,
+        IncrementalGrowth,
+        Naturalize,
+        RoarOfChallenge,
+        SavagePunch,
+        ScoutTheBorders,
+        SeeTheUnwritten,
+        SeekTheHorizon,
+        Windstorm,
+
+        // Red creatures
+        AshcloudPhoenix,
+        AinokTracker,
+        BloodfireExpert,
+        BloodfireMentor,
+        CanyonLurkers,
+        DragonStyleTwins,
+        HordeAmbusher,
+        JeeringInstigator,
+        LeapingMaster,
+        MarduBlazebringer,
+        MarduHeartPiercer,
+        MarduWarshrieker,
+        MonasterySwiftspear,
+        SummitProwler,
+        ValleyDasher,
+        WarNameAspirant,
+
+        // Red planeswalkers
+        SarkhanTheDragonspeaker,
+
+        // Red enchantments
+        Goblinslide,
+
+        // Red spells
+        ActOfTreason,
+        ArcLightning,
+        DragonGrip,
+        ArrowStorm,
+        BarrageOfBoulders,
+        BringLow,
+        BurnAway,
+        CratersClaws,
+        HordelingOutburst,
+        HowlOfTheHorde,
+        Shatter,
+        SwiftKick,
+        TormentingVoice,
+        TrumpetBlast,
+
+        // Multicolor
+        AnafenzaTheForemost,
+        AbominationOfGudul,
+        AnkleShanker,
+        AvalancheTusker,
+        ArmamentCorps,
+        KheruLichLord,
+        KinTreeInvocation,
+        AbzanGuide,
+        CracklingDoom,
+        Duneblast,
+        DeflectingPalm,
+        EfreetWeaponmaster,
+        FlyingCraneTechnique,
+        BearsCompanion,
+        ButcherOfTheHorde,
+        ChiefOfTheEdge,
+        ChiefOfTheScale,
+        HighspireMantis,
+        IcefeatherAven,
+        IvorytuskFortress,
+        JeskaiAscendancy,
+        JeskaiCharm,
+        MantisRider,
+        MasterTheWay,
+        NarsetEnlightenedMaster,
+        Mindswipe,
+        MarduAscendancy,
+        MarduCharm,
+        MarduRoughrider,
+        PonybackBrigade,
+        RideDown,
+        SavageKnuckleblade,
+        SiegeRhino,
+        SageOfTheInwardEye,
+        RakshasaDeathdealer,
+        RakshasaVizier,
+        SaguMauler,
+        SnowhornRider,
+        SurrakDragonclaw,
+        SecretPlans,
+        AbzanAscendancy,
+        AbzanCharm,
+        SidisiBroodTyrant,
+        SultaiAscendancy,
+        SultaiCharm,
+        SultaiSoothsayer,
+        TemurAscendancy,
+        TemurCharm,
+        TrapEssence,
+        UtterEnd,
+        VillainousWealth,
+        WardenOfTheEye,
+        Winterflame,
+        ZurgoHelmsmasher,
+
+        // Multicolor planeswalkers
+        SorinSolemnVisitor,
+
+        // Colorless
+        AltarOfTheBrood,
+        AbzanBanner,
+        BribersPurse,
+        CranialArchive,
+        DragonThroneOfTarkir,
+        GhostfireBlade,
+        HeartPiercerBow,
+        LensOfClarity,
+        JeskaiBanner,
+        MarduBanner,
+        SultaiBanner,
+        TemurBanner,
+        UginsNexus,
+        WitnessOfTheAges,
+
+        // Lands
+        FrontierBivouac,
+        MysticMonastery,
+        NomadOutpost,
+        OpulentPalace,
+        SandsteppeCitadel,
+        BloodstainedMire,
+        FloodedStrand,
+        PollutedDelta,
+        BloodfellCaves,
+        BlossomingSands,
+        DismalBackwater,
+        JungleHollow,
+        ScouredBarrens,
+        RuggedHighlands,
+        SwiftwaterCliffs,
+        ThornwoodFalls,
+        TombOfTheSpiritDragon,
+        TranquilCove,
+        WindScarredCrag,
+        WindsweptHeath,
+        WoodedFoothills,
+
+        // Basic lands
+    ) + KhansBasicLands
+
+    override val basicLands: List<CardDefinition> = KhansBasicLands.map { it.copy(setCode = code) }
+}

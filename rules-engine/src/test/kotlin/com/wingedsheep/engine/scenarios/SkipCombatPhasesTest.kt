@@ -3,7 +3,7 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.state.components.player.SkipCombatPhasesComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.portal.cards.FalsePeace
+import com.wingedsheep.mtg.sets.definitions.por.cards.FalsePeace
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step

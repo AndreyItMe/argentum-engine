@@ -4,8 +4,8 @@ import com.wingedsheep.engine.limited.BoosterGenerator
 import com.wingedsheep.engine.core.PassPriority
 import com.wingedsheep.gym.contract.ResolvedAction
 import com.wingedsheep.engine.registry.CardRegistry
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.BloomburrowSet
-import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
+import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
+import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.booleans.shouldBeFalse

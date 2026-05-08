@@ -4,8 +4,8 @@ import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.DeepchannelDuelist
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.GlamerGifter
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.DeepchannelDuelist
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.GlamerGifter
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Step

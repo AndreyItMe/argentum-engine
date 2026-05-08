@@ -7,8 +7,8 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.WordsOfWar
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.WordsOfWilding
+import com.wingedsheep.mtg.sets.definitions.ons.cards.WordsOfWar
+import com.wingedsheep.mtg.sets.definitions.ons.cards.WordsOfWilding
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step

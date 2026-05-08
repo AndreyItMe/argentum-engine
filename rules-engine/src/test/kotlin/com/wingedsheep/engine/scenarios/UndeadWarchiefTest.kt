@@ -5,9 +5,9 @@ import com.wingedsheep.engine.mechanics.mana.CostCalculator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.CarrionFeeder
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.UndeadWarchief
-import com.wingedsheep.mtg.sets.definitions.scourge.cards.VengefulDead
+import com.wingedsheep.mtg.sets.definitions.scg.cards.CarrionFeeder
+import com.wingedsheep.mtg.sets.definitions.scg.cards.UndeadWarchief
+import com.wingedsheep.mtg.sets.definitions.scg.cards.VengefulDead
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

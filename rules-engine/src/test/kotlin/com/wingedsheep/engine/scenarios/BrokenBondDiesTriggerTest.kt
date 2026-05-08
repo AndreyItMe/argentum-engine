@@ -5,8 +5,8 @@ import com.wingedsheep.engine.core.SelectCardsDecision
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.BrokenBond
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.SparringConstruct
+import com.wingedsheep.mtg.sets.definitions.dom.cards.BrokenBond
+import com.wingedsheep.mtg.sets.definitions.dom.cards.SparringConstruct
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

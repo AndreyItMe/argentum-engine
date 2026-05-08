@@ -3,9 +3,9 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.legions.cards.AvenEnvoy
-import com.wingedsheep.mtg.sets.definitions.legions.cards.CelestialGatekeeper
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.BattlefieldMedic
+import com.wingedsheep.mtg.sets.definitions.lgn.cards.AvenEnvoy
+import com.wingedsheep.mtg.sets.definitions.lgn.cards.CelestialGatekeeper
+import com.wingedsheep.mtg.sets.definitions.ons.cards.BattlefieldMedic
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone

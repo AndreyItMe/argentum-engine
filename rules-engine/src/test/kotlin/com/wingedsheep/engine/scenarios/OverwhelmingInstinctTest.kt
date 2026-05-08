@@ -2,7 +2,7 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.OverwhelmingInstinct
+import com.wingedsheep.mtg.sets.definitions.ons.cards.OverwhelmingInstinct
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.CardDefinition

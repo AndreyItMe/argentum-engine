@@ -7,7 +7,7 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.DawnhandDissident
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.DawnhandDissident
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone

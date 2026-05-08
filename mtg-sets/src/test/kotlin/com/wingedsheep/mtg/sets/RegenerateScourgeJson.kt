@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets
 
-import com.wingedsheep.mtg.sets.definitions.scourge.ScourgeSet
+import com.wingedsheep.mtg.sets.definitions.scg.ScourgeSet
 import com.wingedsheep.sdk.serialization.CardExporter
 import io.kotest.core.annotation.Ignored
 import io.kotest.core.spec.style.FunSpec

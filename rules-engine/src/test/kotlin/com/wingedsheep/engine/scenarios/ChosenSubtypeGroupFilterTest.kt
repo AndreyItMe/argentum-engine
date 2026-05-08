@@ -6,8 +6,8 @@ import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.state.components.identity.ChosenCreatureTypeComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.ChronicleOfVictory
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.FeistySpikeling
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.ChronicleOfVictory
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.FeistySpikeling
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript

@@ -6,8 +6,8 @@ import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.DruidOfTheSpade
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.LilypadVillage
+import com.wingedsheep.mtg.sets.definitions.blb.cards.DruidOfTheSpade
+import com.wingedsheep.mtg.sets.definitions.blb.cards.LilypadVillage
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

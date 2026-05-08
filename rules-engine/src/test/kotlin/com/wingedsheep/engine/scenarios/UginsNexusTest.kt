@@ -3,9 +3,9 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.state.components.player.SkipNextTurnComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.khans.cards.Shatter
-import com.wingedsheep.mtg.sets.definitions.khans.cards.UginsNexus
-import com.wingedsheep.mtg.sets.definitions.portal.cards.LastChance
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.Shatter
+import com.wingedsheep.mtg.sets.definitions.ktk.cards.UginsNexus
+import com.wingedsheep.mtg.sets.definitions.por.cards.LastChance
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone

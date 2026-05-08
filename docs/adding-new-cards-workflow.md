@@ -285,7 +285,7 @@ Define the card in `mtg-sets`.
 **File:** `mtg-sets/src/main/kotlin/.../definitions/{set}/cards/MyCard.kt`
 
 ```kotlin
-package com.wingedsheep.mtg.sets.definitions.portal.cards
+package com.wingedsheep.mtg.sets.definitions.por.cards
 
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity

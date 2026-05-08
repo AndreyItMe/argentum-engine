@@ -8,10 +8,10 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.FestivalOfEmbers
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.OtterballAntics
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.MuldrothaTheGravetide
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.SqueeTheImmortal
+import com.wingedsheep.mtg.sets.definitions.blb.cards.FestivalOfEmbers
+import com.wingedsheep.mtg.sets.definitions.blb.cards.OtterballAntics
+import com.wingedsheep.mtg.sets.definitions.dom.cards.MuldrothaTheGravetide
+import com.wingedsheep.mtg.sets.definitions.dom.cards.SqueeTheImmortal
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import io.kotest.core.spec.style.FunSpec

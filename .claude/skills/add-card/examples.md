@@ -5,7 +5,7 @@
 ### Simple Creature (Vanilla)
 
 ```kotlin
-package com.wingedsheep.mtg.sets.definitions.portal.cards
+package com.wingedsheep.mtg.sets.definitions.por.cards
 
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -694,7 +694,7 @@ test('triggers during upkeep', async ({ createGame }) => {
 ## Set Registration
 
 ```kotlin
-import com.wingedsheep.mtg.sets.definitions.portal.cards.*
+import com.wingedsheep.mtg.sets.definitions.por.cards.*
 
 object PortalSet {
     val allCards = listOf(

@@ -10,9 +10,9 @@ import com.wingedsheep.engine.state.components.identity.ChosenCreatureTypeCompon
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.CallousOppressor
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.ElvishWarrior
-import com.wingedsheep.mtg.sets.definitions.onslaught.cards.GoblinSkyRaider
+import com.wingedsheep.mtg.sets.definitions.ons.cards.CallousOppressor
+import com.wingedsheep.mtg.sets.definitions.ons.cards.ElvishWarrior
+import com.wingedsheep.mtg.sets.definitions.ons.cards.GoblinSkyRaider
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

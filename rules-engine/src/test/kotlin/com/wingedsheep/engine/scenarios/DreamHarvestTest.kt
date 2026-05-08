@@ -5,7 +5,7 @@ import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponen
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.DreamHarvest
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.DreamHarvest
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

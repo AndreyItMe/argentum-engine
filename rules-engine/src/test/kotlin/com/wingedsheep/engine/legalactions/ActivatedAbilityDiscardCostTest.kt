@@ -2,7 +2,7 @@ package com.wingedsheep.engine.legalactions
 
 import com.wingedsheep.engine.legalactions.support.setupP1
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.mtg.sets.definitions.lorwyneclipsed.cards.LluwenImperfectNaturalist
+import com.wingedsheep.mtg.sets.definitions.ecl.cards.LluwenImperfectNaturalist
 import com.wingedsheep.sdk.model.EntityId
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContain

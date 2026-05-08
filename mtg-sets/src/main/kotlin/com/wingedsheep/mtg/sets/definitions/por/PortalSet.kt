@@ -1,0 +1,275 @@
+package com.wingedsheep.mtg.sets.definitions.por
+
+import com.wingedsheep.mtg.sets.definitions.por.cards.*
+import com.wingedsheep.sdk.model.CardDefinition
+import com.wingedsheep.sdk.model.MtgSet
+
+/**
+ * Portal Set (1997)
+ *
+ * Portal was an introductory set designed to teach new players
+ * the basics of Magic: The Gathering with simplified rules.
+ *
+ * Set Code: POR
+ * Release Date: June 1997
+ * Card Count: 222
+ */
+object PortalSet : MtgSet {
+
+    override val code = "POR"
+    override val displayName = "Portal"
+    override val sealedSupported = true
+
+    /**
+     * All cards in this set (complete: 195 spells/creatures + 20 basic lands = 215 cards).
+     */
+    override val cards: List<CardDefinition> = listOf(
+        // Cards 1-10
+        AlabasterDragon,
+        AngelicBlessing,
+        Archangel,
+        ArdentMilitia,
+        Armageddon,
+        ArmoredPegasus,
+        BlessedReversal,
+        BlindingLight,
+        BorderGuard,
+        BreathOfLife,
+        // Cards 11-20
+        ChargingPaladin,
+        DefiantStand,
+        DevotedHero,
+        FalsePeace,
+        FleetFootedMonk,
+        FootSoldiers,
+        GiftOfEstates,
+        HarshJustice,
+        KeenEyedArchers,
+        KnightErrant,
+        // Cards 21-30
+        PathOfPeace,
+        RegalUnicorn,
+        RenewingDawn,
+        SacredKnight,
+        SacredNectar,
+        SeasonedMarshal,
+        SpiritualGuardian,
+        SpottedGriffin,
+        Starlight,
+        StarlitAngel,
+        // Cards 31-40
+        Steadfastness,
+        SternMarshal,
+        TemporaryTruce,
+        ValorousCharge,
+        VenerableMonk,
+        Vengeance,
+        WallOfSwords,
+        WarriorsCharge,
+        WrathOfGod,
+        AncestralMemories,
+        // Cards 41-50
+        BalanceOfPower,
+        BalefulStare,
+        CapriciousSorcerer,
+        CloakOfFeathers,
+        CloudDragon,
+        CloudPirates,
+        CloudSpirit,
+        CommandOfUnsummoning,
+        CoralEel,
+        CruelFate,
+        // Cards 51-60
+        DeepSeaSerpent,
+        DjinnOfTheLamp,
+        DejaVu,
+        Exhaustion,
+        Flux,
+        GiantOctopus,
+        HornedTurtle,
+        IngeniousThief,
+        ManOWar,
+        MerfolkOfThePearlTrident,
+        // Cards 61-70
+        MysticDenial,
+        Omen,
+        OwlFamiliar,
+        PersonalTutor,
+        PhantomWarrior,
+        Prosperity,
+        SnappingDrake,
+        SorcerousSight,
+        StormCrow,
+        SymbolOfUnsummoning,
+        // Cards 71-80
+        Taunt,
+        TheftOfDreams,
+        ThingFromTheDeep,
+        TidalSurge,
+        TimeEbb,
+        TouchOfBrilliance,
+        WindDrake,
+        WitheringGaze,
+        ArrogantVampire,
+        AssassinsBlade,
+        // Cards 81-90
+        BogImp,
+        BogRaiders,
+        BogWraith,
+        ChargingBandits,
+        CravenKnight,
+        CruelBargain,
+        CruelTutor,
+        DreadCharge,
+        DreadReaper,
+        DrySpell,
+        // Cards 91-100
+        EbonDragon,
+        EndlessCockroaches,
+        FeralShadow,
+        FinalStrike,
+        Gravedigger,
+        HandOfDeath,
+        HowlingFury,
+        KingsAssassin,
+        MercenaryKnight,
+        MindKnives,
+        // Cards 101-110
+        MindRot,
+        MuckRats,
+        NaturesRuin,
+        NoxiousToad,
+        Python,
+        RainOfTears,
+        RaiseDead,
+        SerpentAssassin,
+        SerpentWarrior,
+        SkeletalCrocodile,
+        // Cards 111-120
+        SkeletalSnake,
+        SoulShred,
+        UndyingBeast,
+        VampiricFeast,
+        VampiricTouch,
+        VirtuesRuin,
+        WickedPact,
+        Blaze,
+        BoilingSeas,
+        BurningCloak,
+        // Cards 121-130
+        CravenGiant,
+        DesertDrake,
+        Devastation,
+        Earthquake,
+        FireDragon,
+        FireImp,
+        FireSnake,
+        FireTempest,
+        Flashfires,
+        ForkedLightning,
+        // Cards 131-140
+        GoblinBully,
+        HighlandGiant,
+        HillGiant,
+        HulkingCyclops,
+        HulkingGoblin,
+        LastChance,
+        LavaAxe,
+        LavaFlow,
+        LizardWarrior,
+        MinotaurWarrior,
+        // Cards 141-150
+        MountainGoat,
+        PillagingHorde,
+        Pyroclasm,
+        RagingCougar,
+        RagingGoblin,
+        RagingMinotaur,
+        RainOfSalt,
+        ScorchingSpear,
+        ScorchingWinds,
+        SpittingEarth,
+        // Cards 151-160
+        StoneRain,
+        Thundermare,
+        VolcanicDragon,
+        VolcanicHammer,
+        WallOfGranite,
+        WindsOfChange,
+        AlluringScent,
+        Anaconda,
+        BeeSting,
+        BullHippo,
+        // Cards 161-170
+        ChargingRhino,
+        DeepWood,
+        EliteCatWarrior,
+        ElvenCache,
+        ElvishRanger,
+        Fruition,
+        GiantSpider,
+        GorillaWarrior,
+        GrizzlyBears,
+        Hurricane,
+        // Cards 171-180
+        JungleLion,
+        Mobilize,
+        MonstrousGrowth,
+        MoonSprite,
+        NaturalOrder,
+        NaturalSpring,
+        NaturesCloak,
+        NaturesLore,
+        NeedleStorm,
+        PantherWarriors,
+        // Cards 181-190
+        PlantElemental,
+        PrimevalForce,
+        RedwoodTreefolk,
+        RowanTreefolk,
+        SpinedWurm,
+        StalkingTiger,
+        SummerBloom,
+        SylvanTutor,
+        ThunderingWurm,
+        TreetopDefense,
+        // Cards 191-195 (remaining non-land cards)
+        UntamedWilds,
+        WhiptailWurm,
+        WillowDryad,
+        WintersGrasp,
+        WoodElves,
+        // Cards 196-215 (basic lands - 4 art variants each)
+        Plains196, Plains197, Plains198, Plains199,
+        Island200, Island201, Island202, Island203,
+        Swamp204, Swamp205, Swamp206, Swamp207,
+        Mountain208, Mountain209, Mountain210, Mountain211,
+        Forest212, Forest213, Forest214, Forest215
+    )
+
+    /**
+     * Get a card by name (returns first match for basic lands with multiple art variants).
+     */
+    fun getCard(name: String) = cards.find { it.name == name }
+
+    /**
+     * Get all cards with a given name (useful for basic lands with multiple art variants).
+     */
+    fun getCardsByName(name: String) = cards.filter { it.name == name }
+
+    /**
+     * Get a card by collector number.
+     */
+    fun getCardByNumber(collectorNumber: String) =
+        cards.find { it.metadata.collectorNumber == collectorNumber }
+
+    /**
+     * All basic land variants in this set.
+     */
+    override val basicLands: List<CardDefinition> = PortalBasicLands.map { it.copy(setCode = code) }
+
+    /**
+     * Get all basic lands of a specific type.
+     */
+    fun getBasicLandsByType(type: String) = basicLands.filter { it.name == type }
+}

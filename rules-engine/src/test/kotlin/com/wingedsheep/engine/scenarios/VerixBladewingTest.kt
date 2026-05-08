@@ -5,7 +5,7 @@ import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.VerixBladewing
+import com.wingedsheep.mtg.sets.definitions.dom.cards.VerixBladewing
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

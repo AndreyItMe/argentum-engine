@@ -4,7 +4,7 @@ import com.wingedsheep.engine.core.CrewVehicle
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.dominaria.cards.Weatherlight
+import com.wingedsheep.mtg.sets.definitions.dom.cards.Weatherlight
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec

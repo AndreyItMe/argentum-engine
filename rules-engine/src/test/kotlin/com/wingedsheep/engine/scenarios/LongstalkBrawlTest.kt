@@ -10,9 +10,9 @@ import com.wingedsheep.engine.state.components.battlefield.DamageComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.BarkKnuckleBoxer
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.IntrepidRabbit
-import com.wingedsheep.mtg.sets.definitions.bloomburrow.cards.LongstalkBrawl
+import com.wingedsheep.mtg.sets.definitions.blb.cards.BarkKnuckleBoxer
+import com.wingedsheep.mtg.sets.definitions.blb.cards.IntrepidRabbit
+import com.wingedsheep.mtg.sets.definitions.blb.cards.LongstalkBrawl
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Step

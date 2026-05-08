@@ -1,0 +1,32 @@
+package com.wingedsheep.mtg.sets.definitions.por.cards
+
+import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import com.wingedsheep.sdk.scripting.references.Player
+
+/**
+ * Dry Spell
+ * {1}{B}
+ * Sorcery
+ * Dry Spell deals 1 damage to each creature and each player.
+ */
+val DrySpell = card("Dry Spell") {
+    manaCost = "{1}{B}"
+    typeLine = "Sorcery"
+
+    spell {
+        effect = ForEachInGroupEffect(GroupFilter.AllCreatures, DealDamageEffect(1, EffectTarget.Self)) then Effects.DealDamage(1, EffectTarget.PlayerRef(Player.Each))
+    }
+
+    metadata {
+        rarity = Rarity.UNCOMMON
+        collectorNumber = "90"
+        artist = "Quinton Hoover"
+        imageUri = "https://cards.scryfall.io/normal/front/a/1/a142f369-8fdd-4dc8-b5d9-3493455cc588.jpg"
+    }
+}
