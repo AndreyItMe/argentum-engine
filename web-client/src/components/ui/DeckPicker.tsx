@@ -39,6 +39,11 @@ export interface DeckPickerProps {
   /** Available sets for the Random tab dropdown. Empty list hides the dropdown. */
   availableSets?: ReadonlyArray<{ code: string; name: string }>
   disabled?: boolean
+  /**
+   * Tabs to expose. Defaults to all four. Pass a subset to restrict the picker — e.g. the
+   * Premade Decks tournament lobby uses `['saved', 'examples', 'paste']` (no Random).
+   */
+  tabs?: ReadonlyArray<Tab>
 }
 
 interface CardSummary {
@@ -116,6 +121,8 @@ function formatDeckText(cards: Record<string, number>): string {
     .join('\n')
 }
 
+const ALL_TABS: ReadonlyArray<Tab> = ['saved', 'examples', 'paste', 'random']
+
 export function DeckPicker({
   onDeckChange,
   onValidityChange,
@@ -123,13 +130,27 @@ export function DeckPicker({
   initialSetCode = null,
   availableSets = [],
   disabled = false,
+  tabs = ALL_TABS,
 }: DeckPickerProps) {
   const decks = useDeckLibrary((s) => s.decks)
   const hydrate = useDeckLibrary((s) => s.hydrate)
   const saveDeck = useDeckLibrary((s) => s.saveDeck)
   const deleteDeck = useDeckLibrary((s) => s.deleteDeck)
 
-  const [tab, setTab] = useState<Tab>(() => (decks.length > 0 ? 'saved' : 'random'))
+  const showSaved = tabs.includes('saved')
+  const showExamples = tabs.includes('examples')
+  const showPaste = tabs.includes('paste')
+  const showRandom = tabs.includes('random')
+
+  // Default tab: saved if available, else paste, else the first allowed tab.
+  const initialTab: Tab = decks.length > 0 && showSaved
+    ? 'saved'
+    : showRandom
+      ? 'random'
+      : showPaste
+        ? 'paste'
+        : (tabs[0] ?? 'paste')
+  const [tab, setTab] = useState<Tab>(() => initialTab)
   const [pasteText, setPasteText] = useState('')
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
   const [pendingName, setPendingName] = useState('')
@@ -151,11 +172,19 @@ export function DeckPicker({
 
   // Move off `random` to `saved` once decks are hydrated, so users land on their own list.
   useEffect(() => {
-    if (decks.length > 0 && tab === 'random') {
+    if (decks.length > 0 && tab === 'random' && showSaved) {
       setTab('saved')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decks.length])
+
+  // If the active tab gets removed (e.g. the Random tab is hidden), fall back.
+  useEffect(() => {
+    if (!tabs.includes(tab)) {
+      setTab(tabs[0] ?? 'paste')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs])
 
   // Fetch card metadata + examples once.
   useEffect(() => {
@@ -258,10 +287,10 @@ export function DeckPicker({
   return (
     <div className={styles.picker}>
       <div className={styles.tabs}>
-        <TabButton label={`My Decks${decks.length ? ` (${decks.length})` : ''}`} active={tab === 'saved'} onClick={() => setTab('saved')} disabled={disabled} />
-        <TabButton label="Examples" active={tab === 'examples'} onClick={() => setTab('examples')} disabled={disabled} />
-        <TabButton label="Paste" active={tab === 'paste'} onClick={() => setTab('paste')} disabled={disabled} />
-        <TabButton label="Random" active={tab === 'random'} onClick={() => setTab('random')} disabled={disabled} />
+        {showSaved && <TabButton label={`My Decks${decks.length ? ` (${decks.length})` : ''}`} active={tab === 'saved'} onClick={() => setTab('saved')} disabled={disabled} />}
+        {showExamples && <TabButton label="Examples" active={tab === 'examples'} onClick={() => setTab('examples')} disabled={disabled} />}
+        {showPaste && <TabButton label="Paste" active={tab === 'paste'} onClick={() => setTab('paste')} disabled={disabled} />}
+        {showRandom && <TabButton label="Random" active={tab === 'random'} onClick={() => setTab('random')} disabled={disabled} />}
       </div>
 
       <div className={styles.panel}>

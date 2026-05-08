@@ -2,6 +2,7 @@
  * Lobby slice - handles tournament lobbies, spectating, and lobby management.
  */
 import type { SliceCreator, LobbyState, TournamentState, SpectatingState } from './types'
+import type { TournamentFormat } from '@/types'
 import {
   createCreateTournamentLobbyMessage,
   createJoinLobbyMessage,
@@ -13,6 +14,8 @@ import {
   createUpdateLobbySettingsMessage,
   createReadyForNextRoundMessage,
   createAddExtraRoundMessage,
+  createSubmitSealedDeckMessage,
+  createUnsubmitDeckMessage,
   createSpectateGameMessage,
   createStopSpectatingMessage,
   createAddDisconnectTimeMessage,
@@ -29,12 +32,12 @@ export interface LobbySliceState {
 }
 
 export interface LobbySliceActions {
-  createTournamentLobby: (setCodes: string[], format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT', boosterCount?: number, maxPlayers?: number, pickTimeSeconds?: number, isPublic?: boolean) => void
+  createTournamentLobby: (setCodes: string[], format?: TournamentFormat, boosterCount?: number, maxPlayers?: number, pickTimeSeconds?: number, isPublic?: boolean) => void
   joinLobby: (lobbyId: string) => void
   startLobby: () => void
   leaveLobby: () => void
   stopLobby: () => void
-  updateLobbySettings: (settings: { setCodes?: string[]; format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean }) => void
+  updateLobbySettings: (settings: { setCodes?: string[]; format?: TournamentFormat; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean }) => void
   addAiToLobby: () => void
   removeAiFromLobby: (playerId: string) => void
   readyForNextRound: () => void
@@ -45,6 +48,13 @@ export interface LobbySliceActions {
   kickPlayer: (playerId: string) => void
   setSpectatingState: (state: SpectatingState | null) => void
   leaveTournament: () => void
+  /**
+   * Submit a deck directly from the lobby (Premade Decks tournament format).
+   * For Sealed/Draft, players use the dedicated deckbuilder instead via `submitSealedDeck`.
+   */
+  submitLobbyDeck: (deckList: Record<string, number>) => void
+  /** Unsubmit (and re-edit) a previously submitted lobby deck. */
+  unsubmitLobbyDeck: () => void
 }
 
 export type LobbySlice = LobbySliceState & LobbySliceActions
@@ -132,6 +142,15 @@ export const createLobbySlice: SliceCreator<LobbySlice> = (set, get) => ({
 
   setSpectatingState: (state) => {
     set({ spectatingState: state })
+  },
+
+  submitLobbyDeck: (deckList) => {
+    trackEvent('premade_deck_submitted', { deck_size: Object.values(deckList).reduce((a, b) => a + b, 0) })
+    getWebSocket()?.send(createSubmitSealedDeckMessage(deckList))
+  },
+
+  unsubmitLobbyDeck: () => {
+    getWebSocket()?.send(createUnsubmitDeckMessage())
   },
 
   leaveTournament: () => {

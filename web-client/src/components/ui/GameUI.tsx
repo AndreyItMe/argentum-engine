@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameStore, type LobbyState, type TournamentState } from '@/store/gameStore.ts'
-import type { SealedCardInfo } from '@/types'
+import type { SealedCardInfo, TournamentFormat } from '@/types'
 import { getCardImageUrl } from '@/utils/cardImages.ts'
 import { ManaCost } from './ManaSymbols'
 import { randomBackground } from '@/utils/background.ts'
@@ -9,6 +9,7 @@ import { ReplayViewer, type GameSummary } from '../admin/ReplayViewer'
 import type { ReplayData } from '@/replay/reconstructSnapshots.ts'
 import { QuickGameLobbyOverlay } from './QuickGameLobbyOverlay'
 import { useDeckLibrary } from '@/store/deckLibrary'
+import { DeckPicker } from './DeckPicker'
 import styles from './GameUI.module.css'
 
 type GameMode = 'normal' | 'tournament'
@@ -18,7 +19,7 @@ interface PublicTournamentSummary {
   state: string
   playerCount: number
   maxPlayers: number
-  format: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'
+  format: TournamentFormat
   setNames: string[]
   boosterCount: number
   gamesPerMatch: number
@@ -453,6 +454,7 @@ function PublicLobbyList({
 
 function publicLobbyName(entry: PublicLobbyEntry): string {
   if (entry.kind === 'tournament') {
+    if (entry.format === 'PREMADE_DECKS') return 'Premade Decks Tournament'
     return entry.setNames.join(' + ') || 'Tournament'
   }
   return entry.hostName ? `${entry.hostName}'s Quick Game` : 'Quick Game'
@@ -460,6 +462,10 @@ function publicLobbyName(entry: PublicLobbyEntry): string {
 
 function publicLobbyMeta(entry: PublicLobbyEntry): string {
   if (entry.kind === 'tournament') {
+    if (entry.format === 'PREMADE_DECKS') {
+      const base = `Premade Decks · ${entry.playerCount}/${entry.maxPlayers} players`
+      return entry.gamesPerMatch > 1 ? `${base} · ${entry.gamesPerMatch} games per matchup` : base
+    }
     const base = `${formatTournamentFormat(entry.format)} · ${entry.boosterCount} ${entry.format === 'DRAFT' ? 'packs' : 'boosters'} · ${entry.playerCount}/${entry.maxPlayers} players`
     return entry.gamesPerMatch > 1 ? `${base} · ${entry.gamesPerMatch} games per matchup` : base
   }
@@ -477,6 +483,8 @@ function formatTournamentFormat(format: PublicTournamentSummary['format']): stri
       return 'Draft'
     case 'SEALED':
       return 'Sealed'
+    case 'PREMADE_DECKS':
+      return 'Premade Decks'
   }
 }
 
@@ -578,6 +586,7 @@ function LobbyOverlay({
   const isWinston = format === 'WINSTON_DRAFT'
   const isGridDraft = format === 'GRID_DRAFT'
   const isSealed = format === 'SEALED'
+  const isPremade = format === 'PREMADE_DECKS'
   const isAnyDraft = isDraft || isWinston || isGridDraft
   const hasSelectedSets = lobbyState.settings.setCodes.length > 0
   const playerCount = lobbyState.players.length
@@ -587,7 +596,14 @@ function LobbyOverlay({
   const playerCheck = isWinston ? playerCount === 2
     : isGridDraft ? playerCount >= 2 && playerCount <= 4
       : playerCount >= 2
-  const canStart = playerCheck && hasSelectedSets
+  // Premade format: no boosters generated, so set selection is optional. We do require every
+  // connected player to have submitted a deck before the host can start.
+  const allConnectedDecksSubmitted = lobbyState.players
+    .filter((p) => p.isConnected)
+    .every((p) => p.deckSubmitted)
+  const canStart = isPremade
+    ? playerCheck && allConnectedDecksSubmitted
+    : playerCheck && hasSelectedSets
 
   const copyLobbyId = () => {
     navigator.clipboard.writeText(lobbyState.lobbyId)
@@ -602,10 +618,12 @@ function LobbyOverlay({
         {/* Header */}
         <div className={styles.lobbyHeader}>
           <div className={`${styles.lobbyFormat} ${isAnyDraft ? styles.lobbyFormatDraft : styles.lobbyFormatSealed}`}>
-            {isGridDraft ? 'Grid' : isWinston ? 'Winston' : isDraft ? 'Draft' : 'Sealed'}
+            {isGridDraft ? 'Grid' : isWinston ? 'Winston' : isDraft ? 'Draft' : isPremade ? 'Premade' : 'Sealed'}
           </div>
           <h1 className={styles.lobbyTitle}>
-            {lobbyState.settings.setNames.join(' + ') || 'Lobby'}
+            {isPremade
+              ? 'Premade Decks Tournament'
+              : (lobbyState.settings.setNames.join(' + ') || 'Lobby')}
           </h1>
           <p className={styles.lobbySubtitle}>
             {(() => {
@@ -619,6 +637,7 @@ function LobbyOverlay({
               if (isGridDraft) return `Grid Draft · ${lobbyState.settings.boosterCount} boosters · ${lobbyState.settings.pickTimeSeconds}s per pick`
               if (isWinston) return `Winston Draft · ${distText ?? `${lobbyState.settings.boosterCount} boosters`} · ${lobbyState.settings.pickTimeSeconds}s per turn`
               if (isDraft) return `${distText ?? `${lobbyState.settings.boosterCount} packs`} · ${lobbyState.settings.pickTimeSeconds}s per pick${lobbyState.settings.picksPerRound === 2 ? ' · Pick 2' : ''}`
+              if (isPremade) return 'Premade Decks · bring your own ≥40-card deck'
               return distText ?? `${lobbyState.settings.boosterCount} boosters per player`
             })()}
             {(lobbyState.settings.gamesPerMatch ?? 1) > 1 && ` · ${lobbyState.settings.gamesPerMatch} games per matchup`}
@@ -665,6 +684,13 @@ function LobbyOverlay({
                 >
                   Draft
                 </button>
+                <button
+                  onClick={() => updateLobbySettings({ format: 'PREMADE_DECKS' })}
+                  className={`${styles.settingsButton} ${isPremade ? styles.settingsButtonActive : ''}`}
+                  title="Players bring their own pre-built decks (saved or pasted)"
+                >
+                  Premade Decks
+                </button>
               </div>
             </div>
             {/* Draft type sub-selection - only when Draft is selected */}
@@ -699,7 +725,8 @@ function LobbyOverlay({
                 </div>
               </div>
             )}
-            {/* Set selection — grouped by block */}
+            {/* Set selection — grouped by block. Skipped for Premade Decks since no boosters are generated. */}
+            {!isPremade && (
             <div className={styles.settingsRow} style={{ alignItems: 'flex-start' }}>
               <span className={styles.settingsLabel} style={{ paddingTop: 6 }}>Sets</span>
               <div className={styles.setSelectionGrid}>
@@ -756,6 +783,7 @@ function LobbyOverlay({
                 })()}
               </div>
             </div>
+            )}
             {/* Boosters setting - for Sealed and Winston (Grid uses fixed counts) */}
             {(isSealed || isWinston) && lobbyState.settings.setCodes.length > 1 && (
               <div className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
@@ -939,6 +967,11 @@ function LobbyOverlay({
           </div>
         )}
 
+        {/* Premade Decks: every player picks their own deck right here in the lobby. */}
+        {isWaiting && isPremade && (
+          <PremadeDeckPickerPanel lobbyState={lobbyState} />
+        )}
+
         {/* Player list */}
         <div className={styles.playerListPanel}>
           <div className={styles.playerListHeader}>
@@ -1006,17 +1039,23 @@ function LobbyOverlay({
               onClick={startLobby}
               disabled={!canStart}
               title={
-                !hasSelectedSets
-                  ? 'Select at least one set'
-                  : isWinston && lobbyState.players.length !== 2
-                    ? 'Winston Draft requires exactly 2 players'
-                    : lobbyState.players.length < 2
-                      ? 'Need at least 2 players'
+                isPremade
+                  ? lobbyState.players.length < 2
+                    ? 'Need at least 2 players'
+                    : !allConnectedDecksSubmitted
+                      ? 'All connected players must submit a deck first'
                       : undefined
+                  : !hasSelectedSets
+                    ? 'Select at least one set'
+                    : isWinston && lobbyState.players.length !== 2
+                      ? 'Winston Draft requires exactly 2 players'
+                      : lobbyState.players.length < 2
+                        ? 'Need at least 2 players'
+                        : undefined
               }
               className={styles.startButton}
             >
-              {isAnyDraft ? 'Start Draft' : 'Start Game'}
+              {isAnyDraft ? 'Start Draft' : isPremade ? 'Start Tournament' : 'Start Game'}
             </button>
           )}
           <button onClick={leaveLobby} className={styles.leaveButton}>
@@ -1029,6 +1068,64 @@ function LobbyOverlay({
             Waiting for host to start the game...
           </p>
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Embedded deck picker for the Premade Decks tournament format. Each player picks
+ * (saved/example/paste) and submits their deck right in the lobby; the host can only
+ * start once everybody has submitted.
+ */
+function PremadeDeckPickerPanel({ lobbyState }: { lobbyState: LobbyState }) {
+  const submitLobbyDeck = useGameStore((s) => s.submitLobbyDeck)
+  const unsubmitLobbyDeck = useGameStore((s) => s.unsubmitLobbyDeck)
+  const playerId = useGameStore((s) => s.playerId)
+
+  const me = lobbyState.players.find((p) => p.playerId === playerId)
+  const hasSubmitted = !!me?.deckSubmitted
+
+  const [pendingDeck, setPendingDeck] = useState<Record<string, number>>({})
+  const [isValid, setIsValid] = useState(false)
+
+  if (hasSubmitted) {
+    return (
+      <div className={styles.deckSubmittedCard} role="status">
+        <div className={styles.deckSubmittedIcon} aria-hidden>✓</div>
+        <div className={styles.deckSubmittedBody}>
+          <span className={styles.deckSubmittedTitle}>Deck submitted</span>
+          <span className={styles.deckSubmittedSubtitle}>
+            Waiting for the host to start the tournament.
+          </span>
+        </div>
+        <button onClick={unsubmitLobbyDeck} className={styles.deckSubmittedEditButton}>
+          Edit deck
+        </button>
+      </div>
+    )
+  }
+
+  const totalCards = Object.values(pendingDeck).reduce((a, b) => a + b, 0)
+  const canSubmit = isValid && totalCards >= 40
+
+  return (
+    <div className={styles.settingsPanel}>
+      <div className={styles.settingsRow} style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 12 }}>
+        <span className={styles.settingsLabel}>Your Deck</span>
+        <DeckPicker
+          tabs={['saved', 'examples', 'paste']}
+          onDeckChange={setPendingDeck}
+          onValidityChange={setIsValid}
+        />
+        <button
+          onClick={() => submitLobbyDeck(pendingDeck)}
+          disabled={!canSubmit}
+          title={canSubmit ? undefined : 'Pick a valid deck of at least 40 cards'}
+          className={styles.startButton}
+        >
+          Submit Deck
+        </button>
       </div>
     </div>
   )

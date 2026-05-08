@@ -16,7 +16,12 @@ enum class TournamentFormat {
     SEALED,
     DRAFT,
     WINSTON_DRAFT,
-    GRID_DRAFT
+    GRID_DRAFT,
+    /**
+     * Players bring their own pre-built decks (saved or pasted) directly in the lobby.
+     * Lobby skips DECK_BUILDING / DRAFTING entirely: WAITING_FOR_PLAYERS → TOURNAMENT_ACTIVE.
+     */
+    PREMADE_DECKS
 }
 
 /**
@@ -223,12 +228,12 @@ class TournamentLobby(
 
     /** Basic lands available for deck building (one variant per type, for client display) */
     val basicLands: Map<String, CardDefinition> by lazy {
-        boosterGenerator.getBasicLands(setCodes)
+        if (setCodes.isEmpty()) emptyMap() else boosterGenerator.getBasicLands(setCodes)
     }
 
     /** All basic land art variants grouped by land name (for distributing across variants in decks) */
     val allBasicLandVariants: Map<String, List<CardDefinition>> by lazy {
-        boosterGenerator.getAllBasicLandVariants(setCodes)
+        if (setCodes.isEmpty()) emptyMap() else boosterGenerator.getAllBasicLandVariants(setCodes)
     }
 
     /** Players who are ready for the next round */
@@ -1134,9 +1139,16 @@ class TournamentLobby(
      * Submit a deck for a player.
      */
     fun submitDeck(playerId: EntityId, deckList: Map<String, Int>): DeckSubmissionResult {
-        // Allow submissions during DECK_BUILDING or TOURNAMENT_ACTIVE (before match starts)
-        if (state != LobbyState.DECK_BUILDING && state != LobbyState.TOURNAMENT_ACTIVE) {
-            return DeckSubmissionResult.Error("Not in deck building phase")
+        val isPremade = format == TournamentFormat.PREMADE_DECKS
+        // PREMADE_DECKS: players pick their deck while WAITING_FOR_PLAYERS, before the host starts.
+        // Other formats: only DECK_BUILDING / TOURNAMENT_ACTIVE.
+        val stateOk = if (isPremade) {
+            state == LobbyState.WAITING_FOR_PLAYERS || state == LobbyState.TOURNAMENT_ACTIVE
+        } else {
+            state == LobbyState.DECK_BUILDING || state == LobbyState.TOURNAMENT_ACTIVE
+        }
+        if (!stateOk) {
+            return DeckSubmissionResult.Error("Not accepting deck submissions in state $state")
         }
 
         val playerState = players[playerId]
@@ -1146,10 +1158,18 @@ class TournamentLobby(
             return DeckSubmissionResult.Error("Deck already submitted")
         }
 
-        // Validate deck
-        val validationResult = validateDeck(playerState.cardPool, deckList)
-        if (validationResult != null) {
-            return DeckSubmissionResult.Error(validationResult)
+        if (isPremade) {
+            // Pool-free validation: count + 4-of rule. Card existence is checked by the
+            // caller via DeckValidator (it has access to the CardRegistry).
+            val premadeError = validatePremadeDeck(deckList)
+            if (premadeError != null) {
+                return DeckSubmissionResult.Error(premadeError)
+            }
+        } else {
+            val validationResult = validateDeck(playerState.cardPool, deckList)
+            if (validationResult != null) {
+                return DeckSubmissionResult.Error(validationResult)
+            }
         }
 
         players[playerId] = playerState.copy(submittedDeck = deckList)
@@ -1160,10 +1180,13 @@ class TournamentLobby(
     /**
      * Unsubmit a previously submitted deck to allow editing again.
      * Allowed during deck building or tournament active (before match starts).
+     * For PREMADE_DECKS, also allowed while WAITING_FOR_PLAYERS — that's where players
+     * pick their decks in that format.
      * The caller should verify the player's match hasn't started yet.
      */
     fun unsubmitDeck(playerId: EntityId): Boolean {
-        if (state != LobbyState.DECK_BUILDING && state != LobbyState.TOURNAMENT_ACTIVE) {
+        val isPremadeWaiting = format == TournamentFormat.PREMADE_DECKS && state == LobbyState.WAITING_FOR_PLAYERS
+        if (state != LobbyState.DECK_BUILDING && state != LobbyState.TOURNAMENT_ACTIVE && !isPremadeWaiting) {
             return false
         }
 
@@ -1203,6 +1226,16 @@ class TournamentLobby(
         if (state == LobbyState.DECK_BUILDING) {
             state = LobbyState.TOURNAMENT_ACTIVE
         }
+    }
+
+    /**
+     * Premade-decks format: jump straight from WAITING_FOR_PLAYERS to TOURNAMENT_ACTIVE.
+     * Decks were already submitted by players during the lobby phase, so DECK_BUILDING is skipped.
+     */
+    fun activatePremadeTournament() {
+        require(format == TournamentFormat.PREMADE_DECKS) { "Only valid for premade decks format" }
+        require(state == LobbyState.WAITING_FOR_PLAYERS) { "Lobby must be waiting for players" }
+        state = LobbyState.TOURNAMENT_ACTIVE
     }
 
     /**
@@ -1282,6 +1315,33 @@ class TournamentLobby(
             ),
             isHost = isHost(forPlayerId)
         )
+    }
+
+    /**
+     * Validate a premade-decks submission: ≥40 cards, ≤4 of any non-basic card.
+     * Card-existence is checked by the caller (it has the CardRegistry).
+     */
+    private fun validatePremadeDeck(deckList: Map<String, Int>): String? {
+        val sanitized = deckList.filterValues { it > 0 }
+        val totalCards = sanitized.values.sum()
+        if (totalCards < 40) {
+            return "Deck must have at least 40 cards (has $totalCards)"
+        }
+
+        val basicLandNames = setOf("Plains", "Island", "Swamp", "Mountain", "Forest")
+        val countsByBaseName = mutableMapOf<String, Int>()
+        for ((entry, count) in sanitized) {
+            // Strip a "#variant" suffix so collector-number variants stack toward the 4-of rule.
+            val baseName = entry.substringBefore('#')
+            countsByBaseName.merge(baseName, count, Int::plus)
+        }
+        for ((cardName, count) in countsByBaseName) {
+            if (cardName in basicLandNames) continue
+            if (count > 4) {
+                return "Cannot have more than 4 copies of $cardName (have $count)"
+            }
+        }
+        return null
     }
 
     private fun validateDeck(pool: List<CardDefinition>, deckList: Map<String, Int>): String? {

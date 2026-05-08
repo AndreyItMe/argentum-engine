@@ -19,6 +19,7 @@ import com.wingedsheep.gameserver.session.SessionRegistry
 import com.wingedsheep.gameserver.session.GameSession
 import com.wingedsheep.gameserver.config.GameProperties
 import com.wingedsheep.engine.registry.CardRegistry
+import com.wingedsheep.gameserver.deck.DeckValidator
 import com.wingedsheep.gameserver.deck.EasterEggDeckInjector
 import com.wingedsheep.sdk.model.EntityId
 import jakarta.annotation.PostConstruct
@@ -46,7 +47,8 @@ class LobbyHandler(
     private val winstonDraftHandler: WinstonDraftHandler,
     private val gridDraftHandler: GridDraftHandler,
     private val spectatingHandler: SpectatingHandler,
-    private val tournamentMatchHandler: TournamentMatchHandler
+    private val tournamentMatchHandler: TournamentMatchHandler,
+    private val deckValidator: DeckValidator
 ) {
     private val logger = LoggerFactory.getLogger(LobbyHandler::class.java)
 
@@ -476,6 +478,7 @@ class LobbyHandler(
         // Sealed: default 6 boosters, max 16
         // Winston: default 6 boosters, max 16
         // Grid Draft: player-count-aware default (2p=9, 3p=13), max 18
+        // Premade Decks: unused — players bring their own deck
         val boosterCount = when (format) {
             TournamentFormat.DRAFT -> {
                 if (message.boosterCount == 6) 3 else message.boosterCount.coerceIn(1, 6)  // 6 is the client default, use 3 for draft
@@ -486,6 +489,7 @@ class LobbyHandler(
             TournamentFormat.GRID_DRAFT -> {
                 gridDraftHandler.gridDraftDefaultBoosters(maxPlayers)
             }
+            TournamentFormat.PREMADE_DECKS -> 0
         }
 
         val codes = setConfigs.map { it.setCode }
@@ -1037,6 +1041,30 @@ class LobbyHandler(
                 // Start the pick timer
                 gridDraftHandler.startGridDraftTimer(lobby)
             }
+            TournamentFormat.PREMADE_DECKS -> {
+                // Players brought their own decks during WAITING_FOR_PLAYERS.
+                // Require every (human) player to have submitted before the host can start.
+                val missing = lobby.players.values.filter { !it.hasSubmittedDeck }
+                if (missing.isNotEmpty()) {
+                    val names = missing.joinToString(", ") { it.identity.playerName }
+                    sender.sendError(
+                        session,
+                        ErrorCode.INVALID_ACTION,
+                        "Players have not submitted a deck yet: $names"
+                    )
+                    return
+                }
+
+                // Skip DECK_BUILDING entirely; jump straight into the tournament.
+                lobby.activatePremadeTournament()
+                logger.info("Lobby ${lobby.lobbyId} started premade-decks tournament (${lobby.playerCount} players)")
+
+                val tournament = tournamentMatchHandler.ensureTournamentCreated(lobby)
+                lobby.players.values.forEach { ps ->
+                    tournamentMatchHandler.sendTournamentStartedToPlayer(lobby, tournament, ps.identity)
+                }
+                tournamentMatchHandler.autoReadyAiPlayers(lobby, tournament)
+            }
         }
 
         ctx.broadcastLobbyUpdate(lobby)
@@ -1084,6 +1112,15 @@ class LobbyHandler(
 
         if (!aiGameManager.isEnabled) {
             sender.sendError(session, ErrorCode.INVALID_ACTION, "AI opponent is not enabled on this server")
+            return
+        }
+
+        if (lobby.format == TournamentFormat.PREMADE_DECKS) {
+            sender.sendError(
+                session,
+                ErrorCode.INVALID_ACTION,
+                "AI opponents are not supported in Premade Decks tournaments yet"
+            )
             return
         }
 
@@ -1702,20 +1739,23 @@ class LobbyHandler(
                     TournamentFormat.SEALED -> 6
                     TournamentFormat.WINSTON_DRAFT -> 6
                     TournamentFormat.GRID_DRAFT -> gridDraftHandler.gridDraftDefaultBoosters(lobby.players.size)
+                    TournamentFormat.PREMADE_DECKS -> 0
                 }
                 lobby.recalculateDistribution()
             }
         }
 
         // Manual boosterCount override (apply after format change)
-        // Grid draft uses fixed booster counts based on player count — no manual override
-        if (lobby.format != TournamentFormat.GRID_DRAFT) {
+        // Grid draft uses fixed booster counts based on player count — no manual override.
+        // Premade decks doesn't use boosters at all — ignore.
+        if (lobby.format != TournamentFormat.GRID_DRAFT && lobby.format != TournamentFormat.PREMADE_DECKS) {
             message.boosterCount?.let {
                 val maxCount = when (lobby.format) {
                     TournamentFormat.DRAFT -> 6
                     TournamentFormat.SEALED -> 16
                     TournamentFormat.WINSTON_DRAFT -> 16
                     TournamentFormat.GRID_DRAFT -> 24 // unreachable
+                    TournamentFormat.PREMADE_DECKS -> 0 // unreachable
                 }
                 lobby.boosterCount = it.coerceIn(1, maxCount)
                 lobby.recalculateDistribution()
@@ -1737,6 +1777,7 @@ class LobbyHandler(
             when (lobby.format) {
                 TournamentFormat.WINSTON_DRAFT -> lobby.maxPlayers = 2
                 TournamentFormat.GRID_DRAFT -> lobby.maxPlayers = it.coerceIn(2, 4)
+                TournamentFormat.PREMADE_DECKS -> lobby.maxPlayers = it.coerceIn(2, 8)
                 else -> lobby.maxPlayers = it.coerceIn(2, 8)
             }
             // Auto-adjust grid draft booster count when player count changes (always, since it's fixed)
@@ -1771,6 +1812,17 @@ class LobbyHandler(
             return
         }
 
+        // For PREMADE_DECKS, the deck didn't come from a generated card pool — validate
+        // against the registry (≥40 cards, 4-of, all cards must resolve) before storing it.
+        if (lobby.format == TournamentFormat.PREMADE_DECKS) {
+            val validation = deckValidator.validate(deckList)
+            if (!validation.valid) {
+                val msg = validation.errors.firstOrNull()?.message ?: "Invalid deck"
+                sender.sendError(session, ErrorCode.INVALID_DECK, msg)
+                return
+            }
+        }
+
         val result = lobby.submitDeck(identity.playerId, deckList)
         when (result) {
             is TournamentLobby.DeckSubmissionResult.Success -> {
@@ -1778,6 +1830,13 @@ class LobbyHandler(
                 logger.info("Player ${identity.playerName} submitted deck ($deckSize cards) in lobby $lobbyId")
                 sender.send(session, ServerMessage.DeckSubmitted(deckSize))
                 ctx.broadcastLobbyUpdate(lobby)
+
+                // Premade decks: stay in WAITING_FOR_PLAYERS until host clicks Start. Don't
+                // pre-create the tournament here — that happens in handleStartTournamentLobby.
+                if (lobby.format == TournamentFormat.PREMADE_DECKS && lobby.state == LobbyState.WAITING_FOR_PLAYERS) {
+                    lobbyRepository.saveLobby(lobby)
+                    return
+                }
 
                 // Ensure tournament is created (for matchup info)
                 val tournament = tournamentMatchHandler.ensureTournamentCreated(lobby)

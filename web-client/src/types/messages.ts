@@ -844,7 +844,7 @@ export interface LobbySettings {
   readonly setCodes: readonly string[]
   readonly setNames: readonly string[]
   readonly availableSets: readonly AvailableSet[]
-  readonly format: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'
+  readonly format: TournamentFormat
   readonly boosterCount: number
   readonly boosterDistribution: Readonly<Record<string, number>>  // Per-set booster counts
   readonly maxPlayers: number
@@ -853,6 +853,8 @@ export interface LobbySettings {
   readonly gamesPerMatch: number
   readonly isPublic: boolean
 }
+
+export type TournamentFormat = 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT' | 'PREMADE_DECKS'
 
 export interface LobbyCreatedMessage {
   readonly type: 'lobbyCreated'
@@ -1569,7 +1571,7 @@ export function createSubmitSealedDeckMessage(deckList: Record<string, number>):
 export interface CreateTournamentLobbyMessage {
   readonly type: 'createTournamentLobby'
   readonly setCodes: readonly string[]
-  readonly format: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'
+  readonly format: TournamentFormat
   readonly boosterCount: number
   readonly maxPlayers: number
   readonly pickTimeSeconds: number
@@ -1627,7 +1629,7 @@ export interface UnsubmitDeckMessage {
 export interface UpdateLobbySettingsMessage {
   readonly type: 'updateLobbySettings'
   readonly setCodes?: readonly string[]
-  readonly format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'
+  readonly format?: TournamentFormat
   readonly boosterCount?: number
   readonly boosterDistribution?: Readonly<Record<string, number>>
   readonly maxPlayers?: number
@@ -1738,7 +1740,7 @@ export interface RequestResyncMessage {
 // Lobby Message Factories
 export function createCreateTournamentLobbyMessage(
   setCodes: readonly string[],
-  format: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT' = 'SEALED',
+  format: TournamentFormat = 'SEALED',
   boosterCount: number = 6,
   maxPlayers: number = 8,
   pickTimeSeconds: number = 45,
@@ -1808,7 +1810,7 @@ export function createUnsubmitDeckMessage(): UnsubmitDeckMessage {
 export function createUpdateLobbySettingsMessage(
   settings: {
     setCodes?: readonly string[]
-    format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'
+    format?: TournamentFormat
     boosterCount?: number
     boosterDistribution?: Readonly<Record<string, number>>
     maxPlayers?: number

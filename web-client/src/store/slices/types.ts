@@ -18,6 +18,7 @@ import type {
   OpponentDecisionStatus,
   LobbyPlayerInfo,
   LobbySettings,
+  TournamentFormat,
   PlayerStandingInfo,
   MatchResultInfo,
   ActiveMatchInfo,
@@ -687,14 +688,14 @@ export type GameStore = {
   lobbyState: LobbyState | null
   tournamentState: TournamentState | null
   spectatingState: SpectatingState | null
-  createTournamentLobby: (setCodes: string[], format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT', boosterCount?: number, maxPlayers?: number, pickTimeSeconds?: number, isPublic?: boolean) => void
+  createTournamentLobby: (setCodes: string[], format?: TournamentFormat, boosterCount?: number, maxPlayers?: number, pickTimeSeconds?: number, isPublic?: boolean) => void
   joinLobby: (lobbyId: string) => void
   startLobby: () => void
   leaveLobby: () => void
   addAiToLobby: () => void
   removeAiFromLobby: (playerId: string) => void
   stopLobby: () => void
-  updateLobbySettings: (settings: { setCodes?: string[]; format?: 'SEALED' | 'DRAFT' | 'WINSTON_DRAFT' | 'GRID_DRAFT'; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean }) => void
+  updateLobbySettings: (settings: { setCodes?: string[]; format?: TournamentFormat; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean }) => void
   /** Disconnected tournament players: playerId -> info */
   disconnectedPlayers: Record<string, { playerName: string; secondsRemaining: number; disconnectedAt: number }>
   readyForNextRound: () => void
@@ -705,6 +706,9 @@ export type GameStore = {
   addDisconnectTime: (playerId: string) => void
   kickPlayer: (playerId: string) => void
   leaveTournament: () => void
+  /** Submit a deck directly from the lobby (Premade Decks tournament format). */
+  submitLobbyDeck: (deckList: Record<string, number>) => void
+  unsubmitLobbyDeck: () => void
 
   // Quick Game Lobby slice
   quickGameLobbyState: QuickGameLobbyStateMessage | null

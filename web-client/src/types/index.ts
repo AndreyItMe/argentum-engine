@@ -211,6 +211,7 @@ export type {
   // Reconnect types
   ReconnectedMessage,
   // Lobby types
+  TournamentFormat,
   LobbyPlayerInfo,
   LobbySettings,
   LobbyCreatedMessage,
