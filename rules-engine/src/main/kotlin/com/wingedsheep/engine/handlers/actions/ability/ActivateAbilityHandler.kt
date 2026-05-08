@@ -352,7 +352,8 @@ class ActivateAbilityHandler(
             black = poolComponent.black,
             red = poolComponent.red,
             green = poolComponent.green,
-            colorless = poolComponent.colorless
+            colorless = poolComponent.colorless,
+            restrictedMana = poolComponent.restrictedMana
         )
 
         // Pay mana costs before paying other costs
@@ -501,7 +502,8 @@ class ActivateAbilityHandler(
                 black = manaPool.black,
                 red = manaPool.red,
                 green = manaPool.green,
-                colorless = manaPool.colorless
+                colorless = manaPool.colorless,
+                restrictedMana = manaPool.restrictedMana
             ))
         }
 
@@ -615,14 +617,18 @@ class ActivateAbilityHandler(
                     (newPool.colorless - oldPool.colorless)
 
                 if (totalManaProduced >= 2) {
-                    // Replace with 1 colorless mana: revert to old pool + 1 colorless
+                    // Replace with 1 colorless mana: revert to old pool + 1 colorless.
+                    // Restricted mana the player had floating before this activation
+                    // is preserved — Damping Sphere only replaces what the land just
+                    // produced, not what was already in the pool.
                     val dampenedPool = ManaPoolComponent(
                         white = oldPool.white,
                         blue = oldPool.blue,
                         black = oldPool.black,
                         red = oldPool.red,
                         green = oldPool.green,
-                        colorless = oldPool.colorless + 1
+                        colorless = oldPool.colorless + 1,
+                        restrictedMana = oldPool.restrictedMana
                     )
                     currentState = currentState.updateEntity(action.playerId) { container ->
                         container.with(dampenedPool)

@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.scenarios
 
+import com.wingedsheep.engine.core.ActivateAbility
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
@@ -8,6 +9,7 @@ import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.basicLand
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
@@ -55,6 +57,37 @@ class SpellsMV4OrGreaterRestrictionTest : FunSpec({
 
         val pool = driver.state.getEntity(player)?.get<ManaPoolComponent>()!!
         pool.restrictedMana.size shouldBe 3
+    }
+
+    test("tapping a Mountain preserves previously-added restricted mana (Ashling, Rimebound)") {
+        // Regression: after Ashling, Rimebound adds 2 restricted RR to the pool, the
+        // player should be able to tap a Mountain for {R} without losing the restricted
+        // mana. The reported bug: tapping the Mountain replaced the 2 RR restricted with
+        // a single unrestricted R.
+        val TestMountain = basicLand("Mountain") {}
+        val driver = GameTestDriver()
+        driver.registerCards(TestCards.all + listOf(TestMountain))
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 20), skipMulligans = true)
+        val player = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val mountain = driver.putPermanentOnBattlefield(player, "Mountain")
+
+        driver.giveRestrictedMana(player, Color.RED, 2, ManaRestriction.SpellsMV4OrGreater)
+
+        val before = driver.state.getEntity(player)?.get<ManaPoolComponent>()!!
+        before.red shouldBe 0
+        before.restrictedMana.size shouldBe 2
+
+        val manaAbilityId = TestMountain.activatedAbilities[0].id
+        val result = driver.submit(
+            ActivateAbility(playerId = player, sourceId = mountain, abilityId = manaAbilityId)
+        )
+        result.isSuccess shouldBe true
+
+        val after = driver.state.getEntity(player)?.get<ManaPoolComponent>()!!
+        after.red shouldBe 1
+        after.restrictedMana.size shouldBe 2
     }
 
     test("restricted MV4+ mana CAN pay for a 4-mana spell") {

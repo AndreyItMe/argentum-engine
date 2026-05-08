@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.model.*
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.DampLandManaProduction
 import com.wingedsheep.sdk.scripting.IncreaseSpellCostByPlayerSpellsCast
+import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -272,6 +273,44 @@ class DampingSphereTest : FunSpec({
             .get<ManaPoolComponent>()!!
         pool.green shouldBe 0
         pool.colorless shouldBe 1
+    }
+
+    test("dampening preserves previously-added restricted mana in the pool") {
+        // Regression: when Damping Sphere converts a 2+ mana land tap into 1 colorless,
+        // the rewrite of the pool must preserve unrelated restricted mana that was
+        // already floating (e.g. from Ashling, Rimebound's "add two mana of any one
+        // color, spend only on MV4+ spells"). Previously the dampening branch dropped
+        // restrictedMana entirely.
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of("Forest" to 40),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        driver.putPermanentOnBattlefield(activePlayer, "Damping Sphere")
+        val doubleLand = driver.putPermanentOnBattlefield(activePlayer, "Double Land")
+
+        driver.giveRestrictedMana(activePlayer, Color.RED, 2, ManaRestriction.SpellsMV4OrGreater)
+
+        val manaAbility = DoubleLand.script.activatedAbilities.first()
+        driver.submitSuccess(
+            ActivateAbility(
+                playerId = activePlayer,
+                sourceId = doubleLand,
+                abilityId = manaAbility.id
+            )
+        )
+
+        val pool = driver.state.getEntity(activePlayer)!!
+            .get<ManaPoolComponent>()!!
+        // The land's 2 G is dampened to 1 colorless.
+        pool.green shouldBe 0
+        pool.colorless shouldBe 1
+        // The 2 R restricted mana that was already floating must remain.
+        pool.restrictedMana.size shouldBe 2
     }
 
     test("mana dampening does not affect lands producing 1 mana") {
