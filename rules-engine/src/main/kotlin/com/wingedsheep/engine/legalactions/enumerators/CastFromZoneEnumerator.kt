@@ -18,6 +18,7 @@ import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostCo
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -1540,28 +1541,18 @@ class CastFromZoneEnumerator : ActionEnumerator {
             if (cardComponent.typeLine.isLand) continue
 
             val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
-            val manaKicker = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Kicker>()
-                .firstOrNull()
-            val additionalCostKicker = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.KickerWithAdditionalCost>()
-                .firstOrNull()
-            val offspringAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Offspring>()
-                .firstOrNull()
+            val kickers = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>()
+            val manaKicker = kickers.firstOrNull { it.manaCost != null && it.keyword != Keyword.OFFSPRING }
+            val additionalCostKicker = kickers.firstOrNull { it.additionalCost != null }
+            val offspringAbility = kickers.firstOrNull { it.keyword == Keyword.OFFSPRING }
             if (manaKicker == null && additionalCostKicker == null && offspringAbility == null) continue
 
             val sourceZone = originalAction.sourceZone
 
             // Calculate kicked cost
             val baseCost = context.costCalculator.calculateEffectiveCost(state, cardDef, playerId)
-            val kickedCost = if (manaKicker != null) {
-                baseCost + manaKicker.cost
-            } else if (offspringAbility != null) {
-                baseCost + offspringAbility.cost
-            } else {
-                baseCost
-            }
+            val kickedManaCost = manaKicker?.manaCost ?: offspringAbility?.manaCost
+            val kickedCost = if (kickedManaCost != null) baseCost + kickedManaCost else baseCost
             val kickedSpellContext = SpellPaymentContext(
                 isInstantOrSorcery = cardComponent.typeLine.isInstant || cardComponent.typeLine.isSorcery,
                 isKicked = true,
@@ -1587,8 +1578,8 @@ class CastFromZoneEnumerator : ActionEnumerator {
             // Check additional cost payability
             var kickerCostInfo: AdditionalCostData? = null
             var canPayKickerAdditionalCost = true
-            if (additionalCostKicker != null) {
-                when (val cost = additionalCostKicker.cost) {
+            if (additionalCostKicker?.additionalCost != null) {
+                when (val cost = additionalCostKicker.additionalCost) {
                     is AdditionalCost.SacrificePermanent -> {
                         val validSacTargets = context.costUtils.findSacrificeTargets(state, playerId, cost)
                         if (validSacTargets.size < cost.count) {

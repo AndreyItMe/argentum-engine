@@ -228,17 +228,15 @@ class CastSpellHandler(
             if (runtimeCostError != null) return runtimeCostError
         }
 
-        // Validate kicker/offspring: card must have Kicker, KickerWithAdditionalCost, or Offspring keyword ability
+        // Validate kicker/offspring: card must have a Kicker keyword ability
         if (action.wasKicked && cardDef != null) {
-            val hasKicker = cardDef.keywordAbilities.any { it is KeywordAbility.Kicker || it is KeywordAbility.KickerWithAdditionalCost || it is KeywordAbility.Offspring }
-            if (!hasKicker) return "This card does not have kicker"
+            val kickers = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>()
+            if (kickers.isEmpty()) return "This card does not have kicker"
 
-            // Validate kicker additional cost (sacrifice, etc.)
-            val kickerAdditionalCost = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.KickerWithAdditionalCost>()
-                .firstOrNull()
+            // Validate non-mana kicker additional cost (sacrifice, etc.)
+            val kickerAdditionalCost = kickers.firstOrNull { it.additionalCost != null }?.additionalCost
             if (kickerAdditionalCost != null) {
-                val kickerCostError = validateAdditionalCosts(state, listOf(kickerAdditionalCost.cost), action)
+                val kickerCostError = validateAdditionalCosts(state, listOf(kickerAdditionalCost), action)
                 if (kickerCostError != null) return kickerCostError
             }
         }
@@ -322,12 +320,12 @@ class CastSpellHandler(
 
         // Add kicker/offspring mana cost if kicked (only for mana-based kicker/offspring)
         if (action.wasKicked && !playForFree && !action.useAlternativeCost && cardDef != null) {
-            val kickerAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>().firstOrNull()
-            val offspringAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Offspring>().firstOrNull()
-            if (kickerAbility != null) {
-                effectiveCost = ManaCost(effectiveCost.symbols + kickerAbility.cost.symbols)
-            } else if (offspringAbility != null) {
-                effectiveCost = ManaCost(effectiveCost.symbols + offspringAbility.cost.symbols)
+            val kickerManaCost = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.Kicker>()
+                .firstOrNull { it.manaCost != null }
+                ?.manaCost
+            if (kickerManaCost != null) {
+                effectiveCost = ManaCost(effectiveCost.symbols + kickerManaCost.symbols)
             }
         }
 
@@ -1165,12 +1163,12 @@ class CastSpellHandler(
 
         // Add kicker/offspring cost if kicked (not applicable with alternative costs)
         if (action.wasKicked && !playForFreeInExecute && !action.useAlternativeCost && cardDef != null) {
-            val kickerAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>().firstOrNull()
-            val offspringAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Offspring>().firstOrNull()
-            if (kickerAbility != null) {
-                effectiveCost = ManaCost(effectiveCost.symbols + kickerAbility.cost.symbols)
-            } else if (offspringAbility != null) {
-                effectiveCost = ManaCost(effectiveCost.symbols + offspringAbility.cost.symbols)
+            val kickerManaCost = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.Kicker>()
+                .firstOrNull { it.manaCost != null }
+                ?.manaCost
+            if (kickerManaCost != null) {
+                effectiveCost = ManaCost(effectiveCost.symbols + kickerManaCost.symbols)
             }
         }
 
@@ -1237,9 +1235,10 @@ class CastSpellHandler(
             if (cardDef != null) addAll(resolveAdditionalCostsForMode(cardDef, action))
             if (action.wasKicked && cardDef != null) {
                 val kickerAdditionalCost = cardDef.keywordAbilities
-                    .filterIsInstance<KeywordAbility.KickerWithAdditionalCost>()
-                    .firstOrNull()
-                if (kickerAdditionalCost != null) add(kickerAdditionalCost.cost)
+                    .filterIsInstance<KeywordAbility.Kicker>()
+                    .firstOrNull { it.additionalCost != null }
+                    ?.additionalCost
+                if (kickerAdditionalCost != null) add(kickerAdditionalCost)
             }
             if (action.useAlternativeCost && cardDef != null) {
                 val selfAltCost = cardDef.script.selfAlternativeCost

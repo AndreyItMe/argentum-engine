@@ -1066,15 +1066,10 @@ class CastSpellEnumerator : ActionEnumerator {
             if (context.cantCastSpells) continue
 
             val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
-            val manaKicker = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Kicker>()
-                .firstOrNull()
-            val additionalCostKicker = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.KickerWithAdditionalCost>()
-                .firstOrNull()
-            val offspringAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Offspring>()
-                .firstOrNull()
+            val kickers = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>()
+            val manaKicker = kickers.firstOrNull { it.manaCost != null && it.keyword != Keyword.OFFSPRING }
+            val additionalCostKicker = kickers.firstOrNull { it.additionalCost != null }
+            val offspringAbility = kickers.firstOrNull { it.keyword == Keyword.OFFSPRING }
             if (manaKicker == null && additionalCostKicker == null && offspringAbility == null) continue
 
             // Check timing (same rules as normal cast)
@@ -1089,13 +1084,8 @@ class CastSpellEnumerator : ActionEnumerator {
 
             // Calculate kicked/offspring cost
             val baseCost = context.costCalculator.calculateEffectiveCost(state, cardDef, playerId)
-            val kickedCost = if (manaKicker != null) {
-                baseCost + manaKicker.cost
-            } else if (offspringAbility != null) {
-                baseCost + offspringAbility.cost
-            } else {
-                baseCost // No extra mana for additional-cost kicker
-            }
+            val kickedManaCost = manaKicker?.manaCost ?: offspringAbility?.manaCost
+            val kickedCost = if (kickedManaCost != null) baseCost + kickedManaCost else baseCost
             val kickedSpellContext = SpellPaymentContext(
                 isInstantOrSorcery = cardComponent.typeLine.isInstant || cardComponent.typeLine.isSorcery,
                 isKicked = true,
@@ -1114,8 +1104,8 @@ class CastSpellEnumerator : ActionEnumerator {
             // Check additional cost payability (e.g., sacrifice a creature)
             var kickerCostInfo: AdditionalCostData? = null
             var canPayKickerAdditionalCost = true
-            if (additionalCostKicker != null) {
-                when (val cost = additionalCostKicker.cost) {
+            if (additionalCostKicker?.additionalCost != null) {
+                when (val cost = additionalCostKicker.additionalCost) {
                     is AdditionalCost.SacrificePermanent -> {
                         val validSacTargets = context.costUtils.findSacrificeTargets(state, playerId, cost)
                         if (validSacTargets.size < cost.count) {

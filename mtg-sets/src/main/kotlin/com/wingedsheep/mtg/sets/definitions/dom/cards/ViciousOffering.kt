@@ -26,7 +26,7 @@ val ViciousOffering = card("Vicious Offering") {
     typeLine = "Instant"
     oracleText = "Kicker—Sacrifice a creature. (You may sacrifice a creature in addition to any other costs as you cast this spell.)\nTarget creature gets -2/-2 until end of turn. If this spell was kicked, that creature gets -5/-5 until end of turn instead."
 
-    keywordAbility(KeywordAbility.KickerWithAdditionalCost(AdditionalCost.SacrificePermanent(filter = GameObjectFilter.Creature)))
+    keywordAbility(KeywordAbility.kicker(AdditionalCost.SacrificePermanent(filter = GameObjectFilter.Creature)))
 
     spell {
         val t = target("target", Targets.Creature)

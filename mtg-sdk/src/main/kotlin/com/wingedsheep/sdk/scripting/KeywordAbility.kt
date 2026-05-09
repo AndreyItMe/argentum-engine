@@ -216,33 +216,38 @@ sealed interface KeywordAbility {
     // =========================================================================
 
     /**
-     * Kicker with a mana cost.
-     * "Kicker {2}{B}"
+     * Kicker and its variants. Pay [manaCost] (mana kicker), pay [additionalCost] (non-mana
+     * kicker), or both. [multi] is Multikicker — the cost can be paid any number of times.
+     * [displayPrefix] customises the printed-text label ("Kicker", "Multikicker", "Offspring");
+     * mechanically these all share the kicker payment + `wasKicked` flag.
+     *
+     * Examples:
+     * - `Kicker(manaCost = "{2}{B}")`                                      — "Kicker {2}{B}"
+     * - `Kicker(additionalCost = SacrificePermanent(Creature))`            — "Kicker—Sacrifice a creature"
+     * - `Kicker(manaCost = "{1}{W}", multi = true, displayPrefix = "Multikicker")` — "Multikicker {1}{W}"
+     * - `Kicker(manaCost = "{2}", displayPrefix = "Offspring", keyword = Keyword.OFFSPRING)` — "Offspring {2}"
+     *
+     * Prefer the [kicker] / [kickerSacrifice] / [multikicker] / [offspring] companion factories.
      */
     @SerialName("Kicker")
     @Serializable
-    data class Kicker(val cost: ManaCost) : KeywordAbility {
-        override val description: String = "Kicker $cost"
-    }
-
-    /**
-     * Kicker with a non-mana additional cost (e.g., sacrifice a creature).
-     * "Kicker—Sacrifice a creature."
-     */
-    @SerialName("KickerWithAdditionalCost")
-    @Serializable
-    data class KickerWithAdditionalCost(val cost: AdditionalCost) : KeywordAbility {
-        override val description: String = "Kicker—${cost.description}"
-    }
-
-    /**
-     * Multikicker with a mana cost.
-     * "Multikicker {1}{W}"
-     */
-    @SerialName("Multikicker")
-    @Serializable
-    data class Multikicker(val cost: ManaCost) : KeywordAbility {
-        override val description: String = "Multikicker $cost"
+    data class Kicker(
+        val manaCost: ManaCost? = null,
+        val additionalCost: AdditionalCost? = null,
+        val multi: Boolean = false,
+        val displayPrefix: String = "Kicker",
+        override val keyword: Keyword? = null
+    ) : KeywordAbility {
+        init {
+            require(manaCost != null || additionalCost != null) {
+                "Kicker requires either a manaCost or an additionalCost"
+            }
+        }
+        override val description: String = when {
+            manaCost != null && additionalCost != null -> "$displayPrefix—$manaCost, ${additionalCost.description}"
+            additionalCost != null -> "$displayPrefix—${additionalCost.description}"
+            else -> "$displayPrefix $manaCost"
+        }
     }
 
     // =========================================================================
@@ -307,25 +312,6 @@ sealed interface KeywordAbility {
     @Serializable
     data class Warp(val cost: ManaCost) : KeywordAbility {
         override val description: String = "Warp $cost"
-    }
-
-    // =========================================================================
-    // Offspring
-    // =========================================================================
-
-    /**
-     * Offspring with a mana cost.
-     * "Offspring {2}" - You may pay an additional {2} as you cast this spell.
-     * If you do, when this creature enters, create a 1/1 token copy of it.
-     *
-     * Mechanically identical to Kicker in terms of cost payment. The engine
-     * reuses the kicker infrastructure (wasKicked flag) for Offspring.
-     */
-    @SerialName("Offspring")
-    @Serializable
-    data class Offspring(val cost: ManaCost) : KeywordAbility {
-        override val keyword: Keyword = Keyword.OFFSPRING
-        override val description: String = "Offspring $cost"
     }
 
     // =========================================================================
@@ -477,9 +463,37 @@ sealed interface KeywordAbility {
             Flashback(ManaCost.parse(cost), additionalCost)
 
         /**
-         * Create Offspring with mana cost from string.
+         * Create Kicker with a mana cost.
          */
-        fun offspring(cost: String): KeywordAbility = Offspring(ManaCost.parse(cost))
+        fun kicker(cost: String): KeywordAbility = Kicker(manaCost = ManaCost.parse(cost))
+
+        fun kicker(cost: ManaCost): KeywordAbility = Kicker(manaCost = cost)
+
+        /**
+         * Create Kicker with a non-mana additional cost (e.g., sacrifice a creature).
+         */
+        fun kicker(additionalCost: AdditionalCost): KeywordAbility =
+            Kicker(additionalCost = additionalCost)
+
+        /**
+         * Create Multikicker — a kicker whose cost can be paid any number of times.
+         */
+        fun multikicker(cost: String): KeywordAbility = Kicker(
+            manaCost = ManaCost.parse(cost),
+            multi = true,
+            displayPrefix = "Multikicker"
+        )
+
+        /**
+         * Create Offspring — mechanically a kicker, but printed and labelled "Offspring".
+         */
+        fun offspring(cost: String): KeywordAbility = offspring(ManaCost.parse(cost))
+
+        fun offspring(cost: ManaCost): KeywordAbility = Kicker(
+            manaCost = cost,
+            displayPrefix = "Offspring",
+            keyword = Keyword.OFFSPRING
+        )
 
         /**
          * Create Warp with mana cost from string.
