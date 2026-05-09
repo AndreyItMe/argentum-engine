@@ -25,7 +25,7 @@ val NobleTemplar = card("Noble Templar") {
 
     keywords(Keyword.VIGILANCE)
 
-    keywordAbility(KeywordAbility.Typecycling("Plains", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Plains", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.COMMON

@@ -30,7 +30,7 @@ val TwistedAbomination = card("Twisted Abomination") {
         effect = RegenerateEffect(EffectTarget.Self)
     }
 
-    keywordAbility(KeywordAbility.Typecycling("Swamp", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Swamp", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.COMMON

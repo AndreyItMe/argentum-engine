@@ -68,7 +68,7 @@ class CycleCardHandler(
             ?: return "Card definition not found"
 
         val cyclingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cycling>()
-            .firstOrNull()
+            .firstOrNull { it.searchFilter == null }
             ?: return "This card doesn't have cycling"
 
         if (action.paymentStrategy is PaymentStrategy.Explicit) {
@@ -97,7 +97,7 @@ class CycleCardHandler(
             ?: return ExecutionResult.error(state, "Card definition not found")
 
         val cyclingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cycling>()
-            .firstOrNull()
+            .firstOrNull { it.searchFilter == null }
             ?: return ExecutionResult.error(state, "This card doesn't have cycling")
 
         var currentState = state

@@ -12,9 +12,17 @@
     ],
     "keywordAbilities": [
         {
-            "type": "Typecycling",
-            "subtype": "Island",
-            "cost": "{2}"
+            "type": "Cycling",
+            "cost": "{2}",
+            "searchFilter": {
+                "cardPredicates": [
+                    {
+                        "type": "HasSubtype",
+                        "subtype": "Island"
+                    }
+                ]
+            },
+            "displayPrefix": "Islandcycling"
         }
     ],
     "metadata": {

@@ -28,20 +28,14 @@ class CyclingEnumerator : ActionEnumerator {
             val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue
             val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
 
-            val cyclingAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Cycling>()
-                .firstOrNull()
-            val typecyclingAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Typecycling>()
-                .firstOrNull()
-            val basicLandcyclingAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.BasicLandcycling>()
-                .firstOrNull()
+            val cyclingAbilities = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cycling>()
+            val plainCycling = cyclingAbilities.firstOrNull { it.searchFilter == null }
+            val typedCycling = cyclingAbilities.firstOrNull { it.searchFilter != null }
 
-            if (cyclingAbility != null) {
-                val canAfford = context.manaSolver.canPay(state, playerId, cyclingAbility.cost, precomputedSources = context.availableManaSources)
+            if (plainCycling != null) {
+                val canAfford = context.manaSolver.canPay(state, playerId, plainCycling.cost, precomputedSources = context.availableManaSources)
                 val autoTapPreview = if (context.skipAutoTapPreview) null else {
-                    context.manaSolver.solve(state, playerId, cyclingAbility.cost, precomputedSources = context.availableManaSources)
+                    context.manaSolver.solve(state, playerId, plainCycling.cost, precomputedSources = context.availableManaSources)
                         ?.sources?.map { it.entityId }
                 }
                 result.add(
@@ -50,20 +44,15 @@ class CyclingEnumerator : ActionEnumerator {
                         description = "Cycle ${cardComponent.name}",
                         action = CycleCard(playerId, cardId),
                         affordable = canAfford,
-                        manaCostString = cyclingAbility.cost.toString(),
+                        manaCostString = plainCycling.cost.toString(),
                         autoTapPreview = autoTapPreview
                     )
                 )
             }
 
-            val typecycleVariantCostAndLabel: Pair<com.wingedsheep.sdk.core.ManaCost, String>? = when {
-                typecyclingAbility != null -> typecyclingAbility.cost to "${typecyclingAbility.type}cycling ${cardComponent.name}"
-                basicLandcyclingAbility != null -> basicLandcyclingAbility.cost to "Basic landcycling ${cardComponent.name}"
-                else -> null
-            }
-
-            if (typecycleVariantCostAndLabel != null) {
-                val (cost, description) = typecycleVariantCostAndLabel
+            if (typedCycling != null) {
+                val cost = typedCycling.cost
+                val description = "${typedCycling.displayPrefix} ${cardComponent.name}"
                 val canAfford = context.manaSolver.canPay(state, playerId, cost, precomputedSources = context.availableManaSources)
                 val autoTapPreview = if (context.skipAutoTapPreview) null else {
                     context.manaSolver.solve(state, playerId, cost, precomputedSources = context.availableManaSources)

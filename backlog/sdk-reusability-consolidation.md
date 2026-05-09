@@ -29,7 +29,7 @@ happened.
 | Ward | `WardMana` / `WardLife` / `WardDiscard` / `WardSacrifice` | `Ward(cost: WardCost)` (interface exists in `StackEffects.kt:220`, just not used here) | ✅ done |
 | Protection | `ProtectionFromColor` / `FromColors` / `FromCardType` / `FromCreatureSubtype` / `FromEverything` / `FromEachOpponent` / `HexproofFromColor` | `Protection(scope: ProtectionScope)`, `Hexproof(scope)` | ✅ done |
 | Numeric | `Annihilator` / `Bushido` / `Rampage` / `Absorb` / `Afflict` / `Toxic` / `Crew` / `Modular` / `Fading` / `Vanishing` / `Renown` / `Fabricate` / `Tribute` (×13) | `Numeric(keyword: Keyword, n: Int)` driven by `Keyword.displayName` | ✅ done |
-| Cycling | `Cycling` / `Typecycling` / `BasicLandcycling` | `Cycling(cost, searchFilter?, displayPrefix?)` | |
+| Cycling | `Cycling` / `Typecycling` / `BasicLandcycling` | `Cycling(cost, searchFilter?, displayPrefix?)` | ✅ done |
 | Kicker | `Kicker` / `KickerWithAdditionalCost` / `Multikicker` / `Offspring` | `Kicker(manaCost?, additionalCost?, multi)` | |
 
 **Win:** ~25 case classes deleted, ~14KB removed.

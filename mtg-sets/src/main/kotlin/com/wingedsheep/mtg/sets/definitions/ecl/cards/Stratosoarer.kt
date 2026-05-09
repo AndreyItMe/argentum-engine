@@ -36,7 +36,7 @@ val Stratosoarer = card("Stratosoarer") {
         effect = Effects.GrantKeyword(Keyword.FLYING, creature)
     }
 
-    keywordAbility(KeywordAbility.BasicLandcycling(ManaCost.parse("{1}{U}")))
+    keywordAbility(KeywordAbility.basicLandcycling(ManaCost.parse("{1}{U}")))
 
     metadata {
         rarity = Rarity.COMMON

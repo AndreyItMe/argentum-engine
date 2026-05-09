@@ -21,7 +21,7 @@ val WirewoodGuardian = card("Wirewood Guardian") {
     toughness = 6
     oracleText = "Forestcycling {2}"
 
-    keywordAbility(KeywordAbility.Typecycling("Forest", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Forest", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.COMMON

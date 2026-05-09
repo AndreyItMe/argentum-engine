@@ -49,7 +49,7 @@ val KulrathZealot = card("Kulrath Zealot") {
         ))
     }
 
-    keywordAbility(KeywordAbility.BasicLandcycling(ManaCost.parse("{1}{R}")))
+    keywordAbility(KeywordAbility.basicLandcycling(ManaCost.parse("{1}{R}")))
 
     metadata {
         rarity = Rarity.COMMON

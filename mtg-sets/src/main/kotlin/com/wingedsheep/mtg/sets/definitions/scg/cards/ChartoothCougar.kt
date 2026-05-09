@@ -30,7 +30,7 @@ val ChartoothCougar = card("Chartooth Cougar") {
         effect = ModifyStatsEffect(1, 0, EffectTarget.Self)
     }
 
-    keywordAbility(KeywordAbility.Typecycling("Mountain", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Mountain", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.COMMON

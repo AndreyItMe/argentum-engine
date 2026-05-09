@@ -9,9 +9,17 @@
     },
     "keywordAbilities": [
         {
-            "type": "Typecycling",
-            "subtype": "Mountain",
-            "cost": "{2}"
+            "type": "Cycling",
+            "cost": "{2}",
+            "searchFilter": {
+                "cardPredicates": [
+                    {
+                        "type": "HasSubtype",
+                        "subtype": "Mountain"
+                    }
+                ]
+            },
+            "displayPrefix": "Mountaincycling"
         }
     ],
     "script": {

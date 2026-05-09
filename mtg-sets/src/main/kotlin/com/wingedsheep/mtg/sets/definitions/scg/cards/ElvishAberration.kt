@@ -31,7 +31,7 @@ val ElvishAberration = card("Elvish Aberration") {
         manaAbility = true
     }
 
-    keywordAbility(KeywordAbility.Typecycling("Forest", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Forest", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.UNCOMMON

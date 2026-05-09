@@ -270,9 +270,9 @@ class TypecycleCardHandler(
     }
 
     /**
-     * Unified view of the two typecycling-family keywords (classic `Typecycling` and
-     * `BasicLandcycling`). Both share the same cost-pay/discard/search pipeline; only the
-     * search filter and display name differ.
+     * Unified view of the typecycling-family keywords. Plain `Cycling` (no search filter)
+     * is filtered out — that goes through `CycleCardHandler`. Typed cycling shares the
+     * same cost-pay/discard/search pipeline; only the search filter and display prefix differ.
      */
     private data class TypecyclingVariant(
         val cost: com.wingedsheep.sdk.core.ManaCost,
@@ -281,21 +281,15 @@ class TypecycleCardHandler(
     )
 
     private fun findTypecyclingVariant(cardDef: com.wingedsheep.sdk.model.CardDefinition): TypecyclingVariant? {
-        cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Typecycling>().firstOrNull()?.let {
-            return TypecyclingVariant(
-                cost = it.cost,
-                searchFilter = GameObjectFilter.Any.withSubtype(it.type),
-                description = "${it.type}cycling"
-            )
-        }
-        cardDef.keywordAbilities.filterIsInstance<KeywordAbility.BasicLandcycling>().firstOrNull()?.let {
-            return TypecyclingVariant(
-                cost = it.cost,
-                searchFilter = GameObjectFilter.BasicLand,
-                description = "Basic landcycling"
-            )
-        }
-        return null
+        val cycling = cardDef.keywordAbilities
+            .filterIsInstance<KeywordAbility.Cycling>()
+            .firstOrNull { it.searchFilter != null }
+            ?: return null
+        return TypecyclingVariant(
+            cost = cycling.cost,
+            searchFilter = cycling.searchFilter!!,
+            description = cycling.displayPrefix
+        )
     }
 
     private fun isCyclingPrevented(state: GameState): Boolean {

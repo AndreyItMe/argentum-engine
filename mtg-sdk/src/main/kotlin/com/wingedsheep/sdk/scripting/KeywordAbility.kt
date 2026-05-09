@@ -189,38 +189,26 @@ sealed interface KeywordAbility {
     // =========================================================================
 
     /**
-     * Cycling with a mana cost.
-     * "Cycling {2}" - {2}, Discard this card: Draw a card.
+     * Cycling and its typed variants. Plain cycling (search filter absent) discards
+     * and draws a card; typed cycling (search filter present) discards and searches
+     * the library for a card matching [searchFilter].
+     *
+     * Examples:
+     * - `Cycling(cost = "{2}")`                                                           — "Cycling {2}"
+     * - `Cycling(cost = "{2}", searchFilter = Forest, displayPrefix = "Forestcycling")`   — "Forestcycling {2}"
+     * - `Cycling(cost = "{1}{U}", searchFilter = BasicLand, displayPrefix = "Basic landcycling")` — "Basic landcycling {1}{U}"
+     *
+     * Prefer the [typecycling] / [basicLandcycling] companion factories when constructing
+     * typed variants — they hide the filter wiring.
      */
     @SerialName("Cycling")
     @Serializable
-    data class Cycling(val cost: ManaCost) : KeywordAbility {
-        override val description: String = "Cycling $cost"
-    }
-
-    /**
-     * Typecycling (e.g., Slivercycling, Wizardcycling).
-     * "Slivercycling {3}" - {3}, Discard this card: Search your library for a Sliver card,
-     * reveal it, put it into your hand, then shuffle.
-     */
-    @SerialName("Typecycling")
-    @Serializable
-    data class Typecycling(@SerialName("subtype") val type: String, val cost: ManaCost) : KeywordAbility {
-        override val description: String = "${type}cycling $cost"
-    }
-
-    /**
-     * Basic landcycling.
-     * "Basic landcycling {1}{U}" - {1}{U}, Discard this card: Search your library for a basic land
-     * card, reveal it, put it into your hand, then shuffle.
-     *
-     * Shares the typecycling infrastructure — only the search filter differs (any basic land card
-     * rather than cards of a specific subtype).
-     */
-    @SerialName("BasicLandcycling")
-    @Serializable
-    data class BasicLandcycling(val cost: ManaCost) : KeywordAbility {
-        override val description: String = "Basic landcycling $cost"
+    data class Cycling(
+        val cost: ManaCost,
+        val searchFilter: GameObjectFilter? = null,
+        val displayPrefix: String = "Cycling"
+    ) : KeywordAbility {
+        override val description: String = "$displayPrefix $cost"
     }
 
     // =========================================================================
@@ -439,14 +427,33 @@ sealed interface KeywordAbility {
             Protection(ProtectionScope.Subtype(subtype))
 
         /**
-         * Create Cycling with mana cost from string.
+         * Create plain Cycling with mana cost from string.
          */
         fun cycling(cost: String): KeywordAbility = Cycling(ManaCost.parse(cost))
 
         /**
-         * Create Basic landcycling with mana cost from string.
+         * Create Typecycling for a subtype (e.g., "Forest", "Sliver"). Display text is
+         * "${subtype}cycling $cost"; the search filter is "any card with that subtype".
          */
-        fun basicLandcycling(cost: String): KeywordAbility = BasicLandcycling(ManaCost.parse(cost))
+        fun typecycling(subtype: String, cost: ManaCost): KeywordAbility = Cycling(
+            cost = cost,
+            searchFilter = GameObjectFilter.Any.withSubtype(subtype),
+            displayPrefix = "${subtype}cycling"
+        )
+
+        fun typecycling(subtype: String, cost: String): KeywordAbility =
+            typecycling(subtype, ManaCost.parse(cost))
+
+        /**
+         * Create Basic landcycling — search the library for any basic land card.
+         */
+        fun basicLandcycling(cost: ManaCost): KeywordAbility = Cycling(
+            cost = cost,
+            searchFilter = GameObjectFilter.BasicLand,
+            displayPrefix = "Basic landcycling"
+        )
+
+        fun basicLandcycling(cost: String): KeywordAbility = basicLandcycling(ManaCost.parse(cost))
 
         /**
          * Create Morph with mana cost from string.

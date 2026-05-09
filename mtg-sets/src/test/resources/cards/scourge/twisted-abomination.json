@@ -9,9 +9,17 @@
     },
     "keywordAbilities": [
         {
-            "type": "Typecycling",
-            "subtype": "Swamp",
-            "cost": "{2}"
+            "type": "Cycling",
+            "cost": "{2}",
+            "searchFilter": {
+                "cardPredicates": [
+                    {
+                        "type": "HasSubtype",
+                        "subtype": "Swamp"
+                    }
+                ]
+            },
+            "displayPrefix": "Swampcycling"
         }
     ],
     "script": {

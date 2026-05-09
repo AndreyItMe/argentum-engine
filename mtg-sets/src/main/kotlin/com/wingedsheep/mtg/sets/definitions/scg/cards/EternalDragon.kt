@@ -44,7 +44,7 @@ val EternalDragon = card("Eternal Dragon") {
         )
     }
 
-    keywordAbility(KeywordAbility.Typecycling("Plains", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Plains", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.RARE

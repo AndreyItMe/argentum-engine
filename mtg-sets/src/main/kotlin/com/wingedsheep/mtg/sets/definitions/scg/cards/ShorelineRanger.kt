@@ -25,7 +25,7 @@ val ShorelineRanger = card("Shoreline Ranger") {
 
     keywords(Keyword.FLYING)
 
-    keywordAbility(KeywordAbility.Typecycling("Island", ManaCost.parse("{2}")))
+    keywordAbility(KeywordAbility.typecycling("Island", ManaCost.parse("{2}")))
 
     metadata {
         rarity = Rarity.COMMON
