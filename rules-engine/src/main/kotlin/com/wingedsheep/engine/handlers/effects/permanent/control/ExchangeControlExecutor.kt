@@ -9,6 +9,7 @@ import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.addFloatingEffects
 import com.wingedsheep.engine.mechanics.layers.createFloatingEffect
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.scripting.Duration
@@ -48,10 +49,13 @@ class ExchangeControlExecutor : EffectExecutor<ExchangeControlEffect> {
         val card2 = container2.get<CardComponent>()
             ?: return EffectResult.error(state, "Second target is not a card")
 
-        val controller1 = container1.get<ControllerComponent>()?.playerId
+        // Use projected controller so floating-effect-based control changes are respected
+        val controller1 = state.projectedState.getController(target1Id)
+            ?: container1.get<ControllerComponent>()?.playerId
             ?: return EffectResult.error(state, "First target has no controller")
 
-        val controller2 = container2.get<ControllerComponent>()?.playerId
+        val controller2 = state.projectedState.getController(target2Id)
+            ?: container2.get<ControllerComponent>()?.playerId
             ?: return EffectResult.error(state, "Second target has no controller")
 
         // If both creatures already have the same controller, no-op
@@ -78,7 +82,11 @@ class ExchangeControlExecutor : EffectExecutor<ExchangeControlEffect> {
             timestamp = state.timestamp + 1
         )
 
+        // Rule 302.6: each creature has a new controller and hasn't been under their
+        // control continuously since that player's most recent turn began.
         val newState = state.addFloatingEffects(listOf(floating1, floating2))
+            .updateEntity(target1Id) { it.with(SummoningSicknessComponent) }
+            .updateEntity(target2Id) { it.with(SummoningSicknessComponent) }
 
         val events = listOf(
             ControlChangedEvent(

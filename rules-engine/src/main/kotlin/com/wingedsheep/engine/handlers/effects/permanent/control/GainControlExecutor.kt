@@ -60,11 +60,9 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
             context = context
         )
 
-        // Rule 302.6: the new controller hasn't had this creature continuously since their
-        // most recent turn began, so it gains summoning sickness until their next untap step.
-        val stateWithSickness = state.copy(floatingEffects = filteredEffects + floatingEffect)
+        // Rule 302.6: new controller hasn't had this permanent since their most recent turn began.
+        val newState = state.copy(floatingEffects = filteredEffects + floatingEffect)
             .updateEntity(targetId) { it.with(SummoningSicknessComponent) }
-        val newState = stateWithSickness
 
         val events = listOf(
             ControlChangedEvent(

@@ -8,6 +8,7 @@ import com.wingedsheep.engine.mechanics.layers.Layer
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.createFloatingEffect
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.scripting.effects.GiveControlToTargetPlayerEffect
@@ -40,7 +41,9 @@ class GiveControlToTargetPlayerExecutor : EffectExecutor<GiveControlToTargetPlay
         val newControllerId = context.resolvePlayerTarget(effect.newController)
             ?: return EffectResult.error(state, "No valid player target for control change")
 
-        val currentControllerId = targetContainer.get<ControllerComponent>()?.playerId
+        // Use projected controller so floating-effect-based control changes are respected
+        val currentControllerId = state.projectedState.getController(targetId)
+            ?: targetContainer.get<ControllerComponent>()?.playerId
 
         // Remove any previous Layer.CONTROL floating effects from the same source on the same target
         val filteredEffects = state.floatingEffects.filter { floating ->
@@ -49,7 +52,8 @@ class GiveControlToTargetPlayerExecutor : EffectExecutor<GiveControlToTargetPlay
               targetId in floating.effect.affectedEntities)
         }
 
-        // If the base controller already matches after removing old floating effects, no new effect needed
+        // If the controller already matches after removing old floating effects, no new effect needed
+        // and no summoning sickness — control is not actually changing.
         val newState = if (currentControllerId == newControllerId) {
             state.copy(floatingEffects = filteredEffects)
         } else {
@@ -61,7 +65,9 @@ class GiveControlToTargetPlayerExecutor : EffectExecutor<GiveControlToTargetPlay
                 duration = effect.duration,
                 context = controlContext
             )
+            // Rule 302.6: new controller hasn't had this permanent since their most recent turn began.
             state.copy(floatingEffects = filteredEffects + floatingEffect)
+                .updateEntity(targetId) { it.with(SummoningSicknessComponent) }
         }
 
         val events = listOf(
