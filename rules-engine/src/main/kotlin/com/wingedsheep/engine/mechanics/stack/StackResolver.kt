@@ -1017,6 +1017,9 @@ class StackResolver(
                 opponentId = newState.getOpponent(spellComponent.casterId),
                 targets = targets,
                 xValue = spellComponent.xValue,
+                totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
+                    spellComponent.manaSpentBlack + spellComponent.manaSpentRed +
+                    spellComponent.manaSpentGreen + spellComponent.manaSpentColorless,
                 wasKicked = spellComponent.wasKicked,
                 wasBlightPaid = spellComponent.wasBlightPaid,
                 sacrificedPermanents = spellComponent.sacrificedPermanents,

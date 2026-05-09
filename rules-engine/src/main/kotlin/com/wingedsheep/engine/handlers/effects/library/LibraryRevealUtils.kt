@@ -50,4 +50,24 @@ object LibraryRevealUtils {
         }
         return newState
     }
+
+    /**
+     * Strip [RevealedToComponent] from a specific set of cards.
+     *
+     * Use this for **per-card** reveal opacity (e.g. random bottom-of-library placement,
+     * where the player loses knowledge of *these* cards' positions but retains knowledge
+     * of any other cards already revealed elsewhere in the library). For wholesale opacity
+     * after a shuffle, use [clearLibraryReveals] instead.
+     */
+    fun clearReveals(state: GameState, cardIds: Collection<EntityId>): GameState {
+        if (cardIds.isEmpty()) return state
+        var newState = state
+        for (cardId in cardIds) {
+            val container = newState.getEntity(cardId) ?: continue
+            if (container.get<RevealedToComponent>() != null) {
+                newState = newState.updateEntity(cardId) { c -> c.without<RevealedToComponent>() }
+            }
+        }
+        return newState
+    }
 }

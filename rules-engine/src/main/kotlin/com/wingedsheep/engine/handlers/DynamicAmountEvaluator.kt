@@ -62,6 +62,8 @@ class DynamicAmountEvaluator(
 
             is DynamicAmount.XValue -> context.xValue ?: 0
 
+            is DynamicAmount.TotalManaSpent -> context.totalManaSpent
+
             is DynamicAmount.YourLifeTotal -> {
                 state.getEntity(context.controllerId)?.get<LifeTotalComponent>()?.life ?: 0
             }

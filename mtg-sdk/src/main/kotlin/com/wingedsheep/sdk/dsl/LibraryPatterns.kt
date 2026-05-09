@@ -38,20 +38,44 @@ object LibraryPatterns {
         keepDestination: CardDestination = CardDestination.ToZone(Zone.HAND),
         restDestination: CardDestination = CardDestination.ToZone(Zone.GRAVEYARD),
         revealed: Boolean = false
+    ): CompositeEffect = lookAtTopAndKeep(
+        count = DynamicAmount.Fixed(count),
+        keepCount = DynamicAmount.Fixed(keepCount),
+        keepDestination = keepDestination,
+        restDestination = restDestination,
+        revealed = revealed
+    )
+
+    /**
+     * "Look at the top [count], put [keepCount] in [keepDestination], rest to [restDestination]"
+     * with optional [restOrder] (e.g. [CardOrder.Random] for "in a random order").
+     *
+     * Labels are auto-derived from the destinations; override [selectedLabel]/[remainderLabel]
+     * if a card's oracle text uses different wording.
+     */
+    fun lookAtTopAndKeep(
+        count: DynamicAmount,
+        keepCount: DynamicAmount,
+        keepDestination: CardDestination = CardDestination.ToZone(Zone.HAND),
+        restDestination: CardDestination = CardDestination.ToZone(Zone.GRAVEYARD),
+        revealed: Boolean = false,
+        restOrder: CardOrder = CardOrder.Preserve,
+        selectedLabel: String = defaultDestinationLabel(keepDestination),
+        remainderLabel: String = defaultDestinationLabel(restDestination)
     ): CompositeEffect = CompositeEffect(
         listOf(
             GatherCardsEffect(
-                source = CardSource.TopOfLibrary(DynamicAmount.Fixed(count)),
+                source = CardSource.TopOfLibrary(count),
                 storeAs = "looked",
                 revealed = revealed
             ),
             SelectFromCollectionEffect(
                 from = "looked",
-                selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(keepCount)),
+                selection = SelectionMode.ChooseExactly(keepCount),
                 storeSelected = "kept",
                 storeRemainder = "rest",
-                selectedLabel = "Put in hand",
-                remainderLabel = "Put in graveyard"
+                selectedLabel = selectedLabel,
+                remainderLabel = remainderLabel
             ),
             MoveCollectionEffect(
                 from = "kept",
@@ -59,10 +83,26 @@ object LibraryPatterns {
             ),
             MoveCollectionEffect(
                 from = "rest",
-                destination = restDestination
+                destination = restDestination,
+                order = restOrder
             )
         )
     )
+
+    private fun defaultDestinationLabel(destination: CardDestination): String = when (destination) {
+        is CardDestination.ToZone -> when (destination.zone) {
+            Zone.HAND -> "Put in hand"
+            Zone.GRAVEYARD -> "Put in graveyard"
+            Zone.EXILE -> "Exile"
+            Zone.LIBRARY -> when (destination.placement) {
+                ZonePlacement.Bottom -> "Put on bottom"
+                ZonePlacement.Top -> "Put on top"
+                else -> "Put in library"
+            }
+            Zone.BATTLEFIELD -> "Put onto the battlefield"
+            else -> "Move"
+        }
+    }
 
     fun lookAtTopAndReorder(count: Int): CompositeEffect = CompositeEffect(
         listOf(

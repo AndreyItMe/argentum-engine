@@ -27,6 +27,13 @@ data class EffectContext(
     val opponentId: EntityId?,
     val targets: List<ChosenTarget> = emptyList(),
     val xValue: Int? = null,
+    /**
+     * Total mana paid from the pool to cast this spell — sum of every `manaSpent{Color}`
+     * bucket on the [com.wingedsheep.engine.state.components.stack.SpellOnStackComponent].
+     * For `{X}` spells the X portion is already included in those buckets, so this is
+     * not the same as [xValue]. Used by `DynamicAmount.TotalManaSpent`.
+     */
+    val totalManaSpent: Int = 0,
     val wasKicked: Boolean = false,
     /** True if the spell's optional Blight additional cost was paid (BlightOrPay path chosen). */
     val wasBlightPaid: Boolean = false,

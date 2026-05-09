@@ -164,7 +164,24 @@ class MoveCollectionExecutor(
             }
         }
 
-        return moveCardsToZone(state, context, cards, destination, destPlayerId, revealed, moveType, faceDown, noRegenerate, storeMovedAs, underOwnersControl, revealToSelf)
+        // Random ordering: shuffle the cards before placing them (player has no knowledge of order)
+        val orderedCards = if (order == CardOrder.Random) cards.shuffled() else cards
+
+        val result = moveCardsToZone(state, context, orderedCards, destination, destPlayerId, revealed, moveType, faceDown, noRegenerate, storeMovedAs, underOwnersControl, revealToSelf)
+
+        // Random library placement: the mover doesn't know where the cards landed, so strip
+        // their reveal markers. moveCardsToZone marks moved cards as revealed to the controller
+        // (so the UI can show "you know this card"), but random ordering invalidates that.
+        //
+        // Note: this is intentionally per-card, *not* full-library — unlike ZonePlacement.Shuffled
+        // which calls LibraryRevealUtils.clearLibraryReveals() to wipe the whole library. Random
+        // bottom-placement only obscures the cards being moved; any other cards in the library
+        // whose positions the player legitimately knows (e.g. from a prior Brainstorm) stay revealed.
+        if (order == CardOrder.Random && destination.zone == Zone.LIBRARY && result.isSuccess) {
+            return result.copy(state = LibraryRevealUtils.clearReveals(result.state, orderedCards))
+        }
+
+        return result
     }
 
     /**

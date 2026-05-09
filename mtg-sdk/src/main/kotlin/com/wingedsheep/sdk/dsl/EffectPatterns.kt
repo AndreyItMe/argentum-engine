@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.CREATED_TOKENS
 import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.ChooseActionEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -178,6 +179,16 @@ object EffectPatterns {
         revealed: Boolean = false
     ): CompositeEffect =
         LibraryPatterns.lookAtTopAndKeep(count, keepCount, keepDestination, restDestination, revealed)
+
+    fun lookAtTopAndKeep(
+        count: DynamicAmount,
+        keepCount: DynamicAmount,
+        keepDestination: CardDestination = CardDestination.ToZone(Zone.HAND),
+        restDestination: CardDestination = CardDestination.ToZone(Zone.GRAVEYARD),
+        revealed: Boolean = false,
+        restOrder: CardOrder = CardOrder.Preserve
+    ): CompositeEffect =
+        LibraryPatterns.lookAtTopAndKeep(count, keepCount, keepDestination, restDestination, revealed, restOrder)
 
     fun lookAtTopAndReorder(count: Int): CompositeEffect =
         LibraryPatterns.lookAtTopAndReorder(count)

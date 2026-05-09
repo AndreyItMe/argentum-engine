@@ -10,6 +10,7 @@ import com.wingedsheep.mtg.sets.definitions.dsk.DuskmournSet
 import com.wingedsheep.mtg.sets.definitions.eoe.EdgeOfEternitiesSet
 import com.wingedsheep.mtg.sets.definitions.fdn.FoundationsSet
 import com.wingedsheep.mtg.sets.definitions.fin.FinalFantasySet
+import com.wingedsheep.mtg.sets.definitions.inr.InnistradRemasteredSet
 import com.wingedsheep.mtg.sets.definitions.inv.InvasionSet
 import com.wingedsheep.mtg.sets.definitions.mid.InnistradMidnightHuntSet
 import com.wingedsheep.mtg.sets.definitions.vow.InnistradCrimsonVowSet
@@ -49,6 +50,7 @@ object MtgSetCatalog {
         DominariaUnitedSet,
         PhyrexiaAllWillBeOneSet,
         BrothersWarSet,
+        InnistradRemasteredSet,
         InnistradMidnightHuntSet,
         InnistradCrimsonVowSet,
         MarchOfTheMachineSet,

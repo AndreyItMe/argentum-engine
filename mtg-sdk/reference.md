@@ -814,7 +814,7 @@ constructors.
 
 ### Raw DynamicAmount types
 
-- `DynamicAmount.XValue` / `DynamicAmount.Fixed(n)` / `DynamicAmount.YourLifeTotal`
+- `DynamicAmount.XValue` / `DynamicAmount.Fixed(n)` / `DynamicAmount.YourLifeTotal` / `DynamicAmount.TotalManaSpent` (total mana paid to cast current spell — for "where X is the mana spent" effects)
 - `DynamicAmount.SacrificedPermanentPower` / `.SacrificedPermanentToughness`
 - `DynamicAmount.SourcePower` / `.SourceToughness` / `.TriggerDamageAmount` / `.TriggerLifeGainAmount` / `.LastKnownCounterCount`
 - `DynamicAmount.ColorsAmongPermanentsYouControl` / `.CardTypesInAllGraveyards` / `.CardTypesInLinkedExile`
