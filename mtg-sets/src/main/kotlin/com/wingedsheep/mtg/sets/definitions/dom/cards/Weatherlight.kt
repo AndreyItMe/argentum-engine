@@ -38,7 +38,7 @@ val Weatherlight = card("Weatherlight") {
 
     keywords(Keyword.FLYING)
 
-    keywordAbility(KeywordAbility.Crew(3))
+    keywordAbility(KeywordAbility.Numeric(Keyword.CREW, 3))
 
     triggeredAbility {
         trigger = Triggers.DealsCombatDamageToPlayer

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * Printed Toxic N (Rule 702.164). Seeded at game initialization from
- * `KeywordAbility.Toxic` on the card definition. The state projector emits
+ * `KeywordAbility.Numeric(Keyword.TOXIC, n)` on the card definition. The state projector emits
  * `TOXIC_<amount>` into projected keywords so combat damage can read the
  * total toxic value (printed + granted) from a single source of truth.
  */

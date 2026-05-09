@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.one.cards
 
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
@@ -32,7 +33,7 @@ val SkrelvDefectorMite = card("Skrelv, Defector Mite") {
         "Skrelv can't block.\n" +
         "{W/P}, {T}: Choose a color. Another target creature you control gains toxic 1 and hexproof from that color until end of turn. It can't be blocked by creatures of that color this turn. ({W/P} can be paid with either {W} or 2 life.)"
 
-    keywordAbility(KeywordAbility.Toxic(1))
+    keywordAbility(KeywordAbility.Numeric(Keyword.TOXIC, 1))
 
     staticAbility {
         ability = CantBlock()

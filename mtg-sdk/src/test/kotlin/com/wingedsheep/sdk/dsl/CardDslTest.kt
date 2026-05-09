@@ -197,12 +197,14 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Eldrazi"
                 power = 10
                 toughness = 10
-                keywordAbility(KeywordAbility.Annihilator(6))
+                keywordAbility(KeywordAbility.Numeric(Keyword.ANNIHILATOR, 6))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Annihilator>()
-            (creature.keywordAbilities[0] as KeywordAbility.Annihilator).count shouldBe 6
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Numeric>()
+            val annihilator = creature.keywordAbilities[0] as KeywordAbility.Numeric
+            annihilator.keyword shouldBe Keyword.ANNIHILATOR
+            annihilator.n shouldBe 6
             creature.keywordAbilities[0].description shouldBe "Annihilator 6"
         }
 
@@ -232,12 +234,14 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Human Samurai"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.Bushido(2))
+                keywordAbility(KeywordAbility.Numeric(Keyword.BUSHIDO, 2))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Bushido>()
-            (creature.keywordAbilities[0] as KeywordAbility.Bushido).count shouldBe 2
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Numeric>()
+            val bushido = creature.keywordAbilities[0] as KeywordAbility.Numeric
+            bushido.keyword shouldBe Keyword.BUSHIDO
+            bushido.n shouldBe 2
             creature.keywordAbilities[0].description shouldBe "Bushido 2"
         }
 
@@ -247,12 +251,14 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Artifact Creature — Construct"
                 power = 0
                 toughness = 0
-                keywordAbility(KeywordAbility.Modular(1))
+                keywordAbility(KeywordAbility.Numeric(Keyword.MODULAR, 1))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Modular>()
-            (creature.keywordAbilities[0] as KeywordAbility.Modular).count shouldBe 1
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Numeric>()
+            val modular = creature.keywordAbilities[0] as KeywordAbility.Numeric
+            modular.keyword shouldBe Keyword.MODULAR
+            modular.n shouldBe 1
             creature.keywordAbilities[0].description shouldBe "Modular 1"
         }
 
@@ -262,12 +268,14 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Creature — Human Assassin"
                 power = 2
                 toughness = 2
-                keywordAbility(KeywordAbility.Afflict(3))
+                keywordAbility(KeywordAbility.Numeric(Keyword.AFFLICT, 3))
             }
 
             creature.keywordAbilities shouldHaveSize 1
-            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Afflict>()
-            (creature.keywordAbilities[0] as KeywordAbility.Afflict).count shouldBe 3
+            creature.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Numeric>()
+            val afflict = creature.keywordAbilities[0] as KeywordAbility.Numeric
+            afflict.keyword shouldBe Keyword.AFFLICT
+            afflict.n shouldBe 3
             creature.keywordAbilities[0].description shouldBe "Afflict 3"
         }
 
@@ -278,13 +286,15 @@ class CardDslTest : DescribeSpec({
                 power = 4
                 toughness = 4
                 keywords(Keyword.FLYING, Keyword.VIGILANCE)
-                keywordAbility(KeywordAbility.Crew(3))
+                keywordAbility(KeywordAbility.Numeric(Keyword.CREW, 3))
             }
 
             vehicle.typeLine.subtypes shouldContain Subtype.VEHICLE
             vehicle.keywordAbilities shouldHaveSize 1
-            vehicle.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Crew>()
-            (vehicle.keywordAbilities[0] as KeywordAbility.Crew).power shouldBe 3
+            vehicle.keywordAbilities[0].shouldBeInstanceOf<KeywordAbility.Numeric>()
+            val crew = vehicle.keywordAbilities[0] as KeywordAbility.Numeric
+            crew.keyword shouldBe Keyword.CREW
+            crew.n shouldBe 3
             vehicle.keywordAbilities[0].description shouldBe "Crew 3"
         }
 

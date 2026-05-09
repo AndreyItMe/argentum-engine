@@ -14,6 +14,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.ProtectionScope
 
@@ -311,8 +312,9 @@ class GameInitializer(
         // Toxic N (702.164). Multiple instances stack per Rule 702.164b — sum across
         // any printed Toxic abilities so the projector can emit a single TOXIC_<n>.
         val toxicAmount = cardDef.keywordAbilities
-            .filterIsInstance<KeywordAbility.Toxic>()
-            .sumOf { it.count }
+            .filterIsInstance<KeywordAbility.Numeric>()
+            .filter { it.keyword == Keyword.TOXIC }
+            .sumOf { it.n }
         if (toxicAmount > 0) {
             container = container.with(ToxicComponent(toxicAmount))
         }

@@ -15,6 +15,7 @@ import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
 import com.wingedsheep.sdk.model.CharacteristicValue
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -62,8 +63,9 @@ class CrewVehicleHandler(
         val cardDef = cardRegistry.getCard(vehicleCard.cardDefinitionId)
             ?: return "Card definition not found"
 
-        val crewAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Crew>()
-            .firstOrNull()
+        val crewAbility = cardDef.keywordAbilities
+            .filterIsInstance<KeywordAbility.Numeric>()
+            .firstOrNull { it.keyword == Keyword.CREW }
             ?: return "This permanent doesn't have crew"
 
         if (action.crewCreatures.isEmpty()) {
@@ -105,8 +107,8 @@ class CrewVehicleHandler(
             totalPower += power
         }
 
-        if (totalPower < crewAbility.power) {
-            return "Total power ($totalPower) is less than crew requirement (${crewAbility.power})"
+        if (totalPower < crewAbility.n) {
+            return "Total power ($totalPower) is less than crew requirement (${crewAbility.n})"
         }
 
         return null

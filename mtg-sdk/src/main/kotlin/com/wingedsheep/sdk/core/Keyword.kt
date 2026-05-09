@@ -68,6 +68,20 @@ enum class Keyword(val displayName: String) {
     WITHER("Wither"),
     TOXIC("Toxic"),
 
+    // ── Numeric (parameterized by N) ──────────────────────
+    ANNIHILATOR("Annihilator"),
+    BUSHIDO("Bushido"),
+    RAMPAGE("Rampage"),
+    ABSORB("Absorb"),
+    AFFLICT("Afflict"),
+    CREW("Crew"),
+    MODULAR("Modular"),
+    FADING("Fading"),
+    VANISHING("Vanishing"),
+    RENOWN("Renown"),
+    FABRICATE("Fabricate"),
+    TRIBUTE("Tribute"),
+
     // ── Ability words (display prefix, no uniform mechanic) ──
     /**
      * Eerie (Duskmourn: House of Horror).

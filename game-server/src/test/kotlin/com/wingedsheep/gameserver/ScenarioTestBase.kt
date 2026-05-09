@@ -53,6 +53,7 @@ import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.ProtectionScope
 import io.kotest.core.spec.style.FunSpec
@@ -405,8 +406,9 @@ abstract class ScenarioTestBase : FunSpec() {
 
             // Attach ToxicComponent for cards with printed Toxic N (sums per Rule 702.164b)
             val toxicAmount = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Toxic>()
-                .sumOf { it.count }
+                .filterIsInstance<KeywordAbility.Numeric>()
+                .filter { it.keyword == Keyword.TOXIC }
+                .sumOf { it.n }
             if (toxicAmount > 0) {
                 container = container.with(ToxicComponent(toxicAmount))
             }

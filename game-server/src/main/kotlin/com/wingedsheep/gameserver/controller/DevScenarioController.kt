@@ -13,6 +13,7 @@ import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComp
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.*
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
@@ -829,8 +830,9 @@ class DevScenarioController(
 
             // Add ToxicComponent for cards with printed Toxic N (sums per Rule 702.164b)
             val toxicAmount = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Toxic>()
-                .sumOf { it.count }
+                .filterIsInstance<KeywordAbility.Numeric>()
+                .filter { it.keyword == Keyword.TOXIC }
+                .sumOf { it.n }
             if (toxicAmount > 0) {
                 container = container.with(ToxicComponent(toxicAmount))
             }

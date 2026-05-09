@@ -16,15 +16,15 @@ import kotlinx.serialization.Serializable
  * Parameterized keywords include:
  * - Ward with a cost (mana, life, discard)
  * - Protection from a quality (color, card type)
- * - Annihilator, Bushido, Rampage with a number
- * - Crew, Fabricate, Modular, Renown with a number
+ * - Numeric N (Annihilator, Bushido, Rampage, Toxic, Crew, Modular, Fading,
+ *   Vanishing, Renown, Fabricate, Tribute, Absorb, Afflict)
  *
  * Usage:
  * ```kotlin
  * KeywordAbility.Simple(Keyword.FLYING)
  * KeywordAbility.Ward(WardCost.Mana("{2}"))
  * KeywordAbility.Protection(ProtectionScope.Color(Color.BLUE))
- * KeywordAbility.Annihilator(2)
+ * KeywordAbility.Numeric(Keyword.ANNIHILATOR, 2)
  * ```
  */
 @Serializable
@@ -131,34 +131,20 @@ sealed interface KeywordAbility {
     // =========================================================================
 
     /**
-     * Annihilator N.
-     * "Annihilator 2" - Whenever this creature attacks, defending player sacrifices 2 permanents.
+     * A keyword parameterized by a single integer. Covers Annihilator, Bushido,
+     * Rampage, Absorb, Afflict, Toxic, Crew, Modular, Fading, Vanishing, Renown,
+     * Fabricate, Tribute, etc. The display text is "<keyword> <n>" using
+     * [Keyword.displayName].
+     *
+     * Examples:
+     * - `Numeric(Keyword.ANNIHILATOR, 2)` — "Annihilator 2"
+     * - `Numeric(Keyword.TOXIC, 1)`       — "Toxic 1"
+     * - `Numeric(Keyword.CREW, 3)`        — "Crew 3"
      */
-    @SerialName("Annihilator")
+    @SerialName("Numeric")
     @Serializable
-    data class Annihilator(val count: Int) : KeywordAbility {
-        override val description: String = "Annihilator $count"
-    }
-
-    /**
-     * Bushido N.
-     * "Bushido 2" - Whenever this creature blocks or becomes blocked, it gets +2/+2 until end of turn.
-     */
-    @SerialName("Bushido")
-    @Serializable
-    data class Bushido(val count: Int) : KeywordAbility {
-        override val description: String = "Bushido $count"
-    }
-
-    /**
-     * Rampage N.
-     * "Rampage 2" - Whenever this creature becomes blocked, it gets +2/+2 until end of turn
-     * for each creature blocking it beyond the first.
-     */
-    @SerialName("Rampage")
-    @Serializable
-    data class Rampage(val count: Int) : KeywordAbility {
-        override val description: String = "Rampage $count"
+    data class Numeric(override val keyword: Keyword, val n: Int) : KeywordAbility {
+        override val description: String = "${keyword.displayName} $n"
     }
 
     /**
@@ -170,121 +156,6 @@ sealed interface KeywordAbility {
     @Serializable
     data object Flanking : KeywordAbility {
         override val description: String = "Flanking"
-    }
-
-    /**
-     * Absorb N.
-     * "Absorb 2" - If a source would deal damage to this creature, prevent 2 of that damage.
-     */
-    @SerialName("Absorb")
-    @Serializable
-    data class Absorb(val count: Int) : KeywordAbility {
-        override val description: String = "Absorb $count"
-    }
-
-    /**
-     * Afflict N.
-     * "Afflict 2" - Whenever this creature becomes blocked, defending player loses 2 life.
-     */
-    @SerialName("Afflict")
-    @Serializable
-    data class Afflict(val count: Int) : KeywordAbility {
-        override val description: String = "Afflict $count"
-    }
-
-    /**
-     * Toxic N.
-     * "Toxic 1" - Players dealt combat damage by this creature also get N poison counters.
-     */
-    @SerialName("Toxic")
-    @Serializable
-    data class Toxic(val count: Int) : KeywordAbility {
-        override val keyword: Keyword = Keyword.TOXIC
-        override val description: String = "Toxic $count"
-    }
-
-    // =========================================================================
-    // Vehicle/Artifact Keywords
-    // =========================================================================
-
-    /**
-     * Crew N.
-     * "Crew 3" - Tap any number of creatures you control with total power 3 or more:
-     * This Vehicle becomes an artifact creature until end of turn.
-     */
-    @SerialName("Crew")
-    @Serializable
-    data class Crew(val power: Int) : KeywordAbility {
-        override val description: String = "Crew $power"
-    }
-
-    /**
-     * Modular N.
-     * "Modular 2" - This creature enters the battlefield with 2 +1/+1 counters on it.
-     * When it dies, you may put its +1/+1 counters on target artifact creature.
-     */
-    @SerialName("Modular")
-    @Serializable
-    data class Modular(val count: Int) : KeywordAbility {
-        override val description: String = "Modular $count"
-    }
-
-    // =========================================================================
-    // Counter-Based Keywords
-    // =========================================================================
-
-    /**
-     * Fading N.
-     * "Fading 3" - This permanent enters the battlefield with 3 fade counters on it.
-     * At the beginning of your upkeep, remove a fade counter. If you can't, sacrifice it.
-     */
-    @SerialName("Fading")
-    @Serializable
-    data class Fading(val count: Int) : KeywordAbility {
-        override val description: String = "Fading $count"
-    }
-
-    /**
-     * Vanishing N.
-     * "Vanishing 3" - This permanent enters the battlefield with 3 time counters on it.
-     * At the beginning of your upkeep, remove a time counter. When the last is removed, sacrifice it.
-     */
-    @SerialName("Vanishing")
-    @Serializable
-    data class Vanishing(val count: Int) : KeywordAbility {
-        override val description: String = "Vanishing $count"
-    }
-
-    /**
-     * Renown N.
-     * "Renown 2" - When this creature deals combat damage to a player, if it isn't renowned,
-     * put 2 +1/+1 counters on it and it becomes renowned.
-     */
-    @SerialName("Renown")
-    @Serializable
-    data class Renown(val count: Int) : KeywordAbility {
-        override val description: String = "Renown $count"
-    }
-
-    /**
-     * Fabricate N.
-     * "Fabricate 2" - When this creature enters the battlefield, put 2 +1/+1 counters on it,
-     * or create 2 1/1 colorless Servo artifact creature tokens.
-     */
-    @SerialName("Fabricate")
-    @Serializable
-    data class Fabricate(val count: Int) : KeywordAbility {
-        override val description: String = "Fabricate $count"
-    }
-
-    /**
-     * Tribute N.
-     * "Tribute 3" - As this creature enters the battlefield, an opponent may put 3 +1/+1 counters on it.
-     */
-    @SerialName("Tribute")
-    @Serializable
-    data class Tribute(val count: Int) : KeywordAbility {
-        override val description: String = "Tribute $count"
     }
 
     // =========================================================================
@@ -621,6 +492,21 @@ sealed interface KeywordAbility {
         /**
          * Create Toxic with a numeric value.
          */
-        fun toxic(count: Int): KeywordAbility = Toxic(count)
+        fun toxic(count: Int): KeywordAbility = Numeric(Keyword.TOXIC, count)
+
+        // Numeric-keyword shorthands. Each `Keyword.<X>` numeric ability is just
+        // `Numeric(Keyword.<X>, n)`; these helpers exist purely for readability.
+        fun annihilator(n: Int): KeywordAbility = Numeric(Keyword.ANNIHILATOR, n)
+        fun bushido(n: Int): KeywordAbility = Numeric(Keyword.BUSHIDO, n)
+        fun rampage(n: Int): KeywordAbility = Numeric(Keyword.RAMPAGE, n)
+        fun absorb(n: Int): KeywordAbility = Numeric(Keyword.ABSORB, n)
+        fun afflict(n: Int): KeywordAbility = Numeric(Keyword.AFFLICT, n)
+        fun crew(n: Int): KeywordAbility = Numeric(Keyword.CREW, n)
+        fun modular(n: Int): KeywordAbility = Numeric(Keyword.MODULAR, n)
+        fun fading(n: Int): KeywordAbility = Numeric(Keyword.FADING, n)
+        fun vanishing(n: Int): KeywordAbility = Numeric(Keyword.VANISHING, n)
+        fun renown(n: Int): KeywordAbility = Numeric(Keyword.RENOWN, n)
+        fun fabricate(n: Int): KeywordAbility = Numeric(Keyword.FABRICATE, n)
+        fun tribute(n: Int): KeywordAbility = Numeric(Keyword.TRIBUTE, n)
     }
 }

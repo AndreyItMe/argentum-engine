@@ -7,6 +7,7 @@ import com.wingedsheep.engine.legalactions.EnumerationContext
 import com.wingedsheep.engine.legalactions.LegalAction
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.KeywordAbility
 
 /**
@@ -30,8 +31,8 @@ class CrewEnumerator : ActionEnumerator {
             val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
 
             val crewAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Crew>()
-                .firstOrNull() ?: continue
+                .filterIsInstance<KeywordAbility.Numeric>()
+                .firstOrNull { it.keyword == Keyword.CREW } ?: continue
 
             // Find all untapped creatures controlled by the player that can crew
             val validCrewCreatures = mutableListOf<CrewCreatureData>()
@@ -48,7 +49,7 @@ class CrewEnumerator : ActionEnumerator {
                 totalAvailablePower += power
             }
 
-            val canAfford = totalAvailablePower >= crewAbility.power
+            val canAfford = totalAvailablePower >= crewAbility.n
             result.add(
                 LegalAction(
                     actionType = "CrewVehicle",
@@ -56,7 +57,7 @@ class CrewEnumerator : ActionEnumerator {
                     action = CrewVehicle(playerId, entityId, emptyList()),
                     affordable = canAfford,
                     hasCrew = true,
-                    crewPower = crewAbility.power,
+                    crewPower = crewAbility.n,
                     crewCreatures = validCrewCreatures
                 )
             )

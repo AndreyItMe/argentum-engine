@@ -782,7 +782,7 @@ internal class CombatDamageManager(
      * keyword form (see [com.wingedsheep.engine.state.components.identity.ToxicComponent]
      * + [com.wingedsheep.engine.mechanics.layers.StateProjector]). Sums per-instance counts
      * across all `TOXIC_<n>` strings. A bare `TOXIC` keyword without a count contributes
-     * zero, by design — only `KeywordAbility.Toxic(n)` (or a granted toxic effect) grants
+     * zero, by design — only `KeywordAbility.Numeric(Keyword.TOXIC, n)` (or a granted toxic effect) grants
      * combat poison.
      */
     private fun getToxicAmount(state: GameState, projected: ProjectedState, sourceId: EntityId): Int {
