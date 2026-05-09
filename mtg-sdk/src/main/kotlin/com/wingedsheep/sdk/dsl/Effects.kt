@@ -14,6 +14,8 @@ import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
+import com.wingedsheep.sdk.scripting.effects.LandControllerScope
 import com.wingedsheep.sdk.scripting.effects.AddOneManaOfEachColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
@@ -941,6 +943,18 @@ object Effects {
      */
     fun AddOneManaOfEachColorAmong(filter: GameObjectFilter, restriction: ManaRestriction? = null): Effect =
         AddOneManaOfEachColorAmongEffect(filter, restriction)
+
+    /**
+     * Add one mana of any color that a land in the given scope could produce.
+     * Used for cards like Fellwar Stone (OPPONENTS), Exotic Orchard (OPPONENTS),
+     * Reflecting Pool (YOU). The available colors are derived from the union of all
+     * colored mana that any matching land's mana abilities could produce, regardless of
+     * whether those lands are tapped or whether their activation costs could be paid.
+     */
+    fun AddManaOfColorLandsCouldProduce(
+        scope: LandControllerScope,
+        restriction: ManaRestriction? = null
+    ): Effect = AddManaOfColorLandsCouldProduceEffect(scope, restriction)
 
     // =========================================================================
     // Token Effects

@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 2 / 312
+**Implemented:** 3 / 312
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 24    | 0    |
 | Green      | 62    | 1    |
 | Multicolor | 40    | 0    |
-| Colorless  | 33    | 0    |
+| Colorless  | 33    | 1    |
 | Land       | 69    | 1    |
 
 ---
@@ -101,7 +101,7 @@
 - [ ] Explore
 - [ ] Faeburrow Elder
 - [ ] Farseek
-- [ ] Fellwar Stone
+- [x] Fellwar Stone
 - [ ] Ferrous Lake
 - [ ] Fisher's Talent
 - [ ] Flooded Grove

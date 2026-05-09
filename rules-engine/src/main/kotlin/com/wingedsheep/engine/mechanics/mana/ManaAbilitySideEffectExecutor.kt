@@ -18,6 +18,7 @@ import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 
@@ -134,6 +135,7 @@ class ManaAbilitySideEffectExecutor(
         is AddAnyColorManaEffect,
         is AddAnyColorManaSpendOnChosenTypeEffect,
         is AddManaOfColorAmongEffect,
+        is AddManaOfColorLandsCouldProduceEffect,
         is AddManaOfChosenColorEffect -> color != null  // any non-null color
         is AddDynamicManaEffect -> color != null && color in effect.allowedColors
         else -> false
@@ -154,6 +156,7 @@ class ManaAbilitySideEffectExecutor(
         effect is AddAnyColorManaEffect ||
         effect is AddAnyColorManaSpendOnChosenTypeEffect ||
         effect is AddManaOfColorAmongEffect ||
+        effect is AddManaOfColorLandsCouldProduceEffect ||
         effect is AddManaOfChosenColorEffect ||
         effect is AddDynamicManaEffect
 

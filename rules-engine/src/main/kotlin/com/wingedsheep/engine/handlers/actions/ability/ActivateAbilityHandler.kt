@@ -58,6 +58,7 @@ import com.wingedsheep.sdk.scripting.effects.AddManaOfChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.AdditionalManaOnLandTap
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
@@ -719,7 +720,8 @@ class ActivateAbilityHandler(
                         null
                     }
                 }
-                is AddManaOfColorAmongEffect -> {
+                is AddManaOfColorAmongEffect,
+                is AddManaOfColorLandsCouldProduceEffect -> {
                     // Determine what color was actually added by comparing mana pools
                     val oldPool = state.getEntity(action.playerId)?.get<com.wingedsheep.engine.state.components.player.ManaPoolComponent>()
                     val newPool = currentState.getEntity(action.playerId)?.get<com.wingedsheep.engine.state.components.player.ManaPoolComponent>()

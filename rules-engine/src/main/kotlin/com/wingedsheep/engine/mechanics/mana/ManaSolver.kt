@@ -31,6 +31,8 @@ import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
+import com.wingedsheep.sdk.scripting.effects.LandControllerScope
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import com.wingedsheep.sdk.scripting.ActivatedAbility
@@ -645,6 +647,7 @@ class ManaSolver(
                             it is AddAnyColorManaEffect ||
                             it is AddAnyColorManaSpendOnChosenTypeEffect ||
                             it is AddManaOfColorAmongEffect ||
+                            it is AddManaOfColorLandsCouldProduceEffect ||
                             it is AddManaOfChosenColorEffect ||
                             it is AddDynamicManaEffect
                     } ?: effect
@@ -698,6 +701,27 @@ class ManaSolver(
                             }
                         }
                         if (combinedColors.isNotEmpty()) {
+                            maxManaAmount = maxOf(maxManaAmount, 1)
+                        }
+                        effect.restriction
+                    }
+                    is AddManaOfColorLandsCouldProduceEffect -> {
+                        val projected = state.projectedState
+                        val targetPlayers: Set<EntityId> = when (effect.scope) {
+                            LandControllerScope.YOU -> setOf(playerId)
+                            LandControllerScope.OPPONENTS -> state.turnOrder.filter { it != playerId }.toSet()
+                            LandControllerScope.ANY -> state.turnOrder.toSet()
+                        }
+                        val landIds = state.getBattlefield().filter { permId ->
+                            val c = state.getEntity(permId) ?: return@filter false
+                            val cc = c.get<CardComponent>() ?: return@filter false
+                            cc.typeLine.isLand && projected.getController(permId) in targetPlayers
+                        }
+                        val producible = LandManaColorInspector
+                            .colorsLandsCouldProduce(state, projected, landIds, cardRegistry)
+                        combinedColors.addAll(producible)
+                        effectColors.addAll(producible)
+                        if (producible.isNotEmpty()) {
                             maxManaAmount = maxOf(maxManaAmount, 1)
                         }
                         effect.restriction

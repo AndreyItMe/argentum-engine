@@ -26,6 +26,7 @@ import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaSpendOnChosenTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -255,6 +256,7 @@ class ManaAbilityEnumerator : ActionEnumerator {
                         requiresManaColorChoice = ability.effect is AddAnyColorManaEffect ||
                             ability.effect is AddAnyColorManaSpendOnChosenTypeEffect ||
                             ability.effect is AddManaOfColorAmongEffect ||
+                            ability.effect is AddManaOfColorLandsCouldProduceEffect ||
                             (ability.effect is CompositeEffect &&
                                 (ability.effect as CompositeEffect).effects.any {
                                     it is AddAnyColorManaEffect || it is AddAnyColorManaSpendOnChosenTypeEffect

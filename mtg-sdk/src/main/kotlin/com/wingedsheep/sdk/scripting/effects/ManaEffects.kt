@@ -215,6 +215,52 @@ data class AddManaOfColorAmongEffect(
 }
 
 /**
+ * Scope used by [AddManaOfColorLandsCouldProduceEffect] to determine which lands' producible
+ * colors are available.
+ */
+@Serializable
+enum class LandControllerScope {
+    /** Lands controlled by an opponent of the source's controller (e.g., Fellwar Stone, Exotic Orchard). */
+    OPPONENTS,
+    /** Lands controlled by the source's controller (e.g., Reflecting Pool). */
+    YOU,
+    /** Lands controlled by any player. */
+    ANY,
+}
+
+/**
+ * Add one mana of any color that a land in the given scope could produce.
+ *
+ * The available colors are the union of all colors that any matching land's mana abilities
+ * could produce, regardless of whether the lands are tapped or whether any activation cost
+ * could currently be paid (CR 106.7 / Fellwar Stone rulings). Colorless mana production is
+ * ignored — Fellwar Stone-style abilities produce only colored mana.
+ *
+ * Used for cards like Fellwar Stone (OPPONENTS), Exotic Orchard (OPPONENTS), Reflecting Pool (YOU).
+ *
+ * @property scope Which players' lands to inspect.
+ */
+@SerialName("AddManaOfColorLandsCouldProduce")
+@Serializable
+data class AddManaOfColorLandsCouldProduceEffect(
+    val scope: LandControllerScope,
+    val restriction: ManaRestriction? = null
+) : Effect {
+    override val description: String = buildString {
+        append(
+            when (scope) {
+                LandControllerScope.OPPONENTS -> "Add one mana of any color that a land an opponent controls could produce"
+                LandControllerScope.YOU -> "Add one mana of any color that a land you control could produce"
+                LandControllerScope.ANY -> "Add one mana of any color that a land could produce"
+            }
+        )
+        if (restriction != null) append(". ${restriction.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Add one mana of each color found among permanents matching a filter.
  * "{T}: For each color among permanents you control, add one mana of that color."
  *

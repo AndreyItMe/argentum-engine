@@ -134,6 +134,7 @@ constructors.
 - `Effects.AddAnyColorManaSpendOnChosenType(amount = 1)` — produces one mana of any color restricted to casting/activating sources of the source's chosen creature type (Eclipsed Realms)
 - `Effects.AddManaOfColorAmong(filter)` — add one mana of any color among matching permanents (Mox Amber)
 - `Effects.AddOneManaOfEachColorAmong(filter)` — add one mana of EACH color among matching permanents (Bloom Tender / Vivid mana ability)
+- `Effects.AddManaOfColorLandsCouldProduce(scope)` — add one mana of any color a land in `scope` could produce (Fellwar Stone uses `LandControllerScope.OPPONENTS`; Reflecting Pool uses `YOU`). Inspects the lands' mana abilities, ignores activation costs and tapped state, and excludes colorless production.
 
 ### Tokens
 
@@ -363,6 +364,7 @@ constructors.
 | `AddDynamicManaEffect`   | `amountSource: DynamicAmount, allowedColors` | Dynamic mana       |
 | `AddManaOfColorAmongEffect` | `filter: GameObjectFilter`                | Add mana of color among matching permanents (Mox Amber) |
 | `AddOneManaOfEachColorAmongEffect` | `filter: GameObjectFilter`         | Add one mana of EACH color found among matching permanents (Bloom Tender) |
+| `AddManaOfColorLandsCouldProduceEffect` | `scope: LandControllerScope`  | Add one mana of any color a land in scope could produce (Fellwar Stone) |
 
 ### Tokens
 
