@@ -2,17 +2,17 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 131 / 261
+**Implemented:** 136 / 261
 
 ---
 
 - [x] Adagia, Windswept Bastion
 - [x] All-Fates Scroll
-- [ ] All-Fates Stalker
+- [x] All-Fates Stalker
 - [x] Alpharael, Dreaming Acolyte
 - [ ] Alpharael, Stonechosen
 - [x] Annul
-- [ ] Anticausal Vestige
+- [x] Anticausal Vestige
 - [x] Archenemy's Charm
 - [ ] Astelli Reclaimer
 - [x] Atmospheric Greenhouse
@@ -143,7 +143,7 @@
 - [x] Memorial Team Leader
 - [ ] Memorial Vault
 - [ ] Mental Modulation
-- [ ] Mightform Harmonizer
+- [x] Mightform Harmonizer
 - [ ] Mm'menon, the Right Hand
 - [x] Mm'menon, Uthros Exile
 - [x] Molecular Modifier
@@ -205,7 +205,7 @@
 - [ ] Specimen Freighter
 - [x] Squire's Lightblade
 - [x] Starbreach Whale
-- [ ] Starfield Shepherd
+- [x] Starfield Shepherd
 - [ ] Starfield Vocalist
 - [x] Starfighter Pilot
 - [ ] Starport Security
@@ -260,7 +260,7 @@
 - [ ] Weapons Manufacturing
 - [x] Wedgelight Rammer
 - [x] Weftblade Enhancer
-- [ ] Weftstalker Ardent
+- [x] Weftstalker Ardent
 - [ ] Weftwalking
 - [x] Wurmwall Sweeper
 - [ ] Xu-Ifit, Osteoharmonist
