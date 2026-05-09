@@ -1067,8 +1067,7 @@ Set via `staticAbility { ability = ... }`:
 - `CantAttackUnless(condition: Condition, target)` — conditional attack restriction (use `Conditions.ControlMoreCreatures`, `Conditions.OpponentControlsLandType(landType)`)
 - `CantBlockUnless(condition: Condition, target)` — conditional block restriction (uses any `Condition`)
 - `CantBlockCreaturesWithGreaterPower(target)`
-- `CanOnlyBlockCreaturesWithKeyword(keyword, target)`
-- `CanOnlyBlockCreaturesWith(blockerFilter: GameObjectFilter, filter: GroupFilter)` — can block only creatures matching filter (e.g., Spirit token: "can't block non-Spirit creatures")
+- `CanOnlyBlockCreaturesWith(blockerFilter: GameObjectFilter, filter: GroupFilter)` — can block only creatures matching filter (e.g., Cloud Spirit: flying-only blockers, Spirit token: "can't block non-Spirit creatures")
 - `CanBlockAnyNumber(target)` — can block any number of creatures
 - `CanBlockAdditionalForCreatureGroup(count, filter)` — creatures matching filter can block an additional N creatures (cumulative)
 

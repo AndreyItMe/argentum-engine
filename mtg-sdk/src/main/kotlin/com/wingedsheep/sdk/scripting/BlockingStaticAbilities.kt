@@ -1,6 +1,5 @@
 package com.wingedsheep.sdk.scripting
 
-import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
@@ -59,20 +58,6 @@ data class CantBeBlockedExceptBy(
     val filter: GroupFilter = GroupFilter.source()
 ) : StaticAbility {
     override val description: String = "can't be blocked except by ${blockerFilter.description}"
-    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
-}
-
-/**
- * This creature can only block creatures with a specific keyword.
- * Used for cards like Cloud Spirit: "can block only creatures with flying."
- */
-@SerialName("CanOnlyBlockCreaturesWithKeyword")
-@Serializable
-data class CanOnlyBlockCreaturesWithKeyword(
-    val keyword: Keyword,
-    val filter: GroupFilter = GroupFilter.source()
-) : StaticAbility {
-    override val description: String = "can block only creatures with ${keyword.displayName.lowercase()}"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 

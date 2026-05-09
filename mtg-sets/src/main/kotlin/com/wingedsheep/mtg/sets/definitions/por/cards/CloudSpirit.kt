@@ -3,7 +3,8 @@ package com.wingedsheep.mtg.sets.definitions.por.cards
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWithKeyword
+import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWith
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 
 /**
  * Cloud Spirit
@@ -23,7 +24,9 @@ val CloudSpirit = card("Cloud Spirit") {
     keywords(Keyword.FLYING)
 
     staticAbility {
-        ability = CanOnlyBlockCreaturesWithKeyword(Keyword.FLYING)
+        ability = CanOnlyBlockCreaturesWith(
+            blockerFilter = GameObjectFilter.Creature.withKeyword(Keyword.FLYING)
+        )
     }
 
     metadata {

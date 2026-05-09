@@ -11,7 +11,6 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWithKeyword
 import com.wingedsheep.sdk.scripting.CantBeBlockedBy
 import com.wingedsheep.sdk.scripting.CantBlockCreaturesWithGreaterPower
 
@@ -110,16 +109,25 @@ object CombatMath {
             }
 
             // Blocker-side restrictions (e.g., "can block only creatures with flying")
+            val canOnlyBlockFilters = projected.getCanOnlyBlockCreaturesWithFilters(blocker)
+            if (canOnlyBlockFilters.isNotEmpty()) {
+                val blockerController = projected.getController(blocker)
+                if (blockerController != null) {
+                    val predicateEvaluator = PredicateEvaluator()
+                    val ctx = PredicateContext(controllerId = blockerController, sourceId = blocker)
+                    for (filter in canOnlyBlockFilters) {
+                        if (!predicateEvaluator.matchesWithProjection(state, projected, attacker, filter, ctx)) {
+                            return false
+                        }
+                    }
+                }
+            }
             val blockerCard = state.getEntity(blocker)?.get<CardComponent>()
             if (blockerCard != null) {
                 val cardDef = cardRegistry.getCard(blockerCard.cardDefinitionId)
                 if (cardDef != null) {
                     for (ability in cardDef.staticAbilities) {
                         when (ability) {
-                            is CanOnlyBlockCreaturesWithKeyword -> {
-                                if (ability.filter.scope is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self &&
-                                    !projected.hasKeyword(attacker, ability.keyword)) return false
-                            }
                             is CantBlockCreaturesWithGreaterPower -> {
                                 if (ability.filter.scope is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self) {
                                     val aPower = projected.getPower(attacker) ?: 0

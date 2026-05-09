@@ -340,29 +340,6 @@ class ProtectionFromSubtypeRule : BlockEvasionRule {
 }
 
 /**
- * CanOnlyBlockCreaturesWithKeyword: Blocker can only block creatures with a specific keyword
- * (e.g. Cloud Pirates can block only creatures with flying).
- */
-class CanOnlyBlockCreaturesWithKeywordRule : BlockEvasionRule {
-    override fun check(ctx: BlockCheckContext): String? {
-        // Face-down creatures have no abilities — restriction doesn't apply
-        if (ctx.state.getEntity(ctx.blockerId)?.has<FaceDownComponent>() == true) return null
-        val blockerCard = ctx.state.getEntity(ctx.blockerId)?.get<CardComponent>() ?: return null
-        val cardDef = ctx.cardRegistry.getCard(blockerCard.cardDefinitionId) ?: return null
-        val restriction = cardDef.staticAbilities
-            .filterIsInstance<com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWithKeyword>().firstOrNull()
-            ?: return null
-
-        if (restriction.filter.scope !is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self) return null
-
-        if (!ctx.projected.hasKeyword(ctx.attackerId, restriction.keyword)) {
-            return "${blockerCard.name} can block only creatures with ${restriction.keyword.displayName.lowercase()}"
-        }
-        return null
-    }
-}
-
-/**
  * CanOnlyBlockCreaturesWith: Blocker can only block creatures matching a filter
  * (e.g. Realm of Koh's Spirit token: "can't block ... non-Spirit creatures").
  *
@@ -497,7 +474,6 @@ fun defaultBlockEvasionRules(
     ProtectionFromColorRule(),
     ProtectionFromSubtypeRule(),
     ProtectionFromEachOpponentRule(),
-    CanOnlyBlockCreaturesWithKeywordRule(),
     CanOnlyBlockCreaturesWithRule(predicateEvaluator),
     CantBlockCreaturesWithGreaterPowerRule()
 )
