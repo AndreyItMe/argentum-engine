@@ -38,7 +38,15 @@ data class SpellOnStackComponent(
     val manaSpentBlack: Int = 0,
     val manaSpentRed: Int = 0,
     val manaSpentGreen: Int = 0,
-    val manaSpentColorless: Int = 0
+    val manaSpentColorless: Int = 0,
+    /**
+     * For split-layout cards (CR 709), the index of the face that was cast into
+     * [com.wingedsheep.sdk.model.CardDefinition.cardFaces]. Threaded from
+     * [com.wingedsheep.engine.core.CastSpell.faceIndex] so the resolution-time handler
+     * can attach a [com.wingedsheep.engine.state.components.identity.RoomComponent] with
+     * the correct face unlocked. `null` for normal single-face cards.
+     */
+    val faceIndex: Int? = null
 ) : Component
 
 /**

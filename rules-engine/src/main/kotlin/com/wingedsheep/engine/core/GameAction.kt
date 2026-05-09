@@ -77,7 +77,15 @@ data class CastSpell(
      * exactly two distinct untapped creatures the caster controls that each share a color with
      * the spell being cast (CR 702.78). When empty, Conspire was not invoked.
      */
-    val conspiredCreatures: List<EntityId> = emptyList()
+    val conspiredCreatures: List<EntityId> = emptyList(),
+    /**
+     * Index into `cardDef.cardFaces` identifying which face of a split-layout card is being
+     * cast (CR 709.3a — only the chosen half is put on the stack and evaluated for legality).
+     * `null` for normal single-face cards. Required for SPLIT cards; the cast handler reads
+     * the face's mana cost and the resulting permanent enters the battlefield with that
+     * face's door unlocked (CR 709.5d).
+     */
+    val faceIndex: Int? = null
 ) : GameAction
 
 /**

@@ -59,6 +59,47 @@ class CastSpellEnumerator : ActionEnumerator {
                 continue
             }
 
+            // Split-layout cards (CR 709) — Phase 2 minimal handling.
+            //
+            // A split card fans out into one cast option per face (CR 709.3a — only the chosen
+            // half goes on the stack and is evaluated for legality). Each face has its own
+            // mana cost, so we emit one CastSpell action per face with `faceIndex = i` and the
+            // face's printed cost.
+            //
+            // Phase 2 does not yet support targets, modal effects, alternative costs, blight,
+            // behold, kicker, or convoke for split halves — Rooms (the only Phase 5 consumer)
+            // don't use any of them. Layouts that need this (Aftermath, Fuse, Adventure) will
+            // extend this branch when they land.
+            if (cardDef.layout == com.wingedsheep.sdk.model.CardLayout.SPLIT && cardDef.cardFaces.isNotEmpty()) {
+                val isSorceryFace = cardDef.cardFaces.all { face ->
+                    !face.typeLine.isInstant
+                }
+                if (isSorceryFace && !context.canPlaySorcerySpeed) continue
+                val cachedSources = context.availableManaSources
+                cardDef.cardFaces.forEachIndexed { faceIndex, face ->
+                    val effectiveCost = context.costCalculator
+                        .calculateEffectiveCostWithAlternativeBase(state, cardDef, face.manaCost, playerId)
+                    val canAffordFace = context.manaSolver
+                        .canPay(state, playerId, effectiveCost, precomputedSources = cachedSources)
+                    if (!canAffordFace) return@forEachIndexed
+                    val autoTapPreviewFace = if (context.skipAutoTapPreview) null else {
+                        context.manaSolver
+                            .solve(state, playerId, effectiveCost, precomputedSources = cachedSources)
+                            ?.sources?.map { it.entityId }
+                    }
+                    result.add(
+                        LegalAction(
+                            actionType = "CastSpell",
+                            description = "Cast ${face.name}",
+                            action = CastSpell(playerId, cardId, faceIndex = faceIndex),
+                            manaCostString = effectiveCost.toString(),
+                            autoTapPreview = autoTapPreviewFace,
+                        )
+                    )
+                }
+                continue
+            }
+
             // Check timing - sorcery-speed spells need main phase, empty stack, your turn
             val isInstant = cardComponent.typeLine.isInstant
             val hasFlash = cardDef.keywords.contains(Keyword.FLASH)

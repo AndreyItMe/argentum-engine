@@ -117,7 +117,8 @@ class StackResolver(
         manaSpentBlack: Int = 0,
         manaSpentRed: Int = 0,
         manaSpentGreen: Int = 0,
-        manaSpentColorless: Int = 0
+        manaSpentColorless: Int = 0,
+        faceIndex: Int? = null
     ): ExecutionResult {
         val container = state.getEntity(cardId)
             ?: return ExecutionResult.error(state, "Card not found: $cardId")
@@ -174,7 +175,8 @@ class StackResolver(
                 manaSpentBlack = manaSpentBlack,
                 manaSpentRed = manaSpentRed,
                 manaSpentGreen = manaSpentGreen,
-                manaSpentColorless = manaSpentColorless
+                manaSpentColorless = manaSpentColorless,
+                faceIndex = faceIndex
             ))
             if (effectiveTargets.isNotEmpty()) {
                 updated = updated.with(TargetsComponent(effectiveTargets, effectiveTargetRequirements))
@@ -856,6 +858,29 @@ class StackResolver(
             // Track if this permanent was cast for its evoke cost
             if (spellComponent.wasEvoked) {
                 updated = updated.with(com.wingedsheep.engine.state.components.battlefield.EvokedComponent)
+            }
+
+            // For split-layout cards (CR 709), attach a RoomComponent recording every face's
+            // unlock data and the door-state designation set. The cast face enters unlocked
+            // (709.5d); other halves are locked. Cards put on the battlefield by an effect
+            // other than casting (reanimation, Replenish, etc.) reach this code with
+            // `spellComponent.faceIndex == null` and enter with both halves locked.
+            if (cardDef != null && cardDef.layout == com.wingedsheep.sdk.model.CardLayout.SPLIT && cardDef.cardFaces.isNotEmpty()) {
+                val roomFaces = cardDef.cardFaces.map { face ->
+                    com.wingedsheep.engine.state.components.identity.RoomFace(
+                        id = com.wingedsheep.engine.state.components.identity.RoomFaceId(face.name),
+                        name = face.name,
+                        manaCost = face.manaCost,
+                    )
+                }
+                val unlockedFaceId = spellComponent.faceIndex
+                    ?.let { roomFaces.getOrNull(it)?.id }
+                updated = updated.with(
+                    com.wingedsheep.engine.state.components.identity.RoomComponent(
+                        faces = roomFaces,
+                        unlocked = unlockedFaceId?.let { setOf(it) } ?: emptySet(),
+                    )
+                )
             }
 
             // Record mana colors spent to cast (for mana-spent-gated triggers)

@@ -274,8 +274,17 @@ class CastSpellHandler(
 
         // Calculate effective cost (free if PlayWithoutPayingCostComponent is present)
         val playForFree = zoneResolver.hasPlayWithoutPayingCost(state, action.playerId, action.cardId)
+        // Split-layout (CR 709.3a) — only the chosen half is evaluated for legality. When
+        // `faceIndex` is set, the cost is the face's printed mana cost passed through the
+        // standard battlefield cost-modifier pipeline (CR 118.9a applies cost modifiers to
+        // the chosen half just like to a normal cast).
+        val faceManaCostOverride: ManaCost? = action.faceIndex?.let { idx ->
+            cardDef?.cardFaces?.getOrNull(idx)?.manaCost
+        }
         var effectiveCost = if (playForFree) {
             ManaCost.ZERO
+        } else if (faceManaCostOverride != null && cardDef != null) {
+            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, faceManaCostOverride, action.playerId)
         } else if (action.useAlternativeCost && cardDef != null) {
             // Check flashback cost first (card in graveyard with Flashback keyword)
             val flashbackAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Flashback>().firstOrNull()
@@ -1109,8 +1118,14 @@ class CastSpellHandler(
 
         // Calculate effective cost (free if PlayWithoutPayingCostComponent is present)
         val playForFreeInExecute = zoneResolver.hasPlayWithoutPayingCost(currentState, action.playerId, action.cardId)
+        // Split-layout (CR 709.3a) — see validate() for the rationale. Mirror the override here.
+        val faceManaCostOverrideExecute: ManaCost? = action.faceIndex?.let { idx ->
+            cardDef?.cardFaces?.getOrNull(idx)?.manaCost
+        }
         var effectiveCost = if (playForFreeInExecute) {
             ManaCost.ZERO
+        } else if (faceManaCostOverrideExecute != null && cardDef != null) {
+            costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, faceManaCostOverrideExecute, action.playerId)
         } else if (action.useAlternativeCost && cardDef != null) {
             // Check flashback cost first
             val flashbackAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Flashback>().firstOrNull()
@@ -1812,7 +1827,8 @@ class CastSpellHandler(
             manaSpentBlack = manaSpentEvent?.black ?: 0,
             manaSpentRed = manaSpentEvent?.red ?: 0,
             manaSpentGreen = manaSpentEvent?.green ?: 0,
-            manaSpentColorless = manaSpentEvent?.colorless ?: 0
+            manaSpentColorless = manaSpentEvent?.colorless ?: 0,
+            faceIndex = action.faceIndex
         )
 
         if (!castResult.isSuccess) {
