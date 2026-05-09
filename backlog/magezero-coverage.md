@@ -90,7 +90,7 @@ one enchantment (Unholy Annex) are double-faced / modal DFCs and depend on DFC s
 
 ### Creatures (30)
 - [ ] Bloodletter of Aclazotz ×4
-- [ ] Cecil, Dark Knight // Cecil, Redeemed Paladin ×3 *(DFC — requires DFC support)*
+- [x] Cecil, Dark Knight // Cecil, Redeemed Paladin ×3 *(DFC — requires DFC support)*
 - [ ] Deep-Cavern Bat ×4
 - [ ] Forsaken Miner ×4
 - [ ] Gatekeeper of Malakir ×4

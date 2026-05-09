@@ -102,6 +102,17 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * The starting life total of a player (e.g., 20 in standard, 40 in commander).
+     * Used for conditions like "life total ≤ half your starting life total".
+     */
+    @SerialName("StartingLifeTotal")
+    @Serializable
+    data class StartingLifeTotal(val player: Player) : DynamicAmount {
+        override val description: String = "${player.possessive} starting life total"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
+    }
+
+    /**
      * Fixed amount (for consistency in the type system).
      */
     @SerialName("Fixed")

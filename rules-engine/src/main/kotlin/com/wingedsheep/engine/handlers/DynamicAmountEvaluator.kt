@@ -9,6 +9,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
+import com.wingedsheep.engine.state.components.identity.PlayerComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CharacteristicValue
@@ -69,6 +70,12 @@ class DynamicAmountEvaluator(
                 val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
                 val playerId = playerIds.firstOrNull() ?: return 0
                 state.getEntity(playerId)?.get<LifeTotalComponent>()?.life ?: 0
+            }
+
+            is DynamicAmount.StartingLifeTotal -> {
+                val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
+                val playerId = playerIds.firstOrNull() ?: return 0
+                state.getEntity(playerId)?.get<PlayerComponent>()?.startingLifeTotal ?: 20
             }
 
             is DynamicAmount.VariableReference -> {

@@ -241,6 +241,10 @@ object DynamicAmounts {
     fun lifeGainedThisTurn(player: Player = Player.You): DynamicAmount =
         DynamicAmount.TurnTracking(player, TurnTracker.LIFE_GAINED)
 
+    /** The starting life total of a player (20 in standard, 40 in commander). */
+    fun startingLifeTotal(player: Player = Player.You): DynamicAmount =
+        DynamicAmount.StartingLifeTotal(player)
+
     // =========================================================================
     // Entity property shortcuts (composable entity + property)
     // =========================================================================
