@@ -260,7 +260,7 @@
 - [ ] Weapons Manufacturing
 - [x] Wedgelight Rammer
 - [x] Weftblade Enhancer
-- [ ] Weftstalker Ardent
+- [x] Weftstalker Ardent
 - [ ] Weftwalking
 - [x] Wurmwall Sweeper
 - [ ] Xu-Ifit, Osteoharmonist
