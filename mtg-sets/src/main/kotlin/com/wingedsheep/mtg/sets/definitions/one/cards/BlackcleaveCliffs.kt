@@ -54,6 +54,5 @@ val BlackcleaveCliffs = card("Blackcleave Cliffs") {
         flavorText = "Where ambition meets industry, passion is poisoned by greed."
         imageUri = "https://cards.scryfall.io/normal/front/1/4/1441fba4-fe06-4b5f-a103-aa6cf59a3859.jpg?1675957263"
         ruling("2023-02-04", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
-        ruling("2023-02-04", "If one of these lands enters the battlefield under your control and you control zero, one, or two other lands, it enters the battlefield untapped. If you control three or more other lands, however, it enters the battlefield tapped.")
     }
 }

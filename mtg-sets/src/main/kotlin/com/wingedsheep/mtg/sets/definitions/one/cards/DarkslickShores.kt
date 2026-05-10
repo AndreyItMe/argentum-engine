@@ -54,6 +54,5 @@ val DarkslickShores = card("Darkslick Shores") {
         flavorText = "Where curiosity meets cruelty, hideous innovations arise."
         imageUri = "https://cards.scryfall.io/normal/front/b/c/bcbda15b-e49a-4445-a0e1-f221aa82c1e8.jpg?1675957267"
         ruling("2023-02-04", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
-        ruling("2023-02-04", "If one of these lands enters the battlefield under your control and you control zero, one, or two other lands, it enters the battlefield untapped. If you control three or more other lands, however, it enters the battlefield tapped.")
     }
 }

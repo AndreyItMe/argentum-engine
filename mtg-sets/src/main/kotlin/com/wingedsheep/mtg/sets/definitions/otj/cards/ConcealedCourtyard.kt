@@ -1,4 +1,4 @@
-package com.wingedsheep.mtg.sets.definitions.one.cards
+package com.wingedsheep.mtg.sets.definitions.otj.cards
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.dsl.card
@@ -14,16 +14,16 @@ import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
- * Copperline Gorge
+ * Concealed Courtyard
  * Land
  *
  * This land enters tapped unless you control two or fewer other lands.
- * {T}: Add {R} or {G}.
+ * {T}: Add {W} or {B}.
  */
-val CopperlineGorge = card("Copperline Gorge") {
+val ConcealedCourtyard = card("Concealed Courtyard") {
     typeLine = "Land"
-    colorIdentity = "RG"
-    oracleText = "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {R} or {G}."
+    colorIdentity = "WB"
+    oracleText = "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {W} or {B}."
 
     replacementEffect(EntersTapped(
         unlessCondition = Compare(
@@ -35,24 +35,23 @@ val CopperlineGorge = card("Copperline Gorge") {
 
     activatedAbility {
         cost = AbilityCost.Tap
-        effect = AddManaEffect(Color.RED)
+        effect = AddManaEffect(Color.WHITE)
         manaAbility = true
         timing = TimingRule.ManaAbility
     }
 
     activatedAbility {
         cost = AbilityCost.Tap
-        effect = AddManaEffect(Color.GREEN)
+        effect = AddManaEffect(Color.BLACK)
         manaAbility = true
         timing = TimingRule.ManaAbility
     }
 
     metadata {
         rarity = Rarity.RARE
-        collectorNumber = "249"
-        artist = "Yeong-Hao Han"
-        flavorText = "Where fire meets ferocity, a greater evolution begins."
-        imageUri = "https://cards.scryfall.io/normal/front/7/8/78b0f36b-7d8c-4e77-adc2-a4dad93a81d5.jpg?1675957264"
-        ruling("2023-02-04", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
+        collectorNumber = "268"
+        artist = "Rockey Chen"
+        imageUri = "https://cards.scryfall.io/normal/front/b/7/b75df1f0-0513-40e4-a449-454f75de6434.jpg?1712356373"
+        ruling("2024-04-19", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
     }
 }

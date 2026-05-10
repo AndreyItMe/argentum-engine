@@ -54,6 +54,5 @@ val RazorvergeThicket = card("Razorverge Thicket") {
         flavorText = "Where evolution meets austerity, primal might bucks against the yoke of hierarchy."
         imageUri = "https://cards.scryfall.io/normal/front/6/5/65b26f68-3a25-4c4e-bc76-a199ab479a50.jpg?1675957278"
         ruling("2023-02-04", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
-        ruling("2023-02-04", "If one of these lands enters the battlefield under your control and you control zero, one, or two other lands, it enters the battlefield untapped. If you control three or more other lands, however, it enters the battlefield tapped.")
     }
 }

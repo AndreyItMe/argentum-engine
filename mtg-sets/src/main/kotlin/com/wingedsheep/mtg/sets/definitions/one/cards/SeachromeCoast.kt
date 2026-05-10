@@ -54,6 +54,5 @@ val SeachromeCoast = card("Seachrome Coast") {
         flavorText = "Where indoctrination meets inquiry, currents roil restlessly beneath the surface."
         imageUri = "https://cards.scryfall.io/normal/front/9/e/9ed7441f-f624-49c8-8611-d9bba0e441ac.jpg?1675957278"
         ruling("2023-02-04", "If one of these lands enters the battlefield at the same time as one or more other lands, it doesn't take those lands into consideration when determining how many other lands you control.")
-        ruling("2023-02-04", "If one of these lands enters the battlefield under your control and you control zero, one, or two other lands, it enters the battlefield untapped. If you control three or more other lands, however, it enters the battlefield tapped.")
     }
 }
