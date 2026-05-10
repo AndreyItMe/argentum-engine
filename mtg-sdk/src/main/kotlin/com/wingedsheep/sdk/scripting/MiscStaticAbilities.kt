@@ -127,6 +127,29 @@ data class AdditionalManaOnLandTap(
 }
 
 /**
+ * Whenever the controller taps a creature for mana, add [amount] mana of [color].
+ * Used for Badgermole Cub: "Whenever you tap a creature for mana, add an additional {G}."
+ *
+ * Triggered mana ability — resolves immediately without using the stack.
+ *
+ * @property color The color of bonus mana to add
+ * @property amount How many additional mana to add per creature tap
+ */
+@SerialName("AdditionalManaFromCreatureTap")
+@Serializable
+data class AdditionalManaFromCreatureTap(
+    val color: Color,
+    val amount: DynamicAmount = DynamicAmount.Fixed(1)
+) : StaticAbility {
+    override val description: String =
+        "Whenever you tap a creature for mana, add an additional ${color.symbol} mana"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
+}
+
+/**
  * Play with the top card of your library revealed.
  * You may play lands and cast spells from the top of your library.
  * Used for Future Sight.

@@ -60,6 +60,7 @@ import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
+import com.wingedsheep.sdk.scripting.AdditionalManaFromCreatureTap
 import com.wingedsheep.sdk.scripting.AdditionalManaOnLandTap
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.sdk.scripting.AdditionalSourceTriggers
@@ -836,7 +837,13 @@ class ActivateAbilityHandler(
                 currentState, action.sourceId, action.playerId, manaEvent, additionalManaResult.events
             )
             currentState = onLandTapResult.state
-            val allManaEvents = onLandTapResult.events
+
+            // Check for "additional mana whenever you tap a creature for mana" (e.g., Badgermole Cub)
+            val onCreatureTapResult = resolveAdditionalManaOnCreatureTap(
+                currentState, action.sourceId, action.playerId, onLandTapResult.events
+            )
+            currentState = onCreatureTapResult.state
+            val allManaEvents = onCreatureTapResult.events
 
             return ExecutionResult.success(currentState, allManaEvents)
         }
@@ -1458,6 +1465,78 @@ class ActivateAbilityHandler(
                         red = if (bonusColor == Color.RED) bonusAmount else 0,
                         green = if (bonusColor == Color.GREEN) bonusAmount else 0,
                         colorless = if (bonusColorless) bonusAmount else 0
+                    ))
+                }
+            }
+        }
+
+        return AdditionalManaResult(currentState, events)
+    }
+
+    /**
+     * After a creature's mana ability resolves, check for permanents on the controller's
+     * battlefield with [AdditionalManaFromCreatureTap]. Each matching ability adds bonus
+     * mana to the pool (e.g., Badgermole Cub: "Whenever you tap a creature for mana,
+     * add an additional {G}").
+     *
+     * Only fires when the mana source is a creature (not a land, not a non-creature artifact).
+     * Triggered mana ability — resolves immediately without using the stack.
+     */
+    private fun resolveAdditionalManaOnCreatureTap(
+        state: GameState,
+        sourceId: EntityId,
+        controllerId: EntityId,
+        existingEvents: List<GameEvent>
+    ): AdditionalManaResult {
+        state.getEntity(sourceId) ?: return AdditionalManaResult(state, existingEvents)
+        // Use projected state so animated lands (e.g., earthbended Forest) are recognised as
+        // creatures even though their base typeLine is Land, not Creature.
+        if (!state.projectedState.isCreature(sourceId)) return AdditionalManaResult(state, existingEvents)
+
+        var currentState = state
+        val events = existingEvents.toMutableList()
+
+        for (entityId in currentState.getBattlefield()) {
+            val container = currentState.getEntity(entityId) ?: continue
+            val controllerComp = container.get<ControllerComponent>() ?: continue
+            if (controllerComp.playerId != controllerId) continue
+
+            val card = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+
+            for (staticAbility in cardDef.script.staticAbilities) {
+                val onCreatureTap = staticAbility as? AdditionalManaFromCreatureTap ?: continue
+
+                val opponentId = currentState.turnOrder.firstOrNull { it != controllerId }
+                val context = EffectContext(
+                    sourceId = entityId,
+                    controllerId = controllerId,
+                    opponentId = opponentId,
+                    targets = emptyList(),
+                    xValue = null
+                )
+
+                val bonusAmount = dynamicAmountEvaluator.evaluate(currentState, onCreatureTap.amount, context)
+                if (bonusAmount <= 0) continue
+
+                val extraFirings = countAdditionalSourceTriggerDoublers(currentState, entityId, controllerId)
+                val firings = 1 + extraFirings
+                repeat(firings) {
+                    currentState = currentState.updateEntity(controllerId) { c ->
+                        val pool = c.get<ManaPoolComponent>() ?: ManaPoolComponent()
+                        c.with(pool.add(onCreatureTap.color, bonusAmount))
+                    }
+
+                    events.add(ManaAddedEvent(
+                        playerId = controllerId,
+                        sourceId = entityId,
+                        sourceName = card.name,
+                        white = if (onCreatureTap.color == Color.WHITE) bonusAmount else 0,
+                        blue = if (onCreatureTap.color == Color.BLUE) bonusAmount else 0,
+                        black = if (onCreatureTap.color == Color.BLACK) bonusAmount else 0,
+                        red = if (onCreatureTap.color == Color.RED) bonusAmount else 0,
+                        green = if (onCreatureTap.color == Color.GREEN) bonusAmount else 0,
+                        colorless = 0
                     ))
                 }
             }
