@@ -4,6 +4,7 @@ import com.wingedsheep.engine.state.Component
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityId
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.ReplacementEffect
 import kotlinx.serialization.Serializable
 
@@ -362,6 +363,34 @@ data object CantBeTargetedByOpponentAbilitiesComponent : Component
  */
 @Serializable
 data class GrantCantBeBlockedToSmallCreaturesComponent(val maxValue: Int) : Component
+
+/**
+ * Marks a permanent as suppressing hexproof for creatures matching any of [filters].
+ *
+ * Stores one filter per [SuppressHexproofForGroup] static ability on the permanent so
+ * multiple such abilities stack correctly. Each filter is evaluated with the permanent's
+ * controller as the "you" context.
+ *
+ * Created by [StaticAbilityHandler] from [SuppressHexproofForGroup] static abilities.
+ */
+@Serializable
+data class SuppressesHexproofForGroupComponent(
+    val filters: List<GameObjectFilter>
+) : Component
+
+/**
+ * Marks a permanent as suppressing ward triggers for creatures matching any of [filters].
+ *
+ * Stores one filter per [SuppressWardForGroup] static ability on the permanent so
+ * multiple such abilities stack correctly. Each filter is evaluated with the permanent's
+ * controller as the "you" context.
+ *
+ * Created by [StaticAbilityHandler] from [SuppressWardForGroup] static abilities.
+ */
+@Serializable
+data class SuppressesWardForGroupComponent(
+    val filters: List<GameObjectFilter>
+) : Component
 
 /**
  * Tracks entity IDs of cards exiled by this permanent, so they can be

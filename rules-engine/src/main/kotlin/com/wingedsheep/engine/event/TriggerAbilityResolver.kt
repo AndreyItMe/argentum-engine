@@ -3,7 +3,10 @@ package com.wingedsheep.engine.event
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.SuppressesWardForGroupComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
@@ -33,6 +36,7 @@ class TriggerAbilityResolver(
     private val cardRegistry: CardRegistry,
     private val abilityRegistry: AbilityRegistry
 ) {
+    private val predicateEvaluator = PredicateEvaluator()
 
     /**
      * Get triggered abilities for a card, checking both the AbilityRegistry
@@ -278,6 +282,15 @@ class TriggerAbilityResolver(
     ): List<TriggeredAbility> {
         val result = mutableListOf<TriggeredAbility>()
 
+        val targetContainer = state.getEntity(entityId) ?: return result
+        val targetCard = targetContainer.get<CardComponent>() ?: return result
+        val projected = state.projectedState
+        val targetControllerId = projected.getController(entityId)
+
+        // Check suppression before generating any ward triggers — suppresses both intrinsic
+        // and granted ward (Nowhere to Run: "Ward abilities of those creatures don't trigger.")
+        if (isWardSuppressed(entityId, targetControllerId, state, projected)) return result
+
         // 1. Intrinsic ward from card definition
         val cardDef = cardRegistry.getCard(cardDefinitionId)
         if (cardDef != null) {
@@ -289,10 +302,6 @@ class TriggerAbilityResolver(
         }
 
         // 2. Ward granted by battlefield-scoped GrantWard static abilities
-        val targetContainer = state.getEntity(entityId) ?: return result
-        val targetCard = targetContainer.get<CardComponent>() ?: return result
-        val projected = state.projectedState
-        val targetControllerId = projected.getController(entityId)
 
         for (permanentId in state.getBattlefield()) {
             val container = state.getEntity(permanentId) ?: continue
@@ -427,5 +436,31 @@ class TriggerAbilityResolver(
             binding = TriggerBinding.SELF,
             effect = WardCounterEffect(cost)
         )
+    }
+
+    /**
+     * Returns true if any opponent of [targetControllerId] controls a permanent that
+     * suppresses ward triggers for [entityId] (e.g. Nowhere to Run).
+     *
+     * The filter stored on [SuppressesWardForGroupComponent] is evaluated with the
+     * suppressor's controller as the "you" context using [PredicateEvaluator].
+     */
+    private fun isWardSuppressed(
+        entityId: EntityId,
+        targetControllerId: EntityId?,
+        state: GameState,
+        projected: com.wingedsheep.engine.mechanics.layers.ProjectedState
+    ): Boolean {
+        if (targetControllerId == null) return false
+        return state.getBattlefield().any { suppressorId ->
+            val suppressorController = projected.getController(suppressorId) ?: return@any false
+            if (suppressorController == targetControllerId) return@any false  // Must be an opponent
+            val suppressComponent = state.getEntity(suppressorId)
+                ?.get<SuppressesWardForGroupComponent>() ?: return@any false
+            val ctx = PredicateContext(controllerId = suppressorController, sourceId = suppressorId)
+            suppressComponent.filters.any { filter ->
+                predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, ctx)
+            }
+        }
     }
 }
