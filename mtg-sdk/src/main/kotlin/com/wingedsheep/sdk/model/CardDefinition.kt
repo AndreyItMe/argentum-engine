@@ -188,6 +188,19 @@ data class CardDefinition(
             return identity
         }
 
+    /**
+     * The `PrintingRef` for this definition's *default* printing — derived from [setCode] and
+     * [ScryfallMetadata.collectorNumber]. Returns null if either is missing (e.g. test cards
+     * authored without Scryfall metadata). Used by the deckbuilder catalog to default to a
+     * concrete printing when the user hasn't picked one explicitly.
+     */
+    val defaultPrintingRef: PrintingRef?
+        get() {
+            val set = setCode ?: return null
+            val cn = metadata.collectorNumber ?: return null
+            return PrintingRef(set, cn)
+        }
+
     val isCreature: Boolean get() = typeLine.isCreature
     val isLand: Boolean get() = typeLine.isLand
     val isSorcery: Boolean get() = typeLine.isSorcery
