@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 136 / 261
+**Implemented:** 137 / 261
 
 ---
 
@@ -81,7 +81,7 @@
 - [ ] Fell Gravship
 - [ ] Flight-Deck Coordinator
 - [ ] Focus Fire
-- [ ] Frenzied Baloth
+- [x] Frenzied Baloth
 - [ ] Frontline War-Rager
 - [ ] Full Bore
 - [ ] Fungal Colossus
