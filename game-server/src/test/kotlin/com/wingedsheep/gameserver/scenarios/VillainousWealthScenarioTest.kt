@@ -2,7 +2,6 @@ package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.gameserver.ScenarioTestBase
@@ -77,17 +76,17 @@ class VillainousWealthScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Hill Giant"
                 }
 
-                withClue("Glory Seeker (MV 2) should have MayPlayFromExileComponent") {
+                withClue("Glory Seeker (MV 2) should have a MayPlayPermission") {
                     exiledGlorySeeker shouldNotBe null
-                    game.state.getEntity(exiledGlorySeeker!!)?.get<MayPlayFromExileComponent>() shouldNotBe null
+                    game.state.mayPlayPermissions.any { exiledGlorySeeker!! in it.cardIds } shouldBe true
                 }
                 withClue("Glory Seeker should have PlayWithoutPayingCostComponent") {
                     game.state.getEntity(exiledGlorySeeker!!)?.get<PlayWithoutPayingCostComponent>() shouldNotBe null
                 }
 
-                withClue("Hill Giant (MV 4) should NOT have MayPlayFromExileComponent") {
+                withClue("Hill Giant (MV 4) should NOT have a MayPlayPermission") {
                     exiledHillGiant shouldNotBe null
-                    game.state.getEntity(exiledHillGiant!!)?.get<MayPlayFromExileComponent>() shouldBe null
+                    game.state.mayPlayPermissions.any { exiledHillGiant!! in it.cardIds } shouldBe false
                 }
             }
 
@@ -114,7 +113,7 @@ class VillainousWealthScenarioTest : ScenarioTestBase() {
                 // Find an exiled Glory Seeker with permissions
                 val exile = getExile(game, 2)
                 val castableCard = exile.first { entityId ->
-                    game.state.getEntity(entityId)?.get<MayPlayFromExileComponent>() != null
+                    game.state.mayPlayPermissions.any { entityId in it.cardIds }
                 }
 
                 // Cast it for free (all lands are tapped from casting Villainous Wealth)
@@ -161,9 +160,9 @@ class VillainousWealthScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.isLand == true
                 }
 
-                withClue("Exiled land should NOT have MayPlayFromExileComponent") {
+                withClue("Exiled land should NOT have a MayPlayPermission") {
                     exiledLand shouldNotBe null
-                    game.state.getEntity(exiledLand!!)?.get<MayPlayFromExileComponent>() shouldBe null
+                    game.state.mayPlayPermissions.any { exiledLand!! in it.cardIds } shouldBe false
                 }
             }
         }

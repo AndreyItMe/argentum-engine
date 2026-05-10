@@ -4,10 +4,10 @@ import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario tests for Daring Waverider.
@@ -116,8 +116,9 @@ class DaringWaveriderScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Volcanic Hammer"
                 }
                 withClue("Permission components should be granted while the card sits in exile") {
-                    game.state.getEntity(hammerId)?.get<MayPlayFromExileComponent>() shouldBe
-                        MayPlayFromExileComponent(controllerId = game.player1Id)
+                    game.state.mayPlayPermissions.firstOrNull {
+                        hammerId in it.cardIds && it.controllerId == game.player1Id
+                    } shouldNotBe null
                     game.state.getEntity(hammerId)?.get<PlayWithoutPayingCostComponent>() shouldBe
                         PlayWithoutPayingCostComponent(controllerId = game.player1Id)
                 }
@@ -129,7 +130,7 @@ class DaringWaveriderScenarioTest : ScenarioTestBase() {
                 // The components must be stripped immediately so that if the spell is countered
                 // and ExileAfterResolveComponent sends it back to exile, it cannot be cast again.
                 withClue("Free-cast permission must be consumed at cast time, not at resolve time") {
-                    game.state.getEntity(hammerId)?.get<MayPlayFromExileComponent>() shouldBe null
+                    game.state.mayPlayPermissions.any { hammerId in it.cardIds } shouldBe false
                     game.state.getEntity(hammerId)?.get<PlayWithoutPayingCostComponent>() shouldBe null
                 }
 
@@ -141,7 +142,7 @@ class DaringWaveriderScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Volcanic Hammer"
                 }
                 hammerInExile shouldBe true
-                game.state.getEntity(hammerId)?.get<MayPlayFromExileComponent>() shouldBe null
+                game.state.mayPlayPermissions.any { hammerId in it.cardIds } shouldBe false
                 game.state.getEntity(hammerId)?.get<PlayWithoutPayingCostComponent>() shouldBe null
             }
         }

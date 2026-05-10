@@ -347,7 +347,7 @@ constructors.
 | `EffectPatterns.putCreatureFromHandSharingTypeWithTapped()`                          | (none)                                              | Pipeline: Gather tapped subtypes → filter hand → select → move to battlefield |
 | `ShuffleLibraryEffect`                                                              | `target`                                            | Shuffle library                                   |
 | `TakeFromLinkedExileEffect`                                                         | (object)                                            | Put top card of linked exile pile into hand       |
-| `GrantMayPlayFromExileEffect`                                                       | `from`                                              | Grant play-from-exile permission to cards in collection |
+| `GrantMayPlayFromExileEffect`                                                       | `from, expiry?, withAnyManaType?, condition?: Condition` | Grant play-from-exile permission to cards in collection. `condition` is a re-evaluated gate (e.g. "if you control a Kavu" — Possibility Technician). |
 | `GrantPlayWithoutPayingCostEffect`                                                  | `from`                                              | Grant play-without-paying-cost to cards in collection  |
 | `GrantPlayWithAdditionalCostEffect`                                                 | `from, additionalCost`                              | Grant play-from-exile with additional cost (e.g., discard) |
 | `GrantFreeCastTargetFromExileEffect`                                                | `target, exileAfterResolve`                         | Grant single target in exile free cast + optional exile-after-resolve |
@@ -1332,7 +1332,7 @@ Used in `OptionalCostEffect`, `MayPayManaEffect`, `AnyPlayerMayPayEffect`, `PayO
 
 - `NORMAL` — single-face card. All characteristics live on the top-level `CardDefinition`.
 - `SPLIT` — two halves with a shared off-battlefield card (CR 709). Each face in `cardFaces[]` carries its own name / mana cost / type line / oracle text / abilities. Casting passes `CastSpell.faceIndex` to pick a half.
-- `ADVENTURE` — adventurer card (CR 715). The top-level `CardDefinition` describes the creature; `cardFaces[0]` is the Adventure (instant or sorcery — Adventure) with its own mana cost, type line, target requirements, and `spell { … }` effect. Casting `faceIndex = 0` runs the Adventure: on resolution the card is exiled (instead of going to the graveyard) and the caster gains `MayPlayFromExileComponent` so the creature can be cast from exile while it remains there. Casting with `faceIndex = null` casts the creature normally.
+- `ADVENTURE` — adventurer card (CR 715). The top-level `CardDefinition` describes the creature; `cardFaces[0]` is the Adventure (instant or sorcery — Adventure) with its own mana cost, type line, target requirements, and `spell { … }` effect. Casting `faceIndex = 0` runs the Adventure: on resolution the card is exiled (instead of going to the graveyard) and the engine registers a permanent `MayPlayPermission` so the creature can be cast from exile while it remains there. Casting with `faceIndex = null` casts the creature normally.
 
 Adventure DSL example:
 

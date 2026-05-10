@@ -185,7 +185,7 @@ class ConditionEvaluator {
         val found = playerIds.any { playerId ->
             var entities = if (condition.zone == Zone.BATTLEFIELD) {
                 state.getBattlefield().filter { entityId ->
-                    state.getEntity(entityId)?.get<ControllerComponent>()?.playerId == playerId
+                    projected.getController(entityId) == playerId
                 }
             } else {
                 state.getZone(ZoneKey(playerId, condition.zone))

@@ -4,7 +4,6 @@ import com.wingedsheep.engine.core.ActivateAbility
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -85,7 +84,7 @@ class BrightcapBadgerScenarioTest : ScenarioTestBase() {
                     game.state.getHand(game.player1Id).contains(cardId) shouldBe false
                 }
                 withClue("Caster should hold the cast-from-exile permission (CR 715.5)") {
-                    val perm = game.state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
+                    val perm = game.state.mayPlayPermissions.firstOrNull { cardId in it.cardIds }
                     perm.shouldNotBeNull()
                     perm.controllerId shouldBe game.player1Id
                     perm.permanent shouldBe true

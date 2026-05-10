@@ -3,7 +3,6 @@ package com.wingedsheep.gameserver.scenarios
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
@@ -55,9 +54,9 @@ class TheInfamousCruelclawScenarioTest : ScenarioTestBase() {
                 }
                 shockInExile shouldNotBe null
 
-                // Should have MayPlayFromExile + PlayWithoutPayingCost + PlayWithAdditionalCost
+                // Should have MayPlayPermission + PlayWithoutPayingCost + PlayWithAdditionalCost
                 val shockContainer = game.state.getEntity(shockInExile!!)!!
-                shockContainer.get<MayPlayFromExileComponent>() shouldNotBe null
+                game.state.mayPlayPermissions.any { shockInExile in it.cardIds } shouldBe true
                 shockContainer.get<PlayWithoutPayingCostComponent>() shouldNotBe null
                 shockContainer.get<PlayWithAdditionalCostComponent>() shouldNotBe null
 

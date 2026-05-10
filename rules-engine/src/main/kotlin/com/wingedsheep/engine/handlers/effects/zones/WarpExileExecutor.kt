@@ -6,9 +6,11 @@ import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.WarpExiledComponent
+import com.wingedsheep.engine.state.permissions.MayPlayPermission
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import kotlin.reflect.KClass
 
@@ -54,10 +56,20 @@ class WarpExileExecutor : EffectExecutor<WarpExileEffect> {
 
         // Grant cast-from-exile permission (regular mana cost — warp's alt cost is
         // hand-only per CR 702.185a) and mark the card as a "warped" exile (CR 702.185b).
-        val newState = transitionResult.state.updateEntity(targetId) { c ->
-            c.with(MayPlayFromExileComponent(controllerId = context.controllerId, permanent = true))
-                .with(WarpExiledComponent(controllerId = context.controllerId))
+        var newState = transitionResult.state.updateEntity(targetId) { c ->
+            c.with(WarpExiledComponent(controllerId = context.controllerId))
         }
+
+        newState = newState.addMayPlayPermission(
+            MayPlayPermission(
+                id = EntityId.generate(),
+                cardIds = setOf(targetId),
+                controllerId = context.controllerId,
+                sourceId = context.sourceId,
+                permanent = true,
+                timestamp = state.timestamp,
+            )
+        )
 
         return EffectResult.success(newState, transitionResult.events)
     }

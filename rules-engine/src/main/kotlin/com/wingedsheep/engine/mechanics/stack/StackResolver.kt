@@ -26,11 +26,12 @@ import com.wingedsheep.engine.state.components.identity.CopyOfComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.HasMorphAbilityComponent
 import com.wingedsheep.engine.state.components.identity.MorphDataComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.ExileAfterResolveComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.identity.RevealedToComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
+import com.wingedsheep.engine.state.permissions.removeMayPlayPermissionsForCard
 import com.wingedsheep.sdk.scripting.GrantCantBeCountered
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.core.Color
@@ -228,10 +229,6 @@ class StackResolver(
         // remains exiled" grant) are left intact.
         newState = newState.updateEntity(cardId) { c ->
             var updated = c
-            val mayPlay = c.get<MayPlayFromExileComponent>()
-            if (mayPlay != null && !mayPlay.permanent) {
-                updated = updated.without<MayPlayFromExileComponent>()
-            }
             val payCost = c.get<PlayWithoutPayingCostComponent>()
             if (payCost != null && !payCost.permanent) {
                 updated = updated.without<PlayWithoutPayingCostComponent>()
@@ -239,6 +236,13 @@ class StackResolver(
             updated = updated.without<com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent>()
             updated
         }
+        // Drop one-shot may-play grants targeting this card. Permanent grants survive
+        // (e.g. Adventure / Warp / Possibility Technician) and are stripped on resolve.
+        newState = newState.copy(
+            mayPlayPermissions = newState.mayPlayPermissions.filterNot { permission ->
+                cardId in permission.cardIds && !permission.permanent
+            }
+        )
 
         // For face-down creatures, use a generic name in the event
         val eventName = if (castFaceDown) "Face-down creature" else cardComponent.name
@@ -1164,16 +1168,17 @@ class StackResolver(
                 }
                 pausedState = pausedState.addToZone(pausedDestZoneKey, spellId)
 
-                // CR 715.5 — Adventure exiled by its own resolution: re-grant cast-from-exile.
+                // CR 715.3d — Adventure exiled by its own resolution: re-grant cast-from-exile.
                 if (pausedAdventureFaceExile && pausedDestZone == Zone.EXILE) {
-                    pausedState = pausedState.updateEntity(spellId) { c ->
-                        c.with(
-                            com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent(
-                                controllerId = spellComponent.casterId,
-                                permanent = true
-                            )
+                    pausedState = pausedState.addMayPlayPermission(
+                        com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                            id = com.wingedsheep.sdk.model.EntityId.generate(),
+                            cardIds = setOf(spellId),
+                            controllerId = spellComponent.casterId,
+                            permanent = true,
+                            timestamp = state.timestamp,
                         )
-                    }
+                    )
                 }
 
                 val pausedCounterEvents = mutableListOf<GameEvent>()
@@ -1227,9 +1232,9 @@ class StackResolver(
             cardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
         val exileAfterResolveComp = newState.getEntity(spellId)?.get<ExileAfterResolveComponent>()
         val exileAfterResolve = exileAfterResolveComp != null
-        // Adventure face (CR 715.4): when an Adventure resolves, exile it instead of putting
+        // Adventure face (CR 715.3d): when an Adventure resolves, exile it instead of putting
         // it in its owner's graveyard, and grant the caster permission to cast it as the
-        // creature spell while it remains exiled (CR 715.5).
+        // creature spell while it remains exiled.
         val adventureFaceExile = cardDef?.layout == com.wingedsheep.sdk.model.CardLayout.ADVENTURE &&
             spellComponent.faceIndex != null
         val intendedDestination = if (selfExile || flashbackExile || exileAfterResolve || adventureFaceExile) Zone.EXILE else Zone.GRAVEYARD
@@ -1245,26 +1250,27 @@ class StackResolver(
         newState = newState.updateEntity(spellId) { c ->
             c.without<SpellOnStackComponent>()
                 .without<TargetsComponent>()
-                .without<com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent>()
                 .without<com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent>()
                 .without<com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent>()
                 .without<ExileAfterResolveComponent>()
         }
+        newState = newState.removeMayPlayPermissionsForCard(spellId)
         newState = newState.addToZone(destZoneKey, spellId)
 
-        // CR 715.5 — an Adventure card exiled by its own resolution may be cast as the creature
-        // by the spell's controller while it remains in exile. Re-attach the permission after
-        // the prior `.without<MayPlayFromExileComponent>()` strip so the cast-from-exile
-        // enumerator can pick it up.
+        // CR 715.3d — an Adventure card exiled by its own resolution may be cast as the creature
+        // by the spell's controller while it remains in exile. Re-add the permission after
+        // the prior removeMayPlayPermissionsForCard so the cast-from-exile enumerator picks
+        // it up on the next priority pass.
         if (adventureFaceExile && destinationZone == Zone.EXILE) {
-            newState = newState.updateEntity(spellId) { c ->
-                c.with(
-                    com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent(
-                        controllerId = spellComponent.casterId,
-                        permanent = true
-                    )
+            newState = newState.addMayPlayPermission(
+                com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                    id = com.wingedsheep.sdk.model.EntityId.generate(),
+                    cardIds = setOf(spellId),
+                    controllerId = spellComponent.casterId,
+                    permanent = true,
+                    timestamp = state.timestamp,
                 )
-            }
+            )
         }
 
         // Add counters granted by ExileAfterResolveComponent (e.g., Goliath Daydreamer's dream counter).
@@ -1730,10 +1736,20 @@ class StackResolver(
             var updated = c.without<SpellOnStackComponent>().without<TargetsComponent>()
             if (grantFreeCast) {
                 updated = updated
-                    .with(MayPlayFromExileComponent(controllerId = controllerId, permanent = true))
                     .with(PlayWithoutPayingCostComponent(controllerId = controllerId, permanent = true))
             }
             updated
+        }
+        if (grantFreeCast) {
+            newState = newState.addMayPlayPermission(
+                com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                    id = com.wingedsheep.sdk.model.EntityId.generate(),
+                    cardIds = setOf(spellId),
+                    controllerId = controllerId,
+                    permanent = true,
+                    timestamp = state.timestamp,
+                )
+            )
         }
 
         return ExecutionResult.success(

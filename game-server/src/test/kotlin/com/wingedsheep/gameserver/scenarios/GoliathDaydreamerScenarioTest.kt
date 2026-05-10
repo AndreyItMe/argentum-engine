@@ -3,7 +3,6 @@ package com.wingedsheep.gameserver.scenarios
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Phase
@@ -89,8 +88,9 @@ class GoliathDaydreamerScenarioTest : ScenarioTestBase() {
                 game.resolveStack()
 
                 // Shock should now have free-cast permission.
-                game.state.getEntity(shockId)?.get<MayPlayFromExileComponent>() shouldBe
-                    MayPlayFromExileComponent(controllerId = game.player1Id)
+                game.state.mayPlayPermissions.firstOrNull {
+                    shockId in it.cardIds && it.controllerId == game.player1Id
+                } shouldNotBe null
                 game.state.getEntity(shockId)?.get<PlayWithoutPayingCostComponent>() shouldBe
                     PlayWithoutPayingCostComponent(controllerId = game.player1Id)
             }

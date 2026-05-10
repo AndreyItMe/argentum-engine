@@ -2,7 +2,6 @@ package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -66,27 +65,27 @@ class NarsetEnlightenedMasterScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Forest"
                 }
 
-                withClue("Feed the Clan should have MayPlayFromExileComponent") {
+                withClue("Feed the Clan should have a MayPlayPermission") {
                     exiledFeed shouldNotBe null
-                    game.state.getEntity(exiledFeed!!)?.get<MayPlayFromExileComponent>() shouldNotBe null
+                    game.state.mayPlayPermissions.any { exiledFeed!! in it.cardIds } shouldBe true
                 }
                 withClue("Feed the Clan should have PlayWithoutPayingCostComponent") {
                     game.state.getEntity(exiledFeed!!)?.get<PlayWithoutPayingCostComponent>() shouldNotBe null
                 }
 
-                withClue("Trumpet Blast should have MayPlayFromExileComponent") {
+                withClue("Trumpet Blast should have a MayPlayPermission") {
                     exiledTrumpet shouldNotBe null
-                    game.state.getEntity(exiledTrumpet!!)?.get<MayPlayFromExileComponent>() shouldNotBe null
+                    game.state.mayPlayPermissions.any { exiledTrumpet!! in it.cardIds } shouldBe true
                 }
 
-                withClue("Glory Seeker (creature) should NOT have MayPlayFromExileComponent") {
+                withClue("Glory Seeker (creature) should NOT have a MayPlayPermission") {
                     exiledCreature shouldNotBe null
-                    game.state.getEntity(exiledCreature!!)?.get<MayPlayFromExileComponent>() shouldBe null
+                    game.state.mayPlayPermissions.any { exiledCreature!! in it.cardIds } shouldBe false
                 }
 
-                withClue("Forest (land) should NOT have MayPlayFromExileComponent") {
+                withClue("Forest (land) should NOT have a MayPlayPermission") {
                     exiledLand shouldNotBe null
-                    game.state.getEntity(exiledLand!!)?.get<MayPlayFromExileComponent>() shouldBe null
+                    game.state.mayPlayPermissions.any { exiledLand!! in it.cardIds } shouldBe false
                 }
             }
 

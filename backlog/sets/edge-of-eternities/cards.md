@@ -2,8 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 141 / 261
----
+**Implemented:** 142 / 261
 
 - [x] Adagia, Windswept Bastion
 - [x] All-Fates Scroll
@@ -164,7 +163,7 @@
 - [x] Pinnacle Kill-Ship
 - [ ] Pinnacle Starcage
 - [x] Plasma Bolt
-- [ ] Possibility Technician
+- [x] Possibility Technician
 - [ ] Pull Through the Weft
 - [x] Pulsar Squadron Ace
 - [ ] Quantum Riddler

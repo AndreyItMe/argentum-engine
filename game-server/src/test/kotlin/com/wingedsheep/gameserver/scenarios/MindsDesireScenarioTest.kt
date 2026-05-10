@@ -2,7 +2,6 @@ package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -57,10 +56,12 @@ class MindsDesireScenarioTest : ScenarioTestBase() {
                 }
 
                 // The exiled card should have both components
-                val exiledEntity = game.state.getEntity(exile.first())
-                withClue("Exiled card should have MayPlayFromExileComponent") {
-                    exiledEntity?.get<MayPlayFromExileComponent>() shouldNotBe null
-                    exiledEntity?.get<MayPlayFromExileComponent>()?.controllerId shouldBe game.player1Id
+                val exiledCardId = exile.first()
+                val exiledEntity = game.state.getEntity(exiledCardId)
+                withClue("Exiled card should have a MayPlayPermission") {
+                    val mayPlay = game.state.mayPlayPermissions.firstOrNull { exiledCardId in it.cardIds }
+                    mayPlay shouldNotBe null
+                    mayPlay?.controllerId shouldBe game.player1Id
                 }
                 withClue("Exiled card should have PlayWithoutPayingCostComponent") {
                     exiledEntity?.get<PlayWithoutPayingCostComponent>() shouldNotBe null
@@ -167,8 +168,8 @@ class MindsDesireScenarioTest : ScenarioTestBase() {
                 for (cardId in exile) {
                     val entity = game.state.getEntity(cardId)
                     val cardName = entity?.get<CardComponent>()?.name
-                    withClue("Exiled card $cardName should have MayPlayFromExileComponent") {
-                        entity?.get<MayPlayFromExileComponent>() shouldNotBe null
+                    withClue("Exiled card $cardName should have a MayPlayPermission") {
+                        game.state.mayPlayPermissions.any { cardId in it.cardIds } shouldBe true
                     }
                     withClue("Exiled card $cardName should have PlayWithoutPayingCostComponent") {
                         entity?.get<PlayWithoutPayingCostComponent>() shouldNotBe null

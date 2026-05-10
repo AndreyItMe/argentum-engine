@@ -1,7 +1,6 @@
 package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -9,6 +8,7 @@ import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario tests for Portent of Calamity.
@@ -121,8 +121,9 @@ class PortentOfCalamityScenarioTest : ScenarioTestBase() {
 
                 // Shivan Fire remains in exile with free-cast permission.
                 val shivanContainer = game.state.getEntity(shivanInExile)!!
-                shivanContainer.get<MayPlayFromExileComponent>() shouldBe
-                    MayPlayFromExileComponent(controllerId = game.player1Id)
+                game.state.mayPlayPermissions.firstOrNull {
+                    shivanInExile in it.cardIds && it.controllerId == game.player1Id
+                } shouldNotBe null
                 shivanContainer.get<PlayWithoutPayingCostComponent>() shouldBe
                     PlayWithoutPayingCostComponent(controllerId = game.player1Id)
                 game.state.getExile(game.player1Id).contains(shivanInExile) shouldBe true

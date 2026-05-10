@@ -119,6 +119,15 @@ data class GameState(
      * `CommanderDamageLossCheck` SBA against [Format.Commander.commanderDamageThreshold].
      */
     val commanderDamage: List<CommanderDamageEntry> = emptyList(),
+
+    /**
+     * "You may play this card" permissions for cards in exile or other non-hand zones.
+     * Lifecycle is owned by GameState (not the card) so granting permanents leaving play
+     * does not invalidate a permission whose condition is still satisfied (Possibility
+     * Technician). See [com.wingedsheep.engine.state.permissions.MayPlayPermission] for
+     * field semantics.
+     */
+    val mayPlayPermissions: List<com.wingedsheep.engine.state.permissions.MayPlayPermission> = emptyList(),
 ) {
     /**
      * Cached projection of the game state with all continuous effects (Rule 613) applied.

@@ -5,7 +5,6 @@ import com.wingedsheep.engine.core.PassPriority
 import com.wingedsheep.engine.core.TurnFaceUp
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -125,11 +124,11 @@ class KheruSpellsnatcherScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Alpine Grizzly"
                 }
                 val exiledContainer = game.state.getEntity(exiledId)!!
-                withClue("Exiled card should have MayPlayFromExileComponent") {
-                    val comp = exiledContainer.get<MayPlayFromExileComponent>()
-                    comp.shouldNotBeNull()
-                    comp.permanent shouldBe true
-                    comp.controllerId shouldBe game.player1Id
+                withClue("Exiled card should have a MayPlayPermission") {
+                    val perm = game.state.mayPlayPermissions.firstOrNull { exiledId in it.cardIds }
+                    perm.shouldNotBeNull()
+                    perm.permanent shouldBe true
+                    perm.controllerId shouldBe game.player1Id
                 }
                 withClue("Exiled card should have PlayWithoutPayingCostComponent") {
                     val comp = exiledContainer.get<PlayWithoutPayingCostComponent>()

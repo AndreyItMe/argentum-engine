@@ -25,29 +25,6 @@ data class RevealedToComponent(
 }
 
 /**
- * Marks a card in exile as playable by the specified player.
- * Applied by impulse-draw effects like Mind's Desire, Chandra's +1, Act on Impulse.
- * This only grants *permission* to play from exile — it does NOT make the card free.
- * Pair with [PlayWithoutPayingCostComponent] to also waive the mana cost.
- *
- * @param controllerId The player who may play this card from exile.
- * @param permanent If true, this permission persists indefinitely (not cleaned up at end of turn).
- *   Used for "for as long as it remains exiled" effects like Kheru Spellsnatcher / Spelljack.
- * @param expiresAfterTurn If set, the permission persists until the end of the specified turn number
- *   (inclusive). Used for "until the end of your next turn" effects like Muerra, Trash Tactician.
- * @param withAnyManaType If true, mana of any type can be spent to cast this card. Used by effects
- *   like Taster of Wares ("...mana of any type can be spent to cast that spell"). Treats every
- *   colored cost symbol as generic for the purposes of payment when casting from exile.
- */
-@Serializable
-data class MayPlayFromExileComponent(
-    val controllerId: EntityId,
-    val permanent: Boolean = false,
-    val expiresAfterTurn: Int? = null,
-    val withAnyManaType: Boolean = false
-) : Component
-
-/**
  * Marks a card in exile as castable via its warp ability.
  * Applied when a warped permanent is exiled by the warp end-step trigger.
  * The card can be re-cast for its warp cost from exile, and the warp loop continues.
@@ -62,8 +39,8 @@ data class WarpExiledComponent(
 /**
  * Marks a card as playable without paying its mana cost.
  * Applied by effects like Mind's Desire, Cascade, Omniscience.
- * This only waives the mana cost — the card must still be in a zone where
- * it can be played (hand, or exile with [MayPlayFromExileComponent]).
+ * This only waives the mana cost — the card must still be in a zone where it can
+ * be played (hand, or exile with a may-play permission).
  *
  * @param controllerId The player who may play this card for free.
  * @param permanent If true, this permission persists indefinitely (not cleaned up at end of turn).
@@ -77,7 +54,7 @@ data class PlayWithoutPayingCostComponent(
 
 /**
  * Marks a card in exile as requiring an additional cost when cast.
- * Used with [MayPlayFromExileComponent] + [PlayWithoutPayingCostComponent] to model
+ * Used with a may-play permission + [PlayWithoutPayingCostComponent] to model
  * "may cast by paying [cost] rather than its mana cost" — the mana is waived,
  * but this non-mana cost must still be paid.
  *

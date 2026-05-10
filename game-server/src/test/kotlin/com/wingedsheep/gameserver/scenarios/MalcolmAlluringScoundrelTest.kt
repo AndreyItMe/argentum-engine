@@ -3,7 +3,6 @@ package com.wingedsheep.gameserver.scenarios
 import com.wingedsheep.engine.core.PassPriority
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.CounterType
@@ -87,9 +86,8 @@ class MalcolmAlluringScoundrelTest : ScenarioTestBase() {
                     discardedInGraveyard shouldBe islandId
                 }
 
-                val mayPlay = game.state.getEntity(islandId)?.get<MayPlayFromExileComponent>()
                 withClue("No free-cast permission should be granted when counters < 4") {
-                    mayPlay shouldBe null
+                    game.state.mayPlayPermissions.any { islandId in it.cardIds } shouldBe false
                 }
             }
 
@@ -138,7 +136,7 @@ class MalcolmAlluringScoundrelTest : ScenarioTestBase() {
 
                 // Per oracle, Shock stays in the graveyard; the free-cast grant is applied
                 // directly to the graveyard card (zone resolver accepts cards in either
-                // exile or graveyard with MayPlayFromExileComponent).
+                // exile or graveyard with a MayPlayPermission).
                 val shockContainer = game.state.getEntity(shockId)
                 val inExile = game.state.getExile(game.player1Id).contains(shockId)
                 withClue("Discarded Shock should NOT be moved to exile") {
@@ -152,8 +150,8 @@ class MalcolmAlluringScoundrelTest : ScenarioTestBase() {
                     shockStillInGraveyard shouldBe true
                 }
 
-                val mayPlay = shockContainer?.get<MayPlayFromExileComponent>()
-                withClue("Shock should have MayPlayFromExileComponent for player 1") {
+                val mayPlay = game.state.mayPlayPermissions.firstOrNull { shockId in it.cardIds }
+                withClue("Shock should have a MayPlayPermission for player 1") {
                     (mayPlay != null && mayPlay.controllerId == game.player1Id) shouldBe true
                 }
 

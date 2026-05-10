@@ -17,7 +17,6 @@ import com.wingedsheep.engine.state.components.combat.MustAttackThisTurnComponen
 import com.wingedsheep.engine.state.components.combat.PlayerAttackedThisTurnComponent
 import com.wingedsheep.engine.state.components.combat.PlayerAttackersThisTurnComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.AdditionalCombatPhasesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
@@ -424,7 +423,7 @@ class CleanupPhaseManager(
             newState = newState.copy(globalGrantedTriggeredAbilities = remainingGrants)
         }
 
-        // 9. Remove MayPlayFromExileComponent and PlayWithoutPayingCostComponent (expire at end of turn)
+        // 9. Expire non-permanent permissions and PlayWithoutPayingCostComponent (end of turn)
         // Skip permanent ones (used by "for as long as it remains exiled" effects)
         // For expiresAfterTurn: keep alive until that turn number's end step
         // Also clear ExileEntryTurnComponent so "exiled with [granter] this turn" effects
@@ -432,25 +431,31 @@ class CleanupPhaseManager(
         // increments per round, not per active player, so simply comparing turn numbers
         // would let an exile entry leak across the opponent's turn.
         for ((entityId, container) in newState.entities) {
-            val mayPlay = container.get<MayPlayFromExileComponent>()
             val playFree = container.get<PlayWithoutPayingCostComponent>()
-            val removeMayPlay = mayPlay != null && !mayPlay.permanent && when {
-                mayPlay.expiresAfterTurn != null -> newState.turnNumber >= mayPlay.expiresAfterTurn
-                else -> true // default: expire at end of this turn
-            }
             val removePlayFree = playFree != null && !playFree.permanent
             val removeLinkedExileUsed = container.get<com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExileUsedThisTurnComponent>() != null
             val removeExileEntryTurn = container.get<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>() != null
-            if (removeMayPlay || removePlayFree || removeLinkedExileUsed || removeExileEntryTurn) {
+            if (removePlayFree || removeLinkedExileUsed || removeExileEntryTurn) {
                 newState = newState.updateEntity(entityId) { c ->
                     var updated = c
-                    if (removeMayPlay) updated = updated.without<MayPlayFromExileComponent>()
                     if (removePlayFree) updated = updated.without<PlayWithoutPayingCostComponent>()
                     if (removeLinkedExileUsed) updated = updated.without<com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExileUsedThisTurnComponent>()
                     if (removeExileEntryTurn) updated = updated.without<com.wingedsheep.engine.state.components.battlefield.ExileEntryTurnComponent>()
                     updated
                 }
             }
+        }
+
+        // Expire non-permanent may-play permissions whose duration has elapsed.
+        if (newState.mayPlayPermissions.isNotEmpty()) {
+            newState = newState.copy(
+                mayPlayPermissions = newState.mayPlayPermissions.filterNot { permission ->
+                    !permission.permanent && when {
+                        permission.expiresAfterTurn != null -> newState.turnNumber >= permission.expiresAfterTurn
+                        else -> true
+                    }
+                }
+            )
         }
 
         // 10. Expire event-based delayed triggered abilities with EndOfTurn expiry

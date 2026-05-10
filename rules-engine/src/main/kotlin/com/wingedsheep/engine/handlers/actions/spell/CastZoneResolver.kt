@@ -15,8 +15,8 @@ import com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExil
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.CommanderComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
+import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -61,7 +61,7 @@ class CastZoneResolver(
     }
 
     /**
-     * Check if a card is in exile or a graveyard and has `MayPlayFromExileComponent`
+     * Check if a card is in exile or a graveyard and has an active `MayPlayPermission`
      * granting the player permission to play it. Checks all players' exile zones
      * because cards like Villainous Wealth exile from an opponent's library (cards
      * remain in their owner's exile zone but are castable by the spell's controller).
@@ -82,9 +82,11 @@ class CastZoneResolver(
         }
         if (!inExileOrGraveyard) return false
 
-        // Check direct MayPlayFromExileComponent grant
-        val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
-        if (component?.controllerId == playerId) return true
+        // Check direct MayPlayPermission. When the grant carries a runtime condition
+        // (Possibility Technician's "if you control a Kavu"), fall through to linked-exile
+        // granters when the gate is closed — those are independent permission sources and
+        // may still apply.
+        if (state.hasMayPlayFor(cardId, playerId, conditionEvaluator)) return true
 
         // Check for GrantMayCastFromLinkedExile static abilities on battlefield permanents
         return hasLinkedExileCastPermission(state, playerId, cardId)

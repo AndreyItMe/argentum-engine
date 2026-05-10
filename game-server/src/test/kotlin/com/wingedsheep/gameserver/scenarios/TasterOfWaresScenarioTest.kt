@@ -2,7 +2,6 @@ package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
@@ -116,9 +115,10 @@ class TasterOfWaresScenarioTest : ScenarioTestBase() {
                 withClue("Volcanic Hammer should be in opponent's exile") {
                     volcanicHammerExiled shouldNotBe null
                 }
-                val mayPlay = game.state.getEntity(volcanicHammerExiled!!)
-                    ?.get<MayPlayFromExileComponent>()
-                withClue("MayPlayFromExileComponent should be granted to player 1") {
+                val mayPlay = game.state.mayPlayPermissions.firstOrNull {
+                    volcanicHammerExiled!! in it.cardIds
+                }
+                withClue("MayPlayPermission should be granted to player 1") {
                     mayPlay shouldNotBe null
                     mayPlay!!.controllerId shouldBe game.player1Id
                 }
@@ -132,7 +132,7 @@ class TasterOfWaresScenarioTest : ScenarioTestBase() {
                 val castFromExile = game.execute(
                     CastSpell(
                         playerId = game.player1Id,
-                        cardId = volcanicHammerExiled,
+                        cardId = volcanicHammerExiled!!,
                         targets = listOf(ChosenTarget.Player(game.player2Id))
                     )
                 )

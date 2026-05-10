@@ -10,7 +10,6 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 
 /**
  * Tests for Dragonhawk, Fate's Tempest.
@@ -182,8 +181,7 @@ class DragonhawkFatesTempestTest : FunSpec({
 
         val exiledMountain = driver.getExile(p1).first()
         // Impulse window is open this turn (we just don't play it yet).
-        driver.state.getEntity(exiledMountain)
-            ?.get<com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent>() shouldNotBe null
+        driver.state.mayPlayPermissions.any { exiledMountain in it.cardIds } shouldBe true
 
         // Advance through this turn's end step (delayed trigger fires), then past cleanup,
         // into P2's turn, and back to P1's next main phase.
@@ -199,8 +197,7 @@ class DragonhawkFatesTempestTest : FunSpec({
         }
 
         // On P1's next turn's main phase, the impulse component should be gone.
-        driver.state.getEntity(exiledMountain)
-            ?.get<com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent>() shouldBe null
+        driver.state.mayPlayPermissions.any { exiledMountain in it.cardIds } shouldBe false
     }
 
     test("attack trigger's damage resolves at the same turn's end step") {

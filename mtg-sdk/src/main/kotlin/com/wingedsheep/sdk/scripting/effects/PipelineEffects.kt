@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -731,8 +732,9 @@ data class SelectTargetEffect(
 
 /**
  * Grant "may play from exile" permission to all cards in a named collection.
- * The cards must already be in exile. This adds a MayPlayFromExileComponent,
- * allowing the controller to play them as if they were in hand until end of turn.
+ * The cards must already be in exile. The engine registers a MayPlayPermission
+ * on the game state, allowing the controller to play them as if they were in
+ * hand until end of turn (or the configured expiry).
  *
  * Does NOT waive the mana cost — pair with [GrantPlayWithoutPayingCostEffect]
  * to also make them free. Used by impulse-draw effects (Chandra, Act on Impulse, etc.).
@@ -749,10 +751,21 @@ data class GrantMayPlayFromExileEffect(
      * "and mana of any type can be spent to cast that spell" clauses (Taster of Wares,
      * Cruelclaw's Heist).
      */
-    val withAnyManaType: Boolean = false
+    val withAnyManaType: Boolean = false,
+    /**
+     * Optional gate evaluated each time the play permission is checked. Used for cards
+     * that grant a conditional may-play, e.g. Possibility Technician's "you may play it
+     * if you control a Kavu" — the permission persists with the card in exile, but is
+     * only honored while the condition holds. Re-evaluated on every legal-action query.
+     */
+    val condition: Condition? = null
 ) : Effect {
     override val description: String = buildString {
         append("${expiry.description.replaceFirstChar { it.uppercase() }}, you may play the $from cards from exile")
+        if (condition != null) {
+            append(" ")
+            append(condition.description)
+        }
         if (withAnyManaType) append(", and mana of any type can be spent to cast them")
     }
 
@@ -853,9 +866,10 @@ data class GrantPlayWithAdditionalCostEffect(
 
 /**
  * Grant a single target entity in exile permission to be cast without paying
- * its mana cost. Adds MayPlayFromExileComponent and PlayWithoutPayingCostComponent
- * to the target entity. Optionally marks the spell with ExileAfterResolveComponent
- * so it goes to exile instead of graveyard after resolving or being countered.
+ * its mana cost. The engine registers a MayPlayPermission and stamps
+ * PlayWithoutPayingCostComponent on the target. Optionally marks the spell
+ * with ExileAfterResolveComponent so it goes to exile instead of graveyard
+ * after resolving or being countered.
  *
  * Unlike the collection-based [GrantMayPlayFromExileEffect] + [GrantPlayWithoutPayingCostEffect],
  * this works on a single targeted entity referenced by [EffectTarget].

@@ -41,7 +41,7 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  *  - The "cast the discarded card without paying its mana cost" clause leaves the
  *    discarded card in the graveyard (per oracle text) and grants one-shot free-cast
  *    permission directly on the graveyard card via `GrantFreeCastTargetFromExileEffect`.
- *    The cast-from-zone resolver recognizes `MayPlayFromExileComponent` on cards in
+ *    The cast-from-zone resolver recognizes a `MayPlayPermission` on cards in
  *    either exile or the graveyard, so no exile detour is needed. If the controller
  *    declines the free cast, the card simply stays in the graveyard.
  */

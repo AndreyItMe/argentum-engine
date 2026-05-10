@@ -47,7 +47,7 @@ import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.permissions.activeMayPlayFor
 import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
@@ -578,17 +578,18 @@ class CastSpellHandler(
     }
 
     /**
-     * True if the spell is being cast from exile via a [MayPlayFromExileComponent]
-     * that allows mana of any type to be spent. The card must currently be in some
-     * exile zone (the card's owner's, which may be an opponent — e.g. Taster of Wares
-     * leaves the exiled card in the revealing player's exile), the permission must
-     * be granted to the casting player, and the flag must be set.
+     * True if the spell is being cast from exile via a [com.wingedsheep.engine.state.permissions.MayPlayPermission]
+     * that allows mana of any type to be spent. The card must currently be in some exile
+     * zone (the card's owner's, which may be an opponent — e.g. Taster of Wares leaves the
+     * exiled card in the revealing player's exile), an active permission must be granted
+     * to the casting player with its condition gate open, and the `withAnyManaType` flag
+     * must be set on at least one of those active permissions.
      */
     private fun isCastWithAnyManaType(state: GameState, action: CastSpell): Boolean {
-        val container = state.getEntity(action.cardId) ?: return false
-        val mayPlay = container.get<MayPlayFromExileComponent>() ?: return false
-        if (mayPlay.controllerId != action.playerId || !mayPlay.withAnyManaType) return false
-        return state.turnOrder.any { ownerId -> action.cardId in state.getZone(ZoneKey(ownerId, Zone.EXILE)) }
+        val inExile = state.turnOrder.any { ownerId -> action.cardId in state.getZone(ZoneKey(ownerId, Zone.EXILE)) }
+        if (!inExile) return false
+        return state.activeMayPlayFor(action.cardId, action.playerId, conditionEvaluator)
+            .any { it.withAnyManaType }
     }
 
     private fun validateConspire(

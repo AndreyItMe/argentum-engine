@@ -7,9 +7,11 @@ import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
+import com.wingedsheep.engine.state.permissions.MayPlayPermission
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.ExileAndGrantOwnerPlayPermissionEffect
 import kotlin.reflect.KClass
 
@@ -35,14 +37,16 @@ class ExileAndGrantOwnerPlayPermissionExecutor : EffectExecutor<ExileAndGrantOwn
 
         val transition = ZoneTransitionService.moveToZone(state, targetId, Zone.EXILE)
 
-        var newState = transition.state.updateEntity(targetId) { container ->
-            container.with(
-                MayPlayFromExileComponent(
-                    controllerId = ownerId,
-                    permanent = true
-                )
+        var newState = transition.state.addMayPlayPermission(
+            MayPlayPermission(
+                id = EntityId.generate(),
+                cardIds = setOf(targetId),
+                controllerId = ownerId,
+                sourceId = context.sourceId,
+                permanent = true,
+                timestamp = state.timestamp,
             )
-        }
+        )
 
         if (effect.opponentCostIncrease > 0 && ownerId != context.controllerId) {
             newState = newState.updateEntity(targetId) { container ->

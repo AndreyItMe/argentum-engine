@@ -1,7 +1,6 @@
 package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.LifeGainedAmountThisTurnComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
@@ -94,7 +93,7 @@ class BreOfClanStoutarmScenarioTest : ScenarioTestBase() {
 
                 // Shock has free-cast permission — Shock MV=1 <= 5 life gained.
                 val shockContainer = game.state.getEntity(shockExiled!!)!!
-                shockContainer.get<MayPlayFromExileComponent>() shouldNotBe null
+                game.state.mayPlayPermissions.any { shockExiled in it.cardIds } shouldBe true
                 shockContainer.get<PlayWithoutPayingCostComponent>() shouldNotBe null
             }
 

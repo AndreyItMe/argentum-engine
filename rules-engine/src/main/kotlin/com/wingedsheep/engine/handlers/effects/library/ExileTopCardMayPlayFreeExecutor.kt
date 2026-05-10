@@ -4,8 +4,9 @@ import com.wingedsheep.engine.core.EffectResult
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
+import com.wingedsheep.engine.state.permissions.MayPlayPermission
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.GrantMayPlayFromExileEffect
@@ -16,8 +17,9 @@ import kotlin.reflect.KClass
 /**
  * Executor for GrantMayPlayFromExileEffect.
  *
- * Marks all cards in a named collection with MayPlayFromExileComponent,
- * granting the controller permission to play them from exile until end of turn.
+ * Registers a [MayPlayPermission] on the game state targeting the cards in the named
+ * collection, granting the controller permission to play them from exile. The expiry
+ * is encoded on the permission (until end of turn, until a future step, or permanent).
  */
 class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect> {
 
@@ -35,17 +37,20 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
         val expiresAfterTurn = expiresAfterTurnFor(state, controllerId, effect.expiry)
 
         var newState = state
-        for (cardId in collection) {
-            newState = newState.updateEntity(cardId) { container ->
-                container.with(
-                    MayPlayFromExileComponent(
-                        controllerId = controllerId,
-                        permanent = isPermanent,
-                        expiresAfterTurn = expiresAfterTurn,
-                        withAnyManaType = effect.withAnyManaType
-                    )
+        if (collection.isNotEmpty()) {
+            newState = newState.addMayPlayPermission(
+                MayPlayPermission(
+                    id = EntityId.generate(),
+                    cardIds = collection.toSet(),
+                    controllerId = controllerId,
+                    sourceId = context.sourceId,
+                    condition = effect.condition,
+                    withAnyManaType = effect.withAnyManaType,
+                    permanent = isPermanent,
+                    expiresAfterTurn = expiresAfterTurn,
+                    timestamp = state.timestamp,
                 )
-            }
+            )
         }
 
         return EffectResult.success(newState)

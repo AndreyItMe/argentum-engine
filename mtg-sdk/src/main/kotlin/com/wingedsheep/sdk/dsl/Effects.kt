@@ -527,8 +527,9 @@ object Effects {
         from: String,
         expiry: com.wingedsheep.sdk.scripting.effects.MayPlayExpiry =
             com.wingedsheep.sdk.scripting.effects.MayPlayExpiry.EndOfTurn,
-        withAnyManaType: Boolean = false
-    ): Effect = GrantMayPlayFromExileEffect(from, expiry, withAnyManaType)
+        withAnyManaType: Boolean = false,
+        condition: com.wingedsheep.sdk.scripting.conditions.Condition? = null
+    ): Effect = GrantMayPlayFromExileEffect(from, expiry, withAnyManaType, condition)
 
     /**
      * Grant "play without paying mana cost" permission to all cards in a named collection.

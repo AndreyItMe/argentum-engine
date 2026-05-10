@@ -12,7 +12,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.sdk.core.Zone
@@ -39,7 +39,8 @@ import kotlin.reflect.KClass
 class PlayLandHandler(
     private val cardRegistry: CardRegistry,
     private val triggerDetector: TriggerDetector,
-    private val triggerProcessor: TriggerProcessor
+    private val triggerProcessor: TriggerProcessor,
+    private val conditionEvaluator: ConditionEvaluator,
 ) : ActionHandler<PlayLand> {
     override val actionType: KClass<PlayLand> = PlayLand::class
 
@@ -73,7 +74,7 @@ class PlayLandHandler(
             return "You can only play land cards as lands"
         }
 
-        // Check card is in hand, on top of library with PlayFromTopOfLibrary, in exile with MayPlayFromExileComponent,
+        // Check card is in hand, on top of library with PlayFromTopOfLibrary, in exile with MayPlayPermission,
         // or in graveyard with MayPlayPermanentsFromGraveyard permission (Muldrotha)
         val handZone = ZoneKey(action.playerId, Zone.HAND)
         val inHand = action.cardId in state.getZone(handZone)
@@ -351,8 +352,7 @@ class PlayLandHandler(
             cardId in state.getZone(ZoneKey(pid, Zone.EXILE))
         }
         if (!inAnyExile) return false
-        val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
-        return component?.controllerId == playerId
+        return state.hasMayPlayFor(cardId, playerId, conditionEvaluator)
     }
 
     private fun hasPlayFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
@@ -421,7 +421,12 @@ class PlayLandHandler(
 
     companion object {
         fun create(services: EngineServices): PlayLandHandler {
-            return PlayLandHandler(services.cardRegistry, services.triggerDetector, services.triggerProcessor)
+            return PlayLandHandler(
+                services.cardRegistry,
+                services.triggerDetector,
+                services.triggerProcessor,
+                services.conditionEvaluator,
+            )
         }
     }
 }

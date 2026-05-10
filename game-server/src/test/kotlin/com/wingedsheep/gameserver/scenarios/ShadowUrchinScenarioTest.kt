@@ -2,7 +2,6 @@ package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.ManaCost
@@ -11,7 +10,6 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.model.CardDefinition
 import io.kotest.assertions.withClue
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 
@@ -113,8 +111,8 @@ class ShadowUrchinScenarioTest : ScenarioTestBase() {
                 }
 
                 for (cardId in exile) {
-                    val mayPlay = game.state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
-                    withClue("Exiled card ${game.state.getEntity(cardId)?.get<CardComponent>()?.name} should have MayPlayFromExileComponent") {
+                    val mayPlay = game.state.mayPlayPermissions.firstOrNull { cardId in it.cardIds }
+                    withClue("Exiled card ${game.state.getEntity(cardId)?.get<CardComponent>()?.name} should have a MayPlayPermission") {
                         mayPlay.shouldNotBeNull()
                         mayPlay.controllerId shouldBe game.player1Id
                     }
@@ -151,7 +149,7 @@ class ShadowUrchinScenarioTest : ScenarioTestBase() {
                 withClue("Two cards should be exiled with may-play permission") {
                     exile.size shouldBe 2
                     exile.forEach { cardId ->
-                        game.state.getEntity(cardId)?.get<MayPlayFromExileComponent>().shouldNotBeNull()
+                        game.state.mayPlayPermissions.any { cardId in it.cardIds } shouldBe true
                     }
                 }
 
@@ -166,7 +164,7 @@ class ShadowUrchinScenarioTest : ScenarioTestBase() {
                 for (cardId in exile) {
                     val cardName = game.state.getEntity(cardId)?.get<CardComponent>()?.name
                     withClue("Exiled card $cardName should no longer have may-play permission after P1's end step") {
-                        game.state.getEntity(cardId)?.get<MayPlayFromExileComponent>().shouldBeNull()
+                        game.state.mayPlayPermissions.any { cardId in it.cardIds } shouldBe false
                     }
                 }
             }

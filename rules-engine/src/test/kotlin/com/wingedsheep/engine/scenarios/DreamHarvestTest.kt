@@ -1,7 +1,6 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
@@ -133,7 +132,7 @@ class DreamHarvestTest : FunSpec({
         exiled.size shouldBe 1
 
         val exiledCard = exiled.first()
-        val mayPlay = driver.state.getEntity(exiledCard)?.get<MayPlayFromExileComponent>()
+        val mayPlay = driver.state.mayPlayPermissions.firstOrNull { exiledCard in it.cardIds }
         val freeCast = driver.state.getEntity(exiledCard)?.get<PlayWithoutPayingCostComponent>()
 
         mayPlay shouldNotBe null

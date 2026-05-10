@@ -279,7 +279,6 @@ val engineSerializersModule = SerializersModule {
         subclass(CommanderRegistryComponent::class)
         subclass(ExileAfterResolveComponent::class)
         subclass(HasMorphAbilityComponent::class)
-        subclass(MayPlayFromExileComponent::class)
         subclass(PlayWithAdditionalCostComponent::class)
         subclass(PlayWithCostIncreaseComponent::class)
         subclass(PlayWithoutPayingCostComponent::class)

@@ -12,7 +12,8 @@ import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.CommanderComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.permissions.activeMayPlayFor
+import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
@@ -36,7 +37,7 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 /**
  * Enumerates spells and lands castable/playable from non-hand zones:
  * - Top of library (PlayFromTopOfLibrary, CastSpellTypesFromTopOfLibrary)
- * - Exile (MayPlayFromExileComponent)
+ * - Exile (MayPlayPermission on the GameState)
  * - Linked exile (GrantMayCastFromLinkedExile)
  * - Intrinsic zone cast (MayCastSelfFromZones, e.g. Squee)
  * - Graveyard permanents (MayPlayPermanentsFromGraveyard, e.g. Muldrotha)
@@ -319,7 +320,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
     }
 
     // =========================================================================
-    // Cards from exile (MayPlayFromExileComponent)
+    // Cards from exile (MayPlayPermission)
     // =========================================================================
 
     private fun enumerateExileCards(
@@ -338,8 +339,8 @@ class CastFromZoneEnumerator : ActionEnumerator {
         val graveyardCandidates = state.turnOrder.flatMap { pid -> state.getGraveyard(pid).map { it to "GRAVEYARD" } }
         for ((cardId, sourceZoneLabel) in exileCandidates + graveyardCandidates) {
             val container = state.getEntity(cardId) ?: continue
-            val exileComponent = container.get<MayPlayFromExileComponent>() ?: continue
-            if (exileComponent.controllerId != playerId) continue
+            val permissions = state.activeMayPlayFor(cardId, playerId, context.conditionEvaluator)
+            if (permissions.isEmpty()) continue
             val playForFree = container.get<PlayWithoutPayingCostComponent>()?.controllerId == playerId
             val runtimeAdditionalCost = container.get<PlayWithAdditionalCostComponent>()
                 ?.takeIf { it.controllerId == playerId }
@@ -385,7 +386,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
                     } else {
                         cardComponent.manaCost
                     }
-                    var effectiveCost = if (exileComponent.withAnyManaType) {
+                    var effectiveCost = if (permissions.any { it.withAnyManaType }) {
                         baseEffectiveCost.relaxColors()
                     } else {
                         baseEffectiveCost
@@ -595,9 +596,11 @@ class CastFromZoneEnumerator : ActionEnumerator {
             )
 
             for (exiledId in linked.exiledIds) {
-                // Skip if already handled by MayPlayFromExileComponent
+                // Skip if already handled by a direct MayPlayPermission — but only when its
+                // gate is open. A closed conditional gate must fall through so the linked-exile
+                // path remains a viable independent permission source.
                 val exiledContainer = state.getEntity(exiledId) ?: continue
-                if (exiledContainer.get<MayPlayFromExileComponent>()?.controllerId == playerId) continue
+                if (state.hasMayPlayFor(exiledId, playerId, context.conditionEvaluator)) continue
                 val exiledCard = exiledContainer.get<CardComponent>() ?: continue
 
                 // Ownership restriction — "cards you own exiled with this creature"
@@ -808,8 +811,10 @@ class CastFromZoneEnumerator : ActionEnumerator {
             val zoneCards = state.getZone(ZoneKey(playerId, zone))
             for (cardId in zoneCards) {
                 val container = state.getEntity(cardId) ?: continue
-                // Skip cards already handled by MayPlayFromExileComponent or linked exile
-                if (zone == Zone.EXILE && container.get<MayPlayFromExileComponent>()?.controllerId == playerId) continue
+                // Skip cards already handled by a direct MayPlayPermission (gate-open only;
+                // a closed conditional gate must fall through to intrinsic cast permission)
+                // or linked exile.
+                if (zone == Zone.EXILE && state.hasMayPlayFor(cardId, playerId, context.conditionEvaluator)) continue
                 if (zone == Zone.EXILE && cardId in linkedExileCardIds) continue
                 val cardComponent = container.get<CardComponent>() ?: continue
                 val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
