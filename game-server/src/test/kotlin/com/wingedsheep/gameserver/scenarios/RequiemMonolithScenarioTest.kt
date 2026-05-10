@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario tests for Requiem Monolith.
@@ -145,6 +146,91 @@ class RequiemMonolithScenarioTest : ScenarioTestBase() {
                     game.handSize(2) shouldBe p2InitialHand + 1
                 }
                 withClue("Opponent loses 1 life") { game.getLifeTotal(2) shouldBe p2InitialLife - 1 }
+            }
+
+            test("cannot activate at instant speed (during opponent's turn)") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Requiem Monolith")
+                    .withCardOnBattlefield(1, "Glory Seeker")
+                    .withCardInLibrary(1, "Mountain")
+                    .withCardInLibrary(2, "Mountain")
+                    .withActivePlayer(2) // Player 2's turn — Player 1 cannot activate at sorcery speed
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val monolithId = game.findPermanent("Requiem Monolith")!!
+                val seekerId = game.findPermanent("Glory Seeker")!!
+                val ability = cardRegistry.getCard("Requiem Monolith")!!.script.activatedAbilities.first()
+
+                val result = game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = monolithId,
+                        abilityId = ability.id,
+                        targets = listOf(ChosenTarget.Permanent(seekerId))
+                    )
+                )
+
+                withClue("Activation should be rejected at instant speed") {
+                    result.error shouldNotBe null
+                }
+            }
+
+            test("granted trigger fires when an opposing spell deals damage to the granted creature") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Requiem Monolith")
+                    .withCardOnBattlefield(1, "Towering Baloth") // 7/6 — easily survives 2 damage
+                    .withCardInHand(2, "Shock")
+                    .withLandsOnBattlefield(2, "Mountain", 1)
+                    .withCardInLibrary(1, "Mountain")
+                    .withCardInLibrary(1, "Mountain")
+                    .withCardInLibrary(1, "Mountain")
+                    .withCardInLibrary(2, "Mountain")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val monolithId = game.findPermanent("Requiem Monolith")!!
+                val balothId = game.findPermanent("Towering Baloth")!!
+                val ability = cardRegistry.getCard("Requiem Monolith")!!.script.activatedAbilities.first()
+
+                // Player 1 grants the trigger to their Baloth, declines the self-ping.
+                game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = monolithId,
+                        abilityId = ability.id,
+                        targets = listOf(ChosenTarget.Permanent(balothId))
+                    )
+                )
+                game.resolveStack()
+                game.answerYesNo(false)
+                game.resolveStack()
+
+                val handAfterGrant = game.handSize(1)
+                val lifeAfterGrant = game.getLifeTotal(1)
+
+                // Pass priority to P2 so they can cast Shock at instant speed.
+                game.passPriority()
+
+                // Player 2 casts Shock targeting the Baloth while it still carries the granted trigger.
+                val shockResult = game.castSpell(2, "Shock", balothId)
+                withClue("Player 2 should be able to cast Shock: ${shockResult.error}") {
+                    shockResult.error shouldBe null
+                }
+                game.resolveStack() // Shock resolves → 2 damage → granted trigger fires → resolve
+
+                withClue("Granted trigger fires from a different damage source (Shock, not the artifact)") {
+                    game.handSize(1) shouldBe handAfterGrant + 2
+                }
+                withClue("Player1 loses 2 life — equal to damage taken") {
+                    game.getLifeTotal(1) shouldBe lifeAfterGrant - 2
+                }
+                withClue("Towering Baloth (7/6) survives 2 damage from Shock") {
+                    game.isOnBattlefield("Towering Baloth") shouldBe true
+                }
             }
         }
     }
