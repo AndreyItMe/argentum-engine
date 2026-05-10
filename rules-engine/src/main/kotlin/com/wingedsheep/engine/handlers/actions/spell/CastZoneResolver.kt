@@ -5,7 +5,6 @@ import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.engine.handlers.permissions.gateOpen
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -16,8 +15,8 @@ import com.wingedsheep.engine.state.components.battlefield.MayCastFromLinkedExil
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.CommanderComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
-import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
+import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -83,14 +82,11 @@ class CastZoneResolver(
         }
         if (!inExileOrGraveyard) return false
 
-        // Check direct MayPlayFromExileComponent grant. When the grant carries a runtime
-        // condition (Possibility Technician's "if you control a Kavu"), fall through to
-        // linked-exile granters when the gate is closed — those are independent permission
-        // sources and may still apply.
-        val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
-        if (component?.controllerId == playerId && component.gateOpen(state, cardId, conditionEvaluator)) {
-            return true
-        }
+        // Check direct MayPlayPermission. When the grant carries a runtime condition
+        // (Possibility Technician's "if you control a Kavu"), fall through to linked-exile
+        // granters when the gate is closed — those are independent permission sources and
+        // may still apply.
+        if (state.hasMayPlayFor(cardId, playerId, conditionEvaluator)) return true
 
         // Check for GrantMayCastFromLinkedExile static abilities on battlefield permanents
         return hasLinkedExileCastPermission(state, playerId, cardId)

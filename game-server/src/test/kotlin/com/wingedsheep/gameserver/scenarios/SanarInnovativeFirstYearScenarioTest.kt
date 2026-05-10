@@ -4,6 +4,7 @@ import com.wingedsheep.engine.core.SelectCardsDecision
 import com.wingedsheep.engine.legalactions.LegalActionEnumerator
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
@@ -197,7 +198,14 @@ class SanarInnovativeFirstYearScenarioTest : ScenarioTestBase() {
                 }!!
                 game.state = game.state.updateEntity(cinderStrikeId) {
                     it.with(MayPlayFromExileComponent(controllerId = game.player1Id))
-                }
+                }.addMayPlayPermission(
+                    com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                        id = com.wingedsheep.sdk.model.EntityId.generate(),
+                        cardIds = setOf(cinderStrikeId),
+                        controllerId = game.player1Id,
+                        timestamp = game.state.timestamp,
+                    )
+                )
 
                 val enumerator = LegalActionEnumerator.create(cardRegistry)
                 val legalActions = enumerator.enumerate(game.state, game.player1Id)

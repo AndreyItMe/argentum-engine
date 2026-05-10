@@ -5,6 +5,7 @@ import com.wingedsheep.engine.legalactions.support.setupP1
 import com.wingedsheep.engine.legalactions.support.shouldContainCastOf
 import com.wingedsheep.engine.legalactions.support.shouldNotContainCastOf
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
@@ -116,7 +117,16 @@ class CastFromZoneEnumeratorTest : FunSpec({
                 }
             val withPermission = driver.game.state.getEntity(exiledId)!!
                 .with(MayPlayFromExileComponent(controllerId = driver.player1))
-            driver.game.replaceState(driver.game.state.withEntity(exiledId, withPermission))
+            driver.game.replaceState(
+                driver.game.state.withEntity(exiledId, withPermission).addMayPlayPermission(
+                    com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                        id = com.wingedsheep.sdk.model.EntityId.generate(),
+                        cardIds = setOf(exiledId),
+                        controllerId = driver.player1,
+                        timestamp = driver.game.state.timestamp,
+                    )
+                )
+            )
 
             val view = driver.enumerateFor(driver.player1)
 
@@ -148,7 +158,16 @@ class CastFromZoneEnumeratorTest : FunSpec({
             // Attach permission for the OPPONENT, not me.
             val container = driver.game.state.getEntity(exiledId)!!
                 .with(MayPlayFromExileComponent(controllerId = driver.player2))
-            driver.game.replaceState(driver.game.state.withEntity(exiledId, container))
+            driver.game.replaceState(
+                driver.game.state.withEntity(exiledId, container).addMayPlayPermission(
+                    com.wingedsheep.engine.state.permissions.MayPlayPermission(
+                        id = com.wingedsheep.sdk.model.EntityId.generate(),
+                        cardIds = setOf(exiledId),
+                        controllerId = driver.player2,
+                        timestamp = driver.game.state.timestamp,
+                    )
+                )
+            )
 
             driver.enumerateFor(driver.player1) shouldNotContainCastOf "Lightning Bolt"
         }

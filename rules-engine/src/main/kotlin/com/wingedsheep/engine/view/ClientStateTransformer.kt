@@ -25,7 +25,7 @@ import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComp
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.permissions.gateOpen
+import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.GiftGivenEffect
@@ -936,9 +936,7 @@ class ClientStateTransformer(
 
         // Check if this card is playable from exile (impulse draw like Mind's Desire,
         // or cast-from-linked-exile like Rona / Dawnhand Dissident).
-        val mayPlayFromExile = container.get<MayPlayFromExileComponent>()
-            ?.takeIf { it.controllerId == viewingPlayerId }
-            ?.gateOpen(state, entityId, conditionEvaluator) == true
+        val mayPlayFromExile = state.hasMayPlayFor(entityId, viewingPlayerId, conditionEvaluator)
         val playableFromExile = zoneKey.zoneType == Zone.EXILE && (
             mayPlayFromExile || isCastableFromLinkedExile(state, viewingPlayerId, entityId, container)
         )
