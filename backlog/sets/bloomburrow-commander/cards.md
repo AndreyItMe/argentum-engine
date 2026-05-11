@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 14 / 312
+**Implemented:** 42 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -93,7 +93,7 @@
 - [ ] Elspeth, Sun's Champion
 - [ ] End-Raze Forerunners
 - [ ] Esika's Chariot
-- [ ] Etali, Primal Storm
+- [x] Etali, Primal Storm
 - [ ] Evercoat Ursine
 - [x] Evolving Wilds
 - [ ] Exotic Orchard

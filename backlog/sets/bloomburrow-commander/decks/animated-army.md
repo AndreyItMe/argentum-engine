@@ -12,7 +12,7 @@
 
 - [x] 1 Brightcap Badger // Fungus Frolic
 - [x] 1 Burnished Hart
-- [ ] 1 Etali, Primal Storm
+- [x] 1 Etali, Primal Storm
 - [ ] 1 Evercoat Ursine
 - [ ] 1 Garruk's Packleader
 - [ ] 1 Ghalta, Primal Hunger

@@ -45,11 +45,12 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
     ): EffectResult {
         val cards = when (val source = effect.source) {
             is CardSource.TopOfLibrary -> {
-                val playerId = resolvePlayer(source.player, context, state)
-                    ?: return EffectResult.error(state, "Could not resolve player for GatherCards")
                 val count = amountEvaluator.evaluate(state, source.count, context)
-                val libraryZone = ZoneKey(playerId, Zone.LIBRARY)
-                state.getZone(libraryZone).take(count)
+                val playerIds = resolvePlayersForLibrary(source.player, context, state)
+                    ?: return EffectResult.error(state, "Could not resolve player for GatherCards")
+                playerIds.flatMap { playerId ->
+                    state.getZone(ZoneKey(playerId, Zone.LIBRARY)).take(count)
+                }
             }
 
             is CardSource.FromZone -> {
@@ -226,5 +227,21 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
             is Player.TriggeringPlayer -> context.triggeringEntityId
             else -> context.controllerId
         }
+    }
+
+    /**
+     * Resolve a [Player] reference to the list of player ids whose libraries should be
+     * gathered from. Multi-player references like [Player.Each] / [Player.EachOpponent]
+     * fan out (turn-order; opponents in turn-order minus controller); single-player
+     * references collapse to a one-element list.
+     */
+    private fun resolvePlayersForLibrary(
+        player: Player,
+        context: EffectContext,
+        state: GameState
+    ): List<com.wingedsheep.sdk.model.EntityId>? = when (player) {
+        is Player.Each, is Player.ActivePlayerFirst -> state.turnOrder
+        is Player.EachOpponent -> state.turnOrder.filter { it != context.controllerId }
+        else -> resolvePlayer(player, context, state)?.let { listOf(it) }
     }
 }
