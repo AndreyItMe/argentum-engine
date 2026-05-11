@@ -2,8 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 144 / 261
-
+**Implemented:** 145 / 261
 - [x] Adagia, Windswept Bastion
 - [x] All-Fates Scroll
 - [x] All-Fates Stalker
@@ -200,7 +199,7 @@
 - [x] Sledge-Class Seedship
 - [ ] Sothera, the Supervoid
 - [ ] Space-Time Anomaly
-- [ ] Specimen Freighter
+- [x] Specimen Freighter
 - [x] Squire's Lightblade
 - [x] Starbreach Whale
 - [x] Starfield Shepherd

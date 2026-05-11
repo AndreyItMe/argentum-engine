@@ -237,13 +237,10 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 ## Whenever a creature you control dies, each opponent chooses a creature they control and exiles it.
 - [ ] Sothera, the Supervoid
 
-## When this Spacecraft enters, return up to two target non-Spacecraft creatures to their owners’ hands
-- [ ] Specimen Freighter
-
 ## Spend this mana only to cast an artifact spell
 - [ ] Steelswarm Operator
 
-## Draw cards equal to the sacrificed creature’s power
+## Planet, Draw cards equal to the sacrificed creature’s power
 - [ ] Susur Secundi, Void Altar
 
 ## Whenever another creature you control dies or is put into exile, put a +1/+1 counter on Syr Vondam and you gain 1 life.
