@@ -13,10 +13,8 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.conditions.Compare
 import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
-import com.wingedsheep.sdk.scripting.AbilityId
-import com.wingedsheep.sdk.scripting.ActivatedAbility
+import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
-import com.wingedsheep.sdk.scripting.effects.GrantActivatedAbilityEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
@@ -69,16 +67,18 @@ val EvendoWakingHaven = card("Evendo, Waking Haven") {
             Costs.Mana("{G}"),
             Costs.Tap
         )
-        effect = com.wingedsheep.sdk.scripting.effects.ConditionalEffect(
-            condition = Compare(
-                left = DynamicAmount.EntityProperty(
-                    entity = EntityReference.Source,
-                    numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-                ),
-                operator = ComparisonOperator.GTE,
-                right = DynamicAmount.Fixed(12)
-            ),
-            effect = Effects.AddMana(Color.GREEN, DynamicAmounts.otherCreaturesYouControl())
+        effect = Effects.AddMana(Color.GREEN, DynamicAmounts.creaturesYouControl())
+        restrictions = listOf(
+            ActivationRestriction.OnlyIfCondition(
+                Compare(
+                    left = DynamicAmount.EntityProperty(
+                        entity = EntityReference.Source,
+                        numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
+                    ),
+                    operator = ComparisonOperator.GTE,
+                    right = DynamicAmount.Fixed(12)
+                )
+            )
         )
         manaAbility = true
     }

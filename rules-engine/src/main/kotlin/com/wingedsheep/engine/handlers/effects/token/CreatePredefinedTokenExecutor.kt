@@ -71,6 +71,9 @@ class CreatePredefinedTokenExecutor(
                 name = effect.tokenType,
                 manaCost = ManaCost.ZERO,
                 typeLine = cardDef.typeLine,
+                baseStats = cardDef.creatureStats,
+                baseKeywords = cardDef.keywords,
+                colors = cardDef.colors,
                 ownerId = tokenControllerId,
                 imageUri = cardDef.metadata.imageUri
             )

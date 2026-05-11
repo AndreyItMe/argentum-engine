@@ -226,6 +226,16 @@ class ManaAbilityEnumerator : ActionEnumerator {
                     }
                 }
 
+                // Check activation restrictions
+                var restrictionsMet = true
+                for (restriction in ability.restrictions) {
+                    if (!context.castPermissionUtils.checkActivationRestriction(state, playerId, restriction, entityId, ability.id)) {
+                        restrictionsMet = false
+                        break
+                    }
+                }
+                if (!restrictionsMet) continue
+
                 val costInfo = if (tapTargets != null && tapCost != null) {
                     AdditionalCostData(
                         description = tapCost.description,

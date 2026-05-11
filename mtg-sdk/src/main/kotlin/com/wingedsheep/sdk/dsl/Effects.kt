@@ -1154,6 +1154,15 @@ object Effects {
     fun CreateMapToken(count: Int = 1): Effect =
         CreatePredefinedTokenEffect("Map", count)
 
+    /**
+     * Create Drone artifact creature tokens.
+     * "Flying. This token can block only creatures with flying."
+     *
+     * @param count Number of tokens to create
+     */
+    fun CreateDroneToken(count: Int = 1): Effect =
+        CreatePredefinedTokenEffect("Drone", count)
+
     // =========================================================================
     // Protection Effects
     // =========================================================================

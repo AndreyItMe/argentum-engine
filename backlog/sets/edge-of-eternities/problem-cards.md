@@ -29,28 +29,13 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 ## Void:
 
-- [ ] Alpharael, Stonechosen
-- [ ] Chorale of the Void
-- [ ] Decode Transmissions
-- [ ] Elegy Acolyte
-- [ ] Hylderblade
-- [ ] Hymn of the Faller
-- [ ] Insatiable Skittermaw
-- [ ] Temporal Intervention
-- [ ] Tragic Trajectory
-- [ ] Voidforged Titan
-- [ ] Kavaron Skywarden
 - [x] Plasma Bolt
 - [ ] Roving Actuator
-- [ ] Interceptor Mechan
 
 ## Differently named lands:
 - [x] All-Fates Scroll
 - [ ] Fungal Colossus
 - [ ] Survey Mechan
-
-## Legendary token:
-- [x] Adagia, Windswept Bastion
 
 ## NthSpell static ability
 - [x] Brightspear Zealot
@@ -59,7 +44,7 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 - [ ] Cosmogoyf
 
 ## Drone token:
-- [ ] Desculpting Blast
+- [x] Desculpting Blast
 - [ ] Station Monitor
 - [ ] Pinnacle Emissary
 
@@ -116,9 +101,6 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 ## up to one other target artifact you control becomes an artifact creature with base power and toughness 2/2 and gains flying until end of turn
 - [ ] Synthesizer Labship
-
-## If this is the second time this ability has resolved this turn, draw a card
-- [ ] Tannuk, Memorial Ensign
 
 ## power stations permanents using its toughness rather than its power
 - [ ] Tapestry Warden
@@ -228,14 +210,8 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 ## return target creature or enchantment card from your graveyard to the battlefield
 - [ ] Rescue Skiff
 
-## Exile all artifacts with mana value 3 or less
-- [ ] Ruinous Rampage
-
 ## Return up to three target creature cards with total mana value 3 or less from your graveyard to the battlefield. Put a +1/+1 counter on each of them
 - [ ] Scout for Survivors
-
-## mill half their library
-- [ ] Singularity Rupture
 
 ## Whenever this creature blocks a creature with flying, this creature gets +5/+0 until end of turn
 - [ ] Skystinger
@@ -243,17 +219,11 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 ## Whenever a creature you control dies, each opponent chooses a creature they control and exiles it.
 - [ ] Sothera, the Supervoid
 
-## When this Spacecraft enters, return up to two target non-Spacecraft creatures to their owners’ hands
-- [ ] Specimen Freighter
-
 ## Spend this mana only to cast an artifact spell
 - [ ] Steelswarm Operator
 
-## Draw cards equal to the sacrificed creature’s power
+## Planet, Draw cards equal to the sacrificed creature’s power
 - [ ] Susur Secundi, Void Altar
-
-## Whenever another creature you control dies or is put into exile, put a +1/+1 counter on Syr Vondam and you gain 1 life.
-- [ ] Syr Vondam, Sunstar Exemplar
 
 ## That permanent gains haste, "When this permanent leaves the battlefield, it deals damage equal to its mana value to each creature," and "At the beginning of your end step, sacrifice this permanent."
 - [ ] Terminal Velocity

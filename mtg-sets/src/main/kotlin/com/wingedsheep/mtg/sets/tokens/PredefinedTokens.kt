@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.model.CardDefinition.Companion.doubleFacedPermanent
+import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWith
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.TransformEffect
@@ -302,6 +303,31 @@ object PredefinedTokens {
     }
 
     /**
+     * Drone token — a 1/1 colorless artifact creature token with:
+     * Flying
+     * "This token can block only creatures with flying."
+     * Created by Desculpting Blast and other cards.
+     */
+    val Drone = card("Drone") {
+        typeLine = "Artifact Creature — Drone"
+        power = 1
+        toughness = 1
+
+        keywords(Keyword.FLYING)
+
+        staticAbility {
+            ability = CanOnlyBlockCreaturesWith(
+                blockerFilter = GameObjectFilter.Creature.withKeyword(Keyword.FLYING)
+            )
+        }
+
+        metadata {
+            imageUri = "https://cards.scryfall.io/normal/front/3/f/3fcf8950-117a-4587-8522-79001dffa500.jpg?1752946472"
+            artist = "Artur Nakhodkin"
+        }
+    }
+
+    /**
      * All predefined token definitions.
      * Register these in the CardRegistry so token abilities are resolved.
      */
@@ -315,6 +341,7 @@ object PredefinedTokens {
         Cragflame,
         Mutavault,
         SorcererRole,
-        Incubator
+        Incubator,
+        Drone
     )
 }

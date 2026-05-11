@@ -2,13 +2,14 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 142 / 261
+**Implemented:** 159 / 261
+---
 
 - [x] Adagia, Windswept Bastion
 - [x] All-Fates Scroll
 - [x] All-Fates Stalker
 - [x] Alpharael, Dreaming Acolyte
-- [ ] Alpharael, Stonechosen
+- [x] Alpharael, Stonechosen
 - [x] Annul
 - [x] Anticausal Vestige
 - [x] Archenemy's Charm
@@ -31,7 +32,7 @@
 - [ ] Broodguard Elite
 - [x] Bygone Colossus
 - [x] Cerebral Download
-- [ ] Chorale of the Void
+- [x] Chorale of the Void
 - [x] Chrome Companion
 - [ ] Close Encounter
 - [x] Cloudsculpt Technician
@@ -49,9 +50,9 @@
 - [x] Dawnsire, Sunstar Dreadnought
 - [ ] Dawnstrike Vanguard
 - [x] Debris Field Crusher
-- [ ] Decode Transmissions
+- [x] Decode Transmissions
 - [x] Depressurize
-- [ ] Desculpting Blast
+- [x] Desculpting Blast
 - [ ] Devastating Onslaught
 - [x] Diplomatic Relations
 - [ ] Divert Disaster
@@ -63,7 +64,7 @@
 - [x] Dubious Delicacy
 - [ ] Dyadrine, Synthesis Amalgam
 - [ ] Edge Rover
-- [ ] Elegy Acolyte
+- [x] Elegy Acolyte
 - [x] Embrace Oblivion
 - [x] Emergency Eject
 - [x] Emissary Escort
@@ -82,7 +83,7 @@
 - [x] Frenzied Baloth
 - [ ] Frontline War-Rager
 - [ ] Full Bore
-- [ ] Fungal Colossus
+- [x] Fungal Colossus
 - [x] Galactic Wayfarer
 - [x] Galvanizing Sawship
 - [ ] Genemorph Imago
@@ -103,7 +104,7 @@
 - [x] Honored Knight-Captain
 - [x] Hullcarver
 - [x] Hylderblade
-- [ ] Hymn of the Faller
+- [x] Hymn of the Faller
 - [x] Icecave Crasher
 - [ ] Icetill Explorer
 - [x] Illvoi Galeblade
@@ -112,12 +113,12 @@
 - [x] Illvoi Operative
 - [ ] Infinite Guideline Station
 - [x] Insatiable Skittermaw
-- [ ] Interceptor Mechan
+- [x] Interceptor Mechan
 - [x] Intrepid Tenderfoot
 - [x] Invasive Maneuvers
 - [x] Kavaron Harrier
 - [ ] Kavaron, Memorial World
-- [ ] Kavaron Skywarden
+- [x] Kavaron Skywarden
 - [x] Kavaron Turbodrone
 - [ ] Kav Landseeker
 - [x] Knight Luminary
@@ -177,7 +178,7 @@
 - [ ] Rescue Skiff
 - [x] Rig for War
 - [ ] Roving Actuator
-- [ ] Ruinous Rampage
+- [x] Ruinous Rampage
 - [x] Rust Harvester
 - [x] Sacred Foundry
 - [x] Sami's Curiosity
@@ -193,14 +194,14 @@
 - [x] Seedship Impact
 - [ ] Selfcraft Mechan
 - [x] Shattered Wings
-- [ ] Singularity Rupture
+- [x] Singularity Rupture
 - [x] Sinister Cryologist
 - [ ] Skystinger
 - [x] Slagdrill Scrapper
 - [x] Sledge-Class Seedship
 - [ ] Sothera, the Supervoid
 - [ ] Space-Time Anomaly
-- [ ] Specimen Freighter
+- [x] Specimen Freighter
 - [x] Squire's Lightblade
 - [x] Starbreach Whale
 - [x] Starfield Shepherd
@@ -221,13 +222,13 @@
 - [ ] Susur Secundi, Void Altar
 - [x] Swarm Culler
 - [ ] Synthesizer Labship
-- [ ] Syr Vondam, Sunstar Exemplar
+- [x] Syr Vondam, Sunstar Exemplar
 - [x] Syr Vondam, the Lucent
 - [x] Systems Override
-- [ ] Tannuk, Memorial Ensign
+- [x] Tannuk, Memorial Ensign
 - [ ] Tannuk, Steadfast Second
 - [ ] Tapestry Warden
-- [ ] Temporal Intervention
+- [x] Temporal Intervention
 - [ ] Terminal Velocity
 - [ ] Terrapact Intimidator
 - [ ] Terrasymbiosis
@@ -242,7 +243,7 @@
 - [ ] Thrumming Hivepool
 - [ ] Timeline Culler
 - [ ] Tractor Beam
-- [ ] Tragic Trajectory
+- [x] Tragic Trajectory
 - [x] Umbral Collar Zealot
 - [ ] Unravel
 - [ ] Uthros Psionicist
@@ -251,7 +252,7 @@
 - [ ] Vaultguard Trooper
 - [ ] Virulent Silencer
 - [x] Virus Beetle
-- [ ] Voidforged Titan
+- [x] Voidforged Titan
 - [x] Vote Out
 - [ ] Warmaker Gunship
 - [x] Watery Grave
