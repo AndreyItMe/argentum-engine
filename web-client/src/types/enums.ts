@@ -185,6 +185,7 @@ export enum Keyword {
   FLASHBACK = 'FLASHBACK',
   EVOKE = 'EVOKE',
   CONSPIRE = 'CONSPIRE',
+  HIDEAWAY = 'HIDEAWAY',
   // Creature mechanics
   OFFSPRING = 'OFFSPRING',
   // Damage modification
@@ -234,6 +235,7 @@ export const KeywordDisplayNames: Record<Keyword, string> = {
   [Keyword.FLASHBACK]: 'Flashback',
   [Keyword.EVOKE]: 'Evoke',
   [Keyword.CONSPIRE]: 'Conspire',
+  [Keyword.HIDEAWAY]: 'Hideaway',
   [Keyword.OFFSPRING]: 'Offspring',
   [Keyword.WITHER]: 'Wither',
   [Keyword.TOXIC]: 'Toxic',

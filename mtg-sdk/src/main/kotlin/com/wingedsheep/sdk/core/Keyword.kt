@@ -59,6 +59,7 @@ enum class Keyword(val displayName: String) {
     FLASHBACK("Flashback"),
     EVOKE("Evoke"),
     CONSPIRE("Conspire"),
+    HIDEAWAY("Hideaway"),
 
     // ── Creature mechanics ────────────────────────────────
     OFFSPRING("Offspring"),
