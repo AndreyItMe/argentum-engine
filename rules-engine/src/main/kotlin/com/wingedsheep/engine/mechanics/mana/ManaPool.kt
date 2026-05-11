@@ -34,7 +34,7 @@ fun ManaRestriction.isSatisfiedBy(context: SpellPaymentContext): Boolean = when 
     is ManaRestriction.CreatureSpellsOnly -> context.isCreature
     is ManaRestriction.SubtypeSpellsOrAbilitiesOnly ->
         context.subtypes.any { it.equals(subtype, ignoreCase = true) }
-    is ManaRestriction.CreatureSubtypeUncounterableOnly ->
+    is ManaRestriction.CreatureSubtypeOnly ->
         context.isCreature && context.subtypes.any { it.equals(subtype, ignoreCase = true) }
 }
 
@@ -96,8 +96,8 @@ data class ManaPool(
     /**
      * Add restricted mana to the pool.
      */
-    fun addRestricted(color: Color?, amount: Int, restriction: ManaRestriction): ManaPool {
-        val entries = (1..amount).map { RestrictedManaEntry(color, restriction) }
+    fun addRestricted(color: Color?, amount: Int, restriction: ManaRestriction, grantCantBeCountered: Boolean = false): ManaPool {
+        val entries = (1..amount).map { RestrictedManaEntry(color, restriction, grantCantBeCountered) }
         return copy(restrictedMana = restrictedMana + entries)
     }
 

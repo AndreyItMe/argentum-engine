@@ -15,7 +15,6 @@ import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.mechanics.mana.isSatisfiedBy
 import com.wingedsheep.engine.state.components.player.RestrictedManaEntry
-import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 
 /**
  * Result of a mana payment attempt.
@@ -272,9 +271,11 @@ class CastPaymentProcessor(
         }
 
         // Tap lands for remaining cost (using xRemainingToPay instead of full xValue)
+        var solutionUsedUncounterable = false
         if (!remainingCost.isEmpty() || xRemainingToPay > 0) {
             val solution = manaSolver.solve(currentState, playerId, remainingCost, xRemainingToPay, excludeSources = excludeSources, spellContext = spellContext)
                 ?: return PaymentResult(currentState, events, "Not enough mana to auto-pay")
+            solutionUsedUncounterable = solution.usedUncounterableMana
 
             // Tap each source AND run any non-mana side effects of the matching
             // activated mana ability (e.g. Adarkar Wastes' "this land deals 1
@@ -322,6 +323,7 @@ class CastPaymentProcessor(
         )
 
         val usedUncounterable = wasUncounterableManaSpent(poolComponent.restrictedMana, poolAfterPayment.restrictedMana)
+            || solutionUsedUncounterable
         return PaymentResult(currentState, events, null, usedUncounterable)
     }
 
@@ -371,15 +373,15 @@ class CastPaymentProcessor(
     }
 
     /**
-     * Returns true if any [ManaRestriction.CreatureSubtypeUncounterableOnly] restricted mana
+     * Returns true if any restricted mana with [RestrictedManaEntry.grantCantBeCountered]
      * was consumed (present in [before] but not in [after]).
      */
     private fun wasUncounterableManaSpent(
         before: List<RestrictedManaEntry>,
         after: List<RestrictedManaEntry>
     ): Boolean {
-        val beforeCount = before.count { it.restriction is ManaRestriction.CreatureSubtypeUncounterableOnly }
-        val afterCount = after.count { it.restriction is ManaRestriction.CreatureSubtypeUncounterableOnly }
+        val beforeCount = before.count { it.grantCantBeCountered }
+        val afterCount = after.count { it.grantCantBeCountered }
         return beforeCount > afterCount
     }
 }

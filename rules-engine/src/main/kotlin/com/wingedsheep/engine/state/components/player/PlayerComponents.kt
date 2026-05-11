@@ -86,8 +86,8 @@ data class ManaPoolComponent(
      * Add restricted mana to the pool.
      * Each unit of restricted mana is tracked individually with its restriction.
      */
-    fun addRestricted(color: Color?, amount: Int, restriction: ManaRestriction): ManaPoolComponent {
-        val entries = (1..amount).map { RestrictedManaEntry(color, restriction) }
+    fun addRestricted(color: Color?, amount: Int, restriction: ManaRestriction, grantCantBeCountered: Boolean = false): ManaPoolComponent {
+        val entries = (1..amount).map { RestrictedManaEntry(color, restriction, grantCantBeCountered) }
         return copy(restrictedMana = restrictedMana + entries)
     }
 
@@ -105,7 +105,8 @@ data class ManaPoolComponent(
 @Serializable
 data class RestrictedManaEntry(
     val color: Color?,
-    val restriction: ManaRestriction
+    val restriction: ManaRestriction,
+    val grantCantBeCountered: Boolean = false
 )
 
 /**

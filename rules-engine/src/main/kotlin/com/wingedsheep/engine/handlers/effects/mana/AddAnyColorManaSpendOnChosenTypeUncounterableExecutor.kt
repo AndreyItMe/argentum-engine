@@ -43,10 +43,10 @@ class AddAnyColorManaSpendOnChosenTypeUncounterableExecutor(
             return EffectResult.success(state)
         }
 
-        val restriction = ManaRestriction.CreatureSubtypeUncounterableOnly(chosenType)
+        val restriction = ManaRestriction.CreatureSubtypeOnly(chosenType)
         val newState = state.updateEntity(context.controllerId) { container ->
             val manaPool = container.get<ManaPoolComponent>() ?: ManaPoolComponent()
-            container.with(manaPool.addRestricted(color, amount, restriction))
+            container.with(manaPool.addRestricted(color, amount, restriction, grantCantBeCountered = true))
         }
         return EffectResult.success(newState)
     }

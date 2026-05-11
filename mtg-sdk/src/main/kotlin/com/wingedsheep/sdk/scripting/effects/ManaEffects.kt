@@ -167,7 +167,8 @@ data class AddAnyColorManaSpendOnChosenTypeEffect(
  *
  * At resolution, the executor reads the source's ChosenCreatureTypeComponent,
  * prompts the player to choose a color, and adds restricted mana whose
- * [ManaRestriction] is a freshly-minted [ManaRestriction.CreatureSubtypeUncounterableOnly].
+ * [ManaRestriction] is a freshly-minted [ManaRestriction.CreatureSubtypeOnly] with
+ * [com.wingedsheep.engine.state.components.player.RestrictedManaEntry.grantCantBeCountered] set.
  * If no creature type has been chosen, no mana is produced.
  */
 @SerialName("AddAnyColorManaSpendOnChosenTypeUncounterable")

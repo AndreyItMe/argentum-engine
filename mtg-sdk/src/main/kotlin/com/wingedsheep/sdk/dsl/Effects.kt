@@ -929,7 +929,6 @@ object Effects {
     /**
      * Add one mana of any color, restricted to creature spells of the source's chosen subtype,
      * and that spell can't be countered.
-     * Used for Cavern of Souls.
      */
     fun AddAnyColorManaSpendOnChosenTypeUncounterable(amount: Int = 1): Effect =
         AddAnyColorManaSpendOnChosenTypeUncounterableEffect(amount)

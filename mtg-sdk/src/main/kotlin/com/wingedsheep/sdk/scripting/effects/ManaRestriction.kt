@@ -76,17 +76,17 @@ sealed interface ManaRestriction {
     }
 
     /**
-     * "Spend this mana only to cast a creature spell of the specified subtype,
-     * and that spell can't be countered."
+     * "Spend this mana only to cast a creature spell of the specified subtype."
      *
-     * Like [SubtypeSpellsOrAbilitiesOnly] but restricted to creature spells only,
-     * and spending this mana grants [CantBeCounteredComponent] to the spell.
-     * Used by Cavern of Souls.
+     * Like [SubtypeSpellsOrAbilitiesOnly] but restricted to creature spells only.
+     * Whether spending this mana makes the spell uncounterable is tracked on
+     * [com.wingedsheep.engine.state.components.player.RestrictedManaEntry.grantCantBeCountered],
+     * not on this type.
      */
-    @SerialName("CreatureSubtypeUncounterableOnly")
+    @SerialName("CreatureSubtypeOnly")
     @Serializable
-    data class CreatureSubtypeUncounterableOnly(val subtype: String) : ManaRestriction {
+    data class CreatureSubtypeOnly(val subtype: String) : ManaRestriction {
         override val description: String =
-            "Spend this mana only to cast a creature spell of the chosen type. That spell can't be countered"
+            "Spend this mana only to cast a creature spell of the chosen type"
     }
 }
