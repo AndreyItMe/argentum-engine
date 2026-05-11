@@ -88,25 +88,6 @@ data class CantReceiveCounters(
 }
 
 /**
- * Spells opponents cast that target this permanent cost an additional [amount] life to cast.
- * "Spells your opponents cast that target this creature cost an additional 3 life to cast."
- *
- * Unlike ward, this is a mandatory additional cast cost — there is no counter-or-pay choice.
- * If the opponent cannot pay the life, their targeting spell is countered instead.
- * Only applies to spells (not activated or triggered abilities).
- *
- * @property amount Life opponents must pay when targeting this permanent with a spell
- */
-@SerialName("SpellTargetingLifeCost")
-@Serializable
-data class SpellTargetingLifeCost(
-    val amount: Int
-) : StaticAbility {
-    override val description: String = "Spells your opponents cast that target this permanent cost an additional $amount life to cast"
-    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
-}
-
-/**
  * You have shroud. (You can't be the target of spells or abilities.)
  * Grants shroud to the permanent's controller (player-level shroud).
  * Used for True Believer.

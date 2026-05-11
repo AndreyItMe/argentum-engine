@@ -6,7 +6,10 @@ import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.SpellTargetingLifeCost
+import com.wingedsheep.sdk.scripting.CostModification
+import com.wingedsheep.sdk.scripting.ModifySpellCost
+import com.wingedsheep.sdk.scripting.SpellCostTarget
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
 import com.wingedsheep.sdk.scripting.values.EntityReference
@@ -21,13 +24,13 @@ val TerrorOfThePeaks = card("Terror of the Peaks") {
 
     keywords(Keyword.FLYING)
 
-    // Spells your opponents cast that target this creature cost an additional 3 life to cast.
     staticAbility {
-        ability = SpellTargetingLifeCost(3)
+        ability = ModifySpellCost(
+            target = SpellCostTarget.OpponentsCastTargeting(GroupFilter.source()),
+            modification = CostModification.IncreaseLife(3),
+        )
     }
 
-    // Whenever another creature you control enters, this creature deals damage equal to
-    // that creature's power to any target.
     triggeredAbility {
         trigger = Triggers.OtherCreatureEnters
         val anyTarget = target("any target", Targets.Any)

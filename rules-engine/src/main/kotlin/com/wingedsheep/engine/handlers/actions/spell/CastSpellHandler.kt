@@ -490,18 +490,19 @@ class CastSpellHandler(
             }
         }
 
-        // Validate that the caster can afford the targeting life cost imposed by opponent
-        // permanents (e.g. Terror of the Peaks: "Spells your opponents cast that target this
-        // creature cost an additional 3 life to cast.").
+        // Validate that the caster can afford any additional life cost imposed by opponent
+        // permanents via ModifySpellCost + OpponentsCastTargeting + IncreaseLife (e.g. Terror
+        // of the Peaks: "Spells your opponents cast that target this creature cost an
+        // additional 3 life to cast.").
         if (action.targets.isNotEmpty()) {
-            val targetingLifeCost = costCalculator.calculateTargetingLifeCost(
+            val additionalLifeCost = costCalculator.calculateAdditionalLifeCost(
                 state, action.playerId, action.targets
             )
-            if (targetingLifeCost > 0) {
+            if (additionalLifeCost > 0) {
                 val currentLife = state.getEntity(action.playerId)
                     ?.get<LifeTotalComponent>()?.life ?: 0
-                if (currentLife < targetingLifeCost) {
-                    return "Not enough life to pay targeting cost ($targetingLifeCost life required)"
+                if (currentLife < additionalLifeCost) {
+                    return "Not enough life to pay additional life cost ($additionalLifeCost life required)"
                 }
             }
         }
@@ -1727,16 +1728,17 @@ class CastSpellHandler(
             currentState = com.wingedsheep.engine.handlers.effects.DamageUtils.markLifeLostThisTurn(currentState, action.playerId)
         }
 
-        // Pay targeting life cost imposed by opponent permanents (e.g. Terror of the Peaks).
-        // "Spells your opponents cast that target this creature cost an additional 3 life to cast."
+        // Pay any additional life cost from opponent permanents' ModifySpellCost abilities
+        // (e.g. Terror of the Peaks: "Spells your opponents cast that target this creature
+        // cost an additional 3 life to cast.").
         if (action.targets.isNotEmpty()) {
-            val targetingLifeCost = costCalculator.calculateTargetingLifeCost(
+            val additionalLifeCost = costCalculator.calculateAdditionalLifeCost(
                 currentState, action.playerId, action.targets
             )
-            if (targetingLifeCost > 0) {
+            if (additionalLifeCost > 0) {
                 val currentLife = currentState.getEntity(action.playerId)
                     ?.get<LifeTotalComponent>()?.life ?: 0
-                val newLife = currentLife - targetingLifeCost
+                val newLife = currentLife - additionalLifeCost
                 currentState = currentState.updateEntity(action.playerId) { container ->
                     container.with(LifeTotalComponent(newLife))
                 }

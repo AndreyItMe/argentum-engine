@@ -24,7 +24,8 @@ import com.wingedsheep.sdk.scripting.GrantAlternativeCastingCost
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.ModifySpellCost
 import com.wingedsheep.sdk.scripting.SpellCostTarget
-import com.wingedsheep.sdk.scripting.SpellTargetingLifeCost
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import com.wingedsheep.sdk.scripting.filters.unified.Scope
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.handlers.PredicateContext
@@ -93,7 +94,7 @@ class CostCalculator(
 
         // Battlefield-sourced ModifySpellCost abilities.
         for ((sourceId, ability) in scanBattlefieldModifySpellCost(state)) {
-            if (!targetMatchesSpell(ability.target, cardDef, casterId, sourceId, state)) continue
+            if (!targetMatchesSpell(ability.target, cardDef, casterId, sourceId, state, chosenTargets)) continue
             if (!gatingApplies(state, casterId, cardDef, ability)) continue
             applyToSpellCast(
                 state, cardDef, casterId, ability.modification, chosenTargets,
@@ -181,6 +182,7 @@ class CostCalculator(
         casterId: EntityId,
         sourceId: EntityId,
         state: GameState,
+        chosenTargets: List<EntityId> = emptyList(),
     ): Boolean {
         return when (target) {
             SpellCostTarget.SelfCast -> false
@@ -190,11 +192,47 @@ class CostCalculator(
                     matchesCardDefinition(cardDef, target.filter, sourceId, state, state.projectedState)
             }
             is SpellCostTarget.AnyCaster -> matchesCardDefinition(cardDef, target.filter, sourceId, state, state.projectedState)
+            is SpellCostTarget.OpponentsCastTargeting ->
+                opponentsCastTargetingMatches(state, casterId, sourceId, target.targetFilter, chosenTargets)
             // FaceDown / Morph targets are spell-cast modifiers only when applied to a face-down cast.
             // calculateEffectiveCost is only called for face-up casts; face-down handling is in
             // calculateFaceDownCost / calculateMorphCostIncrease.
             SpellCostTarget.FaceDownYouCast -> false
             SpellCostTarget.MorphActivation -> false
+        }
+    }
+
+    /**
+     * True iff the source is controlled by an opponent of the caster, and at least
+     * one of the caster's chosen targets matches [targetFilter] relative to the
+     * source. Implements the matching half of [SpellCostTarget.OpponentsCastTargeting]
+     * (e.g. Terror of the Peaks' "this creature", Kopala's "Merfolk you control").
+     */
+    private fun opponentsCastTargetingMatches(
+        state: GameState,
+        casterId: EntityId,
+        sourceId: EntityId,
+        targetFilter: GroupFilter,
+        chosenTargets: List<EntityId>,
+    ): Boolean {
+        if (chosenTargets.isEmpty()) return false
+        val sourceController = state.projectedState.getController(sourceId) ?: return false
+        if (sourceController == casterId) return false
+        val context = PredicateContext(controllerId = sourceController, sourceId = sourceId)
+        val projected = state.projectedState
+        return chosenTargets.any { targetId ->
+            when (val scope = targetFilter.scope) {
+                is Scope.Self -> targetId == sourceId
+                is Scope.Specific -> targetId == scope.entityId
+                is Scope.AttachedTo -> {
+                    val attached = state.getEntity(sourceId)
+                        ?.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()
+                        ?.targetId
+                    attached != null && targetId == attached
+                }
+                is Scope.Battlefield ->
+                    predicateEvaluator.matchesWithProjection(state, projected, targetId, targetFilter.baseFilter, context)
+            }
         }
     }
 
@@ -255,6 +293,10 @@ class CostCalculator(
             is CostModification.IncreaseGenericPerOtherSpellThisTurn -> {
                 val spellsCast = state.playerSpellsCastThisTurn[casterId] ?: 0
                 addGenericIncrease(spellsCast * modification.amountPerSpell)
+            }
+            is CostModification.IncreaseLife -> {
+                // Life is not part of the mana cost — collected separately via
+                // [calculateAdditionalLifeCost] and paid alongside mana in CastSpellHandler.
             }
         }
     }
@@ -947,30 +989,27 @@ class CostCalculator(
     }
 
     /**
-     * Calculate the additional life an opponent must pay for a spell that targets
-     * permanents with [SpellTargetingLifeCost] static abilities (e.g. Terror of the Peaks).
+     * Calculate the additional life [casterId] must pay as part of casting a spell with
+     * the given [targets], summed across every battlefield [ModifySpellCost] ability
+     * matching [SpellCostTarget.OpponentsCastTargeting] + [CostModification.IncreaseLife]
+     * (e.g. Terror of the Peaks).
      *
-     * Only applies to targets whose controller is an opponent of [casterId].
      * Called from [CastSpellHandler] to validate affordability and collect payment.
      */
-    fun calculateTargetingLifeCost(
+    fun calculateAdditionalLifeCost(
         state: GameState,
         casterId: EntityId,
         targets: List<ChosenTarget>
     ): Int {
-        val projected = state.projectedState
+        if (targets.isEmpty()) return 0
+        val targetEntityIds = targets.mapNotNull { (it as? ChosenTarget.Permanent)?.entityId }
+        if (targetEntityIds.isEmpty()) return 0
         var total = 0
-        for (target in targets) {
-            if (target !is ChosenTarget.Permanent) continue
-            val targetController = projected.getController(target.entityId) ?: continue
-            if (targetController == casterId) continue
-            val card = state.getEntity(target.entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            val classLevel = state.getEntity(target.entityId)
-                ?.get<ClassLevelComponent>()?.currentLevel
-            for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
-                if (ability is SpellTargetingLifeCost) total += ability.amount
-            }
+        for ((sourceId, ability) in scanBattlefieldModifySpellCost(state)) {
+            val target = ability.target as? SpellCostTarget.OpponentsCastTargeting ?: continue
+            val modification = ability.modification as? CostModification.IncreaseLife ?: continue
+            if (!opponentsCastTargetingMatches(state, casterId, sourceId, target.targetFilter, targetEntityIds)) continue
+            total += modification.amount
         }
         return total
     }

@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting
 
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -32,6 +33,8 @@ data class ModifySpellCost(
             SpellCostTarget.SelfCast -> "This spell"
             is SpellCostTarget.YouCast -> "${target.filter.description} spells you cast"
             is SpellCostTarget.AnyCaster -> "${target.filter.description} spells"
+            is SpellCostTarget.OpponentsCastTargeting ->
+                "Spells your opponents cast that target ${target.targetFilter.description}"
             SpellCostTarget.FaceDownYouCast -> "Face-down creature spells you cast"
             SpellCostTarget.MorphActivation -> "All morph costs"
         }
@@ -44,6 +47,7 @@ data class ModifySpellCost(
             is CostModification.IncreaseGeneric -> "cost {${modification.amount}} more"
             is CostModification.IncreaseGenericPerOtherSpellThisTurn ->
                 "cost {${modification.amountPerSpell}} more to cast for each other spell that player has cast this turn"
+            is CostModification.IncreaseLife -> "cost an additional ${modification.amount} life to cast"
         }
         val firstOfType = if (gating == CostGating.FirstOfTypePerTurn) " each turn" else ""
         val prefix = if (gate.isNotEmpty()) gate + subject.replaceFirstChar { it.lowercase() } else subject
@@ -90,6 +94,29 @@ sealed interface SpellCostTarget {
         override fun applyTextReplacement(replacer: TextReplacer): SpellCostTarget {
             val newFilter = filter.applyTextReplacement(replacer)
             return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
+     * Spells opponents of the source's controller cast that target one or more
+     * permanents matching [targetFilter] relative to the source.
+     *
+     * The filter is a [GroupFilter] so callers can express:
+     *   - `GroupFilter.source()` — "this permanent" (Terror of the Peaks, Sphinx of New Prahv, ...)
+     *   - `GroupFilter.AllCreaturesYouControl` — "creatures you control" (Kasmina, Kopala, ...)
+     *   - `GroupFilter(GameObjectFilter.Creature.youControl().withKeyword(Keyword.FLYING))`
+     *     — "flying creatures you control" (Jubilant Skybonder)
+     *
+     * Pair with [CostModification.IncreaseGeneric] for "{N} more" cards (Sphinx of New Prahv,
+     * Boreal Elemental, Charix, ...) or [CostModification.IncreaseLife] for "N life to cast"
+     * (Terror of the Peaks).
+     */
+    @SerialName("OpponentsCastTargeting")
+    @Serializable
+    data class OpponentsCastTargeting(val targetFilter: GroupFilter) : SpellCostTarget {
+        override fun applyTextReplacement(replacer: TextReplacer): SpellCostTarget {
+            val newFilter = targetFilter.applyTextReplacement(replacer)
+            return if (newFilter !== targetFilter) copy(targetFilter = newFilter) else this
         }
     }
 
@@ -158,6 +185,16 @@ sealed interface CostModification {
     data class IncreaseGenericPerOtherSpellThisTurn(
         val amountPerSpell: Int = 1,
     ) : CostModification
+
+    /**
+     * Pay [amount] additional life as part of the casting cost (CR 601.2f).
+     * Validated at cast time; the spell never reaches the stack if the caster
+     * cannot pay. Currently only meaningful when paired with
+     * [SpellCostTarget.OpponentsCastTargeting] (Terror of the Peaks).
+     */
+    @SerialName("IncreaseLife")
+    @Serializable
+    data class IncreaseLife(val amount: Int) : CostModification
 }
 
 /**

@@ -1098,7 +1098,7 @@ Set via `staticAbility { ability = ... }`:
 
 ### Other
 
-- `SpellTargetingLifeCost(amount: Int)` — spells opponents cast that target this permanent cost an additional `amount` life to cast; enforced as a casting cost in `CostCalculator.calculateTargetingLifeCost` + `CastSpellHandler`; cast is rejected if caster can't afford the life; unlike ward, there is no counter-or-pay choice and the spell never goes on the stack without payment (Terror of the Peaks)
+- `ModifySpellCost(SpellCostTarget.OpponentsCastTargeting(targetFilter), CostModification.IncreaseLife(amount))` — "Spells your opponents cast that target [filter] cost an additional N life to cast." Enforced as a casting cost in `CostCalculator.calculateAdditionalLifeCost` + `CastSpellHandler`; the cast is rejected outright if the caster can't afford the life (no counter-or-pay choice). `targetFilter` is a `GroupFilter` — `GroupFilter.source()` for "this permanent" (Terror of the Peaks); other group filters cover "creatures you control" / "Merfolk you control" / etc. Pair with `CostModification.IncreaseGeneric(N)` for the mana variant of the same family (Sphinx of New Prahv, Boreal Elemental, ...).
 - `CantReceiveCounters(target)` — target can't have counters put on it (grants `AbilityFlag.CANT_RECEIVE_COUNTERS`; checked by `AddCountersExecutor`)
 - `ControlEnchantedPermanent` — control the enchanted permanent
 - `GrantShroudToController` — controller has shroud
