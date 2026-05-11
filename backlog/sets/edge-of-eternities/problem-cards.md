@@ -29,7 +29,6 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 ## Void:
 
-- [ ] Kavaron Skywarden
 - [x] Plasma Bolt
 - [ ] Roving Actuator
 - [ ] Interceptor Mechan

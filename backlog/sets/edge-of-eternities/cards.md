@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 150 / 261
+**Implemented:** 151 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -118,7 +118,7 @@
 - [x] Invasive Maneuvers
 - [x] Kavaron Harrier
 - [ ] Kavaron, Memorial World
-- [ ] Kavaron Skywarden
+- [x] Kavaron Skywarden
 - [x] Kavaron Turbodrone
 - [ ] Kav Landseeker
 - [x] Knight Luminary
