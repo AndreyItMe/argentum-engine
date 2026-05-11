@@ -59,13 +59,12 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 
 ## 4 damage to each creature:
-- [ ] Extinguisher Battleship
+- [x] Extinguisher Battleship
 
 ## Additional land, land from graveyard
 - [ ] Icetill Explorer
 
-
-## Sacrifice, unless tap an untapped
+## Sacrifice, unless tap an untapped - New mechanics needed
 - [ ] Command Bridge
 
 ## Deals damage to itself
