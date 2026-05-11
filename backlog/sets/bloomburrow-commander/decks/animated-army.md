@@ -14,8 +14,8 @@
 - [x] 1 Burnished Hart
 - [x] 1 Etali, Primal Storm
 - [x] 1 Evercoat Ursine
-- [ ] 1 Garruk's Packleader
-- [ ] 1 Ghalta, Primal Hunger
+- [x] 1 Garruk's Packleader
+- [x] 1 Ghalta, Primal Hunger
 - [ ] 1 Goreclaw, Terror of Qal Sisma
 - [ ] 1 Grothama, All-Devouring
 - [ ] 1 Grumgully, the Generous
