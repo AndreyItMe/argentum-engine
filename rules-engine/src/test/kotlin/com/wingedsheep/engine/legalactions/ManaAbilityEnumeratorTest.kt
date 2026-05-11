@@ -1,6 +1,15 @@
 package com.wingedsheep.engine.legalactions
 
 import com.wingedsheep.engine.legalactions.support.EnumerationFixtures
+import com.wingedsheep.engine.legalactions.support.setupP1
+import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
+import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.dsl.Conditions
+import com.wingedsheep.sdk.dsl.Costs
+import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.scripting.ActivationRestriction
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -66,6 +75,57 @@ class ManaAbilityEnumeratorTest : FunSpec({
         val abilities = driver.enumerateFor(driver.player1).activatedAbilityActions()
 
         abilities.shouldBeEmpty()
+    }
+
+    // -------------------------------------------------------------------------
+    // Activation restrictions on mana abilities (Evendo, Waking Haven's 12+
+    // charge-counter gate). The enumerator must hide the ability when an
+    // ActivationRestriction.OnlyIfCondition isn't satisfied — same pattern
+    // ActivatedAbilityEnumerator uses for Weathered Wayfarer.
+    val ConditionalManaLand = card("Test Conditional Mana Land") {
+        typeLine = "Land"
+        activatedAbility {
+            cost = Costs.Tap
+            effect = Effects.AddMana(Color.GREEN)
+            manaAbility = true
+            restrictions = listOf(
+                ActivationRestriction.OnlyIfCondition(Conditions.LifeAtLeast(50))
+            )
+        }
+    }
+
+    test("OnlyIfCondition unmet — restricted mana ability is NOT enumerated") {
+        // Default life is 20, threshold is 50 → restriction fails.
+        val driver = setupP1(
+            battlefield = listOf("Test Conditional Mana Land"),
+            extraSetCards = listOf(ConditionalManaLand)
+        )
+        val landId = driver.game.state.getBattlefield(driver.player1).first { id ->
+            driver.game.state.getEntity(id)?.get<CardComponent>()?.name == "Test Conditional Mana Land"
+        }
+
+        driver.enumerateFor(driver.player1).activatedAbilityActionsFor(landId).shouldBeEmpty()
+    }
+
+    test("OnlyIfCondition met — restricted mana ability surfaces as an activatable action") {
+        val driver = setupP1(
+            battlefield = listOf("Test Conditional Mana Land"),
+            extraSetCards = listOf(ConditionalManaLand)
+        )
+        val landId = driver.game.state.getBattlefield(driver.player1).first { id ->
+            driver.game.state.getEntity(id)?.get<CardComponent>()?.name == "Test Conditional Mana Land"
+        }
+
+        // Bump P1's life total above the threshold so the condition holds.
+        var state = driver.game.state
+        val p1 = state.getEntity(driver.player1)!!.with(LifeTotalComponent(50))
+        state = state.withEntity(driver.player1, p1)
+        driver.game.replaceState(state)
+
+        val abilities = driver.enumerateFor(driver.player1).activatedAbilityActionsFor(landId)
+        abilities shouldHaveSize 1
+        abilities.single().isManaAbility shouldBe true
+        abilities.single().affordable shouldBe true
     }
 
     test("two Forests in play produce two distinct mana ability actions") {
