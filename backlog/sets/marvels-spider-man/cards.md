@@ -94,13 +94,13 @@
 - [ ] Pictures of Spider-Man
 - [ ] Prison Break
 - [ ] Professional Wrestler
-- [ ] Prowler, Clawed Thief
+- [x] Prowler, Clawed Thief
 - [ ] Pumpkin Bombardment
 - [ ] Radioactive Spider
 - [ ] Raging Goblinoids
 - [ ] Rent Is Due
 - [ ] Rhino's Rampage
-- [x] Rhino, Barreling Brute
+- [ ] Rhino, Barreling Brute
 - [ ] Risky Research
 - [ ] Robotics Mastery
 - [ ] Rocket-Powered Goblin Glider
