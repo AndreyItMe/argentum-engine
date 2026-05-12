@@ -8,7 +8,7 @@
 - [ ] Agent Venom
 - [ ] Alien Symbiosis
 - [ ] Amazing Acrobatics
-- [ ] Angry Rabble
+- [x] Angry Rabble
 - [ ] Anti-Venom, Horrifying Healer
 - [ ] Arachne, Psionic Weaver
 - [ ] Araña, Heart of the Spider
