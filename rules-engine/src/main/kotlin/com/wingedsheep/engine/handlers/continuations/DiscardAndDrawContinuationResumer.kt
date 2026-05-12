@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers.continuations
 
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
+import com.wingedsheep.engine.handlers.effects.ConniveEffectHandler
 import com.wingedsheep.engine.handlers.effects.drawing.EachPlayerDiscardsOrLoseLifeExecutor
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -14,7 +15,8 @@ class DiscardAndDrawContinuationResumer(
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
         resumer(HandSizeDiscardContinuation::class, ::resumeHandSizeDiscard),
-        resumer(EachPlayerDiscardsOrLoseLifeContinuation::class, ::resumeEachPlayerDiscardsOrLoseLife)
+        resumer(EachPlayerDiscardsOrLoseLifeContinuation::class, ::resumeEachPlayerDiscardsOrLoseLife),
+        resumer(ConviveContinuation::class, ::resumeConnive)
     )
 
     fun resumeHandSizeDiscard(
@@ -263,6 +265,48 @@ class DiscardAndDrawContinuationResumer(
             decisionResult.pendingDecision,
             priorEvents + decisionResult.events
         )
+    }
+
+    fun resumeConnive(
+        state: GameState,
+        continuation: ConviveContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is CardsSelectedResponse) {
+            return ExecutionResult.error(state, "Expected card selection response for Connive")
+        }
+
+        val selectedCards = response.selectedCards
+        val controllerId = continuation.controllerId
+        var newState = state
+
+        val handZone = ZoneKey(controllerId, Zone.HAND)
+        val graveyardZone = ZoneKey(controllerId, Zone.GRAVEYARD)
+
+        for (cardId in selectedCards) {
+            newState = newState.removeFromZone(handZone, cardId)
+            newState = newState.addToZone(graveyardZone, cardId)
+        }
+
+        val discardEvents: List<GameEvent> = if (selectedCards.isNotEmpty()) {
+            val names = selectedCards.map { state.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
+            listOf(CardsDiscardedEvent(controllerId, selectedCards, names))
+        } else emptyList()
+
+        val events = discardEvents.toMutableList()
+
+        val discardedNonland = selectedCards.any { cardId ->
+            state.getEntity(cardId)?.get<CardComponent>()?.isLand == false
+        }
+
+        if (discardedNonland) {
+            val (counterState, counterEvents) = ConniveEffectHandler.addPlusOnePlusOne(newState, continuation.targetCreatureId)
+            newState = counterState
+            events.addAll(counterEvents)
+        }
+
+        return checkForMore(newState, events)
     }
 
 }
