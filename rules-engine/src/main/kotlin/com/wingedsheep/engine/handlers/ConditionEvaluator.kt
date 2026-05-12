@@ -75,6 +75,8 @@ import com.wingedsheep.sdk.scripting.conditions.YouControlSource
 import com.wingedsheep.sdk.scripting.conditions.YouAttackedWithCreaturesThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouCastSpellsThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouCastASpellWithManaValueNOrGreaterThisTurn
+import com.wingedsheep.sdk.scripting.conditions.CreatureDiedThisTurnCondition
+import com.wingedsheep.engine.handlers.triggers.CreatureDiedThisTurnConditionEvaluator
 import com.wingedsheep.sdk.scripting.conditions.YouWereAttackedThisStep
 import com.wingedsheep.sdk.scripting.conditions.VoidCondition
 
@@ -154,6 +156,9 @@ class ConditionEvaluator {
 
             // Collection conditions
             is CollectionContainsMatch -> evaluateCollectionContainsMatch(state, condition, context)
+
+            // Death conditions
+            is CreatureDiedThisTurnCondition -> CreatureDiedThisTurnConditionEvaluator().evaluate(state, condition, context)
 
             // Composite conditions
             is AllConditions -> condition.conditions.all { evaluate(state, it, context) }
