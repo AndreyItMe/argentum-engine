@@ -2,7 +2,7 @@
 
 **Set Size:** 188 booster cards (excluding basic lands and tokens)
 **Release Date:** September 26, 2025
-**Implemented:** 4 / 188
+**Implemented:** 5 / 188
 ---
 
 - [x] Agent Venom
@@ -113,7 +113,7 @@
 - [ ] Scarlet Spider, Kaine
 - [ ] School Daze
 - [ ] Scorpion's Sting
-- [ ] Scorpion, Seething Striker
+- [x] Scorpion, Seething Striker
 - [ ] Scout the City
 - [ ] Secret Identity
 - [ ] Selfless Police Captain
