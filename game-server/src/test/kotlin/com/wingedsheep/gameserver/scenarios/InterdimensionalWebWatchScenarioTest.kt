@@ -69,6 +69,65 @@ class InterdimensionalWebWatchScenarioTest : ScenarioTestBase() {
             }
         }
 
+        context("Interdimensional Web Watch — play permission expiry") {
+
+            test("play permission granted by ETB expires at end of controller's next turn") {
+                val game = scenario()
+                    .withPlayers("Caster", "Opponent")
+                    .withCardInHand(1, "Interdimensional Web Watch")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Mountain", 4)
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(2, "Island")
+                    .withCardInLibrary(2, "Island")
+                    .withCardInLibrary(2, "Island")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val castResult = game.castSpell(1, "Interdimensional Web Watch")
+                withClue("Casting should succeed: ${castResult.error}") {
+                    castResult.error shouldBe null
+                }
+                game.resolveStack()
+
+                val exile = game.state.getExile(game.player1Id)
+                withClue("ETB should exile two cards") { exile.size shouldBe 2 }
+
+                val exiledId = exile.first()
+                withClue("Permission should be active immediately after ETB") {
+                    game.state.getEntity(exiledId)?.get<MayPlayFromExileComponent>() shouldNotBe null
+                }
+
+                // Step through two full turns using alternating waypoints so no call is a no-op.
+                // [1] no-op (already at PRECOMBAT_MAIN)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                // [2] P1's PRECOMBAT_MAIN → P2's UPKEEP (through P1's end + cleanup round 1)
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+                // [3] P2's UPKEEP → P2's PRECOMBAT_MAIN (through P2's draw)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                // [4] P2's PRECOMBAT_MAIN → P1's UPKEEP (through P2's end + cleanup round 1, P1's untap round 2)
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+                // [5] P1's UPKEEP → P1's PRECOMBAT_MAIN (turn 2, through P1's draw)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+
+                withClue("Permission should still be active during controller's next turn") {
+                    game.state.getEntity(exiledId)?.get<MayPlayFromExileComponent>() shouldNotBe null
+                }
+
+                // [6] P1's PRECOMBAT_MAIN (turn 2) → P2's UPKEEP (through P1's end + cleanup round 2)
+                //     P1's cleanup runs with turnNumber=2, expiresAfterTurn=2 → permission removed
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+
+                withClue("Permission must be removed after the controller's next turn ends") {
+                    game.state.getEntity(exiledId)?.get<MayPlayFromExileComponent>() shouldBe null
+                }
+            }
+        }
+
         context("Interdimensional Web Watch — ETB exile and play permission") {
 
             test("entering the battlefield exiles the top two library cards and grants play permission until end of controller's next turn") {
