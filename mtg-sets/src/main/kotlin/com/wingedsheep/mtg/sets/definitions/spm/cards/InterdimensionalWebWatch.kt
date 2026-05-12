@@ -50,7 +50,7 @@ val InterdimensionalWebWatch = card("Interdimensional Web Watch") {
 
     activatedAbility {
         cost = AbilityCost.Tap
-        effect = Effects.AddAnyColorMana(1, restriction = ManaRestriction.CastFromExileOnly)
+        effect = Effects.AddAnyColorMana(2, restriction = ManaRestriction.CastFromExileOnly)
         manaAbility = true
         timing = TimingRule.ManaAbility
     }
