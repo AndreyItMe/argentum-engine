@@ -16,7 +16,7 @@ class DiscardAndDrawContinuationResumer(
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
         resumer(HandSizeDiscardContinuation::class, ::resumeHandSizeDiscard),
         resumer(EachPlayerDiscardsOrLoseLifeContinuation::class, ::resumeEachPlayerDiscardsOrLoseLife),
-        resumer(ConviveContinuation::class, ::resumeConnive)
+        resumer(ConniveContinuation::class, ::resumeConnive)
     )
 
     fun resumeHandSizeDiscard(
@@ -269,7 +269,7 @@ class DiscardAndDrawContinuationResumer(
 
     fun resumeConnive(
         state: GameState,
-        continuation: ConviveContinuation,
+        continuation: ConniveContinuation,
         response: DecisionResponse,
         checkForMore: CheckForMore
     ): ExecutionResult {
@@ -280,24 +280,16 @@ class DiscardAndDrawContinuationResumer(
         val selectedCards = response.selectedCards
         val controllerId = continuation.controllerId
         var newState = state
+        val events = mutableListOf<GameEvent>()
 
-        val handZone = ZoneKey(controllerId, Zone.HAND)
-        val graveyardZone = ZoneKey(controllerId, Zone.GRAVEYARD)
-
+        var discardedNonland = false
         for (cardId in selectedCards) {
-            newState = newState.removeFromZone(handZone, cardId)
-            newState = newState.addToZone(graveyardZone, cardId)
-        }
-
-        val discardEvents: List<GameEvent> = if (selectedCards.isNotEmpty()) {
-            val names = selectedCards.map { state.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
-            listOf(CardsDiscardedEvent(controllerId, selectedCards, names))
-        } else emptyList()
-
-        val events = discardEvents.toMutableList()
-
-        val discardedNonland = selectedCards.any { cardId ->
-            state.getEntity(cardId)?.get<CardComponent>()?.isLand == false
+            val isNonland = state.getEntity(cardId)?.get<CardComponent>()?.isLand == false
+            val discardResult = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+                .discardCard(newState, controllerId, cardId)
+            newState = discardResult.state
+            events.addAll(discardResult.events)
+            if (isNonland) discardedNonland = true
         }
 
         if (discardedNonland) {

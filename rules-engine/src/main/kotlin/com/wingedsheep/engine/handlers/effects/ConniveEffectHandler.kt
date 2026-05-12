@@ -1,7 +1,6 @@
 package com.wingedsheep.engine.handlers.effects
 
-import com.wingedsheep.engine.core.CardsDiscardedEvent
-import com.wingedsheep.engine.core.ConviveContinuation
+import com.wingedsheep.engine.core.ConniveContinuation
 import com.wingedsheep.engine.core.CountersAddedEvent
 import com.wingedsheep.engine.core.DecisionPhase
 import com.wingedsheep.engine.core.EffectResult
@@ -9,12 +8,10 @@ import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.CounterType
-import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.ConniveEffect
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
@@ -74,7 +71,7 @@ class ConniveEffectHandler(
             phase = DecisionPhase.RESOLUTION
         )
 
-        val continuation = ConviveContinuation(
+        val continuation = ConniveContinuation(
             decisionId = decisionResult.pendingDecision!!.id,
             controllerId = playerId,
             targetCreatureId = targetCreatureId
@@ -95,15 +92,10 @@ class ConniveEffectHandler(
         cardId: EntityId,
         targetCreatureId: EntityId
     ): EffectResult {
-        val handZone = ZoneKey(playerId, Zone.HAND)
-        val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
         val isLand = state.getEntity(cardId)?.get<CardComponent>()?.isLand == true
-
-        var newState = state.removeFromZone(handZone, cardId)
-        newState = newState.addToZone(graveyardZone, cardId)
-
-        val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
-        val events = (priorEvents + CardsDiscardedEvent(playerId, listOf(cardId), listOf(cardName))).toMutableList()
+        val discardResult = ZoneTransitionService.discardCard(state, playerId, cardId)
+        var newState = discardResult.state
+        val events = (priorEvents + discardResult.events).toMutableList()
 
         if (!isLand) {
             val (counterState, counterEvents) = addPlusOnePlusOne(newState, targetCreatureId)

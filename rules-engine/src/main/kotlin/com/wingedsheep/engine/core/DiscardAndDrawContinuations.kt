@@ -238,7 +238,7 @@ enum class ReadTheRunesPhase {
  * @property targetCreatureId The creature that receives the +1/+1 counter on nonland discard
  */
 @Serializable
-data class ConviveContinuation(
+data class ConniveContinuation(
     override val decisionId: String,
     val controllerId: EntityId,
     val targetCreatureId: EntityId
