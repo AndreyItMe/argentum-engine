@@ -1,11 +1,11 @@
 package com.wingedsheep.mtg.sets.definitions.spm.cards
 
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Conditions
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.conditions.CreatureDiedThisTurnCondition
 import com.wingedsheep.sdk.scripting.effects.ConniveEffect
 
 /**
@@ -29,7 +29,7 @@ val ScorpionSeethingStriker = card("Scorpion, Seething Striker") {
 
     triggeredAbility {
         trigger = Triggers.YourEndStep
-        triggerCondition = CreatureDiedThisTurnCondition
+        triggerCondition = Conditions.CreatureDiedThisTurn
         val creature = target("target creature you control", Targets.CreatureYouControl)
         effect = ConniveEffect(target = creature)
     }
