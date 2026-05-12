@@ -89,6 +89,7 @@ import com.wingedsheep.engine.state.components.player.GrantedSpellKeywordsCompon
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
+import com.wingedsheep.engine.handlers.costs.AlternativeCostPayLifeEqualToManaValueInsteadOfManaCostHandler
 import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
 import kotlin.reflect.KClass
 
@@ -1113,6 +1114,12 @@ class CastSpellHandler(
                         }
                     }
                 }
+                is AdditionalCost.PayLife -> {
+                    if (!AlternativeCostPayLifeEqualToManaValueInsteadOfManaCostHandler.canPay(
+                            state, action.playerId, additionalCost)) {
+                        return "Not enough life to pay the alternative cost (need ${additionalCost.amount})"
+                    }
+                }
                 else -> {}
             }
         }
@@ -1612,6 +1619,16 @@ class CastSpellHandler(
                     }
                     else -> {}
                 }
+            }
+        }
+
+        // Automatic costs that need no player choice: pay life if required by additional costs.
+        for (additionalCost in flattenedAllCosts) {
+            if (additionalCost is AdditionalCost.PayLife) {
+                val (newState, lifeEvents) = AlternativeCostPayLifeEqualToManaValueInsteadOfManaCostHandler.pay(
+                    currentState, action.playerId, additionalCost)
+                currentState = newState
+                events.addAll(lifeEvents)
             }
         }
 
