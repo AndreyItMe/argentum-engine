@@ -40,6 +40,6 @@ val JackalGeniusGeneticist = card("Jackal, Genius Geneticist") {
         rarity = Rarity.RARE
         collectorNumber = "167"
         artist = "Josu Hernaiz"
-        imageUri = "https://cards.scryfall.io/normal/front/8/4/84fca400-3a9e-4dda-9e70-a9a30e3e0f7e.jpg?1757377391"
+        imageUri = "https://cards.scryfall.io/normal/front/c/0/c0ab07d6-b7c3-4129-9aef-cfdcfabec4b2.jpg?1757377692"
     }
 }
