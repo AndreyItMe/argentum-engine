@@ -2,8 +2,7 @@
 
 **Set Size:** 188 booster cards (excluding basic lands and tokens)
 **Release Date:** September 26, 2025
-**Implemented:** 11 / 189
-
+**Implemented:** 15 / 189
 - [x] Agent Venom
 - [x] Angry Rabble
 - [x] Amazing Acrobatics
@@ -82,7 +81,7 @@
 - [ ] News Helicopter
 - [ ] Norman Osborn // Green Goblin
 - [ ] Ominous Asylum
-- [ ] Origin of Spider-Man
+- [x] Origin of Spider-Man
 - [ ] Oscorp Industries
 - [ ] Oscorp Research Team
 - [ ] Parker Luck
@@ -99,10 +98,10 @@
 - [x] Rent Is Due
 - [ ] Rhino's Rampage
 - [x] Rhino, Barreling Brute
-- [ ] Risky Research
+- [x] Risky Research
 - [x] Robotics Mastery
 - [x] Risky Research
-- [ ] Robotics Mastery
+- [x] Robotics Mastery
 - [ ] Rocket-Powered Goblin Glider
 - [x] Romantic Rendezvous
 - [ ] SP//dr, Piloted by Peni
@@ -124,7 +123,7 @@
 - [ ] Silk, Web Weaver
 - [ ] Silver Sable, Mercenary Leader
 - [ ] Sinister Hideout
-- [ ] Skyward Spider
+- [x] Skyward Spider
 - [ ] Spectacular Spider-Man
 - [ ] Spectacular Tactics
 - [ ] Spider Manifestation
