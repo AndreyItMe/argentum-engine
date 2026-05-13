@@ -199,7 +199,7 @@
 - [ ] Skystinger
 - [x] Slagdrill Scrapper
 - [x] Sledge-Class Seedship
-- [ ] Sothera, the Supervoid
+- [x] Sothera, the Supervoid
 - [ ] Space-Time Anomaly
 - [x] Specimen Freighter
 - [x] Squire's Lightblade
