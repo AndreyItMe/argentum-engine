@@ -51,6 +51,6 @@ val IronSpiderStarkUpgrade = card("Iron Spider, Stark Upgrade") {
         rarity = Rarity.RARE
         collectorNumber = "53"
         artist = "Trung Tin Shinji"
-        imageUri = "https://cards.scryfall.io/normal/front/b/1/b1d6f023-b7c8-47a6-86e4-10c43c4ab8bc.jpg?1757377677"
+        imageUri = "https://cards.scryfall.io/normal/front/8/d/8da5f34e-7f40-406a-88d2-bb1e3ed25200.jpg?1757378035"
     }
 }
