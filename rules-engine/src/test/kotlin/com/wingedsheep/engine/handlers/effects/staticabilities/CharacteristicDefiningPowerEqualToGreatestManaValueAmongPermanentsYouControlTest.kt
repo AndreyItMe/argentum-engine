@@ -5,14 +5,11 @@ import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
-import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.dsl.DynamicAmounts
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.references.Player
-import com.wingedsheep.sdk.scripting.values.Aggregation
-import com.wingedsheep.sdk.scripting.values.CardNumericProperty
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -38,13 +35,7 @@ class CharacteristicDefiningPowerEqualToGreatestManaValueAmongPermanentsYouContr
     val CdaCreature = card("CDA Creature") {
         manaCost = "{2}{G}"
         typeLine = "Creature — Test"
-        dynamicStats(
-            DynamicAmount.AggregateBattlefield(
-                player = Player.You,
-                aggregation = Aggregation.MAX,
-                property = CardNumericProperty.MANA_VALUE
-            )
-        )
+        dynamicStats(DynamicAmounts.battlefield(Player.You).maxManaValue())
     }
 
     // Player A's supporting permanents
