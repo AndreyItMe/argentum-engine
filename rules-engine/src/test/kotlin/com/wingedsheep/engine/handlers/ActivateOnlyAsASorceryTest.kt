@@ -15,9 +15,10 @@ import io.kotest.matchers.string.shouldContain
 /**
  * BDD specification for "activate only as a sorcery" timing enforcement.
  *
- * CR 605.7b: An activated ability that says "activate only as a sorcery" may only
- * be activated when the player could cast a sorcery — their own main phase, stack
- * empty, and they hold priority.
+ * CR 602.5d: Activated abilities that read "Activate only as a sorcery" mean the
+ * player must follow the timing rules for casting a sorcery spell. CR 307.5
+ * defines that timing: the player must have priority, it must be the main phase
+ * of their turn, and the stack must be empty.
  *
  * Uses Disowned Ancestor's Outlast ability ({1}{B}, {T}: put a +1/+1 counter on
  * this creature. Outlast only as a sorcery.) as the specimen.
