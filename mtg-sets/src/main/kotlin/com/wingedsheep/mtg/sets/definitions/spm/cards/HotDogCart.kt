@@ -36,6 +36,6 @@ val HotDogCart = card("Hot Dog Cart") {
         rarity = Rarity.COMMON
         collectorNumber = "240"
         artist = "Jodie Muir"
-        imageUri = "https://cards.scryfall.io/normal/front/9/e/9e3c4ae4-c4a6-4f33-9a53-dd79beae9b55.jpg?1757376788"
+        imageUri = "https://cards.scryfall.io/normal/front/6/e/6ee3b883-e9f5-426f-a2ea-96fe9ff3aba9.jpg?1757378016"
     }
 }
