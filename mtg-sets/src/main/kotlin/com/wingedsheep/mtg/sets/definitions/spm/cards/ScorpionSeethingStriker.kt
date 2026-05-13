@@ -38,6 +38,6 @@ val ScorpionSeethingStriker = card("Scorpion, Seething Striker") {
         rarity = Rarity.UNCOMMON
         collectorNumber = "64"
         artist = "Simon Dominic"
-        imageUri = "https://cards.scryfall.io/normal/front/3/c/3c3d1b79-c203-4afa-989e-ccff47fc76f8.jpg?1757378029"
+        imageUri = "https://cards.scryfall.io/large/normal/c/f/cf407e08-b27f-42ba-b824-75846a80e238.jpg?1757377158"
     }
 }
