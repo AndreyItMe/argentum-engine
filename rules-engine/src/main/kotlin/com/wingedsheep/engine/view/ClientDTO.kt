@@ -190,6 +190,9 @@ data class ClientCard(
     /** Whether this card is face-down (for morph, manifest, hidden info) */
     val isFaceDown: Boolean,
 
+    /** Whether this permanent is suspected (CR 701.60 — has menace and can't block). Battlefield only. */
+    val isSuspected: Boolean = false,
+
     /** Morph cost for face-down creatures (only visible to controller) */
     val morphCost: String? = null,
 

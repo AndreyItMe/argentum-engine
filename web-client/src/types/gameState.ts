@@ -182,6 +182,9 @@ export interface ClientCard {
   /** Whether this card is face-down (for morph, manifest, hidden info) */
   readonly isFaceDown: boolean
 
+  /** Whether this permanent is suspected (CR 701.60 — has menace and can't block). Battlefield only. */
+  readonly isSuspected?: boolean
+
   /** Morph cost for face-down creatures (only visible to controller) */
   readonly morphCost?: string | null
 

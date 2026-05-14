@@ -41,6 +41,7 @@ import com.wingedsheep.sdk.scripting.effects.GrantToxicEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockEffect
+import com.wingedsheep.sdk.scripting.effects.SuspectEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantCastSpellsEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -1564,6 +1565,15 @@ object Effects {
      */
     fun CantAttackOrBlock(target: EffectTarget = EffectTarget.ContextTarget(0), duration: Duration = Duration.EndOfTurn): Effect =
         CompositeEffect(listOf(CantAttackEffect(target, duration), CantBlockEffect(target, duration)))
+
+    /**
+     * Target creature becomes suspected (gains menace, can't block).
+     *
+     * Suspect is a first-class named status — use this instead of independently granting
+     * menace + can't block so that future cards can query or react to the status directly.
+     */
+    fun Suspect(target: EffectTarget = EffectTarget.ContextTarget(0), duration: Duration = Duration.Permanent): Effect =
+        SuspectEffect(target, duration)
 
     // =========================================================================
     // Special Effects

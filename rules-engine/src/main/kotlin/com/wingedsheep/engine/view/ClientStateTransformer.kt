@@ -990,6 +990,7 @@ class ClientStateTransformer(
             attachments = attachments,
             linkedExile = linkedExile,
             isFaceDown = isFaceDown,
+            isSuspected = projectedValues?.isSuspected == true,
             morphCost = if (isFaceDown && morphData != null) morphData.morphCost.description else null,
             targets = targets,
             imageUri = cardComponent.imageUri ?: cardDef?.metadata?.imageUri,

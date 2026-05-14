@@ -144,6 +144,9 @@ internal class EffectApplicator(
                 is Modification.SetCantAttack -> {
                     values.cantAttack = true
                 }
+                is Modification.SetSuspected -> {
+                    values.isSuspected = true
+                }
                 is Modification.SetCantBlock -> {
                     values.cantBlock = true
                 }

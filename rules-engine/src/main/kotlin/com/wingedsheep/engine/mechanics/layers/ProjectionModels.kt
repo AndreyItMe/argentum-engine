@@ -554,6 +554,17 @@ sealed interface Modification {
         override val layer get() = Layer.ABILITY
     }
 
+    /**
+     * Marks a permanent as suspected — the first-class named status for the suspect mechanic.
+     * Applied together with [GrantKeyword](Menace) and [SetCantBlock] by [SuspectEffectHandler].
+     * Stored as a distinct modification so future cards can query or remove the status
+     * independently of the granted abilities.
+     */
+    @Serializable
+    data object SetSuspected : Modification {
+        override val layer get() = Layer.ABILITY
+    }
+
     @Serializable
     data object SetMustAttack : Modification {
         override val layer get() = Layer.ABILITY
@@ -653,6 +664,7 @@ internal data class MutableProjectedValues(
     val subtypes: MutableSet<String> = mutableSetOf(),
     var controllerId: EntityId? = null,
     var isFaceDown: Boolean = false,
+    var isSuspected: Boolean = false,
     var cantAttack: Boolean = false,
     var cantBlock: Boolean = false,
     var mustAttack: Boolean = false,
