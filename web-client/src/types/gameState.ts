@@ -380,6 +380,12 @@ export interface ClientPlayerEffect {
   readonly description?: string
   /** Optional icon identifier for UI rendering */
   readonly icon?: string
+  /**
+   * Optional image URL — typically a Scryfall marker-card image (e.g. the
+   * "City's Blessing" marker). When present, the badge renders this image
+   * in place of the emoji icon.
+   */
+  readonly imageUri?: string
 }
 
 /**

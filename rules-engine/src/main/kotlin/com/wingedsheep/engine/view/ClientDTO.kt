@@ -438,7 +438,13 @@ data class ClientPlayerEffect(
     /** Optional description/tooltip text */
     val description: String? = null,
     /** Optional icon identifier for UI rendering */
-    val icon: String? = null
+    val icon: String? = null,
+    /**
+     * Optional image URL for the badge — typically a Scryfall marker-card image
+     * (e.g., the "City's Blessing" marker). When present, the UI shows the image
+     * in place of the emoji-style [icon].
+     */
+    val imageUri: String? = null
 )
 
 /**
