@@ -24,7 +24,7 @@
 - [x] 1 Lotus Cobra
 - [x] 1 Prosperous Bandit
 - [x] 1 Pyreswipe Hawk
-- [ ] 1 Rampaging Baloths
+- [x] 1 Rampaging Baloths
 - [ ] 1 Sakura-Tribe Elder
 - [ ] 1 Teapot Slinger
 - [ ] 1 Tendershoot Dryad
