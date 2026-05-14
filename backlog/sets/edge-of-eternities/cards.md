@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 167 / 261
+**Implemented:** 168 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
