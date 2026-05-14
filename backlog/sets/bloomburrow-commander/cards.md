@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 53 / 312
+**Implemented:** 59 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -213,10 +213,10 @@
 - [ ] Psychosis Crawler
 - [ ] Pull from Tomorrow
 - [ ] Putrefy
-- [ ] Pyreswipe Hawk
+- [x] Pyreswipe Hawk
 - [ ] Raging Ravine
 - [ ] Rain of Riches
-- [ ] Rampaging Baloths
+- [x] Rampaging Baloths
 - [ ] Rampant Growth
 - [ ] Rapid Augmenter
 - [ ] Rapid Hybridization
@@ -234,7 +234,7 @@
 - [ ] Rose Room Treasurer
 - [ ] Rowdy Research
 - [ ] Rugged Prairie
-- [ ] Sakura-Tribe Elder
+- [x] Sakura-Tribe Elder
 - [ ] Saw in Half
 - [ ] Scurry of Squirrels
 - [x] Seachrome Coast
@@ -293,7 +293,7 @@
 - [x] Temple of Triumph
 - [ ] Tempt with Bunnies
 - [ ] Tempt with Discovery
-- [ ] Tendershoot Dryad
+- [x] Tendershoot Dryad
 - [ ] Tenuous Truce
 - [ ] Terramorphic Expanse
 - [x] Tetsuko Umezawa, Fugitive
@@ -310,7 +310,7 @@
 - [ ] Time Wipe
 - [ ] Tireless Provisioner
 - [ ] Toski, Bearer of Secrets
-- [ ] Trailtracker Scout
+- [x] Trailtracker Scout
 - [x] Tranquil Thicket
 - [ ] Triskaidekaphile
 - [ ] Twenty-Toed Toad
@@ -318,7 +318,7 @@
 - [ ] Unnatural Growth
 - [ ] Viridescent Bog
 - [ ] Warstorm Surge
-- [ ] Wildsear, Scouring Maw
+- [x] Wildsear, Scouring Maw
 - [ ] Windgrace's Judgment
 - [ ] Wizard Class
 - [ ] Woe Strider

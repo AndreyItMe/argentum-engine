@@ -127,7 +127,7 @@
 - [x] Lightless Evangel
 - [ ] Lightstall Inquisitor
 - [ ] Lithobraking
-- [ ] Loading Zone
+- [x] Loading Zone
 - [x] Lost in Space
 - [x] Lumen-Class Frigate
 - [ ] Luxknight Breacher

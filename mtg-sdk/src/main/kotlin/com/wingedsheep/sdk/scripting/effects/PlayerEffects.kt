@@ -437,3 +437,26 @@ data class CreatePermanentEmblemEffect(
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
+
+/**
+ * Grants the city's blessing to a player (CR 702.131 / 700.5).
+ *
+ * Once a player has the city's blessing, they have it for the rest of the game and
+ * it can never be removed. Applying this effect to a player who already has the
+ * blessing is a no-op.
+ *
+ * Used as the post-resolution effect of Ascend triggers (typically gated by
+ * [com.wingedsheep.sdk.scripting.conditions.Compare] "you control 10+ permanents").
+ *
+ * @param target The player to grant the city's blessing to. Defaults to the
+ *   ability's controller, matching Ascend's "you get the city's blessing" wording.
+ */
+@SerialName("GainCitysBlessing")
+@Serializable
+data class GainCitysBlessingEffect(
+    val target: EffectTarget = EffectTarget.Controller
+) : Effect {
+    override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} gets the city's blessing"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}

@@ -42,6 +42,7 @@ class PlayerExecutors(
         CreatePermanentEmblemExecutor(),
         CreatePermanentGlobalTriggeredAbilityExecutor(),
         EachPlayerChoosesCreatureTypeExecutor(),
+        GainCitysBlessingExecutor(),
         GiftGivenExecutor(),
         GrantCastCreaturesFromGraveyardWithForageExecutor(),
         GrantSpellKeywordExecutor(),

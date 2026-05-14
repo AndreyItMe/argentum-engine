@@ -80,6 +80,7 @@ constructors.
 - `Effects.ModifyStats(power, toughness, target = ContextTarget(0))` — until end of turn
 - `Effects.ModifyStats(power: DynamicAmount, toughness: DynamicAmount, target)` — dynamic P/T
 - `Effects.GrantHexproof(target = Controller, duration = EndOfTurn)` — grant hexproof to player or permanent
+- `Effects.GainCitysBlessing(target = Controller)` — grant the city's blessing (CR 702.131); permanent, idempotent
 - `Effects.GrantKeyword(keyword, target = ContextTarget(0), duration = EndOfTurn)` — grant a keyword for a duration
 - `Effects.GrantKeywordToAttackersBlockedBy(keyword, target, duration)` — grant keyword to attackers blocked by target
 - `Effects.GrantExileOnLeave(target)` — exile instead of leaving battlefield (Kheru Lich Lord, Whip of Erebos)
@@ -777,6 +778,8 @@ constructors.
 - `Conditions.IsYourTurn` / `.IsNotYourTurn`
 - `Conditions.IsInPhase(vararg phases, yoursOnly = true)` — true if the current phase is one of the listed phases; with `yoursOnly` also requires the controller's turn (Dose of Dawnglow)
 - `Conditions.IsYourMainPhase` — convenience for `IsInPhase(PRECOMBAT_MAIN, POSTCOMBAT_MAIN, yoursOnly = true)`
+- `Conditions.YouHaveCitysBlessing` — true if you have the city's blessing (CR 702.131 / 700.5). Static-ability path goes through `SourceProjectionCondition.ControllerHasCitysBlessing`
+- `Conditions.ControlPermanentsAtLeast(count)` — true if you control N+ permanents of any type. Primary use is the Ascend ETB intervening-if (10+)
 - `Conditions.YouGainedLifeThisTurn` — true if you gained life this turn
 - `Conditions.YouGainedOrLostLifeThisTurn` — true if you gained or lost life this turn
 - `Conditions.YouLostLifeThisTurn` — true if you lost life this turn (for conditional static abilities)
@@ -997,6 +1000,11 @@ reveal creatures, create tokens
 ### Spell Mechanics
 
 `STORM`
+
+### City's Blessing
+
+`ASCEND` — Ixalan keyword (CR 702.131). On a permanent spell, conventionally wired
+per card as `triggeredAbility { trigger = Triggers.EntersBattlefield; effect = ConditionalEffect(Conditions.ControlPermanentsAtLeast(10), Effects.GainCitysBlessing()) }`. The blessing is a permanent player designation; once granted it persists for the rest of the game. Test via `Conditions.YouHaveCitysBlessing`.
 
 ### Damage Modification
 
