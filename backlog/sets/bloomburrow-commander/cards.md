@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 59 / 312
+**Implemented:** 63 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -16,7 +16,7 @@
 
 ---
 
-- [ ] Abrade
+- [x] Abrade
 - [ ] Academy Manufactor
 - [x] Adarkar Wastes
 - [ ] Aether Channeler
@@ -35,13 +35,13 @@
 - [x] Barren Moor
 - [ ] Bastion of Remembrance
 - [x] Battlefield Forge
-- [ ] Beast Within
+- [x] Beast Within
 - [x] Beastmaster Ascension
 - [ ] Beledros Witherbloom
 - [x] Bello, Bard of the Brambles
 - [ ] Berserkers' Onslaught
 - [ ] Bident of Thassa
-- [ ] Big Score
+- [x] Big Score
 - [ ] Binding the Old Gods
 - [ ] Birds of Paradise
 - [ ] Blade Splicer
@@ -61,7 +61,7 @@
 - [ ] Cascade Bluffs
 - [ ] Castle Ardenvale
 - [ ] Casualties of War
-- [ ] Chaos Warp
+- [x] Chaos Warp
 - [ ] Chart a Course
 - [ ] Chasm Skulker
 - [ ] Chatterfang, Squirrel General
