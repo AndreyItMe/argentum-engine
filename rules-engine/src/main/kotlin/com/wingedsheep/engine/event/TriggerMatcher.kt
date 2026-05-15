@@ -866,7 +866,27 @@ class TriggerMatcher(
             predicate.predicates.all { matchesStatePredicateForTrigger(it, state, entityId) }
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Not ->
             !matchesStatePredicateForTrigger(predicate.predicate, state, entityId)
-        else -> true
+        // Trigger-matching predicates beyond IsFaceDown are not currently used as
+        // *trigger-gating* filters (those evaluate the triggering entity, not the source
+        // state). Returning true preserves the prior "don't gate" behavior, but listing
+        // every variant forces a compile-time choice when a new predicate is added.
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsTapped,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsUntapped,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttacking,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsBlocking,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsBlocked,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsUnblocked,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.EnteredThisTurn,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasDealtDamageThisTurn,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasDealtDamage,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasDealtCombatDamageToPlayer,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceUp,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasMorphAbility,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasAnyCounter,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasGreatestPower,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsEquipped,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsModified,
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasCounter -> true
     }
 
     /**
