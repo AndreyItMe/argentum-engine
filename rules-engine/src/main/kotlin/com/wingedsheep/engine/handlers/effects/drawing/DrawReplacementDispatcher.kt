@@ -295,7 +295,8 @@ class DrawReplacementDispatcher(
                         name = source.name,
                         producesColors = source.producesColors,
                         producesColorless = source.producesColorless,
-                        requiresSacrifice = source.requiresSacrifice
+                        requiresSacrifice = source.requiresSacrifice,
+                        requiresTappingAnotherPermanent = source.tapPermanentsSubCost != null
                     )
                 }
 
