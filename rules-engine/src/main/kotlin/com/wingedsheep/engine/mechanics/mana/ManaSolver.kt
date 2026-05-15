@@ -41,6 +41,7 @@ import com.wingedsheep.sdk.scripting.AdditionalManaOnSourceTap
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.sdk.scripting.DampLandManaProduction
 import com.wingedsheep.sdk.scripting.GrantActivatedAbility
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.engine.state.components.identity.ChosenColorComponent
 import com.wingedsheep.engine.state.components.identity.ChosenCreatureTypeComponent
@@ -112,7 +113,16 @@ data class ManaSource(
      * permanent would surprise the player; manual mana-source selection menus
      * may offer them so the choice is explicit.
      */
-    val requiresSacrifice: Boolean = false
+    val requiresSacrifice: Boolean = false,
+    /**
+     * Tapping this source also requires tapping another permanent (e.g. Springleaf
+     * Drum — "{T}, Tap an untapped creature you control: Add one mana of any color").
+     * Auto-pay refuses to pick these because silently tapping someone else's permanent
+     * choice would surprise the player; manual mana-source selection menus offer the
+     * source and the resumer prompts for the secondary tap target. Null when no such
+     * sub-cost is present.
+     */
+    val tapPermanentsSubCost: TapPermanentsSubCost? = null
 ) {
     /**
      * Returns the set of colors this source can produce for a given spell context.
@@ -126,6 +136,19 @@ data class ManaSource(
         }.toSet()
     }
 }
+
+/**
+ * Secondary tap-permanents sub-cost attached to a tap-based mana ability
+ * (e.g. Springleaf Drum's "Tap an untapped creature you control").
+ *
+ * Mirrors [com.wingedsheep.sdk.scripting.AbilityCost.TapPermanents] but lives on
+ * [ManaSource] so consumers don't need to re-resolve the ability's cost shape.
+ */
+data class TapPermanentsSubCost(
+    val count: Int,
+    val filter: GameObjectFilter,
+    val excludeSelf: Boolean
+)
 
 /**
  * Result of solving mana payment.
@@ -236,6 +259,11 @@ class ManaSolver(
             // The bonus-mana accounting in canPay() still counts these via
             // calculateSacrificeSelfBonusMana(), but the solver itself never picks them.
             .filter { !it.requiresSacrifice }
+            // Same rule for composite Tap+TapPermanents sources (Springleaf Drum) — the
+            // resumer must prompt the player to pick which creature gets tapped, so the
+            // auto-pay solver refuses to silently consume the choice. canPay() accounts
+            // for these via calculateCompositeTapPermanentsBonusMana().
+            .filter { it.tapPermanentsSubCost == null }
             .filter { source ->
                 if (source.restriction == null || spellContext == null) true
                 else source.restriction.isSatisfiedBy(spellContext)
@@ -680,6 +708,12 @@ class ManaSolver(
             // requires sacrifice — if any accepted ability is non-sac, prefer that path.
             var anyAcceptedWithSac = false
             var anyAcceptedWithoutSac = false
+            // Mirror of anyAcceptedWith[out]Sac for composite tap+TapPermanents abilities
+            // (Springleaf Drum). The source surfaces a non-null `tapPermanentsSubCost` only
+            // when every accepted mana ability requires the secondary tap.
+            var anyAcceptedWithTapPermanents = false
+            var anyAcceptedWithoutTapPermanents = false
+            var firstAcceptedTapPermanentsSubCost: TapPermanentsSubCost? = null
             // Track restrictions: if any ability is unrestricted, the source is unrestricted
             var hasUnrestrictedAbility = false
             var commonRestriction: ManaRestriction? = null
@@ -710,6 +744,7 @@ class ManaSolver(
                 var abilityPainAmount = 0
                 var abilityActivationManaCost = 0
                 var abilityRequiresSacrifice = false
+                var abilityTapPermanentsSubCost: TapPermanentsSubCost? = null
                 val abilityCanBeUsed = when (val cost = ability.cost) {
                     is AbilityCost.Tap -> true
                     is AbilityCost.PayLife -> {
@@ -735,12 +770,36 @@ class ManaSolver(
                                 // in `findAvailableManaSources` so manual-selection UIs can offer
                                 // them; selecting one triggers an explicit sacrifice in the resumer.
                                 is AbilityCost.SacrificeSelf -> abilityRequiresSacrifice = true
+                                // TapPermanents as a sub-cost (Springleaf Drum:
+                                // "{T}, Tap an untapped creature you control: Add …"). Same
+                                // treatment as SacrificeSelf — auto-pay refuses to silently
+                                // consume the secondary tap target; manual menus offer the
+                                // source and the resumer prompts for the creature.
+                                is AbilityCost.TapPermanents -> {
+                                    abilityTapPermanentsSubCost = TapPermanentsSubCost(
+                                        count = subCost.count,
+                                        filter = subCost.filter,
+                                        excludeSelf = subCost.excludeSelf
+                                    )
+                                }
                                 // Other choice costs (Forage, sacrifice-something-else, etc.) still
                                 // require explicit ActivateAbility entry.
                                 else -> hasUnsupportedSubCost = true
                             }
                         }
-                        hasTap && !hasUnsupportedSubCost
+                        val tapPermSubCost = abilityTapPermanentsSubCost
+                        if (hasTap && !hasUnsupportedSubCost && tapPermSubCost != null) {
+                            // Verify enough untapped non-source permanents are available to satisfy
+                            // the secondary tap. If not, this ability is not usable right now.
+                            if (!hasEnoughTapTargets(state, playerId, entityId, tapPermSubCost)) {
+                                abilityTapPermanentsSubCost = null
+                                false
+                            } else {
+                                true
+                            }
+                        } else {
+                            hasTap && !hasUnsupportedSubCost
+                        }
                     }
                     else -> false // Skip non-tap mana abilities
                 }
@@ -748,6 +807,14 @@ class ManaSolver(
                 if (!abilityCanBeUsed) continue
 
                 if (abilityRequiresSacrifice) anyAcceptedWithSac = true else anyAcceptedWithoutSac = true
+                if (abilityTapPermanentsSubCost != null) {
+                    anyAcceptedWithTapPermanents = true
+                    if (firstAcceptedTapPermanentsSubCost == null) {
+                        firstAcceptedTapPermanentsSubCost = abilityTapPermanentsSubCost
+                    }
+                } else {
+                    anyAcceptedWithoutTapPermanents = true
+                }
 
                 // Check summoning sickness for creatures (non-lands)
                 if (!card.typeLine.isLand && isCreature) {
@@ -943,6 +1010,15 @@ class ManaSolver(
                 // preferred and the source is offered without sacrifice.
                 val requiresSacrifice = anyAcceptedWithSac && !anyAcceptedWithoutSac
 
+                // Same rule for the tap-another-permanent sub-cost: surface it only when
+                // every accepted ability requires the secondary tap. If any plain mana
+                // ability was accepted, that path is preferred.
+                val tapPermanentsSubCost = if (anyAcceptedWithTapPermanents && !anyAcceptedWithoutTapPermanents) {
+                    firstAcceptedTapPermanentsSubCost
+                } else {
+                    null
+                }
+
                 return@mapNotNull ManaSource(
                     entityId = entityId,
                     name = card.name,
@@ -962,6 +1038,7 @@ class ManaSolver(
                     colorActivationManaCost = colorActivationCosts,
                     requiresSacrifice = requiresSacrifice,
                     hasContextSensitiveAbilities = hasMixedRestrictions,
+                    tapPermanentsSubCost = tapPermanentsSubCost,
                 )
             }
 
@@ -1402,6 +1479,7 @@ class ManaSolver(
         //     ability directly. But the spell is still *affordable* — we just need to know it.
         val bonus = calculateTapPermanentsBonusMana(state, playerId)
             .plus(calculateSacrificeSelfBonusMana(state, playerId))
+            .plus(calculateCompositeTapPermanentsBonusMana(state, playerId))
         if (bonus.totalMana == 0) return false
 
         // Allocate any-color bonus mana to the pool based on what the cost needs,
@@ -1440,17 +1518,20 @@ class ManaSolver(
         }
 
         // Add untapped mana sources (including bonus mana from auras and multi-mana sources).
-        // Sacrifice-self sources (treasures) are already counted via
-        // calculateSacrificeSelfBonusMana below, so skip them here to avoid double-counting.
+        // Sacrifice-self sources (treasures) and composite tap+TapPermanents sources
+        // (Springleaf Drum) are counted below via their dedicated bonus helpers, so skip
+        // them here to avoid double-counting.
         val sourceMana = (precomputedSources ?: findAvailableManaSources(state, playerId))
-            .filter { !it.requiresSacrifice }
+            .filter { !it.requiresSacrifice && it.tapPermanentsSubCost == null }
             .sumOf { it.manaAmount + it.bonusManaPerTap }
 
         // Add extra mana from "extras" abilities the solver doesn't pick:
         //  - TapPermanents (e.g., Birchlore Rangers)
         //  - Tap+SacrificeSelf mana abilities (e.g., Treasure tokens)
+        //  - Composite Tap+TapPermanents mana abilities (e.g., Springleaf Drum)
         val extrasMana = calculateTapPermanentsBonusMana(state, playerId).totalMana +
-            calculateSacrificeSelfBonusMana(state, playerId).totalMana
+            calculateSacrificeSelfBonusMana(state, playerId).totalMana +
+            calculateCompositeTapPermanentsBonusMana(state, playerId).totalMana
 
         return floatingMana + sourceMana + extrasMana
     }
@@ -1631,6 +1712,121 @@ class ManaSolver(
                     }
                     else -> {}
                 }
+            }
+        }
+
+        return TapPermanentsBonusMana(anyColorTotal, specificColorTotal, colorlessTotal)
+    }
+
+    /**
+     * Whether enough untapped permanents matching [subCost] exist on the battlefield to
+     * pay the secondary tap of a composite Tap+TapPermanents mana ability (Springleaf Drum).
+     *
+     * The source's own entity is always excluded — even when [TapPermanentsSubCost.excludeSelf]
+     * is false, the source is tapped by the {T} sub-cost and so can't also satisfy the
+     * "tap another permanent" half. The filter is matched via the projected state so
+     * type-changing effects (Mistform Elemental, etc.) are honored.
+     */
+    private fun hasEnoughTapTargets(
+        state: GameState,
+        playerId: EntityId,
+        sourceId: EntityId,
+        subCost: TapPermanentsSubCost
+    ): Boolean {
+        val projected = state.projectedState
+        val context = PredicateContext(controllerId = playerId)
+        val matches = projected.getBattlefieldControlledBy(playerId).count { targetId ->
+            targetId != sourceId &&
+                state.getEntity(targetId)?.has<TappedComponent>() == false &&
+                predicateEvaluator.matchesWithProjection(state, projected, targetId, subCost.filter, context)
+        }
+        return matches >= subCost.count
+    }
+
+    /**
+     * Bonus mana available from composite Tap+TapPermanents mana abilities (Springleaf Drum:
+     * "{T}, Tap an untapped creature you control: Add one mana of any color").
+     *
+     * `solve()` refuses to auto-tap these sources because the secondary tap requires player
+     * input, but `canPay` and `getAvailableManaCount` must still count their production so
+     * a ward (or other "counter unless pays") doesn't short-circuit to countered when the
+     * player would actually be able to pay manually.
+     *
+     * Each Springleaf-like source contributes one activation, sharing a single pool of
+     * untapped non-source creatures across all such activations to avoid double-counting.
+     */
+    internal fun calculateCompositeTapPermanentsBonusMana(
+        state: GameState,
+        playerId: EntityId
+    ): TapPermanentsBonusMana {
+        val projected = state.projectedState
+        val battlefieldCards = projected.getBattlefieldControlledBy(playerId)
+
+        var anyColorTotal = 0
+        val specificColorTotal = mutableMapOf<Color, Int>()
+        var colorlessTotal = 0
+
+        val consumedIds = mutableSetOf<EntityId>()
+
+        for (entityId in battlefieldCards) {
+            val container = state.getEntity(entityId) ?: continue
+            if (container.has<TappedComponent>()) continue
+            val card = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            if (projected.hasLostAllAbilities(entityId)) continue
+
+            val isCreature = card.typeLine.isCreature
+            if (!card.typeLine.isLand && isCreature) {
+                val hasSummoningSickness = container.has<SummoningSicknessComponent>()
+                val hasHaste = projected.hasKeyword(entityId, Keyword.HASTE)
+                if (hasSummoningSickness && !hasHaste) continue
+            }
+
+            for (ability in cardDef.script.activatedAbilities) {
+                if (!ability.isManaAbility) continue
+                val composite = ability.cost as? AbilityCost.Composite ?: continue
+                val hasTap = composite.costs.any { it is AbilityCost.Tap }
+                val tapPermanentsCost = composite.costs
+                    .firstOrNull { it is AbilityCost.TapPermanents } as? AbilityCost.TapPermanents
+                if (!hasTap || tapPermanentsCost == null) continue
+                // Skip composites that also bundle SacrificeSelf or a mana sub-cost — those are
+                // handled by other helpers (calculateSacrificeSelfBonusMana) and would
+                // double-count or complicate color resolution here.
+                if (composite.costs.any { it is AbilityCost.SacrificeSelf || it is AbilityCost.Mana }) continue
+
+                if (!activationRestrictionsSatisfied(state, playerId, entityId, ability)) continue
+
+                val context = PredicateContext(controllerId = playerId)
+                val matchingTapTargets = battlefieldCards.filter { targetId ->
+                    targetId != entityId &&
+                        targetId !in consumedIds &&
+                        state.getEntity(targetId)?.has<TappedComponent>() == false &&
+                        predicateEvaluator.matchesWithProjection(state, projected, targetId, tapPermanentsCost.filter, context)
+                }
+                if (matchingTapTargets.size < tapPermanentsCost.count) continue
+
+                consumedIds.addAll(matchingTapTargets.take(tapPermanentsCost.count))
+
+                when (val effect = ability.effect) {
+                    is AddAnyColorManaEffect -> {
+                        val amount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
+                        anyColorTotal += amount
+                    }
+                    is AddManaEffect -> {
+                        val amount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
+                        specificColorTotal[effect.color] =
+                            (specificColorTotal[effect.color] ?: 0) + amount
+                    }
+                    is AddColorlessManaEffect -> {
+                        val amount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
+                        colorlessTotal += amount
+                    }
+                    else -> {}
+                }
+                // Each source contributes one activation per canPay query — multiple
+                // mana abilities on the same Springleaf-like permanent are uncommon and
+                // would share the {T} cost anyway.
+                break
             }
         }
 

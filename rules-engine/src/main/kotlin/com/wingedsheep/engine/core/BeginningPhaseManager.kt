@@ -2,7 +2,6 @@ package com.wingedsheep.engine.core
 
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -24,6 +23,7 @@ import com.wingedsheep.sdk.scripting.UntapDuringOtherUntapSteps
 import com.wingedsheep.sdk.scripting.UntapFilteredDuringOtherUntapSteps
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
+import com.wingedsheep.sdk.scripting.predicates.StatePredicate
 
 /**
  * Handles beginning phase logic: untap step, upkeep step, and saga lore counters.
@@ -33,8 +33,6 @@ class BeginningPhaseManager(
     private val decisionHandler: DecisionHandler,
     private val cleanupPhaseManager: CleanupPhaseManager
 ) {
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     /**
      * Perform the untap step.
@@ -288,10 +286,55 @@ class BeginningPhaseManager(
             }
             if (!matches) return false
         }
-        // Check state predicates
+        // Check state predicates (e.g., HasCounter)
         for (predicate in filter.statePredicates) {
-            if (!predicateEvaluator.matchesStatePredicate(state, entityId, predicate)) return false
+            if (!matchesStatePredicateForUntap(predicate, container)) return false
         }
         return true
+    }
+
+    private fun matchesStatePredicateForUntap(
+        predicate: StatePredicate,
+        container: ComponentContainer
+    ): Boolean = when (predicate) {
+        is StatePredicate.HasCounter -> {
+            val countersComponent = container.get<CountersComponent>()
+            if (countersComponent == null) {
+                false
+            } else {
+                val counterType = when (predicate.counterType) {
+                    "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
+                    "-1/-1" -> CounterType.MINUS_ONE_MINUS_ONE
+                    else -> null
+                }
+                counterType != null && countersComponent.getCount(counterType) > 0
+            }
+        }
+        is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicateForUntap(it, container) }
+        is StatePredicate.And -> predicate.predicates.all { matchesStatePredicateForUntap(it, container) }
+        is StatePredicate.Not -> !matchesStatePredicateForUntap(predicate.predicate, container)
+        // Untap-during-other-untap-step filters only meaningfully restrict by counter type
+        // and structural combinators. Tap / combat / face-down / damage-history / equipment
+        // predicates would either be redundant at this point in the turn (e.g. IsTapped is
+        // implied; combat is empty) or would require state we don't have here. Returning
+        // true preserves the historical "no constraint" behavior, but the case is now
+        // explicit so adding a new StatePredicate variant becomes a compile-time decision.
+        StatePredicate.IsTapped,
+        StatePredicate.IsUntapped,
+        StatePredicate.IsAttacking,
+        StatePredicate.IsBlocking,
+        StatePredicate.IsBlocked,
+        StatePredicate.IsUnblocked,
+        StatePredicate.EnteredThisTurn,
+        StatePredicate.WasDealtDamageThisTurn,
+        StatePredicate.HasDealtDamage,
+        StatePredicate.HasDealtCombatDamageToPlayer,
+        StatePredicate.IsFaceDown,
+        StatePredicate.IsFaceUp,
+        StatePredicate.HasMorphAbility,
+        StatePredicate.HasAnyCounter,
+        StatePredicate.HasGreatestPower,
+        StatePredicate.IsEquipped,
+        StatePredicate.IsModified -> true
     }
 }

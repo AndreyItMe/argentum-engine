@@ -22,7 +22,8 @@ branch before diffing. Where the work happens depends on what's already checked 
   place. Skip the worktree step.
 - **Anywhere else** (different branch checked out, dirty tree, PR head not fetched yet,
   user explicitly asks for a worktree) → use a dedicated worktree under
-  `.claude/worktrees/` so the user's primary checkout stays untouched.
+  `~/.claude/worktrees/argentum-engine/` (outside the repo, so an untracked worktree
+  directory can't be staged into a commit by accident).
 
 Steps:
 
@@ -36,9 +37,10 @@ Steps:
    Also refresh `origin/main`:
    `git fetch https://github.com/wingedsheep/argentum-engine.git main:refs/remotes/origin/main`.
 3. **Pick the workspace.** Already on the branch with a clean tree → continue in place.
-   Otherwise: `git worktree add .claude/worktrees/pr-<n>-review pr-<n>-review` (or
-   `.claude/worktrees/<branch>-review` for a branch). Run subsequent commands in
-   whichever workspace applies.
+   Otherwise: `git worktree add ~/.claude/worktrees/argentum-engine/pr-<n>-review pr-<n>-review`
+   (or `~/.claude/worktrees/argentum-engine/<branch>-review` for a branch). Create the
+   parent dir first if needed (`mkdir -p ~/.claude/worktrees/argentum-engine`). Run
+   subsequent commands in whichever workspace applies.
 4. **Merge `origin/main` into the review branch** before reading the diff. This catches
    conflicts the author hasn't seen yet and ensures the review reflects post-merge
    reality: `git merge origin/main --no-edit`. If conflicts arise, resolve them (prefer
@@ -54,8 +56,9 @@ Read every changed file in full, not just the hunk. For large diffs, spawn `Expl
 unfamiliar areas.
 
 **Worktree lifecycle (only when a worktree was created).** Leave it in place across
-review rounds. Only remove it (`git worktree remove .claude/worktrees/pr-<n>-review`)
-once the user confirms the PR is merged or the review is abandoned. Mention the worktree
+review rounds. Only remove it
+(`git worktree remove ~/.claude/worktrees/argentum-engine/pr-<n>-review`) once the user
+confirms the PR is merged or the review is abandoned. Mention the worktree
 path in the final review output so the user can hand-off, re-enter, or push fixups to
 it. When the review ran in place, the final output just notes that the branch already
 has `origin/main` merged in (and any merge commit that produced).
