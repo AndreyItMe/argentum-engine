@@ -524,7 +524,8 @@ class CastSpellHandler(
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
                 subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
-                isFromExile = isCastFromExile(state, action.cardId)
+                isFromExile = isCastFromExile(state, action.cardId),
+                cardTypes = cardComponent.typeLine.cardTypes,
             )
         } else null
 
@@ -1657,7 +1658,8 @@ class CastSpellHandler(
             manaValue = cardComponent.manaCost.cmc,
             hasXInCost = cardComponent.manaCost.hasX,
             subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
-            isFromExile = isCastFromExile(currentState, action.cardId)
+            isFromExile = isCastFromExile(currentState, action.cardId),
+            cardTypes = cardComponent.typeLine.cardTypes,
         )
 
         // "Mana of any type can be spent" — relax colored requirements for cast-from-exile
