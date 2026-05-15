@@ -2,6 +2,7 @@ package com.wingedsheep.engine.core
 
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -23,7 +24,6 @@ import com.wingedsheep.sdk.scripting.UntapDuringOtherUntapSteps
 import com.wingedsheep.sdk.scripting.UntapFilteredDuringOtherUntapSteps
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
-import com.wingedsheep.sdk.scripting.predicates.StatePredicate
 
 /**
  * Handles beginning phase logic: untap step, upkeep step, and saga lore counters.
@@ -33,6 +33,8 @@ class BeginningPhaseManager(
     private val decisionHandler: DecisionHandler,
     private val cleanupPhaseManager: CleanupPhaseManager
 ) {
+
+    private val predicateEvaluator = PredicateEvaluator()
 
     /**
      * Perform the untap step.
@@ -286,33 +288,10 @@ class BeginningPhaseManager(
             }
             if (!matches) return false
         }
-        // Check state predicates (e.g., HasCounter)
+        // Check state predicates
         for (predicate in filter.statePredicates) {
-            if (!matchesStatePredicateForUntap(predicate, container)) return false
+            if (!predicateEvaluator.matchesStatePredicate(state, entityId, predicate)) return false
         }
         return true
-    }
-
-    private fun matchesStatePredicateForUntap(
-        predicate: StatePredicate,
-        container: ComponentContainer
-    ): Boolean = when (predicate) {
-        is StatePredicate.HasCounter -> {
-            val countersComponent = container.get<CountersComponent>()
-            if (countersComponent == null) {
-                false
-            } else {
-                val counterType = when (predicate.counterType) {
-                    "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
-                    "-1/-1" -> CounterType.MINUS_ONE_MINUS_ONE
-                    else -> null
-                }
-                counterType != null && countersComponent.getCount(counterType) > 0
-            }
-        }
-        is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicateForUntap(it, container) }
-        is StatePredicate.And -> predicate.predicates.all { matchesStatePredicateForUntap(it, container) }
-        is StatePredicate.Not -> !matchesStatePredicateForUntap(predicate.predicate, container)
-        else -> true // Other state predicates not relevant for untap filtering
     }
 }

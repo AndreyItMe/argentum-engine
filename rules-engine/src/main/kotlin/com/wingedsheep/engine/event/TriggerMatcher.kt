@@ -855,19 +855,7 @@ class TriggerMatcher(
         predicate: com.wingedsheep.sdk.scripting.predicates.StatePredicate,
         state: GameState,
         entityId: EntityId
-    ): Boolean = when (predicate) {
-        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceDown -> {
-            val entity = state.getEntity(entityId) ?: return false
-            entity.has<FaceDownComponent>()
-        }
-        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Or ->
-            predicate.predicates.any { matchesStatePredicateForTrigger(it, state, entityId) }
-        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.And ->
-            predicate.predicates.all { matchesStatePredicateForTrigger(it, state, entityId) }
-        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Not ->
-            !matchesStatePredicateForTrigger(predicate.predicate, state, entityId)
-        else -> true
-    }
+    ): Boolean = predicateEvaluator.matchesStatePredicate(state, entityId, predicate)
 
     /**
      * Compare counter type strings, normalizing different representations to allow matching
