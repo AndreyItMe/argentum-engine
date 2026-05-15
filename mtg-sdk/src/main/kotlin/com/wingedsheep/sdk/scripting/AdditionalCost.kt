@@ -413,6 +413,31 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
             return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
+
+    /**
+     * Choose one entity that is either a creature you control on the battlefield
+     * or a warped creature card you own in exile (CR 702.185b — a "warped" card
+     * is one that was exiled by the warp end-step trigger). The chosen entity ID
+     * is recorded in [AdditionalCostPayment.beheldCards] and surfaced to the
+     * resolution context under [storeAs] via the spell's pipeline storage, so
+     * downstream effects (typically [com.wingedsheep.sdk.scripting.values.DynamicAmount.StoredCardPower])
+     * can read the chosen entity's power.
+     *
+     * Used by Edge of Eternities cards like Close Encounter and Blade of the Swarm.
+     *
+     * Choosing does not change zones — it merely records the chosen entity for the
+     * spell's effect to reference at resolution.
+     */
+    @SerialName("ChooseCreatureOrWarpedExile")
+    @Serializable
+    data class ChooseCreatureOrWarpedExile(
+        val storeAs: String = "chosen"
+    ) : AdditionalCost {
+        override val description: String =
+            "choose a creature you control or a warped creature card you own in exile"
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost = this
+    }
 }
 
 /**

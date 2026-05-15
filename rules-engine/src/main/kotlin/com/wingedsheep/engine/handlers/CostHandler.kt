@@ -732,6 +732,23 @@ class CostHandler(
                 // All steps must be payable
                 cost.steps.all { canPayAdditionalCost(state, it, controllerId) }
             }
+            is AdditionalCost.ChooseCreatureOrWarpedExile -> {
+                // Payable iff the player has at least one valid choice:
+                //   - a creature they control on the battlefield, OR
+                //   - a creature card they own in exile with WarpExiledComponent
+                //     (CR 702.185b — a "warped" exiled card).
+                val projected = state.projectedState
+                val hasOwnCreature = projected.getBattlefieldControlledBy(controllerId).any { id ->
+                    projected.isCreature(id)
+                }
+                if (hasOwnCreature) return true
+                val exileZone = ZoneKey(controllerId, Zone.EXILE)
+                state.getZone(exileZone).any { cardId ->
+                    val container = state.getEntity(cardId) ?: return@any false
+                    if (!container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>()) return@any false
+                    container.get<CardComponent>()?.typeLine?.isCreature == true
+                }
+            }
         }
     }
 

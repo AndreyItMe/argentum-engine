@@ -1184,9 +1184,15 @@ class ClientStateTransformer(
                 wasKicked = spellOnStack.wasKicked,
                 wasBlightPaid = spellOnStack.wasBlightPaid,
                 sacrificedPermanents = spellOnStack.sacrificedPermanents,
+                chosenEntitySnapshots = spellOnStack.chosenEntitySnapshots,
                 exiledCardCount = spellOnStack.exiledCardCount,
                 additionalCostBlightAmount = spellOnStack.additionalCostBlightAmount,
-                targets = chosenTargets
+                targets = chosenTargets,
+                pipeline = com.wingedsheep.engine.handlers.PipelineState(
+                    storedCollections = com.wingedsheep.engine.mechanics.stack.buildBeheldStoredCollections(
+                        spellOnStack.beheldCards, cardDef
+                    )
+                )
             )
             // Resolve ConditionalEffect at stack-time: opponents see only the branch that
             // will fire (e.g., Cinder Strike shows "deals 4 damage" vs "deals 2 damage"

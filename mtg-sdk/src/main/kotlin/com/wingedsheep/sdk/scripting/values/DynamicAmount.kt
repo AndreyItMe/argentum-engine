@@ -265,6 +265,29 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
         override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
+    /**
+     * Power of the first card stored in a named pipeline collection.
+     *
+     * Resolution order:
+     *  1. If the stored entity is still on the battlefield, use its projected power
+     *     (CR 608.2 "use the values as the spell resolves").
+     *  2. Otherwise, if the spell captured a [com.wingedsheep.engine.state.components.stack.PermanentSnapshot]
+     *     for the entity at cost-pay time, use the snapshot's power
+     *     (CR 112.7a / 608.2h "as it last existed on the battlefield").
+     *  3. Otherwise (e.g. the chosen card was in exile and never on the battlefield
+     *     between cost-pay and resolution), fall back to the card's printed power
+     *     from its base [com.wingedsheep.sdk.model.CardStats].
+     *
+     * Used by Close Encounter: "Close Encounter deals damage equal to the power
+     * of the chosen creature or card to target creature."
+     */
+    @SerialName("StoredCardPower")
+    @Serializable
+    data class StoredCardPower(val collectionName: String) : DynamicAmount {
+        override val description: String = "the power of the chosen creature or card"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
+    }
+
     // =========================================================================
     // Math Operations - Composable arithmetic on DynamicAmounts
     // =========================================================================

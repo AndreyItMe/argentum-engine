@@ -33,6 +33,7 @@ import com.wingedsheep.engine.state.components.identity.TokenComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.engine.state.permissions.removeMayPlayPermissionsForCard
+import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.GrantCantBeCountered
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.core.Color
@@ -115,6 +116,7 @@ class StackResolver(
         modeDamageDistribution: Map<Int, Map<EntityId, Int>> = emptyMap(),
         totalManaSpent: Int = 0,
         beheldCards: List<EntityId> = emptyList(),
+        chosenEntitySnapshots: List<PermanentSnapshot> = emptyList(),
         manaSpentWhite: Int = 0,
         manaSpentBlue: Int = 0,
         manaSpentBlack: Int = 0,
@@ -174,6 +176,7 @@ class StackResolver(
                 wasWarped = wasWarped,
                 wasEvoked = wasEvoked,
                 beheldCards = beheldCards,
+                chosenEntitySnapshots = chosenEntitySnapshots,
                 manaSpentWhite = manaSpentWhite,
                 manaSpentBlue = manaSpentBlue,
                 manaSpentBlack = manaSpentBlack,
@@ -1134,6 +1137,7 @@ class StackResolver(
                 wasKicked = spellComponent.wasKicked,
                 wasBlightPaid = spellComponent.wasBlightPaid,
                 sacrificedPermanents = spellComponent.sacrificedPermanents,
+                chosenEntitySnapshots = spellComponent.chosenEntitySnapshots,
                 damageDistribution = spellComponent.damageDistribution,
                 chosenModes = spellComponent.chosenModes,
                 modeTargetsOrdered = spellComponent.modeTargetsOrdered,
@@ -1144,8 +1148,7 @@ class StackResolver(
                 castFromZone = spellComponent.castFromZone,
                 pipeline = PipelineState(
                     namedTargets = EffectContext.buildNamedTargets(targetRequirements, targets),
-                    storedCollections = if (spellComponent.beheldCards.isNotEmpty())
-                        mapOf("beheld" to spellComponent.beheldCards) else emptyMap()
+                    storedCollections = buildBeheldStoredCollections(spellComponent.beheldCards, resolvedCardDef)
                 )
             )
 
@@ -2244,4 +2247,40 @@ class StackResolver(
         }
     }
 
+}
+
+/**
+ * Build pipeline `storedCollections` for cost-chosen card IDs.
+ *
+ * The chosen IDs (from [AdditionalCost.Behold], [AdditionalCost.BeholdOrPay], or
+ * [AdditionalCost.ChooseCreatureOrWarpedExile]) are stored on the stack object as
+ * [SpellOnStackComponent.beheldCards]. Each of those costs declares its own
+ * `storeAs` key that the card's resolution-time effects reference (e.g.,
+ * `DynamicAmount.StoredCardPower("chosen")`). To keep the effect's reference
+ * stable across cost variants, expose the IDs under every relevant `storeAs`
+ * key plus a default `"beheld"` key for backward compatibility with
+ * pre-existing Behold-using cards.
+ *
+ * Top-level so non-stack consumers (e.g. the client-side preview text builder
+ * in `ClientStateTransformer`) can populate the same pipeline view of the
+ * spell's cost-chosen state without re-implementing the lookup.
+ */
+internal fun buildBeheldStoredCollections(
+    beheldCards: List<EntityId>,
+    cardDef: com.wingedsheep.sdk.model.CardDefinition?
+): Map<String, List<EntityId>> {
+    if (beheldCards.isEmpty()) return emptyMap()
+    val keys = mutableSetOf("beheld")
+    cardDef?.script?.additionalCosts?.forEach { cost ->
+        val flat = if (cost is AdditionalCost.Composite) cost.steps else listOf(cost)
+        for (c in flat) {
+            when (c) {
+                is AdditionalCost.Behold -> keys += c.storeAs
+                is AdditionalCost.BeholdOrPay -> keys += c.storeAs
+                is AdditionalCost.ChooseCreatureOrWarpedExile -> keys += c.storeAs
+                else -> {}
+            }
+        }
+    }
+    return keys.associateWith { beheldCards }
 }

@@ -1146,6 +1146,30 @@ class CastSpellHandler(
                         return "Not enough life to pay ${additionalCost.amount} life"
                     }
                 }
+                is AdditionalCost.ChooseCreatureOrWarpedExile -> {
+                    val chosen = action.additionalCostPayment?.beheldCards ?: emptyList()
+                    if (chosen.isEmpty()) {
+                        return "You must choose a creature you control or a warped creature card you own in exile"
+                    }
+                    if (chosen.size > 1) {
+                        return "You may only choose one creature or warped exiled card"
+                    }
+                    val entityId = chosen.first()
+                    val container = state.getEntity(entityId)
+                        ?: return "Chosen entity not found: $entityId"
+                    val card = container.get<CardComponent>()
+                        ?: return "Chosen entity is not a card: $entityId"
+                    val isOwnCreatureOnBattlefield = entityId in state.getBattlefield() &&
+                        projected.getController(entityId) == action.playerId &&
+                        projected.isCreature(entityId)
+                    val exileZone = ZoneKey(action.playerId, Zone.EXILE)
+                    val isWarpedExiledOwnCard = entityId in state.getZone(exileZone) &&
+                        container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>() &&
+                        card.typeLine.isCreature
+                    if (!isOwnCreatureOnBattlefield && !isWarpedExiledOwnCard) {
+                        return "${card.name} must be a creature you control or a warped creature card you own in exile"
+                    }
+                }
                 else -> {}
             }
         }
@@ -1305,6 +1329,12 @@ class CastSpellHandler(
         val sacrificedSnapshots = mutableListOf<PermanentSnapshot>()
         var exiledCardCount = 0
         val beheldCards = mutableListOf<EntityId>()
+        /**
+         * LKI snapshots for entities chosen via [AdditionalCost.ChooseCreatureOrWarpedExile].
+         * Captured at cost-pay time so [DynamicAmount.StoredCardPower] can read "power as it
+         * last existed on the battlefield" if the chosen creature leaves before resolution.
+         */
+        val chosenEntitySnapshots = mutableListOf<PermanentSnapshot>()
         /** Pipeline storage populated by Behold, consumed by ExileFromStorage */
         val costPipelineCollections = mutableMapOf<String, List<EntityId>>()
 
@@ -1669,6 +1699,25 @@ class CastSpellHandler(
                     is AdditionalCost.PayLife -> {
                         // Handled in the auto-pay pre-pass above (PayLife requires no player choice).
                     }
+                    is AdditionalCost.ChooseCreatureOrWarpedExile -> {
+                        // Choosing does not change zones. Record the chosen entity id under
+                        // [beheldCards] (shared "chosen-as-additional-cost" storage) and in
+                        // the pipeline under [storeAs] so the spell effect can reference it.
+                        // Capture a power/toughness snapshot for battlefield choices so the
+                        // damage effect can fall back to LKI when the creature leaves before
+                        // resolution (CR 112.7a; ruling on Close Encounter).
+                        val chosen = action.additionalCostPayment.beheldCards
+                        if (chosen.isNotEmpty()) {
+                            beheldCards.addAll(chosen)
+                            costPipelineCollections[additionalCost.storeAs] = chosen
+                            val battlefieldChosen = chosen.filter { it in currentState.getBattlefield() }
+                            if (battlefieldChosen.isNotEmpty()) {
+                                chosenEntitySnapshots.addAll(
+                                    capturePermanentSnapshots(battlefieldChosen, currentState.projectedState)
+                                )
+                            }
+                        }
+                    }
                     else -> {}
                 }
             }
@@ -1936,6 +1985,7 @@ class CastSpellHandler(
             modeDamageDistribution = action.modeDamageDistribution,
             totalManaSpent = manaSpentThisCast,
             beheldCards = beheldCards,
+            chosenEntitySnapshots = chosenEntitySnapshots,
             manaSpentWhite = manaSpentEvent?.white ?: 0,
             manaSpentBlue = manaSpentEvent?.blue ?: 0,
             manaSpentBlack = manaSpentEvent?.black ?: 0,

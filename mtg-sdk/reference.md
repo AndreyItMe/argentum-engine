@@ -833,6 +833,7 @@ constructors.
 - `DynamicAmount.CountersOnSelf(counterType)` / `.CountersOnTarget(counterType, targetIndex)` / `.CreaturesSharingTypeWithTriggeringEntity`
 - `DynamicAmount.TargetCount` — number of targets in the current effect context (for "for each target" token creation)
 - `DynamicAmount.VariableReference(variableName)` / `.StoredCardManaValue(collectionName)` / `.AdditionalCostExiledCount`
+- `DynamicAmount.StoredCardPower(collectionName)` — power of the first card stored in a pipeline collection (typically populated by `AdditionalCost.ChooseCreatureOrWarpedExile`). Reads projected power while the entity is on the battlefield, falls back to the LKI snapshot captured at cost-pay time (`EffectContext.chosenEntitySnapshots`), then to the card's printed base power.
 - `DynamicAmount.AttachmentsOnSelf` — count of Auras and Equipment attached to the source entity
 - `DynamicAmount.NumberOfBlockers` / `DynamicAmounts.numberOfBlockers()` — number of creatures blocking the triggering entity
 - `DynamicAmount.DamageDealtToTargetPlayerThisTurn(targetIndex)` — total damage dealt to a target player this turn
@@ -1240,6 +1241,7 @@ Used via `additionalCost(...)` in card DSL for spell additional costs:
 - `AdditionalCost.BlightOrPay(blightAmount, alternativeManaCost)` — Blight N or pay extra mana (Wild Unraveling)
 - `AdditionalCost.BeholdOrPay(filter, alternativeManaCost, storeAs)` — Behold a matching card or pay extra mana; behold reveals but does not exile (Lys Alana Dignitary)
 - `AdditionalCost.RemoveCountersFromYourCreatures(totalCount)` — remove N counters distributed across creatures you control (any counter types qualify); payment supplied via `AdditionalCostPayment.distributedCounterRemovals` (Dawnhand Dissident's linked-exile cost)
+- `AdditionalCost.ChooseCreatureOrWarpedExile(storeAs)` — choose a creature you control or a warped creature card you own in exile (CR 702.185b). The chosen entity id is stored under `storeAs` in pipeline storage; a power/toughness LKI snapshot is captured for battlefield choices. Pair with `DynamicAmount.StoredCardPower(storeAs)` for "damage equal to the power of the chosen creature or card" (Close Encounter, Blade of the Swarm).
 
 CostZone enum: `HAND`, `GRAVEYARD`, `LIBRARY`, `BATTLEFIELD`
 

@@ -243,6 +243,26 @@ class CastSpellEnumerator : ActionEnumerator {
                             .filter { context.predicateEvaluator.matches(state, it, cost.filter, predicateContext) }
                         beholdOrPayTargets = battlefieldMatches + handMatches
                     }
+                    is AdditionalCost.ChooseCreatureOrWarpedExile -> {
+                        // Candidates: creatures the caster controls on the battlefield, plus
+                        // warped creature cards they own in exile (CR 702.185b).
+                        val projected = state.projectedState
+                        val battlefieldMatches = projected.getBattlefieldControlledBy(playerId).filter { permId ->
+                            projected.isCreature(permId)
+                        }
+                        val exileZone = ZoneKey(playerId, Zone.EXILE)
+                        val exileMatches = state.getZone(exileZone).filter { cardEntityId ->
+                            val container = state.getEntity(cardEntityId) ?: return@filter false
+                            container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>() &&
+                                container.get<CardComponent>()?.typeLine?.isCreature == true
+                        }
+                        val allTargets = battlefieldMatches + exileMatches
+                        if (allTargets.isEmpty()) {
+                            canPayAdditionalCosts = false
+                        }
+                        beholdTargets = allTargets
+                        beholdCount = 1
+                    }
                     else -> {}
                 }
             }
@@ -1342,9 +1362,10 @@ class CastSpellEnumerator : ActionEnumerator {
         } else if (beholdTargets.isNotEmpty()) {
             val flatCosts = additionalCosts.flatMap { if (it is AdditionalCost.Composite) it.steps else listOf(it) }
             val beholdCost = flatCosts.filterIsInstance<AdditionalCost.Behold>().firstOrNull()
+            val chooseCost = flatCosts.filterIsInstance<AdditionalCost.ChooseCreatureOrWarpedExile>().firstOrNull()
             AdditionalCostData(
-                description = beholdCost?.description ?: "Behold a card",
-                costType = "Behold",
+                description = chooseCost?.description ?: beholdCost?.description ?: "Behold a card",
+                costType = if (chooseCost != null) "ChooseCreatureOrWarpedExile" else "Behold",
                 validBeholdTargets = beholdTargets,
                 beholdCount = beholdCount
             )

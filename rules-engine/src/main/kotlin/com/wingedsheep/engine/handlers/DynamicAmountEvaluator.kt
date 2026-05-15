@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.PlayerComponent
+import com.wingedsheep.engine.state.components.stack.snapshotFor
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CharacteristicValue
@@ -96,6 +97,24 @@ class DynamicAmountEvaluator(
                 val cards = context.pipeline.storedCollections[amount.collectionName] ?: return 0
                 val cardId = cards.firstOrNull() ?: return 0
                 state.getEntity(cardId)?.get<CardComponent>()?.manaValue ?: 0
+            }
+
+            is DynamicAmount.StoredCardPower -> {
+                val cards = context.pipeline.storedCollections[amount.collectionName] ?: return 0
+                val cardId = cards.firstOrNull() ?: return 0
+                // Prefer the live projected value while the entity is still on the
+                // battlefield (CR 608.2 — resolve using current characteristics).
+                if (cardId in state.getBattlefield()) {
+                    val effectiveProjected = projectedState ?: state.projectedState
+                    effectiveProjected.getPower(cardId)?.let { return it }
+                }
+                // Fall back to the snapshot captured when the chosen entity was on
+                // the battlefield at cost-pay time (CR 112.7a — last known info).
+                context.chosenEntitySnapshots.snapshotFor(cardId)?.power?.let { return it }
+                // Final fallback: the card's printed base power. Used when the chosen
+                // entity was in exile at cost-pay time (warped creature card), or when
+                // no snapshot was captured for some reason.
+                state.getEntity(cardId)?.get<CardComponent>()?.baseStats?.basePower ?: 0
             }
 
             // Math operations
