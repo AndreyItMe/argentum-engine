@@ -419,10 +419,8 @@ data class CopyTargetSpellEffect(
     /**
      * When true, the Legendary supertype is removed from the copy's type line so the resulting
      * token is not legendary (e.g., Jackal, Genius Geneticist's "except the copy isn't legendary").
-     *
-     * Honored only when the targeted spell has no targets and no chosen modes with target
-     * requirements. The modal-with-targets path silently drops it; the targeted permanent-spell
-     * path returns an error (copying a targeted permanent spell is not supported).
+     * Applied to every copy regardless of which path (no-target, modal-with-targets, single-target
+     * permanent or non-permanent) the executor takes.
      */
     val removeLegendary: Boolean = false
 ) : Effect {

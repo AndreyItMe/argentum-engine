@@ -76,7 +76,12 @@ class CopyTargetSpellExecutor(
                     copyTotal = 1,
                     controllerId = context.controllerId
                 )
-                return EffectResult.from(applyKeywordsToCopy(copyResult, effect.keywordsForCopy))
+                if (!copyResult.isSuccess) return EffectResult.from(copyResult)
+                val mutated = StormCopyEffectExecutor.applyCopyMutations(
+                    copyResult.newState, copyResult.events,
+                    effect.keywordsForCopy.toSet(), effect.removeLegendary
+                )
+                return EffectResult.from(ExecutionResult.success(mutated, copyResult.events))
             }
             return EffectResult.from(StormCopyEffectExecutor.driveStormModalCopies(
                 state = state,
@@ -91,7 +96,9 @@ class CopyTargetSpellExecutor(
                 currentOrdinal = 0,
                 remainingCopies = 1,
                 totalCopies = 1,
-                priorEvents = emptyList()
+                priorEvents = emptyList(),
+                keywordsForCopy = effect.keywordsForCopy.toSet(),
+                removeLegendary = effect.removeLegendary
             ))
         }
 
@@ -111,16 +118,11 @@ class CopyTargetSpellExecutor(
                     controllerId = context.controllerId
                 )
                 if (!copyResult.isSuccess) return EffectResult.from(copyResult)
-                val copyId = copyResult.events.filterIsInstance<SpellCopiedEvent>().firstOrNull()?.copyEntityId
-                val stripped = if (effect.removeLegendary && copyId != null) {
-                    copyResult.newState.updateEntity(copyId) { container ->
-                        val card = container.get<CardComponent>() ?: return@updateEntity container
-                        container.with(card.copy(typeLine = card.typeLine.withoutLegendary()))
-                    }
-                } else copyResult.newState
-                return EffectResult.from(applyKeywordsToCopy(
-                    ExecutionResult.success(stripped, copyResult.events), effect.keywordsForCopy
-                ))
+                val mutated = StormCopyEffectExecutor.applyCopyMutations(
+                    copyResult.newState, copyResult.events,
+                    effect.keywordsForCopy.toSet(), effect.removeLegendary
+                )
+                return EffectResult.from(ExecutionResult.success(mutated, copyResult.events))
             }
             val copyAbility = TriggeredAbilityOnStackComponent(
                 sourceId = context.sourceId ?: EntityId.generate(),
@@ -135,15 +137,13 @@ class CopyTargetSpellExecutor(
             ))
         }
 
-        // Spell has targets — prompt for new target selection. Targeted permanent
-        // spells (no spellEffect) are not supported via this path; the caller must
-        // not invoke CopyTargetSpell on a permanent spell with targets.
-        if (spellEffect == null) {
-            return EffectResult.error(state, "Cannot copy target permanent spell with targets")
-        }
+        // Spell has targets — prompt for new target selection. Permanent spells
+        // (spellEffect == null) are supported: the continuation resumes via
+        // putSpellCopy which clones the source's CardComponent, and the
+        // CR 707.10f token tagging happens at resolution in StackResolver.
         return promptForCopyTargets(
             state, context, spellEntityId, spellEffect, targetRequirements, spellName,
-            effect.keywordsForCopy.toSet()
+            effect.keywordsForCopy.toSet(), effect.removeLegendary
         )
     }
 
@@ -174,10 +174,11 @@ class CopyTargetSpellExecutor(
         state: GameState,
         context: EffectContext,
         spellEntityId: EntityId,
-        spellEffect: com.wingedsheep.sdk.scripting.effects.Effect,
+        spellEffect: com.wingedsheep.sdk.scripting.effects.Effect?,
         targetRequirements: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>,
         spellName: String,
-        keywordsForCopy: Set<String> = emptySet()
+        keywordsForCopy: Set<String> = emptySet(),
+        removeLegendary: Boolean = false
     ): EffectResult {
         val decisionId = "copy-spell-target-${System.nanoTime()}"
 
@@ -208,7 +209,8 @@ class CopyTargetSpellExecutor(
             spellName = spellName,
             controllerId = context.controllerId,
             sourceId = spellEntityId,
-            keywordsForCopy = keywordsForCopy
+            keywordsForCopy = keywordsForCopy,
+            removeLegendary = removeLegendary
         )
         val targetReqInfos = targetRequirements.mapIndexed { index, req ->
             TargetRequirementInfo(
