@@ -12,7 +12,7 @@ val ProfessionalWrestler = card("Professional Wrestler") {
     typeLine = "Creature — Human Warrior Performer"
     power = 4
     toughness = 4
-    oracleText = "When this creature enters, create a Treasure token.\nThis creature can't be blocked by more than one creature."
+    oracleText = "When this creature enters, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nThis creature can't be blocked by more than one creature."
 
     triggeredAbility {
         trigger = Triggers.EntersBattlefield

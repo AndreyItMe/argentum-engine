@@ -78,6 +78,10 @@ class ProfessionalWrestlerScenarioTest : ScenarioTestBase() {
                     }
                     untappedLands shouldBe 0
                 }
+
+                withClue("ETB trigger should have created exactly one Treasure token") {
+                    game.findAllPermanents("Treasure").size shouldBe 1
+                }
             }
         }
     }
