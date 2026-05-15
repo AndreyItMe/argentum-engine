@@ -116,7 +116,7 @@
 - [x] 1 Temple of Enlightenment
 - [x] 1 Temple of Epiphany
 - [x] 1 Temple of Triumph
-- [ ] 1 Terramorphic Expanse
+- [x] 1 Terramorphic Expanse
 - [ ] 1 Thriving Bluff
 - [ ] 1 Thriving Heath
 - [ ] 1 Thriving Isle

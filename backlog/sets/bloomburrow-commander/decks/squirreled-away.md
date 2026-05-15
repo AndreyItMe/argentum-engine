@@ -109,7 +109,7 @@
 - [ ] 1 Swarmyard
 - [ ] 1 Tainted Wood
 - [x] 1 Temple of Malady
-- [ ] 1 Terramorphic Expanse
+- [x] 1 Terramorphic Expanse
 - [x] 1 Tranquil Thicket
 - [ ] 1 Twilight Mire
 - [ ] 1 Viridescent Bog

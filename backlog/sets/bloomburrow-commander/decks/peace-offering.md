@@ -107,7 +107,7 @@
 - [ ] 2 Plains
 - [ ] 1 Prairie Stream
 - [x] 1 Razorverge Thicket
-- [ ] 1 Reliquary Tower
+- [x] 1 Reliquary Tower
 - [x] 1 Seachrome Coast
 - [ ] 1 Seaside Citadel
 - [ ] 1 Skycloud Expanse
@@ -116,7 +116,7 @@
 - [x] 1 Temple of Enlightenment
 - [x] 1 Temple of Mystery
 - [x] 1 Temple of Plenty
-- [ ] 1 Terramorphic Expanse
+- [x] 1 Terramorphic Expanse
 - [ ] 1 Thriving Grove
 - [ ] 1 Thriving Heath
 - [ ] 1 Thriving Isle

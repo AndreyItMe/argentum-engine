@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 85 / 312
+**Implemented:** 95 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -68,7 +68,7 @@
 - [ ] Chatterstorm
 - [ ] Chittering Witch
 - [ ] Chitterspitter
-- [ ] Cinder Glade
+- [x] Cinder Glade
 - [ ] Circuit Mender
 - [x] Clifftop Retreat
 - [ ] Cloudblazer
@@ -110,7 +110,7 @@
 - [ ] Fortune Teller's Talent
 - [ ] Game Trail
 - [x] Garruk's Packleader
-- [ ] Garruk's Uprising
+- [x] Garruk's Uprising
 - [ ] Garruk, Cursed Huntsman
 - [ ] Generous Gift
 - [x] Ghalta, Primal Hunger
@@ -123,12 +123,12 @@
 - [x] Goreclaw, Terror of Qal Sisma
 - [ ] Gourmand's Talent
 - [x] Gratuitous Violence
-- [ ] Greater Good
+- [x] Greater Good
 - [ ] Grim Backwoods
 - [x] Grothama, All-Devouring
 - [x] Grumgully, the Generous
 - [x] Gruul Signet
-- [ ] Gruul Turf
+- [x] Gruul Turf
 - [ ] Hanged Executioner
 - [x] Harmonize
 - [ ] Haunted Mire
@@ -179,7 +179,7 @@
 - [ ] Moldervine Reclamation
 - [ ] Moonstone Eulogist
 - [ ] Morbid Opportunist
-- [ ] Mossfire Valley
+- [x] Mossfire Valley
 - [ ] Mosswort Bridge
 - [ ] Mr. Foxglove
 - [ ] Ms. Bumbleflower
@@ -223,13 +223,13 @@
 - [ ] Ravenous Squirrel
 - [x] Razorverge Thicket
 - [ ] Realm-Cloaked Giant // Cast Off
-- [ ] Reliquary Tower
+- [x] Reliquary Tower
 - [ ] Restoration Angel
 - [ ] Riot Control
 - [ ] Rishkar, Peema Renegade
 - [ ] Rites of Flourishing
 - [x] Rolling Hamsphere
-- [ ] Rootbound Crag
+- [x] Rootbound Crag
 - [ ] Rootcast Apprenticeship
 - [ ] Rose Room Treasurer
 - [ ] Rowdy Research
@@ -244,7 +244,7 @@
 - [ ] Selfless Spirit
 - [ ] Selvala, Explorer Returned
 - [ ] Shamanic Revelation
-- [ ] Sheltered Thicket
+- [x] Sheltered Thicket
 - [ ] Shield Broker
 - [x] Shivan Reef
 - [x] Siege-Gang Commander
@@ -295,7 +295,7 @@
 - [ ] Tempt with Discovery
 - [x] Tendershoot Dryad
 - [ ] Tenuous Truce
-- [ ] Terramorphic Expanse
+- [x] Terramorphic Expanse
 - [x] Tetsuko Umezawa, Fugitive
 - [ ] The Gitrog Monster
 - [ ] The Odd Acorn Gang
@@ -323,7 +323,7 @@
 - [ ] Wizard Class
 - [ ] Woe Strider
 - [ ] Wolfwillow Haven
-- [ ] Wooded Ridgeline
+- [x] Wooded Ridgeline
 - [x] Woodland Cemetery
 - [x] Yavimaya Coast
 - [ ] Zinnia, Valley's Voice
