@@ -6,6 +6,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
 import com.wingedsheep.mtg.sets.definitions.blc.BloomburrowCommanderSet
 import com.wingedsheep.mtg.sets.definitions.bro.BrothersWarSet
+import com.wingedsheep.mtg.sets.definitions.c15.Commander2015Set
 import com.wingedsheep.mtg.sets.definitions.dsk.DuskmournSet
 import com.wingedsheep.mtg.sets.definitions.fin.FinalFantasySet
 import com.wingedsheep.mtg.sets.definitions.spm.SpiderManSet
@@ -25,6 +26,7 @@ import com.wingedsheep.mtg.sets.definitions.one.PhyrexiaAllWillBeOneSet
 import com.wingedsheep.mtg.sets.definitions.otj.OutlawsOfThunderJunctionSet
 import com.wingedsheep.mtg.sets.definitions.scg.ScourgeSet
 import com.wingedsheep.mtg.sets.definitions.vow.InnistradCrimsonVowSet
+import com.wingedsheep.mtg.sets.definitions.war.WarOfTheSparkSet
 import com.wingedsheep.mtg.sets.definitions.mid.InnistradMidnightHuntSet
 import com.wingedsheep.mtg.sets.tokens.PredefinedTokens
 import com.wingedsheep.engine.state.ComponentContainer
@@ -80,6 +82,7 @@ abstract class ScenarioTestBase : FunSpec() {
         register(BloomburrowSet.cards); register(BloomburrowSet.basicLands)
         register(BloomburrowCommanderSet.cards); register(BloomburrowCommanderSet.basicLands)
         register(BrothersWarSet.cards)
+        register(Commander2015Set.cards)
         register(DuskmournSet.cards)
         register(FinalFantasySet.cards)
         register(SpiderManSet.cards)
@@ -94,6 +97,7 @@ abstract class ScenarioTestBase : FunSpec() {
         register(InnistradCrimsonVowSet.cards)
         register(InnistradMidnightHuntSet.cards)
         register(OutlawsOfThunderJunctionSet.cards)
+        register(WarOfTheSparkSet.cards)
     }
     protected val actionProcessor = ActionProcessor(cardRegistry)
     protected val stateTransformer = ClientStateTransformer(cardRegistry)

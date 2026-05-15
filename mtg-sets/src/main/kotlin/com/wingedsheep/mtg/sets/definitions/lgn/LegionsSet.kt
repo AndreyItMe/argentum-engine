@@ -20,6 +20,7 @@ object LegionsSet : MtgSet {
 
     override val code = "LGN"
     override val displayName = "Legions"
+    override val releaseDate = "2003-02-03"
     override val block = "Onslaught"
     override val basicLandsFallback = OnslaughtSet
     override val sealedSupported = true

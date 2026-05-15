@@ -18,6 +18,7 @@ object PortalSet : MtgSet {
 
     override val code = "POR"
     override val displayName = "Portal"
+    override val releaseDate = "1997-05-01"
     override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {

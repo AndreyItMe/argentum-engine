@@ -27,8 +27,11 @@ class SetsController(
     private val boosterGenerator: BoosterGenerator
 ) {
 
-    /** Lean set entry — `code` + display `name` only. Used by the deckbuilder filters. */
-    data class SetEntryDTO(val code: String, val name: String)
+    /**
+     * Lean set entry — `code`, display `name`, and ISO `releaseDate` (nullable).
+     * Used by the deckbuilder filters to sort by name/date and surface the year.
+     */
+    data class SetEntryDTO(val code: String, val name: String, val releaseDate: String?)
 
     data class BoosterSetDTO(
         val setCode: String,
@@ -52,7 +55,7 @@ class SetsController(
 
     @GetMapping
     fun getCatalogSets(): List<SetEntryDTO> =
-        MtgSetCatalog.all.map { SetEntryDTO(it.code, it.displayName) }
+        MtgSetCatalog.all.map { SetEntryDTO(it.code, it.displayName, it.releaseDate) }
 
     @GetMapping("/booster-ready")
     fun getBoosterReadySets(): List<BoosterSetDTO> =

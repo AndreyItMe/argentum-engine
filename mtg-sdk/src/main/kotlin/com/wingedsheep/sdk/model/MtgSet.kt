@@ -19,6 +19,12 @@ interface MtgSet {
     /** Display name (e.g. "Edge of Eternities"). */
     val displayName: String
 
+    /**
+     * Set release date in ISO `YYYY-MM-DD` form, or null if unknown.
+     * Used by the deckbuilder to sort sets chronologically and to display the year.
+     */
+    val releaseDate: String? get() = null
+
     /** All non-basic-land card definitions in the set, with [code] already stamped. */
     val cards: List<CardDefinition>
 

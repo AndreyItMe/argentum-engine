@@ -33,15 +33,23 @@ class CardDiscoveryTest : FunSpec({
     }
 
     test("discovery picks up Printing reprints declared in the cards package") {
-        // EOE's only reprint is `cards/BanishingLightReprint.kt`; KTK's is `cards/NaturalizeReprint.kt`.
-        // Both should surface via [findPrintingsIn] without a hand-maintained list.
+        // EOE's reprints live in `cards/BanishingLightReprint.kt` and `cards/Annul.kt`;
+        // KTK's is `cards/NaturalizeReprint.kt`. All should surface via [findPrintingsIn]
+        // without a hand-maintained list.
         val eoePrintings = CardDiscovery.findPrintingsIn("com.wingedsheep.mtg.sets.definitions.eoe.cards")
-        eoePrintings.map { it.name } shouldContainExactlyInAnyOrder listOf("Banishing Light")
-        eoePrintings.first().setCode shouldBe "EOE"
+        eoePrintings.map { it.name } shouldContainExactlyInAnyOrder listOf("Annul", "Banishing Light")
+        eoePrintings.forEach { it.setCode shouldBe "EOE" }
 
         val ktkPrintings = CardDiscovery.findPrintingsIn("com.wingedsheep.mtg.sets.definitions.ktk.cards")
-        ktkPrintings.map { it.name } shouldContainExactlyInAnyOrder listOf("Naturalize")
-        ktkPrintings.first().setCode shouldBe "KTK"
+        ktkPrintings.map { it.name } shouldContainExactlyInAnyOrder listOf(
+            "Arc Lightning",
+            "Bloodstained Mire",
+            "Crippling Chill",
+            "Flooded Strand",
+            "Incremental Growth",
+            "Naturalize",
+        )
+        ktkPrintings.forEach { it.setCode shouldBe "KTK" }
     }
 
     test("discovery skips Printing-typed vals as cards (and vice versa)") {

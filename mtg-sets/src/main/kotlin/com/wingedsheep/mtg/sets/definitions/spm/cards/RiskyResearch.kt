@@ -6,12 +6,6 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
-/**
- * Risky Research
- * {2}{B}
- * Sorcery
- * Surveil 2, then draw two cards, then you lose 2 life.
- */
 val RiskyResearch = card("Risky Research") {
     manaCost = "{2}{B}"
     colorIdentity = "B"
@@ -26,7 +20,6 @@ val RiskyResearch = card("Risky Research") {
         rarity = Rarity.COMMON
         collectorNumber = "62"
         artist = "Rafater"
-        flavorText = "\"Though others fear radiation, I alone am able to make it my servant!\""
         imageUri = "https://cards.scryfall.io/normal/front/1/f/1f8aa705-6177-42e9-95cb-e7f880c186e3.jpg?1757377145"
     }
 }

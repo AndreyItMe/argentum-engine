@@ -9,15 +9,6 @@ import com.wingedsheep.sdk.scripting.ModifyStats
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
-/**
- * Robotics Mastery
- * {4}{U}
- * Enchantment — Aura
- * Flash
- * Enchant creature
- * Enchanted creature gets +2/+2.
- * When Robotics Mastery enters the battlefield, create two 1/1 colorless Robot artifact creature tokens with flying.
- */
 val RoboticsMastery = card("Robotics Mastery") {
     manaCost = "{4}{U}"
     colorIdentity = "U"
@@ -49,7 +40,6 @@ val RoboticsMastery = card("Robotics Mastery") {
         rarity = Rarity.UNCOMMON
         collectorNumber = "41"
         artist = "Domenico Cava"
-        flavorText = "Mendel Stromm didn't just seek revenge. He engineered it."
         imageUri = "https://cards.scryfall.io/normal/front/d/0/d0e92939-6d86-44b4-8a43-1963e97a2bb3.jpg?1757377005"
     }
 }

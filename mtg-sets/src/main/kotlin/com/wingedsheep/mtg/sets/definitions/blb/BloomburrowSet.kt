@@ -20,6 +20,7 @@ object BloomburrowSet : MtgSet {
 
     override val code = "BLB"
     override val displayName = "Bloomburrow"
+    override val releaseDate = "2024-08-02"
     override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {

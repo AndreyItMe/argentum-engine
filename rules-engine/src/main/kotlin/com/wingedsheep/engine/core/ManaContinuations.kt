@@ -195,14 +195,55 @@ data class CounterUnlessPaysLifeContinuation(
 
 /**
  * Information about a mana source available for manual selection.
+ *
+ * @property requiresSacrifice Selecting this source also sacrifices the permanent
+ *   (e.g. Treasure tokens — "{T}, Sacrifice this artifact: Add one mana of any color").
+ *   Auto-pay never picks these; the manual-selection resumer performs the sacrifice
+ *   when the player explicitly opts in.
+ * @property requiresTappingAnotherPermanent Selecting this source also requires tapping
+ *   another permanent (e.g. Springleaf Drum — "{T}, Tap an untapped creature you
+ *   control: Add one mana of any color"). Auto-pay never picks these; the
+ *   manual-selection resumer pauses for the player to pick which permanent to tap.
  */
 @Serializable
 data class ManaSourceOption(
     val entityId: EntityId,
     val name: String,
     val producesColors: Set<Color>,
-    val producesColorless: Boolean
+    val producesColorless: Boolean,
+    val requiresSacrifice: Boolean = false,
+    val requiresTappingAnotherPermanent: Boolean = false
 )
+
+/**
+ * Resume after the player picks which permanent to tap to satisfy the secondary
+ * tap-permanents sub-cost of a mana ability selected during ward payment
+ * (e.g. Springleaf Drum's "Tap an untapped creature you control").
+ *
+ * Pushed by [com.wingedsheep.engine.handlers.continuations.ManaPaymentContinuationResumer]
+ * when the player's manual ward-payment selection contains one or more sources with
+ * [ManaSourceOption.requiresTappingAnotherPermanent]. The resumer pre-tapped any
+ * non-sub-cost sources before pushing this, so [currentPool]-style state already lives
+ * on the player's mana pool component.
+ *
+ * Head of [pendingSubCostSources] is the source the current prompt is targeting; on
+ * response, that source is tapped, the chosen creature is tapped, and its mana is added
+ * to the pool. If more sub-cost sources remain, a new prompt is pushed; otherwise we
+ * attempt to pay the ward cost and either resolve the spell or counter it.
+ */
+@Serializable
+data class WardTapPermanentsSubCostContinuation(
+    override val decisionId: String,
+    val payingPlayerId: EntityId,
+    val spellEntityId: EntityId,
+    val manaCost: com.wingedsheep.sdk.core.ManaCost,
+    val exileOnCounter: Boolean,
+    val controllerId: EntityId?,
+    /** Source IDs still to process. Head is the one the current prompt is for. */
+    val pendingSubCostSources: List<EntityId>,
+    /** Original mana-source menu, kept for source-name lookups when emitting events. */
+    val availableSources: List<ManaSourceOption>
+) : ContinuationFrame
 
 /**
  * Continuation for AddDynamicManaEffect.

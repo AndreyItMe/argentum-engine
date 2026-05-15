@@ -39,10 +39,12 @@ import com.wingedsheep.engine.state.components.player.PlayerEffectRemoval
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.player.PlayerHexproofComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
+import com.wingedsheep.engine.state.components.player.SpellsCantBeCounteredComponent
 import com.wingedsheep.engine.state.components.player.PlayerTurnHijackedComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
+import com.wingedsheep.sdk.scripting.NoMaximumHandSize
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
 
 /**
@@ -73,7 +75,7 @@ class CleanupPhaseManager(
         val maxHandSize = 7
         val cardsToDiscard = hand.size - maxHandSize
 
-        if (cardsToDiscard > 0) {
+        if (cardsToDiscard > 0 && !hasNoMaximumHandSize(newState, activePlayer)) {
             // Player needs to discard - create a decision
             events.add(DiscardRequiredEvent(activePlayer, cardsToDiscard))
 
@@ -202,6 +204,23 @@ class CleanupPhaseManager(
     }
 
     /**
+     * Check if [playerId] controls any permanent with the [NoMaximumHandSize] static ability.
+     * Used for cards like Thought Vessel and Reliquary Tower.
+     */
+    private fun hasNoMaximumHandSize(state: GameState, playerId: EntityId): Boolean {
+        val registry = cardRegistry
+        val projected = state.projectedState
+        for (permanentId in projected.getBattlefieldControlledBy(playerId)) {
+            val card = state.getEntity(permanentId)?.get<CardComponent>() ?: continue
+            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.any { it is NoMaximumHandSize }) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
      * Check if any permanent on the battlefield has the PreventManaPoolEmptying static ability.
      * Used for cards like Upwelling: "Players don't lose unspent mana as steps and phases end."
      */
@@ -305,6 +324,10 @@ class CleanupPhaseManager(
                 val cantCast = result.get<CantCastSpellsComponent>()
                 if (cantCast?.removeOn == PlayerEffectRemoval.EndOfTurn) {
                     result = result.without<CantCastSpellsComponent>()
+                }
+                val spellsUncounterable = result.get<SpellsCantBeCounteredComponent>()
+                if (spellsUncounterable?.removeOn == PlayerEffectRemoval.EndOfTurn) {
+                    result = result.without<SpellsCantBeCounteredComponent>()
                 }
                 val graveyardForage = result.get<MayCastCreaturesFromGraveyardWithForageComponent>()
                 if (graveyardForage?.removeOn == PlayerEffectRemoval.EndOfTurn) {

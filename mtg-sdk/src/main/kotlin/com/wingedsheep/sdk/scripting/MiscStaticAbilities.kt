@@ -311,6 +311,21 @@ data object PreventManaPoolEmptying : StaticAbility {
 }
 
 /**
+ * Removes the maximum hand size limit for the controller.
+ * Used for cards like Thought Vessel and Reliquary Tower: "You have no maximum hand size."
+ *
+ * The engine checks for this static ability during the cleanup step. If the active player
+ * controls any permanent on the battlefield with this ability, the discard-down-to-hand-size
+ * action is skipped.
+ */
+@SerialName("NoMaximumHandSize")
+@Serializable
+data object NoMaximumHandSize : StaticAbility {
+    override val description: String = "You have no maximum hand size"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Reveal the first card the controller draws each turn.
  * Used for Primitive Etchings and similar "reveal as you draw" effects.
  *
@@ -392,19 +407,28 @@ data object ExtraLoyaltyActivation : StaticAbility {
 }
 
 /**
- * When a creature matching [creatureFilter] enters the battlefield under your control,
- * triggered abilities of permanents you control that trigger from that entering
- * trigger an additional time.
+ * When a permanent matching [enteringFilter] enters the battlefield, triggered abilities of
+ * permanents you control that trigger from that entering trigger an additional time.
  *
- * This models Naban, Dean of Iteration and similar "Panharmonicon for a subtype" effects.
- * The [creatureFilter] restricts which entering creatures cause the doubling (e.g., Wizards).
+ * This models Naban, Dean of Iteration and similar "Panharmonicon for a subtype" effects, as
+ * well as Starfield Vocalist where the entering permanent can be any controller.
+ *
+ * [enteringFilter] restricts which entering permanents cause the doubling (e.g., Wizards, Birds,
+ * or [GameObjectFilter.Any] for any permanent).
+ *
+ * [enteringMustBeYouControl] controls whether the entering permanent must be controlled by the
+ * doubler's controller. Defaults to true to match the typical "X you control entering" wording
+ * (Naban, Traveling Chocobo, Panharmonicon). Set to false for cards like Starfield Vocalist whose
+ * oracle text omits the "under your control" restriction on the entering permanent — the trigger
+ * still has to belong to a permanent you control, but the entering permanent does not.
  *
  * Multiple copies are additive: two copies yield three total triggers, etc.
  */
 @SerialName("AdditionalETBTriggers")
 @Serializable
 data class AdditionalETBTriggers(
-    val creatureFilter: GameObjectFilter,
+    val enteringFilter: GameObjectFilter,
+    val enteringMustBeYouControl: Boolean = true,
     override val description: String = "Triggered abilities trigger an additional time"
 ) : StaticAbility {
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this

@@ -19,6 +19,7 @@ object FoundationsSet : MtgSet {
 
     override val code = "FDN"
     override val displayName = "Foundations"
+    override val releaseDate = "2024-11-15"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

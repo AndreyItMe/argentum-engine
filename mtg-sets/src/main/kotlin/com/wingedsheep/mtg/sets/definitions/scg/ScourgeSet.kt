@@ -19,6 +19,7 @@ object ScourgeSet : MtgSet {
 
     override val code = "SCG"
     override val displayName = "Scourge"
+    override val releaseDate = "2003-05-26"
     override val block = "Onslaught"
     override val basicLandsFallback = OnslaughtSet
     override val sealedSupported = true

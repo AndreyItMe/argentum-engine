@@ -13,17 +13,6 @@ import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.GrantKeywordEffect
 
-/**
- * Origin of Spider-Man
- * {1}{W}
- * Enchantment — Saga
- *
- * (As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)
- * I — Create a 2/1 green Spider creature token with reach.
- * II — Put a +1/+1 counter on target creature you control. It becomes a legendary Spider
- *      Hero in addition to its other types.
- * III — Target creature you control gains double strike until end of turn.
- */
 val OriginOfSpiderMan = card("Origin of Spider-Man") {
     manaCost = "{1}{W}"
     colorIdentity = "W"
@@ -33,7 +22,6 @@ val OriginOfSpiderMan = card("Origin of Spider-Man") {
         "II — Put a +1/+1 counter on target creature you control. It becomes a legendary Spider Hero in addition to its other types.\n" +
         "III — Target creature you control gains double strike until end of turn."
 
-    // I — Create a 2/1 green Spider creature token with reach.
     sagaChapter(1) {
         effect = Effects.CreateToken(
             power = 2,
@@ -45,7 +33,6 @@ val OriginOfSpiderMan = card("Origin of Spider-Man") {
         )
     }
 
-    // II — +1/+1 counter + becomes a legendary Spider Hero.
     sagaChapter(2) {
         val creature = target("creature you control", Targets.CreatureYouControl)
         effect = CompositeEffect(listOf(
@@ -56,7 +43,6 @@ val OriginOfSpiderMan = card("Origin of Spider-Man") {
         ))
     }
 
-    // III — Target creature you control gains double strike until end of turn.
     sagaChapter(3) {
         val creature = target("creature you control", Targets.CreatureYouControl)
         effect = GrantKeywordEffect(Keyword.DOUBLE_STRIKE.name, creature, Duration.EndOfTurn)

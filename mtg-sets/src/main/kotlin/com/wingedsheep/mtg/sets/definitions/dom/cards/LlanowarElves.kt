@@ -1,39 +1,18 @@
 package com.wingedsheep.mtg.sets.definitions.dom.cards
 
-import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
-import com.wingedsheep.sdk.scripting.TimingRule
-import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 
 /**
- * Llanowar Elves
- * {G}
- * Creature — Elf Druid
- * 1/1
- * {T}: Add {G}.
+ * Llanowar Elves reprint in DOM.
  */
-val LlanowarElves = card("Llanowar Elves") {
-    manaCost = "{G}"
-    colorIdentity = "G"
-    typeLine = "Creature — Elf Druid"
-    power = 1
-    toughness = 1
-    oracleText = "{T}: Add {G}."
-
-    activatedAbility {
-        cost = AbilityCost.Tap
-        effect = AddManaEffect(Color.GREEN)
-        manaAbility = true
-        timing = TimingRule.ManaAbility
-    }
-
-    metadata {
-        rarity = Rarity.COMMON
-        collectorNumber = "168"
-        artist = "Chris Rahn"
-        flavorText = "As patient and generous as life, as harsh and merciless as nature."
-        imageUri = "https://cards.scryfall.io/normal/front/5/8/581b7327-3215-4a4f-b4ae-d9d4002ba882.jpg?1562736014"
-    }
-}
+val LlanowarElvesReprint = Printing(
+    oracleId = "68954295-54e3-4303-a6bc-fc4547a4e3a3",
+    name = "Llanowar Elves",
+    setCode = "DOM",
+    collectorNumber = "168",
+    artist = "Chris Rahn",
+    imageUri = "https://cards.scryfall.io/normal/front/5/8/581b7327-3215-4a4f-b4ae-d9d4002ba882.jpg?1562736014",
+    releaseDate = "2018-04-27",
+    rarity = Rarity.COMMON,
+)

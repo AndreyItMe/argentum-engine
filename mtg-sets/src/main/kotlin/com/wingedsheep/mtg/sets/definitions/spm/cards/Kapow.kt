@@ -25,9 +25,6 @@ val Kapow = card("Kapow!") {
     spell {
         val yourCreature = target("creature you control", Targets.CreatureYouControl)
         val theirCreature = target("creature an opponent controls", Targets.CreatureOpponentControls)
-        // Per CR 608.2b and the Savage Stomp ruling: if only the fight target is illegal on
-        // resolution, the +1/+1 counter still goes on the creature you control. AddCounters
-        // handles partial-resolution on target #0; the fight requires both targets legal.
         effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, yourCreature)
             .then(
                 ConditionalEffect(
@@ -48,7 +45,6 @@ val Kapow = card("Kapow!") {
         rarity = Rarity.COMMON
         collectorNumber = "103"
         artist = "Jessica Fong"
-        flavorText = "\"People are in danger—I don't have time for your games!\""
         imageUri = "https://cards.scryfall.io/normal/front/c/e/cec575f6-43c9-41c6-a996-bb806bf82185.jpg?1757377442"
     }
 }

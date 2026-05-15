@@ -15,6 +15,7 @@ object AetherdriftSet : MtgSet {
 
     override val code = "DFT"
     override val displayName = "Aetherdrift"
+    override val releaseDate = "2025-02-14"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

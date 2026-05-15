@@ -14,6 +14,7 @@ object PhyrexiaAllWillBeOneSet : MtgSet {
 
     override val code = "ONE"
     override val displayName = "Phyrexia: All Will Be One"
+    override val releaseDate = "2023-02-10"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

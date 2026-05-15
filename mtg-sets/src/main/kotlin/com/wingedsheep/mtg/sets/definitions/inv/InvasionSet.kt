@@ -17,6 +17,7 @@ object InvasionSet : MtgSet {
 
     override val code = "INV"
     override val displayName = "Invasion"
+    override val releaseDate = "2000-10-02"
     override val block = "Invasion"
     override val incomplete = true
 

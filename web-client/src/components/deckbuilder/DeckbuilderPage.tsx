@@ -92,7 +92,7 @@ const RARITY_TOKENS = ['common', 'uncommon', 'rare', 'mythic']
 // helper so the deckbuilder's picker and the lobby filtering stay in lockstep.
 const FORMAT_TOKENS = DECK_FORMATS
 
-type SetInfo = { code: string; name: string }
+type SetInfo = { code: string; name: string; releaseDate: string | null }
 
 // Server-supplied example deck (GET /api/decks/examples). Matches the
 // `ExampleDeckDTO` shape exposed by `DecksController`.
@@ -221,17 +221,16 @@ export function DeckbuilderPage() {
     }
   }, [])
 
-  // Set code → display name, fetched from the server (active sets only).
-  const [setNames, setSetNames] = useState<Record<string, string>>({})
+  // Full set catalog (code, display name, ISO release date) fetched from the server.
+  // The release date drives the deckbuilder's "sort by release" mode and the year shown
+  // next to each set name.
+  const [setInfos, setSetInfos] = useState<SetInfo[]>([])
   useEffect(() => {
     let cancelled = false
     fetch('/api/sets')
       .then((r) => (r.ok ? r.json() : []))
       .then((list: SetInfo[]) => {
-        if (cancelled) return
-        const map: Record<string, string> = {}
-        for (const s of list) map[s.code] = s.name
-        setSetNames(map)
+        if (!cancelled) setSetInfos(list)
       })
       .catch(() => {})
     return () => {
@@ -1037,7 +1036,7 @@ export function DeckbuilderPage() {
             query={query}
             onQueryChange={setQuery}
             catalog={catalog}
-            setNames={setNames}
+            setInfos={setInfos}
             advanced={advanced}
           />
         )}
@@ -2483,13 +2482,13 @@ function FilterSection({
   query,
   onQueryChange,
   catalog,
-  setNames,
+  setInfos,
   advanced,
 }: {
   query: string
   onQueryChange: (next: string) => void
   catalog: CardSummary[]
-  setNames: Record<string, string>
+  setInfos: SetInfo[]
   /**
    * `true` when the query uses or / parens — features the flat chip helpers can't
    * round-trip without rewriting expressions the user authored. We surface a hint
@@ -2510,17 +2509,52 @@ function FilterSection({
   const [powMin, powMax] = useMemo(() => extractRange(query, 'pow'), [query])
   const [touMin, touMax] = useMemo(() => extractRange(query, 'tou'), [query])
 
-  // Distinct set codes from the catalogue (sorted), for the Set dropdown.
-  const setCodes = useMemo(() => {
+  // Distinct set codes present in the loaded catalogue. The picker hides codes that
+  // have no cards on disk so a partially-implemented backend doesn't surface dead options.
+  const availableSetCodes = useMemo(() => {
     const set = new Set<string>()
     for (const c of catalog) if (c.setCode) set.add(c.setCode)
-    return [...set].sort()
+    return set
   }, [catalog])
+
+  // Sort mode for the Set picker. "name" sorts alphabetically by display name (case-insensitive);
+  // "date" sorts newest-first by release date with null/unknown dates pushed to the bottom.
+  // Persisted in localStorage so the user's preference survives page reloads.
+  const [setSortMode, setSetSortMode] = useState<'name' | 'date'>(() => {
+    if (typeof window === 'undefined') return 'name'
+    return (window.localStorage.getItem('deckbuilder.setSort') as 'name' | 'date') ?? 'name'
+  })
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('deckbuilder.setSort', setSortMode)
+  }, [setSortMode])
+
+  const sortedSets = useMemo(() => {
+    const present = setInfos.filter((s) => availableSetCodes.has(s.code))
+    // Fall back to codes that exist in the catalogue but not in the /api/sets response (defensive).
+    const known = new Set(present.map((s) => s.code))
+    for (const code of availableSetCodes) {
+      if (!known.has(code)) present.push({ code, name: code, releaseDate: null })
+    }
+    if (setSortMode === 'date') {
+      return [...present].sort((a, b) => {
+        if (!a.releaseDate && !b.releaseDate) return a.name.localeCompare(b.name)
+        if (!a.releaseDate) return 1
+        if (!b.releaseDate) return -1
+        return b.releaseDate.localeCompare(a.releaseDate)
+      })
+    }
+    return [...present].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+  }, [setInfos, availableSetCodes, setSortMode])
 
   const activeSet = useMemo(() => {
     const m = query.match(/(?:^|\s)s:([^\s]+)/)
     return m ? m[1]! : ''
   }, [query])
+
+  const onSetChange = (next: string) => {
+    const without = query.replace(/(?:^|\s)s:[^\s]+(?=\s|$)/g, '').trim()
+    onQueryChange(next ? (without ? `${without} s:${next}` : `s:${next}`) : without)
+  }
 
   // Color mode is derived from the query so a directly typed `c=wu` immediately
   // re-selects the "Exactly" segment without a separate state to drift.
@@ -2544,6 +2578,65 @@ function FilterSection({
         <div className={styles.advancedBanner} role="status">
           Advanced query — chips disabled. Edit the search bar directly.
         </div>
+      )}
+      {sortedSets.length > 0 && (
+        <section className={`${styles.section} ${styles.setPickerSection}`}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionLabel}>Set</h2>
+            <div className={styles.modeSegmented} role="tablist" aria-label="Sort sets">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={setSortMode === 'name'}
+                className={`${styles.modeButton} ${setSortMode === 'name' ? styles.modeButtonActive : ''}`}
+                onClick={() => setSetSortMode('name')}
+              >
+                Name
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={setSortMode === 'date'}
+                className={`${styles.modeButton} ${setSortMode === 'date' ? styles.modeButtonActive : ''}`}
+                onClick={() => setSetSortMode('date')}
+              >
+                Release
+              </button>
+            </div>
+          </div>
+          <select
+            className={styles.setPicker}
+            value={activeSet}
+            onChange={(e) => onSetChange(e.target.value)}
+            aria-label="Filter by set"
+          >
+            <option value="">All sets</option>
+            {sortedSets.map((s) => {
+              const year = s.releaseDate ? s.releaseDate.slice(0, 4) : '—'
+              return (
+                <option key={s.code} value={s.code}>
+                  {s.name} · {year} ({s.code})
+                </option>
+              )
+            })}
+          </select>
+          {activeSet && (
+            <div className={styles.setPickerMeta}>
+              {(() => {
+                const sel = sortedSets.find((s) => s.code === activeSet)
+                if (!sel) return null
+                return (
+                  <>
+                    <span className={styles.setPickerMetaName}>{sel.name}</span>
+                    <span className={styles.setPickerMetaDate}>
+                      {sel.releaseDate ?? 'release date unknown'}
+                    </span>
+                  </>
+                )
+              })()}
+            </div>
+          )}
+        </section>
       )}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
@@ -2692,28 +2785,6 @@ function FilterSection({
           })}
         </div>
       </section>
-
-      {setCodes.length > 0 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionLabel}>Set</h2>
-          <select
-            className={styles.sortSelect}
-            value={activeSet}
-            onChange={(e) => {
-              const next = e.target.value
-              const without = query.replace(/(?:^|\s)s:[^\s]+(?=\s|$)/g, '').trim()
-              onQueryChange(next ? (without ? `${without} s:${next}` : `s:${next}`) : without)
-            }}
-          >
-            <option value="">All sets</option>
-            {setCodes.map((code) => (
-              <option key={code} value={code}>
-                {setNames[code] ? `${setNames[code]} (${code})` : code}
-              </option>
-            ))}
-          </select>
-        </section>
-      )}
 
       <section className={styles.section}>
         <button
@@ -3645,6 +3716,7 @@ function AddCardSearch({
 
   const handleAdd = (card: CardSummary) => {
     onAdd(card)
+    setHoverCard(null)
     // Keep the input focused but clear the dropdown so subsequent typing starts fresh — most
     // users want to add one card at a time, then move on. They can still arrow back into the
     // input or just keep typing.

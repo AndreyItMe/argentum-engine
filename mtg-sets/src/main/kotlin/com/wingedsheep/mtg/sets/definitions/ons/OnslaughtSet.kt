@@ -18,6 +18,7 @@ object OnslaughtSet : MtgSet {
 
     override val code = "ONS"
     override val displayName = "Onslaught"
+    override val releaseDate = "2002-10-07"
     override val block = "Onslaught"
     override val sealedSupported = true
 

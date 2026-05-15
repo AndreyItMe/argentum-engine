@@ -15,6 +15,7 @@ object OutlawsOfThunderJunctionSet : MtgSet {
 
     override val code = "OTJ"
     override val displayName = "Outlaws of Thunder Junction"
+    override val releaseDate = "2024-04-19"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

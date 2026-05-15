@@ -939,6 +939,60 @@
   font-size: 0.8rem;
 }
 
+/* Top-of-rail set picker. Visually heavier than the other filter sections so the
+   active set reads as the "primary lens" on the catalogue. */
+.setPickerSection {
+  padding: var(--space-3);
+  border: 1px solid rgba(106, 163, 255, 0.25);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    180deg,
+    rgba(106, 163, 255, 0.08) 0%,
+    rgba(106, 163, 255, 0.02) 100%
+  );
+  gap: var(--space-2);
+}
+
+.setPicker {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.setPicker:hover {
+  border-color: rgba(106, 163, 255, 0.5);
+}
+
+.setPicker:focus {
+  outline: none;
+  border-color: rgba(106, 163, 255, 0.8);
+  box-shadow: 0 0 0 2px rgba(106, 163, 255, 0.2);
+}
+
+.setPickerMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 0.7rem;
+}
+
+.setPickerMetaName {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.setPickerMetaDate {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .gridScroll {
   flex: 1;
   overflow-y: auto;

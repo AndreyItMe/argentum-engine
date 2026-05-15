@@ -19,6 +19,7 @@ object LorwynEclipsedSet : MtgSet {
 
     override val code = "ECL"
     override val displayName = "Lorwyn Eclipsed"
+    override val releaseDate = "2026-01-23"
     override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {

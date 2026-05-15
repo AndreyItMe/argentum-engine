@@ -15,6 +15,7 @@ object FinalFantasySet : MtgSet {
 
     override val code = "FIN"
     override val displayName = "Final Fantasy"
+    override val releaseDate = "2025-06-13"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

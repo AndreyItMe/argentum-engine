@@ -19,6 +19,7 @@ object KhansOfTarkirSet : MtgSet {
 
     override val code = "KTK"
     override val displayName = "Khans of Tarkir"
+    override val releaseDate = "2014-09-26"
     override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {

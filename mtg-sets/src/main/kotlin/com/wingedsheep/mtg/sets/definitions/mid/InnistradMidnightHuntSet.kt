@@ -15,6 +15,7 @@ object InnistradMidnightHuntSet : MtgSet {
 
     override val code = "MID"
     override val displayName = "Innistrad: Midnight Hunt"
+    override val releaseDate = "2021-09-24"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

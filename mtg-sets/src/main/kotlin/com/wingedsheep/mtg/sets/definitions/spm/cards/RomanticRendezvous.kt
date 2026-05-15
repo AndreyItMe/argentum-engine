@@ -4,12 +4,6 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 
-/**
- * Romantic Rendezvous
- * {1}{R}
- * Sorcery
- * Discard a card, then draw two cards.
- */
 val RomanticRendezvous = card("Romantic Rendezvous") {
     manaCost = "{1}{R}"
     colorIdentity = "R"

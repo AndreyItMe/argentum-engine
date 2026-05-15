@@ -1,38 +1,18 @@
 package com.wingedsheep.mtg.sets.definitions.ktk.cards
 
-import com.wingedsheep.sdk.core.Counters
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.targets.TargetCreature
 
 /**
- * Incremental Growth
- * {3}{G}{G}
- * Sorcery
- * Put a +1/+1 counter on target creature, two +1/+1 counters on another target creature,
- * and three +1/+1 counters on a third target creature.
+ * Incremental Growth reprint in KTK.
  */
-val IncrementalGrowth = card("Incremental Growth") {
-    manaCost = "{3}{G}{G}"
-    colorIdentity = "G"
-    typeLine = "Sorcery"
-    oracleText = "Put a +1/+1 counter on target creature, two +1/+1 counters on another target creature, and three +1/+1 counters on a third target creature."
-
-    spell {
-        val first = target("first creature", TargetCreature())
-        val second = target("second creature", TargetCreature())
-        val third = target("third creature", TargetCreature())
-        effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, first)
-            .then(Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 2, second))
-            .then(Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 3, third))
-    }
-
-    metadata {
-        rarity = Rarity.UNCOMMON
-        collectorNumber = "138"
-        artist = "Clint Cearley"
-        flavorText = "\"The bonds of family cross the boundaries of race.\""
-        imageUri = "https://cards.scryfall.io/normal/front/b/c/bcc7d833-f71b-4ec4-aad1-07b7583bad64.jpg?1562792751"
-    }
-}
+val IncrementalGrowthReprint = Printing(
+    oracleId = "802ff367-e52e-4f79-aa0f-96c45fe477a0",
+    name = "Incremental Growth",
+    setCode = "KTK",
+    collectorNumber = "138",
+    artist = "Clint Cearley",
+    imageUri = "https://cards.scryfall.io/normal/front/b/c/bcc7d833-f71b-4ec4-aad1-07b7583bad64.jpg?1562792751",
+    releaseDate = "2014-09-26",
+    rarity = Rarity.UNCOMMON,
+)

@@ -15,6 +15,7 @@ object BrothersWarSet : MtgSet {
 
     override val code = "BRO"
     override val displayName = "The Brothers' War"
+    override val releaseDate = "2022-11-18"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

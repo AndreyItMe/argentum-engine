@@ -2,7 +2,7 @@
 
 **Set Size:** 188 booster cards (excluding basic lands and tokens)
 **Release Date:** September 26, 2025
-**Implemented:** 19 / 189
+**Implemented:** 26 / 189
 - [x] Agent Venom
 - [x] Angry Rabble
 - [x] Amazing Acrobatics
@@ -46,17 +46,17 @@
 - [ ] Heroes' Hangout
 - [ ] Hide on the Ceiling
 - [ ] Hobgoblin, Mantled Marauder
-- [ ] Hot Dog Cart
+- [x] Hot Dog Cart
 - [ ] Hydro-Man, Fluid Felon
 - [x] Impostor Syndrome
 - [ ] Inner Demons Gangsters
 - [x] Interdimensional Web Watch
-- [ ] Iron Spider, Stark Upgrade
-- [ ] J. Jonah Jameson
-- [ ] Jackal, Genius Geneticist
+- [x] Iron Spider, Stark Upgrade
+- [x] J. Jonah Jameson
+- [x] Jackal, Genius Geneticist
 - [x] Kapow!
-- [ ] Kraven the Hunter
-- [ ] Kraven's Cats
+- [x] Kraven the Hunter
+- [x] Kraven's Cats
 - [ ] Kraven's Last Hunt
 - [ ] Kraven, Proud Predator
 - [ ] Lady Octopus, Inspired Inventor
@@ -90,7 +90,7 @@
 - [ ] Peter Parker's Camera
 - [ ] Pictures of Spider-Man
 - [ ] Prison Break
-- [ ] Professional Wrestler
+- [x] Professional Wrestler
 - [x] Prowler, Clawed Thief
 - [ ] Pumpkin Bombardment
 - [ ] Radioactive Spider

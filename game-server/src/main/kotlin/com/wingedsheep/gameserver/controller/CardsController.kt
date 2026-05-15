@@ -128,33 +128,40 @@ class CardsController(
         override val printingSetCodes: List<String> = emptyList(),
     ) : SearchCard
 
-    private fun CardDefinition.toSummary(): CardSummaryDTO = CardSummaryDTO(
-        name = name,
-        manaCost = manaCost.toString(),
-        cmc = cmc,
-        colors = colors.map { it.name },
-        colorIdentity = colorIdentity.map { it.name },
-        cardTypes = typeLine.cardTypes.map { it.name },
-        supertypes = typeLine.supertypes.map { it.name },
-        subtypes = typeLine.subtypes.map { it.toString() },
-        basicLand = typeLine.isBasicLand,
-        rarity = metadata.rarity.name,
-        setCode = setCode,
-        collectorNumber = metadata.collectorNumber,
-        oracleText = oracleText.takeIf { it.isNotBlank() },
-        power = creatureStats?.power?.toString(),
-        toughness = creatureStats?.toughness?.toString(),
-        imageUri = metadata.imageUri,
-        keywords = keywords.map { it.name }.sorted(),
-        legalFormats = legalFormats.map { it.name }.sorted(),
-        isDoubleFaced = isDoubleFaced,
-        backFaceName = backFace?.name,
-        backFaceImageUri = backFace?.metadata?.imageUri,
-        defaultPrinting = defaultPrintingRef,
-        printingSetCodes = printingRegistry.printingsOf(name)
-            .map { it.setCode }
-            .distinct(),
-    )
+    private fun CardDefinition.toSummary(): CardSummaryDTO {
+        // Prefer the most-recent printing's art and picker target so reprints (e.g. EOE/KTK)
+        // surface their newest frame in the catalog grid. The `s:` filter on the frontend
+        // still overrides this via setPrintingOverride when the user pins a specific set.
+        val latest = printingRegistry.defaultPrinting(name)
+        val latestRef = latest?.let { PrintingRef(it.setCode, it.collectorNumber) }
+        return CardSummaryDTO(
+            name = name,
+            manaCost = manaCost.toString(),
+            cmc = cmc,
+            colors = colors.map { it.name },
+            colorIdentity = colorIdentity.map { it.name },
+            cardTypes = typeLine.cardTypes.map { it.name },
+            supertypes = typeLine.supertypes.map { it.name },
+            subtypes = typeLine.subtypes.map { it.toString() },
+            basicLand = typeLine.isBasicLand,
+            rarity = metadata.rarity.name,
+            setCode = setCode,
+            collectorNumber = metadata.collectorNumber,
+            oracleText = oracleText.takeIf { it.isNotBlank() },
+            power = creatureStats?.power?.toString(),
+            toughness = creatureStats?.toughness?.toString(),
+            imageUri = latest?.imageUri ?: metadata.imageUri,
+            keywords = keywords.map { it.name }.sorted(),
+            legalFormats = legalFormats.map { it.name }.sorted(),
+            isDoubleFaced = isDoubleFaced,
+            backFaceName = backFace?.name,
+            backFaceImageUri = latest?.backFaceImageUri ?: backFace?.metadata?.imageUri,
+            defaultPrinting = latestRef ?: defaultPrintingRef,
+            printingSetCodes = printingRegistry.printingsOf(name)
+                .map { it.setCode }
+                .distinct(),
+        )
+    }
 
     companion object {
         // Predefined tokens are registered in the CardRegistry so the engine can resolve

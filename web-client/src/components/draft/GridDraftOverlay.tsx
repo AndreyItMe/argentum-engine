@@ -8,6 +8,7 @@ import { ManaCost } from '../ui/ManaSymbols'
 import { HoverCardPreview } from '../ui/HoverCardPreview'
 import { useDfcHoverFlip } from '../ui/useDfcHoverFlip'
 import { SetSynergiesButton } from './SetSynergiesOverlay'
+import { RarityBadge } from './RarityBadge'
 
 /**
  * Grid Draft overlay for 2-4 player Grid Draft mode.
@@ -815,6 +816,7 @@ function GridDrafter({ gridState, settings }: { gridState: GridDraftState; setti
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                          <RarityBadge rarity={card.rarity} size={11} />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {count > 1 ? `${count}x ` : ''}{card.name}
                           </span>
@@ -1015,6 +1017,7 @@ function OpponentCardsOverlay({ playerName, cards, onClose, onHover }: {
                     }}
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <RarityBadge rarity={card.rarity} size={11} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {count > 1 ? `${count}x ` : ''}{card.name}
                       </span>

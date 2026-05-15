@@ -15,6 +15,7 @@ object TarkirDragonstormSet : MtgSet {
 
     override val code = "TDM"
     override val displayName = "Tarkir: Dragonstorm"
+    override val releaseDate = "2025-04-11"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

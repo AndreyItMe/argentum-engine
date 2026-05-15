@@ -8,15 +8,6 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.effects.ConniveEffect
 
-/**
- * Scorpion, Seething Striker
- * {3}{B}
- * Legendary Creature — Scorpion Human Villain
- * 3/3
- * Deathtouch
- * At the beginning of your end step, if a creature died this turn, target creature
- *   you control connives.
- */
 val ScorpionSeethingStriker = card("Scorpion, Seething Striker") {
     manaCost = "{3}{B}"
     colorIdentity = "B"
@@ -38,7 +29,6 @@ val ScorpionSeethingStriker = card("Scorpion, Seething Striker") {
         rarity = Rarity.UNCOMMON
         collectorNumber = "64"
         artist = "Simon Dominic"
-        flavorText = "The scorpion is the natural predator of the spider, and so Mac Gargan hunts."
         imageUri = "https://cards.scryfall.io/normal/front/c/f/cf407e08-b27f-42ba-b824-75846a80e238.jpg?1757377158"
     }
 }

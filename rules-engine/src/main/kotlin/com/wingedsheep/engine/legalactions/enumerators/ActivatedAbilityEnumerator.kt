@@ -135,6 +135,11 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 // creature's power").
                 val effectiveCost = applyAbilityGenericCostReduction(rawCost, ability, state, entityId, playerId)
 
+                // Ability payment context — lets the solver consider restricted mana that's
+                // only spendable on this kind of activation (e.g., Steelswarm Operator's mana
+                // restricted to abilities of artifact sources).
+                val abilityContext = com.wingedsheep.engine.mechanics.mana.buildAbilityPaymentContext(cardComponent, projected, entityId)
+
                 // Check cost requirements and gather sacrifice/tap/bounce targets if needed
                 var sacrificeTargets: List<EntityId>? = null
                 var sacrificeCost: AbilityCost.Sacrifice? = null
@@ -173,7 +178,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         }
                     }
                     is AbilityCost.Mana -> {
-                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources)) {
+                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
                             // If the ability has convoke, check if affordable with convoke creatures
                             if (ability.hasConvoke) {
                                 val creatures = context.costUtils.findConvokeCreatures(state, playerId)
@@ -254,7 +259,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     }
                                 }
                                 is AbilityCost.Mana -> {
-                                    if (!context.manaSolver.canPay(state, playerId, subCost.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources)) {
+                                    if (!context.manaSolver.canPay(state, playerId, subCost.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
                                         // If the ability has convoke, check with convoke creatures
                                         if (ability.hasConvoke) {
                                             val creatures = context.costUtils.findConvokeCreatures(state, playerId)
@@ -383,6 +388,15 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                 is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
                                     // RemoveXPlusOnePlusOneCounters: validated via maxAffordableX cap below
                                 }
+                                is AbilityCost.RemovePlusOnePlusOneCounters -> {
+                                    val available = context.costUtils.buildCounterRemovalPermanents(
+                                        state, playerId, subCost.filter
+                                    ).sumOf { it.availableCounters }
+                                    if (available < subCost.count) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
                                 is AbilityCost.TapXPermanents -> {
                                     // TapXPermanents: validated via maxAffordableX cap below
                                     // Also provide tap targets for the UI
@@ -452,10 +466,21 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                     else -> false
                 }
 
-                // Build counter removal creature info if ability has RemoveXPlusOnePlusOneCounters cost
-                val counterRemovalCreatures = if (hasRemoveXCountersCostEarly) {
-                    context.costUtils.buildCounterRemovalCreatures(state, playerId)
-                } else emptyList()
+                // Build counter removal creature info if ability has RemoveXPlusOnePlusOneCounters
+                // (creature-only X-variable) OR RemovePlusOnePlusOneCounters (filtered fixed-count).
+                val fixedRemoveCost: AbilityCost.RemovePlusOnePlusOneCounters? = when (ability.cost) {
+                    is AbilityCost.RemovePlusOnePlusOneCounters -> ability.cost as AbilityCost.RemovePlusOnePlusOneCounters
+                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                        .filterIsInstance<AbilityCost.RemovePlusOnePlusOneCounters>().firstOrNull()
+                    else -> null
+                }
+                val counterRemovalCreatures = when {
+                    hasRemoveXCountersCostEarly -> context.costUtils.buildCounterRemovalCreatures(state, playerId)
+                    fixedRemoveCost != null -> context.costUtils.buildCounterRemovalPermanents(
+                        state, playerId, fixedRemoveCost.filter
+                    )
+                    else -> emptyList()
+                }
 
                 // Build additional cost info for sacrifice, tap, bounce, or counter removal costs
                 val costInfo = buildAdditionalCostInfo(
@@ -641,10 +666,11 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 }
 
                 // Check cost payability (Free cost always passes)
+                val anyPlayerAbilityContext = com.wingedsheep.engine.mechanics.mana.buildAbilityPaymentContext(cardComponent, projected, entityId)
                 val anyPlayerManaCostString = when (effectiveCost) {
                     is AbilityCost.Free -> null
                     is AbilityCost.Mana -> {
-                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources)) continue
+                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources, spellContext = anyPlayerAbilityContext)) continue
                         effectiveCost.cost.toString()
                     }
                     else -> continue // Other costs on opponent's permanents not yet supported

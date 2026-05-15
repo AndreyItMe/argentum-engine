@@ -1,40 +1,18 @@
 package com.wingedsheep.mtg.sets.definitions.dom.cards
 
-import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.CantBeBlockedBy
-import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.MustAttack
 
 /**
- * Juggernaut
- * {4}
- * Artifact Creature — Juggernaut
- * 5/3
- * Juggernaut attacks each combat if able.
- * Juggernaut can't be blocked by Walls.
+ * Juggernaut reprint in DOM.
  */
-val Juggernaut = card("Juggernaut") {
-    manaCost = "{4}"
-    colorIdentity = ""
-    typeLine = "Artifact Creature — Juggernaut"
-    power = 5
-    toughness = 3
-    oracleText = "Juggernaut attacks each combat if able.\nJuggernaut can't be blocked by Walls."
-
-    staticAbility {
-        ability = MustAttack()
-    }
-
-    staticAbility {
-        ability = CantBeBlockedBy(GameObjectFilter.Creature.withSubtype("Wall"))
-    }
-
-    metadata {
-        rarity = Rarity.UNCOMMON
-        collectorNumber = "222"
-        artist = "Jonas De Ro"
-        flavorText = "\"Urza's machines have a splendid habit of excavating themselves.\" —Rona, disciple of Gix"
-        imageUri = "https://cards.scryfall.io/normal/front/d/f/dfebeab7-44cf-4895-bdd5-04cbb2c700d7.jpg?1562744216"
-    }
-}
+val JuggernautReprint = Printing(
+    oracleId = "4ac9116f-36bc-4d71-b696-d6ee064e1d58",
+    name = "Juggernaut",
+    setCode = "DOM",
+    collectorNumber = "222",
+    artist = "Jonas De Ro",
+    imageUri = "https://cards.scryfall.io/normal/front/d/f/dfebeab7-44cf-4895-bdd5-04cbb2c700d7.jpg?1562744216",
+    releaseDate = "2018-04-27",
+    rarity = Rarity.UNCOMMON,
+)

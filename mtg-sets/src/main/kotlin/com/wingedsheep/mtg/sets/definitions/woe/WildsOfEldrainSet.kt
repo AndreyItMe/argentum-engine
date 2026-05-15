@@ -15,6 +15,7 @@ object WildsOfEldrainSet : MtgSet {
 
     override val code = "WOE"
     override val displayName = "Wilds of Eldraine"
+    override val releaseDate = "2023-09-08"
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

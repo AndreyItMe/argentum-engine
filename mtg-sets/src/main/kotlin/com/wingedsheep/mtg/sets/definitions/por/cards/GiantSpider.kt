@@ -1,30 +1,22 @@
 package com.wingedsheep.mtg.sets.definitions.por.cards
 
-import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity
 
 /**
- * Giant Spider
- * {3}{G}
- * Creature — Spider
- * 2/4
- * Reach
+ * Giant Spider reprint in POR.
+ *
+ * The canonical [com.wingedsheep.sdk.model.CardDefinition] (script, types, P/T) lives in
+ * LEA's `cards/` package (the card's earliest real printing). This file contributes
+ * only the POR-specific presentation row.
  */
-val GiantSpider = card("Giant Spider") {
-    manaCost = "{3}{G}"
-    colorIdentity = "G"
-    typeLine = "Creature — Spider"
-    power = 2
-    toughness = 4
-
-    keywords(Keyword.REACH)
-
-    metadata {
-        rarity = Rarity.COMMON
-        collectorNumber = "167"
-        artist = "Rob Alexander"
-        flavorText = "Its web spans the gap between two ancient trees, catching anything foolish enough to fly through."
-        imageUri = "https://cards.scryfall.io/normal/front/2/9/2995530c-16bd-4dcb-99c2-008bba00052c.jpg"
-    }
-}
+val GiantSpiderReprint = Printing(
+    oracleId = "e740ce2f-2134-473c-afa1-1b6d2d1e38ef",
+    name = "Giant Spider",
+    setCode = "POR",
+    collectorNumber = "167",
+    artist = "Rob Alexander",
+    imageUri = "https://cards.scryfall.io/normal/front/2/9/2995530c-16bd-4dcb-99c2-008bba00052c.jpg",
+    releaseDate = "1997-05-01",
+    rarity = Rarity.COMMON,
+)
