@@ -51,7 +51,7 @@
 - [x] 1 Decimate
 - [x] 1 Explore
 - [x] 1 Farseek
-- [ ] 1 Harmonize
+- [x] 1 Harmonize
 - [ ] 1 Rampant Growth
 
 ## Artifacts (14)
