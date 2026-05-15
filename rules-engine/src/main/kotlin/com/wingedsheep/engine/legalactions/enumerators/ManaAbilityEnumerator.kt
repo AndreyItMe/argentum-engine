@@ -30,6 +30,7 @@ import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaSpendOnChosenTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorInCommanderColorIdentityEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorLandsCouldProduceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -279,6 +280,7 @@ class ManaAbilityEnumerator : ActionEnumerator {
                             ability.effect is AddAnyColorManaSpendOnChosenTypeEffect ||
                             ability.effect is AddManaOfColorAmongEffect ||
                             ability.effect is AddManaOfColorLandsCouldProduceEffect ||
+                            ability.effect is AddManaOfColorInCommanderColorIdentityEffect ||
                             (ability.effect is CompositeEffect &&
                                 (ability.effect as CompositeEffect).effects.any {
                                     it is AddAnyColorManaEffect || it is AddAnyColorManaSpendOnChosenTypeEffect
@@ -396,6 +398,7 @@ class ManaAbilityEnumerator : ActionEnumerator {
     ): List<Color>? = when (effect) {
         is AddManaOfColorAmongEffect -> matchingPermanentColors(effect.filter, state, playerId, context)
         is AddManaOfColorLandsCouldProduceEffect -> landScopeColors(effect.scope, state, sourceId, playerId, context)
+        is AddManaOfColorInCommanderColorIdentityEffect -> commanderIdentityColors(state, playerId, context)
         is CompositeEffect -> {
             val constrained = effect.effects.firstNotNullOfOrNull {
                 when (it) {
@@ -403,12 +406,31 @@ class ManaAbilityEnumerator : ActionEnumerator {
                         matchingPermanentColors(it.filter, state, playerId, context)
                     is AddManaOfColorLandsCouldProduceEffect ->
                         landScopeColors(it.scope, state, sourceId, playerId, context)
+                    is AddManaOfColorInCommanderColorIdentityEffect ->
+                        commanderIdentityColors(state, playerId, context)
                     else -> null
                 }
             }
             constrained
         }
         else -> null
+    }
+
+    private fun commanderIdentityColors(
+        state: GameState,
+        playerId: EntityId,
+        context: EnumerationContext,
+    ): List<Color> {
+        val registry = state.getEntity(playerId)
+            ?.get<com.wingedsheep.engine.state.components.identity.CommanderRegistryComponent>()
+            ?: return emptyList()
+        val colors = mutableSetOf<Color>()
+        for (commanderId in registry.commanderIds) {
+            val card = state.getEntity(commanderId)?.get<CardComponent>() ?: continue
+            val def = context.cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            colors.addAll(def.colorIdentity)
+        }
+        return colors.toList()
     }
 
     private fun matchingPermanentColors(
