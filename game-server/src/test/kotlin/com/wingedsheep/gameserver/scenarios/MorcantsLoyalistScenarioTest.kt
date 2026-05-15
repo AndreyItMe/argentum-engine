@@ -91,7 +91,7 @@ class MorcantsLoyalistScenarioTest : ScenarioTestBase() {
                 }
                 withClue("Reveal should carry graveyard → hand zone context for the UI label") {
                     revealEvent!!.fromZone shouldBe Zone.GRAVEYARD
-                    revealEvent!!.toZone shouldBe Zone.HAND
+                    revealEvent.toZone shouldBe Zone.HAND
                 }
 
                 withClue("Wirewood Herald should now be in hand") {

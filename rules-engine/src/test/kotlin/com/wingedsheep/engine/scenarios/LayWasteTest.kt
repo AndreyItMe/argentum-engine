@@ -2,7 +2,7 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
-import com.wingedsheep.mtg.sets.definitions.ons.cards.LayWaste
+import com.wingedsheep.mtg.sets.definitions.usg.cards.LayWaste
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck

@@ -1,17 +1,6 @@
 package com.wingedsheep.engine.support
 
-import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
-import com.wingedsheep.mtg.sets.definitions.dom.DominariaSet
-import com.wingedsheep.mtg.sets.definitions.eoe.EdgeOfEternitiesSet
-import com.wingedsheep.mtg.sets.definitions.ktk.KhansOfTarkirSet
-import com.wingedsheep.mtg.sets.definitions.lgn.LegionsSet
-import com.wingedsheep.mtg.sets.definitions.ecl.LorwynEclipsedSet
-import com.wingedsheep.mtg.sets.definitions.lci.LostCavernsOfIxalanSet
-import com.wingedsheep.mtg.sets.definitions.dsk.DuskmournSet
-import com.wingedsheep.mtg.sets.definitions.fdn.FoundationsSet
-import com.wingedsheep.mtg.sets.definitions.ons.OnslaughtSet
-import com.wingedsheep.mtg.sets.definitions.por.PortalSet
-import com.wingedsheep.mtg.sets.definitions.scg.ScourgeSet
+import com.wingedsheep.mtg.sets.MtgSetCatalog
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.model.CardDefinition
@@ -700,17 +689,5 @@ object TestCards {
     )
 
     val all: List<CardDefinition> =
-        PortalSet.cards + PortalSet.basicLands +
-            OnslaughtSet.cards + OnslaughtSet.basicLands +
-            ScourgeSet.cards +
-            LegionsSet.cards +
-            KhansOfTarkirSet.cards + KhansOfTarkirSet.basicLands +
-            DominariaSet.cards + DominariaSet.basicLands +
-            BloomburrowSet.cards + BloomburrowSet.basicLands +
-            LorwynEclipsedSet.cards + LorwynEclipsedSet.basicLands +
-            EdgeOfEternitiesSet.cards + EdgeOfEternitiesSet.basicLands +
-            LostCavernsOfIxalanSet.cards +
-            FoundationsSet.cards +
-            DuskmournSet.cards +
-            testOnlyCards
+        MtgSetCatalog.all.flatMap { it.cards + it.basicLands } + testOnlyCards
 }
