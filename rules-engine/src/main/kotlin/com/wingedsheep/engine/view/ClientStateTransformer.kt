@@ -1595,6 +1595,22 @@ class ClientStateTransformer(
             )
         }
 
+        // Check for SpellsCantBeCounteredComponent (e.g., Domri, Anarch of Bolas +1)
+        container.get<SpellsCantBeCounteredComponent>()?.let { component ->
+            val filterDescription = component.filters
+                .joinToString(", ") { it.description }
+                .ifBlank { "Spells" }
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "spells_cant_be_countered",
+                    name = "Uncounterable",
+                    description = "${filterDescription.replaceFirstChar { it.uppercase() }} " +
+                        "spells you cast this turn can't be countered",
+                    icon = "no-counter"
+                )
+            )
+        }
+
         // Check for PlayerHexproofComponent (e.g., Dawn's Truce)
         if (container.has<PlayerHexproofComponent>()) {
             effects.add(
