@@ -184,26 +184,12 @@ class MiscContinuationResumer(
             controllerId = continuation.controllerId
         )
         if (!stackResult.isSuccess) return stackResult
-        currentState = stackResult.newState
+        currentState = com.wingedsheep.engine.handlers.effects.stack.StormCopyEffectExecutor
+            .applyCopyMutations(
+                stackResult.newState, stackResult.events,
+                continuation.keywordsForCopy, continuation.removeLegendary
+            )
         allEvents.addAll(stackResult.events)
-
-        // Apply any keywords granted to this copy (e.g., wither from Spinerock Tyrant).
-        if (continuation.keywordsForCopy.isNotEmpty()) {
-            val newCopyId = stackResult.events.asReversed()
-                .firstNotNullOfOrNull { e ->
-                    if (e is com.wingedsheep.engine.core.SpellCopiedEvent) e.copyEntityId else null
-                }
-            if (newCopyId != null) {
-                currentState = currentState.updateEntity(newCopyId) { container ->
-                    val existing = container.get<com.wingedsheep.engine.state.components.stack.SpellGrantedKeywordsComponent>()
-                    container.with(
-                        com.wingedsheep.engine.state.components.stack.SpellGrantedKeywordsComponent(
-                            (existing?.keywords ?: emptySet()) + continuation.keywordsForCopy
-                        )
-                    )
-                }
-            }
-        }
 
         val remainingAfterThis = continuation.remainingCopies - 1
         if (remainingAfterThis <= 0) {
@@ -239,24 +225,12 @@ class MiscContinuationResumer(
                     controllerId = continuation.controllerId
                 )
                 if (!res.isSuccess) return res
-                loopState = res.newState
+                loopState = com.wingedsheep.engine.handlers.effects.stack.StormCopyEffectExecutor
+                    .applyCopyMutations(
+                        res.newState, res.events,
+                        continuation.keywordsForCopy, continuation.removeLegendary
+                    )
                 loopEvents.addAll(res.events)
-                if (continuation.keywordsForCopy.isNotEmpty()) {
-                    val newCopyId = res.events.asReversed()
-                        .firstNotNullOfOrNull { e ->
-                            if (e is com.wingedsheep.engine.core.SpellCopiedEvent) e.copyEntityId else null
-                        }
-                    if (newCopyId != null) {
-                        loopState = loopState.updateEntity(newCopyId) { container ->
-                            val existing = container.get<com.wingedsheep.engine.state.components.stack.SpellGrantedKeywordsComponent>()
-                            container.with(
-                                com.wingedsheep.engine.state.components.stack.SpellGrantedKeywordsComponent(
-                                    (existing?.keywords ?: emptySet()) + continuation.keywordsForCopy
-                                )
-                            )
-                        }
-                    }
-                }
                 copiesLeft--
             }
             return checkForMore(loopState, loopEvents)
@@ -271,7 +245,8 @@ class MiscContinuationResumer(
             controllerId = continuation.controllerId,
             sourceId = continuation.sourceId,
             totalCopies = continuation.totalCopies,
-            keywordsForCopy = continuation.keywordsForCopy
+            keywordsForCopy = continuation.keywordsForCopy,
+            removeLegendary = continuation.removeLegendary
         )
         val targetReqInfos = continuation.spellTargetRequirements.mapIndexed { index, req ->
             TargetRequirementInfo(
@@ -334,7 +309,9 @@ class MiscContinuationResumer(
             currentOrdinal = nextOrdinal,
             remainingCopies = continuation.remainingCopies,
             totalCopies = continuation.totalCopies,
-            priorEvents = emptyList()
+            priorEvents = emptyList(),
+            keywordsForCopy = continuation.keywordsForCopy,
+            removeLegendary = continuation.removeLegendary
         )
 
         if (result.isPaused) {
