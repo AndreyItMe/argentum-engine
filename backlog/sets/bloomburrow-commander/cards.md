@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 108 / 312
+**Implemented:** 109 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -214,7 +214,7 @@
 - [ ] Pull from Tomorrow
 - [ ] Putrefy
 - [x] Pyreswipe Hawk
-- [ ] Raging Ravine
+- [x] Raging Ravine
 - [x] Rain of Riches
 - [x] Rampaging Baloths
 - [x] Rampant Growth
