@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 101 / 312
+**Implemented:** 102 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -194,7 +194,7 @@
 - [ ] Ogre Slumlord
 - [ ] Oran-Rief, the Vastwood
 - [ ] Ornithopter of Paradise
-- [ ] Outpost Siege
+- [x] Outpost Siege
 - [ ] Overflowing Basin
 - [ ] Path of Ancestry
 - [x] Path of Discovery
