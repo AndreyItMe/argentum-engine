@@ -547,5 +547,15 @@ sealed interface KeywordAbility {
         fun renown(n: Int): KeywordAbility = Numeric(Keyword.RENOWN, n)
         fun fabricate(n: Int): KeywordAbility = Numeric(Keyword.FABRICATE, n)
         fun tribute(n: Int): KeywordAbility = Numeric(Keyword.TRIBUTE, n)
+
+        /**
+         * Hideaway N — display tag for the parameterized hideaway keyword. The
+         * mechanic itself (look at top N, exile one face down linked to source,
+         * bottom-randomize the rest) is composed manually as an ETB triggered
+         * ability using `MoveCollectionEffect(faceDown = true, linkToSource = true)`
+         * + `CardSource.FromLinkedExile()`. This factory only provides the
+         * "Hideaway 4"-style display text on the card's keyword list.
+         */
+        fun hideaway(n: Int): KeywordAbility = Numeric(Keyword.HIDEAWAY, n)
     }
 }

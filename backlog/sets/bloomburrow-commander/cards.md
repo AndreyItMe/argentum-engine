@@ -2,7 +2,7 @@
 
 **Set Size:** 312 cards
 **Release Date:** August 2, 2024
-**Implemented:** 105 / 312
+**Implemented:** 106 / 312
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 37    | 0    |
@@ -180,7 +180,7 @@
 - [ ] Moonstone Eulogist
 - [ ] Morbid Opportunist
 - [x] Mossfire Valley
-- [ ] Mosswort Bridge
+- [x] Mosswort Bridge
 - [ ] Mr. Foxglove
 - [ ] Ms. Bumbleflower
 - [ ] Murmuration

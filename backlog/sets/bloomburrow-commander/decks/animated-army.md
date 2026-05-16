@@ -101,7 +101,7 @@
 - [x] 1 Gruul Turf
 - [x] 1 Karplusan Forest
 - [x] 1 Mossfire Valley
-- [ ] 1 Mosswort Bridge
+- [x] 1 Mosswort Bridge
 - [x] 4 Mountain
 - [x] 4 Mountain
 - [ ] 1 Path of Ancestry
