@@ -27,6 +27,8 @@ export interface DraftSliceActions {
   clearDeck: () => void
   setLandCount: (landType: string, count: number) => void
   setDeck: (deck: readonly string[], landCounts: Record<string, number>) => void
+  /** Set or clear the commander for Commander Draft / Sealed lobbies. */
+  setCommander: (cardName: string | null) => void
   setLlmHighlights: (cardNames: readonly string[] | null) => void
   submitSealedDeck: () => void
   unsubmitDeck: () => void
@@ -177,6 +179,18 @@ export const createDraftSlice: SliceCreator<DraftSlice> = (set, get) => ({
     })
   },
 
+  setCommander: (cardName) => {
+    set((state) => {
+      if (!state.deckBuildingState) return state
+      return {
+        deckBuildingState: {
+          ...state.deckBuildingState,
+          commander: cardName,
+        },
+      }
+    })
+  },
+
   setLlmHighlights: (cardNames) => {
     set((state) => {
       if (!state.deckBuildingState) return state
@@ -208,13 +222,21 @@ export const createDraftSlice: SliceCreator<DraftSlice> = (set, get) => ({
       }
     }
 
+    // Commander is sent both as the dedicated field and merged into deckList — the server's
+    // stripCommanderFromCards subtracts the merged copy when building Deck.cards. Matches the
+    // wire-format invariant documented on SubmitSealedDeckMessage.
+    const commander = deckBuildingState.commander
+    if (commander) {
+      deckList[commander] = (deckList[commander] || 0) + 1
+    }
+
     const landCount = Object.values(deckBuildingState.landCounts).reduce((a, b) => a + b, 0)
     trackEvent('sealed_deck_submitted', {
-      deck_size: deckBuildingState.deck.length + landCount,
+      deck_size: deckBuildingState.deck.length + landCount + (commander ? 1 : 0),
       land_count: landCount,
       nonland_count: deckBuildingState.deck.length,
     })
-    getWebSocket()?.send(createSubmitSealedDeckMessage(deckList))
+    getWebSocket()?.send(createSubmitSealedDeckMessage(deckList, commander))
   },
 
   unsubmitDeck: () => {

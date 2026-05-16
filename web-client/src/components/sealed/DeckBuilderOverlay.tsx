@@ -123,6 +123,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
   const clearDeck = useGameStore((s) => s.clearDeck)
   const setLandCount = useGameStore((s) => s.setLandCount)
   const setLlmHighlights = useGameStore((s) => s.setLlmHighlights)
+  const setCommander = useGameStore((s) => s.setCommander)
   const submitSealedDeck = useGameStore((s) => s.submitSealedDeck)
   const unsubmitDeck = useGameStore((s) => s.unsubmitDeck)
   const leaveLobby = useGameStore((s) => s.leaveLobby)
@@ -131,6 +132,11 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
   const lobbyState = useGameStore((s) => s.lobbyState)
   const isInLobby = lobbyState !== null
   const isHost = lobbyState?.isHost ?? false
+  // Commander Draft / Sealed lobbies require a commander to be chosen from the pool before the
+  // deck can be submitted. The lobby's preset drives the minimum deck size (defaults to 60).
+  const lobbyFormat = lobbyState?.settings.format
+  const isCommanderShape = lobbyFormat === 'COMMANDER_DRAFT' || lobbyFormat === 'COMMANDER_SEALED'
+  const commanderMinDeckSize = lobbyState?.settings.deckSizeMin ?? 60
 
   const [hoveredCard, setHoveredCard] = useState<SealedCardInfo | null>(null)
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null)
@@ -165,8 +171,35 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
   }).length
   const spellCount = state.deck.length - nonBasicLandCount
   const landCount = basicLandCount + nonBasicLandCount
-  const totalCount = state.deck.length + basicLandCount
-  const isValidDeck = totalCount >= 40
+  // Commander shape: the chosen commander counts toward the deck total (the server also strips
+  // it back out before building Deck.cards, so the wire format double-counts intentionally).
+  const commanderInTotal = isCommanderShape && state.commander != null ? 1 : 0
+  const totalCount = state.deck.length + basicLandCount + commanderInTotal
+  const requiredSize = isCommanderShape ? commanderMinDeckSize : 40
+  const isValidDeck = totalCount >= requiredSize && (!isCommanderShape || state.commander != null)
+
+  // Pool-filtered eligible commanders for the limited commander formats. Matches the backend's
+  // CommanderEligibility: legendary creature, legendary planeswalker, or any card with an
+  // explicit "can be your commander" override clause in the oracle text.
+  const eligibleCommanders = useMemo<readonly SealedCardInfo[]>(() => {
+    if (!isCommanderShape) return []
+    const re = /can be your commander/i
+    const seen = new Set<string>()
+    const out: SealedCardInfo[] = []
+    for (const card of state.cardPool) {
+      if (seen.has(card.name)) continue
+      const tl = card.typeLine.toLowerCase()
+      const isLegendary = tl.includes('legendary')
+      const isCreature = tl.includes('creature')
+      const isPlaneswalker = tl.includes('planeswalker')
+      const override = re.test(card.oracleText ?? '')
+      if ((isLegendary && (isCreature || isPlaneswalker)) || override) {
+        seen.add(card.name)
+        out.push(card)
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name))
+  }, [state.cardPool, isCommanderShape])
 
   // Deck analytics
   const deckAnalytics = useMemo(() => {
@@ -451,8 +484,16 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
               fontSize: responsive.fontSize.normal,
             }}
           >
-            {totalCount} / 40
+            {totalCount} / {requiredSize}
           </div>
+          {isCommanderShape && !isSubmitted && (
+            <CommanderPickerControl
+              eligible={eligibleCommanders}
+              selected={state.commander}
+              onSelect={setCommander}
+              compact={responsive.isMobile}
+            />
+          )}
 
           {isSubmitted ? (
             <button
@@ -1189,6 +1230,133 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
       )}
 
       <DeckbuilderChatPanel state={state} />
+    </div>
+  )
+}
+
+/**
+ * Inline commander picker — surfaced in the deck-builder header for Commander Draft / Sealed
+ * lobbies. Renders the chosen commander as a chip; clicking opens a dropdown listing the pool's
+ * eligible commanders. Selecting a card calls [onSelect] with the card name (null to clear).
+ *
+ * Eligibility is computed by the parent ([eligible]) — see CommanderEligibility in the backend
+ * for the canonical rule.
+ */
+function CommanderPickerControl({
+  eligible,
+  selected,
+  onSelect,
+  compact,
+}: {
+  eligible: readonly SealedCardInfo[]
+  selected: string | null
+  onSelect: (cardName: string | null) => void
+  compact: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  if (eligible.length === 0 && !selected) {
+    return (
+      <div
+        title="No legendary creatures or override commanders in your pool"
+        style={{
+          padding: compact ? '4px 10px' : '6px 14px',
+          fontSize: compact ? 12 : 13,
+          backgroundColor: '#c0392b',
+          color: 'white',
+          border: 'none',
+          borderRadius: 6,
+          fontWeight: 600,
+        }}
+      >
+        No eligible commanders
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          padding: compact ? '4px 10px' : '6px 14px',
+          fontSize: compact ? 12 : 13,
+          backgroundColor: selected ? '#b8860b' : '#444',
+          color: 'white',
+          border: '1px solid ' + (selected ? '#daa520' : '#666'),
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontWeight: 600,
+          maxWidth: compact ? 180 : 260,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+        title={selected ? `Commander: ${selected}` : 'Pick your commander'}
+      >
+        {selected ? `♕ ${selected}` : 'Pick commander'}
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            right: 0,
+            zIndex: 30,
+            minWidth: 220,
+            maxHeight: 320,
+            overflowY: 'auto',
+            backgroundColor: '#1f1f1f',
+            border: '1px solid #555',
+            borderRadius: 6,
+            boxShadow: '0 6px 18px rgba(0, 0, 0, 0.5)',
+            padding: 4,
+          }}
+        >
+          {selected && (
+            <button
+              onClick={() => { onSelect(null); setOpen(false) }}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                padding: '6px 10px',
+                fontSize: 12,
+                backgroundColor: 'transparent',
+                color: '#bbb',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontStyle: 'italic',
+              }}
+            >
+              Clear commander
+            </button>
+          )}
+          {eligible.map((card) => (
+            <button
+              key={card.name}
+              onClick={() => { onSelect(card.name); setOpen(false) }}
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'left',
+                padding: '6px 10px',
+                fontSize: 13,
+                backgroundColor: card.name === selected ? '#3d2f00' : 'transparent',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              {card.name}
+              <span style={{ marginLeft: 6, color: '#888', fontSize: 11 }}>{card.typeLine}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

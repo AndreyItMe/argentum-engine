@@ -705,16 +705,25 @@ function LobbyOverlay({
   const isWinston = format === 'WINSTON_DRAFT'
   const isGridDraft = format === 'GRID_DRAFT'
   const isSealed = format === 'SEALED'
+  const isCommanderDraft = format === 'COMMANDER_DRAFT'
+  const isCommanderSealed = format === 'COMMANDER_SEALED'
+  const isAnyCommander = isCommanderDraft || isCommanderSealed
   const isPremade = format === 'PREMADE_DECKS'
-  const isAnyDraft = isDraft || isWinston || isGridDraft
+  // "Draft-shape" — anything that hands packs around at pick time. Commander Draft fits the
+  // shape (same per-pick UI / timer / pack-passing) so it inherits Draft-only settings.
+  const isAnyDraft = isDraft || isWinston || isGridDraft || isCommanderDraft
   const hasSelectedSets = lobbyState.settings.setCodes.length > 0
   const playerCount = lobbyState.players.length
   const canSwitchToNormalDraft = playerCount <= 8
   const canSwitchToWinston = playerCount <= 2
   const canSwitchToGrid = playerCount <= 4
+  // Commander Draft/Sealed are 1v1 for the foreseeable future (multiplayer commander is a
+  // separate project — see backlog/commander-format.md Phase 3).
+  const canSwitchToCommander = playerCount <= 2
   const playerCheck = isWinston ? playerCount === 2
     : isGridDraft ? playerCount >= 2 && playerCount <= 4
-      : playerCount >= 2
+    : isAnyCommander ? playerCount === 2
+    : playerCount >= 2
   // Premade format: no boosters generated, so set selection is optional. We do require every
   // connected player to have submitted a deck before the host can start.
   const allConnectedDecksSubmitted = lobbyState.players
@@ -737,7 +746,13 @@ function LobbyOverlay({
         {/* Header */}
         <div className={styles.lobbyHeader}>
           <div className={`${styles.lobbyFormat} ${isAnyDraft ? styles.lobbyFormatDraft : styles.lobbyFormatSealed}`}>
-            {isGridDraft ? 'Grid' : isWinston ? 'Winston' : isDraft ? 'Draft' : isPremade ? 'Premade' : 'Sealed'}
+            {isGridDraft ? 'Grid'
+              : isWinston ? 'Winston'
+              : isCommanderDraft ? 'Commander Draft'
+              : isCommanderSealed ? 'Commander Sealed'
+              : isDraft ? 'Draft'
+              : isPremade ? 'Premade'
+              : 'Sealed'}
           </div>
           <h1 className={styles.lobbyTitle}>
             {isPremade
@@ -753,8 +768,11 @@ function LobbyOverlay({
                   return `${count} ${name}`
                 }).join(' + ')
                 : null
+              const presetLabel = lobbyState.settings.commanderPreset === 'COMMANDER' ? 'Commander 30 life' : 'Brawl 25 life'
               if (isGridDraft) return `Grid Draft · ${lobbyState.settings.boosterCount} boosters · ${lobbyState.settings.pickTimeSeconds}s per pick`
               if (isWinston) return `Winston Draft · ${distText ?? `${lobbyState.settings.boosterCount} boosters`} · ${lobbyState.settings.pickTimeSeconds}s per turn`
+              if (isCommanderDraft) return `${distText ?? `${lobbyState.settings.boosterCount} packs`} · ${lobbyState.settings.pickTimeSeconds}s per pick${lobbyState.settings.picksPerRound === 2 ? ' · Pick 2' : ''} · ${presetLabel}`
+              if (isCommanderSealed) return `${distText ?? `${lobbyState.settings.boosterCount} packs`} · ${presetLabel}`
               if (isDraft) return `${distText ?? `${lobbyState.settings.boosterCount} packs`} · ${lobbyState.settings.pickTimeSeconds}s per pick${lobbyState.settings.picksPerRound === 2 ? ' · Pick 2' : ''}`
               if (isPremade) return 'Premade Decks · bring your own ≥40-card deck'
               return distText ?? `${lobbyState.settings.boosterCount} boosters per player`
@@ -802,6 +820,22 @@ function LobbyOverlay({
                   className={`${styles.settingsButton} ${isAnyDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : ''}`}
                 >
                   Draft
+                </button>
+                <button
+                  onClick={() => canSwitchToCommander && updateLobbySettings({ format: 'COMMANDER_DRAFT' })}
+                  disabled={!canSwitchToCommander}
+                  className={`${styles.settingsButton} ${isCommanderDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : ''}`}
+                  title="Commander Legends -shaped 20-card packs; pick a commander from your pool. 1v1 only."
+                >
+                  Commander Draft
+                </button>
+                <button
+                  onClick={() => canSwitchToCommander && updateLobbySettings({ format: 'COMMANDER_SEALED' })}
+                  disabled={!canSwitchToCommander}
+                  className={`${styles.settingsButton} ${isCommanderSealed ? styles.settingsButtonActive : ''}`}
+                  title="Open 4 Commander-Legends-shaped packs; build a 60-card deck around a commander you pick from the pool. 1v1 only."
+                >
+                  Commander Sealed
                 </button>
                 <button
                   onClick={() => updateLobbySettings({ format: 'PREMADE_DECKS' })}
@@ -904,7 +938,7 @@ function LobbyOverlay({
             </div>
             )}
             {/* Boosters setting - for Sealed and Winston (Grid uses fixed counts) */}
-            {(isSealed || isWinston) && lobbyState.settings.setCodes.length > 1 && (
+            {(isSealed || isWinston || isCommanderSealed) && lobbyState.settings.setCodes.length > 1 && (
               <div className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
                 <span className={styles.settingsLabel}>{isWinston ? 'Boosters (total)' : 'Boosters per player'}</span>
                 <div className={styles.boosterDistribution}>
@@ -947,7 +981,7 @@ function LobbyOverlay({
                 </div>
               </div>
             )}
-            {(isSealed || isWinston) && lobbyState.settings.setCodes.length <= 1 && (
+            {(isSealed || isWinston || isCommanderSealed) && lobbyState.settings.setCodes.length <= 1 && (
               <div className={styles.settingsRow}>
                 <span className={styles.settingsLabel}>{isWinston ? 'Total boosters' : 'Boosters per player'}</span>
                 <select
@@ -961,8 +995,8 @@ function LobbyOverlay({
                 </select>
               </div>
             )}
-            {/* Packs per player - only for Draft */}
-            {isDraft && lobbyState.settings.setCodes.length > 1 && (
+            {/* Packs per player - for Draft and Commander Draft */}
+            {(isDraft || isCommanderDraft) && lobbyState.settings.setCodes.length > 1 && (
               <div className={styles.settingsRow} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
                 <span className={styles.settingsLabel}>Packs per player</span>
                 <div className={styles.boosterDistribution}>
@@ -1005,7 +1039,7 @@ function LobbyOverlay({
                 </div>
               </div>
             )}
-            {isDraft && lobbyState.settings.setCodes.length <= 1 && (
+            {(isDraft || isCommanderDraft) && lobbyState.settings.setCodes.length <= 1 && (
               <div className={styles.settingsRow}>
                 <span className={styles.settingsLabel}>Packs per player</span>
                 <select
@@ -1034,8 +1068,8 @@ function LobbyOverlay({
                 </select>
               </div>
             )}
-            {/* Pick 2 mode - only for Draft */}
-            {isDraft && (
+            {/* Pick 2 mode - for Draft and Commander Draft */}
+            {(isDraft || isCommanderDraft) && (
               <div className={styles.settingsRow}>
                 <span className={styles.settingsLabel}>Cards per pick</span>
                 <div className={styles.settingsButtons}>
@@ -1053,6 +1087,61 @@ function LobbyOverlay({
                   </button>
                 </div>
               </div>
+            )}
+            {/* Commander preset + Brawl knobs — only for Commander Draft / Sealed */}
+            {isAnyCommander && (
+              <>
+                <div className={styles.settingsRow}>
+                  <span className={styles.settingsLabel}>Preset</span>
+                  <div className={styles.settingsButtons}>
+                    <button
+                      onClick={() => updateLobbySettings({ commanderPreset: 'BRAWL' })}
+                      className={`${styles.settingsButton} ${lobbyState.settings.commanderPreset === 'BRAWL' ? styles.settingsButtonActive : ''}`}
+                      title="Paper Brawl shape — 25 starting life, 16 commander damage"
+                    >
+                      Brawl (25/16)
+                    </button>
+                    <button
+                      onClick={() => updateLobbySettings({ commanderPreset: 'COMMANDER' })}
+                      className={`${styles.settingsButton} ${lobbyState.settings.commanderPreset === 'COMMANDER' ? styles.settingsButtonActive : ''}`}
+                      title="Closer to Commander Legends — 30 life, 21 commander damage"
+                    >
+                      Commander (30/21)
+                    </button>
+                  </div>
+                </div>
+                <div className={styles.settingsRow}>
+                  <span className={styles.settingsLabel}>Min deck size</span>
+                  <select
+                    value={lobbyState.settings.deckSizeMin}
+                    onChange={(e) => updateLobbySettings({ deckSizeMin: Number(e.target.value) })}
+                    className={styles.settingsSelect}
+                  >
+                    {[40, 50, 60, 75, 100].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.settingsRow}>
+                  <span className={styles.settingsLabel}>Singleton</span>
+                  <div className={styles.settingsButtons}>
+                    <button
+                      onClick={() => updateLobbySettings({ allowDuplicates: true })}
+                      className={`${styles.settingsButton} ${lobbyState.settings.allowDuplicates ? styles.settingsButtonActive : ''}`}
+                      title="Allow multiple copies of the same card (drafted Commander default)"
+                    >
+                      Duplicates OK
+                    </button>
+                    <button
+                      onClick={() => updateLobbySettings({ allowDuplicates: false })}
+                      className={`${styles.settingsButton} ${!lobbyState.settings.allowDuplicates ? styles.settingsButtonActive : ''}`}
+                      title="Paper-Commander singleton — max 1 of any non-basic card"
+                    >
+                      Singleton
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
             <div className={styles.settingsRow}>
               <span className={styles.settingsLabel}>Games per matchup</span>

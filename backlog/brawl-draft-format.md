@@ -394,51 +394,66 @@ its alias for back-compat.
 
 ### 5.1 Lobby
 
-Format dropdown gains two entries alongside Sealed / Draft / Winston / Grid:
+Format selector (`web-client/src/components/ui/GameUI.tsx:805–840`) gains two top-level buttons alongside Sealed /
+Draft / Premade:
 
-- "Commander Draft"
-- "Commander Sealed"
+- **Commander Draft** — disabled when player count > 2 (1v1 only).
+- **Commander Sealed** — disabled when player count > 2.
 
-Brawl-specific lobby panel:
+When either is active, the existing booster / pick / timer knobs continue to work (`isAnyDraft` /
+`(isSealed || isWinston || isCommanderSealed)` now include the new formats); the lobby title chip reads "Commander
+Draft" / "Commander Sealed" and the subtitle appends the preset tag (e.g. "3 packs · 45s per pick · Brawl 25 life").
 
-| Control | Default | Notes |
+New conditional knob panel (visible only when `isAnyCommander`):
+
+| Control | Default | Implementation |
 |---|---|---|
-| Sets (multiselect) | — | Existing chip selector |
-| Packs per player | 3 (Draft) / 4 (Sealed) | Slider 2–8 |
-| Pick size | 2 | Draft only; dropdown 1 / 2 / 3 |
-| Min deck size | 60 | Numeric input; warn below 40 |
-| Allow duplicates | ON | Singleton toggle (off = paper-Commander rules) |
-| Preset | Brawl | Radio: Brawl (25/16) vs Commander (30/21) |
-
-Pool-size preview: `20 cards × {packs} = {N} cards drafted/sealed → build a {deckSize}-card deck`.
+| Preset | Brawl (25/16) | Two-button toggle; `updateLobbySettings({ commanderPreset: 'BRAWL' \| 'COMMANDER' })` |
+| Min deck size | 60 | Dropdown 40 / 50 / 60 / 75 / 100; `updateLobbySettings({ deckSizeMin })` |
+| Singleton | OFF (Duplicates OK) | Two-button toggle; `updateLobbySettings({ allowDuplicates })` |
 
 ### 5.2 Pick overlay (Draft, pick-N)
 
-New component `web-client/src/components/draft/CommanderDraftPickOverlay.tsx` (or extension of existing
-`DraftPickOverlay`). Shows:
+Already supported by the existing draft handler — `picksPerRound: 2` makes the booster-draft pick UI accept two
+cards before passing. No new component needed; the Commander Draft format inherits the existing `DraftPickOverlay`
+behaviour. Host configures pick size via the same `Cards per pick` toggle exposed for paper Draft.
 
-- Pack grid: 20 cards visible.
-- Selection counter: "Selected {n} of {pickSize}".
-- Clicking a card toggles selection (up to `pickSize`). Beyond `pickSize`, clicking deselects the oldest pick.
-- Confirm button enabled when exactly `pickSize` cards are selected (or all remaining cards if the pack has
-  fewer left).
+### 5.3 Commander pick — folded into the deckbuilder
 
-### 5.3 Commander pick overlay
+Per the Phase 3 design pivot, the commander pick lives inside the deckbuilder rather than as a separate overlay.
+`web-client/src/components/sealed/DeckBuilderOverlay.tsx` gains an inline `CommanderPickerControl`:
 
-New component `web-client/src/components/draft/CommanderPickOverlay.tsx` (mirrors existing draft overlays). Grid
-of eligible commanders from the player's pool; hover preview shows oracle text; click → select; confirm locks the
-pick and waits for the opponent. Sparse-legendary banner: "No eligible commanders — Prismatic Piper assigned" with
-no confirm needed (server has already auto-picked).
+- Renders only when `lobbyFormat ∈ {COMMANDER_DRAFT, COMMANDER_SEALED}`.
+- Filters the pool for eligible commanders (legendary creatures + planeswalkers + cards with "can be your
+  commander" override text). When the pool has no eligibles, the picker shows a red "No eligible commanders" chip.
+- Selecting a commander calls `setCommander(cardName)` on the draft slice; clearing is supported.
+- The chosen commander travels with the existing `submitSealedDeck` message via a new
+  `DeckBuildingState.commander` field. The slice merges it into the wire `deckList` (the server's
+  `stripCommanderFromCards` subtracts it before building `Deck.cards`).
 
-### 5.4 Deckbuilder
+The submit button stays disabled until a commander is chosen *and* `totalCount >= lobby.deckSizeMin`; the counter
+chip displays the dynamic minimum (`X / 60` for Brawl, `X / 100` if the host bumped the slider).
 
-Already commander-aware (gold-border crown, commander group, identity filter). No new work; verify it picks up the
-lobby-supplied commander on entry and respects the `allowDuplicates` flag.
+### 5.4 Deckbuilder cleanup
+
+The existing commander group / gold-border crown / colour-identity filter (paper Commander UI) lights up
+automatically once `state.commander` is set. No additional component changes were needed.
 
 ### 5.5 In-game
 
-Reuses commander-format Phase 1.8 UI: command-zone widget, commander damage tally, tax badge. The damage threshold
-display reads from `Format.Commander.commanderDamageThreshold` (16 Brawl preset, 21 Commander preset).
+Reuses the existing Commander runtime UI: command-zone widget, commander damage tally, tax badge. The damage
+threshold reads from `Format.Commander.commanderDamageThreshold` (16 Brawl, 21 Commander).
+
+### 5.6 Definition of done (Phase 5)
+
+- [x] Lobby format buttons added; commander knob panel renders when `isAnyCommander`.
+- [x] Lobby title + subtitle reflect the commander format and preset.
+- [x] Pick-2 toggle works for Commander Draft (reuses paper Draft's `picksPerRound`).
+- [x] Deckbuilder shows a pool-filtered commander picker; submit gates on commander + min deck size.
+- [x] `setCommander` action + `DeckBuildingState.commander` plumb the chosen commander through
+      `submitSealedDeck` to the server.
+- [ ] Playwright e2e: lobby create → draft → commander pick in deckbuilder → match → win by commander damage.
+- [ ] Playwright e2e: sealed counterpart (no draft step).
 
 ---
 

@@ -19,6 +19,7 @@ import type {
   LobbyPlayerInfo,
   LobbySettings,
   TournamentFormat,
+  CommanderPreset,
   PlayerStandingInfo,
   MatchResultInfo,
   ActiveMatchInfo,
@@ -361,6 +362,12 @@ export interface DeckBuildingState {
    * these replace any archetype-driven highlights in the pool view.
    */
   llmHighlightedCards: readonly string[] | null
+  /**
+   * Selected commander name for Commander Draft / Sealed lobbies. Null when no commander
+   * is chosen yet, or when the lobby format isn't commander-shape. The card MUST exist in
+   * [cardPool] (the deckbuilder UI gates the picker to eligible pool cards).
+   */
+  commander: string | null
 }
 
 /**
@@ -702,7 +709,7 @@ export type GameStore = {
   addAiToLobby: () => void
   removeAiFromLobby: (playerId: string) => void
   stopLobby: () => void
-  updateLobbySettings: (settings: { setCodes?: string[]; format?: TournamentFormat; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean; deckFormat?: DeckFormat | '' | null }) => void
+  updateLobbySettings: (settings: { setCodes?: string[]; format?: TournamentFormat; boosterCount?: number; boosterDistribution?: Record<string, number>; maxPlayers?: number; gamesPerMatch?: number; pickTimeSeconds?: number; picksPerRound?: number; isPublic?: boolean; deckFormat?: DeckFormat | '' | null; deckSizeMin?: number; allowDuplicates?: boolean; commanderPreset?: CommanderPreset }) => void
   /** Disconnected tournament players: playerId -> info */
   disconnectedPlayers: Record<string, { playerName: string; secondsRemaining: number; disconnectedAt: number }>
   readyForNextRound: () => void
@@ -738,6 +745,8 @@ export type GameStore = {
   setLandCount: (landType: string, count: number) => void
   /** Replace the entire deck (non-basic cards as a flat list) and basic land counts. */
   setDeck: (deck: readonly string[], landCounts: Record<string, number>) => void
+  /** Set or clear the commander for Commander Draft / Sealed lobbies. */
+  setCommander: (cardName: string | null) => void
   /** Set the LLM-driven highlight set. Pass null to clear. */
   setLlmHighlights: (cardNames: readonly string[] | null) => void
   submitSealedDeck: () => void
