@@ -135,6 +135,19 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 // creature's power").
                 val effectiveCost = applyAbilityGenericCostReduction(rawCost, ability, state, entityId, playerId)
 
+                // Description shown to the player. When the ability has a generic cost reduction
+                // that's currently active, rebuild the prefix from [effectiveCost] so the menu
+                // reflects what the player will actually pay (e.g., Starport Security drops from
+                // "{3}{W}, {T}: ..." to "{1}{W}, {T}: ..." once a +1/+1-counter creature is in
+                // play). Otherwise fall through to [ability.description], which honours any
+                // descriptionOverride the card defined.
+                val displayDescription =
+                    if (ability.genericCostReduction != null && effectiveCost != rawCost) {
+                        "${effectiveCost.description}: ${ability.effect.description}"
+                    } else {
+                        ability.description
+                    }
+
                 // Ability payment context — lets the solver consider restricted mana that's
                 // only spendable on this kind of activation (e.g., Steelswarm Operator's mana
                 // restricted to abilities of artifact sources).
@@ -435,15 +448,15 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
 
                 // If cost is unaffordable, add as greyed-out option and skip expensive computations
                 if (!costAffordable) {
-                    val abilityManaCostString = when (ability.cost) {
-                        is AbilityCost.Mana -> (ability.cost as AbilityCost.Mana).cost.toString()
-                        is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                    val abilityManaCostString = when (effectiveCost) {
+                        is AbilityCost.Mana -> effectiveCost.cost.toString()
+                        is AbilityCost.Composite -> effectiveCost.costs
                             .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost?.toString()
                         else -> null
                     }
                     result.add(LegalAction(
                         actionType = "ActivateAbility",
-                        description = ability.description,
+                        description = displayDescription,
                         action = ActivateAbility(playerId, entityId, ability.id),
                         affordable = false,
                         manaCostString = abilityManaCostString
@@ -493,10 +506,12 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 )
 
                 // Calculate X cost info for activated abilities with X in their mana cost
-                // or X determined by a variable cost (e.g., RemoveXPlusOnePlusOneCounters)
-                val abilityManaCost = when (ability.cost) {
-                    is AbilityCost.Mana -> (ability.cost as AbilityCost.Mana).cost
-                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                // or X determined by a variable cost (e.g., RemoveXPlusOnePlusOneCounters).
+                // Use [effectiveCost] so generic-cost reductions (e.g., The Dominion Bracelet,
+                // Starport Security) flow through to the displayed [manaCostString].
+                val abilityManaCost = when (effectiveCost) {
+                    is AbilityCost.Mana -> effectiveCost.cost
+                    is AbilityCost.Composite -> effectiveCost.costs
                         .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost
                     else -> null
                 }
@@ -561,7 +576,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         val autoSelectedTarget = ChosenTarget.Player(firstReqInfo.validTargets.first())
                         result.add(LegalAction(
                             actionType = "ActivateAbility",
-                            description = ability.description,
+                            description = displayDescription,
                             action = ActivateAbility(playerId, entityId, ability.id, targets = listOf(autoSelectedTarget)),
                             additionalCostInfo = costInfo,
                             hasXCost = abilityHasXCost,
@@ -576,7 +591,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         val autoSelectedTarget = ChosenTarget.Permanent(entityId)
                         result.add(LegalAction(
                             actionType = "ActivateAbility",
-                            description = ability.description,
+                            description = displayDescription,
                             action = ActivateAbility(playerId, entityId, ability.id, targets = listOf(autoSelectedTarget)),
                             additionalCostInfo = costInfo,
                             hasXCost = abilityHasXCost,
@@ -596,7 +611,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                             state.stack.lastOrNull()?.let { it in firstReqInfo.validTargets } == true
                         result.add(LegalAction(
                             actionType = "ActivateAbility",
-                            description = ability.description,
+                            description = displayDescription,
                             action = ActivateAbility(playerId, entityId, ability.id),
                             validTargets = firstReqInfo.validTargets,
                             requiresTargets = true,
@@ -617,7 +632,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 } else {
                     result.add(LegalAction(
                         actionType = "ActivateAbility",
-                        description = ability.description,
+                        description = displayDescription,
                         action = ActivateAbility(playerId, entityId, ability.id),
                         additionalCostInfo = costInfo,
                         hasXCost = abilityHasXCost,
