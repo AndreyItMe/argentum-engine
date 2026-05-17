@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.TriggerSpec
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
@@ -653,22 +654,18 @@ object Triggers {
     // Spell Triggers
     // =========================================================================
 
+    // -------------------------------------------------------------------------
+    // Spell cast (always Player.You, ANY binding).
+    //
+    // High-frequency type-primitive constants below; reach for `youCastSpell(...)`
+    // factory for any from-zone / kicked / treasure-mana / OR-filter combination.
+    // -------------------------------------------------------------------------
+
     /**
      * Whenever you cast a spell.
      */
     val YouCastSpell: TriggerSpec = TriggerSpec(
         event = SpellCastEvent(player = Player.You),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * Whenever you cast a spell from your hand.
-     */
-    val YouCastSpellFromHand: TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(
-            player = Player.You,
-            castFromZone = com.wingedsheep.sdk.core.Zone.HAND
-        ),
         binding = TriggerBinding.ANY
     )
 
@@ -681,34 +678,10 @@ object Triggers {
     )
 
     /**
-     * Whenever you cast a spell, if mana from a Treasure was spent to cast it.
-     *
-     * Used by Alchemist's Talent level 3. The engine records on each cast whether
-     * any of the mana spent was added to the controller's mana pool by a
-     * permanent with the Treasure subtype.
-     */
-    val YouCastSpellPaidWithTreasureMana: TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(player = Player.You, paidWithTreasureMana = true),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
      * Whenever you cast a noncreature spell.
      */
     val YouCastNoncreature: TriggerSpec = TriggerSpec(
         event = SpellCastEvent(spellFilter = GameObjectFilter.Noncreature, player = Player.You),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * Whenever you cast a noncreature or [subtype] spell.
-     * Uses OR logic: triggers on noncreature spells OR spells with the given subtype.
-     */
-    fun YouCastNoncreatureOrSubtype(subtype: Subtype): TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(
-            spellFilter = GameObjectFilter.Noncreature or GameObjectFilter.Any.withSubtype(subtype),
-            player = Player.You
-        ),
         binding = TriggerBinding.ANY
     )
 
@@ -721,34 +694,10 @@ object Triggers {
     )
 
     /**
-     * Whenever you cast an instant or sorcery spell from your hand.
-     */
-    val YouCastInstantOrSorceryFromHand: TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(
-            spellFilter = GameObjectFilter.InstantOrSorcery,
-            player = Player.You,
-            castFromZone = com.wingedsheep.sdk.core.Zone.HAND
-        ),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
      * Whenever you cast an enchantment spell.
      */
     val YouCastEnchantment: TriggerSpec = TriggerSpec(
         event = SpellCastEvent(spellFilter = GameObjectFilter.Enchantment, player = Player.You),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * Whenever you cast an enchantment spell from your hand.
-     */
-    val YouCastEnchantmentFromHand: TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(
-            spellFilter = GameObjectFilter.Enchantment,
-            player = Player.You,
-            castFromZone = com.wingedsheep.sdk.core.Zone.HAND
-        ),
         binding = TriggerBinding.ANY
     )
 
@@ -763,7 +712,7 @@ object Triggers {
 
     /**
      * Whenever you cast a spell with a specific creature subtype.
-     * Example: "Whenever you cast a Lizard spell" → YouCastSubtype(Subtype.LIZARD)
+     * Example: "Whenever you cast a Lizard spell" → `YouCastSubtype(Subtype.LIZARD)`.
      */
     fun YouCastSubtype(subtype: Subtype): TriggerSpec = TriggerSpec(
         event = SpellCastEvent(spellFilter = GameObjectFilter.Any.withSubtype(subtype), player = Player.You),
@@ -771,11 +720,46 @@ object Triggers {
     )
 
     /**
-     * Whenever you cast a kicked spell.
+     * Generic "you cast a spell" trigger factory.
+     *
+     * Use the named constants above (`YouCastSpell`, `YouCastCreature`,
+     * `YouCastNoncreature`, `YouCastInstantOrSorcery`, `YouCastEnchantment`,
+     * `YouCastHistoric`) when their defaults match. Reach for this factory
+     * for any other combination of spell-filter + cast-time predicates.
+     *
+     * `requires` is a conjunctive set of [SpellCastPredicate] cases. Adding a
+     * new cast-time mechanic later (was-copied, was-overloaded,
+     * paid-additional-life-cost, …) is one new sealed-case in
+     * [SpellCastPredicate] + one matcher branch — no new factory parameter.
+     *
+     * Examples:
+     * - "Whenever you cast a spell from your hand":
+     *   `youCastSpell(requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)))`
+     * - "Whenever you cast an instant or sorcery from your hand":
+     *   `youCastSpell(spellFilter = GameObjectFilter.InstantOrSorcery,
+     *                 requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)))`
+     * - "Whenever you cast a kicked spell":
+     *   `youCastSpell(requires = setOf(SpellCastPredicate.WasKicked))`
+     * - "Whenever you cast a spell using mana from a Treasure":
+     *   `youCastSpell(requires = setOf(
+     *       SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)))`
+     *   The same shape will cover Food / Clue / Blood / Powerstone / Map
+     *   once the engine's mana-pool tracker tags those subtypes; no SDK
+     *   change needed.
+     * - "Whenever you cast a noncreature or Lizard spell":
+     *   `youCastSpell(spellFilter = GameObjectFilter.Noncreature or
+     *                               GameObjectFilter.Any.withSubtype(Subtype.LIZARD))`
      */
-    val YouCastKickedSpell: TriggerSpec = TriggerSpec(
-        event = SpellCastEvent(kicked = true, player = Player.You),
-        binding = TriggerBinding.ANY
+    fun youCastSpell(
+        spellFilter: GameObjectFilter = GameObjectFilter.Any,
+        requires: Set<SpellCastPredicate> = emptySet(),
+    ): TriggerSpec = TriggerSpec(
+        event = SpellCastEvent(
+            spellFilter = spellFilter,
+            player = Player.You,
+            requires = requires,
+        ),
+        binding = TriggerBinding.ANY,
     )
 
     // =========================================================================

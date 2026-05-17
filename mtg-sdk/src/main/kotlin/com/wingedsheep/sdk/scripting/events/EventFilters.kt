@@ -1,6 +1,8 @@
 package com.wingedsheep.sdk.scripting.events
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -272,5 +274,55 @@ sealed interface ControllerFilter {
     @Serializable
     data object Any : ControllerFilter {
         override val description = ""
+    }
+}
+
+// =============================================================================
+// Spell-Cast Predicates - extensible "facts about a cast" the trigger requires
+// =============================================================================
+
+/**
+ * One required fact about a spell cast, used by `SpellCastEvent.requires` to
+ * gate the trigger. The set is conjunctive: every predicate must hold.
+ *
+ * Each new "the cast had X property" mechanic adds a new sealed-case here
+ * (and one branch in the engine matcher). The shape avoids growing
+ * `SpellCastEvent` with a new boolean / optional field every time a new
+ * cast-time fact becomes triggerable (kicker, treasure mana, future:
+ * was-copied, was-overloaded, paid-additional-life, etc.).
+ */
+@Serializable
+sealed interface SpellCastPredicate {
+    val description: String
+
+    /** The spell was cast from this zone (e.g. HAND for "from your hand"). */
+    @SerialName("SpellCastFromZone")
+    @Serializable
+    data class CastFromZone(val zone: Zone) : SpellCastPredicate {
+        override val description = when (zone) {
+            Zone.HAND -> "from your hand"
+            Zone.GRAVEYARD -> "from your graveyard"
+            Zone.EXILE -> "from exile"
+            else -> "from your ${zone.displayName.lowercase()}"
+        }
+    }
+
+    /** The spell was cast with kicker (CR 702.32). */
+    @SerialName("SpellWasKicked")
+    @Serializable
+    data object WasKicked : SpellCastPredicate {
+        override val description = "kicked"
+    }
+
+    /**
+     * Mana produced by a permanent with this subtype was spent on the cast.
+     * Covers Treasure today; the engine matcher will resolve other token
+     * subtypes (Food / Clue / Blood / Powerstone / Map) once the mana-pool
+     * tracker generalizes beyond the current Treasure-only boolean.
+     */
+    @SerialName("SpellPaidWithManaFromSubtype")
+    @Serializable
+    data class PaidWithManaFromSubtype(val subtype: Subtype) : SpellCastPredicate {
+        override val description = "using mana from a ${subtype.value}"
     }
 }

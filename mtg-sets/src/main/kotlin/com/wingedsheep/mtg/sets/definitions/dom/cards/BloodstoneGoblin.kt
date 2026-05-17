@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -24,7 +25,7 @@ val BloodstoneGoblin = card("Bloodstone Goblin") {
     oracleText = "Whenever you cast a spell, if that spell was kicked, Bloodstone Goblin gets +1/+1 and gains menace until end of turn."
 
     triggeredAbility {
-        trigger = Triggers.YouCastKickedSpell
+        trigger = Triggers.youCastSpell(requires = setOf(SpellCastPredicate.WasKicked))
         effect = Effects.ModifyStats(1, 1, EffectTarget.Self)
             .then(Effects.GrantKeyword(Keyword.MENACE, EffectTarget.Self))
     }

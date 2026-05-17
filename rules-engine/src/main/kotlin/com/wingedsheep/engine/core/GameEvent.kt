@@ -210,8 +210,8 @@ data class SpellCastEvent(
     /**
      * True when any of the mana spent on this cast was tagged as Treasure
      * mana (see [com.wingedsheep.engine.state.components.player.ManaPoolComponent.treasureMana]).
-     * Drives the SDK trigger
-     * [com.wingedsheep.sdk.dsl.Triggers.YouCastSpellPaidWithTreasureMana].
+     * Drives SDK triggers built with
+     * `Triggers.youCastSpell(requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)))`.
      */
     val paidWithTreasureMana: Boolean = false
 ) : GameEvent

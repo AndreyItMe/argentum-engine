@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantActivatedAbility
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -71,7 +72,9 @@ val AlchemistsTalent = card("Alchemist's Talent") {
     // [ManaPoolComponent.treasureMana] counter is decremented during payment.
     classLevel(3, "{4}{R}") {
         triggeredAbility {
-            trigger = Triggers.YouCastSpellPaidWithTreasureMana
+            trigger = Triggers.youCastSpell(
+                requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)),
+            )
             effect = Effects.DealDamage(
                 DynamicAmounts.triggeringManaValue(),
                 EffectTarget.PlayerRef(Player.EachOpponent)

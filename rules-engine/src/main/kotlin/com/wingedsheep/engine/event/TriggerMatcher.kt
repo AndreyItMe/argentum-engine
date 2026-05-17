@@ -43,6 +43,7 @@ import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.engine.core.GameEvent as EngineGameEvent
@@ -152,9 +153,7 @@ class TriggerMatcher(
                 event is SpellCastEvent &&
                     matchesPlayer(trigger.player, event.casterId, controllerId) &&
                     matchesSpellFilter(trigger.spellFilter, event, state, sourceId) &&
-                    (trigger.kicked == null || trigger.kicked == event.wasKicked) &&
-                    matchesCastFromZone(trigger.castFromZone, event, state) &&
-                    (trigger.paidWithTreasureMana == null || trigger.paidWithTreasureMana == event.paidWithTreasureMana)
+                    trigger.requires.all { matchesSpellCastPredicate(it, event, state) }
             }
             is GameEvent.NthSpellCastEvent -> {
                 // Fires on SpellCastEvent when the casting player's per-turn spell count
@@ -801,14 +800,34 @@ class TriggerMatcher(
      * (e.g., HAND for "Whenever you cast a spell from your hand"). When the
      * trigger doesn't specify a zone, every cast matches.
      */
-    private fun matchesCastFromZone(
-        requiredZone: Zone?,
+    /**
+     * Resolve one [SpellCastPredicate] against the runtime [SpellCastEvent].
+     *
+     * Add a new branch here when extending [SpellCastPredicate] with a new
+     * cast-time fact. The matcher is conjunctive — every predicate the
+     * trigger declares must hold.
+     *
+     * Note on [SpellCastPredicate.PaidWithManaFromSubtype]: the SDK exposes
+     * any token subtype, but the engine currently only tracks Treasure-sourced
+     * mana (via [SpellCastEvent.paidWithTreasureMana] / `ManaPoolComponent.treasureMana`).
+     * Other subtypes resolve to `false` so triggers silently don't fire until
+     * the mana-pool tracker is generalized to a `Set<Subtype>`; card
+     * definitions can already declare them forward-compatibly.
+     */
+    private fun matchesSpellCastPredicate(
+        predicate: SpellCastPredicate,
         event: SpellCastEvent,
         state: GameState
-    ): Boolean {
-        if (requiredZone == null) return true
-        val spellComponent = state.getEntity(event.spellEntityId)?.get<SpellOnStackComponent>() ?: return false
-        return spellComponent.castFromZone == requiredZone
+    ): Boolean = when (predicate) {
+        is SpellCastPredicate.CastFromZone -> {
+            val spellComponent = state.getEntity(event.spellEntityId)?.get<SpellOnStackComponent>()
+            spellComponent?.castFromZone == predicate.zone
+        }
+        SpellCastPredicate.WasKicked -> event.wasKicked
+        is SpellCastPredicate.PaidWithManaFromSubtype -> when (predicate.subtype) {
+            Subtype.TREASURE -> event.paidWithTreasureMana
+            else -> false
+        }
     }
 
     /**

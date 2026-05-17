@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.dsl.DynamicAmounts
@@ -31,7 +32,7 @@ val HallarTheFirefletcher = card("Hallar, the Firefletcher") {
     keywords(Keyword.TRAMPLE)
 
     triggeredAbility {
-        trigger = Triggers.YouCastKickedSpell
+        trigger = Triggers.youCastSpell(requires = setOf(SpellCastPredicate.WasKicked))
         effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
             .then(Effects.DealDamage(
                 DynamicAmounts.countersOnSelf(CounterTypeFilter.PlusOnePlusOne),

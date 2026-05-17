@@ -8,6 +8,7 @@ import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.text.TextReplaceable
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -598,40 +599,35 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     @Serializable
     data class SpellCastEvent(
         val spellFilter: GameObjectFilter = GameObjectFilter.Any,
-        val kicked: Boolean? = null,
         val player: Player = Player.You,
-        /** When non-null, only triggers if the spell was cast from this zone
-         *  (e.g., HAND for "Whenever you cast a spell from your hand"). */
-        val castFromZone: com.wingedsheep.sdk.core.Zone? = null,
         /**
-         * When non-null, the cast must match the engine's `paidWithTreasureMana`
-         * flag on the spell-cast event. Used by Alchemist's Talent level 3
-         * ("if mana from a Treasure was spent to cast it"). The flag is set
-         * when any mana spent on the cast was added to the pool by a
-         * permanent with the Treasure subtype.
+         * Extensible set of cast-time facts the trigger requires (conjunctive).
+         * Each predicate is a [SpellCastPredicate] sealed-case — adding a new
+         * cast-time mechanic (was-copied, was-overloaded, paid-life-cost, …)
+         * is one new sealed-case + one matcher branch, not a new field here.
+         *
+         * Current cases: [SpellCastPredicate.CastFromZone],
+         * [SpellCastPredicate.WasKicked],
+         * [SpellCastPredicate.PaidWithManaFromSubtype].
          */
-        val paidWithTreasureMana: Boolean? = null
+        val requires: Set<SpellCastPredicate> = emptySet(),
     ) : GameEvent {
         override val description: String = buildString {
             append(player.description)
             append(" casts ")
-            if (kicked == true) append("a kicked ")
+            val wasKicked = SpellCastPredicate.WasKicked in requires
+            if (wasKicked) append("a kicked ")
             val filterDesc = spellFilter.description
             if (filterDesc == "card" || filterDesc.isBlank()) {
-                if (kicked != true) append("a spell") else append("spell")
+                if (!wasKicked) append("a spell") else append("spell")
             } else {
-                if (kicked != true) append("a ") else Unit
+                if (!wasKicked) append("a ") else Unit
                 append("$filterDesc spell")
             }
-            if (castFromZone != null) {
-                append(" from ")
-                append(when (castFromZone) {
-                    com.wingedsheep.sdk.core.Zone.HAND -> "your hand"
-                    com.wingedsheep.sdk.core.Zone.GRAVEYARD -> "your graveyard"
-                    com.wingedsheep.sdk.core.Zone.EXILE -> "exile"
-                    else -> "your ${castFromZone.displayName.lowercase()}"
-                })
-            }
+            // Suffix qualifiers (cast-from-zone, mana-source, …) in registration order.
+            requires
+                .filter { it !is SpellCastPredicate.WasKicked }
+                .forEach { append(" ").append(it.description) }
         }
 
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this

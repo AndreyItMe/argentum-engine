@@ -1,10 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.blc.cards
 
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
 /**
  * Wildsear, Scouring Maw {3}{R}{G}
@@ -37,7 +40,10 @@ val WildsearScouringMaw = card("Wildsear, Scouring Maw") {
     keywords(Keyword.TRAMPLE)
 
     triggeredAbility {
-        trigger = Triggers.YouCastEnchantmentFromHand
+        trigger = Triggers.youCastSpell(
+            spellFilter = GameObjectFilter.Enchantment,
+            requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)),
+        )
         effect = Effects.Cascade
     }
 

@@ -650,20 +650,62 @@ Named sugar for the common cases; reach for the factories for any other combinat
 
 ### Spell casting
 
+Named sugar for the common type-primitive cases; reach for `youCastSpell(...)` plus a
+`SpellCastPredicate` set for anything from-zone / kicked / mana-source-tagged.
+
 - `YouCastSpell` — any spell you cast.
-- `YouCastSpellFromHand` — any spell you cast from your hand (Sunbird's Invocation).
 - `YouCastCreature` — any creature spell you cast.
 - `YouCastNoncreature` — non-creature spells you cast.
-- `YouCastNoncreatureOrSubtype(subtype)` — noncreature OR subtype creature.
 - `YouCastInstantOrSorcery` — instant/sorcery you cast.
-- `YouCastInstantOrSorceryFromHand` — same, must be from hand.
 - `YouCastEnchantment` — any enchantment you cast.
-- `YouCastEnchantmentFromHand` — same, from hand.
 - `YouCastHistoric` — artifact / legendary / Saga.
-- `YouCastSubtype(subtype)` — creature with matching subtype.
-- `YouCastKickedSpell` — kicked or supercast spell.
-- `YouCastSpellPaidWithTreasureMana` — Treasure-fueled cast.
+- `YouCastSubtype(subtype)` — tribal helper: spell with matching subtype.
 - `AnySpellOrAbilityOnStack` — any object hits the stack.
+
+**Factory** — `youCastSpell(spellFilter?, requires: Set<SpellCastPredicate>)`. The
+`requires` set is conjunctive — every predicate must hold for the trigger to fire.
+
+**`SpellCastPredicate`** — extensible "facts about a cast." Adding a new cast-time mechanic
+(was-copied, was-overloaded, paid-additional-life-cost, …) is one new sealed-case plus one
+matcher branch — `SpellCastEvent` does not grow a new field per axis.
+
+- `SpellCastPredicate.CastFromZone(zone)` — spell was cast from this zone. Used for Sunbird's
+  Invocation (`Zone.HAND`), Goliath Daydreamer's instant/sorcery-from-hand trigger,
+  Wildsear's enchantment-from-hand cascade.
+- `SpellCastPredicate.WasKicked` — spell was cast with kicker (CR 702.32). Used for
+  Hallar / Bloodstone Goblin.
+- `SpellCastPredicate.PaidWithManaFromSubtype(subtype)` — mana from a permanent of this
+  subtype was spent on the cast. Resolves Treasure today (Rain of Riches, Alchemist's
+  Talent); engine matcher accepts other token subtypes as the shape, but only Treasure
+  actually fires until the mana-pool tracker generalizes beyond its current Treasure-only
+  boolean.
+
+Examples:
+
+```kotlin
+// "Whenever you cast a spell from your hand"
+Triggers.youCastSpell(requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)))
+
+// "Whenever you cast an instant or sorcery from your hand"
+Triggers.youCastSpell(
+    spellFilter = GameObjectFilter.InstantOrSorcery,
+    requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)),
+)
+
+// "Whenever you cast a kicked spell"
+Triggers.youCastSpell(requires = setOf(SpellCastPredicate.WasKicked))
+
+// "Whenever you cast a spell using mana from a Treasure"
+Triggers.youCastSpell(
+    requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)),
+)
+
+// "Whenever you cast a noncreature or Otter spell"
+Triggers.youCastSpell(
+    spellFilter = GameObjectFilter.Noncreature or
+                  GameObjectFilter.Any.withSubtype(Subtype("Otter")),
+)
+```
 
 ### State change & misc
 

@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect
@@ -58,7 +59,9 @@ val SunbirdsInvocation = card("Sunbird's Invocation") {
     oracleText = "Whenever you cast a spell from your hand, reveal the top X cards of your library, where X is that spell's mana value. You may cast a spell with mana value X or less from among cards revealed this way without paying its mana cost. Put the rest on the bottom of your library in a random order."
 
     triggeredAbility {
-        trigger = Triggers.YouCastSpellFromHand
+        trigger = Triggers.youCastSpell(
+            requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)),
+        )
         val triggeringSpellManaValue = DynamicAmount.EntityProperty(
             EntityReference.Triggering,
             EntityNumericProperty.ManaValue,

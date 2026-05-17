@@ -1,10 +1,12 @@
 package com.wingedsheep.mtg.sets.definitions.ncc.cards
 
+import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.dsl.Conditions
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
 /**
  * Rain of Riches {3}{R}{R}
@@ -37,7 +39,9 @@ val RainOfRiches = card("Rain of Riches") {
     }
 
     triggeredAbility {
-        trigger = Triggers.YouCastSpellPaidWithTreasureMana
+        trigger = Triggers.youCastSpell(
+            requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)),
+        )
         triggerCondition = Conditions.IsFirstSpellPaidWithTreasureManaCastThisTurn
         effect = Effects.Cascade
     }

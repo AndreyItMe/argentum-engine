@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.CardSource
+import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ConditionalOnCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
@@ -45,7 +46,10 @@ val GoliathDaydreamer = card("Goliath Daydreamer") {
 
     // First ability — re-route resolution to exile with a dream counter.
     triggeredAbility {
-        trigger = Triggers.YouCastInstantOrSorceryFromHand
+        trigger = Triggers.youCastSpell(
+            spellFilter = GameObjectFilter.InstantOrSorcery,
+            requires = setOf(SpellCastPredicate.CastFromZone(Zone.HAND)),
+        )
         effect = MarkSpellExileWithCountersEffect(
             target = EffectTarget.TriggeringEntity,
             counterType = Counters.DREAM,
