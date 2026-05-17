@@ -99,29 +99,32 @@ class DynamicAmountEvaluator(
                 state.getEntity(cardId)?.get<CardComponent>()?.manaValue ?: 0
             }
 
-            // Math operations
+            // Math operations — propagate [projectedState] so the StateProjector's internal
+            // evaluator (projectForBattlefieldCounting=false) keeps its intermediate
+            // projection through nested aggregates and never falls back to
+            // `state.projectedState`, which would re-enter the lazy projection.
             is DynamicAmount.Add -> {
-                evaluate(state, amount.left, context) + evaluate(state, amount.right, context)
+                evaluate(state, amount.left, context, projectedState) + evaluate(state, amount.right, context, projectedState)
             }
 
             is DynamicAmount.Subtract -> {
-                evaluate(state, amount.left, context) - evaluate(state, amount.right, context)
+                evaluate(state, amount.left, context, projectedState) - evaluate(state, amount.right, context, projectedState)
             }
 
             is DynamicAmount.Multiply -> {
-                evaluate(state, amount.amount, context) * amount.multiplier
+                evaluate(state, amount.amount, context, projectedState) * amount.multiplier
             }
 
             is DynamicAmount.IfPositive -> {
-                max(0, evaluate(state, amount.amount, context))
+                max(0, evaluate(state, amount.amount, context, projectedState))
             }
 
             is DynamicAmount.Max -> {
-                max(evaluate(state, amount.left, context), evaluate(state, amount.right, context))
+                max(evaluate(state, amount.left, context, projectedState), evaluate(state, amount.right, context, projectedState))
             }
 
             is DynamicAmount.Min -> {
-                min(evaluate(state, amount.left, context), evaluate(state, amount.right, context))
+                min(evaluate(state, amount.left, context, projectedState), evaluate(state, amount.right, context, projectedState))
             }
 
             is DynamicAmount.ContextProperty -> evaluateContextProperty(state, amount.key, context)
@@ -142,7 +145,8 @@ class DynamicAmountEvaluator(
             is DynamicAmount.Conditional -> {
                 val eval = conditionEvaluator ?: ConditionEvaluator()
                 val met = eval.evaluate(state, amount.condition, context)
-                if (met) evaluate(state, amount.ifTrue, context) else evaluate(state, amount.ifFalse, context)
+                if (met) evaluate(state, amount.ifTrue, context, projectedState)
+                else evaluate(state, amount.ifFalse, context, projectedState)
             }
 
             is DynamicAmount.CountPlayersWith -> {
@@ -221,8 +225,8 @@ class DynamicAmountEvaluator(
             }
 
             is DynamicAmount.Divide -> {
-                val num = evaluate(state, amount.numerator, context)
-                val den = evaluate(state, amount.denominator, context)
+                val num = evaluate(state, amount.numerator, context, projectedState)
+                val den = evaluate(state, amount.denominator, context, projectedState)
                 if (den == 0) return 0
                 if (amount.roundUp) {
                     (num + den - 1) / den
@@ -392,6 +396,16 @@ class DynamicAmountEvaluator(
 
     private val predicateEvaluator = PredicateEvaluator()
 
+    /**
+     * Empty projection used as a safe fallback when no explicit projection is available
+     * and we can't request [GameState.projectedState] (i.e., we're called from inside
+     * [com.wingedsheep.engine.mechanics.layers.StateProjector] with
+     * `projectForBattlefieldCounting=false`). The predicate evaluator falls back to
+     * base `CardComponent` for entities not in the projection, matching pre-refactor
+     * base-state semantics.
+     */
+    private fun emptyProjectionFor(state: GameState): ProjectedState = ProjectedState(state, emptyMap())
+
     private fun evaluateUnifiedCount(
         state: GameState,
         player: Player,
@@ -427,12 +441,9 @@ class DynamicAmountEvaluator(
                 state.getZone(ZoneKey(playerId, zoneType))
             }
 
+            val matchProjection = projected ?: emptyProjectionFor(state)
             entities.count { entityId ->
-                if (projected != null) {
-                    predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
-                } else {
-                    predicateEvaluator.matches(state, state.projectedState, entityId, filter, predicateContext)
-                }
+                predicateEvaluator.matches(state, matchProjection, entityId, filter, predicateContext)
             }
         }
     }
@@ -464,11 +475,8 @@ class DynamicAmountEvaluator(
                     controllerId == playerId
                 }
                 .filter { entityId ->
-                    if (projected != null) {
-                        predicateEvaluator.matches(state, projected, entityId, amount.filter, predicateContext)
-                    } else {
-                        predicateEvaluator.matches(state, state.projectedState, entityId, amount.filter, predicateContext)
-                    }
+                    val matchProjection = projected ?: emptyProjectionFor(state)
+                    predicateEvaluator.matches(state, matchProjection, entityId, amount.filter, predicateContext)
                 }
         }
 
@@ -528,11 +536,13 @@ class DynamicAmountEvaluator(
         val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
         val predicateContext = PredicateContext.fromEffectContext(context)
 
-        // Collect and filter matching entities from the zone
+        // Non-battlefield zones don't carry projected values — pass an empty projection
+        // so callers in the StateProjector path don't re-enter `state.projectedState`.
+        val matchProjection = emptyProjectionFor(state)
         val matchingEntities = playerIds.flatMap { playerId ->
             state.getZone(ZoneKey(playerId, amount.zone))
                 .filter { entityId ->
-                    predicateEvaluator.matches(state, state.projectedState, entityId, amount.filter, predicateContext)
+                    predicateEvaluator.matches(state, matchProjection, entityId, amount.filter, predicateContext)
                 }
         }
 

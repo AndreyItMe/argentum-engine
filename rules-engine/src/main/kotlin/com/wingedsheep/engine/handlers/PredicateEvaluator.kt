@@ -300,7 +300,12 @@ class PredicateEvaluator {
 
             CardPredicate.SharesCreatureTypeWithSource -> {
                 val sourceId = context?.sourceId ?: return false
-                val sourceSubtypes = projected.getSubtypes(sourceId)
+                // Source may be a spell on the stack (e.g., Amplify resolution-time reveal) —
+                // projection only covers the battlefield, so fall back to base CardComponent.
+                val sourceSubtypes = projected.getSubtypes(sourceId).ifEmpty {
+                    state.getEntity(sourceId)?.get<CardComponent>()?.typeLine?.subtypes?.map { it.value }?.toSet()
+                        ?: emptySet()
+                }
                 if (sourceSubtypes.isEmpty()) return false
                 val entitySubtypes = projectedValues?.subtypes ?: card.typeLine.subtypes.map { it.value }.toSet()
                 entitySubtypes.any { entitySubtype ->
