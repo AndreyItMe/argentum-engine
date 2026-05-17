@@ -53,7 +53,14 @@ private val KEYWORD_COUNTER_MAP = mapOf(
 )
 
 class StateProjector(
-    private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(projectForBattlefieldCounting = false)
+    // Inject an empty projection as the supplier — reaching for [GameState.projectedState]
+    // here would re-enter our own lazy initializer. Mid-layer callers thread their
+    // intermediate snapshot through the `projectedState` parameter explicitly; the empty
+    // supplier is the safety net for paths that don't carry one (predicate matching falls
+    // back to base CardComponent for missing entries).
+    private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(
+        defaultProjection = { ProjectedState(it, emptyMap()) }
+    )
 ) {
     private val filterResolver = AffectsFilterResolver()
     private val effectApplicator = EffectApplicator(dynamicAmountEvaluator)
