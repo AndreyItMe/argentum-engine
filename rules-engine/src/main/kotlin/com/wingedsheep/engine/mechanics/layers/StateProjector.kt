@@ -53,7 +53,7 @@ private val KEYWORD_COUNTER_MAP = mapOf(
 )
 
 class StateProjector(
-    private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator()
+    private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(projectForBattlefieldCounting = false)
 ) {
     private val filterResolver = AffectsFilterResolver()
     private val effectApplicator = EffectApplicator(dynamicAmountEvaluator)
