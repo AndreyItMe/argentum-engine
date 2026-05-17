@@ -102,78 +102,69 @@ data class GroupFilter(
 
     companion object {
         /** All creatures on the battlefield */
-        val AllCreatures = GroupFilter(GameObjectFilter.Companion.Creature)
+        val AllCreatures = GroupFilter(GameObjectFilter.Creature)
 
         /** All creatures you control */
-        val AllCreaturesYouControl = GroupFilter(GameObjectFilter.Companion.Creature.youControl())
+        val AllCreaturesYouControl = GroupFilter(GameObjectFilter.Creature.youControl())
 
         /** All creatures opponents control */
-        val AllCreaturesOpponentsControl = GroupFilter(GameObjectFilter.Companion.Creature.opponentControls())
+        val AllCreaturesOpponentsControl = GroupFilter(GameObjectFilter.Creature.opponentControls())
 
         /** All other creatures (excluding source) */
-        val AllOtherCreatures = GroupFilter(GameObjectFilter.Companion.Creature, excludeSelf = true)
+        val AllOtherCreatures = GroupFilter(GameObjectFilter.Creature, excludeSelf = true)
 
         /** All other creatures you control */
-        val OtherCreaturesYouControl = GroupFilter(GameObjectFilter.Companion.Creature.youControl(), excludeSelf = true)
-
-        /** All other creatures opponents control */
-        val OtherCreaturesOpponentsControl = GroupFilter(GameObjectFilter.Companion.Creature.opponentControls(), excludeSelf = true)
+        val OtherCreaturesYouControl = GroupFilter(GameObjectFilter.Creature.youControl(), excludeSelf = true)
 
         /** All other tapped creatures you control (for effects like Adept Watershaper) */
-        val OtherTappedCreaturesYouControl = GroupFilter(GameObjectFilter.Companion.Creature.youControl().tapped(), excludeSelf = true)
+        val OtherTappedCreaturesYouControl = GroupFilter(GameObjectFilter.Creature.youControl().tapped(), excludeSelf = true)
 
         /** All attacking creatures */
-        val AttackingCreatures = GroupFilter(GameObjectFilter.Companion.Creature.attacking())
+        val AttackingCreatures = GroupFilter(GameObjectFilter.Creature.attacking())
 
         /** All blocking creatures */
-        val BlockingCreatures = GroupFilter(GameObjectFilter.Companion.Creature.blocking())
+        val BlockingCreatures = GroupFilter(GameObjectFilter.Creature.blocking())
 
         /** All tapped creatures */
-        val TappedCreatures = GroupFilter(GameObjectFilter.Companion.Creature.tapped())
+        val TappedCreatures = GroupFilter(GameObjectFilter.Creature.tapped())
 
         /** All untapped creatures */
-        val UntappedCreatures = GroupFilter(GameObjectFilter.Companion.Creature.untapped())
+        val UntappedCreatures = GroupFilter(GameObjectFilter.Creature.untapped())
 
         // =============================================================================
         // Pre-built Permanent Groups
         // =============================================================================
 
         /** All permanents */
-        val AllPermanents = GroupFilter(GameObjectFilter.Companion.Permanent)
+        val AllPermanents = GroupFilter(GameObjectFilter.Permanent)
 
         /** All permanents you control */
-        val AllPermanentsYouControl = GroupFilter(GameObjectFilter.Companion.Permanent.youControl())
+        val AllPermanentsYouControl = GroupFilter(GameObjectFilter.Permanent.youControl())
 
         /** All nonland permanents */
-        val AllNonlandPermanents = GroupFilter(GameObjectFilter.Companion.NonlandPermanent)
+        val AllNonlandPermanents = GroupFilter(GameObjectFilter.NonlandPermanent)
 
         /** All artifacts */
-        val AllArtifacts = GroupFilter(GameObjectFilter.Companion.Artifact)
+        val AllArtifacts = GroupFilter(GameObjectFilter.Artifact)
 
         /** All enchantments */
-        val AllEnchantments = GroupFilter(GameObjectFilter.Companion.Enchantment)
+        val AllEnchantments = GroupFilter(GameObjectFilter.Enchantment)
 
         /** All planeswalkers you control */
-        val PlaneswalkersYouControl = GroupFilter(GameObjectFilter.Companion.Planeswalker.youControl())
+        val PlaneswalkersYouControl = GroupFilter(GameObjectFilter.Planeswalker.youControl())
 
         /** All lands */
-        val AllLands = GroupFilter(GameObjectFilter.Companion.Land)
+        val AllLands = GroupFilter(GameObjectFilter.Land)
 
         // =============================================================================
         // Convenience Builders for Common Destroy-All Patterns
         // =============================================================================
 
-        /** All creatures of a specific color (e.g., "Destroy all black creatures") */
-        fun allCreaturesOfColor(color: Color) = GroupFilter(GameObjectFilter.Companion.Creature.withColor(color))
-
         /** All lands with a specific subtype (e.g., "Destroy all Islands") */
-        fun allLandsWithSubtype(subtype: String) = GroupFilter(GameObjectFilter.Companion.Land.withSubtype(subtype))
-
-        /** All lands with a specific subtype (e.g., "Destroy all Islands") */
-        fun allLandsWithSubtype(subtype: Subtype) = GroupFilter(GameObjectFilter.Companion.Land.withSubtype(subtype))
+        fun allLandsWithSubtype(subtype: Subtype) = GroupFilter(GameObjectFilter.Land.withSubtype(subtype))
 
         /** All creatures with a specific subtype (e.g., "Destroy all Goblins") */
-        fun allCreaturesWithSubtype(subtype: String) = GroupFilter(GameObjectFilter.Companion.Creature.withSubtype(subtype))
+        fun allCreaturesWithSubtype(subtype: String) = GroupFilter(GameObjectFilter.Creature.withSubtype(subtype))
 
         /**
          * All creatures of the creature type chosen at resolution time.
@@ -182,21 +173,21 @@ data class GroupFilter(
          * Pair with `ChooseOptionEffect(CREATURE_TYPE, storeAs = key)` upstream in a pipeline.
          */
         fun ChosenSubtypeCreatures(key: String = "chosenCreatureType", excludeSelf: Boolean = false) =
-            GroupFilter(GameObjectFilter.Companion.Creature, excludeSelf = excludeSelf, chosenSubtypeKey = key)
+            GroupFilter(GameObjectFilter.Creature, excludeSelf = excludeSelf, chosenSubtypeKey = key)
 
         // =============================================================================
         // Scope-based factories (replaces former StaticTarget cases)
         // =============================================================================
 
         /** "This creature" — the source permanent itself. */
-        fun source() = GroupFilter(GameObjectFilter.Companion.Permanent, scope = Scope.Self)
+        fun source() = GroupFilter(GameObjectFilter.Permanent, scope = Scope.Self)
 
         /** "Enchanted/equipped creature" — the creature this Aura/Equipment is attached to. */
-        fun attachedCreature() = GroupFilter(GameObjectFilter.Companion.Permanent, scope = Scope.AttachedTo)
+        fun attachedCreature() = GroupFilter(GameObjectFilter.Permanent, scope = Scope.AttachedTo)
 
         /** A specific pre-bound entity. */
         fun specific(entityId: EntityId) =
-            GroupFilter(GameObjectFilter.Companion.Permanent, scope = Scope.Specific(entityId))
+            GroupFilter(GameObjectFilter.Permanent, scope = Scope.Specific(entityId))
     }
 
     // =============================================================================
