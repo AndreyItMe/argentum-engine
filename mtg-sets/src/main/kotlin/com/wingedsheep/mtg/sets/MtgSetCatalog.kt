@@ -38,6 +38,7 @@ import com.wingedsheep.mtg.sets.definitions.lrw.LorwynSet
 import com.wingedsheep.mtg.sets.definitions.ecl.LorwynEclipsedSet
 import com.wingedsheep.mtg.sets.definitions.lci.LostCavernsOfIxalanSet
 import com.wingedsheep.mtg.sets.definitions.mbs.MirrodinBesiegedSet
+import com.wingedsheep.mtg.sets.definitions.mir.MirageSet
 import com.wingedsheep.mtg.sets.definitions.mrd.MirrodinSet
 import com.wingedsheep.mtg.sets.definitions.mkm.MurdersAtKarlovManorSet
 import com.wingedsheep.mtg.sets.definitions.mom.MarchOfTheMachineSet
@@ -74,6 +75,7 @@ object MtgSetCatalog {
     val all: List<MtgSet> = listOf(
         AlphaSet,
         PortalSet,
+        MirageSet,
         TempestSet,
         UrzasSagaSet,
         InvasionSet,
