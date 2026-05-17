@@ -70,7 +70,10 @@ val DoranBesiegedByTime = card("Doran, Besieged by Time") {
 
     // Whenever a creature you control blocks, same.
     triggeredAbility {
-        trigger = Triggers.CreatureYouControlBlocks
+        trigger = Triggers.blocks(
+            filter = GameObjectFilter.Creature.youControl(),
+            binding = TriggerBinding.ANY,
+        )
         effect = ModifyStatsEffect(
             powerModifier = TriggeringPowerToughnessDifference,
             toughnessModifier = TriggeringPowerToughnessDifference,

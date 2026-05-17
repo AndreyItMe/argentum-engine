@@ -588,23 +588,64 @@ for any other (filter, binding, to/excludeTo) combination.
 
 ### Combat
 
-- `Attacks` — when source attacks.
-- `AttacksAlone` — when source is the only attacker.
-- `AnyAttacks` — when any creature attacks.
-- `CreatureYouControlAttacks` — your creature attacks.
-- `NontokenCreatureYouControlAttacks` — same, nontoken.
-- `YouAttack` — when you declare attackers (player-level).
+Named sugar for the common cases; reach for `attacks(...)` / `blocks(...)` /
+`becomesBlocked(...)` for any other combination, and use the [AttackPredicate]
+sealed set for attack-time facts beyond the basics.
+
+**Attacks (per-attacker `AttackEvent`)**
+
+- `Attacks` — SELF, no filter. ("When this creature attacks.")
+- `attacks(filter?, requires?, binding?)` — factory. Covers ANY-binding scopes,
+  type-filtered scopes (creature-you-control, nontoken-creature-you-control),
+  and attack-time predicates (alone, future Battalion-style count gates).
+
+**Attacks (player-level)**
+
+- `YouAttack` — when you declare attackers (player-level, ANY binding).
 - `YouAttackWithFilter(filter)` — when you attack with ≥1 matching attacker.
-- `CreaturesAttackYou` — when one or more creatures attack you (defender side; fires once
-  per `AttackersDeclaredEvent`, not per attacker). Excludes creatures attacking a planeswalker
-  you control, per CR 509.1b. Pair with `DynamicAmounts.creaturesAttackingYou()` if the
-  payoff scales with the attacker count (e.g., Orim's Prayer).
-- `Blocks` — when source blocks.
-- `CreatureYouControlBlocks` — your creature blocks.
-- `BecomesBlocked` — when source becomes blocked.
-- `CreatureYouControlBecomesBlocked` — your creature becomes blocked.
-- `FilteredBecomesBlocked(filter)` — matching creature becomes blocked.
-- `BlocksOrBecomesBlockedBy(filter)` — either direction, filtered.
+- `CreaturesAttackYou` — defender side; fires once per `AttackersDeclaredEvent`,
+  not per attacker. Excludes creatures attacking a planeswalker you control
+  (CR 509.1b). Pair with `DynamicAmounts.creaturesAttackingYou()` for
+  attacker-count payoffs (e.g., Orim's Prayer).
+
+**Blocks**
+
+- `Blocks` — SELF, no filter.
+- `BecomesBlocked` — SELF, no filter.
+- `blocks(filter?, binding?)` — factory. Covers ANY-binding + filter variants.
+- `becomesBlocked(filter?, binding?)` — factory. Replaces the old
+  `CreatureYouControlBecomesBlocked` and `FilteredBecomesBlocked(filter)`.
+- `BlocksOrBecomesBlockedBy(filter)` — either direction, partner-filtered;
+  sole consumer of `BlocksOrBecomesBlockedByEvent`.
+
+**`AttackPredicate`** — extensible "facts about an attack declaration."
+Adding a new attack-time mechanic is one new sealed-case + one matcher branch
+— `AttackEvent` does not grow a new field per axis.
+
+- `AttackPredicate.Alone` — the attacker is the only declared attacker this
+  combat (`attacker count == 1`). Replaces the old `alone: Boolean` axis.
+- `AttackPredicate.AttackerCountAtLeast(n)` — at least N creatures total were
+  declared as attackers (counting the trigger's attacker). Battalion shape:
+  `attacks(requires = setOf(AttackerCountAtLeast(3)))` on a `SELF` binding.
+
+Examples:
+
+```kotlin
+// "Whenever this creature attacks alone"
+Triggers.attacks(requires = setOf(AttackPredicate.Alone))
+
+// "Whenever a nontoken creature you control attacks"
+Triggers.attacks(
+    filter = GameObjectFilter.Creature.youControl().nontoken(),
+    binding = TriggerBinding.ANY,
+)
+
+// "Whenever a Beast becomes blocked"
+Triggers.becomesBlocked(
+    filter = GameObjectFilter.Creature.withSubtype("Beast"),
+    binding = TriggerBinding.ANY,
+)
+```
 
 ### Damage
 

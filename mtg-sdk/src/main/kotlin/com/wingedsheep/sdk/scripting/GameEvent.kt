@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.events.ControllerFilter
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.events.DamageType
+import com.wingedsheep.sdk.scripting.events.AttackPredicate
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
 import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
@@ -345,7 +346,17 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     @Serializable
     data class AttackEvent(
         val filter: GameObjectFilter? = null,
-        val alone: Boolean = false
+        /**
+         * Extensible set of attack-time facts the trigger requires (conjunctive).
+         * Each predicate is an [AttackPredicate] sealed-case — adding a new
+         * attack-time mechanic (Battalion-style attacker-count gates,
+         * with-another-matching-creature, …) is one new sealed-case + one
+         * matcher branch, not a new field here.
+         *
+         * Current cases: [AttackPredicate.Alone],
+         * [AttackPredicate.AttackerCountAtLeast].
+         */
+        val requires: Set<AttackPredicate> = emptySet(),
     ) : GameEvent {
         override val description: String = buildString {
             if (filter != null) {
@@ -353,7 +364,7 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             } else {
                 append("a creature attacks")
             }
-            if (alone) append(" alone")
+            requires.forEach { append(" ").append(it.description) }
         }
 
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent {

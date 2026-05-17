@@ -3,12 +3,12 @@ package com.wingedsheep.mtg.sets.definitions.ecl.cards
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.dsl.DynamicAmounts
 import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.GameEvent.AttackEvent
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
-import com.wingedsheep.sdk.scripting.TriggerSpec
+import com.wingedsheep.sdk.scripting.events.AttackPredicate
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -30,9 +30,10 @@ val ThoughtweftImbuer = card("Thoughtweft Imbuer") {
         "where X is the number of Kithkin you control."
 
     triggeredAbility {
-        trigger = TriggerSpec(
-            AttackEvent(filter = GameObjectFilter.Creature.youControl(), alone = true),
-            TriggerBinding.ANY
+        trigger = Triggers.attacks(
+            filter = GameObjectFilter.Creature.youControl(),
+            requires = setOf(AttackPredicate.Alone),
+            binding = TriggerBinding.ANY,
         )
         val kithkinCount = DynamicAmounts.battlefield(
             com.wingedsheep.sdk.scripting.references.Player.You,

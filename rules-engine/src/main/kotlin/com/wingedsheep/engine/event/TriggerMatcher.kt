@@ -42,6 +42,7 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
+import com.wingedsheep.sdk.scripting.events.AttackPredicate
 import com.wingedsheep.sdk.scripting.events.SourceFilter
 import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
@@ -87,7 +88,7 @@ class TriggerMatcher(
             is GameEvent.AttackEvent -> {
                 event is AttackersDeclaredEvent &&
                     checkBinding(binding, sourceId, event.attackers) &&
-                    (!trigger.alone || event.attackers.size == 1)
+                    trigger.requires.all { matchesAttackPredicate(it, event) }
             }
             is GameEvent.YouAttackEvent -> {
                 if (event !is AttackersDeclaredEvent) return false
@@ -814,6 +815,21 @@ class TriggerMatcher(
      * the mana-pool tracker is generalized to a `Set<Subtype>`; card
      * definitions can already declare them forward-compatibly.
      */
+    /**
+     * Resolve one [AttackPredicate] against the runtime [AttackersDeclaredEvent].
+     *
+     * Add a new branch here when extending [AttackPredicate] with a new
+     * attack-time fact. The matcher is conjunctive — every predicate the
+     * trigger declares must hold.
+     */
+    private fun matchesAttackPredicate(
+        predicate: AttackPredicate,
+        event: AttackersDeclaredEvent
+    ): Boolean = when (predicate) {
+        AttackPredicate.Alone -> event.attackers.size == 1
+        is AttackPredicate.AttackerCountAtLeast -> event.attackers.size >= predicate.n
+    }
+
     private fun matchesSpellCastPredicate(
         predicate: SpellCastPredicate,
         event: SpellCastEvent,

@@ -9,12 +9,11 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.TriggerSpec
 import com.wingedsheep.sdk.scripting.events.DamageType
+import com.wingedsheep.sdk.scripting.events.AttackPredicate
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
 import com.wingedsheep.sdk.scripting.events.SpellCastPredicate
 
-import com.wingedsheep.sdk.scripting.predicates.CardPredicate
-import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
 import com.wingedsheep.sdk.scripting.references.Player
 
 /**
@@ -221,8 +220,16 @@ object Triggers {
     // Combat Triggers
     // =========================================================================
 
+    // -------------------------------------------------------------------------
+    // Attacks (per-attacker `AttackEvent`)
+    //
+    // High-frequency primitive below. Reach for `attacks(...)` for any other
+    // (filter, alone, binding) combination — attacks-alone, ANY-binding scopes,
+    // creature-you-control / nontoken-creature-you-control variants, etc.
+    // -------------------------------------------------------------------------
+
     /**
-     * When this creature attacks.
+     * When this creature attacks. (SELF.)
      */
     val Attacks: TriggerSpec = TriggerSpec(
         event = AttackEvent(),
@@ -230,47 +237,35 @@ object Triggers {
     )
 
     /**
-     * When this creature attacks alone (is the only declared attacker).
+     * Generic "attacks" trigger factory. Use [Attacks] for the SELF-only
+     * unfiltered case; reach for this factory for any other combination.
+     *
+     * `requires` is a conjunctive set of [AttackPredicate] cases. Adding a
+     * new attack-time mechanic later (further attacker-count shapes,
+     * with-another-matching-creature, …) is one new sealed-case in
+     * [AttackPredicate] + one matcher branch — no new factory parameter.
+     *
+     * Examples:
+     * - "When this creature attacks alone":
+     *   `attacks(requires = setOf(AttackPredicate.Alone))`
+     * - "Whenever any creature attacks":
+     *   `attacks(binding = TriggerBinding.ANY)`
+     * - "Whenever a creature you control attacks":
+     *   `attacks(filter = GameObjectFilter.Creature.youControl(),
+     *            binding = TriggerBinding.ANY)`
+     * - "Whenever a nontoken creature you control attacks":
+     *   `attacks(filter = GameObjectFilter.Creature.youControl().nontoken(),
+     *            binding = TriggerBinding.ANY)`
+     * - "Battalion — whenever ~ and at least two other creatures attack":
+     *   `attacks(requires = setOf(AttackPredicate.AttackerCountAtLeast(3)))`
      */
-    val AttacksAlone: TriggerSpec = TriggerSpec(
-        event = AttackEvent(alone = true),
-        binding = TriggerBinding.SELF
-    )
-
-    /**
-     * When any creature attacks.
-     */
-    val AnyAttacks: TriggerSpec = TriggerSpec(
-        event = AttackEvent(),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * When a nontoken creature you control attacks.
-     * Creates one trigger per nontoken attacker controlled by the ability's controller.
-     */
-    val NontokenCreatureYouControlAttacks: TriggerSpec = TriggerSpec(
-        event = AttackEvent(
-            filter = GameObjectFilter(
-                cardPredicates = listOf(CardPredicate.IsCreature, CardPredicate.IsNontoken),
-                controllerPredicate = ControllerPredicate.ControlledByYou
-            )
-        ),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * When a creature you control attacks (token or nontoken).
-     * Creates one trigger per attacker controlled by the ability's controller.
-     */
-    val CreatureYouControlAttacks: TriggerSpec = TriggerSpec(
-        event = AttackEvent(
-            filter = GameObjectFilter(
-                cardPredicates = listOf(CardPredicate.IsCreature),
-                controllerPredicate = ControllerPredicate.ControlledByYou
-            )
-        ),
-        binding = TriggerBinding.ANY
+    fun attacks(
+        filter: GameObjectFilter? = null,
+        requires: Set<AttackPredicate> = emptySet(),
+        binding: TriggerBinding = TriggerBinding.SELF,
+    ): TriggerSpec = TriggerSpec(
+        event = AttackEvent(filter = filter, requires = requires),
+        binding = binding,
     )
 
     /**
@@ -301,8 +296,15 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    // -------------------------------------------------------------------------
+    // Blocks / becomes blocked
+    //
+    // High-frequency primitives below. Reach for `blocks(...)` / `becomesBlocked(...)`
+    // for any other (filter, binding) combination.
+    // -------------------------------------------------------------------------
+
     /**
-     * When this creature blocks.
+     * When this creature blocks. (SELF.)
      */
     val Blocks: TriggerSpec = TriggerSpec(
         event = BlockEvent(),
@@ -310,21 +312,7 @@ object Triggers {
     )
 
     /**
-     * When a creature you control blocks.
-     * Creates one trigger per matching blocker controlled by the ability's controller.
-     */
-    val CreatureYouControlBlocks: TriggerSpec = TriggerSpec(
-        event = BlockEvent(
-            filter = GameObjectFilter(
-                cardPredicates = listOf(CardPredicate.IsCreature),
-                controllerPredicate = ControllerPredicate.ControlledByYou
-            )
-        ),
-        binding = TriggerBinding.ANY
-    )
-
-    /**
-     * When this creature becomes blocked.
+     * When this creature becomes blocked. (SELF.)
      */
     val BecomesBlocked: TriggerSpec = TriggerSpec(
         event = BecomesBlockedEvent(),
@@ -332,25 +320,36 @@ object Triggers {
     )
 
     /**
-     * When a creature you control becomes blocked.
+     * Generic "blocks" trigger factory. Use [Blocks] for the SELF-only
+     * unfiltered case; reach for this factory for (filter, binding) variants
+     * like "Whenever a creature you control blocks" (ANY binding + filter).
      */
-    val CreatureYouControlBecomesBlocked: TriggerSpec = TriggerSpec(
-        event = BecomesBlockedEvent(),
-        binding = TriggerBinding.ANY
+    fun blocks(
+        filter: GameObjectFilter? = null,
+        binding: TriggerBinding = TriggerBinding.SELF,
+    ): TriggerSpec = TriggerSpec(
+        event = BlockEvent(filter = filter),
+        binding = binding,
     )
 
     /**
-     * Whenever a creature matching the filter becomes blocked (any controller).
-     * Used for cards like Berserk Murlodont: "Whenever a Beast becomes blocked..."
+     * Generic "becomes blocked" trigger factory. Use [BecomesBlocked] for the
+     * SELF-only unfiltered case; reach for this factory for filtered variants
+     * (Berserk Murlodont: `becomesBlocked(filter = Beast, binding = ANY)`) and
+     * the ANY-binding "a creature you control becomes blocked" shape.
      */
-    fun FilteredBecomesBlocked(filter: GameObjectFilter): TriggerSpec = TriggerSpec(
+    fun becomesBlocked(
+        filter: GameObjectFilter? = null,
+        binding: TriggerBinding = TriggerBinding.SELF,
+    ): TriggerSpec = TriggerSpec(
         event = BecomesBlockedEvent(filter = filter),
-        binding = TriggerBinding.ANY
+        binding = binding,
     )
 
     /**
      * When this creature blocks or becomes blocked by a creature matching the filter.
      * TriggerContext.triggeringEntityId = the combat partner.
+     * Sole consumer of [BlocksOrBecomesBlockedByEvent].
      */
     fun BlocksOrBecomesBlockedBy(filter: GameObjectFilter): TriggerSpec = TriggerSpec(
         event = BlocksOrBecomesBlockedByEvent(partnerFilter = filter),

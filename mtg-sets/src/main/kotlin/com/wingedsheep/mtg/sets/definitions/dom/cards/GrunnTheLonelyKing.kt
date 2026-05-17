@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
+import com.wingedsheep.sdk.scripting.events.AttackPredicate
 import com.wingedsheep.sdk.dsl.DynamicAmounts
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -38,7 +39,7 @@ val GrunnTheLonelyKing = card("Grunn, the Lonely King") {
     }
 
     triggeredAbility {
-        trigger = Triggers.AttacksAlone
+        trigger = Triggers.attacks(requires = setOf(AttackPredicate.Alone))
         effect = Effects.ModifyStats(DynamicAmounts.sourcePower(), DynamicAmounts.sourceToughness(), EffectTarget.Self)
     }
 

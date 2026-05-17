@@ -5,6 +5,8 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.effects.MayEffect
 
@@ -26,7 +28,10 @@ val GustcloakSavior = card("Gustcloak Savior") {
     keywords(Keyword.FLYING)
 
     triggeredAbility {
-        trigger = Triggers.CreatureYouControlBecomesBlocked
+        trigger = Triggers.becomesBlocked(
+            filter = GameObjectFilter.Creature.youControl(),
+            binding = TriggerBinding.ANY,
+        )
         effect = MayEffect(
             Effects.Untap(EffectTarget.TriggeringEntity) then Effects.RemoveFromCombat(EffectTarget.TriggeringEntity)
         )

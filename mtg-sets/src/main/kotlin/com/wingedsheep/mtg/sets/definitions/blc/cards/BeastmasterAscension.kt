@@ -6,7 +6,9 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.ModifyStats
+import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.conditions.Compare
 import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
@@ -33,7 +35,10 @@ val BeastmasterAscension = card("Beastmaster Ascension") {
         "As long as Beastmaster Ascension has seven or more quest counters on it, creatures you control get +5/+5."
 
     triggeredAbility {
-        trigger = Triggers.CreatureYouControlAttacks
+        trigger = Triggers.attacks(
+            filter = GameObjectFilter.Creature.youControl(),
+            binding = TriggerBinding.ANY,
+        )
         optional = true
         effect = Effects.AddCounters(Counters.QUEST, 1, EffectTarget.Self)
     }

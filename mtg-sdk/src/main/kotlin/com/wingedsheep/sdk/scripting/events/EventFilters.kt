@@ -326,3 +326,44 @@ sealed interface SpellCastPredicate {
         override val description = "using mana from a ${subtype.value}"
     }
 }
+
+// =============================================================================
+// Attack Predicates - extensible "facts about an attack declaration" the
+// trigger requires
+// =============================================================================
+
+/**
+ * One required fact about a creature attacking, used by `AttackEvent.requires`
+ * to gate the trigger. The set is conjunctive: every predicate must hold.
+ *
+ * Each new attack-time mechanic (Battalion-style "with N+ attackers",
+ * "with another matching creature", etc.) adds a new sealed-case here +
+ * one branch in the engine matcher. The shape avoids growing `AttackEvent`
+ * with a new boolean / optional field per axis (`alone`, `withAtLeastN`, …).
+ */
+@Serializable
+sealed interface AttackPredicate {
+    val description: String
+
+    /**
+     * The attacker is the only declared attacker this combat.
+     * Equivalent to "attacker count == 1." Used for "attacks alone" cards.
+     */
+    @SerialName("AttacksAlone")
+    @Serializable
+    data object Alone : AttackPredicate {
+        override val description = "alone"
+    }
+
+    /**
+     * At least [n] creatures total were declared as attackers this combat
+     * (counting the attacker the trigger fires for). Battalion shape, where
+     * a creature triggers when it attacks together with two or more others
+     * — `AttackerCountAtLeast(3)` on a `SELF` binding.
+     */
+    @SerialName("AttackerCountAtLeast")
+    @Serializable
+    data class AttackerCountAtLeast(val n: Int) : AttackPredicate {
+        override val description = "with $n or more attackers"
+    }
+}
