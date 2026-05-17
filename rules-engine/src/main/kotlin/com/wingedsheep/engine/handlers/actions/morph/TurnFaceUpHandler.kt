@@ -549,7 +549,7 @@ class TurnFaceUpHandler(
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
 
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, cost.filter, predicateContext)
         }
     }
 
@@ -573,7 +573,7 @@ class TurnFaceUpHandler(
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
 
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, cost.filter, predicateContext)
         }
     }
 
@@ -591,7 +591,7 @@ class TurnFaceUpHandler(
         val predicateContext = PredicateContext(controllerId = playerId)
 
         return hand.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, cardId, cost.filter, predicateContext)
         }
     }
 
@@ -609,7 +609,7 @@ class TurnFaceUpHandler(
         val predicateContext = PredicateContext(controllerId = playerId)
 
         return hand.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, cardId, cost.filter, predicateContext)
         }
     }
 
@@ -627,7 +627,7 @@ class TurnFaceUpHandler(
         val predicateContext = PredicateContext(controllerId = playerId)
 
         return cards.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, cardId, cost.filter, predicateContext)
         }
     }
 

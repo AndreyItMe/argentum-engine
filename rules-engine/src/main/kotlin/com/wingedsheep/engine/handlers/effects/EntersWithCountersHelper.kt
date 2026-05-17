@@ -203,7 +203,7 @@ object EntersWithCountersHelper {
             sourceId = enteringEntityId,
             controllerId = sourceControllerId
         )
-        return predicateEvaluator.matches(state, enteringEntityId, filter, predicateContext)
+        return predicateEvaluator.matches(state, state.projectedState, enteringEntityId, filter, predicateContext)
     }
 
     fun resolveCounterType(filter: CounterTypeFilter): CounterType {

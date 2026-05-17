@@ -650,7 +650,7 @@ object DamageUtils {
                         if (sourceId == null) false
                         else {
                             val context = PredicateContext(controllerId = sourceControllerId)
-                            predicateEvaluator.matchesWithProjection(state, projected, sourceId, source.filter, context)
+                            predicateEvaluator.matches(state, projected, sourceId, source.filter, context)
                         }
                     }
                     else -> false
@@ -666,7 +666,7 @@ object DamageUtils {
                     }
                     is RecipientFilter.Matching -> {
                         val context = PredicateContext(controllerId = sourceControllerId)
-                        predicateEvaluator.matchesWithProjection(state, projected, targetId, recipient.filter, context)
+                        predicateEvaluator.matches(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {
                         val isCreature = state.getEntity(targetId)?.get<CardComponent>()?.typeLine?.isCreature == true
@@ -731,7 +731,7 @@ object DamageUtils {
                         if (sourceId == null) false
                         else {
                             val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
-                            predicateEvaluator.matchesWithProjection(state, projected, sourceId, sourceFilter.filter, context)
+                            predicateEvaluator.matches(state, projected, sourceId, sourceFilter.filter, context)
                         }
                     }
                     else -> false
@@ -743,7 +743,7 @@ object DamageUtils {
                     is RecipientFilter.Any -> true
                     is RecipientFilter.Matching -> {
                         val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
-                        predicateEvaluator.matchesWithProjection(state, projected, targetId, recipient.filter, context)
+                        predicateEvaluator.matches(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {
                         val isCreature = state.getEntity(targetId)?.get<CardComponent>()?.typeLine?.isCreature == true
@@ -777,7 +777,7 @@ object DamageUtils {
                         if (sourceId == null) false
                         else {
                             val context = PredicateContext(controllerId = sourceControllerId)
-                            predicateEvaluator.matchesWithProjection(state, projected, sourceId, sourceFilter.filter, context)
+                            predicateEvaluator.matches(state, projected, sourceId, sourceFilter.filter, context)
                         }
                     }
                     else -> false
@@ -789,7 +789,7 @@ object DamageUtils {
                     is RecipientFilter.Any -> true
                     is RecipientFilter.Matching -> {
                         val context = PredicateContext(controllerId = sourceControllerId)
-                        predicateEvaluator.matchesWithProjection(state, projected, targetId, recipient.filter, context)
+                        predicateEvaluator.matches(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {
                         val isCreature = state.getEntity(targetId)?.get<CardComponent>()?.typeLine?.isCreature == true
@@ -824,7 +824,7 @@ object DamageUtils {
                     }
                     is SourceFilter.Matching -> {
                         val context = PredicateContext(controllerId = playerId)
-                        predicateEvaluator.matchesWithProjection(state, projected, sourceId, filter.filter, context)
+                        predicateEvaluator.matches(state, projected, sourceId, filter.filter, context)
                     }
                     else -> false
                 }

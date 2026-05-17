@@ -463,7 +463,7 @@ class DamageCalculator(
                     }
                     is RecipientFilter.Matching -> {
                         val context = PredicateContext(controllerId = sourceControllerId)
-                        predicateEvaluator.matchesWithProjection(state, projected, targetId, recipient.filter, context)
+                        predicateEvaluator.matches(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {
                         val isCreature = state.getEntity(targetId)?.get<CardComponent>()?.typeLine?.isCreature == true

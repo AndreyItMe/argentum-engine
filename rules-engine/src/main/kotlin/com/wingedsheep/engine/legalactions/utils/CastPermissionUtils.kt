@@ -186,7 +186,7 @@ class CastPermissionUtils(
                 for (ability in cardDef.script.staticAbilities) {
                     if (ability is GrantFlashToSpellType) {
                         if (ability.controllerOnly && playerId != spellOwner) continue
-                        if (predicateEvaluator.matches(state, spellCardId, ability.filter, context)) {
+                        if (predicateEvaluator.matches(state, state.projectedState, spellCardId, ability.filter, context)) {
                             return true
                         }
                     }
@@ -283,7 +283,7 @@ class CastPermissionUtils(
                     is com.wingedsheep.sdk.scripting.filters.unified.Scope.Battlefield -> {
                         if (ability.filter.excludeSelf && permanentId == entityId) continue
                         val granterController = state.projectedState.getController(permanentId) ?: continue
-                        val matches = predicateEvaluator.matchesWithProjection(
+                        val matches = predicateEvaluator.matches(
                             state,
                             state.projectedState,
                             entityId,

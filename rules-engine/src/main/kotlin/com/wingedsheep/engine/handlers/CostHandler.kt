@@ -291,7 +291,7 @@ class CostHandler(
                         ?: return CostPaymentResult.failure("Sacrifice target has no controller")
                     val sacrificeName = sacrificeContainer.get<CardComponent>()?.name ?: "Unknown"
 
-                    if (!predicateEvaluator.matchesWithProjection(state, projected, toSacrifice, sacrificeFilter, context)) {
+                    if (!predicateEvaluator.matches(state, projected, toSacrifice, sacrificeFilter, context)) {
                         return CostPaymentResult.failure("Sacrifice target does not match the required filter")
                     }
                     // Validate excludeSelf: "sacrifice another creature" cannot sacrifice the source
@@ -444,7 +444,7 @@ class CostHandler(
                         ?: return CostPaymentResult.failure("Bounce target not found")
 
                     // Validate the chosen bounce target matches the required filter
-                    if (!predicateEvaluator.matches(newState, toBounce, cost.filter, context)) {
+                    if (!predicateEvaluator.matches(newState, newState.projectedState, toBounce, cost.filter, context)) {
                         return CostPaymentResult.failure("Bounce target does not match the required filter")
                     }
 
@@ -692,10 +692,10 @@ class CostHandler(
                 val projected = state.projectedState
                 val predicateContext = PredicateContext(controllerId = controllerId)
                 val hasBattlefieldMatch = projected.getBattlefieldControlledBy(controllerId).any { permId ->
-                    predicateEvaluator.matchesWithProjection(state, projected, permId, cost.filter, predicateContext)
+                    predicateEvaluator.matches(state, projected, permId, cost.filter, predicateContext)
                 }
                 val hasHandMatch = state.getHand(controllerId).any { cardId ->
-                    predicateEvaluator.matches(state, cardId, cost.filter, predicateContext)
+                    predicateEvaluator.matches(state, state.projectedState, cardId, cost.filter, predicateContext)
                 }
                 hasBattlefieldMatch || hasHandMatch
             }
@@ -765,9 +765,9 @@ class CostHandler(
         return cost.zoneFilters.flatMap { (zone, filter) ->
             when (zone) {
                 Zone.BATTLEFIELD -> projected.getBattlefieldControlledBy(controllerId)
-                    .filter { predicateEvaluator.matchesWithProjection(state, projected, it, filter, ctx) }
+                    .filter { predicateEvaluator.matches(state, projected, it, filter, ctx) }
                 else -> state.getZone(ZoneKey(controllerId, zone))
-                    .filter { predicateEvaluator.matches(state, it, filter, ctx) }
+                    .filter { predicateEvaluator.matches(state, state.projectedState, it, filter, ctx) }
             }
         }
     }
@@ -965,7 +965,7 @@ class CostHandler(
             if (container.get<ControllerComponent>()?.playerId != controllerId) {
                 return CostPaymentResult.failure("Cannot remove counters from a permanent you don't control")
             }
-            if (!predicateEvaluator.matchesWithProjection(state, projected, permId, filter, context)) {
+            if (!predicateEvaluator.matches(state, projected, permId, filter, context)) {
                 return CostPaymentResult.failure("Permanent does not match the cost's filter")
             }
             val available = container.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
@@ -993,7 +993,7 @@ class CostHandler(
         val projected = state.projectedState
         return state.entities.filter { (entityId, container) ->
             container.get<ControllerComponent>()?.playerId == controllerId &&
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter, context)
         }.keys.toList()
     }
 
@@ -1007,7 +1007,7 @@ class CostHandler(
         return state.entities.filter { (entityId, container) ->
             container.get<ControllerComponent>()?.playerId == controllerId &&
             !container.has<TappedComponent>() &&
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter, context)
         }.keys.toList()
     }
 
@@ -1020,7 +1020,7 @@ class CostHandler(
         val context = PredicateContext(controllerId = controllerId)
         val projected = state.projectedState
         return cardIds.filter { cardId ->
-            predicateEvaluator.matchesWithProjection(state, projected, cardId, filter, context)
+            predicateEvaluator.matches(state, projected, cardId, filter, context)
         }
     }
 

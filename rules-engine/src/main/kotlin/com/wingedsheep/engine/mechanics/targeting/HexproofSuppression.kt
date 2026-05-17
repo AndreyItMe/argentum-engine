@@ -36,7 +36,7 @@ object HexproofSuppression {
                 when {
                     groupFilter.scope !is Scope.Battlefield -> false
                     groupFilter.excludeSelf && targetId == suppressorId -> false
-                    else -> predicateEvaluator.matchesWithProjection(
+                    else -> predicateEvaluator.matches(
                         state, projected, targetId, groupFilter.baseFilter, ctx
                     )
                 }

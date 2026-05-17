@@ -101,12 +101,23 @@ class TriggerMatcher(
                         sourceId = sourceId
                     )
                     val matchingCount = event.attackers.count { attackerId ->
-                        predicateEvaluator.matchesWithProjection(state, projected, attackerId, filter, predicateContext)
+                        predicateEvaluator.matches(state, projected, attackerId, filter, predicateContext)
                     }
                     matchingCount >= trigger.minAttackers
                 } else {
                     event.attackers.size >= trigger.minAttackers
                 }
+            }
+            is GameEvent.CreaturesAttackYouEvent -> {
+                if (event !is AttackersDeclaredEvent) return false
+                // Only count attackers declared against the player themself, not against
+                // a planeswalker they control (per CR 509.1b / Orim's Prayer ruling).
+                val attackingThisPlayer = event.attackers.count { attackerId ->
+                    val attackingComponent = state.getEntity(attackerId)
+                        ?.get<com.wingedsheep.engine.state.components.combat.AttackingComponent>()
+                    attackingComponent?.defenderId == controllerId
+                }
+                attackingThisPlayer >= trigger.minAttackers
             }
             is GameEvent.BlockEvent -> {
                 event is BlockersDeclaredEvent &&
@@ -284,7 +295,7 @@ class TriggerMatcher(
                         sourceId = sourceId
                     )
                     val predicateEvaluator = PredicateEvaluator()
-                    if (!predicateEvaluator.matchesWithProjection(state, projected, event.entityId, trigger.filter, predicateContext)) {
+                    if (!predicateEvaluator.matches(state, projected, event.entityId, trigger.filter, predicateContext)) {
                         return false
                     }
                 }
@@ -732,7 +743,7 @@ class TriggerMatcher(
                 controllerId = controllerId ?: EntityId(""),
                 sourceId = null
             )
-            predicateEvaluator.matchesWithProjection(
+            predicateEvaluator.matches(
                 state, state.projectedState, event.sourceId, trigger.sourceFilter!!, predicateContext
             )
         } else {
@@ -782,7 +793,7 @@ class TriggerMatcher(
             controllerId = event.casterId,
             sourceId = triggerSourceId
         )
-        return predicateEvaluator.matches(state, event.spellEntityId, spellFilter, context)
+        return predicateEvaluator.matches(state, state.projectedState, event.spellEntityId, spellFilter, context)
     }
 
     /**

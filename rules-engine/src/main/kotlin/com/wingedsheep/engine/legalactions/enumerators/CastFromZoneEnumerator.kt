@@ -215,10 +215,10 @@ class CastFromZoneEnumerator : ActionEnumerator {
         // Non-land spell on top of library
         val topCardMatchesFilter = canPlayAllFromTop ||
             (castFromTopFilter != null && context.predicateEvaluator.matches(
-                state, topCardId, castFromTopFilter, PredicateContext(controllerId = playerId)
+                state, state.projectedState, topCardId, castFromTopFilter, PredicateContext(controllerId = playerId)
             )) ||
             (castFilteredFromTopFilter != null && context.predicateEvaluator.matches(
-                state, topCardId, castFilteredFromTopFilter, PredicateContext(controllerId = playerId)
+                state, state.projectedState, topCardId, castFilteredFromTopFilter, PredicateContext(controllerId = playerId)
             ))
 
         if (!topCardComponent.typeLine.isLand && topCardMatchesFilter) {
@@ -1070,10 +1070,10 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 val projected = state.projectedState
                 val predicateContext = PredicateContext(controllerId = playerId)
                 val battlefieldMatches = projected.getBattlefieldControlledBy(playerId).filter { permId ->
-                    context.predicateEvaluator.matchesWithProjection(state, projected, permId, beholdCost.filter, predicateContext)
+                    context.predicateEvaluator.matches(state, projected, permId, beholdCost.filter, predicateContext)
                 }
                 val handMatches = state.getZone(ZoneKey(playerId, Zone.HAND)).filter { id ->
-                    context.predicateEvaluator.matches(state, id, beholdCost.filter, predicateContext)
+                    context.predicateEvaluator.matches(state, state.projectedState, id, beholdCost.filter, predicateContext)
                 }
                 val validTargets = battlefieldMatches + handMatches
                 val description = beholdCost.description
@@ -1444,7 +1444,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
 
                 // Check if card matches filter
                 if (!context.predicateEvaluator.matches(
-                        state, cardId, permission.filter,
+                        state, state.projectedState, cardId, permission.filter,
                         PredicateContext(controllerId = playerId)
                     )
                 ) continue

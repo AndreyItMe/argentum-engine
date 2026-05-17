@@ -173,12 +173,12 @@ class CastSpellEnumerator : ActionEnumerator {
                         val projected = state.projectedState
                         val predicateContext = PredicateContext(controllerId = playerId)
                         val battlefieldMatches = projected.getBattlefieldControlledBy(playerId).filter { permId ->
-                            context.predicateEvaluator.matchesWithProjection(state, projected, permId, cost.filter, predicateContext)
+                            context.predicateEvaluator.matches(state, projected, permId, cost.filter, predicateContext)
                         }
                         val handZone = ZoneKey(playerId, Zone.HAND)
                         val handMatches = state.getZone(handZone)
                             .filter { it != cardId } // Exclude the card being cast
-                            .filter { context.predicateEvaluator.matches(state, it, cost.filter, predicateContext) }
+                            .filter { context.predicateEvaluator.matches(state, state.projectedState, it, cost.filter, predicateContext) }
                         val allTargets = battlefieldMatches + handMatches
                         if (allTargets.size < cost.count) {
                             canPayAdditionalCosts = false
@@ -197,7 +197,7 @@ class CastSpellEnumerator : ActionEnumerator {
                         val validDiscards = if (cost.filter == com.wingedsheep.sdk.scripting.GameObjectFilter.Any) {
                             handCards
                         } else {
-                            handCards.filter { context.predicateEvaluator.matches(state, it, cost.filter, predicateContext) }
+                            handCards.filter { context.predicateEvaluator.matches(state, state.projectedState, it, cost.filter, predicateContext) }
                         }
                         if (validDiscards.size < cost.count) {
                             canPayAdditionalCosts = false
@@ -235,12 +235,12 @@ class CastSpellEnumerator : ActionEnumerator {
                         val projected = state.projectedState
                         val predicateContext = PredicateContext(controllerId = playerId)
                         val battlefieldMatches = projected.getBattlefieldControlledBy(playerId).filter { permId ->
-                            context.predicateEvaluator.matchesWithProjection(state, projected, permId, cost.filter, predicateContext)
+                            context.predicateEvaluator.matches(state, projected, permId, cost.filter, predicateContext)
                         }
                         val handZone = ZoneKey(playerId, Zone.HAND)
                         val handMatches = state.getZone(handZone)
                             .filter { it != cardId } // Exclude the card being cast
-                            .filter { context.predicateEvaluator.matches(state, it, cost.filter, predicateContext) }
+                            .filter { context.predicateEvaluator.matches(state, state.projectedState, it, cost.filter, predicateContext) }
                         beholdOrPayTargets = battlefieldMatches + handMatches
                     }
                     is AdditionalCost.ChooseEntity -> {
@@ -253,7 +253,7 @@ class CastSpellEnumerator : ActionEnumerator {
                             when (zone) {
                                 Zone.BATTLEFIELD -> projected.getBattlefieldControlledBy(playerId)
                                     .filter {
-                                        context.predicateEvaluator.matchesWithProjection(
+                                        context.predicateEvaluator.matches(
                                             state, projected, it, filter, predicateContext
                                         )
                                     }
@@ -261,7 +261,7 @@ class CastSpellEnumerator : ActionEnumerator {
                                     .filter { it != cardId } // exclude the spell being cast
                                     .filter {
                                         context.predicateEvaluator.matches(
-                                            state, it, filter, predicateContext
+                                            state, state.projectedState, it, filter, predicateContext
                                         )
                                     }
                             }
@@ -1501,7 +1501,7 @@ class CastSpellEnumerator : ActionEnumerator {
                         val validDiscards = if (cost.filter == com.wingedsheep.sdk.scripting.GameObjectFilter.Any) {
                             handCards
                         } else {
-                            handCards.filter { context.predicateEvaluator.matches(state, it, cost.filter, predicateContext) }
+                            handCards.filter { context.predicateEvaluator.matches(state, state.projectedState, it, cost.filter, predicateContext) }
                         }
                         if (validDiscards.size < cost.count) canPayAdditionalCosts = false
                         modeDiscardTargets = validDiscards

@@ -234,7 +234,7 @@ class CostCalculator(
                     attached != null && targetId == attached
                 }
                 is Scope.Battlefield ->
-                    predicateEvaluator.matchesWithProjection(state, projected, targetId, targetFilter.baseFilter, context)
+                    predicateEvaluator.matches(state, projected, targetId, targetFilter.baseFilter, context)
             }
         }
     }
@@ -373,7 +373,7 @@ class CostCalculator(
         val projected = state.projectedState
         val context = PredicateContext(controllerId = playerId)
         return state.getBattlefield().count { entityId ->
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter, context)
         }
     }
 
@@ -471,7 +471,7 @@ class CostCalculator(
         val projected = state.projectedState
         val context = PredicateContext(controllerId = playerId)
         return targets.any { entityId ->
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter, context)
         }
     }
 
@@ -487,7 +487,7 @@ class CostCalculator(
         val projected = state.projectedState
         val context = PredicateContext(controllerId = playerId)
         for (entityId in state.getBattlefield()) {
-            if (predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)) {
+            if (predicateEvaluator.matches(state, projected, entityId, filter, context)) {
                 return entityId
             }
         }

@@ -34,7 +34,7 @@ object BattlefieldFilterUtils {
         val projected = state.projectedState
         return state.getBattlefield().filter { entityId ->
             if (excludeSelfId != null && entityId == excludeSelfId) return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter, context)
         }
     }
 

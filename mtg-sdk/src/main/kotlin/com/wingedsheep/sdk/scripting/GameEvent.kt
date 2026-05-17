@@ -392,6 +392,29 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
+     * When one or more creatures attack the trigger's controller (the player).
+     * Defender side of [YouAttackEvent]: fires once per [com.wingedsheep.engine.core.AttackersDeclaredEvent]
+     * when at least [minAttackers] declared attackers have the trigger's controller as their defender.
+     *
+     * Per CR 509.1b and the Orim's Prayer ruling, creatures attacking a planeswalker controlled
+     * by the trigger's controller do **not** count toward this trigger — only attackers
+     * declared against the player themself.
+     */
+    @SerialName("CreaturesAttackYouEvent")
+    @Serializable
+    data class CreaturesAttackYouEvent(
+        val minAttackers: Int = 1
+    ) : GameEvent {
+        override val description: String = if (minAttackers <= 1) {
+            "one or more creatures attack you"
+        } else {
+            "$minAttackers or more creatures attack you"
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    }
+
+    /**
      * When a creature blocks.
      * Binding SELF = "when this creature blocks".
      * Binding ANY + filter = "whenever a [filter] blocks" — fires once per matching blocker.

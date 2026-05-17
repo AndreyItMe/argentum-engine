@@ -68,7 +68,7 @@ class ExileFromTopRepeatingExecutor : EffectExecutor<ExileFromTopRepeatingEffect
             for (cardId in library) {
                 allExiled.add(cardId)
 
-                if (predicateEvaluator.matches(currentState, cardId, effect.matchFilter, predicateContext)) {
+                if (predicateEvaluator.matches(currentState, currentState.projectedState, cardId, effect.matchFilter, predicateContext)) {
                     matchCard = cardId
                     break
                 }

@@ -453,7 +453,7 @@ class TriggerAbilityResolver(
                 when {
                     groupFilter.scope !is com.wingedsheep.sdk.scripting.filters.unified.Scope.Battlefield -> false
                     groupFilter.excludeSelf && entityId == suppressorId -> false
-                    else -> predicateEvaluator.matchesWithProjection(
+                    else -> predicateEvaluator.matches(
                         state, projected, entityId, groupFilter.baseFilter, ctx
                     )
                 }

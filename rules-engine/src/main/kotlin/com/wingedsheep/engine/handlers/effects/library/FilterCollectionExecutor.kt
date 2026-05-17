@@ -72,7 +72,7 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
             is CollectionFilter.MatchesFilter -> {
                 val predicateContext = PredicateContext.fromEffectContext(context)
                 cards.partition { cardId ->
-                    predicateEvaluator.matchesWithProjection(state, projected, cardId, filter.filter, predicateContext)
+                    predicateEvaluator.matches(state, projected, cardId, filter.filter, predicateContext)
                 }
             }
 

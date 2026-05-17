@@ -1084,7 +1084,7 @@ class ManaPaymentContinuationResumer(
             .filter { candidate ->
                 candidate != headSourceId &&
                     state.getEntity(candidate)?.has<TappedComponent>() == false &&
-                    predicateEvaluator.matchesWithProjection(state, projected, candidate, subCost.filter, predicateContext)
+                    predicateEvaluator.matches(state, projected, candidate, subCost.filter, predicateContext)
             }
 
         if (options.size < subCost.count) {
@@ -1175,7 +1175,7 @@ class ManaPaymentContinuationResumer(
             if (container.has<TappedComponent>()) {
                 return ExecutionResult.error(state, "Chosen permanent is already tapped")
             }
-            if (!predicateEvaluator.matchesWithProjection(state, projected, chosen, subCost.filter, predicateContext)) {
+            if (!predicateEvaluator.matches(state, projected, chosen, subCost.filter, predicateContext)) {
                 return ExecutionResult.error(state, "Chosen permanent does not match ${sourceOption.name}'s tap requirement")
             }
         }

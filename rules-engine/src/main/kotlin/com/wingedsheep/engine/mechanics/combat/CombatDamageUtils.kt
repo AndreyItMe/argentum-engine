@@ -103,7 +103,7 @@ internal object CombatDamageUtils {
             // Defer the full filter check (controller, type, subtype, keywords, state) to the
             // shared PredicateEvaluator so new battlefield-scope uses (e.g. "Each Equipment-
             // bearing creature you control") are honored without per-call special-casing.
-            if (!predicateEvaluator.matchesWithProjection(state, projected, creatureId, unwrapped.filter.baseFilter, predicateContext)) continue
+            if (!predicateEvaluator.matches(state, projected, creatureId, unwrapped.filter.baseFilter, predicateContext)) continue
             return true
         }
         return false

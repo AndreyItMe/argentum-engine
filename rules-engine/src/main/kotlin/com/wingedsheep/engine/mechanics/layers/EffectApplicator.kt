@@ -267,7 +267,7 @@ internal class EffectApplicator(
                 val intermediateProjected = buildIntermediateProjectedState(state, projectedValues)
                 state.getBattlefield(controllerId).any { entityId ->
                     if (condition.excludeSelf && entityId == effect.sourceId) return@any false
-                    predicateEvaluator.matchesWithProjection(state, intermediateProjected, entityId, condition.filter, PredicateContext(controllerId = controllerId))
+                    predicateEvaluator.matches(state, intermediateProjected, entityId, condition.filter, PredicateContext(controllerId = controllerId))
                 }
             } else false
         }
@@ -276,7 +276,7 @@ internal class EffectApplicator(
             val intermediateProjected = buildIntermediateProjectedState(state, projectedValues)
             val controllerId = sourceValues?.controllerId ?: effect.sourceId
             state.getBattlefield().any { entityId ->
-                predicateEvaluator.matchesWithProjection(state, intermediateProjected, entityId, condition.filter, PredicateContext(controllerId = controllerId))
+                predicateEvaluator.matches(state, intermediateProjected, entityId, condition.filter, PredicateContext(controllerId = controllerId))
             }
         }
         is SourceProjectionCondition.SourceEnteredThisTurn ->
@@ -331,7 +331,7 @@ internal class EffectApplicator(
                     val predicateContext = PredicateContext(controllerId = controllerId)
                     var matches = 0
                     for (id in attackerIds) {
-                        if (predicateEvaluator.matchesWithProjection(state, intermediateProjected, id, condition.filter, predicateContext)) {
+                        if (predicateEvaluator.matches(state, intermediateProjected, id, condition.filter, predicateContext)) {
                             matches++
                             if (matches >= condition.atLeast) break
                         }

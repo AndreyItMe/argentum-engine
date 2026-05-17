@@ -1213,7 +1213,7 @@ class ActivateAbilityHandler(
             for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
                 if (ability !is AdditionalSourceTriggers) continue
                 if (ability.excludeSelf && permanentId == triggerSourceId) continue
-                if (!predicateEvaluator.matchesWithProjection(
+                if (!predicateEvaluator.matches(
                         state, projected, triggerSourceId, ability.sourceFilter,
                         PredicateContext(controllerId = controllerId, sourceId = permanentId)
                     )
@@ -1392,7 +1392,7 @@ class ActivateAbilityHandler(
                 // `youControl` on the source filter means "controlled by you, the static
                 // controller" — see AdditionalManaOnSourceTap kdoc.
                 val filterContext = PredicateContext(controllerId = staticController, sourceId = entityId)
-                if (!predicateEvaluator.matchesWithProjection(
+                if (!predicateEvaluator.matches(
                         currentState, currentState.projectedState, sourceId, onSourceTap.sourceFilter, filterContext
                     )) continue
 
@@ -1540,7 +1540,7 @@ class ActivateAbilityHandler(
                     is Scope.Battlefield -> {
                         if (ability.filter.excludeSelf && permanentId == entityId) continue
                         val granterController = state.projectedState.getController(permanentId) ?: continue
-                        val matches = predicateEvaluator.matchesWithProjection(
+                        val matches = predicateEvaluator.matches(
                             state,
                             state.projectedState,
                             entityId,

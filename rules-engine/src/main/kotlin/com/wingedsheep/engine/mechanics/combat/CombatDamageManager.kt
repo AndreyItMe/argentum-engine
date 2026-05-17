@@ -1084,7 +1084,7 @@ internal class CombatDamageManager(
             if (modification is SerializableModification.PreventCombatDamageFromGroup) {
                 val controllerId = floatingEffect.controllerId
                 val predicateContext = PredicateContext(controllerId = controllerId)
-                predicateEvaluator.matchesWithProjection(
+                predicateEvaluator.matches(
                     state, projected, creatureId, modification.filter, predicateContext
                 )
             } else {

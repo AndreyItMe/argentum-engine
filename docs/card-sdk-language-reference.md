@@ -586,6 +586,10 @@ For modal spells, prefer the explicit `targetPlayerControls(target)` DSL form; p
 - `NontokenCreatureYouControlAttacks` — same, nontoken.
 - `YouAttack` — when you declare attackers (player-level).
 - `YouAttackWithFilter(filter)` — when you attack with ≥1 matching attacker.
+- `CreaturesAttackYou` — when one or more creatures attack you (defender side; fires once
+  per `AttackersDeclaredEvent`, not per attacker). Excludes creatures attacking a planeswalker
+  you control, per CR 509.1b. Pair with `DynamicAmounts.creaturesAttackingYou()` if the
+  payoff scales with the attacker count (e.g., Orim's Prayer).
 - `Blocks` — when source blocks.
 - `CreatureYouControlBlocks` — your creature blocks.
 - `BecomesBlocked` — when source becomes blocked.

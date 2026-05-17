@@ -289,7 +289,7 @@ class CastZoneResolver(
                     if (ability is GrantFlashToSpellType) {
                         // If controllerOnly, only the permanent's controller benefits
                         if (ability.controllerOnly && playerId != spellOwner) continue
-                        if (predicateEvaluator.matches(state, spellCardId, ability.filter, context)) {
+                        if (predicateEvaluator.matches(state, state.projectedState, spellCardId, ability.filter, context)) {
                             return true
                         }
                     }

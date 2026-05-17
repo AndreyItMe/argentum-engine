@@ -659,7 +659,7 @@ class StackResolver(
                 val copyFilter = entersAsCopy.copyFilter
                 var candidates = state.getBattlefield().filter { entityId ->
                     predicateEvaluator.matches(
-                        state, entityId, copyFilter,
+                        state, state.projectedState, entityId, copyFilter,
                         PredicateContext(controllerId = controllerId)
                     )
                 }
@@ -741,7 +741,7 @@ class StackResolver(
                 val revealZone = ZoneKey(controllerId, revealCountersEffect.revealSource)
                 val predicateContext = PredicateContext(controllerId = controllerId, sourceId = spellId)
                 val validCards = state.getZone(revealZone).filter { cardId ->
-                    predicateEvaluator.matches(state, cardId, revealCountersEffect.filter, predicateContext)
+                    predicateEvaluator.matches(state, state.projectedState, cardId, revealCountersEffect.filter, predicateContext)
                 }
 
                 if (validCards.isNotEmpty()) {
@@ -1918,7 +1918,7 @@ class StackResolver(
                     val requirement = getRequirementForTargetIndex(index, targetRequirements)
                     val filter = extractTargetFilter(requirement)
                     if (filter != null) {
-                        if (!predicateEvaluator.matchesWithProjection(
+                        if (!predicateEvaluator.matches(
                                 state, projected, target.entityId, filter.baseFilter, predicateContext
                             )
                         ) {
@@ -2082,7 +2082,7 @@ class StackResolver(
                 val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
                 for (ability in def.staticAbilities) {
                     if (ability is GrantCantBeCountered) {
-                        if (predicateEvaluator.matches(state, spellId, ability.filter, context)) {
+                        if (predicateEvaluator.matches(state, state.projectedState, spellId, ability.filter, context)) {
                             return true
                         }
                     }
@@ -2103,7 +2103,7 @@ class StackResolver(
             if (component != null) {
                 val context = PredicateContext(controllerId = spellController, sourceId = spellController)
                 for (filter in component.filters) {
-                    if (predicateEvaluator.matches(state, spellId, filter, context)) {
+                    if (predicateEvaluator.matches(state, state.projectedState, spellId, filter, context)) {
                         return true
                     }
                 }

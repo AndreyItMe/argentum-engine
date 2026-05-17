@@ -139,18 +139,18 @@ class ModifiedCreatureFilterEquipmentAurasCountersTest : FunSpec({
         val projected = state.projectedState
 
         // C1: equipment attached — should match
-        evaluator.matchesWithProjection(state, projected, c1Id, modifiedFilter, context) shouldBe true
+        evaluator.matches(state, projected, c1Id, modifiedFilter, context) shouldBe true
 
         // C2: aura attached — should match
-        evaluator.matchesWithProjection(state, projected, c2Id, modifiedFilter, context) shouldBe true
+        evaluator.matches(state, projected, c2Id, modifiedFilter, context) shouldBe true
 
         // C3: +1/+1 counter — should match
-        evaluator.matchesWithProjection(state, projected, c3Id, modifiedFilter, context) shouldBe true
+        evaluator.matches(state, projected, c3Id, modifiedFilter, context) shouldBe true
 
         // C4: vanilla, nothing attached, no counters — should NOT match
-        evaluator.matchesWithProjection(state, projected, c4Id, modifiedFilter, context) shouldBe false
+        evaluator.matches(state, projected, c4Id, modifiedFilter, context) shouldBe false
 
         // C5: not controlled by playerA — should NOT match even though playerA's aura is attached
-        evaluator.matchesWithProjection(state, projected, c5Id, modifiedFilter, context) shouldBe false
+        evaluator.matches(state, projected, c5Id, modifiedFilter, context) shouldBe false
     }
 })

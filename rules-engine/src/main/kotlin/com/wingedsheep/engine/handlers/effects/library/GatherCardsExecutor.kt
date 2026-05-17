@@ -61,7 +61,7 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 if (source.filter != GameObjectFilter.Any) {
                     val predicateContext = PredicateContext.fromEffectContext(context)
                     allCards.filter { cardId ->
-                        predicateEvaluator.matches(state, cardId, source.filter, predicateContext)
+                        predicateEvaluator.matches(state, state.projectedState, cardId, source.filter, predicateContext)
                     }
                 } else {
                     allCards
@@ -77,7 +77,7 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 if (source.filter != GameObjectFilter.Any) {
                     val predicateContext = PredicateContext.fromEffectContext(context)
                     allCards.filter { cardId ->
-                        predicateEvaluator.matches(state, cardId, source.filter, predicateContext)
+                        predicateEvaluator.matches(state, state.projectedState, cardId, source.filter, predicateContext)
                     }
                 } else {
                     allCards
@@ -100,7 +100,7 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 if (source.filter != GameObjectFilter.Any) {
                     val predicateContext = PredicateContext.fromEffectContext(context)
                     controlled.filter { cardId ->
-                        predicateEvaluator.matches(state, cardId, source.filter, predicateContext)
+                        predicateEvaluator.matches(state, state.projectedState, cardId, source.filter, predicateContext)
                     }
                 } else {
                     controlled

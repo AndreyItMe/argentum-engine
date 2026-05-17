@@ -429,9 +429,9 @@ class DynamicAmountEvaluator(
 
             entities.count { entityId ->
                 if (projected != null) {
-                    predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+                    predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
                 } else {
-                    predicateEvaluator.matches(state, entityId, filter, predicateContext)
+                    predicateEvaluator.matches(state, state.projectedState, entityId, filter, predicateContext)
                 }
             }
         }
@@ -465,9 +465,9 @@ class DynamicAmountEvaluator(
                 }
                 .filter { entityId ->
                     if (projected != null) {
-                        predicateEvaluator.matchesWithProjection(state, projected, entityId, amount.filter, predicateContext)
+                        predicateEvaluator.matches(state, projected, entityId, amount.filter, predicateContext)
                     } else {
-                        predicateEvaluator.matches(state, entityId, amount.filter, predicateContext)
+                        predicateEvaluator.matches(state, state.projectedState, entityId, amount.filter, predicateContext)
                     }
                 }
         }
@@ -532,7 +532,7 @@ class DynamicAmountEvaluator(
         val matchingEntities = playerIds.flatMap { playerId ->
             state.getZone(ZoneKey(playerId, amount.zone))
                 .filter { entityId ->
-                    predicateEvaluator.matches(state, entityId, amount.filter, predicateContext)
+                    predicateEvaluator.matches(state, state.projectedState, entityId, amount.filter, predicateContext)
                 }
         }
 

@@ -55,7 +55,7 @@ class MayRevealCardFromHandEffectExecutor(
             targetOpponentId = context.opponentId,
         )
         val eligible = handCards.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, effect.filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, cardId, effect.filter, predicateContext)
         }
 
         if (eligible.isEmpty()) {

@@ -157,7 +157,7 @@ class ChangeTargetExecutor : EffectExecutor<ChangeTargetEffect> {
                 val predContext = PredicateContext(controllerId = controllerId)
                 state.getBattlefield().filter { entityId ->
                     entityId != currentTargetId &&
-                        predicateEvaluator.matches(state, entityId, requirement.filter.baseFilter, predContext)
+                        predicateEvaluator.matches(state, state.projectedState, entityId, requirement.filter.baseFilter, predContext)
                 }
             }
 

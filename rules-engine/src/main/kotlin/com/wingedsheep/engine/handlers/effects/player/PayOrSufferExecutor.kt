@@ -574,7 +574,7 @@ class PayOrSufferExecutor(
         val context = PredicateContext(controllerId = playerId)
 
         return hand.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, filter, context)
+            predicateEvaluator.matches(state, state.projectedState, cardId, filter, context)
         }
     }
 
@@ -596,7 +596,7 @@ class PayOrSufferExecutor(
         val cards = state.getZone(zoneKey)
         val context = PredicateContext(controllerId = playerId)
         return cards.filter { cardId ->
-            predicateEvaluator.matches(state, cardId, filter, context)
+            predicateEvaluator.matches(state, state.projectedState, cardId, filter, context)
         }
     }
 
@@ -760,7 +760,7 @@ class PayOrSufferExecutor(
 
             // Filter valid cards
             val validCards = hand.filter { cardId ->
-                predicateEvaluatorStatic.matches(state, cardId, filter, context)
+                predicateEvaluatorStatic.matches(state, state.projectedState, cardId, filter, context)
             }
 
             if (validCards.isEmpty()) {

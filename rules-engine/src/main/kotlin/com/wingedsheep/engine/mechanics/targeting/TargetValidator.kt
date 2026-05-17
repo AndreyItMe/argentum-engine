@@ -292,7 +292,7 @@ class TargetValidator {
         // Use unified filter with projection (face-down creatures have CMC 0 per Rule 708.2)
         val projected = state.projectedState
         val predicateContext = PredicateContext(controllerId = casterId, sourceId = sourceId, xValue = xValue)
-        val matches = predicateEvaluator.matchesWithProjection(state, projected, target.entityId, filter.baseFilter, predicateContext)
+        val matches = predicateEvaluator.matches(state, projected, target.entityId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
         }
@@ -472,7 +472,7 @@ class TargetValidator {
 
         // Use unified filter - OwnedByYou predicate handles "your graveyard" restriction
         val predicateContext = PredicateContext(controllerId = casterId, ownerId = target.ownerId, sourceId = sourceId, xValue = xValue)
-        val matches = predicateEvaluator.matches(state, target.cardId, filter.baseFilter, predicateContext)
+        val matches = predicateEvaluator.matches(state, state.projectedState, target.cardId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
         }
@@ -495,7 +495,7 @@ class TargetValidator {
 
         // Use unified filter with projected state (face-down spells need projection to be seen as creatures)
         val predicateContext = PredicateContext(controllerId = casterId, xValue = xValue)
-        val matches = predicateEvaluator.matchesWithProjection(state, state.projectedState, target.spellEntityId, filter.baseFilter, predicateContext)
+        val matches = predicateEvaluator.matches(state, state.projectedState, target.spellEntityId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
         }
@@ -546,7 +546,7 @@ class TargetValidator {
                 if (filter != null) {
                     val projected = state.projectedState
                     val context = PredicateContext(controllerId = casterId, sourceId = sourceId, xValue = xValue)
-                    if (!predicateEvaluator.matchesWithProjection(state, projected, target.entityId, filter, context)) {
+                    if (!predicateEvaluator.matches(state, projected, target.entityId, filter, context)) {
                         return "Target does not match ${filter.description}"
                     }
                 }
@@ -588,7 +588,7 @@ class TargetValidator {
         }
 
         val predicateContext = PredicateContext(controllerId = casterId, ownerId = target.ownerId, xValue = xValue)
-        val matches = predicateEvaluator.matches(state, target.cardId, filter.baseFilter, predicateContext)
+        val matches = predicateEvaluator.matches(state, state.projectedState, target.cardId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
         }

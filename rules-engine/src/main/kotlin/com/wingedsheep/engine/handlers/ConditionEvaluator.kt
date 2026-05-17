@@ -224,7 +224,7 @@ class ConditionEvaluator {
                 entities.isNotEmpty()
             } else {
                 entities.any { entityId ->
-                    predicateEvaluator.matchesWithProjection(state, projected, entityId, condition.filter, predicateContext)
+                    predicateEvaluator.matches(state, projected, entityId, condition.filter, predicateContext)
                 }
             }
         }
@@ -424,7 +424,7 @@ class ConditionEvaluator {
         val projected = state.projectedState
         var matches = 0
         for (id in attackerIds) {
-            if (predicateEvaluator.matchesWithProjection(state, projected, id, condition.filter, predicateContext)) {
+            if (predicateEvaluator.matches(state, projected, id, condition.filter, predicateContext)) {
                 matches++
                 if (matches >= condition.atLeast) return true
             }
@@ -561,7 +561,7 @@ class ConditionEvaluator {
         val predicateEvaluator = PredicateEvaluator()
         val predicateContext = PredicateContext.fromEffectContext(context)
         val projected = state.projectedState
-        return predicateEvaluator.matchesWithProjection(state, projected, entityId, condition.filter, predicateContext)
+        return predicateEvaluator.matches(state, projected, entityId, condition.filter, predicateContext)
     }
 
     private fun evaluateFirstSpellOfType(
@@ -646,7 +646,7 @@ class ConditionEvaluator {
         val predicateEvaluator = PredicateEvaluator()
         val predicateContext = PredicateContext.fromEffectContext(context)
         return collection.any { entityId ->
-            predicateEvaluator.matches(state, entityId, condition.filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, entityId, condition.filter, predicateContext)
         }
     }
 }

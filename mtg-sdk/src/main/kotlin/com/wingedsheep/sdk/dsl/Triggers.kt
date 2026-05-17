@@ -313,6 +313,17 @@ object Triggers {
     )
 
     /**
+     * When one or more creatures attack you.
+     * Fires once per combat (not per attacker) when the trigger's controller is
+     * declared as defender for at least one creature.
+     * Example: "Whenever one or more creatures attack you, ..." (Orim's Prayer).
+     */
+    val CreaturesAttackYou: TriggerSpec = TriggerSpec(
+        event = CreaturesAttackYouEvent(minAttackers = 1),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * When this creature blocks.
      */
     val Blocks: TriggerSpec = TriggerSpec(

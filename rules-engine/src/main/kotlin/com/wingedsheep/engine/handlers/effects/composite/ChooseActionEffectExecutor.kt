@@ -140,7 +140,7 @@ internal fun checkFeasibility(
             } else {
                 val context = PredicateContext(controllerId = playerId)
                 cards.count { cardId ->
-                    predicateEvaluator.matches(state, cardId, check.filter, context)
+                    predicateEvaluator.matches(state, state.projectedState, cardId, check.filter, context)
                 } >= check.count
             }
         }

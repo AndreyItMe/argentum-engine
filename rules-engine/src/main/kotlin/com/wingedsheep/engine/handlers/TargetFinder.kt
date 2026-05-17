@@ -241,7 +241,7 @@ class TargetFinder(
 
             // Use unified filter with projected state
             val predicateContext = PredicateContext(controllerId = controllerId, sourceId = sourceId)
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter.baseFilter, predicateContext)
         }
     }
 
@@ -365,7 +365,7 @@ class TargetFinder(
             for (cardId in graveyard) {
                 if (filter.excludeSelf && cardId == sourceId) continue
                 val predicateContext = PredicateContext(controllerId = controllerId, ownerId = playerId)
-                if (predicateEvaluator.matches(state, cardId, filter.baseFilter, predicateContext)) {
+                if (predicateEvaluator.matches(state, state.projectedState, cardId, filter.baseFilter, predicateContext)) {
                     targets.add(cardId)
                 }
             }
@@ -382,7 +382,7 @@ class TargetFinder(
         val filter = requirement.filter
         val predicateContext = PredicateContext(controllerId = controllerId)
         return state.stack.filter { spellId ->
-            predicateEvaluator.matches(state, spellId, filter.baseFilter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, spellId, filter.baseFilter, predicateContext)
         }
     }
 
@@ -436,7 +436,7 @@ class TargetFinder(
             if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
             if (permanentFilter != null &&
-                !predicateEvaluator.matchesWithProjection(state, projected, entityId, permanentFilter, predicateContext)
+                !predicateEvaluator.matches(state, projected, entityId, permanentFilter, predicateContext)
             ) continue
 
             targets.add(entityId)
@@ -541,7 +541,7 @@ class TargetFinder(
 
             for (cardId in zone) {
                 val predicateContext = PredicateContext(controllerId = controllerId, ownerId = playerId)
-                if (predicateEvaluator.matches(state, cardId, filter.baseFilter, predicateContext)) {
+                if (predicateEvaluator.matches(state, state.projectedState, cardId, filter.baseFilter, predicateContext)) {
                     targets.add(cardId)
                 }
             }

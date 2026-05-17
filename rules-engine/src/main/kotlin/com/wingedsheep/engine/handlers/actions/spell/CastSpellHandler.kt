@@ -843,7 +843,7 @@ class CastSpellHandler(
                         }
                         // Use unified filter with projected state
                         val context = PredicateContext(controllerId = action.playerId)
-                        val matches = predicateEvaluator.matchesWithProjection(state, projected, permId, additionalCost.filter, context)
+                        val matches = predicateEvaluator.matches(state, projected, permId, additionalCost.filter, context)
                         if (!matches) {
                             return "${permCard.name} doesn't match the required filter: $filterDesc"
                         }
@@ -867,7 +867,7 @@ class CastSpellHandler(
                         if (cardId !in zoneCards) {
                             return "Card to exile is not in your ${additionalCost.fromZone.description}"
                         }
-                        if (!predicateEvaluator.matchesWithProjection(state, projected, cardId, additionalCost.filter, context)) {
+                        if (!predicateEvaluator.matches(state, projected, cardId, additionalCost.filter, context)) {
                             val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                             return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                         }
@@ -891,7 +891,7 @@ class CastSpellHandler(
                         if (cardId !in zoneCards) {
                             return "Card to exile is not in your ${additionalCost.fromZone.description}"
                         }
-                        if (!predicateEvaluator.matchesWithProjection(state, projected, cardId, additionalCost.filter, context)) {
+                        if (!predicateEvaluator.matches(state, projected, cardId, additionalCost.filter, context)) {
                             val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                             return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                         }
@@ -913,7 +913,7 @@ class CastSpellHandler(
                             return "Cannot discard the spell being cast"
                         }
                         if (additionalCost.filter != com.wingedsheep.sdk.scripting.GameObjectFilter.Any) {
-                            if (!predicateEvaluator.matches(state, cardId, additionalCost.filter, context)) {
+                            if (!predicateEvaluator.matches(state, state.projectedState, cardId, additionalCost.filter, context)) {
                                 val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                                 return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                             }
@@ -941,7 +941,7 @@ class CastSpellHandler(
                         if (permId !in state.getBattlefield()) {
                             return "Tapped permanent is not on the battlefield: $permId"
                         }
-                        val matches = predicateEvaluator.matchesWithProjection(state, projected, permId, additionalCost.filter, context)
+                        val matches = predicateEvaluator.matches(state, projected, permId, additionalCost.filter, context)
                         if (!matches) {
                             return "${permCard.name} doesn't match the required filter: ${additionalCost.filter.description}"
                         }
@@ -963,7 +963,7 @@ class CastSpellHandler(
                             return "Sacrificed permanent is not on the battlefield: $permId"
                         }
                         val context = PredicateContext(controllerId = action.playerId)
-                        val matches = predicateEvaluator.matchesWithProjection(state, projected, permId, additionalCost.filter, context)
+                        val matches = predicateEvaluator.matches(state, projected, permId, additionalCost.filter, context)
                         if (!matches) {
                             return "${permCard.name} doesn't match the required filter: ${additionalCost.filter.description}"
                         }
@@ -986,12 +986,12 @@ class CastSpellHandler(
                             return "Beheld card must be a card in your hand or a permanent you control"
                         }
                         if (onBattlefield) {
-                            if (!predicateEvaluator.matchesWithProjection(state, projected, cardId, additionalCost.filter, context)) {
+                            if (!predicateEvaluator.matches(state, projected, cardId, additionalCost.filter, context)) {
                                 val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                                 return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                             }
                         } else {
-                            if (!predicateEvaluator.matches(state, cardId, additionalCost.filter, context)) {
+                            if (!predicateEvaluator.matches(state, state.projectedState, cardId, additionalCost.filter, context)) {
                                 val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                                 return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                             }
@@ -1080,12 +1080,12 @@ class CastSpellHandler(
                                 return "Beheld card must be a card in your hand or a permanent you control"
                             }
                             if (onBattlefield) {
-                                if (!predicateEvaluator.matchesWithProjection(state, projected, cardId, additionalCost.filter, context)) {
+                                if (!predicateEvaluator.matches(state, projected, cardId, additionalCost.filter, context)) {
                                     val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                                     return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                                 }
                             } else {
-                                if (!predicateEvaluator.matches(state, cardId, additionalCost.filter, context)) {
+                                if (!predicateEvaluator.matches(state, state.projectedState, cardId, additionalCost.filter, context)) {
                                     val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
                                     return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
                                 }
@@ -2054,7 +2054,7 @@ class CastSpellHandler(
             val evalContext = PredicateContext(controllerId = action.playerId)
             grants.count { grant ->
                 grant.keyword == Keyword.STORM &&
-                    predicateEvaluator.matches(currentCastState, action.cardId, grant.spellFilter, evalContext)
+                    predicateEvaluator.matches(currentCastState, currentCastState.projectedState, action.cardId, grant.spellFilter, evalContext)
             }
         }
         val printedStormCount = if (cardDef != null && cardDef.hasKeyword(Keyword.STORM)) 1 else 0

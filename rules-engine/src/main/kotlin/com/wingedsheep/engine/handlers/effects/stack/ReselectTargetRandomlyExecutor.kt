@@ -149,7 +149,7 @@ class ReselectTargetRandomlyExecutor : EffectExecutor<ReselectTargetRandomlyEffe
             requirement is TargetObject && requirement.filter.zone == Zone.BATTLEFIELD -> {
                 val predContext = PredicateContext(controllerId = controllerId)
                 state.getBattlefield().filter { entityId ->
-                    predicateEvaluator.matchesWithProjection(
+                    predicateEvaluator.matches(
                         state, projected, entityId, requirement.filter.baseFilter, predContext
                     )
                 }

@@ -72,7 +72,7 @@ internal class PreventCombatDamageFromGroupModifier : CombatDamageModifier {
             !groupEffects.any { floatingEffect ->
                 val mod = floatingEffect.effect.modification as SerializableModification.PreventCombatDamageFromGroup
                 val context = PredicateContext(controllerId = floatingEffect.controllerId)
-                predicateEvaluator.matchesWithProjection(state, projected, assignment.sourceId, mod.filter, context)
+                predicateEvaluator.matches(state, projected, assignment.sourceId, mod.filter, context)
             }
         }
     }

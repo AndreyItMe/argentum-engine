@@ -62,7 +62,7 @@ class SelectFromCollectionExecutor : EffectExecutor<SelectFromCollectionEffect> 
         var eligibleCards = if (effect.filter != GameObjectFilter.Any) {
             val predicateContext = PredicateContext.fromEffectContext(context)
             cards.filter { cardId ->
-                predicateEvaluator.matches(state, cardId, effect.filter, predicateContext)
+                predicateEvaluator.matches(state, state.projectedState, cardId, effect.filter, predicateContext)
             }
         } else {
             cards

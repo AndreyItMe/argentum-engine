@@ -46,56 +46,25 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 class PredicateEvaluator {
 
     /**
-     * Evaluate a GameObjectFilter against an entity.
+     * Evaluate a GameObjectFilter against an entity using projected state.
+     *
+     * Always pass a [ProjectedState] — for battlefield entities this is required to see
+     * continuous effects (type/color/control changes, granted keywords, P/T mods). For
+     * entities in non-battlefield zones (hand, library, graveyard, stack), the projection
+     * has no entry and the predicate matchers fall back to base [CardComponent] data, so
+     * passing `state.projectedState` is always correct.
+     *
+     * Mid-projection callers (e.g. [com.wingedsheep.engine.mechanics.layers.EffectApplicator])
+     * pass their intermediate projected state instead of the cached one.
      *
      * @param state Current game state
+     * @param projected Projected (post-Rule 613) state — typically `state.projectedState`
      * @param entityId Entity to evaluate
      * @param filter The filter to match against
      * @param context Evaluation context (for controller resolution)
      * @return true if the entity matches all predicates in the filter
      */
     fun matches(
-        state: GameState,
-        entityId: EntityId,
-        filter: GameObjectFilter,
-        context: PredicateContext
-    ): Boolean {
-        val container = state.getEntity(entityId) ?: return false
-
-        // Check controller predicate first (if specified)
-        filter.controllerPredicate?.let { controllerPred ->
-            if (!matchesControllerPredicate(state, entityId, controllerPred, context)) {
-                return false
-            }
-        }
-
-        // Check all card predicates
-        val cardMatches = if (filter.matchAll) {
-            filter.cardPredicates.all { predicate ->
-                matchesCardPredicate(state, entityId, predicate, context)
-            }
-        } else {
-            filter.cardPredicates.isEmpty() || filter.cardPredicates.any { predicate ->
-                matchesCardPredicate(state, entityId, predicate, context)
-            }
-        }
-
-        if (!cardMatches) return false
-
-        // Check all state predicates
-        val stateMatches = filter.statePredicates.all { predicate ->
-            matchesStatePredicate(state, entityId, predicate)
-        }
-
-        return stateMatches
-    }
-
-    /**
-     * Evaluate a GameObjectFilter against an entity using projected state.
-     * This version uses the projected characteristics (types, colors, keywords)
-     * which correctly handles face-down creatures (Rule 708.2).
-     */
-    fun matchesWithProjection(
         state: GameState,
         projected: ProjectedState,
         entityId: EntityId,
@@ -106,7 +75,7 @@ class PredicateEvaluator {
 
         // Check controller predicate first (if specified)
         filter.controllerPredicate?.let { controllerPred ->
-            if (!matchesControllerPredicateWithProjection(state, projected, entityId, controllerPred, context)) {
+            if (!matchesControllerPredicate(state, projected, entityId, controllerPred, context)) {
                 return false
             }
         }
@@ -114,11 +83,11 @@ class PredicateEvaluator {
         // Check all card predicates using projected state
         val cardMatches = if (filter.matchAll) {
             filter.cardPredicates.all { predicate ->
-                matchesCardPredicateWithProjection(state, projected, entityId, predicate, context)
+                matchesCardPredicate(state, projected, entityId, predicate, context)
             }
         } else {
             filter.cardPredicates.isEmpty() || filter.cardPredicates.any { predicate ->
-                matchesCardPredicateWithProjection(state, projected, entityId, predicate, context)
+                matchesCardPredicate(state, projected, entityId, predicate, context)
             }
         }
 
@@ -135,7 +104,7 @@ class PredicateEvaluator {
     /**
      * Evaluate a CardPredicate against an entity using projected state.
      */
-    fun matchesCardPredicateWithProjection(
+    fun matchesCardPredicate(
         state: GameState,
         projected: ProjectedState,
         entityId: EntityId,
@@ -157,8 +126,13 @@ class PredicateEvaluator {
         val card = container.get<CardComponent>() ?: return false
         val projectedValues = projected.getProjectedValues(entityId)
 
-        // Use projected types/colors/keywords if available, otherwise fall back to base
-        val types = projectedValues?.types ?: card.typeLine.cardTypes.map { it.name }.toSet()
+        // Use projected types/colors/keywords if available, otherwise fall back to base.
+        // The projected `types` set includes supertypes (LEGENDARY, BASIC, SNOW, ...) baked in
+        // by StateProjector — mirror that here so predicates like IsLegendary work for non-
+        // battlefield entities (cards in hand/library/graveyard) which have no projection entry.
+        val types = projectedValues?.types ?: (
+            card.typeLine.cardTypes.map { it.name } + card.typeLine.supertypes.map { it.name }
+        ).toSet()
         val colors = projectedValues?.colors ?: card.colors.map { it.name }.toSet()
         val keywords = projectedValues?.keywords ?: (card.baseKeywords.map { it.name } + card.baseFlags.map { it.name }).toSet()
 
@@ -405,13 +379,13 @@ class PredicateEvaluator {
 
             // Composite predicates
             is CardPredicate.And -> {
-                predicate.predicates.all { matchesCardPredicateWithProjection(state, projected, entityId, it, context) }
+                predicate.predicates.all { matchesCardPredicate(state, projected, entityId, it, context) }
             }
             is CardPredicate.Or -> {
-                predicate.predicates.any { matchesCardPredicateWithProjection(state, projected, entityId, it, context) }
+                predicate.predicates.any { matchesCardPredicate(state, projected, entityId, it, context) }
             }
             is CardPredicate.Not -> {
-                !matchesCardPredicateWithProjection(state, projected, entityId, predicate.predicate, context)
+                !matchesCardPredicate(state, projected, entityId, predicate.predicate, context)
             }
 
             // Handled before CardComponent check above — unreachable here
@@ -423,292 +397,54 @@ class PredicateEvaluator {
     /**
      * Evaluate a ControllerPredicate using projected state (for controller-changing effects).
      */
-    private fun matchesControllerPredicateWithProjection(
+    private fun matchesControllerPredicate(
         state: GameState,
         projected: ProjectedState,
         entityId: EntityId,
         predicate: ControllerPredicate,
         context: PredicateContext
     ): Boolean {
-        val container = state.getEntity(entityId)
-        // Use projected controller if available; otherwise fall back to the base
-        // ControllerComponent or, for stack objects (spells and abilities), the
-        // controllerId stored on their stack components.
-        val controllerId = projected.getController(entityId)
-            ?: container?.get<ControllerComponent>()?.playerId
-            ?: container?.get<SpellOnStackComponent>()?.casterId
-            ?: container?.get<TriggeredAbilityOnStackComponent>()?.controllerId
-            ?: container?.get<ActivatedAbilityOnStackComponent>()?.controllerId
-            ?: return false
+        val container = state.getEntity(entityId) ?: return false
 
+        // OwnedByYou/OwnedByOpponent check the card's owner, not controller.
+        // These predicates are used for cards in graveyards/exile which don't have ControllerComponent —
+        // so handle them before the controller lookup below.
         return when (predicate) {
-            ControllerPredicate.ControlledByYou -> controllerId == context.controllerId
-            ControllerPredicate.ControlledByOpponent -> controllerId != context.controllerId
-            ControllerPredicate.ControlledByAny -> true
-            ControllerPredicate.ControlledByTargetOpponent -> {
-                context.targetOpponentId?.let { controllerId == it } ?: false
-            }
-            ControllerPredicate.ControlledByTargetPlayer -> {
-                context.targetPlayerId?.let { controllerId == it } ?: false
-            }
-            is ControllerPredicate.ControlledByReferencedPlayer -> {
-                context.resolvePlayerTarget(predicate.target)?.let { controllerId == it } ?: false
-            }
             ControllerPredicate.OwnedByYou -> {
-                val card = state.getEntity(entityId)?.get<CardComponent>()
+                val card = container.get<CardComponent>()
                 card?.ownerId == context.controllerId
             }
             ControllerPredicate.OwnedByOpponent -> {
-                val card = state.getEntity(entityId)?.get<CardComponent>()
+                val card = container.get<CardComponent>()
                 card?.ownerId != null && card.ownerId != context.controllerId
             }
-        }
-    }
-
-    /**
-     * Evaluate a CardPredicate against an entity.
-     */
-    fun matchesCardPredicate(
-        state: GameState,
-        entityId: EntityId,
-        predicate: CardPredicate,
-        context: PredicateContext? = null
-    ): Boolean {
-        val container = state.getEntity(entityId) ?: return false
-
-        // Handle stack item type predicates before CardComponent check
-        // since abilities on the stack don't have CardComponent
-        if (predicate is CardPredicate.IsActivatedOrTriggeredAbility) {
-            return container.has<ActivatedAbilityOnStackComponent>() ||
-                container.has<TriggeredAbilityOnStackComponent>()
-        }
-        if (predicate is CardPredicate.IsTriggeredAbility) {
-            return container.has<TriggeredAbilityOnStackComponent>()
-        }
-
-        val card = container.get<CardComponent>() ?: return false
-        val typeLine = card.typeLine
-
-        return when (predicate) {
-            // Type predicates
-            CardPredicate.IsCreature -> typeLine.isCreature
-            CardPredicate.IsLand -> typeLine.isLand
-            CardPredicate.IsArtifact -> typeLine.isArtifact
-            CardPredicate.IsEnchantment -> typeLine.isEnchantment
-            CardPredicate.IsPlaneswalker -> card.isPlaneswalker
-            CardPredicate.IsInstant -> typeLine.isInstant
-            CardPredicate.IsSorcery -> typeLine.isSorcery
-            CardPredicate.IsBasicLand -> typeLine.isBasicLand
-            CardPredicate.IsPermanent -> typeLine.isPermanent
-            CardPredicate.IsNonland -> !typeLine.isLand
-            CardPredicate.IsNoncreature -> !typeLine.isCreature
-            CardPredicate.IsNonenchantment -> !typeLine.isEnchantment
-            CardPredicate.IsToken -> container.has<TokenComponent>()
-            CardPredicate.IsNontoken -> !container.has<TokenComponent>()
-            CardPredicate.IsLegendary -> typeLine.isLegendary
-            CardPredicate.IsNonlegendary -> !typeLine.isLegendary
-
-            // Color predicates
-            is CardPredicate.HasColor -> predicate.color in card.colors
-            is CardPredicate.NotColor -> predicate.color !in card.colors
-            CardPredicate.IsColorless -> card.colors.isEmpty()
-            CardPredicate.IsMulticolored -> card.colors.size > 1
-            CardPredicate.IsMonocolored -> card.colors.size == 1
-
-            // Subtype predicates - face-down creatures have no subtypes (Rule 708.2)
-            is CardPredicate.HasSubtype -> {
-                if (container.has<FaceDownComponent>()) false
-                else typeLine.hasSubtype(predicate.subtype) ||
-                    // Changeling: has all creature types in all zones
-                    (Keyword.CHANGELING in card.baseKeywords &&
-                        predicate.subtype.value in Subtype.ALL_CREATURE_TYPES)
-            }
-            is CardPredicate.NotSubtype -> {
-                if (container.has<FaceDownComponent>()) true
-                else !(typeLine.hasSubtype(predicate.subtype) ||
-                    (Keyword.CHANGELING in card.baseKeywords &&
-                        predicate.subtype.value in Subtype.ALL_CREATURE_TYPES))
-            }
-            is CardPredicate.HasAnyOfSubtypes -> {
-                if (container.has<FaceDownComponent>()) false
-                else predicate.subtypes.any { subtype ->
-                    typeLine.hasSubtype(subtype) ||
-                        (Keyword.CHANGELING in card.baseKeywords &&
-                            subtype.value in Subtype.ALL_CREATURE_TYPES)
-                }
-            }
-            is CardPredicate.HasBasicLandType -> {
-                if (container.has<FaceDownComponent>()) false
-                else typeLine.hasSubtype(com.wingedsheep.sdk.core.Subtype(predicate.landType))
-            }
-
-            // Name predicates
-            is CardPredicate.NameEquals -> card.name == predicate.name
-
-            // Keyword predicates
-            is CardPredicate.HasKeyword -> {
-                // Keywords are stored in the card's baseKeywords
-                card.baseKeywords.contains(predicate.keyword)
-            }
-            is CardPredicate.NotKeyword -> {
-                !card.baseKeywords.contains(predicate.keyword)
-            }
-
-            // Mana value predicates
-            is CardPredicate.ManaValueEquals -> card.manaValue == predicate.value
-            is CardPredicate.ManaValueAtMost -> card.manaValue <= predicate.max
-            is CardPredicate.ManaValueAtMostX -> {
-                val xValue = context?.xValue
-                xValue == null || card.manaValue <= xValue
-            }
-            is CardPredicate.ManaValueAtLeast -> card.manaValue >= predicate.min
-            is CardPredicate.ManaValueAtMostEntity -> {
-                val refEntityId = resolveEntityReference(predicate.reference, context) ?: return false
-                val refManaValue = state.getEntity(refEntityId)?.get<CardComponent>()?.manaValue ?: return false
-                card.manaValue <= refManaValue
-            }
-
-            // Power/toughness predicates
-            is CardPredicate.PowerEquals -> {
-                val power = card.baseStats?.power
-                power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && power.value == predicate.value
-            }
-            is CardPredicate.PowerAtMost -> {
-                val power = card.baseStats?.power
-                power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && power.value <= predicate.max
-            }
-            is CardPredicate.PowerAtLeast -> {
-                val power = card.baseStats?.power
-                power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && power.value >= predicate.min
-            }
-            is CardPredicate.ToughnessEquals -> {
-                val toughness = card.baseStats?.toughness
-                toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && toughness.value == predicate.value
-            }
-            is CardPredicate.ToughnessAtMost -> {
-                val toughness = card.baseStats?.toughness
-                toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && toughness.value <= predicate.max
-            }
-            is CardPredicate.ToughnessAtLeast -> {
-                val toughness = card.baseStats?.toughness
-                toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && toughness.value >= predicate.min
-            }
-            is CardPredicate.PowerOrToughnessAtLeast -> {
-                val power = card.baseStats?.power
-                val toughness = card.baseStats?.toughness
-                (power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && power.value >= predicate.min) ||
-                    (toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed && toughness.value >= predicate.min)
-            }
-            is CardPredicate.TotalPowerAndToughnessAtMost -> {
-                val power = card.baseStats?.power
-                val toughness = card.baseStats?.toughness
-                power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed &&
-                    toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed &&
-                    (power.value + toughness.value) <= predicate.max
-            }
-            CardPredicate.ToughnessGreaterThanPower -> {
-                val power = card.baseStats?.power
-                val toughness = card.baseStats?.toughness
-                power is com.wingedsheep.sdk.model.CharacteristicValue.Fixed &&
-                    toughness is com.wingedsheep.sdk.model.CharacteristicValue.Fixed &&
-                    toughness.value > power.value
-            }
-
-            // Source-relative predicates
-            CardPredicate.NotOfSourceChosenType -> {
-                val sourceId = context?.sourceId ?: return true
-                val chosenType = state.getEntity(sourceId)
-                    ?.get<ChosenCreatureTypeComponent>()?.creatureType
-                    ?: return true
-                !card.typeLine.hasSubtype(Subtype(chosenType))
-            }
-
-            CardPredicate.SharesCreatureTypeWithSource -> {
-                val sourceId = context?.sourceId ?: return false
-                val sourceCard = state.getEntity(sourceId)?.get<CardComponent>() ?: return false
-                val sourceSubtypes = sourceCard.typeLine.subtypes
-                if (sourceSubtypes.isEmpty()) return false
-                val entitySubtypes = card.typeLine.subtypes
-                entitySubtypes.any { entitySubtype ->
-                    sourceSubtypes.any { it.value.equals(entitySubtype.value, ignoreCase = true) }
-                }
-            }
-
-            CardPredicate.SharesCreatureTypeWithTriggeringEntity -> {
-                val triggeringId = context?.triggeringEntityId ?: return false
-                val triggeringCard = state.getEntity(triggeringId)?.get<CardComponent>() ?: return false
-                val triggeringSubtypes = triggeringCard.typeLine.subtypes
-                if (triggeringSubtypes.isEmpty()) return false
-                val entitySubtypes = card.typeLine.subtypes
-                entitySubtypes.any { entitySubtype ->
-                    triggeringSubtypes.any { it.value.equals(entitySubtype.value, ignoreCase = true) }
-                }
-            }
-
-            CardPredicate.HasChosenSubtype -> {
-                val sourceId = context?.sourceId ?: return false
-                val chosenType = state.getEntity(sourceId)
-                    ?.get<ChosenCreatureTypeComponent>()?.creatureType
+            else -> {
+                // Use projected controller if available; otherwise fall back to the base
+                // ControllerComponent or, for stack objects (spells and abilities), the
+                // controllerId stored on their stack components.
+                val controllerId = projected.getController(entityId)
+                    ?: container.get<ControllerComponent>()?.playerId
+                    ?: container.get<SpellOnStackComponent>()?.casterId
+                    ?: container.get<TriggeredAbilityOnStackComponent>()?.controllerId
+                    ?: container.get<ActivatedAbilityOnStackComponent>()?.controllerId
                     ?: return false
-                card.typeLine.subtypes.any { it.value.equals(chosenType, ignoreCase = true) } ||
-                    // Changeling: has all creature types in all zones
-                    (Keyword.CHANGELING in card.baseKeywords &&
-                        chosenType in Subtype.ALL_CREATURE_TYPES)
-            }
-
-            is CardPredicate.SharesCreatureTypeWith -> {
-                val referenceId = resolveEntityReference(predicate.entity, context) ?: return false
-                val referenceCard = state.getEntity(referenceId)?.get<CardComponent>() ?: return false
-                val referenceSubtypes = referenceCard.typeLine.subtypes
-                if (referenceSubtypes.isEmpty()) return false
-                val entitySubtypes = card.typeLine.subtypes
-                entitySubtypes.any { entitySubtype ->
-                    referenceSubtypes.any { it.value.equals(entitySubtype.value, ignoreCase = true) }
-                }
-            }
-
-            // Context-relative predicates (pipeline variable references)
-            is CardPredicate.HasSubtypeFromVariable -> {
-                val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
-                card.typeLine.subtypes.any { it.value.equals(chosenType, ignoreCase = true) } ||
-                    // Changeling: has all creature types in all zones
-                    (Keyword.CHANGELING in card.baseKeywords &&
-                        chosenType in Subtype.ALL_CREATURE_TYPES)
-            }
-
-            is CardPredicate.HasSubtypeInStoredList -> {
-                val storedTypes = context?.storedStringLists?.get(predicate.listName) ?: return false
-                card.typeLine.subtypes.any { subtype ->
-                    storedTypes.any { it.equals(subtype.value, ignoreCase = true) }
-                }
-            }
-
-            is CardPredicate.HasSubtypeInEachStoredGroup -> {
-                val groups = context?.storedSubtypeGroups?.get(predicate.groupName) ?: return false
-                if (groups.isEmpty()) return false
-                val entitySubtypes = card.typeLine.subtypes.map { it.value }.toSet()
-                if (entitySubtypes.isEmpty()) return false
-                groups.all { group ->
-                    entitySubtypes.any { entitySubtype ->
-                        group.any { it.equals(entitySubtype, ignoreCase = true) }
+                when (predicate) {
+                    ControllerPredicate.ControlledByYou -> controllerId == context.controllerId
+                    ControllerPredicate.ControlledByOpponent -> controllerId != context.controllerId
+                    ControllerPredicate.ControlledByAny -> true
+                    ControllerPredicate.ControlledByTargetOpponent -> {
+                        context.targetOpponentId?.let { controllerId == it } ?: false
                     }
+                    ControllerPredicate.ControlledByTargetPlayer -> {
+                        context.targetPlayerId?.let { controllerId == it } ?: false
+                    }
+                    is ControllerPredicate.ControlledByReferencedPlayer -> {
+                        context.resolvePlayerTarget(predicate.target)?.let { controllerId == it } ?: false
+                    }
+                    // Already handled above
+                    ControllerPredicate.OwnedByYou, ControllerPredicate.OwnedByOpponent -> true
                 }
             }
-
-            // Composite predicates
-            is CardPredicate.And -> {
-                predicate.predicates.all { matchesCardPredicate(state, entityId, it, context) }
-            }
-            is CardPredicate.Or -> {
-                predicate.predicates.any { matchesCardPredicate(state, entityId, it, context) }
-            }
-            is CardPredicate.Not -> {
-                !matchesCardPredicate(state, entityId, predicate.predicate, context)
-            }
-
-            // Handled before CardComponent check above — unreachable here
-            CardPredicate.IsActivatedOrTriggeredAbility -> false
-            CardPredicate.IsTriggeredAbility -> false
         }
     }
 
@@ -846,57 +582,6 @@ class PredicateEvaluator {
             is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicate(state, entityId, it) }
             is StatePredicate.And -> predicate.predicates.all { matchesStatePredicate(state, entityId, it) }
             is StatePredicate.Not -> !matchesStatePredicate(state, entityId, predicate.predicate)
-        }
-    }
-
-    /**
-     * Evaluate a ControllerPredicate against an entity.
-     */
-    fun matchesControllerPredicate(
-        state: GameState,
-        entityId: EntityId,
-        predicate: ControllerPredicate,
-        context: PredicateContext
-    ): Boolean {
-        val container = state.getEntity(entityId) ?: return false
-
-        // OwnedByYou/OwnedByOpponent check the card's owner, not controller.
-        // These predicates are used for cards in graveyards/exile which don't have ControllerComponent.
-        return when (predicate) {
-            ControllerPredicate.OwnedByYou -> {
-                val card = container.get<CardComponent>()
-                card?.ownerId == context.controllerId
-            }
-            ControllerPredicate.OwnedByOpponent -> {
-                val card = container.get<CardComponent>()
-                card?.ownerId != null && card.ownerId != context.controllerId
-            }
-            // All other predicates require a controller — check ControllerComponent first,
-            // then fall back to stack components (spells use SpellOnStackComponent.casterId,
-            // triggered/activated abilities use their own controllerId)
-            else -> {
-                val controllerId = container.get<ControllerComponent>()?.playerId
-                    ?: container.get<SpellOnStackComponent>()?.casterId
-                    ?: container.get<TriggeredAbilityOnStackComponent>()?.controllerId
-                    ?: container.get<ActivatedAbilityOnStackComponent>()?.controllerId
-                    ?: return false
-                when (predicate) {
-                    ControllerPredicate.ControlledByYou -> controllerId == context.controllerId
-                    ControllerPredicate.ControlledByOpponent -> controllerId != context.controllerId
-                    ControllerPredicate.ControlledByAny -> true
-                    ControllerPredicate.ControlledByTargetOpponent -> {
-                        context.targetOpponentId?.let { controllerId == it } ?: false
-                    }
-                    ControllerPredicate.ControlledByTargetPlayer -> {
-                        context.targetPlayerId?.let { controllerId == it } ?: false
-                    }
-                    is ControllerPredicate.ControlledByReferencedPlayer -> {
-                        context.resolvePlayerTarget(predicate.target)?.let { controllerId == it } ?: false
-                    }
-                    // Already handled above
-                    ControllerPredicate.OwnedByYou, ControllerPredicate.OwnedByOpponent -> true
-                }
-            }
         }
     }
 

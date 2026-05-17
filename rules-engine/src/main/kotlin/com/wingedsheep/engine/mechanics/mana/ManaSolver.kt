@@ -1243,7 +1243,7 @@ class ManaSolver(
                 // Filter from the static-ability controller's perspective — see
                 // AdditionalManaOnSourceTap kdoc.
                 val filterContext = PredicateContext(controllerId = staticController, sourceId = entityId)
-                if (!predicateEvaluator.matchesWithProjection(
+                if (!predicateEvaluator.matches(
                         state, state.projectedState, source.entityId, onSourceTap.sourceFilter, filterContext
                     )) continue
 
@@ -1297,7 +1297,7 @@ class ManaSolver(
                     ability.filter.scope is com.wingedsheep.sdk.scripting.filters.unified.Scope.Battlefield) {
                     if (ability.filter.excludeSelf && permanentId == entityId) continue
                     val granterController = state.projectedState.getController(permanentId) ?: continue
-                    val matches = predicateEvaluator.matchesWithProjection(
+                    val matches = predicateEvaluator.matches(
                         state,
                         state.projectedState,
                         entityId,
@@ -1550,7 +1550,7 @@ class ManaSolver(
                     targetId !in regularSourceIds &&
                     targetId !in consumedIds &&
                     state.getEntity(targetId)?.has<TappedComponent>() == false &&
-                    predicateEvaluator.matchesWithProjection(state, projected, targetId, tapCost.filter, context)
+                    predicateEvaluator.matches(state, projected, targetId, tapCost.filter, context)
                 }
 
                 val activationCount = matchingNonSources.size / tapCost.count
@@ -1685,7 +1685,7 @@ class ManaSolver(
         val matches = projected.getBattlefieldControlledBy(playerId).count { targetId ->
             targetId != sourceId &&
                 state.getEntity(targetId)?.has<TappedComponent>() == false &&
-                predicateEvaluator.matchesWithProjection(state, projected, targetId, subCost.filter, context)
+                predicateEvaluator.matches(state, projected, targetId, subCost.filter, context)
         }
         return matches >= subCost.count
     }
@@ -1748,7 +1748,7 @@ class ManaSolver(
                     targetId != entityId &&
                         targetId !in consumedIds &&
                         state.getEntity(targetId)?.has<TappedComponent>() == false &&
-                        predicateEvaluator.matchesWithProjection(state, projected, targetId, tapPermanentsCost.filter, context)
+                        predicateEvaluator.matches(state, projected, targetId, tapPermanentsCost.filter, context)
                 }
                 if (matchingTapTargets.size < tapPermanentsCost.count) continue
 

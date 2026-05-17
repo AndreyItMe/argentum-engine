@@ -579,7 +579,7 @@ class TriggerDetector(
                         for (attackerId in event.attackers) {
                             if (attackFilter != null) {
                                 // Filtered trigger: match creature against filter (includes controller predicate)
-                                if (predicateEvaluator.matchesWithProjection(
+                                if (predicateEvaluator.matches(
                                         state, projected, attackerId, attackFilter,
                                         PredicateContext(controllerId = controllerId, sourceId = entityId)
                                     )) {
@@ -619,7 +619,7 @@ class TriggerDetector(
                         for (attackerId in blockedAttackers) {
                             if (creatureFilter != null) {
                                 // Filtered trigger: match any creature matching the filter (any controller)
-                                if (predicateEvaluator.matchesWithProjection(state, projected, attackerId, creatureFilter, PredicateContext(controllerId = controllerId, sourceId = entityId))) {
+                                if (predicateEvaluator.matches(state, projected, attackerId, creatureFilter, PredicateContext(controllerId = controllerId, sourceId = entityId))) {
                                     triggers.add(
                                         PendingTrigger(
                                             ability = ability,
@@ -654,7 +654,7 @@ class TriggerDetector(
                         val blockFilter = (ability.trigger as GameEvent.BlockEvent).filter
                         for (blockerId in event.blockers.keys) {
                             if (blockFilter != null) {
-                                if (predicateEvaluator.matchesWithProjection(
+                                if (predicateEvaluator.matches(
                                         state, projected, blockerId, blockFilter,
                                         PredicateContext(controllerId = controllerId, sourceId = entityId)
                                     )) {
@@ -704,7 +704,7 @@ class TriggerDetector(
                         for (partnerId in partners.distinct()) {
                             val partnerFilter = trigger.partnerFilter
                             val matchesFilter = if (partnerFilter != null) {
-                                predicateEvaluator.matchesWithProjection(
+                                predicateEvaluator.matches(
                                     state, projected, partnerId, partnerFilter,
                                     PredicateContext(controllerId = controllerId, sourceId = entityId)
                                 )
@@ -1614,7 +1614,7 @@ class TriggerDetector(
 
                 // Check if the entering creature matches the filter
                 if (doubler.filter != GameObjectFilter.Any) {
-                    if (!predicateEvaluator.matchesWithProjection(
+                    if (!predicateEvaluator.matches(
                             state, projected, enteringEntityId, doubler.filter,
                             PredicateContext(controllerId = doubler.controllerId, sourceId = doubler.sourceId)
                         )) continue
@@ -1696,7 +1696,7 @@ class TriggerDetector(
                 if (trigger.controllerId != doubler.controllerId) continue
                 val triggerSourceId = trigger.sourceId
                 if (doubler.excludeSelf && triggerSourceId == doubler.doublerSourceId) continue
-                if (!predicateEvaluator.matchesWithProjection(
+                if (!predicateEvaluator.matches(
                         state, projected, triggerSourceId, doubler.filter,
                         PredicateContext(controllerId = doubler.controllerId, sourceId = doubler.doublerSourceId)
                     )

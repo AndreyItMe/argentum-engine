@@ -23,7 +23,7 @@ object RemoveCountersFromAmongFilteredPermanentsCostHandler {
         val context = PredicateContext(controllerId = controllerId)
         val projected = state.projectedState
         val total = projected.getBattlefieldControlledBy(controllerId).sumOf { entityId ->
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, cost.filter, context)) return@sumOf 0
+            if (!predicateEvaluator.matches(state, projected, entityId, cost.filter, context)) return@sumOf 0
             state.getEntity(entityId)?.get<CountersComponent>()?.getCount(counterType) ?: 0
         }
         return total >= cost.count
@@ -53,7 +53,7 @@ object RemoveCountersFromAmongFilteredPermanentsCostHandler {
             if (projected.getController(permanentId) != controllerId) {
                 return CostPaymentResult.failure("Cannot remove counters from a permanent you do not control")
             }
-            if (!predicateEvaluator.matchesWithProjection(state, projected, permanentId, cost.filter, context)) {
+            if (!predicateEvaluator.matches(state, projected, permanentId, cost.filter, context)) {
                 return CostPaymentResult.failure("Permanent does not match the required filter for counter removal")
             }
             val available = container.get<CountersComponent>()?.getCount(counterType) ?: 0

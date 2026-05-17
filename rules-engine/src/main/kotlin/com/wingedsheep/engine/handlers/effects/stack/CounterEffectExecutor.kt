@@ -59,7 +59,7 @@ class CounterEffectExecutor(
         val filter = effect.filter
         if (filter != null) {
             val predicateContext = PredicateContext.fromEffectContext(context)
-            if (!predicateEvaluator.matches(state, entityId, filter.baseFilter, predicateContext)) {
+            if (!predicateEvaluator.matches(state, state.projectedState, entityId, filter.baseFilter, predicateContext)) {
                 return EffectResult.error(state, "Target does not match filter: ${filter.baseFilter.description}")
             }
         }

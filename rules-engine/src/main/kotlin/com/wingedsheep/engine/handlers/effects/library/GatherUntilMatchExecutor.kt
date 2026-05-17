@@ -73,7 +73,7 @@ class GatherUntilMatchExecutor : EffectExecutor<GatherUntilMatchEffect> {
         for (cardId in library) {
             allRevealed.add(cardId)
 
-            if (predicateEvaluator.matches(state, cardId, effect.filter, predicateContext)) {
+            if (predicateEvaluator.matches(state, state.projectedState, cardId, effect.filter, predicateContext)) {
                 matches.add(cardId)
                 if (matches.size >= targetCount) break
             }

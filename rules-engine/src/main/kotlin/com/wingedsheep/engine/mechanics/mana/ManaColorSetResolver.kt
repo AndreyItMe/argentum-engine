@@ -86,7 +86,7 @@ object ManaColorSetResolver {
         val predCtx = PredicateContext(controllerId = controllerId)
         val colors = mutableSetOf<Color>()
         for (entityId in state.getBattlefield()) {
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, colorSet.filter, predCtx)) continue
+            if (!predicateEvaluator.matches(state, projected, entityId, colorSet.filter, predCtx)) continue
             for (colorName in projected.getColors(entityId)) {
                 Color.entries.find { it.name == colorName }?.let { colors.add(it) }
             }

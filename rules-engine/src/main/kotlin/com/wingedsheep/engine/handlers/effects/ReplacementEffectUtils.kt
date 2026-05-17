@@ -135,7 +135,7 @@ object ReplacementEffectUtils {
         is RecipientFilter.You -> targetId == sourceControllerId
         is RecipientFilter.Matching -> {
             val context = PredicateContext(controllerId = sourceControllerId, sourceId = sourceEntityId)
-            predicateEvaluator.matchesWithProjection(
+            predicateEvaluator.matches(
                 state, state.projectedState, targetId, recipient.filter, context
             )
         }

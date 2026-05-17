@@ -152,7 +152,7 @@ class CantBeBlockedByRule(
         val predicateContext = PredicateContext(controllerId = attackerController, sourceId = ctx.attackerId)
 
         for (restriction in restrictions) {
-            if (predicateEvaluator.matchesWithProjection(
+            if (predicateEvaluator.matches(
                     ctx.state, ctx.projected, ctx.blockerId, restriction.blockerFilter, predicateContext
                 )
             ) {
@@ -231,7 +231,7 @@ class CantBeBlockedExceptByRule(
         val predicateContext = PredicateContext(controllerId = attackerController, sourceId = ctx.attackerId)
 
         for (filter in filters) {
-            if (predicateEvaluator.matchesWithProjection(
+            if (predicateEvaluator.matches(
                     ctx.state, ctx.projected, ctx.blockerId, filter, predicateContext
                 )
             ) continue
@@ -361,7 +361,7 @@ class CanOnlyBlockCreaturesWithRule(
         )
 
         for (filter in filters) {
-            if (!predicateEvaluator.matchesWithProjection(
+            if (!predicateEvaluator.matches(
                     ctx.state, ctx.projected, ctx.attackerId, filter, predicateContext
                 )
             ) {

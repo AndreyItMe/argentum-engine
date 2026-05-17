@@ -88,7 +88,7 @@ class TargetEnumerationUtils(
                             !HexproofSuppression.isSuppressedForCaster(state, projected, entityId, playerId)
                         ) return@filter false
                         if (projected.hasKeyword(entityId, Keyword.SHROUD)) return@filter false
-                        predicateEvaluator.matchesWithProjection(state, projected, entityId, permanentFilter, context)
+                        predicateEvaluator.matches(state, projected, entityId, permanentFilter, context)
                     }
                 }
                 val spells = findValidSpellTargets(state, playerId, TargetFilter.SpellOnStack)
@@ -123,7 +123,7 @@ class TargetEnumerationUtils(
                 !HexproofSuppression.isSuppressedForCaster(state, projected, entityId, playerId)
             ) return@filter false
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, context)
+            predicateEvaluator.matches(state, projected, entityId, filter.baseFilter, context)
         }
     }
 
@@ -142,7 +142,7 @@ class TargetEnumerationUtils(
         return playerIds.flatMap { pid ->
             state.getGraveyard(pid).filter { entityId ->
                 if (filter.excludeSelf && entityId == sourceId) return@filter false
-                predicateEvaluator.matches(state, entityId, filter.baseFilter, context)
+                predicateEvaluator.matches(state, state.projectedState, entityId, filter.baseFilter, context)
             }
         }
     }
@@ -168,7 +168,7 @@ class TargetEnumerationUtils(
     ): List<EntityId> {
         val context = PredicateContext(controllerId = playerId)
         return state.stack.filter { spellId ->
-            predicateEvaluator.matches(state, spellId, filter.baseFilter, context)
+            predicateEvaluator.matches(state, state.projectedState, spellId, filter.baseFilter, context)
         }
     }
 

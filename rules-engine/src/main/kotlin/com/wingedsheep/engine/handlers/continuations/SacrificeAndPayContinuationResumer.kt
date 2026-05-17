@@ -586,7 +586,7 @@ class SacrificeAndPayContinuationResumer(
                 val context = PredicateContext(controllerId = nextPlayerId)
 
                 val validPermanents = battlefield.filter { permanentId ->
-                    predicateEvaluator.matchesWithProjection(state, projected, permanentId, cost.filter, context)
+                    predicateEvaluator.matches(state, projected, permanentId, cost.filter, context)
                 }
 
                 if (validPermanents.size >= cost.count) {

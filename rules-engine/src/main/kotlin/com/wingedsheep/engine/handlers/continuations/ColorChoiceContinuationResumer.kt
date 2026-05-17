@@ -50,7 +50,7 @@ class ColorChoiceContinuationResumer(
 
             if (continuation.filter.excludeSelf && entityId == continuation.sourceId) continue
 
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, continuation.filter.baseFilter, predicateContext)) {
+            if (!predicateEvaluator.matches(state, projected, entityId, continuation.filter.baseFilter, predicateContext)) {
                 continue
             }
 

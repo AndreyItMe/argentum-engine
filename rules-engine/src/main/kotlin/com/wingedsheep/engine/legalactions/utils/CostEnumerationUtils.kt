@@ -52,7 +52,7 @@ class CostEnumerationUtils(
         return projected.getBattlefieldControlledBy(playerId).filter { entityId ->
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, cost.filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, cost.filter, predicateContext)
         }
     }
 
@@ -66,7 +66,7 @@ class CostEnumerationUtils(
         return projected.getBattlefieldControlledBy(playerId).filter { entityId ->
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -82,7 +82,7 @@ class CostEnumerationUtils(
             if (entityId == excludeEntityId) return@filter false
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -99,7 +99,7 @@ class CostEnumerationUtils(
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
             if (container.has<TappedComponent>()) return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -115,7 +115,7 @@ class CostEnumerationUtils(
         return projected.getBattlefieldControlledBy(playerId).filter { entityId ->
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -136,7 +136,7 @@ class CostEnumerationUtils(
         val zoneKey = ZoneKey(playerId, zone)
         val predicateContext = PredicateContext(controllerId = playerId)
         return state.getZone(zoneKey).filter { entityId ->
-            predicateEvaluator.matches(state, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, state.projectedState, entityId, filter, predicateContext)
         }
     }
 
@@ -148,7 +148,7 @@ class CostEnumerationUtils(
         val handZone = ZoneKey(playerId, Zone.HAND)
         val hand = state.getZone(handZone)
         val predicateContext = PredicateContext(controllerId = playerId)
-        return hand.filter { predicateEvaluator.matches(state, it, filter, predicateContext) }
+        return hand.filter { predicateEvaluator.matches(state, state.projectedState, it, filter, predicateContext) }
     }
 
     // --- Morph cost targets ---
@@ -172,7 +172,7 @@ class CostEnumerationUtils(
             if (entityId == excludeEntityId) return@filter false
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -180,7 +180,7 @@ class CostEnumerationUtils(
         val zoneKey = ZoneKey(playerId, zone)
         val cards = state.getZone(zoneKey)
         val predicateContext = PredicateContext(controllerId = playerId)
-        return cards.filter { predicateEvaluator.matches(state, it, filter, predicateContext) }
+        return cards.filter { predicateEvaluator.matches(state, state.projectedState, it, filter, predicateContext) }
     }
 
     fun findReturnToHandTargets(
@@ -195,7 +195,7 @@ class CostEnumerationUtils(
             if (entityId == excludeEntityId) return@filter false
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
+            predicateEvaluator.matches(state, projected, entityId, filter, predicateContext)
         }
     }
 
@@ -364,7 +364,7 @@ class CostEnumerationUtils(
         val projected = state.projectedState
         return state.entities.mapNotNull { (eid, c) ->
             if (c.get<ControllerComponent>()?.playerId != playerId) return@mapNotNull null
-            if (!predicateEvaluator.matchesWithProjection(state, projected, eid, filter, context)) {
+            if (!predicateEvaluator.matches(state, projected, eid, filter, context)) {
                 return@mapNotNull null
             }
             val counters = c.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
