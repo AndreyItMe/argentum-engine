@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 191 / 261
+**Implemented:** 193 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -140,7 +140,7 @@
 - [x] Meltstrider's Gear
 - [x] Meltstrider's Resolve
 - [x] Memorial Team Leader
-- [ ] Memorial Vault
+- [x] Memorial Vault
 - [x] Mental Modulation
 - [x] Mightform Harmonizer
 - [ ] Mm'menon, the Right Hand
@@ -248,7 +248,7 @@
 - [x] Unravel
 - [ ] Uthros Psionicist
 - [x] Uthros Scanship
-- [ ] Uthros, Titanic Godcore
+- [x] Uthros, Titanic Godcore
 - [x] Vaultguard Trooper
 - [ ] Virulent Silencer
 - [x] Virus Beetle
