@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 194 / 261
+**Implemented:** 195 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -237,7 +237,7 @@
 - [x] Thaumaton Torpedo
 - [x] Thawbringer
 - [x] The Dominion Bracelet
-- [ ] The Endstone
+- [x] The Endstone
 - [ ] The Eternity Elevator
 - [x] The Seriema
 - [ ] Thrumming Hivepool
