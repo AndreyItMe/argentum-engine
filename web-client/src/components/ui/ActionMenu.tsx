@@ -25,7 +25,7 @@ interface ActionOption {
   /** The legal action info if available */
   action: LegalActionInfo | null
   /** Action type for coloring */
-  actionType: 'cast' | 'castFaceDown' | 'castWithKicker' | 'cycle' | 'playLand' | 'activate' | 'turnFaceUp'
+  actionType: 'cast' | 'castFaceDown' | 'castWithKicker' | 'cycle' | 'plot' | 'playLand' | 'activate' | 'turnFaceUp'
   /**
    * Signed loyalty change for planeswalker loyalty abilities (+1, -2, -8, 0).
    * When present, the button renders a mana-font loyalty icon instead of a text prefix.
@@ -63,6 +63,7 @@ function buildActionOptions(
   const morphAction = legalActions.find((a) => a.actionType === 'CastFaceDown')
   const cycleAction = legalActions.find((a) => a.action.type === 'CycleCard')
   const typecycleAction = legalActions.find((a) => a.action.type === 'TypecycleCard')
+  const plotAction = legalActions.find((a) => a.action.type === 'PlotCard')
   const playLandAction = legalActions.find((a) => a.action.type === 'PlayLand')
 
   // Debug: log found actions
@@ -123,8 +124,8 @@ function buildActionOptions(
       action: castAction,
       actionType: 'cast',
     })
-  } else if ((cycleAction || typecycleAction) && !cardInfo.cardTypes.includes('LAND')) {
-    // Non-land card with cycling but no CastSpell action — show grayed-out cast option
+  } else if ((cycleAction || typecycleAction || plotAction) && !cardInfo.cardTypes.includes('LAND')) {
+    // Non-land card with cycling/plot but no CastSpell action — show grayed-out cast option
     // so the action menu always presents both choices
     options.push({
       key: 'cast',
@@ -204,6 +205,18 @@ function buildActionOptions(
       isAvailable: typecycleAction.isAffordable !== false,
       action: typecycleAction,
       actionType: 'cycle',
+    })
+  }
+
+  // 4c. Plot (CR 718) — sorcery-speed special action; sits alongside the cast option.
+  if (plotAction) {
+    options.push({
+      key: 'plot',
+      label: 'Plot',
+      manaCost: plotAction.manaCostString || null,
+      isAvailable: plotAction.isAffordable !== false,
+      action: plotAction,
+      actionType: 'plot',
     })
   }
 
@@ -457,6 +470,8 @@ function getActionStyleClass(actionType: ActionOption['actionType'], isAvailable
       return styles.actionCastWithKicker ?? ''
     case 'cycle':
       return styles.actionCycle ?? ''
+    case 'plot':
+      return styles.actionCycle ?? ''
     case 'playLand':
       return styles.actionPlayLand ?? ''
     case 'activate':
@@ -582,6 +597,8 @@ function ActionButton({
       case 'CastSpell':
         return styles.fallbackCast
       case 'CycleCard':
+        return styles.fallbackCycle
+      case 'PlotCard':
         return styles.fallbackCycle
       case 'ActivateAbility':
         return styles.fallbackActivate

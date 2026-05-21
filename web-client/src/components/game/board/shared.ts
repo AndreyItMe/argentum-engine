@@ -181,6 +181,7 @@ export function hasMultipleCastingOptions(cardLegalActions: LegalActionInfo[]): 
   const hasFlashbackCast = cardLegalActions.some((a) => a.actionType === 'CastWithFlashback')
   const hasWarpCast = cardLegalActions.some((a) => a.actionType === 'CastWithWarp')
   const hasCycling = cardLegalActions.some((a) => a.action.type === 'CycleCard')
+  const hasPlot = cardLegalActions.some((a) => a.action.type === 'PlotCard')
   const hasPlayLand = cardLegalActions.some((a) => a.action.type === 'PlayLand')
 
   let options = 0
@@ -190,6 +191,7 @@ export function hasMultipleCastingOptions(cardLegalActions: LegalActionInfo[]): 
   if (hasFlashbackCast) options++
   if (hasWarpCast) options++
   if (hasCycling) options++
+  if (hasPlot) options++
   if (hasPlayLand) options++
 
   return options > 1

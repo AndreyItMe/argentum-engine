@@ -122,7 +122,7 @@ class AutoPassManager {
                     // Auto-pass if we have no meaningful instant-speed responses.
                     // Auras are excluded because they target, and the opponent should see what's being targeted.
                     val hasResponses = meaningfulActions.any {
-                        it.actionType == "CastSpell" || it.actionType == "CastSpellMode" || it.actionType == "CastSpellModal" || it.actionType == "ActivateAbility" || it.actionType == "CycleCard" || it.actionType == "TypecycleCard"
+                        it.actionType == "CastSpell" || it.actionType == "CastSpellMode" || it.actionType == "CastSpellModal" || it.actionType == "ActivateAbility" || it.actionType == "CycleCard" || it.actionType == "TypecycleCard" || it.actionType == "PlotCard"
                     }
                     if (!hasResponses) {
                         logger.debug("AUTO-PASS: Opponent's permanent spell on stack, no responses")
@@ -175,7 +175,7 @@ class AutoPassManager {
         // by shouldAutoPassOnOpponentTurn which only stops if you have blockers.
         if (state.step == Step.DECLARE_BLOCKERS && isMyTurn) {
             val hasInstantSpeedResponses = meaningfulActions.any { action ->
-                (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard" || action.actionType == "PlotCard") &&
                 (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
             }
 
@@ -270,7 +270,7 @@ class AutoPassManager {
             }
 
             // Cycling/typecycling is meaningful only if the player can afford it
-            if (action.actionType == "CycleCard" || action.actionType == "TypecycleCard") {
+            if (action.actionType == "CycleCard" || action.actionType == "TypecycleCard" || action.actionType == "PlotCard") {
                 return@filter action.isAffordable
             }
 
@@ -331,7 +331,7 @@ class AutoPassManager {
 
             Step.DECLARE_BLOCKERS -> {
                 val hasResponses = meaningfulActions.any { action ->
-                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard" || action.actionType == "PlotCard") &&
                     (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
                 }
                 if (hasResponses) {
@@ -345,7 +345,7 @@ class AutoPassManager {
 
             Step.FIRST_STRIKE_COMBAT_DAMAGE -> {
                 val hasResponses = meaningfulActions.any { action ->
-                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard" || action.actionType == "PlotCard") &&
                     (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
                 }
                 if (hasResponses) {
@@ -398,7 +398,7 @@ class AutoPassManager {
 
         // Check if we have instant-speed responses (spells/abilities, not blockers)
         val hasInstantSpeedResponses = meaningfulActions.any { action ->
-            (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+            (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "CastSpellModal" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard" || action.actionType == "PlotCard") &&
             (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
         }
 
