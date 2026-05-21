@@ -33,6 +33,7 @@ class LegalActionEnumerator(
         MorphCastEnumerator(),
         CastSpellEnumerator(),
         CyclingEnumerator(),
+        PlotEnumerator(),
         CastFromZoneEnumerator(),
         ManaAbilityEnumerator(),
         TurnFaceUpEnumerator(),

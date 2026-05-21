@@ -176,6 +176,26 @@ data class CycleCard(
 ) : GameAction
 
 /**
+ * Player plots a card from their hand (Outlaws of Thunder Junction, CR 718).
+ *
+ * Plot is a special action — does not use the stack, sorcery-speed only. The player
+ * pays the plot cost from the [KeywordAbility.Plot][com.wingedsheep.sdk.scripting.KeywordAbility.Plot]
+ * ability and exiles the card from their hand. The exiled card is marked plotted
+ * (see [com.wingedsheep.engine.state.components.identity.PlottedComponent]) and may
+ * be cast from exile without paying its mana cost on a later turn.
+ *
+ * @property playerId The player plotting the card
+ * @property cardId The card being plotted
+ */
+@Serializable
+@SerialName("PlotCard")
+data class PlotCard(
+    override val playerId: EntityId,
+    val cardId: EntityId,
+    val paymentStrategy: PaymentStrategy = PaymentStrategy.AutoPay
+) : GameAction
+
+/**
  * Player typecycles a card from their hand.
  *
  * Typecycling (e.g., Swampcycling, Wizardcycling) is an activated ability from hand.

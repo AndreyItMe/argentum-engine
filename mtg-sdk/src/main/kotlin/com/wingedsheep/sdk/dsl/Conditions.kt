@@ -586,6 +586,14 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.SourceAbilityResolvedNTimesThisTurn(count)
 
     /**
+     * Internal: gate on the plot mechanic's may-cast permission. True when the source
+     * card is currently plotted and was plotted on a prior turn (CR 718.2). Cards
+     * never reference this directly — the engine's plot handler wires it up.
+     */
+    val SourcePlottedOnPriorTurn: ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.SourcePlottedOnPriorTurn
+
+    /**
      * If it's your turn.
      */
     val IsYourTurn: ConditionInterface =

@@ -72,6 +72,19 @@ enum class Keyword(val displayName: String) {
      */
     CASCADE("Cascade"),
 
+    /**
+     * Plot (CR 718, Outlaws of Thunder Junction). "Plot [cost]" — special action
+     * available any time you have priority during your main phase while the stack is
+     * empty: pay the plot cost and exile this card from your hand. It becomes plotted.
+     * On any later turn, you may cast a plotted card from exile without paying its
+     * mana cost as a sorcery.
+     *
+     * The keyword itself is display-only; cast/exile wiring lives in
+     * [com.wingedsheep.sdk.scripting.KeywordAbility.Plot] and the engine's plot
+     * action handler + enumerator.
+     */
+    PLOT("Plot"),
+
     // ── Creature mechanics ────────────────────────────────
     OFFSPRING("Offspring"),
     PERSIST("Persist"),

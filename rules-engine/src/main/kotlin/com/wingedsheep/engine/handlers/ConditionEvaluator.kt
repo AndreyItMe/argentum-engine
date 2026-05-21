@@ -74,7 +74,9 @@ import com.wingedsheep.sdk.scripting.conditions.PlayerAttackedWithCreaturesThisT
 import com.wingedsheep.sdk.scripting.conditions.PlayerCastSpellsThisTurn
 import com.wingedsheep.sdk.scripting.conditions.PlayerHasCitysBlessing
 import com.wingedsheep.sdk.scripting.conditions.CreatureDiedThisTurnCondition
+import com.wingedsheep.sdk.scripting.conditions.SourcePlottedOnPriorTurn
 import com.wingedsheep.engine.handlers.triggers.CreatureDiedThisTurnConditionEvaluator
+import com.wingedsheep.engine.state.components.identity.PlottedComponent
 import com.wingedsheep.sdk.scripting.conditions.YouWereAttackedThisStep
 import com.wingedsheep.sdk.scripting.conditions.VoidCondition
 import com.wingedsheep.engine.state.components.player.PlayerCitysBlessingComponent
@@ -121,6 +123,12 @@ class ConditionEvaluator {
 
             is IsYourTurn -> ctx.controllerId?.let { state.activePlayerId == it } ?: false
             is IsNotYourTurn -> ctx.controllerId?.let { state.activePlayerId != it } ?: false
+
+            is SourcePlottedOnPriorTurn -> {
+                val sourceId = ctx.sourceId
+                val plotted = sourceId?.let { state.getEntity(it)?.get<PlottedComponent>() }
+                plotted != null && plotted.turnPlotted < state.turnNumber
+            }
 
             // Generic source-state primitive — predicate-evaluator against the source entity.
             is SourceMatches -> evaluateSourceMatchesCtx(state, condition, ctx)

@@ -506,6 +506,19 @@ sealed interface ClientEvent {
         }
     ) : ClientEvent
 
+    @Serializable
+    @SerialName("cardPlotted")
+    data class CardPlotted(
+        val playerId: EntityId,
+        val cardName: String,
+        val isYours: Boolean? = null,
+        override val description: String = when (isYours) {
+            true -> "You plotted $cardName"
+            false -> "Opponent plotted $cardName"
+            null -> "Plotted $cardName"
+        }
+    ) : ClientEvent
+
     // =========================================================================
     // Gift Events
     // =========================================================================
@@ -1010,6 +1023,12 @@ is PermanentsSacrificedEvent -> {
             )
 
             is CardCycledEvent -> ClientEvent.CardCycled(
+                playerId = event.playerId,
+                cardName = event.cardName,
+                isYours = event.playerId == viewingPlayerId
+            )
+
+            is CardPlottedEvent -> ClientEvent.CardPlotted(
                 playerId = event.playerId,
                 cardName = event.cardName,
                 isYours = event.playerId == viewingPlayerId

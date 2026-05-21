@@ -893,6 +893,25 @@ data class CardCycledEvent(
 ) : GameEvent
 
 // =============================================================================
+// Plot Events
+// =============================================================================
+
+/**
+ * A player plotted a card (Outlaws of Thunder Junction).
+ *
+ * Fires when the plot special action resolves — the plot cost was paid and the
+ * card was exiled face-up from hand. The card is now marked plotted and may be
+ * cast from exile on a later turn without paying its mana cost.
+ */
+@Serializable
+@SerialName("CardPlottedEvent")
+data class CardPlottedEvent(
+    val playerId: EntityId,
+    val cardId: EntityId,
+    val cardName: String
+) : GameEvent
+
+// =============================================================================
 // Gift Events
 // =============================================================================
 

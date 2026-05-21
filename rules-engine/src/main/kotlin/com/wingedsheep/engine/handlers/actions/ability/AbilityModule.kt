@@ -10,11 +10,13 @@ import com.wingedsheep.engine.handlers.actions.ActionHandlerModule
  * Ability actions include:
  * - ActivateAbility: Activate an ability on a permanent
  * - CycleCard: Cycle a card from hand
+ * - PlotCard: Plot a card from hand (CR 718)
  */
 class AbilityModule(private val services: EngineServices) : ActionHandlerModule {
     override fun handlers(): List<ActionHandler<*>> = listOf(
         ActivateAbilityHandler.create(services),
         CycleCardHandler.create(services),
+        PlotCardHandler.create(services),
         TypecycleCardHandler.create(services),
         CrewVehicleHandler.create(services)
     )

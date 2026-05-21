@@ -378,6 +378,29 @@ sealed interface KeywordAbility {
     }
 
     // =========================================================================
+    // Plot
+    // =========================================================================
+
+    /**
+     * Plot (CR 718, Outlaws of Thunder Junction).
+     * "Plot {cost}" — special action: pay [cost] and exile this card from your hand
+     * any time you have priority during your main phase while the stack is empty.
+     * It becomes plotted. You may cast a plotted card from exile as a sorcery on a
+     * later turn without paying its mana cost.
+     *
+     * Per the official ruling: plotting is a special action (does not use the stack
+     * and cannot be responded to once announced) and a plotted card cannot be cast
+     * the same turn it was plotted. Casting from exile follows the regular spell
+     * rules but waives the mana cost.
+     */
+    @SerialName("Plot")
+    @Serializable
+    data class Plot(val cost: ManaCost) : KeywordAbility {
+        override val keyword: Keyword = Keyword.PLOT
+        override val description: String = "Plot $cost"
+    }
+
+    // =========================================================================
     // Conspire
     // =========================================================================
 
@@ -503,6 +526,11 @@ sealed interface KeywordAbility {
         )
 
         fun basicLandcycling(cost: String): KeywordAbility = basicLandcycling(ManaCost.parse(cost))
+
+        /**
+         * Create Plot with mana cost from a string.
+         */
+        fun plot(cost: String): KeywordAbility = Plot(ManaCost.parse(cost))
 
         /**
          * Create Morph with mana cost from string.

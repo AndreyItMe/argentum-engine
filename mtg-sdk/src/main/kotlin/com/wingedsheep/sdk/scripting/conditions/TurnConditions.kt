@@ -233,6 +233,25 @@ data object CreatureDiedThisTurnCondition : Condition {
 }
 
 // =============================================================================
+// Plot (CR 718, Outlaws of Thunder Junction)
+// =============================================================================
+
+/**
+ * Gate condition for the cast-from-exile permission granted by plot.
+ *
+ * True when the source card carries a `PlottedComponent` whose `turnPlotted` is
+ * strictly less than the current `state.turnNumber` — i.e. the plotted card was
+ * plotted on a prior turn. Used as the `MayPlayPermission.condition` so plotted
+ * cards cannot be cast on the same turn they were plotted (CR 718.2).
+ */
+@SerialName("SourcePlottedOnPriorTurn")
+@Serializable
+data object SourcePlottedOnPriorTurn : Condition {
+    override val description: String = "if this card was plotted on a prior turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+// =============================================================================
 // City's Blessing (Ixalan, CR 702.131 / 700.5)
 // =============================================================================
 

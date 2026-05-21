@@ -37,6 +37,24 @@ data class WarpExiledComponent(
 ) : Component
 
 /**
+ * Marks a card in exile as "plotted" (CR 718, Outlaws of Thunder Junction).
+ *
+ * Applied when a player pays the plot cost and exiles a card from their hand via the
+ * Plot keyword's special action. Carries [turnPlotted] = `state.turnNumber` at the
+ * moment the card was plotted, so the `SourcePlottedOnPriorTurn` condition gating
+ * the cast-from-exile permission can enforce CR 718.2 ("you can't cast a plotted
+ * card on the same turn it became plotted").
+ *
+ * @param controllerId The player who plotted the card.
+ * @param turnPlotted The `GameState.turnNumber` on which the card was plotted.
+ */
+@Serializable
+data class PlottedComponent(
+    val controllerId: EntityId,
+    val turnPlotted: Int,
+) : Component
+
+/**
  * Marks a card as playable without paying its mana cost.
  * Applied by effects like Mind's Desire, Cascade, Omniscience.
  * This only waives the mana cost — the card must still be in a zone where it can

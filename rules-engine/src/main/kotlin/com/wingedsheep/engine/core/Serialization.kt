@@ -42,6 +42,7 @@ val engineSerializersModule = SerializersModule {
         subclass(Concede::class)
         subclass(CrewVehicle::class)
         subclass(CycleCard::class)
+        subclass(PlotCard::class)
         subclass(TurnFaceUp::class)
         subclass(TypecycleCard::class)
         subclass(UnlockRoomDoor::class)
@@ -90,6 +91,7 @@ val engineSerializersModule = SerializersModule {
         subclass(AbilityCounteredEvent::class)
         subclass(BecomesTargetEvent::class)
         subclass(CardCycledEvent::class)
+        subclass(CardPlottedEvent::class)
         subclass(CardsRevealedEvent::class)
         subclass(ClassLevelChangedEvent::class)
         subclass(CoinFlipEvent::class)
@@ -295,6 +297,7 @@ val engineSerializersModule = SerializersModule {
         subclass(PlayWithCostIncreaseComponent::class)
         subclass(PlayWithoutPayingCostComponent::class)
         subclass(WarpExiledComponent::class)
+        subclass(PlottedComponent::class)
 
         // Battlefield components
         subclass(TappedComponent::class)
