@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 201 / 261
+**Implemented:** 202 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -192,7 +192,7 @@
 - [x] Seedship Agrarian
 - [x] Seedship Broodtender
 - [x] Seedship Impact
-- [ ] Selfcraft Mechan
+- [x] Selfcraft Mechan
 - [x] Shattered Wings
 - [x] Singularity Rupture
 - [x] Sinister Cryologist
