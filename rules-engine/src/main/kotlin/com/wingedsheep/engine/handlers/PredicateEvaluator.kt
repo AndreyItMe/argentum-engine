@@ -585,6 +585,10 @@ class PredicateEvaluator {
             StatePredicate.IsWarpExiled ->
                 container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>()
 
+            // Battlefield marker — set when a warped spell resolves (CR 702.185).
+            StatePredicate.WasCastForWarp ->
+                container.has<com.wingedsheep.engine.state.components.battlefield.WarpedComponent>()
+
             // Relative power
             StatePredicate.HasGreatestPower -> {
                 val projected = state.projectedState

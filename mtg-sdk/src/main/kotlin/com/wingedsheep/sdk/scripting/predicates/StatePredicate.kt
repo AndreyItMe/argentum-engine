@@ -201,6 +201,22 @@ sealed interface StatePredicate {
         override val description: String = "warped"
     }
 
+    /**
+     * Permanent on the battlefield that was cast for its warp cost (CR 702.185).
+     * Matches the `WarpedComponent` marker the engine writes when a warped spell
+     * resolves — the permanent-side bookkeeping equivalent of 702.185c's "a spell
+     * was warped this turn."
+     *
+     * Useful for effects that branch on whether a target was cast via warp — e.g.,
+     * Full Bore's "if that creature was cast for its warp cost, it also gains
+     * trample and haste."
+     */
+    @SerialName("WasCastForWarp")
+    @Serializable
+    data object WasCastForWarp : Entity {
+        override val description: String = "cast for its warp cost"
+    }
+
     // =============================================================================
     // Composite / Logical Combinators
     // =============================================================================

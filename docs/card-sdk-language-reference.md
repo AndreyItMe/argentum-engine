@@ -566,6 +566,12 @@ work for abilities-on-stack (which carry no `CardComponent`).
 - `IsBlocking` — declared as blocker this combat.
 - `IsFaceDown` — currently face-down.
 - `HasCounter(type)` — has at least one counter of `type`.
+- `IsWarpExiled` (filter builder `warpExiled()`) — card in exile via warp's
+  end-of-turn delayed trigger (CR 702.185b).
+- `WasCastForWarp` (filter builder `castForWarp()`) — battlefield permanent that
+  was cast for its warp cost (CR 702.185). Pair with
+  `Conditions.TargetMatchesFilter(GameObjectFilter.Creature.castForWarp(), …)` to
+  branch on whether a target was warp-cast (e.g., Full Bore).
 
 ### `AffectsFilter` — static-ability target shapes
 

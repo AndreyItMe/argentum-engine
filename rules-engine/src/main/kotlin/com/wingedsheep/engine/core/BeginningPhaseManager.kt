@@ -340,6 +340,7 @@ class BeginningPhaseManager(
         StatePredicate.HasGreatestPower,
         StatePredicate.IsEquipped,
         StatePredicate.IsModified,
-        StatePredicate.IsWarpExiled -> true
+        StatePredicate.IsWarpExiled,
+        StatePredicate.WasCastForWarp -> true
     }
 }
