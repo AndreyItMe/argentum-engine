@@ -844,6 +844,7 @@ class TriggerMatcher(
             Subtype.TREASURE -> event.paidWithTreasureMana
             else -> false
         }
+        SpellCastPredicate.IsModal -> event.chosenModesCount > 0
     }
 
     /**

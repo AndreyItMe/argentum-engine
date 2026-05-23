@@ -70,15 +70,32 @@ class ModalEffectExecutor(
             state.getEntity(sourceId)?.get<CardComponent>()?.name
         }
 
+        // Resolve "choose up to <DynamicAmount>" at runtime. minChooseCount is treated
+        // as 0 (player may always decline picks once the dynamic-evaluated cap is
+        // exhausted); chooseCount becomes min(evaluated, modes.size).
+        val (effectiveChooseCount, effectiveMinChooseCount) = if (effect.dynamicChooseCount != null) {
+            val evaluator = com.wingedsheep.engine.handlers.DynamicAmountEvaluator()
+            val raw = evaluator.evaluate(state, effect.dynamicChooseCount!!, context)
+            val capped = raw.coerceIn(0, effect.modes.size)
+            capped to 0
+        } else {
+            effect.chooseCount to effect.minChooseCount
+        }
+
+        // Evaluated cap = 0 → no modes will be chosen; resolve as a no-op success.
+        if (effectiveChooseCount == 0) {
+            return EffectResult.success(state, emptyList())
+        }
+
         val baseOptions = effect.modes.map { it.description }
         val availableIndices = effect.modes.indices.toList()
         // "Choose up to N" — allow declining a mode pick when minChooseCount has
         // already been satisfied (here, before any picks, when minChooseCount = 0).
-        val canDecline = effect.minChooseCount < effect.chooseCount
+        val canDecline = effectiveMinChooseCount < effectiveChooseCount
         val modeDescriptions = if (canDecline) baseOptions + DECLINE_MODE_LABEL else baseOptions
 
         val basePrompt = "Choose a mode for ${sourceName ?: "modal spell"}"
-        val prompt = if (effect.chooseCount > 1) "$basePrompt (1 of ${effect.chooseCount})" else basePrompt
+        val prompt = if (effectiveChooseCount > 1) "$basePrompt (1 of $effectiveChooseCount)" else basePrompt
 
         val decisionId = UUID.randomUUID().toString()
         val decision = ChooseOptionDecision(
@@ -106,8 +123,8 @@ class ModalEffectExecutor(
             xValue = context.xValue,
             opponentId = context.opponentId,
             triggeringEntityId = context.triggeringEntityId,
-            chooseCount = effect.chooseCount,
-            minChooseCount = effect.minChooseCount,
+            chooseCount = effectiveChooseCount,
+            minChooseCount = effectiveMinChooseCount,
             selectedModeIndices = emptyList(),
             availableIndices = availableIndices,
             outerTargets = context.targets,

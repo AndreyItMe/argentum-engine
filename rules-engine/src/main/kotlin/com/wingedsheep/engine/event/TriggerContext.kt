@@ -53,7 +53,14 @@ data class TriggerContext(
      * Read by LTB effects like Grothama's "each player draws X cards where X is the damage
      * dealt to ~ this turn by sources they controlled."
      */
-    val lastKnownDamageDealtByPlayers: Map<EntityId, Int>? = null
+    val lastKnownDamageDealtByPlayers: Map<EntityId, Int>? = null,
+    /**
+     * For SpellCastEvent triggers — number of mode picks the cast spell recorded. `null`
+     * when the trigger was not driven by a spell cast. Read by
+     * `ContextPropertyKey.MODES_CHOSEN_ON_TRIGGERING_SPELL` so abilities like Riku of
+     * Many Paths can scale by "the number of times you chose a mode for that spell."
+     */
+    val modesChosenCount: Int? = null
 ) {
     companion object {
         fun fromEvent(event: com.wingedsheep.engine.core.GameEvent): TriggerContext {
@@ -81,7 +88,8 @@ data class TriggerContext(
                 )
                 is SpellCastEvent -> TriggerContext(
                     triggeringEntityId = event.spellEntityId,
-                    triggeringPlayerId = event.casterId
+                    triggeringPlayerId = event.casterId,
+                    modesChosenCount = event.chosenModesCount.takeIf { it > 0 }
                 )
                 is CardsDrawnEvent -> TriggerContext(triggeringPlayerId = event.playerId)
                 is CardRevealedFromDrawEvent -> TriggerContext(

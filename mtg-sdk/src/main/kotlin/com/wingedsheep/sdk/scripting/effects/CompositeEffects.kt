@@ -175,11 +175,25 @@ data class ModalEffect(
      * [chooseCount]/[minChooseCount] apply. Models the "Choose one. If this spell's
      * additional cost was paid, choose both instead." pattern (e.g., Pyrrhic Strike).
      */
-    val chooseAllIfBlightPaid: Boolean = false
+    val chooseAllIfBlightPaid: Boolean = false,
+    /**
+     * Optional runtime-evaluated upper bound on the number of modes that may be chosen.
+     * When non-null, the engine's modal executor evaluates this against the current
+     * resolution context and uses the result as the effective maximum, clamped to
+     * `modes.size`. Used for "choose up to X" triggered abilities where X depends on
+     * resolution-time data (Riku of Many Paths — X is the number of modes the cast
+     * modal spell chose). [minChooseCount] is treated as `0` when this is set
+     * (i.e. always "choose up to"); [chooseCount] is ignored.
+     */
+    val dynamicChooseCount: com.wingedsheep.sdk.scripting.values.DynamicAmount? = null
 ) : Effect {
     override val description: String = buildString {
         append("Choose ")
         when {
+            dynamicChooseCount != null -> {
+                append("up to ")
+                append(dynamicChooseCount.description)
+            }
             minChooseCount < chooseCount && chooseCount == 2 && modes.size == 2 -> append("one or both")
             minChooseCount < chooseCount -> append("one or more")
             else -> when (chooseCount) {
@@ -236,6 +250,27 @@ data class ModalEffect(
          */
         fun chooseTwo(vararg modes: Mode): ModalEffect =
             ModalEffect(modes.toList(), 2)
+
+        /**
+         * Create a "choose up to X" modal effect where X is evaluated at resolution
+         * time from a [com.wingedsheep.sdk.scripting.values.DynamicAmount]. The player
+         * may decline (pick 0) and may pick at most `min(X, modes.size)` total modes.
+         * Mode repetition is not allowed by default (per CR-compliant "choose up to N")
+         * — pass `allowRepeat = true` for Spree-style behavior.
+         *
+         * Used by triggered abilities like Riku of Many Paths.
+         */
+        fun chooseUpToDynamic(
+            dynamicMax: com.wingedsheep.sdk.scripting.values.DynamicAmount,
+            vararg modes: Mode,
+            allowRepeat: Boolean = false
+        ): ModalEffect = ModalEffect(
+            modes = modes.toList(),
+            chooseCount = modes.size,
+            minChooseCount = 0,
+            allowRepeat = allowRepeat,
+            dynamicChooseCount = dynamicMax
+        )
     }
 }
 

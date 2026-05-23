@@ -103,6 +103,13 @@ enum class ContextPropertyKey(val description: String) {
     LINKED_EXILE_CARD_COUNT("the number of cards exiled with this creature"),
     /** Distinct card types among cards exiled and linked to the source permanent (Keen-Eyed Curator). */
     LINKED_EXILE_DISTINCT_CARD_TYPE_COUNT("the number of card types among cards exiled with this creature"),
+    /**
+     * Number of times a mode was chosen for the modal spell that fired this trigger.
+     * Counts mode selections, not distinct modes (Spree-style cards may pick the same
+     * mode several times — see Riku of Many Paths: "X is the number of times you chose
+     * a mode for that spell, not the number of distinct modes").
+     */
+    MODES_CHOSEN_ON_TRIGGERING_SPELL("the number of times you chose a mode for that spell"),
 }
 
 /**

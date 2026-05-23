@@ -415,7 +415,8 @@ class TriggerProcessor(
                 triggerLastKnownDamageDealtByPlayers =
                     trigger.triggerContext.lastKnownDamageDealtByPlayers,
                 triggerLastKnownPower = trigger.triggerContext.lastKnownPower,
-                triggerLastKnownToughness = trigger.triggerContext.lastKnownToughness
+                triggerLastKnownToughness = trigger.triggerContext.lastKnownToughness,
+                triggerModesChosenCount = trigger.triggerContext.modesChosenCount
             )
             ability.effect.runtimeDescription { amount -> evaluator.evaluate(state, amount, context) }
         } catch (_: Exception) {
@@ -455,7 +456,8 @@ class TriggerProcessor(
             triggerLastKnownDamageDealtByPlayers =
                 trigger.triggerContext.lastKnownDamageDealtByPlayers,
             lastKnownPower = trigger.triggerContext.lastKnownPower,
-            lastKnownToughness = trigger.triggerContext.lastKnownToughness
+            lastKnownToughness = trigger.triggerContext.lastKnownToughness,
+            triggerModesChosenCount = trigger.triggerContext.modesChosenCount
         )
 
         // Push the continuation onto the stack
@@ -501,7 +503,8 @@ class TriggerProcessor(
                 trigger.triggerContext.lastKnownDamageDealtByPlayers,
             targetingSourceEntityId = trigger.triggerContext.targetingSourceEntityId,
             lastKnownPower = trigger.triggerContext.lastKnownPower,
-            lastKnownToughness = trigger.triggerContext.lastKnownToughness
+            lastKnownToughness = trigger.triggerContext.lastKnownToughness,
+            triggerModesChosenCount = trigger.triggerContext.modesChosenCount
         )
 
         return stackResolver.putTriggeredAbility(

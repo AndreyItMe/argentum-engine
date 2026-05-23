@@ -627,17 +627,28 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             append(player.description)
             append(" casts ")
             val wasKicked = SpellCastPredicate.WasKicked in requires
-            if (wasKicked) append("a kicked ")
+            val isModal = SpellCastPredicate.IsModal in requires
+            val prefixedQualifiers = listOfNotNull(
+                "kicked".takeIf { wasKicked },
+                "modal".takeIf { isModal }
+            )
             val filterDesc = spellFilter.description
-            if (filterDesc == "card" || filterDesc.isBlank()) {
-                if (!wasKicked) append("a spell") else append("spell")
+            val anyPrefix = prefixedQualifiers.isNotEmpty()
+            if (anyPrefix) {
+                append("a ")
+                append(prefixedQualifiers.joinToString(" "))
+                append(" ")
+                if (filterDesc == "card" || filterDesc.isBlank()) append("spell") else append("$filterDesc spell")
             } else {
-                if (!wasKicked) append("a ") else Unit
-                append("$filterDesc spell")
+                if (filterDesc == "card" || filterDesc.isBlank()) {
+                    append("a spell")
+                } else {
+                    append("a $filterDesc spell")
+                }
             }
             // Suffix qualifiers (cast-from-zone, mana-source, …) in registration order.
             requires
-                .filter { it !is SpellCastPredicate.WasKicked }
+                .filter { it !is SpellCastPredicate.WasKicked && it !is SpellCastPredicate.IsModal }
                 .forEach { append(" ").append(it.description) }
         }
 

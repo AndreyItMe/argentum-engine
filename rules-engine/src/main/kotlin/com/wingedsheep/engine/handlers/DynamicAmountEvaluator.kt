@@ -367,6 +367,8 @@ class DynamicAmountEvaluator(
 
         ContextPropertyKey.TARGET_COUNT -> context.targets.size
 
+        ContextPropertyKey.MODES_CHOSEN_ON_TRIGGERING_SPELL -> context.triggerModesChosenCount ?: 0
+
         ContextPropertyKey.LINKED_EXILE_CARD_COUNT -> {
             val sourceId = context.sourceId
             if (sourceId == null) 0 else state.getEntity(sourceId)

@@ -270,7 +270,19 @@ class StackResolver(
             }
         }
 
-        val events = mutableListOf<GameEvent>(SpellCastEvent(cardId, eventName, casterId, targetNames, xValue, wasKicked, totalManaSpent, paidWithTreasureMana))
+        val events = mutableListOf<GameEvent>(
+            SpellCastEvent(
+                spellEntityId = cardId,
+                cardName = eventName,
+                casterId = casterId,
+                targetNames = targetNames,
+                xValue = xValue,
+                wasKicked = wasKicked,
+                totalManaSpent = totalManaSpent,
+                paidWithTreasureMana = paidWithTreasureMana,
+                chosenModesCount = chosenModes.size
+            )
+        )
 
         // Crime detection (CR Outlaws of Thunder Junction). Emit at most once per cast,
         // regardless of how many opponent-controlled targets the spell chose.
@@ -1468,6 +1480,7 @@ class StackResolver(
             targetingSourceEntityId = abilityComponent.targetingSourceEntityId,
             triggerLastKnownPower = abilityComponent.lastKnownPower,
             triggerLastKnownToughness = abilityComponent.lastKnownToughness,
+            triggerModesChosenCount = abilityComponent.triggerModesChosenCount,
             xValue = abilityComponent.xValue,
             damageDistribution = abilityComponent.damageDistribution,
             chosenModes = abilityComponent.chosenModes,

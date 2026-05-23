@@ -766,6 +766,10 @@ matcher branch — `SpellCastEvent` does not grow a new field per axis.
   Talent); engine matcher accepts other token subtypes as the shape, but only Treasure
   actually fires until the mana-pool tracker generalizes beyond its current Treasure-only
   boolean.
+- `SpellCastPredicate.IsModal` — spell was cast with at least one chosen mode (rules
+  700.2). Matches `SpellCastEvent.chosenModesCount > 0`, where the count is the size of
+  `SpellOnStackComponent.chosenModes` (so Spree picking the same mode twice counts as
+  two). Used by Riku of Many Paths: "Whenever you cast a modal spell, …".
 
 Examples:
 
@@ -786,6 +790,9 @@ Triggers.youCastSpell(requires = setOf(SpellCastPredicate.WasKicked))
 Triggers.youCastSpell(
     requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)),
 )
+
+// "Whenever you cast a modal spell" (Riku of Many Paths)
+Triggers.youCastSpell(requires = setOf(SpellCastPredicate.IsModal))
 
 // "Whenever you cast a noncreature or Otter spell"
 Triggers.youCastSpell(
@@ -1149,7 +1156,19 @@ All three desugar to `EntityProperty(EntityReference.Triggering, …)`.
 
 ### Context-plumbed
 
-- `ContextProperty(key)` — value plumbed via `EffectContext` (e.g. damage amount).
+- `ContextProperty(key)` — value plumbed via `EffectContext`. Keys include:
+  - `TRIGGER_DAMAGE_AMOUNT` — damage in the current trigger payload (Tephraderm).
+  - `TRIGGER_LIFE_GAINED` / `TRIGGER_LIFE_LOST` — life delta from a `LifeChangedEvent`.
+  - `TRIGGER_COUNTERS_PLACED_AMOUNT` — counters placed in the triggering event (Simic Ascendancy).
+  - `LAST_KNOWN_PLUS_ONE_COUNTER_COUNT` / `LAST_KNOWN_TOTAL_COUNTER_COUNT` — counters on the
+    source as it last existed on the battlefield (Hooded Hydra / Shadow Urchin).
+  - `ADDITIONAL_COST_EXILED_COUNT` / `ADDITIONAL_COST_BLIGHT_AMOUNT` — cost-step accumulators.
+  - `TARGET_COUNT` — still-legal targets in the current effect context.
+  - `LINKED_EXILE_CARD_COUNT` / `LINKED_EXILE_DISTINCT_CARD_TYPE_COUNT` — cards / distinct
+    types in the source's linked exile pile (Veteran Survivor / Keen-Eyed Curator).
+  - `MODES_CHOSEN_ON_TRIGGERING_SPELL` — number of mode picks recorded on the cast that fired
+    the trigger (Riku of Many Paths). Counts selections, not distinct modes, so Spree with
+    the same mode twice reads as `2`.
 - `AdditionalCostBlightAmount` — X paid via the Blight additional cost.
 - `ChosenNumber` — number a player chose via a Choose action.
 - `VariableReference(name)` — named variable stored earlier by `StoreResult`/`StoreCount`.
@@ -1246,6 +1265,13 @@ spell {
 - `Mode.noTarget(...)` — explicit target-less mode (outer targets are preserved).
 
 `ModalEffect.chooseOne { mode(...) }` and `ModalEffect.chooseN(n) { ... }` for explicit modal effects.
+
+**Dynamic "choose up to X"** — `ModalEffect.chooseUpToDynamic(dynamicMax, *modes, allowRepeat = false)`
+caps the pick count by a `DynamicAmount` evaluated at resolution time. `minChooseCount` is
+forced to `0` (the player may always decline); `chooseCount` becomes `min(eval, modes.size)`.
+If the evaluated cap is `0` the effect resolves as a no-op. Used by Riku of Many Paths,
+where the cap is `ContextProperty(MODES_CHOSEN_ON_TRIGGERING_SPELL)`. Equivalent raw shape:
+`ModalEffect(modes, chooseCount = modes.size, minChooseCount = 0, dynamicChooseCount = …)`.
 
 ### Permanent enters-with-choice (Sieges)
 

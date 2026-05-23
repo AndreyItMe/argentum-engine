@@ -325,6 +325,17 @@ sealed interface SpellCastPredicate {
     data class PaidWithManaFromSubtype(val subtype: Subtype) : SpellCastPredicate {
         override val description = "using mana from a ${subtype.value}"
     }
+
+    /**
+     * The spell was modal — at least one mode was chosen at cast time (rules 700.2).
+     * Used by triggers that fire only when a modal spell is cast (e.g., Riku of Many
+     * Paths: "Whenever you cast a modal spell, …").
+     */
+    @SerialName("SpellIsModal")
+    @Serializable
+    data object IsModal : SpellCastPredicate {
+        override val description = "modal"
+    }
 }
 
 // =============================================================================

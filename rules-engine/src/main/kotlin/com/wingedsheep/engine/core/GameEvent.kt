@@ -213,7 +213,15 @@ data class SpellCastEvent(
      * Drives SDK triggers built with
      * `Triggers.youCastSpell(requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)))`.
      */
-    val paidWithTreasureMana: Boolean = false
+    val paidWithTreasureMana: Boolean = false,
+    /**
+     * Number of mode picks recorded on this cast (size of
+     * [com.wingedsheep.engine.state.components.stack.SpellOnStackComponent.chosenModes]).
+     * `0` for non-modal spells. Drives `SpellCastPredicate.IsModal` matching and feeds
+     * `ContextPropertyKey.MODES_CHOSEN_ON_TRIGGERING_SPELL` for cards like Riku of Many
+     * Paths whose triggered ability scales by the cast's mode count.
+     */
+    val chosenModesCount: Int = 0
 ) : GameEvent
 
 /**

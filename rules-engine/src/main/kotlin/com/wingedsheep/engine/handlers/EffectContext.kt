@@ -109,6 +109,11 @@ data class EffectContext(
      * to ~ this turn by sources they controlled."
      */
     val triggerLastKnownDamageDealtByPlayers: Map<EntityId, Int>? = null,
+    /**
+     * Number of mode picks the triggering spell-cast recorded. Read by
+     * `ContextPropertyKey.MODES_CHOSEN_ON_TRIGGERING_SPELL` (Riku of Many Paths).
+     */
+    val triggerModesChosenCount: Int? = null,
     // --- Choice state ---
     /** Color chosen for "add one mana of any color" abilities */
     val manaColorChoice: Color? = null,
