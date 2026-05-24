@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.AttackersDeclaredEvent
 import com.wingedsheep.engine.core.BecomesTargetEvent
 import com.wingedsheep.engine.core.BlockersDeclaredEvent
 import com.wingedsheep.engine.core.CardCycledEvent
+import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.GiftGivenEvent
 import com.wingedsheep.engine.core.CardRevealedFromDrawEvent
 import com.wingedsheep.engine.core.CardsDrawnEvent
@@ -66,6 +67,7 @@ enum class TriggerCategory {
     GIFT_GIVEN,
     TRANSFORM,
     COMMIT_CRIME,
+    DISCARD,
 }
 
 /**
@@ -181,6 +183,7 @@ class TriggerIndex(
                 is SdkGameEvent.GiftGivenEvent -> listOf(TriggerCategory.GIFT_GIVEN)
                 is SdkGameEvent.TransformEvent -> listOf(TriggerCategory.TRANSFORM)
                 is SdkGameEvent.CommitCrimeEvent -> listOf(TriggerCategory.COMMIT_CRIME)
+                is SdkGameEvent.DiscardEvent -> listOf(TriggerCategory.DISCARD)
                 // These are handled by specialized detect methods, not the main loop
                 else -> emptyList()
             }
@@ -212,6 +215,7 @@ class TriggerIndex(
             is GiftGivenEvent -> GIFT_GIVEN_LIST
             is com.wingedsheep.engine.core.TransformedEvent -> TRANSFORM_LIST
             is com.wingedsheep.engine.core.CommitCrimeEvent -> COMMIT_CRIME_LIST
+            is CardsDiscardedEvent -> DISCARD_LIST
             else -> emptyList()
         }
 
@@ -235,5 +239,6 @@ class TriggerIndex(
         private val GIFT_GIVEN_LIST = listOf(TriggerCategory.GIFT_GIVEN)
         private val TRANSFORM_LIST = listOf(TriggerCategory.TRANSFORM)
         private val COMMIT_CRIME_LIST = listOf(TriggerCategory.COMMIT_CRIME)
+        private val DISCARD_LIST = listOf(TriggerCategory.DISCARD)
     }
 }

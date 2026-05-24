@@ -12,6 +12,64 @@ export function parseManaCost(manaCost: string): string[] {
   return symbols
 }
 
+const COLOR_PIP = new Set(['W', 'U', 'B', 'R', 'G'])
+
+/**
+ * Can this printed mana cost be paid using only colored mana of [allowedColors]
+ * (single-letter WUBRG)? This drives the "at most" deckbuilder filter, which
+ * asks whether a card is castable in a deck limited to a colour set.
+ *
+ * A hybrid pip like `{R/W}` is payable with EITHER half (CR 107.4d), so a
+ * `{R/W}` card is castable in a mono-white *or* mono-red deck and must survive
+ * "at most W". Phyrexian (`{W/P}`) and monocolor-hybrid / "twobrid" (`{2/W}`)
+ * pips always have a non-colored payment (life / generic), so they never force
+ * a colour. Generic / X / colorless / snow symbols never force a colour either.
+ */
+export function manaCostCastableWith(manaCost: string, allowedColors: ReadonlySet<string>): boolean {
+  for (const raw of parseManaCost(manaCost)) {
+    const sym = raw.toUpperCase()
+    if (sym.includes('/')) {
+      const halves = sym.split('/')
+      if (halves.includes('P')) continue // Phyrexian — pay 2 life
+      if (halves.some((h) => /^\d+$/.test(h))) continue // twobrid — pay generic
+      if (halves.some((h) => allowedColors.has(h))) continue // hybrid — either colour
+      return false
+    }
+    if (COLOR_PIP.has(sym) && !allowedColors.has(sym)) return false
+  }
+  return true
+}
+
+/** Every colour letter appearing anywhere in the printed cost (including both halves of a hybrid). */
+export function manaCostColors(manaCost: string): Set<string> {
+  const colors = new Set<string>()
+  for (const raw of parseManaCost(manaCost)) {
+    for (const half of raw.toUpperCase().split('/')) {
+      if (COLOR_PIP.has(half)) colors.add(half)
+    }
+  }
+  return colors
+}
+
+/**
+ * "At most" deckbuilder semantics: can this card be *played* in a deck limited
+ * to [allowedColors] (single-letter WUBRG)? The card must be castable from its
+ * cost (hybrid pips give a choice — see [manaCostCastableWith]), and any colour
+ * in its identity that the cost doesn't account for — off-color activation
+ * costs, dual-land subtypes — must itself be within the allowed set.
+ */
+export function playableWithinColors(
+  manaCost: string,
+  colorIdentity: ReadonlySet<string>,
+  allowedColors: ReadonlySet<string>,
+): boolean {
+  const costColors = manaCostColors(manaCost)
+  for (const c of colorIdentity) {
+    if (!costColors.has(c) && !allowedColors.has(c)) return false
+  }
+  return manaCostCastableWith(manaCost, allowedColors)
+}
+
 /**
  * Build the remaining mana cost symbols after applying N delve exiles.
  * Reduces the generic portion only.

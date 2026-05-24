@@ -87,15 +87,33 @@ sealed interface CounterCondition {
     @Serializable
     data object Always : CounterCondition
 
-    /** Counter unless controller pays a fixed mana cost. */
+    /**
+     * Counter unless controller pays a fixed mana cost.
+     *
+     * @property onPaid Optional effect run **only if** the spell's controller pays the
+     *   cost (the "If they do, …" rider on cards like Divert Disaster). Executed with
+     *   the original spell's caster (of the counter, not of the countered spell) as
+     *   `controllerId`, so "you create a Lander token" targets the counter's caster.
+     *   When the spell is countered instead, the rider does not run.
+     */
     @SerialName("CounterCondition.UnlessPaysMana")
     @Serializable
-    data class UnlessPaysMana(val cost: ManaCost) : CounterCondition
+    data class UnlessPaysMana(
+        val cost: ManaCost,
+        val onPaid: Effect? = null
+    ) : CounterCondition
 
-    /** Counter unless controller pays a dynamic generic mana cost. */
+    /**
+     * Counter unless controller pays a dynamic generic mana cost.
+     *
+     * @property onPaid See [UnlessPaysMana.onPaid].
+     */
     @SerialName("CounterCondition.UnlessPaysDynamic")
     @Serializable
-    data class UnlessPaysDynamic(val amount: DynamicAmount) : CounterCondition
+    data class UnlessPaysDynamic(
+        val amount: DynamicAmount,
+        val onPaid: Effect? = null
+    ) : CounterCondition
 }
 
 /**
@@ -145,9 +163,11 @@ data class CounterEffect(
                     }
                     is CounterCondition.UnlessPaysMana -> {
                         append("Counter target spell unless its controller pays ${condition.cost}")
+                        condition.onPaid?.let { append(". If they do, ${it.description.replaceFirstChar(Char::lowercase)}") }
                     }
                     is CounterCondition.UnlessPaysDynamic -> {
                         append("Counter target spell unless its controller pays ${condition.amount.description}")
+                        condition.onPaid?.let { append(". If they do, ${it.description.replaceFirstChar(Char::lowercase)}") }
                     }
                 }
                 when (val dest = counterDestination) {
@@ -170,9 +190,15 @@ data class CounterEffect(
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newFilter = filter?.applyTextReplacement(replacer)
         val newCondition = when (condition) {
+            is CounterCondition.UnlessPaysMana -> {
+                val newOnPaid = condition.onPaid?.applyTextReplacement(replacer)
+                if (newOnPaid !== condition.onPaid) condition.copy(onPaid = newOnPaid) else condition
+            }
             is CounterCondition.UnlessPaysDynamic -> {
                 val newAmount = condition.amount.applyTextReplacement(replacer)
-                if (newAmount !== condition.amount) CounterCondition.UnlessPaysDynamic(newAmount) else condition
+                val newOnPaid = condition.onPaid?.applyTextReplacement(replacer)
+                if (newAmount !== condition.amount || newOnPaid !== condition.onPaid)
+                    condition.copy(amount = newAmount, onPaid = newOnPaid) else condition
             }
             else -> condition
         }

@@ -744,6 +744,49 @@ object Triggers {
     )
 
     // =========================================================================
+    // Discard Triggers
+    // =========================================================================
+
+    /**
+     * Whenever an opponent discards a card.
+     */
+    val AnyOpponentDiscards: TriggerSpec = TriggerSpec(
+        event = DiscardEvent(player = Player.Opponent),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever you discard a card.
+     */
+    val YouDiscard: TriggerSpec = TriggerSpec(
+        event = DiscardEvent(player = Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Generic "discards a card" trigger factory. Use [AnyOpponentDiscards] /
+     * [YouDiscard] when their defaults match; reach for this factory for
+     * card-type filters or "any player discards" scopes.
+     *
+     * Examples:
+     * - "Whenever a player discards a card":
+     *   `discards(player = Player.Each)`
+     * - "Whenever an opponent discards a creature card":
+     *   `discards(player = Player.Opponent, cardFilter = GameObjectFilter.Creature)`
+     *
+     * Note: fires once per card discarded — e.g. an opponent discarding 3 cards
+     * in one resolution fires this 3 times. Mirrors how [YouDraw] handles
+     * multi-card draws.
+     */
+    fun discards(
+        player: Player = Player.Each,
+        cardFilter: GameObjectFilter? = null,
+    ): TriggerSpec = TriggerSpec(
+        event = DiscardEvent(player = player, cardFilter = cardFilter),
+        binding = TriggerBinding.ANY,
+    )
+
+    // =========================================================================
     // Stack Triggers
     // =========================================================================
 

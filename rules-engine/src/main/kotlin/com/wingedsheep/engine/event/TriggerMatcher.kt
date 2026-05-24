@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.AbilityTriggeredEvent
 import com.wingedsheep.engine.core.AttackersDeclaredEvent
 import com.wingedsheep.engine.core.BlockersDeclaredEvent
 import com.wingedsheep.engine.core.CardCycledEvent
+import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.GiftGivenEvent
 import com.wingedsheep.engine.core.RoomFullyUnlockedEvent
 import com.wingedsheep.engine.core.CardRevealedFromDrawEvent
@@ -268,7 +269,10 @@ class TriggerMatcher(
                     event.oldLife != event.newLife &&
                     matchesPlayer(trigger.player, event.playerId, controllerId)
             }
-            is GameEvent.DiscardEvent -> false
+            is GameEvent.DiscardEvent -> {
+                event is CardsDiscardedEvent &&
+                    matchingDiscardCount(trigger, event, sourceId, controllerId, state) > 0
+            }
             is GameEvent.SearchLibraryEvent -> false
             // ExtraTurnEvent is only used as a replacement effect filter, not a trigger
             is GameEvent.ExtraTurnEvent -> false
@@ -301,6 +305,36 @@ class TriggerMatcher(
                 }
                 true
             }
+        }
+    }
+
+    /**
+     * How many of the discarded cards satisfy this discard trigger — i.e. how many times the
+     * ability fires. Discarding N cards in one resolution fires "whenever ... discards a card"
+     * N times (one per card); a [GameEvent.DiscardEvent.cardFilter] narrows that to the matching
+     * cards only. Returns 0 when the discarding player doesn't match the trigger's selector, so
+     * the boolean "does it trigger?" question is just `matchingDiscardCount(...) > 0`.
+     *
+     * The filter is evaluated against post-discard state — the cards are already in the graveyard.
+     * Safe for zone-independent predicates (type/subtype/color); a filter depending on hand-specific
+     * state would read the wrong zone.
+     */
+    fun matchingDiscardCount(
+        trigger: GameEvent.DiscardEvent,
+        event: CardsDiscardedEvent,
+        sourceId: EntityId,
+        controllerId: EntityId,
+        state: GameState
+    ): Int {
+        if (!matchesPlayer(trigger.player, event.playerId, controllerId)) return 0
+        val filter = trigger.cardFilter ?: return event.cardIds.size
+        val projected = state.projectedState
+        val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+            controllerId = controllerId,
+            sourceId = sourceId
+        )
+        return event.cardIds.count { cardId ->
+            predicateEvaluator.matches(state, projected, cardId, filter, predicateContext)
         }
     }
 

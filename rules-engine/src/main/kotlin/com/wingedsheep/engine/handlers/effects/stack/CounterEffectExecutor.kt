@@ -67,7 +67,8 @@ class CounterEffectExecutor(
         // Step 3: Handle condition (unless pays) or perform counter directly
         return when (val condition = effect.condition) {
             is CounterCondition.Always -> performCounter(state, effect, entityId, context)
-            is CounterCondition.UnlessPaysMana -> handleUnlessPaysMana(state, effect, entityId, condition.cost, context)
+            is CounterCondition.UnlessPaysMana ->
+                handleUnlessPaysMana(state, effect, entityId, condition.cost, condition.onPaid, context)
             is CounterCondition.UnlessPaysDynamic -> handleUnlessPaysDynamic(state, effect, entityId, condition, context)
         }
     }
@@ -118,6 +119,7 @@ class CounterEffectExecutor(
         effect: CounterEffect,
         spellEntityId: EntityId,
         cost: ManaCost,
+        onPaid: com.wingedsheep.sdk.scripting.effects.Effect?,
         context: EffectContext
     ): EffectResult {
         val payingPlayerId = getSpellCasterId(state, spellEntityId)
@@ -128,7 +130,7 @@ class CounterEffectExecutor(
             return performCounter(state, effect, spellEntityId, context)
         }
 
-        return offerPayment(state, effect, spellEntityId, payingPlayerId, cost, context)
+        return offerPayment(state, effect, spellEntityId, payingPlayerId, cost, onPaid, context)
     }
 
     private fun handleUnlessPaysDynamic(
@@ -144,7 +146,8 @@ class CounterEffectExecutor(
         val totalGenericCost = amountEvaluator.evaluate(state, condition.amount, context)
 
         if (totalGenericCost <= 0) {
-            // Cost is 0 or negative — spell is not countered
+            // Cost is 0 or negative — spell is not countered.
+            // The "If they do, …" rider also doesn't fire: nothing was paid.
             return EffectResult.success(state)
         }
 
@@ -155,7 +158,7 @@ class CounterEffectExecutor(
             return performCounter(state, effect, spellEntityId, context)
         }
 
-        return offerPayment(state, effect, spellEntityId, payingPlayerId, manaCost, context)
+        return offerPayment(state, effect, spellEntityId, payingPlayerId, manaCost, condition.onPaid, context)
     }
 
     private fun getSpellCasterId(state: GameState, spellEntityId: EntityId): EntityId? {
@@ -170,6 +173,7 @@ class CounterEffectExecutor(
         spellEntityId: EntityId,
         payingPlayerId: EntityId,
         manaCost: ManaCost,
+        onPaid: com.wingedsheep.sdk.scripting.effects.Effect?,
         context: EffectContext
     ): EffectResult {
         val decisionResult = decisionHandler.createYesNoDecision(
@@ -192,7 +196,8 @@ class CounterEffectExecutor(
             sourceId = context.sourceId,
             sourceName = "Counter unless pays",
             exileOnCounter = exileOnCounter,
-            controllerId = context.controllerId
+            controllerId = context.controllerId,
+            onPaid = onPaid
         )
 
         val stateWithContinuation = decisionResult.state.pushContinuation(continuation)

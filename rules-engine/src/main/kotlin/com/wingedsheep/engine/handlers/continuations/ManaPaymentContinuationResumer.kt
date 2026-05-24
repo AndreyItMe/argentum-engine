@@ -69,7 +69,14 @@ class ManaPaymentContinuationResumer(
                         )
                     )
                 }
-                return checkForMore(currentState, emptyList())
+                return runOnPaidThenCheckForMore(
+                    currentState,
+                    emptyList(),
+                    continuation.onPaid,
+                    continuation.controllerId ?: continuation.payingPlayerId,
+                    continuation.sourceId,
+                    checkForMore
+                )
             }
 
             // Need to tap sources — show mana source selection UI
@@ -112,7 +119,9 @@ class ManaPaymentContinuationResumer(
                 availableSources = sourceOptions,
                 autoPaySuggestion = autoPaySuggestion,
                 exileOnCounter = continuation.exileOnCounter,
-                controllerId = continuation.controllerId
+                controllerId = continuation.controllerId,
+                onPaid = continuation.onPaid,
+                sourceId = continuation.sourceId
             )
 
             val stateWithDecision = state.withPendingDecision(decision)
@@ -386,7 +395,9 @@ class ManaPaymentContinuationResumer(
                         exileOnCounter = continuation.exileOnCounter,
                         controllerId = continuation.controllerId,
                         pendingSubCostSources = subCostSources,
-                        availableSources = continuation.availableSources
+                        availableSources = continuation.availableSources,
+                        onPaid = continuation.onPaid,
+                        sourceId = continuation.sourceId
                     )
                 }
             }
@@ -416,8 +427,55 @@ class ManaPaymentContinuationResumer(
             )
         }
 
-        // Spell resolves normally — don't counter it
-        return checkForMore(currentState, events)
+        // Spell resolves normally — don't counter it.
+        return runOnPaidThenCheckForMore(
+            currentState,
+            events,
+            continuation.onPaid,
+            continuation.controllerId ?: continuation.payingPlayerId,
+            continuation.sourceId,
+            checkForMore
+        )
+    }
+
+    /**
+     * Run the optional "If they do, …" rider that fires only when the spell's controller
+     * paid the counter-unless cost, then continue the pipeline.
+     *
+     * The rider executes with [riderController] as `controllerId` (the controller of the
+     * counter effect, i.e. "you" in "you create a Lander token"), with the spell's
+     * opponent as `opponentId`. If the rider pauses for a sub-decision we surface that
+     * pause directly; on error we also propagate it. Otherwise events from the prior
+     * payment phase are concatenated with the rider's events.
+     */
+    private fun runOnPaidThenCheckForMore(
+        state: GameState,
+        priorEvents: List<GameEvent>,
+        onPaid: com.wingedsheep.sdk.scripting.effects.Effect?,
+        riderController: EntityId,
+        sourceId: EntityId?,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (onPaid == null) return checkForMore(state, priorEvents)
+
+        val opponentId = state.turnOrder.firstOrNull { it != riderController }
+        val riderContext = com.wingedsheep.engine.handlers.EffectContext(
+            sourceId = sourceId,
+            controllerId = riderController,
+            opponentId = opponentId
+        )
+        val riderResult = services.effectExecutorRegistry
+            .execute(state, onPaid, riderContext)
+            .toExecutionResult()
+        if (riderResult.error != null) return riderResult
+        if (riderResult.isPaused) {
+            return ExecutionResult.paused(
+                riderResult.state,
+                riderResult.pendingDecision!!,
+                priorEvents + riderResult.events
+            )
+        }
+        return checkForMore(riderResult.state, priorEvents + riderResult.events)
     }
 
     /**
@@ -1066,7 +1124,9 @@ class ManaPaymentContinuationResumer(
         exileOnCounter: Boolean,
         controllerId: EntityId?,
         pendingSubCostSources: List<EntityId>,
-        availableSources: List<ManaSourceOption>
+        availableSources: List<ManaSourceOption>,
+        onPaid: com.wingedsheep.sdk.scripting.effects.Effect? = null,
+        sourceId: EntityId? = null
     ): ExecutionResult {
         val headSourceId = pendingSubCostSources.first()
         val sourceName = availableSources.firstOrNull { it.entityId == headSourceId }?.name
@@ -1115,7 +1175,9 @@ class ManaPaymentContinuationResumer(
             exileOnCounter = exileOnCounter,
             controllerId = controllerId,
             pendingSubCostSources = pendingSubCostSources,
-            availableSources = availableSources
+            availableSources = availableSources,
+            onPaid = onPaid,
+            sourceId = sourceId
         )
 
         val stateWithDecision = state.withPendingDecision(decision)
@@ -1230,7 +1292,9 @@ class ManaPaymentContinuationResumer(
                 exileOnCounter = continuation.exileOnCounter,
                 controllerId = continuation.controllerId,
                 pendingSubCostSources = remaining,
-                availableSources = continuation.availableSources
+                availableSources = continuation.availableSources,
+                onPaid = continuation.onPaid,
+                sourceId = continuation.sourceId
             )
         }
 
@@ -1257,6 +1321,15 @@ class ManaPaymentContinuationResumer(
                 )
             )
         }
-        return checkForMore(currentState, events)
+        // Payment fully resolved through the sub-cost source — fire the "If they do, …"
+        // rider (no-op when null), with the counter's controller as "you".
+        return runOnPaidThenCheckForMore(
+            currentState,
+            events,
+            continuation.onPaid,
+            continuation.controllerId ?: continuation.payingPlayerId,
+            continuation.sourceId,
+            checkForMore
+        )
     }
 }

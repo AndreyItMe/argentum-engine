@@ -17,6 +17,12 @@ import type { AtomNode, CardPredicate, Op } from './types'
 import type { CardSummary } from '../cardFilter'
 import { COLOR_LETTER, parseColorValue } from './colorSugar'
 import { manaCostPredicate } from './manaCost'
+import { playableWithinColors } from '@/utils/manaCost'
+
+/** Internal-representation colour names → single-letter pips used by the mana-cost helpers. */
+const LETTER_OF_COLOR: Record<string, string> = {
+  WHITE: 'W', BLUE: 'U', BLACK: 'B', RED: 'R', GREEN: 'G',
+}
 
 export type MatcherResult =
   | { kind: 'ok'; predicate: CardPredicate }
@@ -171,7 +177,16 @@ const TYPE_MATCHER: Matcher['build'] = (atom) => {
 // Color (identity / cost) + numeric color count
 // ---------------------------------------------------------------------------
 
-function buildColor(get: (c: CardSummary) => string[]): Matcher['build'] {
+/**
+ * @param atMostByCastability  When true, the `<=` operator means "playable in a
+ *   deck limited to these colours" rather than a plain subset test, so hybrid
+ *   pips (`{R/W}`) survive a single-colour "at most". Only the colour-identity
+ *   matcher opts in; `cost:` keeps literal printed-colour subset semantics.
+ */
+function buildColor(
+  get: (c: CardSummary) => string[],
+  atMostByCastability = false,
+): Matcher['build'] {
   return (atom) => {
     const parsed = parseColorValue(atom.value)
     if (parsed.kind === 'error') return err(parsed.message)
@@ -208,6 +223,13 @@ function buildColor(get: (c: CardSummary) => string[]): Matcher['build'] {
           return true
         })
       case '<=':
+        if (atMostByCastability) {
+          const allowed = new Set([...wanted].map((n) => LETTER_OF_COLOR[n] ?? n))
+          return ok((c) => {
+            const identity = new Set(get(c).map((n) => LETTER_OF_COLOR[n] ?? n))
+            return playableWithinColors(c.manaCost, identity, allowed)
+          })
+        }
         return ok((c) => get(c).every((col) => wanted.has(col)))
       case '>':
         return ok((c) => {
@@ -485,7 +507,7 @@ const ENTRIES: Matcher[] = [
   { aliases: ['name', 'n'], ops: STRING_OPS, build: buildName('name'), description: 'Card name (substring or regex)' },
   { aliases: ['oracle', 'o'], ops: STRING_OPS, build: buildName('oracle'), description: 'Oracle text contains' },
   { aliases: ['type', 't'], ops: STRING_OPS, build: TYPE_MATCHER, description: 'Type line (AND of words)' },
-  { aliases: ['c', 'color', 'colour', 'id', 'identity'], ops: COLOR_OPS, build: buildColor((c) => c.colorIdentity), description: 'Color identity (CR 903.4)' },
+  { aliases: ['c', 'color', 'colour', 'id', 'identity'], ops: COLOR_OPS, build: buildColor((c) => c.colorIdentity, true), description: 'Color identity (CR 903.4)' },
   { aliases: ['cost'], ops: COLOR_OPS, build: buildColor((c) => c.colors), description: 'Printed mana-cost colors' },
   { aliases: ['mana', 'm'], ops: NUMERIC_OPS, build: MANA, description: 'Mana cost symbols (multiset compare)' },
   { aliases: ['cmc', 'mv', 'manavalue'], ops: NUMERIC_OPS, build: buildNumeric((c) => c.cmc), description: 'Mana value' },

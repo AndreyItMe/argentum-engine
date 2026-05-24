@@ -317,6 +317,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `CounterEffect(target, condition?, destination?)` — counter a spell/ability; optionally send elsewhere.
   - `target = CounterTarget.Spell` / `Ability` / `SpellOrAbility` — `SpellOrAbility` dispatches at resolution by inspecting whether the stack entity has a `SpellOnStackComponent`. Used by Teferi's Response.
+  - `condition = CounterCondition.UnlessPaysMana(cost, onPaid?)` / `UnlessPaysDynamic(amount, onPaid?)` — "unless its controller pays …" with an optional `onPaid: Effect` rider that fires **only** when the spell's controller pays (Divert Disaster's "If they do, you create a Lander token"). The rider executes with the counter's controller as `controllerId`, so "you" in the rider resolves to the caster of the counter. The rider does not fire when the spell is countered. Facade: `Effects.CounterUnlessPays(cost, onPaid)` / `Effects.CounterUnlessDynamicPays(amount, exileOnCounter, onPaid)`.
 - `CounterAllOnStackEffect(filter?, destination?)` — counter everything matching.
 - `DestroySourceOfTargetedAbilityEffect` — when the targeted stack object is a permanent's activated/triggered ability, destroy that source permanent. Compose *before* the counter step so the ability component is still readable (Teferi's Response).
 - `CopyTargetSpellEffect(target)` — copy a spell on the stack.
@@ -740,6 +741,23 @@ in the repo today):
 - `CardsPutIntoYourGraveyard(filter?)` — when matching cards enter your yard.
 - `PermanentCardsPutIntoYourGraveyard` — only permanent cards.
 - `CreaturesPutIntoGraveyardFromLibrary` — mill-trigger shape.
+
+### Discard
+
+Fires once per card discarded — a single resolution that discards N cards fires the
+trigger N times (mirrors how `YouDraw` handles multi-card draws). The engine emits
+one aggregate `CardsDiscardedEvent` per resolution and fans it out in the detector.
+`Player.TriggeringPlayer` resolves to the discarding player inside the effect.
+
+- `AnyOpponentDiscards` — whenever an opponent discards a card. (Entropic Battlecruiser.)
+- `YouDiscard` — whenever you discard a card.
+
+**Factory** — `discards(player?, cardFilter?)` — generic shape. `player = Player.Each`
+matches any player; `cardFilter` narrows the fan-out to matching cards, so a batch that
+discards a creature and two lands fires a `cardFilter = Creature` trigger once, not three
+times. The cardFilter is evaluated against the **post-discard zone** (the cards are already
+in the graveyard when the trigger matches) — safe for type/subtype/color predicates,
+but a filter that depends on hand-specific state would read the wrong zone.
 
 ### Spell casting
 

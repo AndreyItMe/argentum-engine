@@ -7,6 +7,7 @@ import com.wingedsheep.engine.core.BecomesTargetEvent
 import com.wingedsheep.engine.core.BlockersDeclaredEvent
 import com.wingedsheep.engine.core.CardCycledEvent
 import com.wingedsheep.engine.core.CardRevealedFromDrawEvent
+import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.CardsDrawnEvent
 import com.wingedsheep.engine.core.ControlChangedEvent
 import com.wingedsheep.engine.core.DamageDealtEvent
@@ -92,6 +93,7 @@ data class TriggerContext(
                     modesChosenCount = event.chosenModesCount.takeIf { it > 0 }
                 )
                 is CardsDrawnEvent -> TriggerContext(triggeringPlayerId = event.playerId)
+                is CardsDiscardedEvent -> TriggerContext(triggeringPlayerId = event.playerId)
                 is CardRevealedFromDrawEvent -> TriggerContext(
                     triggeringEntityId = event.cardEntityId,
                     triggeringPlayerId = event.playerId

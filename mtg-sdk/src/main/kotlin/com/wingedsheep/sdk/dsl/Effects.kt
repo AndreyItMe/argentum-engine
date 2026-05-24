@@ -1422,17 +1422,27 @@ object Effects {
     /**
      * Counter target spell unless its controller pays a mana cost.
      * "Counter target spell unless its controller pays {cost}."
+     *
+     * [onPaid] is an optional rider that runs **only if** the spell's controller pays
+     * — the "If they do, …" clause on cards like Divert Disaster (controller of the
+     * counter, not of the countered spell, becomes the rider's `controllerId`).
      */
-    fun CounterUnlessPays(cost: String): Effect =
-        CounterEffect(condition = CounterCondition.UnlessPaysMana(ManaCost.parse(cost)))
+    fun CounterUnlessPays(cost: String, onPaid: Effect? = null): Effect =
+        CounterEffect(condition = CounterCondition.UnlessPaysMana(ManaCost.parse(cost), onPaid))
 
     /**
      * Counter target spell unless its controller pays a dynamic generic mana cost.
      * "Counter target spell unless its controller pays {2} for each Wizard on the battlefield."
+     *
+     * [onPaid] mirrors [CounterUnlessPays]'s rider.
      */
-    fun CounterUnlessDynamicPays(amount: DynamicAmount, exileOnCounter: Boolean = false): Effect =
+    fun CounterUnlessDynamicPays(
+        amount: DynamicAmount,
+        exileOnCounter: Boolean = false,
+        onPaid: Effect? = null
+    ): Effect =
         CounterEffect(
-            condition = CounterCondition.UnlessPaysDynamic(amount),
+            condition = CounterCondition.UnlessPaysDynamic(amount, onPaid),
             counterDestination = if (exileOnCounter) CounterDestination.Exile() else CounterDestination.Graveyard
         )
 
