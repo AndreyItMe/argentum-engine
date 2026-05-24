@@ -3,6 +3,7 @@ import { useGameStore, type DeckBuildingState } from '@/store/gameStore.ts'
 import type { SealedCardInfo } from '@/types'
 import { useResponsive } from '@/hooks/useResponsive.ts'
 import { getCardImageUrl } from '@/utils/cardImages.ts'
+import { playableWithinColors } from '@/utils/manaCost.ts'
 import { ManaSymbol, ManaCost } from '../ui/ManaSymbols'
 import { HoverCardPreview } from '../ui/HoverCardPreview'
 import { useDfcHoverFlip } from '../ui/useDfcHoverFlip'
@@ -387,7 +388,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
         }
         if (colorFilter.size > 0) {
           const cardColors = getCardColors(card)
-          if (!matchesColorIdentityFilter(cardColors, colorFilter, colorMode)) continue
+          if (!matchesColorIdentityFilter(cardColors, colorFilter, colorMode, card.manaCost || '')) continue
         }
         // Commander-identity restriction: every colour in the card's identity must appear in
         // the commander's identity. Mirrors the server's COLOR_IDENTITY_VIOLATION check.
@@ -1767,7 +1768,9 @@ type ColorOp = ':' | '=' | '<='
  *
  * - `:`  Includes — card identity contains all chosen WUBRG colors (AND).
  * - `=`  Exactly — card identity equals exactly the chosen WUBRG set.
- * - `<=` At most — card identity is a subset of the chosen WUBRG set; colorless always passes.
+ * - `<=` At most — card is *playable* in a deck limited to the chosen WUBRG set; colorless always
+ *   passes. Hybrid pips give a choice, so `{R/W}` survives "at most W" (it's castable in mono-white).
+ *   See [playableWithinColors].
  *
  * The `C` chip is treated as a separate "include colorless" toggle that ORs with the colored
  * predicate in `:` and `=` modes (in `<=` mode colorless cards always match anyway).
@@ -1776,6 +1779,7 @@ function matchesColorIdentityFilter(
   cardColors: Set<string>,
   filter: Set<string>,
   mode: ColorOp,
+  manaCost: string,
 ): boolean {
   const wanted = new Set<string>()
   let includeColorless = false
@@ -1787,8 +1791,7 @@ function matchesColorIdentityFilter(
 
   if (mode === '<=') {
     if (isColorless) return true
-    for (const c of cardColors) if (!wanted.has(c)) return false
-    return true
+    return playableWithinColors(manaCost, cardColors, wanted)
   }
 
   if (mode === '=') {
