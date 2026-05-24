@@ -334,6 +334,8 @@ internal class AffectsFilterResolver {
         StatePredicate.IsModified -> com.wingedsheep.engine.handlers.predicates.isModified(state, entityId)
         StatePredicate.IsWarpExiled ->
             container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>()
+        StatePredicate.WasCastForWarp ->
+            container.has<com.wingedsheep.engine.state.components.battlefield.WarpedComponent>()
         StatePredicate.HasGreatestPower -> hasGreatestPowerInProjection(state, entityId, container, projectedValues)
         StatePredicate.HasAnyCounter -> {
             val counters = container.get<CountersComponent>()

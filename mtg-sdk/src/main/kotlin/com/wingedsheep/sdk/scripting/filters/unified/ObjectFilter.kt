@@ -414,6 +414,16 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.IsWarpExiled
     )
 
+    /**
+     * Must be a permanent on the battlefield that was cast for its warp cost
+     * (CR 702.185) — i.e., the engine wrote a `WarpedComponent` when the
+     * warped spell resolved. Use this to gate effects on warp-cast permanents,
+     * e.g. Full Bore's conditional trample + haste branch.
+     */
+    fun castForWarp() = copy(
+        statePredicates = statePredicates + StatePredicate.WasCastForWarp
+    )
+
     // =============================================================================
     // Fluent Builder Methods - Controller Predicates
     // =============================================================================
