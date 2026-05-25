@@ -210,27 +210,16 @@ class DamageCalculator(
         // Use projected values for keywords and power (includes floating effects like +4/+4)
         val projected = state.projectedState
 
-        // Single blocker without trample = no choice needed
+        // Single blocker without trample = no choice (all damage goes to that one blocker).
         if (blockerIds.size <= 1 && !projected.hasKeyword(attackerId, Keyword.TRAMPLE)) {
             return false
         }
 
-        // Has trample = always has a choice for excess damage
-        if (projected.hasKeyword(attackerId, Keyword.TRAMPLE)) {
-            return true
-        }
-
-        // Multiple blockers - check if there's excess damage to distribute
-        val attackerPower = CombatDamageUtils.getAssignedCombatDamage(state, projected, attackerId, cardRegistry)
-        var totalLethalNeeded = 0
-
-        for (blockerId in blockerIds) {
-            val lethalInfo = calculateLethalDamage(state, blockerId, attackerId)
-            totalLethalNeeded += lethalInfo.lethalAmount
-        }
-
-        // If power exceeds total lethal needed, there are choices to make
-        return attackerPower > totalLethalNeeded
+        // Trample (choose how much spills over) or 2+ blockers always present a choice: the
+        // attacking player picks the damage-assignment order, which decides *which* blockers die
+        // when power is short and where any overkill goes (CR 510.1c) — not just whether there's
+        // excess to spread. So surface the board whenever there is more than one way to assign.
+        return true
     }
 
     /**
