@@ -32,7 +32,7 @@ class FamishedWorldsireScenarioTest : ScenarioTestBase() {
     init {
         context("Famished Worldsire — Devour land + ETB land tutor") {
 
-            test("sacrifice 2 lands → enters with 6 +1/+1 counters; ETB looks at 6 cards and puts 2 Forests tapped") {
+            test("sacrifice 2 lands → enters with 6 +1/+1 counters; ETB looks at 6 cards and puts 3 Forests tapped") {
                 val game = scenario()
                     .withPlayers("Player1", "Player2")
                     .withCardInHand(1, "Famished Worldsire")
