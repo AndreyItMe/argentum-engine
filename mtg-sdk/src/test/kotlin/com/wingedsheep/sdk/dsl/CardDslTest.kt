@@ -1106,5 +1106,22 @@ class CardDslTest : DescribeSpec({
             }
             ex.message?.contains("at least 2 faces") shouldBe true
         }
+
+        it("should reject blocks(attackerFilter) with a non-SELF binding") {
+            // attackerFilter is only honored by the SELF detector branch; the ANY branch
+            // ignores it, so the combination must fail fast rather than silently misfire.
+            val ex = io.kotest.assertions.throwables.shouldThrow<IllegalArgumentException> {
+                Triggers.blocks(
+                    binding = TriggerBinding.ANY,
+                    attackerFilter = GameObjectFilter.Creature.withKeyword(Keyword.FLYING),
+                )
+            }
+            ex.message?.contains("attackerFilter") shouldBe true
+
+            // SELF binding (the default) is accepted.
+            Triggers.blocks(
+                attackerFilter = GameObjectFilter.Creature.withKeyword(Keyword.FLYING),
+            ).binding shouldBe TriggerBinding.SELF
+        }
     }
 })

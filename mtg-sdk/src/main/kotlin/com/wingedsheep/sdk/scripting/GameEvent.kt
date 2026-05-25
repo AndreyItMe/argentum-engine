@@ -430,17 +430,27 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
      * When a creature blocks.
      * Binding SELF = "when this creature blocks".
      * Binding ANY + filter = "whenever a [filter] blocks" — fires once per matching blocker.
+     *
+     * [attackerFilter] restricts the blocked attacker (e.g. "blocks a creature with flying").
+     * When set with SELF binding, fires once per blocked attacker matching the filter and
+     * sets TriggerContext.triggeringEntityId to that attacker. Skystinger pattern.
      */
     @SerialName("BlockEvent")
     @Serializable
     data class BlockEvent(
-        val filter: GameObjectFilter? = null
+        val filter: GameObjectFilter? = null,
+        val attackerFilter: GameObjectFilter? = null
     ) : GameEvent {
-        override val description: String = if (filter != null) "a ${filter.description} blocks" else "a creature blocks"
+        override val description: String = buildString {
+            append(if (filter != null) "a ${filter.description} blocks" else "a creature blocks")
+            if (attackerFilter != null) append(" a ${attackerFilter.description}")
+        }
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
-            val f = filter ?: return this
-            val newFilter = f.applyTextReplacement(replacer)
-            return if (newFilter !== f) copy(filter = newFilter) else this
+            val newFilter = filter?.applyTextReplacement(replacer)
+            val newAttackerFilter = attackerFilter?.applyTextReplacement(replacer)
+            val filterChanged = newFilter !== filter
+            val attackerChanged = newAttackerFilter !== attackerFilter
+            return if (filterChanged || attackerChanged) copy(filter = newFilter, attackerFilter = newAttackerFilter) else this
         }
     }
 

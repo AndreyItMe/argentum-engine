@@ -323,14 +323,26 @@ object Triggers {
      * Generic "blocks" trigger factory. Use [Blocks] for the SELF-only
      * unfiltered case; reach for this factory for (filter, binding) variants
      * like "Whenever a creature you control blocks" (ANY binding + filter).
+     *
+     * [attackerFilter] constrains the blocked attacker — "this creature blocks a
+     * creature with flying" is `blocks(attackerFilter = withKeyword(FLYING))`.
+     * TriggerContext.triggeringEntityId is set to the blocked attacker. Only the
+     * SELF binding honors [attackerFilter] (the detector's ANY branch ignores it),
+     * so combining ANY + [attackerFilter] is rejected rather than silently misfiring.
      */
     fun blocks(
         filter: GameObjectFilter? = null,
         binding: TriggerBinding = TriggerBinding.SELF,
-    ): TriggerSpec = TriggerSpec(
-        event = BlockEvent(filter = filter),
-        binding = binding,
-    )
+        attackerFilter: GameObjectFilter? = null,
+    ): TriggerSpec {
+        require(attackerFilter == null || binding == TriggerBinding.SELF) {
+            "attackerFilter is only supported with TriggerBinding.SELF"
+        }
+        return TriggerSpec(
+            event = BlockEvent(filter = filter, attackerFilter = attackerFilter),
+            binding = binding,
+        )
+    }
 
     /**
      * Generic "becomes blocked" trigger factory. Use [BecomesBlocked] for the

@@ -682,6 +682,31 @@ class TriggerDetector(
                             }
                         }
                     }
+                    // For "whenever this creature blocks a [filter]" (BlockEvent with SELF binding +
+                    // attackerFilter), create one trigger per blocked attacker matching the filter.
+                    // triggeringEntityId = the blocked attacker. Skystinger pattern.
+                    else if (ability.trigger is GameEvent.BlockEvent && ability.binding == TriggerBinding.SELF &&
+                        (ability.trigger as GameEvent.BlockEvent).attackerFilter != null &&
+                        event is com.wingedsheep.engine.core.BlockersDeclaredEvent) {
+                        val attackerFilter = (ability.trigger as GameEvent.BlockEvent).attackerFilter!!
+                        val blockedAttackerIds = event.blockers[entityId] ?: emptyList()
+                        for (attackerId in blockedAttackerIds) {
+                            if (predicateEvaluator.matches(
+                                    state, projected, attackerId, attackerFilter,
+                                    PredicateContext(controllerId = controllerId, sourceId = entityId)
+                                )) {
+                                triggers.add(
+                                    PendingTrigger(
+                                        ability = ability,
+                                        sourceId = entityId,
+                                        sourceName = cardComponent.name,
+                                        controllerId = controllerId,
+                                        triggerContext = TriggerContext(triggeringEntityId = attackerId)
+                                    )
+                                )
+                            }
+                        }
+                    }
                     // For "whenever [filter] blocks this creature" (BecomesBlockedEvent with SELF binding),
                     // create one trigger per blocker of this creature that matches the filter.
                     // triggeringEntityId = the blocker, so effects targeting the triggering entity
