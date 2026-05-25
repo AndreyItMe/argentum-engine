@@ -7,14 +7,18 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.WarpExiledComponent
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.legalactions.LegalActionEnumerator
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.scripting.EntersWithDynamicCounters
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -30,9 +34,20 @@ class WarpMechanicTest : FunSpec({
         keywords(Keyword.HASTE)
     }
 
+    // A warp creature whose warp cost itself contains {X} (cf. Broodguard Elite, Warp {X}{G}).
+    // It enters with X +1/+1 counters, so the chosen X must be applied to the warp cost.
+    val warpXCreature = card("Warp X Creature") {
+        manaCost = "{X}{G}{G}"
+        typeLine = "Creature — Insect"
+        power = 0
+        toughness = 0
+        warp = "{X}{G}"
+        replacementEffect(EntersWithDynamicCounters(count = DynamicAmount.XValue))
+    }
+
     fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
-        driver.registerCards(TestCards.all + listOf(warpCreature))
+        driver.registerCards(TestCards.all + listOf(warpCreature, warpXCreature))
         return driver
     }
 
@@ -379,5 +394,56 @@ class WarpMechanicTest : FunSpec({
                 action.sourceZone == "GRAVEYARD"
         }
         castFromGraveyard shouldBe null
+    }
+
+    test("warp cost containing X surfaces hasXCost so the client prompts for X") {
+        // Regression: the warp enumeration path never set hasXCost, so a warp cost like
+        // {X}{G} was cast with X = 0 (no X picker shown).
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40))
+        driver.gotoMainPhase()
+
+        val player = driver.activePlayer!!
+        val cardId = driver.putCardInHand(player, "Warp X Creature")
+        driver.giveMana(player, Color.GREEN, 5)
+
+        val enumerator = LegalActionEnumerator.create(driver.cardRegistry)
+        val warpAction = enumerator.enumerate(driver.state, player).firstOrNull { action ->
+            action.actionType == "CastWithWarp" &&
+                (action.action as? CastSpell)?.cardId == cardId
+        }
+        warpAction shouldNotBe null
+        warpAction!!.hasXCost shouldBe true
+        // Warp cost {X}{G}: 5 mana available, fixed {G} costs 1, so max X = (5 - 1) / 1 = 4.
+        warpAction.maxAffordableX shouldBe 4
+    }
+
+    test("casting via warp applies chosen X to the warp cost and enters with X counters") {
+        // The warp cost {X}{G} with X = 2 costs {2}{G}, and EntersWithDynamicCounters(XValue)
+        // must read the same X so the creature enters with 2 +1/+1 counters.
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40))
+        driver.gotoMainPhase()
+
+        val player = driver.activePlayer!!
+        val cardId = driver.putCardInHand(player, "Warp X Creature")
+        driver.giveMana(player, Color.GREEN, 3) // {2}{G} for X = 2
+
+        val result = driver.submit(
+            CastSpell(
+                playerId = player,
+                cardId = cardId,
+                xValue = 2,
+                useAlternativeCost = true,
+                paymentStrategy = PaymentStrategy.FromPool
+            )
+        )
+        result.isSuccess shouldBe true
+        driver.bothPass()
+
+        val permanent = driver.findPermanent(player, "Warp X Creature")
+        permanent shouldNotBe null
+        val counters = driver.state.getEntity(permanent!!)?.get<CountersComponent>()
+        (counters?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0) shouldBe 2
     }
 })

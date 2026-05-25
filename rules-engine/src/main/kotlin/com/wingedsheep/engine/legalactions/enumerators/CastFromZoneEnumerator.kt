@@ -1238,6 +1238,19 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 continue
             }
 
+            // The warp cost itself can contain {X} (e.g. Broodguard Elite, Warp {X}{G}).
+            // Mirror the normal cast path so the client prompts for X — without this the
+            // spell is cast with X = 0. Warp has no delve, so there's no delve ceiling.
+            val hasXCost = effectiveCost.hasX
+            val maxAffordableX: Int? = if (hasXCost) {
+                val availableSources = context.manaSolver.getAvailableManaCount(
+                    state, playerId, precomputedSources = context.availableManaSources
+                )
+                val fixedCost = effectiveCost.cmc  // X contributes 0 to CMC
+                val xSymbolCount = effectiveCost.xCount.coerceAtLeast(1)
+                ((availableSources - fixedCost) / xSymbolCount).coerceAtLeast(0)
+            } else null
+
             val targetReqs = buildList {
                 addAll(cardDef.script.targetRequirements)
                 cardDef.script.auraTarget?.let { add(it) }
@@ -1267,6 +1280,8 @@ class CastFromZoneEnumerator : ActionEnumerator {
                             targetRequirements = if (targetInfos.size > 1) targetInfos else null,
                             manaCostString = costString,
                             autoTapPreview = autoTapPreview,
+                            hasXCost = hasXCost,
+                            maxAffordableX = maxAffordableX,
                             sourceZone = sourceZoneLabel
                         )
                     )
@@ -1279,6 +1294,8 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         action = CastSpell(playerId, cardId, useAlternativeCost = true),
                         manaCostString = costString,
                         autoTapPreview = autoTapPreview,
+                        hasXCost = hasXCost,
+                        maxAffordableX = maxAffordableX,
                         sourceZone = sourceZoneLabel
                     )
                 )
