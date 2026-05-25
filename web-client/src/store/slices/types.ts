@@ -679,6 +679,7 @@ export type GameStore = {
   submitBudgetModalDecision: (selectedModeIndices: readonly number[]) => void
   submitDistributeDecision: (distribution: Record<EntityId, number>) => void
   submitDamageAssignmentDecision: (assignments: Record<EntityId, number>) => void
+  submitCombatResolutionDecision: (edges: ReadonlyArray<{ edgeId: string; amount: number }>) => void
   submitColorDecision: (color: string) => void
   submitManaSourcesDecision: (selectedSources: readonly EntityId[], autoPay: boolean) => void
   submitCancelDecision: () => void
