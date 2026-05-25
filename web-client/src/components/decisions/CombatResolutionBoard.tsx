@@ -9,12 +9,13 @@ import { useResponsive } from '@/hooks/useResponsive.ts'
 import { getCardImageUrl } from '@/utils/cardImages.ts'
 
 /**
- * The combat resolution board (CR 510 / 702.22). Renders the bipartite damage graph the engine
- * emits for combat damage: each source (attacker, or a blocker that blocks 2+ attackers) lists
- * its outgoing {@link DamageEdge}s pre-filled with the engine's lethal-first default. The local
- * player adjusts the edges they own ({@link DamageEdge.editableBy}) with +/- steppers, then
- * confirms. The server is authoritative — the board only clamps to `[0, maximum]` and the
- * per-source power budget; CR 510.1c / 702.19b legality is enforced on submit by the engine.
+ * The combat resolution board (CR 510 / 702.22). Shows only the damage the local player gets to
+ * assign — the sources whose edges they own ({@link DamageEdge.editableBy}). Per CR 510.1c the
+ * attacker assigns its creatures' damage and the defender assigns its blockers' damage as separate
+ * steps, so the opponent's half isn't rendered (it's chosen on their own board). Each owned edge is
+ * pre-filled with the engine's lethal-first default and adjusted with +/- steppers. The server is
+ * authoritative — the board only clamps to `[0, maximum]` and the per-source power budget;
+ * CR 510.1c / 702.19b legality is enforced on submit by the engine.
  */
 export function CombatResolutionBoard({ decision }: { decision: CombatResolutionDecision }) {
   const submit = useGameStore((s) => s.submitCombatResolutionDecision)
@@ -27,14 +28,15 @@ export function CombatResolutionBoard({ decision }: { decision: CombatResolution
     () => Object.fromEntries(decision.edges.map((e) => [e.id, e.amount]))
   )
 
-  // Group edges by source, preserving the engine's emission order.
+  // Only the edges this player may assign. Group them by source, in emission order.
+  const myEdges = decision.edges.filter((e) => e.editableBy === playerId)
   const sourceIds: EntityId[] = []
-  for (const edge of decision.edges) {
+  for (const edge of myEdges) {
     if (!sourceIds.includes(edge.sourceId)) sourceIds.push(edge.sourceId)
   }
 
   const edgesBySource = (sourceId: EntityId) =>
-    decision.edges.filter((e) => e.sourceId === sourceId)
+    myEdges.filter((e) => e.sourceId === sourceId)
 
   const sourcePower = (sourceId: EntityId) =>
     decision.edges.filter((e) => e.sourceId === sourceId).reduce((m, e) => Math.max(m, e.maximum), 0)
@@ -140,7 +142,6 @@ export function CombatResolutionBoard({ decision }: { decision: CombatResolution
 
   const edgeRow = (edge: DamageEdge) => {
     const amount = amounts[edge.id] ?? 0
-    const editable = edge.editableBy === playerId
     const isDrain = edge.isTrampleDrain
     const atLethal = !isDrain && edge.lethal > 0 && amount >= edge.lethal
     const arrow = isDrain ? 'trample →' : '→'
@@ -152,7 +153,7 @@ export function CombatResolutionBoard({ decision }: { decision: CombatResolution
         {targetVisual(edge.targetId)}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ color: 'white', fontSize: responsive.fontSize.small, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {isPlayerTarget(edge.targetId) ? cardName(edge.targetId) : cardName(edge.targetId)}
+            {cardName(edge.targetId)}
           </span>
           {!isDrain && (
             <span style={{ color: atLethal ? '#4ade80' : '#f59e0b', fontSize: responsive.fontSize.small }}>
@@ -164,15 +165,11 @@ export function CombatResolutionBoard({ decision }: { decision: CombatResolution
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          {editable
-            ? stepBtn('-', () => adjust(edge, -1), amount > 0, '#dc2626')
-            : null}
+          {stepBtn('-', () => adjust(edge, -1), amount > 0, '#dc2626')}
           <span style={{ color: 'white', fontSize: responsive.fontSize.large, fontWeight: 700, minWidth: 28, textAlign: 'center' }}>
             {amount}
           </span>
-          {editable
-            ? stepBtn('+', () => adjust(edge, +1), amount < edge.maximum && sourceTotal(edge.sourceId) < sourcePower(edge.sourceId), '#16a34a')
-            : <span style={{ color: '#666', fontSize: responsive.fontSize.small }}>read-only</span>}
+          {stepBtn('+', () => adjust(edge, +1), amount < edge.maximum && sourceTotal(edge.sourceId) < sourcePower(edge.sourceId), '#16a34a')}
         </div>
       </div>
     )
