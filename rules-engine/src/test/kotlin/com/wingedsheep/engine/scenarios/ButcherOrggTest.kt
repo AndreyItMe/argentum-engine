@@ -128,14 +128,8 @@ class ButcherOrggTest : FunSpec({
             blocker2 to listOf(orgg)
         ))
 
-        // Multiple blockers require damage assignment order decision
-        val orderDecision = driver.pendingDecision as OrderObjectsDecision
-        driver.submitDecision(
-            activePlayer,
-            OrderedResponse(orderDecision.id, listOf(blocker1, blocker2))
-        )
-
-        // Pass priority to reach combat damage step
+        // Butcher Orgg divides its damage freely (DistributeDecision); damage-assignment order is
+        // no longer a separate pre-step. Pass priority to reach the combat damage step.
         driver.passPriorityUntil(Step.COMBAT_DAMAGE)
 
         // Submit damage distribution: 2 to bears (lethal), 1 to goblin (lethal), 3 to player

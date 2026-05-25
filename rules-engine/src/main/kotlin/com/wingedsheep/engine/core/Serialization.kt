@@ -174,8 +174,6 @@ val engineSerializersModule = SerializersModule {
         subclass(HandSizeDiscardContinuation::class)
         subclass(LegendRuleContinuation::class)
         subclass(CommanderZoneChoiceContinuation::class)
-        subclass(BlockerOrderContinuation::class)
-        subclass(AttackerOrderContinuation::class)
         subclass(PayOrSufferContinuation::class)
         subclass(PayOrSufferChoiceContinuation::class)
         subclass(ChooseColorProtectionContinuation::class)

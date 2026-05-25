@@ -75,16 +75,6 @@ class CombatManager(
     fun getMandatoryAttackers(state: GameState, attackingPlayer: EntityId): List<EntityId> =
         attackPhase.getMandatoryAttackers(state, attackingPlayer)
 
-    fun createAttackerOrderDecision(
-        state: GameState,
-        attackingPlayer: EntityId,
-        firstBlocker: EntityId,
-        remainingBlockers: List<EntityId>,
-        precedingEvents: List<GameEvent>
-    ): ExecutionResult = blockPhase.createAttackerOrderDecision(
-        state, attackingPlayer, firstBlocker, remainingBlockers, precedingEvents
-    )
-
     // =========================================================================
     // Combat Damage
     // =========================================================================

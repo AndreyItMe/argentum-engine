@@ -55,48 +55,6 @@ data class AssignAsUnblockedContinuation(
 ) : ContinuationFrame
 
 /**
- * Resume after attacking player declares damage assignment order for blockers.
- *
- * Per MTG CR 510.1c, an attacking creature blocked by two or more creatures
- * assigns its combat damage to those creatures divided as its controller chooses.
- * The engine surfaces this as an explicit ordering decision so the attacking
- * player can specify the division before damage is dealt.
- *
- * @property attackingPlayerId The attacking player who must order the blockers
- * @property attackerId The attacking creature whose blockers are being ordered
- * @property attackerName Name of the attacker for display
- * @property remainingAttackers List of attackers that still need ordering after this one
- */
-@Serializable
-data class BlockerOrderContinuation(
-    override val decisionId: String,
-    val attackingPlayerId: EntityId,
-    val attackerId: EntityId,
-    val attackerName: String,
-    val remainingAttackers: List<EntityId>
-) : ContinuationFrame
-
-/**
- * Resume after the attacking player orders their attackers for a blocker's damage assignment.
- *
- * When a single blocker blocks multiple attackers, the attacking player must order those
- * attackers to determine how the blocker divides its combat damage (CR 510.1d).
- *
- * @property attackingPlayerId The attacking player who must order their attackers
- * @property blockerId The blocking creature whose attackers are being ordered
- * @property blockerName Name of the blocker for display
- * @property remainingBlockers List of blockers that still need attacker ordering after this one
- */
-@Serializable
-data class AttackerOrderContinuation(
-    override val decisionId: String,
-    val attackingPlayerId: EntityId,
-    val blockerId: EntityId,
-    val blockerName: String,
-    val remainingBlockers: List<EntityId>
-) : ContinuationFrame
-
-/**
  * Resume after player has distributed damage among targets.
  *
  * Used for effects like Forked Lightning where the player divides damage
