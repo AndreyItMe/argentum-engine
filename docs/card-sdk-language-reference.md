@@ -298,7 +298,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `GainControlEffect(target, duration)` — gain control until end of turn (default).
 - `ExchangeControlEffect(target1, target2)` — swap control of two permanents.
-- `GainControlByMostOfSubtypeEffect(subtype)` — whoever controls the most of a tribe takes it.
+- `GainControlByMostEffect(metric, target?)` — the player with strictly the most of a `PlayerRankMetric` takes it (tie = no change). Metrics: `PlayerRankMetric.LifeTotal` (Ghazbán Ogre), `PlayerRankMetric.CreaturesOfSubtype(subtype)` (Thoughtbound Primoc). Facades: `Effects.GainControlByMostLife()`, `Effects.GainControlByMostOfSubtype(subtype)`.
 - `GiftGivenEffect(target)` — "gift" temporary control.
 - `CantAttackEffect(target, unless?)` — target can't attack.
 - `CantBlockEffect(target, unless?)` — target can't block.

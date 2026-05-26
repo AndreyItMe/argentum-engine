@@ -894,6 +894,15 @@ class GameTestDriver {
     }
 
     /**
+     * Set a player's life total directly (test helper).
+     */
+    fun setLifeTotal(playerId: EntityId, life: Int) {
+        _state = _state.updateEntity(playerId) { container ->
+            container.with(LifeTotalComponent(life))
+        }
+    }
+
+    /**
      * Get a card's name.
      */
     fun getCardName(entityId: EntityId): String? {

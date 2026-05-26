@@ -60,7 +60,8 @@ import com.wingedsheep.sdk.scripting.effects.ForceReturnOwnPermanentEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ExchangeControlEffect
 import com.wingedsheep.sdk.scripting.effects.ExchangeLifeAndPowerEffect
-import com.wingedsheep.sdk.scripting.effects.GainControlByMostOfSubtypeEffect
+import com.wingedsheep.sdk.scripting.effects.GainControlByMostEffect
+import com.wingedsheep.sdk.scripting.effects.PlayerRankMetric
 import com.wingedsheep.sdk.scripting.effects.GiftGivenEffect
 import com.wingedsheep.sdk.scripting.effects.GrantSpellKeywordEffect
 import com.wingedsheep.sdk.scripting.effects.GrantSpellsCantBeCounteredEffect
@@ -1357,7 +1358,14 @@ object Effects {
      * The player who controls the most creatures of the given subtype gains control of the target.
      */
     fun GainControlByMostOfSubtype(subtype: Subtype, target: EffectTarget = EffectTarget.Self): Effect =
-        GainControlByMostOfSubtypeEffect(subtype, target)
+        GainControlByMostEffect(PlayerRankMetric.CreaturesOfSubtype(subtype), target)
+
+    /**
+     * The player with strictly more life than every other player gains control of the
+     * target. On a tie for highest life, nothing happens. (Ghazbán Ogre.)
+     */
+    fun GainControlByMostLife(target: EffectTarget = EffectTarget.Self): Effect =
+        GainControlByMostEffect(PlayerRankMetric.LifeTotal, target)
 
     /**
      * Choose a creature type. If you control more creatures of that type than each

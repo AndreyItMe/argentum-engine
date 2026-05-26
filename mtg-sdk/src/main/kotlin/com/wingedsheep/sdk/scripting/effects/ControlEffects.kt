@@ -52,25 +52,56 @@ data class GainControlByActivePlayerEffect(
 }
 
 /**
- * Gain control of a permanent based on who controls the most creatures of a subtype.
- * The player with strictly more creatures of the given subtype than all other players
- * gains control of the target permanent.
- *
- * Used by Thoughtbound Primoc: "At the beginning of your upkeep, if a player controls
- * more Wizards than each other player, that player gains control of Thoughtbound Primoc."
+ * A per-player quantity used to rank players for "the player with the most X gains
+ * control" effects. The player with strictly more than every other player wins; a tie
+ * for the highest value means no control change. Add a variant here when a new card
+ * ranks players by a different quantity (cards in hand, poison counters, etc.).
  */
-@SerialName("GainControlByMostOfSubtype")
 @Serializable
-data class GainControlByMostOfSubtypeEffect(
-    val subtype: Subtype,
+sealed interface PlayerRankMetric {
+    /** Each player's life total. (Ghazbán Ogre.) */
+    @SerialName("LifeTotal")
+    @Serializable
+    data object LifeTotal : PlayerRankMetric
+
+    /** How many creatures of [subtype] each player controls. (Thoughtbound Primoc.) */
+    @SerialName("CreaturesOfSubtype")
+    @Serializable
+    data class CreaturesOfSubtype(val subtype: Subtype) : PlayerRankMetric
+}
+
+/**
+ * Gain control of a permanent based on which player has the most of a [PlayerRankMetric].
+ * The player with strictly more than every other player gains control of the target;
+ * on a tie for the highest value, nothing happens.
+ *
+ * Used by Thoughtbound Primoc (most Wizards): "At the beginning of your upkeep, if a
+ * player controls more Wizards than each other player, that player gains control of
+ * Thoughtbound Primoc." and Ghazbán Ogre (most life): "At the beginning of your upkeep,
+ * if a player has more life than each other player, the player with the most life gains
+ * control of this creature."
+ */
+@SerialName("GainControlByMost")
+@Serializable
+data class GainControlByMostEffect(
+    val metric: PlayerRankMetric,
     val target: EffectTarget = EffectTarget.Self
 ) : Effect {
-    override val description: String =
-        "the player who controls the most ${subtype.value}s gains control of ${target.description}"
+    override val description: String = buildString {
+        append(
+            when (metric) {
+                is PlayerRankMetric.LifeTotal -> "the player with the most life"
+                is PlayerRankMetric.CreaturesOfSubtype -> "the player who controls the most ${metric.subtype.value}s"
+            }
+        )
+        append(" gains control of ${target.description}")
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val new = replacer.replaceSubtype(subtype)
-        return if (new == subtype) this else copy(subtype = new)
+        val metric = metric
+        if (metric !is PlayerRankMetric.CreaturesOfSubtype) return this
+        val new = replacer.replaceSubtype(metric.subtype)
+        return if (new == metric.subtype) this else copy(metric = PlayerRankMetric.CreaturesOfSubtype(new))
     }
 }
 

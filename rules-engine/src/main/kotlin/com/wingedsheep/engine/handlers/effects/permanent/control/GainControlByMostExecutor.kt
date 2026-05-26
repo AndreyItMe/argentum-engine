@@ -11,23 +11,29 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
+import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
-import com.wingedsheep.sdk.scripting.effects.GainControlByMostOfSubtypeEffect
+import com.wingedsheep.sdk.scripting.effects.GainControlByMostEffect
+import com.wingedsheep.sdk.scripting.effects.PlayerRankMetric
 import kotlin.reflect.KClass
 
 /**
- * Executor for GainControlByMostOfSubtypeEffect.
+ * Executor for [GainControlByMostEffect].
  *
- * Finds the player who controls the most creatures of the given subtype
- * and gives that player control of the target permanent.
+ * Ranks players by the effect's [PlayerRankMetric] and gives the player with strictly
+ * more than every other player control of the target permanent. On a tie for the highest
+ * value, nothing happens (Ghazbán Ogre's "if a player has more life than each other
+ * player" / Thoughtbound Primoc's "if a player controls more Wizards than each other
+ * player" intervening condition).
  */
-class GainControlByMostOfSubtypeExecutor : EffectExecutor<GainControlByMostOfSubtypeEffect> {
+class GainControlByMostExecutor : EffectExecutor<GainControlByMostEffect> {
 
-    override val effectType: KClass<GainControlByMostOfSubtypeEffect> = GainControlByMostOfSubtypeEffect::class
+    override val effectType: KClass<GainControlByMostEffect> = GainControlByMostEffect::class
 
     override fun execute(
         state: GameState,
-        effect: GainControlByMostOfSubtypeEffect,
+        effect: GainControlByMostEffect,
         context: EffectContext
     ): EffectResult {
         val targetId = context.resolveTarget(effect.target)
@@ -39,35 +45,35 @@ class GainControlByMostOfSubtypeExecutor : EffectExecutor<GainControlByMostOfSub
         val cardComponent = targetContainer.get<CardComponent>()
             ?: return EffectResult.error(state, "Target is not a card")
 
-        // Count creatures of the subtype per player
-        val counts = state.turnOrder.associateWith { playerId ->
-            state.entities.count { (_, container) ->
-                container.get<ControllerComponent>()?.playerId == playerId &&
-                container.get<CardComponent>()?.typeLine?.hasSubtype(effect.subtype) == true
-            }
+        // Rank value per player, per the effect's metric.
+        val valueByPlayer = state.turnOrder.associateWith { playerId ->
+            metricValue(state, effect.metric, playerId)
         }
 
-        val maxCount = counts.values.maxOrNull() ?: return EffectResult.success(state)
-        if (maxCount == 0) return EffectResult.success(state)
+        val maxValue = valueByPlayer.values.maxOrNull() ?: return EffectResult.success(state)
+        // No creatures of the subtype means no one qualifies. (Life ties are caught below.)
+        if (effect.metric is PlayerRankMetric.CreaturesOfSubtype && maxValue == 0) {
+            return EffectResult.success(state)
+        }
 
-        val playersWithMax = counts.filter { it.value == maxCount }
+        val playersWithMax = valueByPlayer.filter { it.value == maxValue }
+        // Strictly more than each other player — a tie means no control change.
         if (playersWithMax.size != 1) return EffectResult.success(state)
 
         val newControllerId = playersWithMax.keys.first()
 
-        // Use projected controller so floating-effect-based control changes are respected
+        // Use projected controller so floating-effect-based control changes are respected.
         val currentControllerId = state.projectedState.getController(targetId)
             ?: targetContainer.get<ControllerComponent>()?.playerId
         if (currentControllerId == newControllerId) return EffectResult.success(state)
 
-        // Remove any previous Layer.CONTROL floating effects from the same source on the same target
+        // Remove any previous Layer.CONTROL floating effects from the same source on the same target.
         val filteredEffects = state.floatingEffects.filter { floating ->
             !(floating.sourceId == context.sourceId &&
-              floating.effect.layer == Layer.CONTROL &&
-              targetId in floating.effect.affectedEntities)
+                floating.effect.layer == Layer.CONTROL &&
+                targetId in floating.effect.affectedEntities)
         }
 
-        // Create new floating effect — use controllerId override since control goes to subtype majority player
         val controlContext = context.copy(controllerId = newControllerId)
         val floatingEffect = state.createFloatingEffect(
             layer = Layer.CONTROL,
@@ -77,7 +83,7 @@ class GainControlByMostOfSubtypeExecutor : EffectExecutor<GainControlByMostOfSub
             context = controlContext
         )
 
-        // Rule 302.6: new controller hasn't had this permanent since their most recent turn began.
+        // Rule 302.6: the new controller hasn't controlled this permanent since their most recent turn began.
         val newState = state.copy(floatingEffects = filteredEffects + floatingEffect)
             .updateEntity(targetId) { it.with(SummoningSicknessComponent) }
 
@@ -92,4 +98,15 @@ class GainControlByMostOfSubtypeExecutor : EffectExecutor<GainControlByMostOfSub
 
         return EffectResult.success(newState, events)
     }
+
+    private fun metricValue(state: GameState, metric: PlayerRankMetric, playerId: EntityId): Int =
+        when (metric) {
+            is PlayerRankMetric.LifeTotal ->
+                state.getEntity(playerId)?.get<LifeTotalComponent>()?.life ?: 0
+            is PlayerRankMetric.CreaturesOfSubtype ->
+                state.entities.count { (_, container) ->
+                    container.get<ControllerComponent>()?.playerId == playerId &&
+                        container.get<CardComponent>()?.typeLine?.hasSubtype(metric.subtype) == true
+                }
+        }
 }

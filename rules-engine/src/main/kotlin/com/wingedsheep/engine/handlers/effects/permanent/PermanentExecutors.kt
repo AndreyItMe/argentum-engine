@@ -19,7 +19,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.attachments.AttachTarge
 import com.wingedsheep.engine.handlers.effects.permanent.attachments.GrantExileOnLeaveExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.ExchangeControlExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.GainControlByActivePlayerExecutor
-import com.wingedsheep.engine.handlers.effects.permanent.control.GainControlByMostOfSubtypeExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.control.GainControlByMostExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.GainControlExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.GiveControlToTargetPlayerExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.AddCountersExecutor
@@ -103,7 +103,7 @@ class PermanentExecutors(
         ExchangeControlExecutor(),
         GainControlExecutor(),
         GainControlByActivePlayerExecutor(),
-        GainControlByMostOfSubtypeExecutor(),
+        GainControlByMostExecutor(),
         GiveControlToTargetPlayerExecutor(),
         // types
         AddCardTypeExecutor(),

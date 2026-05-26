@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 48 / 78
+**Implemented:** 49 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -63,7 +63,7 @@
 - [x] Desert Twister
 - [ ] Drop of Honey
 - [x] Erhnam Djinn
-- [ ] Ghazbán Ogre
+- [x] Ghazbán Ogre
 - [x] Ifh-Bíff Efreet
 - [ ] Metamorphosis
 - [ ] Nafs Asp

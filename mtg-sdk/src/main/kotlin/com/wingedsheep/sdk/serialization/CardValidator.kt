@@ -19,7 +19,7 @@ import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ForceSacrificeEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
-import com.wingedsheep.sdk.scripting.effects.GainControlByMostOfSubtypeEffect
+import com.wingedsheep.sdk.scripting.effects.GainControlByMostEffect
 import com.wingedsheep.sdk.scripting.effects.GainControlEffect
 import com.wingedsheep.sdk.scripting.effects.GrantKeywordEffect
 import com.wingedsheep.sdk.scripting.effects.GrantTriggeredAbilityEffect
@@ -239,7 +239,7 @@ object CardValidator {
             is LoseAllCreatureTypesEffect -> effect.target
             is LookAtFaceDownEffect -> effect.target
             is TransformEffect -> effect.target
-            is GainControlByMostOfSubtypeEffect -> effect.target
+            is GainControlByMostEffect -> effect.target
             is SacrificeTargetEffect -> effect.target
             is LoseGameEffect -> effect.target
             else -> null
