@@ -30,7 +30,7 @@
 - [ ] Dandân
 - [ ] Fishliver Oil
 - [x] Flying Men
-- [ ] Giant Tortoise
+- [x] Giant Tortoise
 - [ ] Island Fish Jasconius
 - [ ] Merchant Ship
 - [ ] Old Man of the Sea
