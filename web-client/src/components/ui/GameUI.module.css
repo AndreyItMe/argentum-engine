@@ -1312,6 +1312,18 @@
   gap: var(--space-1);
 }
 
+.incompleteSetsButton {
+  border-style: dashed;
+  align-self: flex-start;
+}
+
+.incompleteSetsNote {
+  font-size: var(--font-xs);
+  color: var(--text-disabled);
+  line-height: 1.4;
+  margin: 0 0 var(--space-3);
+}
+
 
 /* =========================================================================
  * Player List

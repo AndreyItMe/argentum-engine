@@ -697,6 +697,7 @@ function LobbyOverlay({
   const updateLobbySettings = useGameStore((state) => state.updateLobbySettings)
   const tournamentState = useGameStore((state) => state.tournamentState)
   const [copied, setCopied] = useState(false)
+  const [showIncompleteSets, setShowIncompleteSets] = useState(false)
 
   // Show tournament standings when tournament is active
   if (tournamentState) {
@@ -742,6 +743,68 @@ function LobbyOverlay({
     navigator.clipboard.writeText(lobbyState.lobbyId)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Incomplete sets (cards not fully implemented yet) are pulled out of the main grid and offered
+  // behind a separate modal so the default picker stays focused on fully-playable sets.
+  type AvailableSet = typeof lobbyState.settings.availableSets[number]
+  const completeSets = lobbyState.settings.availableSets.filter((s) => !s.incomplete)
+  const incompleteSets = lobbyState.settings.availableSets.filter((s) => s.incomplete)
+  const selectedIncompleteCount = incompleteSets.filter((s) => lobbyState.settings.setCodes.includes(s.code)).length
+
+  const toggleSet = (code: string) => {
+    const isSelected = lobbyState.settings.setCodes.includes(code)
+    const newCodes = isSelected
+      ? lobbyState.settings.setCodes.filter((c) => c !== code)
+      : [...lobbyState.settings.setCodes, code]
+    updateLobbySettings({ setCodes: newCodes })
+  }
+
+  const renderSetButton = (set: AvailableSet) => {
+    const isSelected = lobbyState.settings.setCodes.includes(set.code)
+    return (
+      <button
+        key={set.code}
+        onClick={() => toggleSet(set.code)}
+        className={`${styles.settingsButton} ${isSelected ? (isAnyDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : styles.settingsButtonActive) : ''}`}
+      >
+        <span>{set.name}</span>
+        {set.implementedCount != null && (
+          <span className={styles.setButtonCardCount}>{set.implementedCount} cards</span>
+        )}
+      </button>
+    )
+  }
+
+  // Group sets: ungrouped first, then per-block groups (preserving first-seen order).
+  const renderGroupedSets = (sets: readonly AvailableSet[]) => {
+    const blockOrder: string[] = []
+    const blockSets = new Map<string, AvailableSet[]>()
+    const ungrouped: AvailableSet[] = []
+    for (const set of sets) {
+      if (set.block) {
+        if (!blockSets.has(set.block)) {
+          blockOrder.push(set.block)
+          blockSets.set(set.block, [])
+        }
+        blockSets.get(set.block)!.push(set)
+      } else {
+        ungrouped.push(set)
+      }
+    }
+    return (
+      <>
+        {ungrouped.map(renderSetButton)}
+        {blockOrder.map((blockName) => (
+          <div key={blockName} className={styles.blockGroup}>
+            <span className={styles.blockLabel}>{blockName} Block</span>
+            <div className={styles.blockSets}>
+              {blockSets.get(blockName)!.map(renderSetButton)}
+            </div>
+          </div>
+        ))}
+      </>
+    )
   }
 
   return (
@@ -911,57 +974,19 @@ function LobbyOverlay({
             <div className={styles.settingsRow} style={{ alignItems: 'flex-start' }}>
               <span className={styles.settingsLabel} style={{ paddingTop: 6 }}>Sets</span>
               <div className={styles.setSelectionGrid}>
-                {(() => {
-                  const sets = lobbyState.settings.availableSets
-                  // Group sets: blocks first (preserving order), then ungrouped sets
-                  const blockOrder: string[] = []
-                  const blockSets = new Map<string, typeof sets[number][]>()
-                  const ungrouped: typeof sets[number][] = []
-                  for (const set of sets) {
-                    if (set.block) {
-                      if (!blockSets.has(set.block)) {
-                        blockOrder.push(set.block)
-                        blockSets.set(set.block, [])
-                      }
-                      blockSets.get(set.block)!.push(set)
-                    } else {
-                      ungrouped.push(set)
-                    }
-                  }
-                  const renderSetButton = (set: typeof sets[number]) => {
-                    const isSelected = lobbyState.settings.setCodes.includes(set.code)
-                    return (
-                      <button
-                        key={set.code}
-                        onClick={() => {
-                          const newCodes = isSelected
-                            ? lobbyState.settings.setCodes.filter(c => c !== set.code)
-                            : [...lobbyState.settings.setCodes, set.code]
-                          updateLobbySettings({ setCodes: newCodes })
-                        }}
-                        className={`${styles.settingsButton} ${isSelected ? (isAnyDraft ? `${styles.settingsButtonActive} ${styles.settingsButtonDraft}` : styles.settingsButtonActive) : ''}`}
-                      >
-                        <span>{set.name}</span>
-                        {set.implementedCount != null && (
-                          <span className={styles.setButtonCardCount}>{set.implementedCount} cards</span>
-                        )}
-                      </button>
-                    )
-                  }
-                  return (
-                    <>
-                      {ungrouped.map(renderSetButton)}
-                      {blockOrder.map((blockName) => (
-                        <div key={blockName} className={styles.blockGroup}>
-                          <span className={styles.blockLabel}>{blockName} Block</span>
-                          <div className={styles.blockSets}>
-                            {blockSets.get(blockName)!.map(renderSetButton)}
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )
-                })()}
+                {renderGroupedSets(completeSets)}
+                {incompleteSets.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowIncompleteSets(true)}
+                    className={`${styles.settingsButton} ${styles.incompleteSetsButton}`}
+                  >
+                    <span>Incomplete sets…</span>
+                    <span className={styles.setButtonCardCount}>
+                      {selectedIncompleteCount > 0 ? `${selectedIncompleteCount} selected` : `${incompleteSets.length} available`}
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
             )}
@@ -1357,6 +1382,26 @@ function LobbyOverlay({
           </p>
         )}
       </div>
+
+      {showIncompleteSets && (
+        <div className={styles.deckViewerBackdrop} onClick={() => setShowIncompleteSets(false)}>
+          <div className={styles.deckViewerPanel} style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.deckViewerHeader}>
+              <h3 className={styles.deckViewerTitle}>Incomplete sets</h3>
+              <button className={styles.deckViewerClose} onClick={() => setShowIncompleteSets(false)}>×</button>
+            </div>
+            <div className={styles.deckViewerBody}>
+              <p className={styles.incompleteSetsNote}>
+                These sets aren't fully implemented yet — some cards are missing, so boosters draw from a
+                combined pool of the cards that exist. Selecting one mixes it into your pool.
+              </p>
+              <div className={styles.setSelectionGrid} style={{ justifyContent: 'flex-start' }}>
+                {renderGroupedSets(incompleteSets)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

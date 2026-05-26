@@ -22,7 +22,6 @@ object DominariaSet : MtgSet {
     override val code = "DOM"
     override val displayName = "Dominaria"
     override val releaseDate = "2018-04-27"
-    override val incomplete = true
     override val sealedSupported = true
     override val boosterStrategy: BoosterStrategy = GuaranteedLegendaryBooster()
 
