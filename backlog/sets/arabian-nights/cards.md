@@ -57,7 +57,7 @@
 - [ ] Kird Ape
 - [ ] Magnetic Mountain
 - [ ] Mijae Djinn
-- [ ] Rukh Egg
+- [x] Rukh Egg
 - [ ] Ydwen Efreet
 - [ ] Cyclone
 - [x] Desert Twister
