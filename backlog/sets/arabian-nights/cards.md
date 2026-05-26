@@ -78,7 +78,7 @@
 - [ ] City in a Bottle
 - [x] Dancing Scimitar
 - [ ] Ebony Horse
-- [ ] Flying Carpet
+- [x] Flying Carpet
 - [ ] Jandor's Ring
 - [x] Jandor's Saddlebags
 - [ ] Jeweled Bird
