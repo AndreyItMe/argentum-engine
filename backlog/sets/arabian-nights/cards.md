@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 46 / 78
+**Implemented:** 47 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -25,7 +25,7 @@
 - [x] Piety
 - [x] Repentant Blacksmith
 - [ ] Shahrazad
-- [ ] War Elephant
+- [x] War Elephant
 - [ ] Dandân
 - [x] Fishliver Oil
 - [x] Flying Men
