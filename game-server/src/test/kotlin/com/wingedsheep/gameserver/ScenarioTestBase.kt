@@ -824,6 +824,16 @@ abstract class ScenarioTestBase : FunSpec() {
         }
 
         /**
+         * Find all permanents on the battlefield with the given name (e.g. multiple
+         * copies of the same token or card).
+         */
+        fun findPermanents(name: String): List<EntityId> {
+            return state.getBattlefield().filter { entityId ->
+                state.getEntity(entityId)?.get<CardComponent>()?.name == name
+            }
+        }
+
+        /**
          * Check if a card with the given name is in a player's graveyard.
          */
         fun isInGraveyard(playerNumber: Int, cardName: String): Boolean {

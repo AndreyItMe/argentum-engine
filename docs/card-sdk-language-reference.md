@@ -691,6 +691,12 @@ Triggers.becomesBlocked(
 Triggers.blocks(attackerFilter = GameObjectFilter.Creature.withKeyword(Keyword.FLYING))
 ```
 
+`Triggers.BecomesBlocked` (SELF, **unfiltered**) fires **once** when the creature becomes
+blocked, regardless of how many creatures block it, with `triggeringEntityId` = the source —
+so `DynamicAmounts.numberOfBlockers()` reads this creature's blocker count (Rampage). The
+**filtered** SELF form `becomesBlocked(filter = …)` instead fires once per matching blocker,
+with `triggeringEntityId` = that blocker (Flanking gives each blocker -1/-1).
+
 ### Damage
 
 Named sugar for the common cases; reach for the factories for any other combination of axes.
@@ -1001,7 +1007,9 @@ composite abilities).
 - `Annihilator(n)` — attacker forces sacrifices.
 - `Absorb(n)` — prevent N damage each time it would be dealt to this.
 - `Bushido(n)` — +N/+N when blocking or blocked.
-- `Rampage(n)` — +N/+N for each blocker past the first.
+- `Rampage(n)` — +N/+N for each blocker past the first. Display-only; wire the behavior with the
+  `card { rampage(n) }` builder helper, which adds this keyword ability plus a "becomes blocked"
+  triggered ability granting `+n/+n × (blockers − 1)` until end of turn (mirrors `prowess()`).
 - `Afflict(n)` — defender loses N when this becomes blocked.
 - `Crew(n)` — tap N power worth to animate a Vehicle.
 - `Modular(n)` — ETB with +1/+1 counters, transfer on death.
