@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets
 
 import com.wingedsheep.mtg.sets.definitions.akh.AmonkhetSet
+import com.wingedsheep.mtg.sets.definitions.arn.ArabianNightsSet
 import com.wingedsheep.mtg.sets.definitions.avr.AvacynRestoredSet
 import com.wingedsheep.mtg.sets.definitions.bfz.BattleForZendikarSet
 import com.wingedsheep.mtg.sets.definitions.blb.BloomburrowSet
@@ -75,6 +76,7 @@ object MtgSetCatalog {
 
     val all: List<MtgSet> = listOf(
         AlphaSet,
+        ArabianNightsSet,
         PortalSet,
         MirageSet,
         TempestSet,
