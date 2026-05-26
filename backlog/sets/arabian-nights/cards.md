@@ -22,7 +22,7 @@
 - [ ] Eye for an Eye
 - [ ] Jihad
 - [ ] King Suleiman
-- [ ] Moorish Cavalry
+- [x] Moorish Cavalry
 - [ ] Piety
 - [ ] Repentant Blacksmith
 - [ ] Shahrazad
