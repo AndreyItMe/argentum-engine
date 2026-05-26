@@ -41,7 +41,10 @@ object TargetResolutionUtils {
      * that need to look up attachment relationships).
      */
     fun resolveTarget(effectTarget: EffectTarget, context: EffectContext, state: GameState): EntityId? {
-        if (effectTarget is EffectTarget.EnchantedCreature || effectTarget is EffectTarget.EquippedCreature) {
+        if (effectTarget is EffectTarget.EnchantedCreature ||
+            effectTarget is EffectTarget.EquippedCreature ||
+            effectTarget is EffectTarget.EnchantedPermanent
+        ) {
             val sourceId = context.sourceId ?: return null
             return state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId
         }

@@ -465,6 +465,8 @@ Composed pipelines (`GatherCards → SelectFromCollection → MoveCollection` sh
   amount, …).
 - `EnchantedCreature` / `EquippedCreature` — resolve via `AttachedToComponent`; requires the state-aware
   `resolveTarget(state, target)` overload.
+- `EnchantedPermanent` — same `AttachedToComponent` resolution as `EnchantedCreature`, but type-agnostic; use for
+  Auras that enchant non-creature permanents (e.g. Wellspring enchants a land: "gain control of enchanted land").
 
 ### Cast-time (`Targets.*` / `TargetRequirement`)
 

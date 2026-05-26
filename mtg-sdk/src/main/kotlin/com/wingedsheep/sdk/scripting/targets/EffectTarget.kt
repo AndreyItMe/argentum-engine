@@ -42,6 +42,18 @@ sealed interface EffectTarget {
         override val description: String = "equipped creature"
     }
 
+    /**
+     * The permanent this aura/equipment is attached to, regardless of its type.
+     * Use for auras that enchant non-creature permanents (e.g., Wellspring enchants
+     * a land: "gain control of enchanted land"). Resolves via the source's
+     * attachment relationship, exactly like [EnchantedCreature]/[EquippedCreature].
+     */
+    @SerialName("EnchantedPermanent")
+    @Serializable
+    data object EnchantedPermanent : EffectTarget {
+        override val description: String = "enchanted permanent"
+    }
+
     /** The controller of the target (used for effects like "its controller gains 4 life") */
     @SerialName("TargetController")
     @Serializable

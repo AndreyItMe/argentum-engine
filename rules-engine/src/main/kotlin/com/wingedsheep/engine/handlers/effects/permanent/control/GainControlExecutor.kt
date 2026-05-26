@@ -28,7 +28,9 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
         effect: GainControlEffect,
         context: EffectContext
     ): EffectResult {
-        val targetId = context.resolveTarget(effect.target)
+        // Use the state-aware overload so attachment-relative targets (e.g.
+        // EnchantedPermanent for an aura on a land) resolve via AttachedToComponent.
+        val targetId = context.resolveTarget(effect.target, state)
             ?: return EffectResult.error(state, "No valid target for control change")
 
         val targetContainer = state.getEntity(targetId)
