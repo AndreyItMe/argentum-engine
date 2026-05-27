@@ -74,6 +74,8 @@ sealed interface PreventionSourceFilter {
  * @property direction Whether to prevent damage TO the target, FROM the target, or BOTH
  * @property sourceFilter Filter on which damage sources are affected
  * @property reflect If true, prevented damage is dealt to the source's controller (Deflecting Palm)
+ * @property gainLifeFromColors If non-empty, whenever damage from a source of one of these colors is
+ *   prevented by this shield, the shield's controller gains that much life (Samite Ministration)
  * @property duration When the shield expires
  */
 @SerialName("PreventDamageShield")
@@ -85,6 +87,7 @@ data class PreventDamageEffect(
     val direction: PreventionDirection = PreventionDirection.ToTarget,
     val sourceFilter: PreventionSourceFilter = PreventionSourceFilter.AnySource,
     val reflect: Boolean = false,
+    val gainLifeFromColors: Set<Color> = emptySet(),
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = buildString {
@@ -113,6 +116,10 @@ data class PreventDamageEffect(
         }
         append(" this turn")
         if (reflect) append(". If damage is prevented this way, deal that much damage to that source's controller")
+        if (gainLifeFromColors.isNotEmpty()) {
+            val colorList = gainLifeFromColors.joinToString(" or ") { it.displayName.lowercase() }
+            append(". Whenever damage from a $colorList source is prevented this way this turn, you gain that much life")
+        }
     }
 
     override fun runtimeDescription(resolver: (DynamicAmount) -> Int): String {

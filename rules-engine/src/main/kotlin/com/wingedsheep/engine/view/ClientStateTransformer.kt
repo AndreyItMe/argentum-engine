@@ -1540,6 +1540,7 @@ class ClientStateTransformer(
         var preventDamageTotal = 0
         var preventsAllDamage = false
         val preventedCreatureTypes = mutableSetOf<String>()
+        val preventedFromSources = mutableSetOf<EntityId>()
         for (floatingEffect in state.floatingEffects) {
             if (playerId !in floatingEffect.effect.affectedEntities) continue
             when (val modification = floatingEffect.effect.modification) {
@@ -1551,6 +1552,9 @@ class ClientStateTransformer(
                 }
                 is SerializableModification.PreventNextDamageFromCreatureType -> {
                     preventedCreatureTypes.add(modification.creatureType)
+                }
+                is SerializableModification.PreventAllDamageFromSource -> {
+                    preventedFromSources.add(modification.damageSourceId)
                 }
                 else -> {}
             }
@@ -1581,6 +1585,17 @@ class ClientStateTransformer(
                     effectId = "prevent_damage_from_${creatureType.lowercase()}",
                     name = "Prevent $creatureType",
                     description = "The next time a $creatureType would deal damage to you this turn, prevent that damage",
+                    icon = "prevent-damage"
+                )
+            )
+        }
+        for (sourceId in preventedFromSources) {
+            val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "a chosen source"
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "prevent_damage_from_source_${sourceId.value}",
+                    name = "Prevent from $sourceName",
+                    description = "All damage that would be dealt to you by $sourceName this turn is prevented",
                     icon = "prevent-damage"
                 )
             )

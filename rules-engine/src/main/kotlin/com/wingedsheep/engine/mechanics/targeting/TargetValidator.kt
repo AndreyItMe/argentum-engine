@@ -62,6 +62,7 @@ class TargetValidator {
         // For TargetObject with dynamicMaxCount = XValue, the chosen X clamps the per-req
         // max count (the static `count` field is just a placeholder at enumeration time).
         fun effectiveMaxCount(req: TargetRequirement): Int {
+            if (req.unlimited) return Int.MAX_VALUE
             if (req is TargetObject && req.dynamicMaxCount == DynamicAmount.XValue && xValue != null) {
                 return xValue
             }

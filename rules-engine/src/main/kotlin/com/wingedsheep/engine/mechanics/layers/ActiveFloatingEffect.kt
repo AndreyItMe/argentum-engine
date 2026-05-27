@@ -402,6 +402,22 @@ sealed interface SerializableModification {
         val damageSourceId: EntityId,
         val deflectSourceId: EntityId
     ) : SerializableModification
+
+    /**
+     * Damage prevention shield tied to a single chosen source: prevent all damage that the
+     * source [damageSourceId] would deal to the affected entities this turn (not consumed —
+     * it persists for the full turn). Used by Samite Ministration.
+     *
+     * @property damageSourceId The chosen source whose damage is prevented
+     * @property gainLifeFromColors If non-empty, whenever damage from a source of one of these
+     *   colors (enum names, e.g. "BLACK", "RED") is prevented by this shield, the affected player
+     *   gains that much life.
+     */
+    @Serializable
+    data class PreventAllDamageFromSource(
+        val damageSourceId: EntityId,
+        val gainLifeFromColors: Set<String> = emptySet()
+    ) : SerializableModification
 }
 
 /**
@@ -474,5 +490,7 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.RedirectCombatDamageToController -> Modification.NoOp
     // DeflectNextDamageFromSource doesn't map to a layer modification - it's checked during damage resolution directly
     is SerializableModification.DeflectNextDamageFromSource -> Modification.NoOp
+    // PreventAllDamageFromSource doesn't map to a layer modification - it's checked during damage resolution directly
+    is SerializableModification.PreventAllDamageFromSource -> Modification.NoOp
     is SerializableModification.RemoveAllAbilities -> Modification.RemoveAllAbilities
 }

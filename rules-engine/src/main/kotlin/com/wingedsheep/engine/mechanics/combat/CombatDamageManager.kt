@@ -824,6 +824,14 @@ internal class CombatDamageManager(
             return newState
         }
 
+        // "Prevent all damage from chosen source" shields (Samite Ministration)
+        val preventFromSourceResult = DamageUtils.checkPreventFromSourceShield(newState, targetId, amplifiedAmount, sourceId)
+        if (preventFromSourceResult != null) {
+            newState = preventFromSourceResult.state
+            events.addAll(preventFromSourceResult.events)
+            return newState
+        }
+
         // Prevention shields
         val (shieldState, effectiveAmount) = DamageUtils.applyDamagePreventionShields(
             newState, targetId, amplifiedAmount, isCombatDamage = true, sourceId = sourceId

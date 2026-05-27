@@ -121,7 +121,10 @@ data class DeflectDamageSourceChoiceContinuation(
  *
  * @property controllerId The player who controls the spell
  * @property targetId The entity receiving the prevention shield
- * @property amount The amount of damage to prevent
+ * @property amount The amount of damage to prevent; null means prevent all damage from the chosen
+ *   source for the rest of the turn (Samite Ministration)
+ * @property gainLifeFromColors Color enum names whose prevented damage gives the affected player
+ *   that much life (only used when [amount] is null)
  * @property sourceId The spell/ability that created this effect
  * @property sourceName Name of the source for display
  */
@@ -130,7 +133,8 @@ data class PreventDamageFromChosenSourceContinuation(
     override val decisionId: String,
     val controllerId: EntityId,
     val targetId: EntityId,
-    val amount: Int,
+    val amount: Int?,
+    val gainLifeFromColors: Set<String> = emptySet(),
     val sourceId: EntityId?,
     val sourceName: String?
 ) : ContinuationFrame

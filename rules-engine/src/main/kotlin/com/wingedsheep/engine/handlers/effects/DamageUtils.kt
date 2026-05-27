@@ -147,6 +147,10 @@ object DamageUtils {
             if (sourceId != null) {
                 val deflectResult = checkDeflectDamageShield(newState, targetId, effectiveAmount, sourceId)
                 if (deflectResult != null) return deflectResult
+
+                // Check for "prevent all damage from chosen source" shields (Samite Ministration)
+                val preventFromSourceResult = checkPreventFromSourceShield(newState, targetId, effectiveAmount, sourceId)
+                if (preventFromSourceResult != null) return preventFromSourceResult
             }
 
             val (shieldState, reducedAmount) = applyDamagePreventionShields(newState, targetId, effectiveAmount, sourceId = sourceId)
@@ -591,6 +595,62 @@ object DamageUtils {
 
         // Deal the reflected damage to the source's controller, sourced from the deflecting card
         return dealDamageToTarget(newState, sourceController, damageAmount, mod.deflectSourceId)
+    }
+
+    /**
+     * Check for "prevent all damage from a chosen source" shields (Samite Ministration).
+     *
+     * Scans floating effects for a [SerializableModification.PreventAllDamageFromSource] whose
+     * `damageSourceId` matches [sourceId] and whose affected entities include [targetId]. The shield
+     * is persistent (not consumed) — it prevents all damage from the chosen source for the turn.
+     *
+     * If the shield carries `gainLifeFromColors` and the source has one of those colors, the affected
+     * player gains life equal to the prevented amount.
+     *
+     * @return EffectResult (damage fully prevented) if a matching shield exists, null otherwise
+     */
+    fun checkPreventFromSourceShield(
+        state: GameState,
+        targetId: EntityId,
+        damageAmount: Int,
+        sourceId: EntityId
+    ): EffectResult? {
+        val shield = state.floatingEffects.firstOrNull { effect ->
+            val mod = effect.effect.modification
+            mod is SerializableModification.PreventAllDamageFromSource &&
+                mod.damageSourceId == sourceId &&
+                targetId in effect.effect.affectedEntities
+        } ?: return null
+
+        val mod = shield.effect.modification as SerializableModification.PreventAllDamageFromSource
+
+        // Damage is fully prevented. Optionally gain life when the source matches one of the colors.
+        if (damageAmount <= 0 || mod.gainLifeFromColors.isEmpty()) {
+            return EffectResult.success(state)
+        }
+
+        // Combine projected colors (battlefield permanents) with base card colors (spells on the stack).
+        val sourceColors = state.projectedState.getColors(sourceId) +
+            (state.getEntity(sourceId)?.get<CardComponent>()?.colors?.map { it.name } ?: emptyList())
+        if (sourceColors.none { it in mod.gainLifeFromColors }) {
+            return EffectResult.success(state)
+        }
+
+        // Life gain goes to the affected player (the protected "you").
+        if (isLifeGainPrevented(state, targetId)) {
+            return EffectResult.success(state)
+        }
+        val currentLife = state.getEntity(targetId)?.get<LifeTotalComponent>()?.life
+            ?: return EffectResult.success(state)
+        val newLife = currentLife + damageAmount
+        var newState = state.updateEntity(targetId) { container ->
+            container.with(LifeTotalComponent(newLife))
+        }
+        newState = markLifeGainedThisTurn(newState, targetId, damageAmount)
+        return EffectResult.success(
+            newState,
+            listOf(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.LIFE_GAIN))
+        )
     }
 
     /**

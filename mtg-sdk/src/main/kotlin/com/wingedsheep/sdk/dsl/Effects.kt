@@ -1841,6 +1841,22 @@ object Effects {
         )
 
     /**
+     * Prevent all damage that would be dealt to a target this turn by a source of your choice.
+     * If [gainLifeFromColors] is non-empty, whenever damage from a source of one of those colors is
+     * prevented this way, the controller gains that much life (Samite Ministration).
+     */
+    fun PreventAllDamageFromChosenSource(
+        target: EffectTarget = EffectTarget.Controller,
+        gainLifeFromColors: Set<com.wingedsheep.sdk.core.Color> = emptySet()
+    ): Effect =
+        PreventDamageEffect(
+            target = target,
+            amount = null,
+            sourceFilter = PreventionSourceFilter.ChosenSource,
+            gainLifeFromColors = gainLifeFromColors
+        )
+
+    /**
      * Prevent the next time a creature of the chosen type would deal damage to you this turn.
      */
     fun PreventNextDamageFromChosenCreatureType(): Effect =

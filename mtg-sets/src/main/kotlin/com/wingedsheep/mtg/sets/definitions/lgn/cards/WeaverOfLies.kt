@@ -30,8 +30,7 @@ val WeaverOfLies = card("Weaver of Lies") {
     triggeredAbility {
         trigger = Triggers.TurnedFaceUp
         val t = target("creatures with morph abilities other than this creature", TargetPermanent(
-            count = 20,
-            optional = true,
+            unlimited = true,
             filter = TargetFilter(GameObjectFilter.Creature.withMorph().faceUp()).other()
         ))
         effect = ForEachTargetEffect(

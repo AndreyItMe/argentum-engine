@@ -32,7 +32,7 @@ val MorningtidesLight = card("Morningtide's Light") {
     spell {
         selfExile()
 
-        target("any number of target creatures", TargetCreature(count = 99, optional = true))
+        target("any number of target creatures", TargetCreature(unlimited = true))
 
         effect = ForEachTargetEffect(
             effects = listOf(

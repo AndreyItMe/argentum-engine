@@ -26,7 +26,7 @@ val SingularityRupture = card("Singularity Rupture") {
     oracleText = "Destroy all creatures, then any number of target players each mill half their library, rounded down."
 
     spell {
-        target = TargetPlayer(count = 99, optional = true)
+        target = TargetPlayer(unlimited = true)
         effect = CompositeEffect(listOf(
             Effects.DestroyAll(GameObjectFilter.Creature),
             ForEachTargetEffect(

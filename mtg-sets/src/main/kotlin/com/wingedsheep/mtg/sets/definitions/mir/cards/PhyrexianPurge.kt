@@ -19,8 +19,8 @@ import com.wingedsheep.sdk.scripting.targets.TargetCreature
  * The life payment is an additional cost paid at cast time; it is not refunded if the
  * spell is countered or if targets become illegal (Scryfall ruling, 2009-10-01).
  *
- * Implementation: variable target count modeled as `count = 20, optional = true`
- * (same pattern as Wave of Indifference / Hide on the Ceiling). The per-target life
+ * Implementation: "any number of target creatures" uses `unlimited = true`, so the
+ * target count has no cap — the client offers every legal target. The per-target life
  * payment uses [AdditionalCost.PayLifePerTarget] — the engine multiplies the
  * payment by `action.targets.size` at cast resolution.
  */
@@ -33,7 +33,7 @@ val PhyrexianPurge = card("Phyrexian Purge") {
     additionalCost(AdditionalCost.PayLifePerTarget(amountPerTarget = 3))
 
     spell {
-        target = TargetCreature(count = 20, optional = true)
+        target = TargetCreature(unlimited = true)
         effect = ForEachTargetEffect(listOf(Effects.Destroy(EffectTarget.ContextTarget(0))))
     }
 

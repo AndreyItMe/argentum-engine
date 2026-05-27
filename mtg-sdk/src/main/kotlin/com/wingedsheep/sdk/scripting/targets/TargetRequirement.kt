@@ -32,11 +32,18 @@ sealed interface TargetRequirement : TextReplaceable<TargetRequirement> {
     val count: Int get() = 1  // Maximum targets
     val minCount: Int get() = count  // Minimum targets (defaults to count)
     val optional: Boolean get() = false  // If true, minCount becomes 0
+    /**
+     * If true, the target count has no upper bound — "any number of target ...".
+     * The practical maximum is the number of legal targets, which the engine surfaces
+     * to the client; validation imposes no cap. Implies a minimum of 0, so [count] is
+     * left at its default and ignored. Use this instead of a large placeholder [count].
+     */
+    val unlimited: Boolean get() = false
     /** Named identifier for this target requirement. When set, enables BoundVariable resolution. */
     val id: String? get() = null
 
-    /** Effective minimum after considering optional flag */
-    val effectiveMinCount: Int get() = if (optional) 0 else minCount
+    /** Effective minimum after considering optional/unlimited flags */
+    val effectiveMinCount: Int get() = if (optional || unlimited) 0 else minCount
 }
 
 // =============================================================================
@@ -51,11 +58,16 @@ sealed interface TargetRequirement : TextReplaceable<TargetRequirement> {
 data class TargetPlayer(
     override val count: Int = 1,
     override val optional: Boolean = false,
+    override val unlimited: Boolean = false,
     override val id: String? = null,
     private val descriptionOverride: String? = null
 ) : TargetRequirement {
     override val description: String = descriptionOverride
-        ?: if (count == 1) "target player" else "target $count players"
+        ?: when {
+            unlimited -> "any number of target players"
+            count == 1 -> "target player"
+            else -> "target $count players"
+        }
     override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
@@ -85,6 +97,7 @@ fun TargetCreature(
     count: Int = 1,
     minCount: Int = count,
     optional: Boolean = false,
+    unlimited: Boolean = false,
     filter: TargetFilter = TargetFilter.Creature,
     id: String? = null,
     dynamicMaxCount: DynamicAmount? = null
@@ -92,6 +105,7 @@ fun TargetCreature(
     count = count,
     minCount = minCount,
     optional = optional,
+    unlimited = unlimited,
     filter = filter,
     id = id,
     dynamicMaxCount = dynamicMaxCount
@@ -108,12 +122,14 @@ fun TargetCreature(
 fun TargetPermanent(
     count: Int = 1,
     optional: Boolean = false,
+    unlimited: Boolean = false,
     filter: TargetFilter = TargetFilter.Permanent,
     id: String? = null,
     dynamicMaxCount: DynamicAmount? = null
 ): TargetObject = TargetObject(
     count = count,
     optional = optional,
+    unlimited = unlimited,
     filter = filter,
     id = id,
     dynamicMaxCount = dynamicMaxCount
@@ -274,22 +290,31 @@ data class TargetObject(
     override val count: Int = 1,
     override val minCount: Int = count,
     override val optional: Boolean = false,
+    override val unlimited: Boolean = false,
     val filter: TargetFilter,
     override val id: String? = null,
     val dynamicMaxCount: DynamicAmount? = null
 ) : TargetRequirement {
     override val description: String = if (id != null) {
         buildString {
-            if (optional) append("up to ")
-            else if (minCount < count) append("$minCount to ")
+            when {
+                unlimited -> append("any number of ")
+                optional -> append("up to ")
+                minCount < count -> append("$minCount to ")
+            }
             append(id)
         }
     } else {
         buildString {
-            if (optional) append("up to ")
-            else if (minCount < count) append("$minCount to ")
-            append("target ")
-            append(if (count == 1) filter.description else "$count ${filter.description}s")
+            if (unlimited) {
+                append("any number of target ")
+                append("${filter.description}s")
+            } else {
+                if (optional) append("up to ")
+                else if (minCount < count) append("$minCount to ")
+                append("target ")
+                append(if (count == 1) filter.description else "$count ${filter.description}s")
+            }
         }
     }
 

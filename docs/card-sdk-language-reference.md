@@ -116,8 +116,8 @@ the `CardDefinition`.
 - `AdditionalCost.BlightVariable` — "as you cast, you may pay X life" (Blight X); X exposed via
   `DynamicAmount.AdditionalCostBlightAmount`.
 - `AdditionalCost.PayLifePerTarget(amountPerTarget)` — "this spell costs N life more to cast for
-  each target." Pair with a variable-count `TargetCreature(count = 20, optional = true)` etc.; the
-  engine auto-pays `amountPerTarget × action.targets.size` at cast resolution (Phyrexian Purge).
+  each target." Pair with an unbounded `TargetCreature(unlimited = true)` etc.; the engine
+  auto-pays `amountPerTarget × action.targets.size` at cast resolution (Phyrexian Purge).
 
 ---
 
@@ -332,7 +332,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 ### Combat-shape & misc
 
-- `PreventDamageEffect(amount, direction, scope, source?, recipient?)` — prevention shield.
+- `PreventDamageEffect(amount, direction, scope, sourceFilter, reflect, gainLifeFromColors, duration)` — prevention shield. `amount = null` prevents all. `sourceFilter` can be `ChosenSource` (player picks a source on resolution). `reflect` deals prevented damage back to the source's controller (Deflecting Palm). `gainLifeFromColors: Set<Color>` makes the shield's controller gain that much life whenever it prevents damage from a source of one of those colors (Samite Ministration). Facades: `Effects.PreventNextDamage`, `Effects.PreventNextDamageFromChosenSource(amount, target)`, `Effects.PreventAllDamageFromChosenSource(target, gainLifeFromColors)`, `Effects.DeflectNextDamageFromChosenSource()`.
 - `BecomeCreatureEffect(target, p, t, subtypes, keywords, duration)` — animate non-creature (lands, artifacts).
 - `EachPermanentBecomesCopyOfTargetEffect(filter, target)` — Cytoshape-style mass copy.
 - `AnimateLandEffect(target, subtypes, keywords, duration)` — land becomes a creature.
@@ -511,6 +511,21 @@ spell {
 
 For modal spells, prefer the explicit `targetPlayerControls(target)` DSL form; per-mode targets route via
 `modeTargetsOrdered`.
+
+### Target count
+
+Every `TargetRequirement` carries count semantics (defaults shown):
+
+- `count = 1` — maximum number of targets.
+- `minCount = count` — minimum; set below `count` for "one or two target creatures".
+- `optional = false` — when `true`, minimum becomes 0 ("up to N target ...").
+- `unlimited = false` — when `true`, **"any number of target ..."** — no upper cap. The practical
+  maximum is the number of legal targets, which the engine sends to the client; validation imposes
+  no limit and the minimum is 0. Use this instead of a large placeholder `count` (Phyrexian Purge,
+  Kaboom, Weaver of Lies). For "**X** target creatures" use `dynamicMaxCount = DynamicAmount.XValue`
+  instead — that clamps the count to the chosen X.
+- `dynamicMaxCount: DynamicAmount?` — evaluated when the spell/ability hits the stack; the resolved
+  value becomes the max ("up to X target creatures", X = board state or chosen X).
 
 ---
 

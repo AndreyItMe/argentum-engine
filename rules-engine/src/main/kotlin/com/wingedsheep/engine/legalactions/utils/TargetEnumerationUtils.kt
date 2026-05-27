@@ -220,7 +220,9 @@ class TargetEnumerationUtils(
                 index = index,
                 description = req.description,
                 minTargets = req.effectiveMinCount,
-                maxTargets = req.count,
+                // "Any number of target ..." has no fixed cap; the real maximum is the
+                // number of legal targets on the board, so the client offers all of them.
+                maxTargets = if (req.unlimited) validTargets.size else req.count,
                 validTargets = validTargets,
                 targetZone = getTargetZone(req),
                 xConstrainsManaValue = requirementUsesManaValueAtMostX(req),

@@ -108,17 +108,18 @@ class PreventDamageExecutor(
             val newState = state.withPendingDecision(decision).pushContinuation(continuation)
             return EffectResult.paused(newState, decision)
         } else {
-            // Prevention-only path: prevent N damage from chosen source
+            // Prevention-only path: prevent N damage (or all, when amount is null) from chosen source
             val targetId = context.resolveTarget(effect.target)
                 ?: return EffectResult.error(state, "Could not resolve target for PreventDamageEffect with ChosenSource")
-            val amount = effect.amount?.let { amountEvaluator.evaluate(state, it, context) } ?: 0
-            if (amount <= 0 && effect.amount != null) return EffectResult.success(state)
+            val amount = effect.amount?.let { amountEvaluator.evaluate(state, it, context) }
+            if (amount != null && amount <= 0) return EffectResult.success(state)
 
             val continuation = PreventDamageFromChosenSourceContinuation(
                 decisionId = decisionId,
                 controllerId = controllerId,
                 targetId = targetId,
                 amount = amount,
+                gainLifeFromColors = effect.gainLifeFromColors.map { it.name }.toSet(),
                 sourceId = context.sourceId,
                 sourceName = context.sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name }
             )
