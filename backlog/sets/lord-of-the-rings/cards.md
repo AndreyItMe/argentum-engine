@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 88 / 291
+**Implemented:** 129 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -26,7 +26,7 @@ starter-deck/special cards and basic lands.
 ### White
 
 - [x] Banish from Edoras
-- [ ] The Battle of Bywater
+- [x] The Battle of Bywater
 - [ ] Bill the Pony
 - [ ] Boromir, Warden of the Tower
 - [ ] Dawn of a New Age
@@ -50,15 +50,15 @@ starter-deck/special cards and basic lands.
 - [x] Nimble Hobbit
 - [ ] Now for Wrath, Now for Ruin!
 - [x] Protector of Gondor
-- [ ] Reprieve
-- [ ] Rosie Cotton of South Lane
+- [x] Reprieve
+- [x] Rosie Cotton of South Lane
 - [ ] Samwise the Stouthearted
-- [ ] Second Breakfast
-- [ ] Shire Shirriff
+- [x] Second Breakfast
+- [x] Shire Shirriff
 - [ ] Slip On the Ring
-- [ ] Soldier of the Grey Host
+- [x] Soldier of the Grey Host
 - [ ] Stalwarts of Osgiliath
-- [ ] Tale of Tinúviel
+- [x] Tale of Tinúviel
 - [ ] Took Reaper
 - [ ] War of the Last Alliance
 - [x] Westfold Rider
@@ -67,7 +67,7 @@ starter-deck/special cards and basic lands.
 ### Blue
 
 - [x] Arwen's Gift
-- [ ] The Bath Song
+- [x] The Bath Song
 - [ ] Bewitching Leechcraft
 - [x] Bill Ferny, Bree Swindler
 - [ ] Birthday Escape
@@ -91,15 +91,15 @@ starter-deck/special cards and basic lands.
 - [ ] Lost Isle Calling
 - [x] Meneldor, Swift Savior
 - [ ] Nimrodel Watcher
-- [ ] Pelargir Survivor
+- [x] Pelargir Survivor
 - [ ] Press the Enemy
 - [ ] Rangers of Ithilien
 - [ ] Saruman the White
 - [ ] Saruman's Trickery
 - [ ] Scroll of Isildur
 - [ ] Soothing of Sméagol
-- [ ] Stern Scolding
-- [ ] Storm of Saruman
+- [x] Stern Scolding
+- [x] Storm of Saruman
 - [ ] Surrounded by Orcs
 - [ ] Treason of Isengard
 - [ ] The Watcher in the Water
@@ -131,15 +131,15 @@ starter-deck/special cards and basic lands.
 - [ ] Morgul-Knife Wound
 - [ ] Nasty End
 - [ ] Nazgûl
-- [ ] Oath of the Grey Host
+- [x] Oath of the Grey Host
 - [ ] One Ring to Rule Them All
 - [ ] Orcish Bowmasters
 - [ ] Orcish Medicine
 - [ ] Sam's Desperate Rescue
 - [ ] Sauron, the Necromancer
-- [ ] Shadow of the Enemy
-- [ ] Shelob's Ambush
-- [ ] Snarling Warg
+- [x] Shadow of the Enemy
+- [x] Shelob's Ambush
+- [x] Snarling Warg
 - [ ] The Torment of Gollum
 - [ ] Troll of Khazad-dûm
 - [ ] Uruk-hai Berserker
@@ -171,18 +171,18 @@ starter-deck/special cards and basic lands.
 - [x] Haradrim Spearmaster
 - [ ] Hew the Entwood
 - [x] Improvised Club
-- [ ] Moria Marauder
-- [ ] Oliphaunt
-- [ ] Olog-hai Crusher
-- [ ] Quarrel's End
-- [ ] Rally at the Hornburg
+- [x] Moria Marauder
+- [x] Oliphaunt
+- [x] Olog-hai Crusher
+- [x] Quarrel's End
+- [x] Rally at the Hornburg
 - [ ] Ranger's Firebrand
 - [ ] Relentless Rohirrim
-- [ ] Rising of the Day
+- [x] Rising of the Day
 - [ ] Rohirrim Lancer
-- [ ] Rush the Room
-- [ ] Smite the Deathless
-- [ ] Spiteful Banditry
+- [x] Rush the Room
+- [x] Smite the Deathless
+- [x] Spiteful Banditry
 - [ ] Swarming of Moria
 - [ ] There and Back Again
 - [ ] Warbeast of Gorgoroth
@@ -216,16 +216,16 @@ starter-deck/special cards and basic lands.
 - [x] Meriadoc Brandybuck
 - [x] Mirkwood Spider
 - [ ] Mirrormere Guardian
-- [ ] Mushroom Watchdogs
+- [x] Mushroom Watchdogs
 - [ ] Peregrin Took
-- [ ] Pippin's Bravery
-- [ ] Quickbeam, Upstart Ent
+- [x] Pippin's Bravery
+- [x] Quickbeam, Upstart Ent
 - [ ] Radagast the Brown
-- [ ] Revive the Shire
+- [x] Revive the Shire
 - [ ] The Ring Goes South
 - [ ] Shortcut to Mushrooms
-- [ ] Shower of Arrows
-- [ ] Stew the Coneys
+- [x] Shower of Arrows
+- [x] Stew the Coneys
 - [ ] Wose Pathfinder
 
 ### Multicolor
@@ -256,22 +256,22 @@ starter-deck/special cards and basic lands.
 - [x] Mauhúr, Uruk-hai Captain
 - [x] Merry, Esquire of Rohan
 - [ ] The Mouth of Sauron
-- [ ] Old Man Willow
+- [x] Old Man Willow
 - [ ] Pippin, Guard of the Citadel
 - [ ] Prince Imrahil the Fair
 - [ ] Ringsight
 - [ ] Rise of the Witch-king
-- [ ] Samwise Gamgee
+- [x] Samwise Gamgee
 - [ ] Saruman of Many Colors
 - [ ] Sauron, the Dark Lord
 - [ ] Sauron's Ransom
-- [ ] Shadow Summoning
+- [x] Shadow Summoning
 - [ ] Shadowfax, Lord of Horses
 - [ ] Shagrat, Loot Bearer
 - [ ] Sharkey, Tyrant of the Shire
 - [ ] Shelob, Child of Ungoliant
 - [ ] Sméagol, Helpful Guide
-- [ ] Strider, Ranger of the North
+- [x] Strider, Ranger of the North
 - [ ] Théoden, King of Rohan
 - [ ] Tom Bombadil
 - [ ] Uglúk of the White Hand
@@ -291,9 +291,9 @@ starter-deck/special cards and basic lands.
 - [ ] The One Ring
 - [ ] Palantír of Orthanc
 - [ ] Phial of Galadriel
-- [ ] Shire Scarecrow
+- [x] Shire Scarecrow
 - [ ] Sting, the Glinting Dagger
-- [ ] Stone of Erech
+- [x] Stone of Erech
 - [ ] Wizard's Rockets
 
 ### Land
@@ -304,9 +304,9 @@ starter-deck/special cards and basic lands.
 - [x] Minas Tirith
 - [x] Mines of Moria
 - [ ] Mount Doom
-- [ ] Rivendell
+- [x] Rivendell
 - [ ] The Shire
-- [ ] Shire Terrace
+- [x] Shire Terrace
 
 ---
 
@@ -322,7 +322,7 @@ starter-deck/special cards and basic lands.
 
 ### White
 
-- [ ] Saradoc, Master of Buckland
+- [x] Saradoc, Master of Buckland
 
 ### Blue
 
@@ -343,7 +343,7 @@ starter-deck/special cards and basic lands.
 ### Multicolor
 
 - [x] Aragorn and Arwen, Wed
-- [ ] Sauron, the Lidless Eye
+- [x] Sauron, the Lidless Eye
 
 ### White
 
@@ -367,7 +367,7 @@ starter-deck/special cards and basic lands.
 
 ### Multicolor
 
-- [ ] The Balrog, Flame of Udûn
+- [x] The Balrog, Flame of Udûn
 
 ### Artifact
 
