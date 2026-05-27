@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 45 / 291
+**Implemented:** 88 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -44,9 +44,9 @@ starter-deck/special cards and basic lands.
 - [ ] Forge Anew
 - [ ] Frodo, Sauron's Bane
 - [ ] Gandalf the White
-- [ ] Hobbit's Sting
-- [ ] Landroval, Horizon Witness
-- [ ] Lost to Legend
+- [x] Hobbit's Sting
+- [x] Landroval, Horizon Witness
+- [x] Lost to Legend
 - [x] Nimble Hobbit
 - [ ] Now for Wrath, Now for Ruin!
 - [x] Protector of Gondor
@@ -81,15 +81,15 @@ starter-deck/special cards and basic lands.
 - [ ] Glorious Gale
 - [ ] Goldberry, River-Daughter
 - [ ] Grey Havens Navigator
-- [ ] Hithlain Knots
+- [x] Hithlain Knots
 - [ ] Horses of the Bruinen
-- [ ] Ioreth of the Healing House
-- [ ] Isolation at Orthanc
-- [ ] Ithilien Kingfisher
+- [x] Ioreth of the Healing House
+- [x] Isolation at Orthanc
+- [x] Ithilien Kingfisher
 - [ ] Knights of Dol Amroth
-- [ ] Lórien Revealed
+- [x] Lórien Revealed
 - [ ] Lost Isle Calling
-- [ ] Meneldor, Swift Savior
+- [x] Meneldor, Swift Savior
 - [ ] Nimrodel Watcher
 - [ ] Pelargir Survivor
 - [ ] Press the Enemy
@@ -116,16 +116,16 @@ starter-deck/special cards and basic lands.
 - [ ] Easterling Vanguard
 - [ ] Gollum, Patient Plotter
 - [ ] Gollum's Bite
-- [ ] Gorbag of Minas Morgul
+- [x] Gorbag of Minas Morgul
 - [ ] Gothmog, Morgul Lieutenant
 - [ ] Gríma Wormtongue
 - [ ] Grond, the Gatebreaker
-- [ ] Haunt of the Dead Marshes
-- [ ] Isildur's Fateful Strike
-- [ ] Lash of the Balrog
+- [x] Haunt of the Dead Marshes
+- [x] Isildur's Fateful Strike
+- [x] Lash of the Balrog
 - [ ] Lobelia Sackville-Baggins
 - [ ] March from the Black Gate
-- [ ] Mirkwood Bats
+- [x] Mirkwood Bats
 - [ ] Mordor Muster
 - [ ] Mordor Trebuchet
 - [ ] Morgul-Knife Wound
@@ -162,15 +162,15 @@ starter-deck/special cards and basic lands.
 - [ ] Fiery Inscription
 - [x] Fire of Orthanc
 - [ ] Foray of Orcs
-- [ ] Gimli, Counter of Kills
-- [ ] Gimli's Axe
-- [ ] Gimli's Fury
+- [x] Gimli, Counter of Kills
+- [x] Gimli's Axe
+- [x] Gimli's Fury
 - [ ] Glóin, Dwarf Emissary
-- [ ] Goblin Fireleaper
+- [x] Goblin Fireleaper
 - [ ] Grishnákh, Brash Instigator
-- [ ] Haradrim Spearmaster
+- [x] Haradrim Spearmaster
 - [ ] Hew the Entwood
-- [ ] Improvised Club
+- [x] Improvised Club
 - [ ] Moria Marauder
 - [ ] Oliphaunt
 - [ ] Olog-hai Crusher
@@ -205,16 +205,16 @@ starter-deck/special cards and basic lands.
 - [x] Fangorn, Tree Shepherd
 - [x] Galadhrim Bow
 - [x] Galadhrim Guide
-- [ ] Generous Ent
-- [ ] Gift of Strands
+- [x] Generous Ent
+- [x] Gift of Strands
 - [ ] Glorfindel, Dauntless Rescuer
-- [ ] Last March of the Ents
+- [x] Last March of the Ents
 - [ ] Legolas, Master Archer
 - [ ] Long List of the Ents
-- [ ] Lothlórien Lookout
-- [ ] Many Partings
-- [ ] Meriadoc Brandybuck
-- [ ] Mirkwood Spider
+- [x] Lothlórien Lookout
+- [x] Many Partings
+- [x] Meriadoc Brandybuck
+- [x] Mirkwood Spider
 - [ ] Mirrormere Guardian
 - [ ] Mushroom Watchdogs
 - [ ] Peregrin Took
@@ -248,13 +248,13 @@ starter-deck/special cards and basic lands.
 - [ ] Galadriel of Lothlórien
 - [ ] Gandalf the Grey
 - [ ] Gandalf's Sanction
-- [ ] Gimli, Mournful Avenger
+- [x] Gimli, Mournful Avenger
 - [ ] Gwaihir the Windlord
 - [ ] King of the Oathbreakers
 - [ ] Legolas, Counter of Kills
-- [ ] Lotho, Corrupt Shirriff
-- [ ] Mauhúr, Uruk-hai Captain
-- [ ] Merry, Esquire of Rohan
+- [x] Lotho, Corrupt Shirriff
+- [x] Mauhúr, Uruk-hai Captain
+- [x] Merry, Esquire of Rohan
 - [ ] The Mouth of Sauron
 - [ ] Old Man Willow
 - [ ] Pippin, Guard of the Citadel
@@ -282,12 +282,12 @@ starter-deck/special cards and basic lands.
 - [ ] Barrow-Blade
 - [ ] Ent-Draught Basin
 - [ ] Glamdring
-- [ ] Horn of Gondor
-- [ ] Horn of the Mark
+- [x] Horn of Gondor
+- [x] Horn of the Mark
 - [ ] Inherited Envelope
-- [ ] Lembas
-- [ ] Mirror of Galadriel
-- [ ] Mithril Coat
+- [x] Lembas
+- [x] Mirror of Galadriel
+- [x] Mithril Coat
 - [ ] The One Ring
 - [ ] Palantír of Orthanc
 - [ ] Phial of Galadriel
@@ -301,8 +301,8 @@ starter-deck/special cards and basic lands.
 - [ ] Barad-dûr
 - [ ] Great Hall of the Citadel
 - [ ] The Grey Havens
-- [ ] Minas Tirith
-- [ ] Mines of Moria
+- [x] Minas Tirith
+- [x] Mines of Moria
 - [ ] Mount Doom
 - [ ] Rivendell
 - [ ] The Shire
@@ -348,8 +348,8 @@ starter-deck/special cards and basic lands.
 ### White
 
 - [ ] Frodo, Determined Hero
-- [ ] Gandalf, White Rider
-- [ ] Knight of the Keep
+- [x] Gandalf, White Rider
+- [x] Knight of the Keep
 
 ### Black
 
@@ -359,11 +359,11 @@ starter-deck/special cards and basic lands.
 ### Red
 
 - [ ] Fires of Mount Doom
-- [ ] Goblin Assailant
+- [x] Goblin Assailant
 
 ### Green
 
-- [ ] Galadriel, Gift-Giver
+- [x] Galadriel, Gift-Giver
 
 ### Multicolor
 
@@ -400,4 +400,4 @@ starter-deck/special cards and basic lands.
 
 ### Green
 
-- [ ] Mirkwood Channeler
+- [x] Mirkwood Channeler
