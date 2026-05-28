@@ -478,7 +478,6 @@ If `backlog/sets/{set-name}/cards.md` exists:
 6. **Check existing effects** — Most common effects already exist; compose before creating new ones
 7. **Use immutable patterns** — Never modify state in place
 8. **Test new mechanics** — All new effects/keywords/triggers/conditions need scenario tests
-8b. **Engine changes → `/generate-scenario`** — If the card introduced engine changes (Step 4), run `/generate-scenario` on it to emit a playable DevScenarioController scenario (Step 5)
 9. **Follow naming conventions** — CardName matches file name
 10. **Keep effects data-only** — Logic goes in executors, not effect data classes
 11. **Verify against Scryfall before committing** — Re-check every field against the API data (Step 10)
