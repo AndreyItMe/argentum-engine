@@ -30,6 +30,7 @@ import com.wingedsheep.mtg.sets.definitions.frf.FateReforgedSet
 import com.wingedsheep.mtg.sets.definitions.fin.FinalFantasySet
 import com.wingedsheep.mtg.sets.definitions.inr.InnistradRemasteredSet
 import com.wingedsheep.mtg.sets.definitions.inv.InvasionSet
+import com.wingedsheep.mtg.sets.definitions.jud.JudgmentSet
 import com.wingedsheep.mtg.sets.definitions.mid.InnistradMidnightHuntSet
 import com.wingedsheep.mtg.sets.definitions.vow.InnistradCrimsonVowSet
 import com.wingedsheep.mtg.sets.definitions.khm.KaldheimSet
@@ -128,6 +129,7 @@ object MtgSetCatalog {
         AvatarTheLastAirbenderSet,
         WarOfTheSparkSet,
         OdysseySet,
+        JudgmentSet,
         GuildpactSet,
         TimeSpiralSet,
         ConfluxSet,

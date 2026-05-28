@@ -34,6 +34,7 @@ import com.wingedsheep.mtg.sets.definitions.mom.MarchOfTheMachineSet
 import com.wingedsheep.mtg.sets.definitions.mrd.MirrodinSet
 import com.wingedsheep.mtg.sets.definitions.ncc.NewCapennaCommanderSet
 import com.wingedsheep.mtg.sets.definitions.one.PhyrexiaAllWillBeOneSet
+import com.wingedsheep.mtg.sets.definitions.jud.JudgmentSet
 import com.wingedsheep.mtg.sets.definitions.ons.OnslaughtSet
 import com.wingedsheep.mtg.sets.definitions.otj.OutlawsOfThunderJunctionSet
 import com.wingedsheep.mtg.sets.definitions.por.PortalSet
@@ -115,6 +116,7 @@ abstract class ScenarioTestBase : FunSpec() {
         register(InnistradRemasteredSet.cards)
         register(InvasionSet.cards)
         register(IxalanSet.cards)
+        register(JudgmentSet.cards)
         register(KaldheimSet.cards); register(KaldheimSet.basicLands)
         register(KhansOfTarkirSet.cards); register(KhansOfTarkirSet.basicLands)
         register(LegionsSet.cards); register(LegionsSet.basicLands)

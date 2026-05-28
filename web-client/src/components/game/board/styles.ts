@@ -1189,6 +1189,22 @@ export const styles: Record<string, React.CSSProperties> = {
     zIndex: 5,
     textShadow: '0 0 4px rgba(170, 140, 230, 0.8)',
   } as React.CSSProperties,
+  // Feather counter badge (Soulcatchers' Aerie)
+  featherCounterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(45, 50, 65, 0.95)',
+    borderRadius: 4,
+    border: '1px solid rgba(200, 210, 230, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: '#dfe6f0',
+    fontWeight: 700,
+    zIndex: 5,
+    textShadow: '0 0 4px rgba(200, 210, 230, 0.8)',
+  } as React.CSSProperties,
   // Quest counter badge (for Beastmaster Ascension etc.)
   questCounterBadge: {
     position: 'absolute',

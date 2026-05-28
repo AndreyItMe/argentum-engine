@@ -432,6 +432,14 @@ export function getTimeCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of feather counters on a card. Feather counters appear on
+ * Soulcatchers' Aerie and accrue when Birds die, boosting Bird creatures.
+ */
+export function getFeatherCounters(card: ClientCard): number {
+  return card.counters[CounterType.FEATHER] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {

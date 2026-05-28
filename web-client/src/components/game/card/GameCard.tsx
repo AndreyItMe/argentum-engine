@@ -39,6 +39,7 @@ import {
   getDreamCounters,
   getQuestCounters,
   getGrowthCounters,
+  getFeatherCounters,
   getTimeCounters,
 } from '../board/shared'
 import { styles, bandColorFor } from '../board/styles'
@@ -1536,6 +1537,20 @@ export function GameCard({
           <i className={`ms ms-${counterManaClass.TIME}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
           <span style={{ fontWeight: 700 }}>
             {getTimeCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Feather counter badge (Soulcatchers' Aerie) */}
+      {battlefield && getFeatherCounters(card) > 0 && (
+        <div style={{
+          ...styles.featherCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.FEATHER}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getFeatherCounters(card)}
           </span>
         </div>
       )}
