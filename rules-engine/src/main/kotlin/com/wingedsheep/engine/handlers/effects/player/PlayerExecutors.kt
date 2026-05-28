@@ -60,6 +60,7 @@ class PlayerExecutors(
         SkipCombatPhasesExecutor(),
         SkipNextTurnExecutor(),
         SkipUntapExecutor(),
-        TakeExtraTurnExecutor()
+        TakeExtraTurnExecutor(),
+        TheRingTemptsYouExecutor()
     )
 }

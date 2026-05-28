@@ -24,6 +24,7 @@ import com.wingedsheep.engine.state.components.combat.PlayerAttackersThisTurnCom
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
+import com.wingedsheep.engine.state.components.identity.RingBearerComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.player.WasDealtCombatDamageThisTurnComponent
 import com.wingedsheep.sdk.core.CounterType
@@ -71,6 +72,7 @@ import com.wingedsheep.sdk.scripting.conditions.SourceAbilityResolvedNTimesThisT
 import com.wingedsheep.sdk.scripting.conditions.ManaSpentToCastIncludes
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
 import com.wingedsheep.sdk.scripting.conditions.BlightWasPaid
+import com.wingedsheep.sdk.scripting.conditions.SourceIsRingBearer
 import com.wingedsheep.sdk.scripting.conditions.YouControlSource
 import com.wingedsheep.sdk.scripting.conditions.PlayerAttackedWithCreaturesThisTurn
 import com.wingedsheep.sdk.scripting.conditions.PermanentTypeEnteredBattlefieldThisTurn
@@ -140,6 +142,18 @@ class ConditionEvaluator {
 
             // Generic source-state primitive — predicate-evaluator against the source entity.
             is SourceMatches -> evaluateSourceMatchesCtx(state, condition, ctx)
+
+            // CR 701.52e: the source is your Ring-bearer — it carries your Ring-bearer designation
+            // and you still control it. The control half reads the projected controller so a
+            // control-changing effect correctly ends the designation.
+            is SourceIsRingBearer -> {
+                val sourceId = ctx.sourceId
+                val controllerId = ctx.controllerId
+                val bearer = sourceId?.let { state.getEntity(it)?.get<RingBearerComponent>() }
+                bearer != null && controllerId != null &&
+                    bearer.ownerId == controllerId &&
+                    state.projectedState.getController(sourceId) == controllerId
+            }
 
             // Aura-controller-aware modified check (CR 700.4) — distinct enough from the
             // generic StatePredicate.IsModified to warrant its own branch.

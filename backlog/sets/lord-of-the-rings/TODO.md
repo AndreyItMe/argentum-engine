@@ -16,6 +16,16 @@ Set scaffolding is done:
 
 Verify status anytime with: `scripts/card-status --set LTR` (and `--list --set LTR`).
 
+## Progress
+
+- ✅ **Foundation** — set scaffolding committed.
+- ✅ **`ltr-cards` (no-engine-change big PR)** — merged (PR #199). Draft cards at 126/261.
+- 🚧 **The Ring** — in progress on branch `ltr-cards2`. Headline mechanic (CR 701.52),
+  unlocks ~50 missing cards (the largest bucket; Amass is the next at ~24). Building the
+  substrate first (one commit), then one card per commit. See
+  [`MagicCompRules_20260417.pdf`] rule 701.52 for the four cumulative emblem abilities.
+- ⬜ **Amass Orcs** — next mechanic (~24 cards).
+
 ## Data sources — do NOT hit the network
 
 - **Card data** (name, mana cost, type line, oracle text, P/T, rarity, collector number,

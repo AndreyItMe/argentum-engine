@@ -9,8 +9,10 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.SuppressesWardForGroupComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
+import com.wingedsheep.engine.state.components.identity.RingBearerComponent
 import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.identity.RoomComponent
+import com.wingedsheep.engine.state.components.player.TheRingComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityId
@@ -71,7 +73,9 @@ class TriggerAbilityResolver(
         // Generate ward triggered abilities from intrinsic keyword abilities and GrantWard
         val wardAbilities = getWardTriggeredAbilities(entityId, cardDefinitionId, state)
 
-        val allGranted = grantedAbilities + staticGrantedAbilities + attachedGrantedAbilities + wardAbilities
+        val ringBearerAbilities = getRingBearerAbilities(entityId, state)
+
+        val allGranted = grantedAbilities + staticGrantedAbilities + attachedGrantedAbilities + wardAbilities + ringBearerAbilities
         val combined = if (allGranted.isNotEmpty()) base + allGranted else base
 
         // Apply text replacement if the entity has one
@@ -185,7 +189,11 @@ class TriggerAbilityResolver(
         val wardAbilities = if (hasLostAbilities) emptyList()
             else getWardTriggeredAbilities(entityId, cardDefinitionId, state)
 
-        val allGranted = grantedAbilities + staticGrantedAbilities + attachedGrantedAbilities + wardAbilities
+        // The Ring emblem's abilities belong to the emblem (a player object), not the creature, so
+        // they survive "loses all abilities" effects on the Ring-bearer (CR 701.52c).
+        val ringBearerAbilities = getRingBearerAbilities(entityId, state)
+
+        val allGranted = grantedAbilities + staticGrantedAbilities + attachedGrantedAbilities + wardAbilities + ringBearerAbilities
         val combined = if (allGranted.isNotEmpty()) base + allGranted else base
 
         val textReplacement = state.getEntity(entityId)?.get<TextReplacementComponent>()
@@ -194,6 +202,21 @@ class TriggerAbilityResolver(
         } else {
             combined
         }
+    }
+
+    /**
+     * The Ring emblem's cumulative triggered abilities (CR 701.52c) for [entityId] when it is a
+     * player's Ring-bearer. "Is your Ring-bearer" requires the creature to be under that owner's
+     * control (CR 701.52e), so a Ring-bearer that changed controllers contributes nothing. The
+     * subset of abilities is gated by the owner's tempt count (see [TheRingAbilities]).
+     */
+    private fun getRingBearerAbilities(entityId: EntityId, state: GameState): List<TriggeredAbility> {
+        val bearer = state.getEntity(entityId)?.get<RingBearerComponent>() ?: return emptyList()
+        // CR 701.52e: read the *projected* controller — a Ring-bearer stolen by a control-changing
+        // effect is no longer "your Ring-bearer," so it stops contributing the emblem's abilities.
+        if (state.projectedState.getController(entityId) != bearer.ownerId) return emptyList()
+        val temptCount = state.getEntity(bearer.ownerId)?.get<TheRingComponent>()?.temptCount ?: return emptyList()
+        return TheRingAbilities.abilitiesFor(temptCount)
     }
 
     /**

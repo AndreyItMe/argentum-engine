@@ -135,12 +135,22 @@ data object SacrificeSelfEffect : Effect {
  * "Sacrifice it" — used in delayed triggers where the exact permanent to sacrifice
  * was determined at ability resolution time (e.g., Skirk Alarmist's delayed sacrifice).
  *
+ * A permanent can only ever be sacrificed by its own controller, so this always sacrifices the
+ * target via its controller; the flag below only selects which of two MTG templates is meant.
+ *
  * @property target The specific permanent to sacrifice
+ * @property sacrificedByItsController Picks the templating intent. False (default) = the resolving
+ *   player is the actor ("you sacrifice it" / "sacrifice the creature you put onto the battlefield"):
+ *   if control slipped away before resolution the sacrifice is skipped. True = the target's own
+ *   controller is the actor regardless of who resolves the effect ("[that creature]'s controller
+ *   sacrifices it", e.g. The Ring's Ring-bearer ability), so it is never skipped on a control
+ *   mismatch.
  */
 @SerialName("SacrificeTarget")
 @Serializable
 data class SacrificeTargetEffect(
-    val target: EffectTarget = EffectTarget.ContextTarget(0)
+    val target: EffectTarget = EffectTarget.ContextTarget(0),
+    val sacrificedByItsController: Boolean = false
 ) : Effect {
     override val description: String = "sacrifice ${target.description}"
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this

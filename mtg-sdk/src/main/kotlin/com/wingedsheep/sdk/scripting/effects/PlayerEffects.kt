@@ -488,3 +488,20 @@ data class GainCitysBlessingEffect(
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
+
+/**
+ * "The Ring tempts you" (CR 701.52). The target player gets an emblem named The Ring (if they
+ * don't have one) and chooses a creature they control to become their Ring-bearer. The emblem's
+ * four cumulative abilities are gated by how many times that player has been tempted.
+ *
+ * @param target The tempted player. Defaults to the ability's controller ("the Ring tempts you").
+ */
+@SerialName("TheRingTemptsYou")
+@Serializable
+data class TheRingTemptsYouEffect(
+    val target: EffectTarget = EffectTarget.Controller
+) : Effect {
+    override val description: String = "the Ring tempts ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}

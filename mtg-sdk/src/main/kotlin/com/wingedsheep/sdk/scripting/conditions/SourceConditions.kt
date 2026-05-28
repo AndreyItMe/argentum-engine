@@ -56,6 +56,19 @@ data object YouControlSource : Condition {
 }
 
 /**
+ * Condition: "if this creature is your Ring-bearer" (CR 701.52e).
+ *
+ * True when the source permanent is on the battlefield under the ability's controller and has the
+ * Ring-bearer designation for that player. Used by cards whose effects key off "your Ring-bearer".
+ */
+@SerialName("SourceIsRingBearer")
+@Serializable
+data object SourceIsRingBearer : Condition {
+    override val description: String = "if this creature is your Ring-bearer"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+/**
  * Condition: "As long as this permanent is modified"
  *
  * Per CR 700.4, a permanent is modified if it has one or more counters on it, one or more

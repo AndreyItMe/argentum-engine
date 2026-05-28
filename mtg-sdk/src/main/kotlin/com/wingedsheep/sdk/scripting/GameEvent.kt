@@ -263,6 +263,21 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
+    /**
+     * Whenever the Ring tempts a player (CR 701.52d). Fires after the temptee completes
+     * the "the Ring tempts you" action, even if some or all of it was impossible.
+     * Used by cards with "Whenever the Ring tempts you, ...".
+     */
+    @SerialName("RingTemptedEvent")
+    @Serializable
+    data class RingTemptedEvent(
+        val player: Player = Player.You
+    ) : GameEvent {
+        override val description: String = "the Ring tempts ${player.description}"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    }
+
     // =========================================================================
     // Extra Turn Events
     // =========================================================================

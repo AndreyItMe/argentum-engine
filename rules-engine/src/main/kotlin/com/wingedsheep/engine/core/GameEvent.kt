@@ -166,6 +166,25 @@ data class CitysBlessingGainedEvent(
 ) : GameEvent
 
 /**
+ * The Ring tempted a player (CR 701.52d). Emitted after the "the Ring tempts you" action
+ * completes (even if some or all of it was impossible). Drives "Whenever the Ring tempts you"
+ * triggers; see [com.wingedsheep.sdk.scripting.GameEvent.RingTemptedEvent].
+ *
+ * @property playerId The tempted player.
+ * @property temptCount That player's tempt count after this tempt (1..n).
+ * @property bearerId The creature designated Ring-bearer, or null if the player controlled none.
+ * @property sourceName The card/ability that caused the temptation (for display).
+ */
+@Serializable
+@SerialName("RingTemptedEvent")
+data class RingTemptedEvent(
+    val playerId: EntityId,
+    val temptCount: Int,
+    val bearerId: EntityId?,
+    val sourceName: String
+) : GameEvent
+
+/**
  * A player chose a creature type (e.g., "Choose a creature type" for Walking Desecration).
  * This is a public announcement visible to all players.
  */

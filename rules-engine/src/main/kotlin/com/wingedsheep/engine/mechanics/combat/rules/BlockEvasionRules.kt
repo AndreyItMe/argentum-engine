@@ -452,6 +452,29 @@ class CantBeBlockedIfCastSpellTypeRule(
 }
 
 /**
+ * Ring-bearer evasion (CR 701.52c): a player's Ring-bearer can't be blocked by creatures with
+ * power greater than the Ring-bearer's power. Driven by the [RingBearerComponent] designation
+ * rather than a card static ability, and only while the bearer is still controlled by its
+ * designator (CR 701.52e). The dual of [CantBlockCreaturesWithGreaterPowerRule].
+ */
+class RingBearerCantBeBlockedByGreaterPowerRule : BlockEvasionRule {
+    override fun check(ctx: BlockCheckContext): String? {
+        val bearer = ctx.state.getEntity(ctx.attackerId)
+            ?.get<com.wingedsheep.engine.state.components.identity.RingBearerComponent>() ?: return null
+        if (ctx.projected.getController(ctx.attackerId) != bearer.ownerId) return null
+
+        val bearerPower = ctx.projected.getPower(ctx.attackerId) ?: 0
+        val blockerPower = ctx.projected.getPower(ctx.blockerId) ?: 0
+        if (blockerPower > bearerPower) {
+            val attackerName = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>()?.name ?: "Ring-bearer"
+            val blockerName = ctx.state.getEntity(ctx.blockerId)?.get<CardComponent>()?.name ?: "Creature"
+            return "$blockerName can't block $attackerName (power $blockerPower is greater than the Ring-bearer's power $bearerPower)"
+        }
+        return null
+    }
+}
+
+/**
  * Default set of block evasion rules, ordered for efficient short-circuiting.
  */
 fun defaultBlockEvasionRules(
@@ -474,5 +497,6 @@ fun defaultBlockEvasionRules(
     ProtectionFromSubtypeRule(),
     ProtectionFromEachOpponentRule(),
     CanOnlyBlockCreaturesWithRule(predicateEvaluator),
-    CantBlockCreaturesWithGreaterPowerRule()
+    CantBlockCreaturesWithGreaterPowerRule(),
+    RingBearerCantBeBlockedByGreaterPowerRule()
 )
