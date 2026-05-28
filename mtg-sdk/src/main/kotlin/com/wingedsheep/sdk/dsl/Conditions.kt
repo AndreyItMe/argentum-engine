@@ -216,6 +216,13 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.TargetMatchesFilter(filter, targetIndex)
 
     /**
+     * If the target shares a color with the most common color among all permanents
+     * (or a color tied for most common). Used by Tsabo's Assassin.
+     */
+    fun TargetSharesMostCommonColor(targetIndex: Int = 0): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor(targetIndex)
+
+    /**
      * If the creature enchanted by the source Aura is legendary.
      */
     fun EnchantedCreatureIsLegendary(): ConditionInterface =

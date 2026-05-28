@@ -1113,6 +1113,13 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
 - `OpponentControlsLandType(type)` — opponent controls land of a type.
 - `TargetControlsCreature(target)` — target player has a creature.
 - `TargetControlsLand(target)` — target player has a land.
+- `TargetMatchesFilter(filter, targetIndex = 0)` — the context target matches a `GameObjectFilter`.
+- `TargetSharesMostCommonColor(targetIndex = 0)` — the context target shares a color with the
+  most common color among all permanents, or a color tied for most common. Tallies each of the
+  five colors across every battlefield permanent (multicolored permanents count once per color,
+  using projected colors), takes the highest tally, and checks whether the target has any color
+  in that (possibly tied) most-common set. A board with no colored permanents is `false`. Used by
+  Tsabo's Assassin.
 - `YouHaveCitysBlessing` — you have City's Blessing (10+ permanents).
 - `SourceIsRingBearer` — the source permanent is your Ring-bearer (CR 701.52e).
 
@@ -1203,7 +1210,7 @@ inside a `ConditionalStaticAbility` (only the source entity and projected values
 known). The engine dispatches via a `ConditionEvaluationContext.Resolution` /
 `Projection` sealed type — there is **no** separate `SourceProjectionCondition` arm.
 
-Conditions that need resolution-only facts (e.g. `TargetMatchesFilter`, `TriggeringEntity*`,
+Conditions that need resolution-only facts (e.g. `TargetMatchesFilter`, `TargetSharesMostCommonColor`, `TriggeringEntity*`,
 `WasKicked`, `ManaSpentToCastIncludes`, `CollectionContainsMatch`) silently evaluate to
 `false` under projection — a static-ability gate is never "in the middle of casting a spell".
 

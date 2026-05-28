@@ -145,3 +145,25 @@ data class TargetMatchesFilter(
     override val description: String = "if target matches $filter"
     override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
+
+/**
+ * Condition: "if [target] shares a color with the most common color among all permanents
+ * or a color tied for most common".
+ *
+ * Tallies, across every permanent on the battlefield, how many share each of the five
+ * colors (a multicolored permanent contributes to each of its colors). The most common
+ * color(s) are those with the highest tally; ties all count. The condition is true when
+ * the targeted permanent has at least one color in that most-common set. A board with no
+ * colored permanents has no most-common color, so the condition is false.
+ *
+ * Used by Tsabo's Assassin.
+ */
+@SerialName("TargetSharesMostCommonColor")
+@Serializable
+data class TargetSharesMostCommonColor(
+    val targetIndex: Int = 0
+) : Condition {
+    override val description: String =
+        "if it shares a color with the most common color among all permanents or a color tied for most common"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}

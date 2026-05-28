@@ -60,6 +60,7 @@ import com.wingedsheep.sdk.scripting.conditions.WasCastFromZone
 import com.wingedsheep.engine.state.components.battlefield.CastFromGraveyardComponent
 import com.wingedsheep.sdk.scripting.conditions.SacrificedPermanentHadSubtype
 import com.wingedsheep.sdk.scripting.conditions.TargetMatchesFilter
+import com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityEnteredOrWasCastFromGraveyard
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityHadMinusOneMinusOneCounter
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasHistoric
@@ -205,6 +206,7 @@ class ConditionEvaluator {
                 ifResolution { evaluateTriggeringEntityWasNotPutByThisSource(state, it) }
             is TriggeringSpellHasSingleTarget -> ifResolution { evaluateTriggeringSpellHasSingleTarget(state, it) }
             is TargetMatchesFilter -> ifResolution { evaluateTargetMatchesFilter(state, condition, it) }
+            is TargetSharesMostCommonColor -> ifResolution { evaluateTargetSharesMostCommonColor(state, condition, it) }
             is IsInPhase -> ifResolution { evaluateIsInPhase(state, condition, it) }
             is YouWereAttackedThisStep -> ifResolution { evaluateYouWereAttackedThisStep(state, it) }
             is IsFirstSpellOfTypeCastThisTurn -> ifResolution { evaluateFirstSpellOfType(state, condition, it) }
@@ -640,6 +642,35 @@ class ConditionEvaluator {
         val predicateContext = PredicateContext.fromEffectContext(context)
         val projected = state.projectedState
         return predicateEvaluator.matches(state, projected, entityId, condition.filter, predicateContext)
+    }
+
+    /**
+     * CR-style "most common color among all permanents": tally each of the five colors across
+     * every battlefield permanent (multicolored permanents count once per color), find the
+     * highest tally, and check whether the targeted permanent shares any color tied for that
+     * highest tally. Uses projected colors so color-changing continuous effects are respected.
+     */
+    private fun evaluateTargetSharesMostCommonColor(
+        state: GameState,
+        condition: TargetSharesMostCommonColor,
+        context: EffectContext
+    ): Boolean {
+        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
+            ?.entityId ?: return false
+        val projected = state.projectedState
+
+        val colorCounts = mutableMapOf<String, Int>()
+        for (permanentId in state.getBattlefield()) {
+            for (color in projected.getColors(permanentId)) {
+                colorCounts[color] = (colorCounts[color] ?: 0) + 1
+            }
+        }
+        val maxCount = colorCounts.values.maxOrNull() ?: return false
+        if (maxCount == 0) return false
+        val mostCommonColors = colorCounts.filterValues { it == maxCount }.keys
+
+        return projected.getColors(entityId).any { it in mostCommonColors }
     }
 
     private fun evaluateFirstSpellOfType(
