@@ -104,9 +104,10 @@ class GainControlByMostExecutor : EffectExecutor<GainControlByMostEffect> {
             is PlayerRankMetric.LifeTotal ->
                 state.getEntity(playerId)?.get<LifeTotalComponent>()?.life ?: 0
             is PlayerRankMetric.CreaturesOfSubtype ->
-                state.entities.count { (_, container) ->
-                    container.get<ControllerComponent>()?.playerId == playerId &&
-                        container.get<CardComponent>()?.typeLine?.hasSubtype(metric.subtype) == true
+                // Projected state so type-changing effects (a permanent animated/typeshifted
+                // into the subtype) and stolen control are counted correctly.
+                state.projectedState.getBattlefieldControlledBy(playerId).count { entityId ->
+                    state.projectedState.hasSubtype(entityId, metric.subtype.value)
                 }
         }
 }

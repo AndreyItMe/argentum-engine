@@ -30,7 +30,7 @@ import io.kotest.matchers.shouldNotBe
  * This covers all five control-change executors:
  *   - GainControlExecutor (Blatant Thievery)
  *   - GainControlByActivePlayerExecutor       (covered indirectly — same fix shape)
- *   - GainControlByMostOfSubtypeExecutor      (covered indirectly — same fix shape)
+ *   - GainControlByMostExecutor               (covered indirectly — same fix shape)
  *   - GiveControlToTargetPlayerExecutor (Custody Battle suffer branch)
  *   - ExchangeControlExecutor (Exchange Ritual — minimal sorcery wrapper)
  */
