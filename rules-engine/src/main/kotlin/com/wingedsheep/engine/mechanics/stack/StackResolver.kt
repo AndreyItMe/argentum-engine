@@ -683,9 +683,16 @@ class StackResolver(
         if (cardDef != null && !spellComponent.castFaceDown) {
             val entersAsCopy = cardDef.script.replacementEffects.filterIsInstance<EntersAsCopy>().firstOrNull()
             if (entersAsCopy != null) {
-                // Find all permanents on the battlefield matching the copy filter
+                // Find candidates to copy. Battlefield copies (Clone) read permanents in play;
+                // graveyard copies (Superior Spider-Man) read creature cards across every graveyard.
                 val copyFilter = entersAsCopy.copyFilter
-                var candidates = state.getBattlefield().filter { entityId ->
+                val copyFromGraveyard = entersAsCopy.copyFromZone == Zone.GRAVEYARD
+                val candidatePool = if (copyFromGraveyard) {
+                    state.turnOrder.flatMap { state.getGraveyard(it) }
+                } else {
+                    state.getBattlefield()
+                }
+                var candidates = candidatePool.filter { entityId ->
                     predicateEvaluator.matches(
                         state, state.projectedState, entityId, copyFilter,
                         PredicateContext(controllerId = controllerId)
@@ -709,14 +716,15 @@ class StackResolver(
                 if (candidates.isNotEmpty()) {
                     // Present the selection decision
                     val filterDesc = copyFilter.description
+                    val whereDesc = if (copyFromGraveyard) "$filterDesc card in a graveyard" else "$filterDesc"
                     val decisionId = "clone-enters-${spellId.value}"
                     val decision = SelectCardsDecision(
                         id = decisionId,
                         playerId = controllerId,
                         prompt = if (entersAsCopy.optional) {
-                            "You may choose a $filterDesc to copy"
+                            "You may choose a $whereDesc to copy"
                         } else {
-                            "Choose a $filterDesc to copy"
+                            "Choose a $whereDesc to copy"
                         },
                         context = DecisionContext(
                             sourceId = spellId,
@@ -726,7 +734,9 @@ class StackResolver(
                         options = candidates,
                         minSelections = if (entersAsCopy.optional) 0 else 1,
                         maxSelections = 1,
-                        useTargetingUI = true
+                        // Battlefield copies click permanents in-place; graveyard copies use the
+                        // modal card-list overlay (graveyards aren't on the battlefield).
+                        useTargetingUI = !copyFromGraveyard
                     )
 
                     // Push continuation
@@ -737,7 +747,11 @@ class StackResolver(
                         ownerId = ownerId,
                         castFaceDown = spellComponent.castFaceDown,
                         additionalSubtypes = entersAsCopy.additionalSubtypes,
-                        additionalKeywords = entersAsCopy.additionalKeywords
+                        additionalKeywords = entersAsCopy.additionalKeywords,
+                        nameOverride = entersAsCopy.nameOverride,
+                        powerOverride = entersAsCopy.powerOverride,
+                        toughnessOverride = entersAsCopy.toughnessOverride,
+                        exileCopiedCard = entersAsCopy.exileCopiedCard
                     )
 
                     val pausedState = state

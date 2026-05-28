@@ -401,12 +401,14 @@ class ModalAndCloneContinuationResumer(
         // If a creature was selected, copy its CardComponent
         val selectedCreatureId = response.selectedCards.firstOrNull()
         val copiedCardDef: com.wingedsheep.sdk.model.CardDefinition?
+        var copyApplied = false
 
         if (selectedCreatureId != null) {
             val targetContainer = newState.getEntity(selectedCreatureId)
             val targetCardComponent = targetContainer?.get<CardComponent>()
 
             if (targetCardComponent != null) {
+                copyApplied = true
                 // Create a copy of the target's CardComponent, keeping Clone's ownerId
                 // Apply additional subtypes and keywords if specified (e.g., Mockingbird adds Bird + flying)
                 var copiedCardComponent = targetCardComponent.copy(
@@ -422,6 +424,20 @@ class ModalAndCloneContinuationResumer(
                 if (continuation.additionalKeywords.isNotEmpty()) {
                     copiedCardComponent = copiedCardComponent.copy(
                         baseKeywords = copiedCardComponent.baseKeywords + continuation.additionalKeywords
+                    )
+                }
+                // Name override (e.g., Superior Spider-Man keeps his own name)
+                if (continuation.nameOverride != null) {
+                    copiedCardComponent = copiedCardComponent.copy(name = continuation.nameOverride)
+                }
+                // Power/toughness override (e.g., Superior Spider-Man is always 4/4)
+                if (continuation.powerOverride != null || continuation.toughnessOverride != null) {
+                    val basePower = continuation.powerOverride
+                        ?: copiedCardComponent.baseStats?.basePower ?: 0
+                    val baseToughness = continuation.toughnessOverride
+                        ?: copiedCardComponent.baseStats?.baseToughness ?: 0
+                    copiedCardComponent = copiedCardComponent.copy(
+                        baseStats = com.wingedsheep.sdk.model.CreatureStats(basePower, baseToughness)
                     )
                 }
 
@@ -474,6 +490,15 @@ class ModalAndCloneContinuationResumer(
                 copyOfOriginalName = copyOfOriginalName
             )
         )
+
+        // "When you do, exile that card." (Superior Spider-Man) — exile the copied
+        // graveyard card after the copy has been applied and the permanent has entered.
+        if (continuation.exileCopiedCard && copyApplied && selectedCreatureId != null) {
+            val exileResult = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+                .moveToZone(newState, selectedCreatureId, Zone.EXILE)
+            newState = exileResult.state
+            events.addAll(exileResult.events)
+        }
 
         return checkForMore(newState, events)
     }

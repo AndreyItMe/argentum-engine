@@ -149,6 +149,12 @@ data class ModalTargetContinuation(
  * @property optional Whether the copy is optional (Clone is optional)
  * @property additionalSubtypes Subtypes to add to the copy (e.g., "Bird" for Mockingbird)
  * @property additionalKeywords Keywords to grant to the copy (e.g., FLYING for Mockingbird)
+ * @property nameOverride When non-null, the copy keeps this name instead of the copied object's
+ *   name (Superior Spider-Man: "except his name is Superior Spider-Man")
+ * @property powerOverride When non-null, overrides the copy's base power (Superior Spider-Man: 4)
+ * @property toughnessOverride When non-null, overrides the copy's base toughness (Superior Spider-Man: 4)
+ * @property exileCopiedCard When true, exile the copied card after copying it (Superior Spider-Man:
+ *   "When you do, exile that card"). Used for graveyard copies.
  */
 @Serializable
 data class CloneEntersContinuation(
@@ -158,7 +164,11 @@ data class CloneEntersContinuation(
     val ownerId: EntityId,
     val castFaceDown: Boolean,
     val additionalSubtypes: List<String> = emptyList(),
-    val additionalKeywords: List<Keyword> = emptyList()
+    val additionalKeywords: List<Keyword> = emptyList(),
+    val nameOverride: String? = null,
+    val powerOverride: Int? = null,
+    val toughnessOverride: Int? = null,
+    val exileCopiedCard: Boolean = false
 ) : ContinuationFrame
 
 /**

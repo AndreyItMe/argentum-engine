@@ -1459,6 +1459,17 @@ replacementEffect {
   "Devour land N" wording. **Scope today:** only the stack-spell entry path is wired; reanimation and
   token entries skip Devour (which is fine for printed cards — Devour creatures all cost real mana to
   cast).
+- `EntersAsCopy(optional, copyFilter, copyFromZone, filterByTotalManaSpent, additionalSubtypes, additionalKeywords, nameOverride, powerOverride, toughnessOverride, exileCopiedCard)` —
+  "enter as a copy of …". As the permanent resolves, the controller picks an object matching
+  `copyFilter` and the permanent enters as a copy (Rule 707 copiable values), with any overrides
+  applied. `copyFromZone` selects the candidate pool: `Zone.BATTLEFIELD` (default — Clone, Clever
+  Impersonator, Mockingbird) copies a permanent in play; `Zone.GRAVEYARD` copies a creature *card*
+  from any graveyard (Superior Spider-Man) via the modal card-list overlay. `additionalSubtypes` /
+  `additionalKeywords` are added "in addition to its other types"; `nameOverride` keeps a fixed name;
+  `powerOverride` / `toughnessOverride` force base P/T; `exileCopiedCard` exiles the copied card after
+  the copy ("When you do, exile that card"). `filterByTotalManaSpent` restricts copy targets to mana
+  value ≤ total mana spent (Mockingbird). The copy snapshots a `CopyOfComponent` so it reverts to its
+  printed identity when it leaves the battlefield (CR 400.7 / 707.2).
 - Custom — implement the `ReplacementEffect` interface directly.
 
 Amount-modifying replacements expose **both** `multiplier` (×) and `modifier` (±) on the same type — do not split into

@@ -675,29 +675,46 @@ data class ModifyLifeLoss(
 // =============================================================================
 
 /**
- * Enter the battlefield as a copy of a permanent.
+ * Enter the battlefield as a copy of a card or permanent.
  * Example: Clone ("You may have this creature enter as a copy of any creature on the battlefield")
  * Example: Clever Impersonator ("You may have this creature enter as a copy of any nonland permanent on the battlefield")
+ * Example: Superior Spider-Man ("You may have this creature enter as a copy of any creature card in a
+ *          graveyard, except his name is Superior Spider-Man and he's a 4/4 Spider Human Hero ... When
+ *          you do, exile that card.")
  *
- * When this permanent would enter the battlefield, the controller may choose a permanent
- * on the battlefield matching [copyFilter]. If they do, the permanent enters as a copy of that permanent.
- * If they don't (or can't), the permanent enters as itself (typically 0/0 and dies).
+ * When this permanent would enter the battlefield, the controller may choose an object in [copyFromZone]
+ * matching [copyFilter]. If they do, the permanent enters as a copy of that object (with the overrides
+ * below applied). If they don't (or can't), the permanent enters as itself (typically 0/0 and dies).
  *
  * @param copyFilter Filter for what can be copied. Defaults to creatures only (Clone).
  *                   Use [GameObjectFilter.Companion.NonlandPermanent] for Clever Impersonator.
+ * @param copyFromZone Where to look for copy candidates. [Zone.BATTLEFIELD] (default) copies a permanent;
+ *                   [Zone.GRAVEYARD] copies a creature *card* from any graveyard (Superior Spider-Man).
  * @param filterByTotalManaSpent When true, only creatures with mana value ≤ total mana spent
  *                                to cast this spell are valid copy targets. Used for Mockingbird.
- * @param additionalSubtypes Subtypes to add to the copy (e.g., "Bird" for Mockingbird).
+ * @param additionalSubtypes Subtypes to add to the copy (e.g., "Bird" for Mockingbird; "Spider", "Human",
+ *                   "Hero" for Superior Spider-Man — added "in addition to its other types").
  * @param additionalKeywords Keywords to grant to the copy (e.g., FLYING for Mockingbird).
+ * @param nameOverride When non-null, the copy keeps this name instead of the copied object's name
+ *                   ("except his name is Superior Spider-Man").
+ * @param powerOverride When non-null, the copy's base power is set to this value ("he's a 4/4 ...").
+ * @param toughnessOverride When non-null, the copy's base toughness is set to this value.
+ * @param exileCopiedCard When true, the copied card is exiled after the copy is applied
+ *                   ("When you do, exile that card"). Only meaningful with [copyFromZone] = graveyard.
  */
 @SerialName("EntersAsCopy")
 @Serializable
 data class EntersAsCopy(
     val optional: Boolean = true,
     val copyFilter: GameObjectFilter = GameObjectFilter.Creature,
+    val copyFromZone: Zone = Zone.BATTLEFIELD,
     val filterByTotalManaSpent: Boolean = false,
     val additionalSubtypes: List<String> = emptyList(),
     val additionalKeywords: List<Keyword> = emptyList(),
+    val nameOverride: String? = null,
+    val powerOverride: Int? = null,
+    val toughnessOverride: Int? = null,
+    val exileCopiedCard: Boolean = false,
     override val appliesTo: GameEvent = GameEvent.ZoneChangeEvent(
         filter = GameObjectFilter.Any,
         to = Zone.BATTLEFIELD
@@ -705,10 +722,28 @@ data class EntersAsCopy(
 ) : ReplacementEffect {
     override val description: String = run {
         val filterDesc = copyFilter.description
-        if (optional) {
-            "You may have this creature enter as a copy of any $filterDesc on the battlefield"
+        val where = if (copyFromZone == Zone.GRAVEYARD) "$filterDesc card in a graveyard" else "$filterDesc on the battlefield"
+        val lead = if (optional) {
+            "You may have this creature enter as a copy of any $where"
         } else {
-            "This creature enters as a copy of any $filterDesc on the battlefield"
+            "This creature enters as a copy of any $where"
+        }
+        buildString {
+            append(lead)
+            val exceptions = buildList {
+                if (nameOverride != null) add("its name is $nameOverride")
+                if (powerOverride != null && toughnessOverride != null) {
+                    add("it's $powerOverride/$toughnessOverride")
+                }
+                if (additionalSubtypes.isNotEmpty()) {
+                    add("a ${additionalSubtypes.joinToString(" ")} in addition to its other types")
+                }
+                if (additionalKeywords.isNotEmpty()) {
+                    add("it has ${additionalKeywords.joinToString(", ") { it.name.lowercase() }}")
+                }
+            }
+            if (exceptions.isNotEmpty()) append(", except ${exceptions.joinToString(" and ")}")
+            if (exileCopiedCard) append(". When you do, exile that card")
         }
     }
 
