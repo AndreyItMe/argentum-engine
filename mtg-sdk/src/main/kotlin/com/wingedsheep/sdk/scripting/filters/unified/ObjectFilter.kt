@@ -355,6 +355,14 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.IsAttacking
     )
 
+    /**
+     * Must be in the same combat band as the effect's source (the source itself, or a band-mate
+     * sharing its band id — CR 702.22). Source-relative; only matches while the source attacks.
+     */
+    fun inSameBandAsSource() = copy(
+        statePredicates = statePredicates + StatePredicate.InSameBandAsSource
+    )
+
     /** Must be blocking */
     fun blocking() = copy(
         statePredicates = statePredicates + StatePredicate.IsBlocking

@@ -75,6 +75,19 @@ sealed interface StatePredicate {
         override val description: String = "unblocked"
     }
 
+    /**
+     * In the same combat band as the effect's source — i.e. the source creature itself, or a
+     * creature sharing the source's band id (CR 702.22). Source-relative: resolves against the
+     * source entity supplied in the evaluation context, so it only matches while that source is
+     * attacking (band membership exists only during combat). Used for Camel's "this creature and
+     * creatures banded with this creature".
+     */
+    @SerialName("InSameBandAsSource")
+    @Serializable
+    data object InSameBandAsSource : Entity {
+        override val description: String = "in the same band as this creature"
+    }
+
     // =============================================================================
     // Summoning Sickness (Entity)
     // =============================================================================

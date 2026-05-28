@@ -725,7 +725,10 @@ object DamageUtils {
                         targetId == attachedTo
                     }
                     is RecipientFilter.Matching -> {
-                        val context = PredicateContext(controllerId = sourceControllerId)
+                        // sourceId here is the permanent that owns the prevention effect (e.g.
+                        // Camel), so source-relative recipient predicates like InSameBandAsSource
+                        // can resolve "this creature and creatures banded with it".
+                        val context = PredicateContext(controllerId = sourceControllerId, sourceId = entityId)
                         predicateEvaluator.matches(state, projected, targetId, recipient.filter, context)
                     }
                     is RecipientFilter.CreatureYouControl -> {

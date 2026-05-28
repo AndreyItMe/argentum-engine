@@ -260,6 +260,14 @@ class TurnManager(
             }
 
             Step.POSTCOMBAT_MAIN -> {
+                // The combat phase has now ended: remove every creature from combat (clear
+                // attacking/blocking and related components). Deferred from the end of combat step
+                // so end-of-combat abilities resolve while their attacking targets are still legal.
+                val endCombatResult = combatManager.endCombat(newState)
+                if (!endCombatResult.isSuccess) return endCombatResult
+                newState = endCombatResult.newState
+                events.addAll(endCombatResult.events)
+
                 newState = newState.withPriority(activePlayer)
             }
 
@@ -334,11 +342,11 @@ class TurnManager(
             }
 
             Step.END_COMBAT -> {
-                // Clean up combat state (remove attacking/blocking components)
-                val endCombatResult = combatManager.endCombat(newState)
-                if (!endCombatResult.isSuccess) return endCombatResult
-                newState = endCombatResult.newState
-                events.addAll(endCombatResult.events)
+                // Creatures stay in combat until the combat phase *ends* (cleaned up on entry to
+                // POSTCOMBAT_MAIN below), not when the end of combat step begins. This keeps them
+                // flagged as attacking while players hold priority here, so abilities that target
+                // an attacking creature only during the end of combat step (e.g. Desert) still
+                // have legal targets.
 
                 // Remove MustAttackPlayerComponent after combat (Taunt effect is consumed)
                 val mustAttack = newState.getEntity(activePlayer)?.get<MustAttackPlayerComponent>()

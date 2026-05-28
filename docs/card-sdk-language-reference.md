@@ -600,6 +600,14 @@ work for abilities-on-stack (which carry no `CardComponent`).
 - `IsUntapped` — currently untapped.
 - `IsAttacking` — declared as attacker this combat.
 - `IsBlocking` — declared as blocker this combat.
+- `InSameBandAsSource` (filter builder `inSameBandAsSource()`) — source-relative (CR 702.22):
+  matches the effect's source creature itself and any creature sharing its combat band id.
+  Resolves against `PredicateContext.sourceId`, so it only matches while that source is attacking
+  (band membership exists only during combat). Used as the recipient filter of Camel's
+  "prevent all damage Deserts would deal to this creature and to creatures banded with this
+  creature". Note: it's only evaluated where the context carries a source entity — currently the
+  recipient filter of a `PreventDamage` replacement (see §15); it's inert in group/projection,
+  untap, and trigger-gating contexts.
 - `IsFaceDown` — currently face-down.
 - `HasCounter(type)` — has at least one counter of `type`.
 - `IsWarpExiled` (filter builder `warpExiled()`) — card in exile via warp's

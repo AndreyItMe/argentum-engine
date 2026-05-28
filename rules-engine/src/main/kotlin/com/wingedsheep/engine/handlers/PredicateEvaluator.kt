@@ -98,7 +98,7 @@ class PredicateEvaluator {
 
         // Check all state predicates (these use base state, not projected)
         val stateMatches = filter.statePredicates.all { predicate ->
-            matchesStatePredicate(state, entityId, predicate)
+            matchesStatePredicate(state, entityId, predicate, context)
         }
 
         return stateMatches
@@ -525,7 +525,8 @@ class PredicateEvaluator {
     fun matchesStatePredicate(
         state: GameState,
         entityId: EntityId,
-        predicate: StatePredicate
+        predicate: StatePredicate,
+        context: PredicateContext? = null
     ): Boolean {
         val container = state.getEntity(entityId) ?: return false
 
@@ -548,6 +549,21 @@ class PredicateEvaluator {
                 val attackingComp = container.get<AttackingComponent>()
                 attackingComp != null && state.getBattlefield().none { blockerId ->
                     state.getEntity(blockerId)?.get<BlockingComponent>()?.blockedAttackerIds?.contains(entityId) == true
+                }
+            }
+
+            // Same combat band as the effect's source (CR 702.22). Resolves against
+            // context.sourceId: matches the source creature itself, or a creature sharing the
+            // source's non-null band id. Yields false when there's no source context or the
+            // source isn't attacking, so it's inert outside combat / damage-prevention contexts.
+            StatePredicate.InSameBandAsSource -> {
+                val sourceId = context?.sourceId
+                val sourceAttacking = sourceId?.let { state.getEntity(it)?.get<AttackingComponent>() }
+                when {
+                    sourceAttacking == null -> false
+                    entityId == sourceId -> true
+                    sourceAttacking.bandId == null -> false
+                    else -> container.get<AttackingComponent>()?.bandId == sourceAttacking.bandId
                 }
             }
 
@@ -638,9 +654,9 @@ class PredicateEvaluator {
             }
 
             // Composite / logical combinators
-            is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicate(state, entityId, it) }
-            is StatePredicate.And -> predicate.predicates.all { matchesStatePredicate(state, entityId, it) }
-            is StatePredicate.Not -> !matchesStatePredicate(state, entityId, predicate.predicate)
+            is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicate(state, entityId, it, context) }
+            is StatePredicate.And -> predicate.predicates.all { matchesStatePredicate(state, entityId, it, context) }
+            is StatePredicate.Not -> !matchesStatePredicate(state, entityId, predicate.predicate, context)
         }
     }
 

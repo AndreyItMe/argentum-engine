@@ -317,6 +317,10 @@ internal class AffectsFilterResolver {
                 state.getEntity(blockerId)?.get<BlockingComponent>()?.blockedAttackerIds?.contains(entityId) == true
             }
         }
+        // Source-relative band membership has no meaning when projecting a group static ability
+        // (there's no per-recipient "source" here); it's only evaluated in damage-prevention
+        // recipient filters via PredicateEvaluator. Never match in this context.
+        StatePredicate.InSameBandAsSource -> false
         StatePredicate.EnteredThisTurn -> container.has<EnteredThisTurnComponent>()
         StatePredicate.WasDealtDamageThisTurn -> container.has<WasDealtDamageThisTurnComponent>()
         StatePredicate.HasDealtDamage -> container.has<HasDealtDamageComponent>()
