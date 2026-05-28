@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 153 / 291
+**Implemented:** 154 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -95,7 +95,7 @@ starter-deck/special cards and basic lands.
 - [ ] Press the Enemy
 - [ ] Rangers of Ithilien
 - [ ] Saruman the White
-- [ ] Saruman's Trickery
+- [x] Saruman's Trickery
 - [ ] Scroll of Isildur
 - [ ] Soothing of Sméagol
 - [x] Stern Scolding
