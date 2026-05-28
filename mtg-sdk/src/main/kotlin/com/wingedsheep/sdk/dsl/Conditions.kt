@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.dsl
 
 import com.wingedsheep.sdk.core.CardType
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Subtype
@@ -221,6 +222,14 @@ object Conditions {
      */
     fun TargetSharesMostCommonColor(targetIndex: Int = 0): ConditionInterface =
         com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor(targetIndex)
+
+    /**
+     * If [color] is the most common color among all permanents on the battlefield, or is tied
+     * for most common. Board-derived, so it works as a `ConditionalStaticAbility` gate. Used by
+     * the Invasion djinn cycle (Goham/Halam/Ruham/Sulam/Zanam).
+     */
+    fun ColorIsMostCommon(color: Color): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.ColorIsMostCommon(color)
 
     /**
      * If the creature enchanted by the source Aura is legendary.

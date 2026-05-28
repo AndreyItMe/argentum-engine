@@ -1136,6 +1136,11 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
   using projected colors), takes the highest tally, and checks whether the target has any color
   in that (possibly tied) most-common set. A board with no colored permanents is `false`. Used by
   Tsabo's Assassin.
+- `ColorIsMostCommon(color)` — the self-gating sibling of the above: true when `color` is the most
+  common color among all permanents, or tied for most common (same tally rules). Board-derived
+  only — no targets/triggering/kicker — so it evaluates identically in resolution and in
+  projection, which lets it gate a `ConditionalStaticAbility`. Used by the Invasion djinn cycle
+  ("as long as [color] is the most common color among all permanents…" — Goham/Halam/Ruham/Sulam/Zanam).
 - `YouHaveCitysBlessing` — you have City's Blessing (10+ permanents).
 - `SourceIsRingBearer` — the source permanent is your Ring-bearer (CR 701.52e).
 
@@ -1232,6 +1237,8 @@ Conditions that need resolution-only facts (e.g. `TargetMatchesFilter`, `TargetS
 
 Other gates available in both contexts:
 
+- `ColorIsMostCommon(color)` — board-derived, so it gates a `ConditionalStaticAbility` directly
+  (the Invasion djinns rely on this).
 - `SourceChosenModeIs("id")` — gate on the chosen mode (Sieges / `EntersWithChoice`).
   Currently resolution-only; can be extended to projection if needed.
 

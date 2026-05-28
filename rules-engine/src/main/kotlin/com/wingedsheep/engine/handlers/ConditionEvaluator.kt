@@ -61,6 +61,8 @@ import com.wingedsheep.engine.state.components.battlefield.CastFromGraveyardComp
 import com.wingedsheep.sdk.scripting.conditions.SacrificedPermanentHadSubtype
 import com.wingedsheep.sdk.scripting.conditions.TargetMatchesFilter
 import com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor
+import com.wingedsheep.sdk.scripting.conditions.ColorIsMostCommon
+import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityEnteredOrWasCastFromGraveyard
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityHadMinusOneMinusOneCounter
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasHistoric
@@ -173,6 +175,11 @@ class ConditionEvaluator {
             // Global facts (no controller/source needed).
             is VoidCondition ->
                 state.nonlandPermanentLeftBattlefieldThisTurn || state.spellWarpedThisTurn
+
+            // Board-derived only — no targets/triggering/kicker — so it works identically in
+            // resolution and projection (required for the djinn `ConditionalStaticAbility` gate).
+            is ColorIsMostCommon ->
+                condition.color.name in mostCommonColors(state, ctx.projectedStateFor(state))
 
             // Composites recurse with the same ctx.
             is AllConditions -> condition.conditions.all { evaluate(state, it, ctx) }
@@ -659,18 +666,24 @@ class ConditionEvaluator {
         val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
             ?.entityId ?: return false
         val projected = state.projectedState
+        return projected.getColors(entityId).any { it in mostCommonColors(state, projected) }
+    }
 
+    /**
+     * The set of colors tied for most common among all battlefield permanents. Colors are the
+     * projected-state color strings (`Color.name`); a multicolored permanent contributes to each
+     * of its colors. Empty when no permanent has a color.
+     */
+    private fun mostCommonColors(state: GameState, projected: ProjectedState): Set<String> {
         val colorCounts = mutableMapOf<String, Int>()
         for (permanentId in state.getBattlefield()) {
             for (color in projected.getColors(permanentId)) {
                 colorCounts[color] = (colorCounts[color] ?: 0) + 1
             }
         }
-        val maxCount = colorCounts.values.maxOrNull() ?: return false
-        if (maxCount == 0) return false
-        val mostCommonColors = colorCounts.filterValues { it == maxCount }.keys
-
-        return projected.getColors(entityId).any { it in mostCommonColors }
+        val maxCount = colorCounts.values.maxOrNull() ?: return emptySet()
+        if (maxCount == 0) return emptySet()
+        return colorCounts.filterValues { it == maxCount }.keys
     }
 
     private fun evaluateFirstSpellOfType(

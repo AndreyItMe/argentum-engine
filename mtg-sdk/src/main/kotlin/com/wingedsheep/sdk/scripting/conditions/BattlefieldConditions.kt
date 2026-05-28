@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.conditions
 
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -165,5 +166,27 @@ data class TargetSharesMostCommonColor(
 ) : Condition {
     override val description: String =
         "if it shares a color with the most common color among all permanents or a color tied for most common"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+/**
+ * Condition: "As long as [color] is the most common color among all permanents, or is tied
+ * for most common".
+ *
+ * Tallies, across every permanent on the battlefield, how many share each of the five colors
+ * (a multicolored permanent contributes to each of its colors). The most common color(s) are
+ * those with the highest tally; ties all count. The condition is true when [color] is in that
+ * most-common set. A board with no colored permanents has no most-common color, so the
+ * condition is false.
+ *
+ * Board-derived only (no targets / triggering entity / kicker state), so it evaluates
+ * identically in resolution and in projection — which is required, since the Invasion djinn
+ * cycle (Goham/Halam/Ruham/Sulam/Zanam) uses it as a `ConditionalStaticAbility` gate.
+ */
+@SerialName("ColorIsMostCommon")
+@Serializable
+data class ColorIsMostCommon(val color: Color) : Condition {
+    override val description: String =
+        "as long as ${color.displayName.lowercase()} is the most common color among all permanents, or is tied for most common"
     override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
