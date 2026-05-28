@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 152 / 291
+**Implemented:** 153 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -74,7 +74,7 @@ starter-deck/special cards and basic lands.
 - [ ] Borne Upon a Wind
 - [x] Captain of Umbar
 - [ ] Council's Deliberation
-- [ ] Deceive the Messenger
+- [x] Deceive the Messenger
 - [ ] Dreadful as the Storm
 - [ ] Elrond, Lord of Rivendell
 - [ ] Gandalf, Friend of the Shire
