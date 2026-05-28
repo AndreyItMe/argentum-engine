@@ -10,11 +10,15 @@ import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.TriggerBinding
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -67,9 +71,54 @@ class AmassScenarioTest : FunSpec({
         }
     }
 
+    // Warbeast of Gorgoroth's dies trigger: "Whenever this creature or another creature you control
+    // with power 4 or greater dies, amass Orcs 2." The filter has to read last-known power, since the
+    // creature is already in the graveyard when the leaves-the-battlefield trigger is evaluated.
+    val Warbeast = card("Warbeast of Gorgoroth") {
+        manaCost = "{4}{R}"
+        typeLine = "Creature — Beast"
+        power = 5; toughness = 4
+        triggeredAbility {
+            trigger = Triggers.leavesBattlefield(
+                filter = GameObjectFilter.Creature.youControl().powerAtLeast(4),
+                to = Zone.GRAVEYARD,
+                binding = TriggerBinding.ANY
+            )
+            effect = Effects.Amass(2)
+        }
+    }
+
+    // Vanilla bodies to die on cue: one at the power-4 boundary, one just below it.
+    val BigBeast = card("Cave Troll") {
+        manaCost = "{0}"
+        typeLine = "Creature — Troll"
+        power = 4; toughness = 4
+    }
+    val SmallBeast = card("Goblin Footman") {
+        manaCost = "{0}"
+        typeLine = "Creature — Goblin"
+        power = 3; toughness = 3
+    }
+
+    // {0} sorcery that destroys a target creature, to send a chosen body to the graveyard on demand.
+    val Slay = card("Slay") {
+        manaCost = "{0}"
+        typeLine = "Sorcery"
+        oracleText = "Destroy target creature."
+        spell {
+            val creature = target("target creature", Targets.Creature)
+            effect = Effects.Destroy(creature)
+        }
+    }
+
     fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
-        driver.registerCards(TestCards.all + listOf(AmassTwo, AmassOne, ZombieArmyA, ZombieArmyB, DunlandCrebain))
+        driver.registerCards(
+            TestCards.all + listOf(
+                AmassTwo, AmassOne, ZombieArmyA, ZombieArmyB, DunlandCrebain,
+                Warbeast, BigBeast, SmallBeast, Slay
+            )
+        )
         return driver
     }
 
@@ -169,5 +218,64 @@ class AmassScenarioTest : FunSpec({
         val army = driver.armiesControlledBy(active).single()
         projector.project(driver.state).getPower(army) shouldBe 2
         driver.plusOneCounters(army) shouldBe 2
+    }
+
+    // Cast {0} "Slay" on a target creature and resolve it (the creature dies).
+    fun GameTestDriver.slay(player: EntityId, victim: EntityId) {
+        val slayId = putCardInHand(player, "Slay")
+        castSpell(player, slayId, listOf(victim))
+        bothPass()
+    }
+
+    test("Warbeast dies and triggers off its own last-known power 5 (amass Orcs 2)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40))
+        val active = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val warbeast = driver.putCreatureOnBattlefield(active, "Warbeast of Gorgoroth")
+        driver.armiesControlledBy(active).size shouldBe 0
+
+        driver.slay(active, warbeast)   // Slay resolves → Warbeast dies → its leaves trigger goes on the stack
+        driver.bothPass()               // resolve "amass Orcs 2"
+
+        // The dies trigger fired even though Warbeast is in the graveyard: a 2/2 Orc Army now exists.
+        val army = driver.armiesControlledBy(active).single()
+        projector.project(driver.state).getPower(army) shouldBe 2
+        driver.plusOneCounters(army) shouldBe 2
+    }
+
+    test("another power-4 creature dying triggers Warbeast via last-known power (amass Orcs 2)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40))
+        val active = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        driver.putCreatureOnBattlefield(active, "Warbeast of Gorgoroth")
+        val troll = driver.putCreatureOnBattlefield(active, "Cave Troll")
+        driver.armiesControlledBy(active).size shouldBe 0
+
+        driver.slay(active, troll)      // the 4/4 dies; Warbeast's trigger must read its last-known power 4
+        driver.bothPass()               // resolve "amass Orcs 2"
+
+        val army = driver.armiesControlledBy(active).single()
+        projector.project(driver.state).getPower(army) shouldBe 2
+        driver.plusOneCounters(army) shouldBe 2
+    }
+
+    test("a power-3 creature dying does not trigger Warbeast (no amass)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40))
+        val active = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        driver.putCreatureOnBattlefield(active, "Warbeast of Gorgoroth")
+        val footman = driver.putCreatureOnBattlefield(active, "Goblin Footman")
+
+        driver.slay(active, footman)    // 3/3 is below the power-4 threshold
+        driver.bothPass()
+
+        // No trigger, so no Army token was created.
+        driver.armiesControlledBy(active).size shouldBe 0
     }
 })
