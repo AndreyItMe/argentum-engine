@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 140 / 291
+**Implemented:** 149 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -59,7 +59,7 @@ starter-deck/special cards and basic lands.
 - [x] Soldier of the Grey Host
 - [ ] Stalwarts of Osgiliath
 - [x] Tale of Tinúviel
-- [ ] Took Reaper
+- [x] Took Reaper
 - [ ] War of the Last Alliance
 - [x] Westfold Rider
 - [ ] You Cannot Pass!
@@ -111,7 +111,7 @@ starter-deck/special cards and basic lands.
 - [ ] The Black Breath
 - [ ] Call of the Ring
 - [x] Cirith Ungol Patrol
-- [ ] Claim the Precious
+- [x] Claim the Precious
 - [ ] Dunland Crebain
 - [ ] Easterling Vanguard
 - [ ] Gollum, Patient Plotter
@@ -135,14 +135,14 @@ starter-deck/special cards and basic lands.
 - [ ] One Ring to Rule Them All
 - [ ] Orcish Bowmasters
 - [ ] Orcish Medicine
-- [ ] Sam's Desperate Rescue
+- [x] Sam's Desperate Rescue
 - [ ] Sauron, the Necromancer
 - [x] Shadow of the Enemy
 - [x] Shelob's Ambush
 - [x] Snarling Warg
 - [ ] The Torment of Gollum
 - [ ] Troll of Khazad-dûm
-- [ ] Uruk-hai Berserker
+- [x] Uruk-hai Berserker
 - [ ] Voracious Fell Beast
 - [ ] Witch-king of Angmar
 
@@ -176,10 +176,10 @@ starter-deck/special cards and basic lands.
 - [x] Olog-hai Crusher
 - [x] Quarrel's End
 - [x] Rally at the Hornburg
-- [ ] Ranger's Firebrand
-- [ ] Relentless Rohirrim
+- [x] Ranger's Firebrand
+- [x] Relentless Rohirrim
 - [x] Rising of the Day
-- [ ] Rohirrim Lancer
+- [x] Rohirrim Lancer
 - [x] Rush the Room
 - [x] Smite the Deathless
 - [x] Spiteful Banditry
@@ -198,7 +198,7 @@ starter-deck/special cards and basic lands.
 - [ ] Dúnedain Rangers
 - [x] Elven Chorus
 - [x] Elven Farsight
-- [ ] Enraged Huorn
+- [x] Enraged Huorn
 - [x] Entish Restoration
 - [x] Ent's Fury
 - [x] Fall of Gil-galad
@@ -215,7 +215,7 @@ starter-deck/special cards and basic lands.
 - [x] Many Partings
 - [x] Meriadoc Brandybuck
 - [x] Mirkwood Spider
-- [ ] Mirrormere Guardian
+- [x] Mirrormere Guardian
 - [x] Mushroom Watchdogs
 - [ ] Peregrin Took
 - [x] Pippin's Bravery
