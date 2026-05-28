@@ -272,7 +272,10 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `CreateToken(name, p, t, colors?, subtypes?, keywords?, count?, tapped?)` — make N tokens.
 - `CreateDynamicToken(...)` — tokens whose P/T is computed.
 - `CreateTokenCopyOfSelf(count?, tapped?)` — token copies of source.
-- `CreateTokenCopyOfTarget(target, count?, tapped?)` — token copy of another permanent.
+- `CreateTokenCopyOfTarget(target, count?, overridePower?, overrideToughness?, tapped?, attacking?, triggeredAbilities?, addedKeywords?, addedSupertypes?, removedSupertypes?, overrideColors?, overrideSubtypes?)` —
+  token copy of another permanent (or a card in any zone — the executor copies the target's `CardComponent`,
+  so a graveyard/exile card works). `overrideColors`/`overrideSubtypes` replace the copy's colors/subtypes
+  outright for "a token that's a copy … except it's a 5/5 black Demon" wording (Ardyn, the Usurper).
 - `CreateTokenCopyOfEquippedCreature(count?, tapped?)` — equipment-specific copy.
 - `CreateTreasure(count?, tapped?)` — Treasure tokens.
 - `CreateFood(count?, controller?)` — Food tokens.

@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.effects
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Supertype
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.StaticAbility
@@ -348,12 +349,29 @@ data class CreateTokenCopyOfTargetEffect(
     /** Supertypes added to the token copy's type line (e.g., LEGENDARY for Adagia, Windswept Bastion). */
     val addedSupertypes: Set<Supertype> = emptySet(),
     /** Supertypes stripped from the token copy's type line (e.g., LEGENDARY for Impostor Syndrome). */
-    val removedSupertypes: Set<Supertype> = emptySet()
+    val removedSupertypes: Set<Supertype> = emptySet(),
+    /**
+     * Replaces the token copy's colors outright (e.g., black for Ardyn, the Usurper's
+     * "a 5/5 black Demon"). Null leaves the copied card's colors untouched.
+     */
+    val overrideColors: Set<Color>? = null,
+    /**
+     * Replaces the token copy's subtypes outright (e.g., Demon for Ardyn, the Usurper).
+     * Null leaves the copied card's subtypes untouched.
+     */
+    val overrideSubtypes: Set<Subtype>? = null
 ) : Effect {
     override val description: String = buildString {
         append("Create ${count.description} token copies of target permanent")
         if (overridePower != null && overrideToughness != null) {
             append(", except they're $overridePower/$overrideToughness")
+        }
+        if (overrideColors != null || overrideSubtypes != null) {
+            val color = overrideColors?.joinToString(" ") { it.displayName.lowercase() }
+            val type = overrideSubtypes?.joinToString(" ") { it.value }
+            append(", except ${if (count == DynamicAmount.Fixed(1)) "it's" else "they're"} ${
+                listOfNotNull(color, type).joinToString(" ")
+            }")
         }
         if (tapped) append(" tapped")
         if (attacking) append(" and attacking")

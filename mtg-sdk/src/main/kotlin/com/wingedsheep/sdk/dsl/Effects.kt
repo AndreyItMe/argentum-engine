@@ -1143,7 +1143,9 @@ object Effects {
         triggeredAbilities: List<TriggeredAbility> = emptyList(),
         addedKeywords: Set<com.wingedsheep.sdk.core.Keyword> = emptySet(),
         addedSupertypes: Set<com.wingedsheep.sdk.core.Supertype> = emptySet(),
-        removedSupertypes: Set<com.wingedsheep.sdk.core.Supertype> = emptySet()
+        removedSupertypes: Set<com.wingedsheep.sdk.core.Supertype> = emptySet(),
+        overrideColors: Set<com.wingedsheep.sdk.core.Color>? = null,
+        overrideSubtypes: Set<com.wingedsheep.sdk.core.Subtype>? = null
     ): Effect = CreateTokenCopyOfTargetEffect(
         target = target,
         count = DynamicAmount.Fixed(count),
@@ -1154,7 +1156,9 @@ object Effects {
         triggeredAbilities = triggeredAbilities,
         addedKeywords = addedKeywords,
         addedSupertypes = addedSupertypes,
-        removedSupertypes = removedSupertypes
+        removedSupertypes = removedSupertypes,
+        overrideColors = overrideColors,
+        overrideSubtypes = overrideSubtypes
     )
 
     /**
