@@ -91,6 +91,15 @@ data object WarpedComponent : Component
 data object EvokedComponent : Component
 
 /**
+ * Marks a permanent as having been cast for its impending cost (CR 702.176a).
+ * The "isn't a creature" static and the end-step time-counter trigger both gate on
+ * impending-cost-paid AND has-time-counter, so this marker survives for as long as
+ * the permanent stays on the battlefield even after the last time counter is gone.
+ */
+@Serializable
+data object CastForImpendingComponent : Component
+
+/**
  * Records the mana colors spent to cast this permanent.
  * Used by mana-spent-gated trigger conditions (e.g., "if {W}{W} was spent to cast it").
  * Stripped when the permanent leaves the battlefield.

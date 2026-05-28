@@ -6,7 +6,9 @@ import com.wingedsheep.sdk.model.*
 import com.wingedsheep.sdk.scripting.ClassLevelAbility
 import com.wingedsheep.sdk.scripting.SagaChapterAbility
 import com.wingedsheep.sdk.scripting.*
+import com.wingedsheep.sdk.scripting.conditions.AllConditions
 import com.wingedsheep.sdk.scripting.conditions.Condition
+import com.wingedsheep.sdk.scripting.conditions.SourceCastForImpending
 import com.wingedsheep.sdk.scripting.costs.PayCost
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -432,13 +434,21 @@ class CardBuilder(private val name: String) {
      */
     fun impending(time: Int, cost: String) {
         keywordAbilityList.add(KeywordAbility.Impending(time, ManaCost.parse(cost)))
-        val hasTimeCounter = Conditions.SourceHasCounter(
-            com.wingedsheep.sdk.scripting.events.CounterTypeFilter.Named(Counters.TIME)
-        )
+        // CR 702.176a gates both the "isn't a creature" static and the end-step removal
+        // trigger on "impending cost was paid AND has a time counter". The counter check
+        // alone is insufficient: any future effect that places time counters on a normally-
+        // cast permanent (proliferate-on-counters, ability-granted time counters, etc.)
+        // would otherwise turn it into a non-creature.
+        val impendingActive = AllConditions(listOf(
+            SourceCastForImpending,
+            Conditions.SourceHasCounter(
+                com.wingedsheep.sdk.scripting.events.CounterTypeFilter.Named(Counters.TIME)
+            )
+        ))
         staticAbilities.add(
             ConditionalStaticAbility(
                 ability = RemoveCardType("CREATURE", GroupFilter.source()),
-                condition = hasTimeCounter
+                condition = impendingActive
             )
         )
         triggeredAbilities.add(
@@ -446,7 +456,7 @@ class CardBuilder(private val name: String) {
                 trigger = Triggers.YourEndStep.event,
                 binding = Triggers.YourEndStep.binding,
                 effect = Effects.RemoveCounters(Counters.TIME, 1, EffectTarget.Self),
-                triggerCondition = hasTimeCounter,
+                triggerCondition = impendingActive,
                 descriptionOverride = "At the beginning of your end step, remove a time counter from this permanent."
             )
         )

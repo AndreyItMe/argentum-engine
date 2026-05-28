@@ -349,6 +349,7 @@ val engineSerializersModule = SerializersModule {
         subclass(WarpedComponent::class)
         subclass(WasKickedComponent::class)
         subclass(EvokedComponent::class)
+        subclass(CastForImpendingComponent::class)
         subclass(CastRecordComponent::class)
 
         // Combat components

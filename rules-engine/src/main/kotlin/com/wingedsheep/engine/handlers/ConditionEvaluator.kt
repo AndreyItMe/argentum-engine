@@ -47,9 +47,11 @@ import com.wingedsheep.sdk.scripting.conditions.IsNotYourTurn
 import com.wingedsheep.sdk.scripting.conditions.IsYourTurn
 import com.wingedsheep.sdk.scripting.conditions.NotCondition
 import com.wingedsheep.sdk.scripting.conditions.OpponentSpellOnStack
+import com.wingedsheep.sdk.scripting.conditions.SourceCastForImpending
 import com.wingedsheep.sdk.scripting.conditions.SourceIsModified
 import com.wingedsheep.sdk.scripting.conditions.SourceChosenModeIs
 import com.wingedsheep.sdk.scripting.conditions.SourceMatches
+import com.wingedsheep.engine.state.components.battlefield.CastForImpendingComponent
 import com.wingedsheep.engine.state.components.identity.ChosenModeComponent
 import com.wingedsheep.sdk.scripting.conditions.WasCast
 import com.wingedsheep.sdk.scripting.conditions.WasCastFromHand
@@ -129,6 +131,11 @@ class ConditionEvaluator {
                 val sourceId = ctx.sourceId
                 val plotted = sourceId?.let { state.getEntity(it)?.get<PlottedComponent>() }
                 plotted != null && plotted.turnPlotted < state.turnNumber
+            }
+
+            is SourceCastForImpending -> {
+                val sourceId = ctx.sourceId
+                sourceId != null && state.getEntity(sourceId)?.has<CastForImpendingComponent>() == true
             }
 
             // Generic source-state primitive — predicate-evaluator against the source entity.

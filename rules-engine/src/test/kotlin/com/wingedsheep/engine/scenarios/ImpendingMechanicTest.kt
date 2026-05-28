@@ -133,4 +133,33 @@ class ImpendingMechanicTest : FunSpec({
         timeCounters(driver, perm) shouldBe 0
         projector.project(driver.state).isCreature(perm) shouldBe true
     }
+
+    test("a time counter added by an external effect to a normally-cast permanent does not turn it into a non-creature") {
+        // CR 702.176a gates the "isn't a creature" static on (impending cost was paid) AND
+        // (has a time counter). The counter alone is not enough.
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Swamp" to 40))
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val player = driver.activePlayer!!
+        val cardId = driver.putCardInHand(player, "Impending Five")
+        driver.giveMana(player, Color.BLACK, 5)
+        driver.submit(
+            CastSpell(player, cardId, useAlternativeCost = false, paymentStrategy = PaymentStrategy.FromPool)
+        )
+        driver.bothPass()
+
+        val perm = driver.findPermanent(player, "Impending Five")!!
+
+        // Simulate some external effect (proliferate-on-counters, ability grant, etc.)
+        // placing a time counter on the normally-cast permanent.
+        val mutated = driver.state.updateEntity(perm) { c ->
+            val counters = c.get<CountersComponent>() ?: CountersComponent()
+            c.with(counters.withAdded(CounterType.TIME, 1))
+        }
+        driver.replaceState(mutated)
+
+        timeCounters(driver, perm) shouldBe 1
+        projector.project(driver.state).isCreature(perm) shouldBe true
+    }
 })

@@ -171,6 +171,23 @@ data class ManaSpentToCastIncludes(
 }
 
 /**
+ * Condition: "If this permanent's impending cost was paid" (CR 702.176a).
+ *
+ * Reads the `CastForImpendingComponent` marker stamped on the permanent when it
+ * resolved from an impending cast. Dual-mode: works in both static-ability
+ * projection (gating the "isn't a creature" type-removing static) and resolution
+ * (gating the end-step time-counter-removal trigger). Pair with
+ * `SourceHasCounter(TIME)` via `AllConditions` to recover the printed
+ * "impending cost was paid AND has a time counter" gate.
+ */
+@SerialName("SourceCastForImpending")
+@Serializable
+data object SourceCastForImpending : Condition {
+    override val description: String = "this permanent's impending cost was paid"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+/**
  * Condition: "If the chosen mode is [modeId]".
  *
  * Reads the `ChosenModeComponent` stored on the source permanent (set by an

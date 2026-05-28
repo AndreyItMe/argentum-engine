@@ -978,17 +978,21 @@ class StackResolver(
                 updated = updated.with(com.wingedsheep.engine.state.components.battlefield.EvokedComponent)
             }
 
-            // Impending (CR 702.175b): a permanent cast for its impending cost enters with
-            // N time counters. While it has a time counter it isn't a creature and a counter
-            // is removed at the beginning of its controller's end step — both wired by the
-            // impending keyword's static ability and triggered ability on the card script.
+            // Impending (CR 702.176a): a permanent cast for its impending cost enters with
+            // N time counters. The "isn't a creature" static and the end-step removal trigger
+            // both gate on impending-cost-paid AND has-time-counter, so we stamp a
+            // CastForImpendingComponent marker that survives the countdown — without it, a
+            // normally-cast permanent that gained a time counter from some other effect
+            // would incorrectly stop being a creature.
             if (spellComponent.wasImpending) {
                 val impendingTime = cardDef?.keywordAbilities
                     ?.filterIsInstance<KeywordAbility.Impending>()
                     ?.firstOrNull()?.time ?: 0
                 if (impendingTime > 0) {
                     val existingCounters = updated.get<CountersComponent>() ?: CountersComponent()
-                    updated = updated.with(existingCounters.withAdded(CounterType.TIME, impendingTime))
+                    updated = updated
+                        .with(existingCounters.withAdded(CounterType.TIME, impendingTime))
+                        .with(com.wingedsheep.engine.state.components.battlefield.CastForImpendingComponent)
                 }
             }
 
