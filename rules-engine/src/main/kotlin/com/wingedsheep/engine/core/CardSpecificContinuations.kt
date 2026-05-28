@@ -117,6 +117,26 @@ data class ProliferateContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after a tempted player chooses which creature becomes their Ring-bearer (CR 701.52a).
+ *
+ * The emblem and tempt-count increment are applied before the decision; this continuation only
+ * moves the Ring-bearer designation to the chosen creature and announces the temptation.
+ *
+ * @property temptedPlayerId The player being tempted.
+ * @property temptCount That player's tempt count after this temptation (for the announcement).
+ * @property sourceName The card/ability that tempted (for display).
+ * @property candidates The creatures offered at decision time, used to validate the response.
+ */
+@Serializable
+data class RingTemptContinuation(
+    override val decisionId: String,
+    val temptedPlayerId: EntityId,
+    val temptCount: Int,
+    val sourceName: String,
+    val candidates: List<EntityId>
+) : ContinuationFrame
+
+/**
  * Resume creating a copy of a triggered ability after the player selects new targets.
  *
  * Used by Kirol-style effects ("Copy target triggered ability you control. You may choose

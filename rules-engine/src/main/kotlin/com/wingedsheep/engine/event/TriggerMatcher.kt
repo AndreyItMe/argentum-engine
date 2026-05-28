@@ -229,6 +229,10 @@ class TriggerMatcher(
                     event.reason == com.wingedsheep.engine.core.LifeChangeReason.LIFE_GAIN &&
                     matchesPlayer(trigger.player, event.playerId, controllerId)
             }
+            is GameEvent.RingTemptedEvent -> {
+                event is com.wingedsheep.engine.core.RingTemptedEvent &&
+                    matchesPlayer(trigger.player, event.playerId, controllerId)
+            }
             is GameEvent.BecomesTargetEvent -> {
                 event is BecomesTargetEvent && matchesBecomesTargetTrigger(trigger, binding, event, sourceId, controllerId, state)
             }

@@ -19,6 +19,7 @@ import com.wingedsheep.sdk.scripting.conditions.WasCastFromZone as WasCastFromZo
 import com.wingedsheep.sdk.scripting.conditions.WasKicked as WasKickedCondition
 import com.wingedsheep.sdk.scripting.conditions.BlightWasPaid as BlightWasPaidCondition
 import com.wingedsheep.sdk.scripting.conditions.SourceMatches
+import com.wingedsheep.sdk.scripting.conditions.SourceIsRingBearer as SourceIsRingBearerCondition
 import com.wingedsheep.sdk.scripting.predicates.StatePredicate
 import com.wingedsheep.sdk.scripting.conditions.IsYourTurn as IsYourTurnCondition
 import com.wingedsheep.sdk.scripting.conditions.IsNotYourTurn as IsNotYourTurnCondition
@@ -43,6 +44,15 @@ import com.wingedsheep.sdk.scripting.conditions.Condition as ConditionInterface
  * ```
  */
 object Conditions {
+
+    // =========================================================================
+    // The Ring (CR 701.52)
+    // =========================================================================
+
+    /**
+     * If the source permanent is your Ring-bearer (CR 701.52e).
+     */
+    val SourceIsRingBearer: ConditionInterface = SourceIsRingBearerCondition
 
     // =========================================================================
     // Battlefield Conditions (via Exists / Compare)

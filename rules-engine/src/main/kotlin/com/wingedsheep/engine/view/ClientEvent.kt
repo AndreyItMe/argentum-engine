@@ -1127,6 +1127,7 @@ is PermanentsSacrificedEvent -> {
             is LibraryReorderedEvent,
             is KeywordGrantedEvent,
             is CitysBlessingGainedEvent,
+            is RingTemptedEvent,
             is TurnedFaceDownEvent,
             is CreatureTypeChangedEvent,
             is BecomesTargetEvent,

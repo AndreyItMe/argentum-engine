@@ -310,6 +310,24 @@ data class PlayerHexproofComponent(
 data object PlayerCitysBlessingComponent : Component
 
 /**
+ * Tracks a player's emblem named **The Ring** (CR 701.52c).
+ *
+ * Presence of this component means the player has the Ring emblem. [temptCount] is how many times
+ * the Ring has tempted that player, gating the emblem's four cumulative abilities:
+ * - `>= 1` your Ring-bearer is legendary and can't be blocked by creatures with greater power
+ * - `>= 2` whenever your Ring-bearer attacks, draw a card then discard a card
+ * - `>= 3` whenever your Ring-bearer becomes blocked, the blocker's controller sacrifices it at end of combat
+ * - `>= 4` whenever your Ring-bearer deals combat damage to a player, each opponent loses 3 life
+ *
+ * Like the city's blessing, the Ring emblem is never removed once gained. The Ring-bearer
+ * designation itself lives on the creature ([com.wingedsheep.engine.state.components.identity.RingBearerComponent]).
+ */
+@Serializable
+data class TheRingComponent(
+    val temptCount: Int = 0
+) : Component
+
+/**
  * Describes when a player-level effect component should be removed.
  */
 @Serializable

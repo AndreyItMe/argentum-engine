@@ -24,6 +24,7 @@ object LordOfTheRingsSet : MtgSet {
     override val releaseDate = "2023-06-23"
     override val basicLandsFallback = PortalSet
     override val incomplete = true
+    override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)

@@ -1734,6 +1734,23 @@ class ClientStateTransformer(
             )
         }
 
+        // The Ring emblem (CR 701.52). Surface the tempt count so the player can see which of the
+        // emblem's four cumulative abilities are active and which creature is their Ring-bearer.
+        container.get<TheRingComponent>()?.let { ring ->
+            val bearerName = state.getBattlefield()
+                .firstOrNull { state.getEntity(it)?.get<RingBearerComponent>()?.ownerId == playerId }
+                ?.let { state.getEntity(it)?.get<CardComponent>()?.name }
+            val bearerSuffix = bearerName?.let { " Ring-bearer: $it." } ?: ""
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "the_ring",
+                    name = "The Ring",
+                    description = "The Ring has tempted you ${ring.temptCount} time(s).$bearerSuffix",
+                    icon = "emblem"
+                )
+            )
+        }
+
         // Check for MustAttackPlayerComponent (Taunt effect)
         val mustAttack = container.get<MustAttackPlayerComponent>()
         if (mustAttack != null) {
