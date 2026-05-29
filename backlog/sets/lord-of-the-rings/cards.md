@@ -60,7 +60,7 @@ starter-deck/special cards and basic lands.
 - [ ] Stalwarts of Osgiliath
 - [x] Tale of Tinúviel
 - [x] Took Reaper
-- [ ] War of the Last Alliance
+- [x] War of the Last Alliance
 - [x] Westfold Rider
 - [ ] You Cannot Pass!
 
