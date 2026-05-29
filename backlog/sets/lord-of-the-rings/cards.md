@@ -80,7 +80,7 @@ starter-deck/special cards and basic lands.
 - [ ] Gandalf, Friend of the Shire
 - [ ] Glorious Gale
 - [ ] Goldberry, River-Daughter
-- [ ] Grey Havens Navigator
+- [x] Grey Havens Navigator
 - [x] Hithlain Knots
 - [ ] Horses of the Bruinen
 - [x] Ioreth of the Healing House
