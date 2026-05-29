@@ -1,11 +1,12 @@
 # Invasion — Engine Gap Analysis
 
-Cross-reference of the **275 remaining (unimplemented) Invasion cards** against the engine's
+Cross-reference of the **248 remaining (unimplemented) Invasion cards** against the engine's
 actual capabilities (SDK reference + source verification, May 2026). Generated to scope what
 must be built before the set can be completed.
 
-**Status at time of writing:** 59 / 335 implemented (18%). Card list comes from
-`scripts/card-status --list --set INV`.
+**Status:** 87 / 335 implemented (26%) — up from 59 / 335 (18%) at time of writing, after gaps
+#1–#13 (incl. Blind Seer, Backlash, Agonizing Demise, Tsabo Tavoc) and the cards they unlocked.
+Card list comes from `scripts/card-status --list --set INV`.
 
 ## Bottom line
 
@@ -27,7 +28,7 @@ all supported:
 - Counter spells/abilities, reanimation + mass reanimation (Bringer shape), prevent-damage shields, choose-a-number, search/reveal/mill/scry pipelines, mana rocks/taplands/sac-lands/cameos.
 
 What follows are the **genuine gaps** — elements no current SDK primitive expresses. ~21 distinct
-elements, concentrated in ~35 of the 275 cards. The other ~240 are implementable now.
+elements, concentrated in ~35 cards. The remaining majority are implementable now.
 
 ---
 
