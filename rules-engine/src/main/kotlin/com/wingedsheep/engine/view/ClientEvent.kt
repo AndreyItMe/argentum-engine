@@ -1120,6 +1120,7 @@ is PermanentsSacrificedEvent -> {
             is StepChangedEvent,
             is PriorityChangedEvent,
             is ManaSpentEvent,
+            is LandTappedForManaEvent,
             is DecisionRequestedEvent,
             is AbilityResolvedEvent,
             is DiscardRequiredEvent,

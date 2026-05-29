@@ -28,7 +28,8 @@ val ShadowSummoning = card("Shadow Summoning") {
             colors = setOf(Color.WHITE),
             creatureTypes = setOf("Spirit"),
             keywords = setOf(Keyword.FLYING),
-            tapped = true
+            tapped = true,
+            imageUri = "https://cards.scryfall.io/normal/front/b/5/b53ee2f0-afbd-491f-b3b8-c9997f175199.jpg?1699974536"
         )
     }
 

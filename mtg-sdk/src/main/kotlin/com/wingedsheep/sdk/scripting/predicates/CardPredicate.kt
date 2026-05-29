@@ -504,6 +504,18 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
     }
 
+    /** Matches objects that share a color with the referenced entity */
+    @SerialName("SharesColorWith")
+    @Serializable
+    data class SharesColorWith(val entity: EntityReference) : CardPredicate {
+        override val description: String = when (entity) {
+            is EntityReference.Source -> "that shares a color with this permanent"
+            is EntityReference.Triggering -> "that shares a color with it"
+            else -> "that shares a color with ${entity.description}"
+        }
+        override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
+    }
+
     // =============================================================================
     // Stack Item Type Predicates
     // =============================================================================

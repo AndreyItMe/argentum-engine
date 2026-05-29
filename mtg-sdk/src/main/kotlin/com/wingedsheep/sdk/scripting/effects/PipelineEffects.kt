@@ -108,10 +108,16 @@ sealed interface CardSource {
         val filter: GameObjectFilter = GameObjectFilter.Companion.Any,
         val player: Player = Player.Each,
         val excludeSelf: Boolean = false,
-        val includeAttachments: Boolean = false
+        val includeAttachments: Boolean = false,
+        /**
+         * Exclude the triggering entity from the gathered set. Used by "all *other*
+         * creatures … with it" triggered effects (Spreading Plague), where "it" is the
+         * triggering creature, which itself matches a "shares a [property] with it" filter.
+         */
+        val excludeTriggering: Boolean = false
     ) : CardSource {
         override val description: String = buildString {
-            if (excludeSelf) append("all other ") else append("all ")
+            if (excludeSelf || excludeTriggering) append("all other ") else append("all ")
             append("${filter.description} permanents on the battlefield")
             if (includeAttachments) append(" and all permanents attached to them")
             if (player != Player.Each) {

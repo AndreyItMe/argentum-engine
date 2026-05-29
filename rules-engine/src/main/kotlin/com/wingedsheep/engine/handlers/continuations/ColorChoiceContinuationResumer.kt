@@ -18,13 +18,24 @@ class ColorChoiceContinuationResumer(
     private val effectRunner: EffectContinuationRunner
 ) : ContinuationResumerModule {
 
+    private val tappedForManaBonusResolver =
+        com.wingedsheep.engine.handlers.effects.mana.TappedForManaBonusResolver(services.cardRegistry)
+
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
         resumer(ChooseColorProtectionContinuation::class, ::resumeChooseColorProtection),
         resumer(ChooseColorProtectionTargetContinuation::class, ::resumeChooseColorProtectionTarget),
         resumer(ChooseColorThenContinuation::class, ::resumeChooseColorThen),
         resumer(ChooseManaColorContinuation::class, ::resumeChooseManaColor),
-        resumer(ChooseColorForTargetContinuation::class, ::resumeChooseColorForTarget)
+        resumer(ChooseColorForTargetContinuation::class, ::resumeChooseColorForTarget),
+        resumer(ChooseAnyColorTapBonusContinuation::class, ::resumeChooseAnyColorTapBonus)
     )
+
+    fun resumeChooseAnyColorTapBonus(
+        state: GameState,
+        continuation: ChooseAnyColorTapBonusContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult = tappedForManaBonusResolver.resume(state, continuation, response, checkForMore)
 
     fun resumeChooseColorProtection(
         state: GameState,

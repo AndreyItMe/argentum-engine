@@ -61,6 +61,9 @@ import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.AdditionalManaOnSourceTap
+import com.wingedsheep.sdk.scripting.ReplaceLandManaColor
+import com.wingedsheep.sdk.scripting.values.ManaColorSet
+import com.wingedsheep.engine.core.LandTappedForManaEvent
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.sdk.scripting.AdditionalSourceTriggers
 import com.wingedsheep.engine.handlers.PredicateEvaluator
@@ -610,6 +613,18 @@ class ActivateAbilityHandler(
             if (overrideColor != null && finalEffect is AddManaEffect) {
                 finalEffect = finalEffect.copy(color = overrideColor)
             }
+            // Filter-based mana-color replacement (Pulse of Llanowar): a matched land produces
+            // one mana of a color of its controller's choice instead of its normal mana. Swapping
+            // the base effect for AddManaOfChoiceEffect routes the choice through the existing
+            // any-color machinery (action.manaColorChoice on a manual tap, or a resolution-time
+            // color decision if none was supplied).
+            if (landMatchesManaColorReplacement(currentState, action.sourceId, action.playerId)) {
+                finalEffect = when (val fe = finalEffect) {
+                    is AddManaEffect -> AddManaOfChoiceEffect(ManaColorSet.AnyColor, fe.amount)
+                    is AddColorlessManaEffect -> AddManaOfChoiceEffect(ManaColorSet.AnyColor, fe.amount)
+                    else -> finalEffect
+                }
+            }
             val opponentId = state.turnOrder.firstOrNull { it != action.playerId }
             val context = EffectContext(
                 sourceId = action.sourceId,
@@ -782,9 +797,24 @@ class ActivateAbilityHandler(
                 currentState, action.sourceId, action.playerId, manaEvent, additionalManaResult.events
             )
             currentState = onSourceTapResult.state
-            val allManaEvents = onSourceTapResult.events
+            var allManaEvents = onSourceTapResult.events
 
-            return ExecutionResult.success(currentState, allManaEvents)
+            // Emit a "land tapped for mana" event so triggers like Overabundance / Mana Flare
+            // ("whenever a player taps a land for mana") can fire. Manual-tap path only —
+            // automatic cost payment adds mana via the solver without re-entering this handler.
+            if (cardComponent.typeLine.isLand) {
+                allManaEvents = allManaEvents + LandTappedForManaEvent(
+                    tapperId = action.playerId,
+                    landId = action.sourceId,
+                    landName = cardComponent.name
+                )
+            }
+
+            // Resolve "additional one mana of any color" tap bonuses (Fertile Ground). Unlike the
+            // fixed/mirror bonuses above these need a per-tap color choice, so this may pause for a
+            // color decision (resuming via ChooseAnyColorTapBonusContinuation).
+            val anyColorBonuses = tappedForManaBonusResolver.collect(currentState, action.sourceId, action.playerId)
+            return tappedForManaBonusResolver.drive(currentState, anyColorBonuses, allManaEvents)
         }
 
         // Non-mana abilities go on the stack
@@ -1192,6 +1222,8 @@ class ActivateAbilityHandler(
 
     private val dynamicAmountEvaluator = DynamicAmountEvaluator()
     private val predicateEvaluator = PredicateEvaluator()
+    private val tappedForManaBonusResolver =
+        com.wingedsheep.engine.handlers.effects.mana.TappedForManaBonusResolver(cardRegistry, dynamicAmountEvaluator)
 
     /**
      * Validation-time mirror of [com.wingedsheep.engine.legalactions.utils.CastPermissionUtils.isActivationPrevented].
@@ -1298,6 +1330,33 @@ class ActivateAbilityHandler(
             }
         }
         return override
+    }
+
+    /**
+     * True if the land [landId] is subject to a [ReplaceLandManaColor] static (Pulse of Llanowar) —
+     * i.e. some permanent on the battlefield has that static and its filter matches the tapped land
+     * from the static controller's projected perspective. When true, the land's produced mana is
+     * replaced with one mana of a color of its controller's choice.
+     */
+    private fun landMatchesManaColorReplacement(
+        state: GameState,
+        landId: EntityId,
+        @Suppress("UNUSED_PARAMETER") tappingPlayerId: EntityId
+    ): Boolean {
+        for (entityId in state.getBattlefield()) {
+            val container = state.getEntity(entityId) ?: continue
+            val card = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            for (staticAbility in cardDef.script.staticAbilities) {
+                val replacement = staticAbility as? ReplaceLandManaColor ?: continue
+                val staticController = state.projectedState.getController(entityId) ?: continue
+                val filterContext = PredicateContext(controllerId = staticController, sourceId = entityId)
+                if (predicateEvaluator.matches(state, state.projectedState, landId, replacement.filter, filterContext)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun resolveAdditionalManaOnTap(
@@ -1469,6 +1528,17 @@ class ActivateAbilityHandler(
                         green = if (bonusColor == Color.GREEN) bonusAmount else 0,
                         colorless = if (bonusColorless) bonusAmount else 0
                     ))
+
+                    // Inline non-mana rider (Overabundance: "deals 1 damage to the player").
+                    // Resolved with controllerId = the tapping player, sourceId = this static's
+                    // source, so EffectTarget.Controller is the tapper and EffectTarget.Self is the
+                    // enchantment. Riders here must not require player input (no stack).
+                    val rider = onSourceTap.rider
+                    if (rider != null) {
+                        val riderResult = effectExecutorRegistry.execute(currentState, rider, effectContext)
+                        currentState = riderResult.state
+                        events.addAll(riderResult.events)
+                    }
                 }
             }
         }

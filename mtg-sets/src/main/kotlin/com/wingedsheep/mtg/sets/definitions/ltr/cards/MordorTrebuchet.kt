@@ -44,7 +44,8 @@ val MordorTrebuchet = card("Mordor Trebuchet") {
             artifactToken = true,
             tapped = true,
             attacking = true,
-            exileAtStep = Step.END_COMBAT
+            exileAtStep = Step.END_COMBAT,
+            imageUri = "https://cards.scryfall.io/normal/front/3/8/389a6f88-0c90-4b67-a72c-7e9674f00898.jpg?1699974407"
         )
     }
 

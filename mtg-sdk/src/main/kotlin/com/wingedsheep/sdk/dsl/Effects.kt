@@ -382,12 +382,15 @@ object Effects {
      * @param noRegenerate If true, destroyed permanents can't be regenerated
      * @param storeDestroyedAs If set, stores actually-destroyed IDs for follow-up effects
      *   (count available as DynamicAmount.VariableReference("{key}_count"))
+     * @param excludeTriggering If true, the triggering entity is excluded from the destroyed
+     *   set — for "destroy all *other* … with it" triggers (Spreading Plague).
      */
     fun DestroyAll(
         filter: GameObjectFilter,
         noRegenerate: Boolean = false,
-        storeDestroyedAs: String? = null
-    ): Effect = EffectPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs)
+        storeDestroyedAs: String? = null,
+        excludeTriggering: Boolean = false
+    ): Effect = EffectPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs, excludeTriggering)
 
     /**
      * Destroy all permanents matching [filter] and all permanents attached to them.
@@ -528,6 +531,18 @@ object Effects {
      */
     fun TheRingTemptsYou(target: EffectTarget = EffectTarget.Controller): Effect =
         com.wingedsheep.sdk.scripting.effects.TheRingTemptsYouEffect(target)
+
+    /**
+     * "Amass [subtype] N" (CR 701.47). The controller puts N +1/+1 counters on an Army they
+     * control, creating a 0/0 black [subtype] Army token first if they control no Army, and the
+     * chosen Army becomes that subtype in addition to its other types.
+     */
+    fun Amass(count: Int, subtype: String = "Orc"): Effect =
+        com.wingedsheep.sdk.scripting.effects.AmassEffect(DynamicAmount.Fixed(count), subtype)
+
+    /** "Amass [subtype] X" with a dynamic amount (e.g. Fall of Cair Andros, The Mouth of Sauron). */
+    fun Amass(amount: DynamicAmount, subtype: String = "Orc"): Effect =
+        com.wingedsheep.sdk.scripting.effects.AmassEffect(amount, subtype)
 
     /**
      * Return to hand.
@@ -1150,13 +1165,15 @@ object Effects {
         creatureTypes: Set<String>,
         keywords: Set<Keyword> = emptySet(),
         count: Int = 1,
-        controller: EffectTarget? = null
+        controller: EffectTarget? = null,
+        imageUri: String? = null
     ): Effect = CreateTokenEffect(
         count = DynamicAmount.Fixed(count),
         power = 0, toughness = 0,
         colors = colors, creatureTypes = creatureTypes, keywords = keywords,
         controller = controller,
-        dynamicPower = dynamicPower, dynamicToughness = dynamicToughness
+        dynamicPower = dynamicPower, dynamicToughness = dynamicToughness,
+        imageUri = imageUri
     )
 
     /**

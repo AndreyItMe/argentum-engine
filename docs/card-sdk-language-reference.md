@@ -157,8 +157,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 ### Destruction & exile
 
 - `Destroy(target)` — destroy target (respects indestructible).
-- `DestroyAll(filter, noRegenerate?, storeDestroyedAs?)` — destroy all matching; optionally save the ID list for
-  follow-up.
+- `DestroyAll(filter, noRegenerate?, storeDestroyedAs?, excludeTriggering?)` — destroy all matching; optionally
+  save the ID list for follow-up. `excludeTriggering = true` spares the triggering entity, for "destroy all
+  *other* … with it" triggers (Spreading Plague).
 - `DestroyAllAndAttached(filter, noRegenerate?)` — also destroys auras/equipment on the matching permanents.
 - `DestroyAllEquipmentOnTarget(target)` — wreck the gear attached to a creature.
 - `Exile(target)` — exile target.
@@ -273,7 +274,10 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `CreateToken(name, p, t, colors?, subtypes?, keywords?, count?, tapped?)` — make N tokens. `count` accepts an
   `Int` or a `DynamicAmount` (the latter for "create X tokens" wording — e.g. Verdeloth the Ancient passes
   `count = DynamicAmount.XValue` to make X Saprolings when kicked).
-- `CreateDynamicToken(...)` — tokens whose P/T is computed.
+- `CreateDynamicToken(dynamicPower, dynamicToughness, colors?, creatureTypes, keywords?, count?, controller?, imageUri?)` —
+  tokens whose P/T is computed at resolution (e.g. Pure Reflection's X/X Reflection where X = the cast spell's mana
+  value, via `DynamicAmounts.triggeringManaValue()`). `controller` directs who gets the token (e.g.
+  `EffectTarget.PlayerRef(Player.TriggeringPlayer)` for "that player creates …"); `imageUri` sets custom token art.
 - `CreateTokenCopyOfSelf(count?, tapped?)` — token copies of source.
 - `CreateTokenCopyOfTarget(target, count?, overridePower?, overrideToughness?, tapped?, attacking?, triggeredAbilities?, addedKeywords?, addedSupertypes?, removedSupertypes?, overrideColors?, overrideSubtypes?)` —
   token copy of another permanent (or a card in any zone — the executor copies the target's `CardComponent`,
@@ -551,6 +555,7 @@ Every `TargetRequirement` carries count semantics (defaults shown):
 - `Filters.Permanent` — permanent card.
 - `Filters.NonlandPermanent` — nonland permanent.
 - `Filters.WithSubtype(subtype)` — card of a given subtype.
+- `GameObjectFilter.Multicolored` — multicolored card (two or more colors; `CardPredicate.IsMulticolored`).
 
 **Chained predicates**
 
@@ -561,6 +566,11 @@ Every `TargetRequirement` carries count semantics (defaults shown):
 - `.withChosenColor()` — `CardPredicate.HasChosenColor`: matches the color chosen during the current
   effect's resolution (read from `EffectContext.chosenColor`, set by `Effects.ChooseColorThen`). Use with
   `AggregateBattlefield(Player.Each, …)` for "for each permanent of that color" (Coalition Dragon cycle).
+- `.sharingColorWith(entity)` — `CardPredicate.SharesColorWith(entity)`: shares ≥1 (projected) color with
+  a referenced entity (e.g. `EntityReference.Triggering`). Mirror of `.sharingCreatureTypeWith(entity)`.
+  Colorless entities share no color (never match). Used by Spreading Plague ("destroy all other creatures
+  that share a color with it") — pair with `Effects.DestroyAll(filter, excludeTriggering = true)` so the
+  triggering creature itself is spared.
 - `.power(n)` / `.minPower(n)` / `.maxPower(n)` — P/T comparator.
 - `.manaValue(n)` / `.manaValueAtMost(n)` / `.manaValueAtLeast(n)` — mana-value comparator.
 - `.manaValueAtMostX()` — mana value ≤ the X chosen for the source spell/ability.
@@ -838,6 +848,17 @@ Named sugar for the common type-primitive cases; reach for `youCastSpell(...)` p
 - `YouCastSubtype(subtype)` — tribal helper: spell with matching subtype.
 - `AnySpellOrAbilityOnStack` — any object hits the stack.
 
+**Other casters.** The same shape, scoped to a different caster via the runtime
+`Player.Each` / `Player.Opponent` matching on `SpellCastEvent`. Bind the payoff to the
+caster with `EffectTarget.PlayerRef(Player.TriggeringPlayer)`.
+
+- `AnyPlayerCastsSpell` — any player (including you) casts a spell.
+- `OpponentCastsSpell` — an opponent casts a spell.
+- `anyPlayerCasts(spellFilter?, requires?)` — factory; e.g. `anyPlayerCasts(GameObjectFilter.Creature)`
+  for "whenever a player casts a creature spell" (Pure Reflection).
+- `opponentCasts(spellFilter?, requires?)` — factory; e.g. `opponentCasts(GameObjectFilter.Multicolored)`
+  for "whenever an opponent casts a multicolored spell" (Rewards of Diversity).
+
 **Factory** — `youCastSpell(spellFilter?, requires: Set<SpellCastPredicate>)`. The
 `requires` set is conjunctive — every predicate must hold for the trigger to fire.
 
@@ -902,6 +923,11 @@ Triggers.youCastSpell(
 - `TransformsToBack` — to back face.
 - `YouCycleThis` — you cycle source.
 - `AnyPlayerCycles` — anyone cycles.
+- `AnyPlayerTapsLandForMana` — whenever any player taps a land for mana. Use
+  `landTappedForMana(player, landFilter, binding)` for "an opponent"/"you" variants or a land-type
+  restriction. Fires on the manual mana-ability path only (auto-pay adds mana via the solver without
+  emitting the event). Backs the "whenever a player taps a land for mana" family (Mana Flare, Heartbeat
+  of Spring); the inline-static cards (Overabundance, Pulse) use the mana statics in §9 instead.
 - `YouCommitCrime` — MKM crime mechanic.
 - `YouGiveAGift` — Gift mechanic.
 - `Valiant` — Bloomburrow Valiant trigger.
@@ -1006,6 +1032,29 @@ staticAbility {
 - `RestrictSpellsCastPerTurn(maxPerTurn)` — the controller can't cast more than `maxPerTurn`
   spell(s) each turn. Per-controller; the most restrictive applies when several are in play.
   Already-cast spells count, even those cast before this permanent entered. (Yawgmoth's Agenda)
+
+**Tapped-for-mana mana statics** (extra mana / replaced mana when a land is tapped for mana — resolve
+inline as triggered mana abilities, off the stack per CR 605). These fire on the *manual* mana-ability
+path; automatic cost payment adds the extra/replacement *mana* via the solver but skips non-mana
+riders, matching how the engine already treats e.g. City of Brass's damage during auto-pay.
+
+- `AdditionalManaOnTap(color, amount, anyColor = false)` — aura: "Whenever enchanted land is tapped
+  for mana, its controller adds additional mana." `color = null` reads the aura's `ChosenColorComponent`;
+  `anyColor = true` makes it one mana of **any color the controller chooses** each tap (prompts on a
+  manual tap; flexible for the solver). (Elvish Guidance = fixed `{G}`; **Fertile Ground** = `anyColor`)
+- `AdditionalManaOnSourceTap(sourceFilter, color = null, amount = 1, rider = null)` — global: "Whenever
+  a `<sourceFilter>` is tapped for mana, that player adds …". `color = null` mirrors the produced color.
+  `rider` is an optional non-mana `Effect` resolved inline, controlled by the tapping player
+  (`EffectTarget.Controller` = tapper, `EffectTarget.Self` = the static's source). (Lavaleaper = basic-land
+  mirror; Badgermole Cub = `+{G}`; **Overabundance** = `GameObjectFilter.Land` mirror + `DealDamage(1,
+  Controller)` rider)
+- `ReplaceLandManaColor(filter)` — global: lands matching `filter` produce one mana of a color of their
+  controller's choice instead of their normal mana. Implemented by swapping the land's base mana effect
+  for "add one mana of any color", so the choice flows through the normal any-color machinery (manual tap
+  prompts; solver treats a matched basic as a five-color source). (**Pulse of Llanowar** =
+  `GameObjectFilter.BasicLand.youControl()`)
+- `OverrideEnchantedLandManaColor(color)` — aura: replaces the enchanted land's *own* produced color with
+  a fixed/aura-chosen `color` (vs. `ReplaceLandManaColor`'s filter-based, free-choice form). (Shimmerwilds Growth)
 
 **Alternative play / cast permissions** (let a player play or cast cards from non-hand zones)
 
@@ -1137,6 +1186,11 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
   using projected colors), takes the highest tally, and checks whether the target has any color
   in that (possibly tied) most-common set. A board with no colored permanents is `false`. Used by
   Tsabo's Assassin.
+- `ColorIsMostCommon(color)` — the self-gating sibling of the above: true when `color` is the most
+  common color among all permanents, or tied for most common (same tally rules). Board-derived
+  only — no targets/triggering/kicker — so it evaluates identically in resolution and in
+  projection, which lets it gate a `ConditionalStaticAbility`. Used by the Invasion djinn cycle
+  ("as long as [color] is the most common color among all permanents…" — Goham/Halam/Ruham/Sulam/Zanam).
 - `YouHaveCitysBlessing` — you have City's Blessing (10+ permanents).
 - `SourceIsRingBearer` — the source permanent is your Ring-bearer (CR 701.52e).
 
@@ -1233,6 +1287,8 @@ Conditions that need resolution-only facts (e.g. `TargetMatchesFilter`, `TargetS
 
 Other gates available in both contexts:
 
+- `ColorIsMostCommon(color)` — board-derived, so it gates a `ConditionalStaticAbility` directly
+  (the Invasion djinns rely on this).
 - `SourceChosenModeIs("id")` — gate on the chosen mode (Sieges / `EntersWithChoice`).
   Currently resolution-only; can be extended to projection if needed.
 
@@ -1659,8 +1715,12 @@ Card authors rarely reference these directly; they are created/updated by the ma
   `RingBearerCantBeBlockedByGreaterPowerRule`; the ≥2/≥3/≥4 triggered abilities are appended to the bearer by
   `TriggerAbilityResolver` (see `TheRingAbilities`). For card triggers/checks use `Triggers.RingTemptsYou`
   ("Whenever the Ring tempts you") and `Conditions.SourceIsRingBearer` ("if this is your Ring-bearer").
-
----
+- **Amass [subtype] N (CR 701.47)** — `Effects.Amass(count, subtype = "Orc")` (fixed) or
+  `Effects.Amass(amount, subtype)` (a `DynamicAmount`, for "amass Orcs X"). If the controller controls no Army
+  creature, a 0/0 black `[subtype]` Army token is created first (composing `CreateTokenEffect`); then they put N
+  +1/+1 counters on an Army they control (a `SelectCardsDecision` resolved by `AmassContinuation` picks which one
+  when they control several) and that Army becomes the subtype if it isn't already. The counter/subtype back half
+  lives in `AmassResolution`; counters route through `AddCountersEffect`, so placement replacements still apply.
 
 ## 20. Miscellaneous author-facing knobs
 

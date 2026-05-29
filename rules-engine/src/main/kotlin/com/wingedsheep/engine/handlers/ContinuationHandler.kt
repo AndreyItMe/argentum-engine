@@ -46,6 +46,7 @@ class ContinuationHandler(
         registerModule(CastModalContinuationResumer(services))
         registerModule(TokenContinuationResumer(services))
         registerModule(RingTemptContinuationResumer(services))
+        registerModule(AmassContinuationResumer(services))
     }
 
     /**

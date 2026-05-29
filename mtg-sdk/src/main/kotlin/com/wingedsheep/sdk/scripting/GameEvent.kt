@@ -867,6 +867,36 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
+     * When a player taps a land for mana (a land's mana ability resolves).
+     *
+     * Models the "Whenever a player taps a land for mana" family (Overabundance, Mana Flare,
+     * Pulse of Llanowar, Heartbeat of Spring). [player] restricts whose tap fires the trigger
+     * (relative to the trigger's controller — `Each` for any player, `Opponent`, `You`).
+     * [landFilter] optionally restricts which lands count (e.g. only basic lands).
+     *
+     * Fires on the manual mana-ability activation path; automatic cost payment adds mana via the
+     * solver and does not emit this event, matching how the engine handles mana-ability side
+     * effects during auto-payment.
+     */
+    @SerialName("LandTappedForMana")
+    @Serializable
+    data class LandTappedForMana(
+        val player: Player = Player.Each,
+        val landFilter: GameObjectFilter? = null
+    ) : GameEvent {
+        override val description: String = buildString {
+            append(player.description.replaceFirstChar { it.uppercase() })
+            append(" taps a ")
+            append(landFilter?.description ?: "land")
+            append(" for mana")
+        }
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = landFilter?.applyTextReplacement(replacer)
+            return if (newFilter !== landFilter) copy(landFilter = newFilter) else this
+        }
+    }
+
+    /**
      * When a permanent becomes untapped.
      * Binding SELF = "whenever this becomes untapped".
      */

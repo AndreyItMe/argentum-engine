@@ -86,6 +86,33 @@ data class ChooseManaColorContinuation(
 ) : ContinuationFrame
 
 /**
+ * One pending "additional one mana of any color" bonus from a [com.wingedsheep.sdk.scripting.AdditionalManaOnTap]
+ * aura with `anyColor = true` (Fertile Ground). [amount] is the resolved bonus size (already
+ * evaluated from the aura's dynamic amount at tap time), [controllerId] is the land controller who
+ * gets the mana and chooses the color, and [auraId] is the aura source (for events/messages).
+ */
+@Serializable
+data class AnyColorTapBonus(
+    val auraId: EntityId,
+    val controllerId: EntityId,
+    val amount: Int
+)
+
+/**
+ * Resume after the controller picks the color for an "additional one mana of any color" bonus that
+ * fires when a land they control is tapped for mana (Fertile Ground). These bonuses resolve as
+ * triggered mana abilities (off-stack) but still require a per-tap color choice; this continuation
+ * adds the chosen-color mana for [current], then drives the [remaining] bonuses (which may pause
+ * again for their own color choice).
+ */
+@Serializable
+data class ChooseAnyColorTapBonusContinuation(
+    override val decisionId: String,
+    val current: AnyColorTapBonus,
+    val remaining: List<AnyColorTapBonus>
+) : ContinuationFrame
+
+/**
  * Resume after a player chooses a color to store on a permanent.
  */
 @Serializable

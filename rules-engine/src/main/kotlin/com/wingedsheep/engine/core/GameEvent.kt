@@ -484,6 +484,22 @@ data class TappedEvent(
 ) : GameEvent
 
 /**
+ * A player tapped a land for mana (a land's mana ability resolved).
+ *
+ * Drives the "Whenever a player taps a land for mana" trigger family
+ * ([com.wingedsheep.sdk.scripting.GameEvent.LandTappedForMana]). Emitted only on the manual
+ * mana-ability activation path; automatic cost payment adds mana via the solver without emitting
+ * this event.
+ */
+@Serializable
+@SerialName("LandTappedForManaEvent")
+data class LandTappedForManaEvent(
+    val tapperId: EntityId,
+    val landId: EntityId,
+    val landName: String
+) : GameEvent
+
+/**
  * A permanent was untapped.
  */
 @Serializable

@@ -51,7 +51,7 @@ val RithTheAwakener = card("Rith, the Awakener") {
                     toughness = 1,
                     colors = setOf(Color.GREEN),
                     creatureTypes = setOf("Saproling"),
-                    imageUri = "https://cards.scryfall.io/normal/front/5/3/5371de1b-db33-4db4-a518-e35c71aa72b7.jpg?1562702067"
+                    imageUri = "/images/tokens/inv-saproling.jpeg"
                 ),
                 prompt = "Choose a color"
             )

@@ -65,10 +65,11 @@ object GroupPatterns {
     fun destroyAllPipeline(
         filter: GameObjectFilter,
         noRegenerate: Boolean = false,
-        storeDestroyedAs: String? = null
+        storeDestroyedAs: String? = null,
+        excludeTriggering: Boolean = false
     ): CompositeEffect = CompositeEffect(listOf(
         GatherCardsEffect(
-            source = CardSource.BattlefieldMatching(filter = filter),
+            source = CardSource.BattlefieldMatching(filter = filter, excludeTriggering = excludeTriggering),
             storeAs = "destroyAll_gathered"
         ),
         MoveCollectionEffect(

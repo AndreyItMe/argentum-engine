@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.conditions.Condition
+import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
@@ -53,16 +54,25 @@ data class ConditionalStaticAbility(
  *
  * @property color The color of additional mana to produce. When `null`, the color is
  *   read from the aura's `ChosenColorComponent` at resolution (e.g., Shimmerwilds Growth).
- *   If the source has no chosen color, no mana is added (per Oracle ruling).
+ *   If the source has no chosen color, no mana is added (per Oracle ruling). Ignored when
+ *   [anyColor] is true.
  * @property amount How much additional mana to produce (evaluated dynamically)
+ * @property anyColor When true, the bonus is mana of any color the controller chooses
+ *   (a real choice made each time the land is tapped) rather than a fixed/aura-chosen color.
+ *   Used by Fertile Ground ("adds an additional one mana of any color"). On a manual tap the
+ *   controller is prompted for the color; when auto-tapping for a cost the solver treats the
+ *   bonus as flexible and supplies whatever color the cost needs.
  */
 @SerialName("AdditionalManaOnTap")
 @Serializable
 data class AdditionalManaOnTap(
     val color: Color? = null,
-    val amount: DynamicAmount
+    val amount: DynamicAmount,
+    val anyColor: Boolean = false
 ) : StaticAbility {
-    override val description: String = "Whenever enchanted land is tapped for mana, its controller adds additional mana"
+    override val description: String =
+        if (anyColor) "Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color"
+        else "Whenever enchanted land is tapped for mana, its controller adds additional mana"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
         val newAmount = amount.applyTextReplacement(replacer)
         return if (newAmount !== amount) copy(amount = newAmount) else this
@@ -127,13 +137,22 @@ data class OverrideEnchantedLandManaColor(
  * @property color The bonus mana color. `null` means mirror the color the source produced
  *   (used by Lavaleaper). When set, the bonus is always that color regardless of the source.
  * @property amount How many additional mana per tap (default 1).
+ * @property rider An optional non-mana side effect resolved inline right after the bonus mana
+ *   is added, controlled by the tapping player (so `EffectTarget.Controller` is the tapper and
+ *   `EffectTarget.Self` is this static's source). Used by Overabundance ("…and this enchantment
+ *   deals 1 damage to the player"). Like the bonus mana itself this is a triggered mana ability
+ *   that resolves immediately without the stack, so the rider must not require targeting input.
+ *   The rider runs only on the manual mana-ability path; auto-tapping for a cost adds the mirror
+ *   mana via the solver but skips the rider, matching how the engine already treats mana-ability
+ *   side effects (e.g. City of Brass's damage) during automatic payment.
  */
 @SerialName("AdditionalManaOnSourceTap")
 @Serializable
 data class AdditionalManaOnSourceTap(
     val sourceFilter: GameObjectFilter,
     val color: Color? = null,
-    val amount: DynamicAmount = DynamicAmount.Fixed(1)
+    val amount: DynamicAmount = DynamicAmount.Fixed(1),
+    val rider: Effect? = null
 ) : StaticAbility {
     override val description: String = buildString {
         append("Whenever a ")
@@ -144,13 +163,48 @@ data class AdditionalManaOnSourceTap(
         } else {
             append("add an additional {${color.symbol}}.")
         }
+        if (rider != null) {
+            append(" ")
+            append(rider.description)
+        }
     }
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
         val newFilter = sourceFilter.applyTextReplacement(replacer)
         val newAmount = amount.applyTextReplacement(replacer)
-        return if (newFilter !== sourceFilter || newAmount !== amount) {
-            copy(sourceFilter = newFilter, amount = newAmount)
+        val newRider = rider?.applyTextReplacement(replacer)
+        return if (newFilter !== sourceFilter || newAmount !== amount || newRider !== rider) {
+            copy(sourceFilter = newFilter, amount = newAmount, rider = newRider)
         } else this
+    }
+}
+
+/**
+ * Lands matching [filter] produce one mana of a color of their controller's choice instead of
+ * their normal mana ("instead of any other type"). The land still taps as a mana ability; only
+ * the produced mana's color is replaced, and the controller chooses the color each time.
+ *
+ * Used by Pulse of Llanowar ("If a basic land you control is tapped for mana, it produces mana of
+ * a color of your choice instead of any other type") with `filter = GameObjectFilter.BasicLand.youControl()`.
+ *
+ * This is a global mana-production replacement: it is checked whenever a land's mana ability
+ * resolves (manual taps) and is honored by the [com.wingedsheep] ManaSolver when auto-tapping for
+ * costs (a matched land is treated as a five-color source). Unlike [OverrideEnchantedLandManaColor]
+ * (a per-aura fixed-color override) this is filter-based and the color is a free choice.
+ *
+ * @property filter Which lands have their produced mana color replaced (matched via projected
+ *   state from the land controller's perspective, so `youControl()` means "you, the controller of
+ *   this static, control the land").
+ */
+@SerialName("ReplaceLandManaColor")
+@Serializable
+data class ReplaceLandManaColor(
+    val filter: GameObjectFilter
+) : StaticAbility {
+    override val description: String =
+        "If a ${filter.description} is tapped for mana, it produces mana of a color of its controller's choice instead of any other type"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
     }
 }
 

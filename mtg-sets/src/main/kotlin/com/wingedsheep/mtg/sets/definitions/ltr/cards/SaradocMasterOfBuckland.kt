@@ -42,7 +42,8 @@ val SaradocMasterOfBuckland = card("Saradoc, Master of Buckland") {
             power = 1,
             toughness = 1,
             colors = setOf(Color.WHITE),
-            creatureTypes = setOf("Halfling")
+            creatureTypes = setOf("Halfling"),
+            imageUri = "https://cards.scryfall.io/normal/front/b/b/bbd9ff58-4d38-4d34-9dfc-6f788830297e.jpg?1777658851"
         )
     }
 

@@ -17,6 +17,7 @@ import com.wingedsheep.engine.core.DamageDealtEvent
 import com.wingedsheep.engine.core.LifeChangedEvent
 import com.wingedsheep.engine.core.SpellCastEvent
 import com.wingedsheep.engine.state.components.player.ManaSpentOnSpellsThisTurnComponent
+import com.wingedsheep.engine.core.LandTappedForManaEvent
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.TransformedEvent
 import com.wingedsheep.engine.core.TurnFaceUpEvent
@@ -223,6 +224,22 @@ class TriggerMatcher(
             }
             is GameEvent.UntapEvent -> {
                 event is UntappedEvent && (binding != TriggerBinding.SELF || event.entityId == sourceId)
+            }
+            is GameEvent.LandTappedForMana -> {
+                if (event !is LandTappedForManaEvent) return false
+                if (binding == TriggerBinding.SELF && event.landId != sourceId) return false
+                if (!matchesPlayer(trigger.player, event.tapperId, controllerId)) return false
+                val filter = trigger.landFilter
+                if (filter != null) {
+                    val predicateEvaluator = PredicateEvaluator()
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId
+                    )
+                    predicateEvaluator.matches(
+                        state, state.projectedState, event.landId, filter, predicateContext
+                    )
+                } else true
             }
             is GameEvent.LifeGainEvent -> {
                 event is LifeChangedEvent &&

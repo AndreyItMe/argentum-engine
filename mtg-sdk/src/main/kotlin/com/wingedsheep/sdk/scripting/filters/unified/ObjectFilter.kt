@@ -92,6 +92,7 @@ data class GameObjectFilter(
         val Noncreature = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsNoncreature))
         val Nonenchantment = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsNonenchantment))
         val Token = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsToken))
+        val Multicolored = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsMulticolored))
 
         // Combined type filters
         val InstantOrSorcery = GameObjectFilter(
@@ -334,6 +335,11 @@ data class GameObjectFilter(
     /** Must share a creature type with the referenced entity */
     fun sharingCreatureTypeWith(entity: EntityReference) = copy(
         cardPredicates = cardPredicates + CardPredicate.SharesCreatureTypeWith(entity)
+    )
+
+    /** Must share a color with the referenced entity */
+    fun sharingColorWith(entity: EntityReference) = copy(
+        cardPredicates = cardPredicates + CardPredicate.SharesColorWith(entity)
     )
 
     // =============================================================================

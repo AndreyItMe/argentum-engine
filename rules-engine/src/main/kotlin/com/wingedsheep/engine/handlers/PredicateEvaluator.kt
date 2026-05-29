@@ -380,6 +380,16 @@ class PredicateEvaluator {
                 }
             }
 
+            is CardPredicate.SharesColorWith -> {
+                val referenceId = resolveEntityReference(predicate.entity, context) ?: return false
+                val referenceColors = projected.getColors(referenceId).ifEmpty {
+                    state.getEntity(referenceId)?.get<CardComponent>()?.colors?.map { it.name }?.toSet()
+                        ?: emptySet()
+                }
+                if (referenceColors.isEmpty()) return false
+                colors.any { it in referenceColors }
+            }
+
             // Context-relative predicates (pipeline variable references)
             is CardPredicate.HasSubtypeFromVariable -> {
                 val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
@@ -746,7 +756,8 @@ class PredicateEvaluator {
             CardPredicate.NotOfSourceChosenType, CardPredicate.SharesCreatureTypeWithSource,
             CardPredicate.SharesCreatureTypeWithTriggeringEntity, CardPredicate.HasChosenSubtype,
             CardPredicate.HasChosenColor,
-            is CardPredicate.SharesCreatureTypeWith -> false
+            is CardPredicate.SharesCreatureTypeWith,
+            is CardPredicate.SharesColorWith -> false
             is CardPredicate.HasSubtypeFromVariable, is CardPredicate.HasSubtypeInStoredList,
             is CardPredicate.HasSubtypeInEachStoredGroup -> false
 

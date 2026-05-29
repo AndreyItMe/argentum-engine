@@ -24,7 +24,9 @@ Verify status anytime with: `scripts/card-status --set LTR` (and `--list --set L
   unlocks ~50 missing cards (the largest bucket; Amass is the next at ~24). Building the
   substrate first (one commit), then one card per commit. See
   [`MagicCompRules_20260417.pdf`] rule 701.52 for the four cumulative emblem abilities.
-- ⬜ **Amass Orcs** — next mechanic (~24 cards).
+- 🚧 **Amass Orcs** — substrate done on branch `ltr-amass` (CR 701.47: `Effects.Amass`,
+  `AmassExecutor` + `AmassContinuation`, composing `CreateToken`/`AddCounters`/`AddSubtype`).
+  First card attached: **Dunland Crebain**. ~23 Amass cards remain to attach.
 
 ## Data sources — do NOT hit the network
 

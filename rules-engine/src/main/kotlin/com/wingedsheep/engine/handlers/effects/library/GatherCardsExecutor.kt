@@ -120,9 +120,14 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 val predicateContext = PredicateContext.fromEffectContext(context).let {
                     if (resolvedPlayerId != null) it.copy(controllerId = resolvedPlayerId) else it
                 }
-                val afterExclusion = BattlefieldFilterUtils.findMatchingOnBattlefield(
+                val matched = BattlefieldFilterUtils.findMatchingOnBattlefield(
                     state, baseFilter, predicateContext, excludeSelfId
                 )
+                val afterExclusion = if (source.excludeTriggering) {
+                    matched.filter { it != context.triggeringEntityId }
+                } else {
+                    matched
+                }
                 if (source.includeAttachments) {
                     val withAttachments = afterExclusion.toMutableList()
                     for (entityId in afterExclusion) {

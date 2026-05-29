@@ -49,7 +49,8 @@ val AndurilFlameOfTheWest = card("Andúril, Flame of the West") {
                 creatureTypes = setOf("Spirit"),
                 keywords = setOf(Keyword.FLYING),
                 tapped = true,
-                attacking = true
+                attacking = true,
+                imageUri = "https://cards.scryfall.io/normal/front/b/5/b53ee2f0-afbd-491f-b3b8-c9997f175199.jpg?1699974536"
             ),
             elseEffect = CreateTokenEffect(
                 count = DynamicAmount.Fixed(2),
@@ -58,7 +59,8 @@ val AndurilFlameOfTheWest = card("Andúril, Flame of the West") {
                 colors = setOf(Color.WHITE),
                 creatureTypes = setOf("Spirit"),
                 keywords = setOf(Keyword.FLYING),
-                tapped = true
+                tapped = true,
+                imageUri = "https://cards.scryfall.io/normal/front/b/5/b53ee2f0-afbd-491f-b3b8-c9997f175199.jpg?1699974536"
             )
         )
     }

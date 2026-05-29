@@ -75,6 +75,12 @@ data class ManaSource(
     val bonusManaPerTap: Int = 0,
     /** Color of the bonus mana */
     val bonusManaColor: Color? = null,
+    /**
+     * When true, the bonus mana ([bonusManaPerTap]) is "one mana of any color" (Fertile Ground) —
+     * the solver may spend it toward any colored or generic cost. [bonusManaColor] then only acts
+     * as the fallback color for any bonus left unspent.
+     */
+    val bonusManaIsAnyColor: Boolean = false,
     /** Mana spending restriction (e.g., "only for instant/sorcery"). Null = unrestricted. */
     val restriction: ManaRestriction? = null,
     /**
@@ -182,6 +188,12 @@ data class BonusManaEntry(
     val color: Color,
     val amount: Int = 1,
     val restriction: ManaRestriction? = null,
+    /**
+     * When true this bonus mana may be spent toward a cost of any color (Fertile Ground's
+     * "one mana of any color"). [color] then only acts as the fallback if the bonus is left
+     * unspent and lands in the pool.
+     */
+    val anyColor: Boolean = false,
 )
 
 /**
@@ -305,8 +317,17 @@ class ManaSolver(
             }
             // Collect bonus mana from auras attached to this source (no restriction —
             // the aura grants extra mana on top of the source's printed ability).
-            if (source.bonusManaPerTap > 0 && source.bonusManaColor != null) {
-                bonusManaPool.add(BonusManaEntry(source.bonusManaColor, source.bonusManaPerTap, null))
+            if (source.bonusManaPerTap > 0 && (source.bonusManaColor != null || source.bonusManaIsAnyColor)) {
+                bonusManaPool.add(
+                    BonusManaEntry(
+                        // Fertile Ground's any-color bonus has no fixed color; default to white as
+                        // the fallback for any portion left unspent (anyColor lets it pay any cost).
+                        color = source.bonusManaColor ?: Color.WHITE,
+                        amount = source.bonusManaPerTap,
+                        restriction = null,
+                        anyColor = source.bonusManaIsAnyColor,
+                    )
+                )
             }
         }
 
@@ -317,7 +338,11 @@ class ManaSolver(
         // current solve any order is correct, and the choice affects only which
         // restrictions land back in [ManaSolution.remainingBonusMana] for the caller.
         fun spendBonusMana(color: Color): Boolean {
+            // An any-color bonus entry (Fertile Ground) can pay a cost of any color; prefer an exact
+            // color match first so fixed-color bonuses aren't wasted on flexible demand.
             val idx = bonusManaPool.indexOfFirst { it.color == color && it.amount > 0 }
+                .takeIf { it >= 0 }
+                ?: bonusManaPool.indexOfFirst { it.anyColor && it.amount > 0 }
             if (idx < 0) return false
             val entry = bonusManaPool[idx]
             bonusManaPool[idx] = entry.copy(amount = entry.amount - 1)
@@ -676,8 +701,14 @@ class ManaSolver(
                 if (subtypeColors.isNotEmpty()) {
                     // An attached aura may override the produced mana color
                     // (e.g., Shimmerwilds Growth on a Mountain with Blue chosen → produces {U}).
+                    // A filter-based replacement (Pulse of Llanowar) makes a matched land produce
+                    // one mana of a color of its controller's choice — i.e. any of the five.
                     val overrideColor = findEnchantedLandManaColorOverride(state, entityId)
-                    val effectiveColors = if (overrideColor != null) setOf(overrideColor) else subtypeColors
+                    val effectiveColors = when {
+                        landMatchesManaColorReplacement(state, entityId) -> Color.entries.toSet()
+                        overrideColor != null -> setOf(overrideColor)
+                        else -> subtypeColors
+                    }
                     return@mapNotNull ManaSource(
                         entityId = entityId,
                         name = card.name,
@@ -1151,6 +1182,29 @@ class ManaSolver(
     }
 
     /**
+     * True if [landId] is subject to a [com.wingedsheep.sdk.scripting.ReplaceLandManaColor] static
+     * (Pulse of Llanowar) — its produced mana becomes one mana of a color of its controller's
+     * choice, so for solving it is treated as a five-color source. Mirrors
+     * `ActivateAbilityHandler.landMatchesManaColorReplacement`.
+     */
+    private fun landMatchesManaColorReplacement(state: GameState, landId: EntityId): Boolean {
+        for (entityId in state.getBattlefield()) {
+            val container = state.getEntity(entityId) ?: continue
+            val card = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            for (staticAbility in cardDef.script.staticAbilities) {
+                val replacement = staticAbility as? com.wingedsheep.sdk.scripting.ReplaceLandManaColor ?: continue
+                val staticController = state.projectedState.getController(entityId) ?: continue
+                val filterContext = PredicateContext(controllerId = staticController, sourceId = entityId)
+                if (predicateEvaluator.matches(state, state.projectedState, landId, replacement.filter, filterContext)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    /**
      * Checks if a mana source has auras attached with AdditionalManaOnTap
      * and augments the source with bonus mana information.
      */
@@ -1161,6 +1215,7 @@ class ManaSolver(
     ): ManaSource {
         var totalBonus = 0
         var bonusColor: Color? = null
+        var anyColorBonus = false
 
         for (entityId in state.getBattlefield()) {
             val container = state.getEntity(entityId) ?: continue
@@ -1187,19 +1242,25 @@ class ManaSolver(
 
                 val amount = dynamicAmountEvaluator.evaluate(state, additionalMana.amount, context)
                 if (amount > 0) {
-                    // Resolve the color: null means "read the aura's chosen color".
-                    // If no color is chosen (shouldn't happen in practice), skip.
-                    val manaColor = additionalMana.color
-                        ?: container.get<ChosenColorComponent>()?.color
-                        ?: continue
-                    totalBonus += amount
-                    bonusColor = manaColor
+                    if (additionalMana.anyColor) {
+                        // Fertile Ground: one mana of any color — treat as flexible for the solve.
+                        totalBonus += amount
+                        anyColorBonus = true
+                    } else {
+                        // Resolve the color: null means "read the aura's chosen color".
+                        // If no color is chosen (shouldn't happen in practice), skip.
+                        val manaColor = additionalMana.color
+                            ?: container.get<ChosenColorComponent>()?.color
+                            ?: continue
+                        totalBonus += amount
+                        bonusColor = manaColor
+                    }
                 }
             }
         }
 
         return if (totalBonus > 0) {
-            source.copy(bonusManaPerTap = totalBonus, bonusManaColor = bonusColor)
+            source.copy(bonusManaPerTap = totalBonus, bonusManaColor = bonusColor, bonusManaIsAnyColor = anyColorBonus)
         } else {
             source
         }

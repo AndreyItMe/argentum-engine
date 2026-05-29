@@ -523,9 +523,10 @@ object EffectPatterns {
     fun destroyAllPipeline(
         filter: GameObjectFilter,
         noRegenerate: Boolean = false,
-        storeDestroyedAs: String? = null
+        storeDestroyedAs: String? = null,
+        excludeTriggering: Boolean = false
     ): CompositeEffect =
-        GroupPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs)
+        GroupPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs, excludeTriggering)
 
     fun destroyAllAndAttachedPipeline(filter: GameObjectFilter, noRegenerate: Boolean = false): CompositeEffect =
         GroupPatterns.destroyAllAndAttachedPipeline(filter, noRegenerate)

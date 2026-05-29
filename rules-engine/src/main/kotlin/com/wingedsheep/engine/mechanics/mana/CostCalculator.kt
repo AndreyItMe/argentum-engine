@@ -884,6 +884,7 @@ class CostCalculator(
                         chosenType in Subtype.ALL_CREATURE_TYPES)
             }
             is CardPredicate.SharesCreatureTypeWith -> true
+            is CardPredicate.SharesColorWith -> true
 
             is CardPredicate.HasSubtypeFromVariable -> true
             is CardPredicate.HasSubtypeInStoredList -> true

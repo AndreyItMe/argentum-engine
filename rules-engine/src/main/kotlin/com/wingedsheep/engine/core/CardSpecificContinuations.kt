@@ -137,6 +137,29 @@ data class RingTemptContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume "amass [subtype] N" after the controller chooses which Army to put the counters on
+ * (CR 701.47a). Only reached when the controller has more than one Army; the chosen Army receives
+ * [amount] +1/+1 counters and becomes [subtype] if it isn't already.
+ *
+ * @property controllerId The player amassing (also the chooser).
+ * @property opponentId That player's opponent (for the resolution context).
+ * @property subtype The Army subtype being amassed (e.g., "Orc").
+ * @property amount Number of +1/+1 counters to place.
+ * @property sourceId The amassing source (for context/display).
+ * @property candidates The Armies offered at decision time, used to validate the response.
+ */
+@Serializable
+data class AmassContinuation(
+    override val decisionId: String,
+    val controllerId: EntityId,
+    val opponentId: EntityId?,
+    val subtype: String,
+    val amount: Int,
+    val sourceId: EntityId?,
+    val candidates: List<EntityId>
+) : ContinuationFrame
+
+/**
  * Resume creating a copy of a triggered ability after the player selects new targets.
  *
  * Used by Kirol-style effects ("Copy target triggered ability you control. You may choose

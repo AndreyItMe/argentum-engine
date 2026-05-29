@@ -467,6 +467,7 @@ internal class AffectsFilterResolver {
         CardPredicate.SharesCreatureTypeWithTriggeringEntity,
         CardPredicate.HasChosenSubtype,
         is CardPredicate.SharesCreatureTypeWith,
+        is CardPredicate.SharesColorWith,
         is CardPredicate.HasSubtypeFromVariable,
         is CardPredicate.HasSubtypeInStoredList,
         is CardPredicate.HasSubtypeInEachStoredGroup -> false

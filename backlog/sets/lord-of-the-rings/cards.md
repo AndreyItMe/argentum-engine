@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 150 / 291
+**Implemented:** 163 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -74,7 +74,7 @@ starter-deck/special cards and basic lands.
 - [ ] Borne Upon a Wind
 - [x] Captain of Umbar
 - [ ] Council's Deliberation
-- [ ] Deceive the Messenger
+- [x] Deceive the Messenger
 - [ ] Dreadful as the Storm
 - [ ] Elrond, Lord of Rivendell
 - [ ] Gandalf, Friend of the Shire
@@ -95,13 +95,13 @@ starter-deck/special cards and basic lands.
 - [ ] Press the Enemy
 - [ ] Rangers of Ithilien
 - [ ] Saruman the White
-- [ ] Saruman's Trickery
+- [x] Saruman's Trickery
 - [ ] Scroll of Isildur
 - [ ] Soothing of Sméagol
 - [x] Stern Scolding
 - [x] Storm of Saruman
 - [ ] Surrounded by Orcs
-- [ ] Treason of Isengard
+- [x] Treason of Isengard
 - [x] The Watcher in the Water
 - [x] Willow-Wind
 
@@ -112,21 +112,21 @@ starter-deck/special cards and basic lands.
 - [ ] Call of the Ring
 - [x] Cirith Ungol Patrol
 - [x] Claim the Precious
-- [ ] Dunland Crebain
-- [ ] Easterling Vanguard
+- [x] Dunland Crebain
+- [x] Easterling Vanguard
 - [ ] Gollum, Patient Plotter
 - [ ] Gollum's Bite
 - [x] Gorbag of Minas Morgul
-- [ ] Gothmog, Morgul Lieutenant
+- [x] Gothmog, Morgul Lieutenant
 - [ ] Gríma Wormtongue
 - [ ] Grond, the Gatebreaker
 - [x] Haunt of the Dead Marshes
 - [x] Isildur's Fateful Strike
 - [x] Lash of the Balrog
 - [ ] Lobelia Sackville-Baggins
-- [ ] March from the Black Gate
+- [x] March from the Black Gate
 - [x] Mirkwood Bats
-- [ ] Mordor Muster
+- [x] Mordor Muster
 - [x] Mordor Trebuchet
 - [x] Morgul-Knife Wound
 - [ ] Nasty End
@@ -134,13 +134,13 @@ starter-deck/special cards and basic lands.
 - [x] Oath of the Grey Host
 - [ ] One Ring to Rule Them All
 - [ ] Orcish Bowmasters
-- [ ] Orcish Medicine
+- [x] Orcish Medicine
 - [x] Sam's Desperate Rescue
 - [ ] Sauron, the Necromancer
 - [x] Shadow of the Enemy
 - [x] Shelob's Ambush
 - [x] Snarling Warg
-- [ ] The Torment of Gollum
+- [x] The Torment of Gollum
 - [ ] Troll of Khazad-dûm
 - [x] Uruk-hai Berserker
 - [ ] Voracious Fell Beast
@@ -149,7 +149,7 @@ starter-deck/special cards and basic lands.
 ### Red
 
 - [ ] Battle-Scarred Goblin
-- [ ] Book of Mazarbul
+- [x] Book of Mazarbul
 - [ ] Breaking of the Fellowship
 - [x] Cast into the Fire
 - [ ] Display of Power
@@ -183,9 +183,9 @@ starter-deck/special cards and basic lands.
 - [x] Rush the Room
 - [x] Smite the Deathless
 - [x] Spiteful Banditry
-- [ ] Swarming of Moria
+- [x] Swarming of Moria
 - [ ] There and Back Again
-- [ ] Warbeast of Gorgoroth
+- [x] Warbeast of Gorgoroth
 
 ### Green
 

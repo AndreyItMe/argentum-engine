@@ -60,7 +60,8 @@ val TheWatcherInTheWater = card("The Watcher in the Water") {
             power = 1,
             toughness = 1,
             colors = setOf(Color.BLUE),
-            creatureTypes = setOf("Tentacle")
+            creatureTypes = setOf("Tentacle"),
+            imageUri = "https://cards.scryfall.io/normal/front/e/e/eea4e628-4ae2-4e33-a3b6-176ed87c1840.jpg?1686336819"
         )
     }
 
