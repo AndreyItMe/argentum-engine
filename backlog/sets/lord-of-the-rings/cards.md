@@ -235,7 +235,7 @@ starter-deck/special cards and basic lands.
 - [x] Arwen, Mortal Queen
 - [ ] Arwen Undómiel
 - [ ] The Balrog, Durin's Bane
-- [ ] Bilbo, Retired Burglar
+- [x] Bilbo, Retired Burglar
 - [x] Butterbur, Bree Innkeeper
 - [x] Denethor, Ruling Steward
 - [x] Doors of Durin
