@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 229 / 261
+**Implemented:** 230 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -182,7 +182,7 @@
 - [x] Rust Harvester
 - [x] Sacred Foundry
 - [x] Sami's Curiosity
-- [ ] Sami, Ship's Engineer
+- [x] Sami, Ship's Engineer
 - [ ] Sami, Wildcat Captain
 - [x] Scour for Scrap
 - [x] Scout for Survivors
