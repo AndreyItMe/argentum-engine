@@ -238,6 +238,16 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.ManaValueAtMostEntityManaSpent(reference)
     )
 
+    /** Mana value is even (zero is even). */
+    fun manaValueIsEven() = copy(
+        cardPredicates = cardPredicates + CardPredicate.ManaValueIsEven
+    )
+
+    /** Mana value is odd. */
+    fun manaValueIsOdd() = copy(
+        cardPredicates = cardPredicates + CardPredicate.ManaValueIsOdd
+    )
+
     /** Power equals */
     fun power(value: Int) = copy(
         cardPredicates = cardPredicates + CardPredicate.PowerEquals(value)

@@ -362,6 +362,20 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
     }
 
+    @SerialName("ManaValueIsEven")
+    @Serializable
+    data object ManaValueIsEven : CardPredicate {
+        override val description: String = "with even mana value"
+        override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
+    }
+
+    @SerialName("ManaValueIsOdd")
+    @Serializable
+    data object ManaValueIsOdd : CardPredicate {
+        override val description: String = "with odd mana value"
+        override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
+    }
+
     // =============================================================================
     // Power/Toughness Predicates
     // =============================================================================

@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 235 / 261
+**Implemented:** 236 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -150,7 +150,7 @@
 - [x] Monoist Sentry
 - [ ] Moonlit Meditation
 - [x] Mouth of the Storm
-- [ ] Mutinous Massacre
+- [x] Mutinous Massacre
 - [x] Nanoform Sentinel
 - [x] Nebula Dragon
 - [x] Nova Hellkite

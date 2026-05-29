@@ -567,6 +567,14 @@ class TriggerMatcher(
                 val cmc = if (isFaceDown) 0 else cardComponent.manaValue
                 cmc == predicate.value
             }
+            com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueIsEven -> {
+                val cmc = if (isFaceDown) 0 else cardComponent.manaValue
+                cmc % 2 == 0
+            }
+            com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueIsOdd -> {
+                val cmc = if (isFaceDown) 0 else cardComponent.manaValue
+                cmc % 2 != 0
+            }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.PowerAtLeast -> {
                 val power = if (isFaceDown) 2
                     else lastKnownPower ?: projected.getPower(entityId) ?: cardComponent.baseStats?.basePower ?: 0

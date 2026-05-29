@@ -616,6 +616,8 @@ Every `TargetRequirement` carries count semantics (defaults shown):
   `CastRecordComponent` snapshot once it has resolved onto the battlefield (0 if it was never cast).
   Used by Edge of Eternities warp payoffs like Astelli Reclaimer ("…mana value X or less…, where X is the
   amount of mana spent to cast this creature") — X is 5 for `{3}{W}{W}`, 3 for warp `{2}{W}`, 0 for free.
+- `.manaValueIsOdd()` / `.manaValueIsEven()` — mana-value parity (zero is even). Pair with modal
+  spells whose modes ask the caster to choose a parity (e.g. *Mutinous Massacre*).
 - `.tapped()` / `.untapped()` — tap state.
 - `.nontoken()` / `.token()` — token vs printed.
 - `.faceDown()` — face-down state.

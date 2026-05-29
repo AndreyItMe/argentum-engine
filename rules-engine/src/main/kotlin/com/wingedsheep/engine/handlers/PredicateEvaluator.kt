@@ -273,6 +273,14 @@ class PredicateEvaluator {
                 val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
                 cmc <= manaSpent
             }
+            CardPredicate.ManaValueIsEven -> {
+                val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
+                cmc % 2 == 0
+            }
+            CardPredicate.ManaValueIsOdd -> {
+                val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
+                cmc % 2 != 0
+            }
 
             // Power/toughness predicates - use projected P/T
             is CardPredicate.PowerEquals -> {
@@ -762,6 +770,8 @@ class PredicateEvaluator {
             // Entity-relative — no entity context for cast records
             is CardPredicate.ManaValueAtMostEntity -> false
             is CardPredicate.ManaValueAtMostEntityManaSpent -> false
+            CardPredicate.ManaValueIsEven -> record.manaValue % 2 == 0
+            CardPredicate.ManaValueIsOdd -> record.manaValue % 2 != 0
 
             // Power/toughness — not meaningful for cast records
             is CardPredicate.PowerEquals, is CardPredicate.PowerAtMost, is CardPredicate.PowerAtLeast,
