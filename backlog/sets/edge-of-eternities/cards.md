@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 223 / 261
+**Implemented:** 224 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -208,7 +208,7 @@
 - [x] Starfield Vocalist
 - [x] Starfighter Pilot
 - [x] Starport Security
-- [ ] Starwinder
+- [x] Starwinder
 - [ ] Station Monitor
 - [x] Steelswarm Operator
 - [x] Stomping Ground
