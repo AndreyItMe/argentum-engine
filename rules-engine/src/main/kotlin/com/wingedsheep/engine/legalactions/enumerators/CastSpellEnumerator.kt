@@ -50,6 +50,9 @@ class CastSpellEnumerator : ActionEnumerator {
             // Skip all spells if player can't cast spells this turn
             if (context.cantCastSpells) continue
 
+            // Mana Maze: can't cast a spell sharing a color with the most recently cast spell this turn
+            if (context.castPermissionUtils.sharesColorWithMostRecentCast(state, cardId)) continue
+
             // Look up card definition for target requirements and cast restrictions
             val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
 

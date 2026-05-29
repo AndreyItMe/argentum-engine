@@ -670,22 +670,24 @@ was the precedent for a projection-time, board-derived keyword grant.
 
 ---
 
-### #18 — Color-relational cast restriction · Mana Maze
+### #18 — Color-relational cast restriction · Mana Maze ✅ DONE
 
-**What exists.** `CastRestriction` is timing/phase only and is *per-spell-definition*;
-`spellsCastThisTurnByPlayer` records casts but there's no "most recently cast spell" color check, and
-Mana Maze restricts **all** spells globally.
-
-**Plan.**
-1. Track the most recent cast: add `lastCastSpellColors: Set<Color>?` to `GameState`, updated on every
-   `SpellCastEvent`.
-2. Model Mana Maze as a `StaticAbility.CantCastSpellsSharingColorWithLastCast` consulted by
-   `CastPermissionUtils.canCastSpell()` — reject a candidate that shares a color with
-   `lastCastSpellColors`. This is a global continuous restriction (correct for Mana Maze), not a
-   per-card cast restriction.
-
-**Leverage.** Narrow (one card), but `lastCastSpellColors` tracking is cheap and the static-restriction
-hook is reusable for other "players can't cast…" effects. Medium effort.
+> **Implemented (primitive + card).** New SDK `data object CantCastSpellsSharingColorWithLastCast`
+> (global static ability) backed by `GameState.lastCastSpellColors: Set<Color>?` — the colors of the
+> spell most recently cast this turn, written in `CastSpellHandler` alongside the existing
+> `spellsCastThisTurnByPlayer` record and cleared each turn in `TurnManager.startTurn()`. The check
+> lives in `CastPermissionUtils.sharesColorWithMostRecentCast(state, spellCardId)` (true only when some
+> battlefield permanent has the static, a colored spell was cast earlier this turn, and the candidate's
+> colors overlap that set) and is enforced both authoritatively in `CastSpellHandler.validate` and in
+> the hand-cast `CastSpellEnumerator` so legal actions stay correct. Never blocks the first spell of the
+> turn; a colorless spell shares no color (always castable) and casting one lifts the restriction. **Mana
+> Maze** (`{1}{U}` Enchantment) authored in `definitions/inv/cards/ManaMaze.kt`; covered by
+> `ManaMazeScenarioTest` (first-spell, same-color block, differently-colored allow, colorless lift).
+>
+> **Scoping note:** the restriction reads the candidate's base `CardComponent.colors` (matching how
+> `lastCastSpellColors` is recorded). Color-changing a card in hand is not a real concern; a recolored
+> *spell on the stack* still records its base colors as "most recently cast", which is the practical
+> universe.
 
 ---
 
@@ -760,4 +762,4 @@ filter.
 9. Scope additions: protection supertype (#13 ✅), dynamic-color protection (#15 ✅), chosen-type
    landwalk (#14 ✅), discard-at-random cost (#9 ✅) — small, independent.
 10. Bespoke / heavier: stack color-change (#11 ✅), life auction (#16 ✅), text-changing (#17 ✅),
-    Mana Maze restriction (#18), reveal-and-compare (#19).
+    Mana Maze restriction (#18 ✅), reveal-and-compare (#19).

@@ -107,6 +107,13 @@ data class GameState(
     val nonlandPermanentLeftBattlefieldThisTurn: Boolean = false,
 
     /**
+     * Colors of the spell most recently cast this turn (by any player), or null if no spell has
+     * been cast yet this turn. Used by Mana Maze's "can't cast a spell that shares a color with
+     * the spell most recently cast this turn" restriction. Cleared at the start of each turn.
+     */
+    val lastCastSpellColors: Set<Color>? = null,
+
+    /**
      * Game-mode configuration the engine reads for format-dependent behaviour (commander damage
      * threshold, command-zone redirect, etc.). Defaults to [Format.Standard] so existing
      * persisted states / tests need no migration.

@@ -237,3 +237,22 @@ data class RestrictSpellsCastPerTurn(
         "You can't cast more than $maxPerTurn spell${if (maxPerTurn == 1) "" else "s"} each turn"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
+
+/**
+ * Players can't cast a spell that shares a color with the spell most recently cast this turn.
+ * Used by Mana Maze (Invasion).
+ *
+ * This is a global continuous restriction — it applies to every player, not just the source's
+ * controller. The engine tracks the colors of the most recently cast spell on
+ * [com.wingedsheep.engine.state.GameState.lastCastSpellColors] (cleared at the start of each turn)
+ * and, while any permanent on the battlefield has this static ability, refuses to cast a spell
+ * whose colors overlap that set. A colorless spell shares no color, so it is always castable and
+ * casting one (an empty color set) lifts the restriction until the next colored spell is cast.
+ */
+@SerialName("CantCastSpellsSharingColorWithLastCast")
+@Serializable
+data object CantCastSpellsSharingColorWithLastCast : StaticAbility {
+    override val description: String =
+        "Players can't cast a spell that shares a color with the spell most recently cast this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}

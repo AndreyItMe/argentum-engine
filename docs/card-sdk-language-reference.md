@@ -1108,6 +1108,11 @@ of "type" to count.
 - `RestrictSpellsCastPerTurn(maxPerTurn)` — the controller can't cast more than `maxPerTurn`
   spell(s) each turn. Per-controller; the most restrictive applies when several are in play.
   Already-cast spells count, even those cast before this permanent entered. (Yawgmoth's Agenda)
+- `CantCastSpellsSharingColorWithLastCast` — *global* (all players): can't cast a spell that shares a
+  color with the spell most recently cast this turn. Backed by `GameState.lastCastSpellColors` (the
+  colors of the last spell cast, cleared each turn). Never blocks the first spell of the turn; a
+  colorless spell shares no color, so it is always castable and casting one lifts the restriction
+  until the next colored spell. (Mana Maze)
 
 **Tapped-for-mana mana statics** (extra mana / replaced mana when a land is tapped for mana — resolve
 inline as triggered mana abilities, off the stack per CR 605). These fire on the *manual* mana-ability

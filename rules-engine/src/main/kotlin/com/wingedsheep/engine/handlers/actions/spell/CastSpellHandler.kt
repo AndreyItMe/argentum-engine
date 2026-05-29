@@ -170,6 +170,11 @@ class CastSpellHandler(
             return "You can't cast another spell this turn"
         }
 
+        // Mana Maze: can't cast a spell sharing a color with the spell most recently cast this turn.
+        if (castPermissionUtils.sharesColorWithMostRecentCast(state, action.cardId)) {
+            return "You can't cast a spell that shares a color with the spell most recently cast this turn"
+        }
+
         if (hasForageFromGraveyard) {
             if (!costHandler.canPayAdditionalCost(state, AdditionalCost.Forage, action.playerId)) {
                 return "Cannot forage: need 3 other cards in graveyard or a Food"
@@ -2000,7 +2005,9 @@ class CastSpellHandler(
             val existing = currentState.spellsCastThisTurnByPlayer[action.playerId] ?: emptyList()
             currentState = currentState.copy(
                 spellsCastThisTurnByPlayer = currentState.spellsCastThisTurnByPlayer +
-                    (action.playerId to existing + record)
+                    (action.playerId to existing + record),
+                // "the spell most recently cast this turn" — read by Mana Maze's cast restriction.
+                lastCastSpellColors = record.colors
             )
         }
 

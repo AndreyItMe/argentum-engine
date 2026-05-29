@@ -14,6 +14,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivationRestriction
+import com.wingedsheep.sdk.scripting.CantCastSpellsSharingColorWithLastCast
 import com.wingedsheep.sdk.scripting.CastRestriction
 import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.ExtraLoyaltyActivation
@@ -132,6 +133,30 @@ class CastPermissionUtils(
         if (limit == null) return false
         val castThisTurn = state.playerSpellsCastThisTurn[playerId] ?: 0
         return castThisTurn >= limit
+    }
+
+    /**
+     * Mana Maze (CR via [CantCastSpellsSharingColorWithLastCast]): true when a spell can't be cast
+     * because its colors overlap those of the spell most recently cast this turn.
+     *
+     * Returns false unless (a) some permanent on the battlefield has the restriction static ability,
+     * (b) a colored spell was cast earlier this turn ([GameState.lastCastSpellColors] is non-null and
+     * non-empty), and (c) the candidate spell shares at least one of those colors. A colorless spell
+     * never shares a color, so it is always castable.
+     */
+    fun sharesColorWithMostRecentCast(state: GameState, spellCardId: EntityId): Boolean {
+        val lastColors = state.lastCastSpellColors
+        if (lastColors.isNullOrEmpty()) return false
+
+        val restrictionActive = state.getBattlefield().any { permanentId ->
+            val card = state.getEntity(permanentId)?.get<CardComponent>()
+            val cardDef = card?.let { cardRegistry.getCard(it.cardDefinitionId) }
+            cardDef?.script?.staticAbilities?.any { it is CantCastSpellsSharingColorWithLastCast } == true
+        }
+        if (!restrictionActive) return false
+
+        val spellColors = state.getEntity(spellCardId)?.get<CardComponent>()?.colors ?: return false
+        return spellColors.any { it in lastColors }
     }
 
     fun hasPlayFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
