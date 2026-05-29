@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 215 / 261
+**Implemented:** 235 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -39,7 +39,7 @@
 - [x] Codecracker Hound
 - [x] Comet Crawler
 - [ ] Command Bridge
-- [ ] Consult the Star Charts
+- [x] Consult the Star Charts
 - [ ] Cosmogoyf
 - [x] Cosmogrand Zenith
 - [x] Cryogen Relic
@@ -48,7 +48,7 @@
 - [x] Dark Endurance
 - [x] Dauntless Scrapbot
 - [x] Dawnsire, Sunstar Dreadnought
-- [ ] Dawnstrike Vanguard
+- [x] Dawnstrike Vanguard
 - [x] Debris Field Crusher
 - [x] Decode Transmissions
 - [x] Depressurize
@@ -58,7 +58,7 @@
 - [x] Divert Disaster
 - [x] Dockworker Drone
 - [x] Drill Too Deep
-- [ ] Drix Fatemaker
+- [x] Drix Fatemaker
 - [x] Dual-Sun Adepts
 - [x] Dual-Sun Technique
 - [x] Dubious Delicacy
@@ -79,14 +79,14 @@
 - [x] Famished Worldsire
 - [x] Fell Gravship
 - [x] Flight-Deck Coordinator
-- [ ] Focus Fire
+- [x] Focus Fire
 - [x] Frenzied Baloth
-- [ ] Frontline War-Rager
+- [x] Frontline War-Rager
 - [x] Full Bore
 - [x] Fungal Colossus
 - [x] Galactic Wayfarer
 - [x] Galvanizing Sawship
-- [ ] Genemorph Imago
+- [x] Genemorph Imago
 - [x] Gene Pollinator
 - [x] Germinating Wurm
 - [x] Gigastorm Titan
@@ -111,32 +111,32 @@
 - [x] Illvoi Infiltrator
 - [x] Illvoi Light Jammer
 - [x] Illvoi Operative
-- [ ] Infinite Guideline Station
+- [x] Infinite Guideline Station
 - [x] Insatiable Skittermaw
 - [x] Interceptor Mechan
 - [x] Intrepid Tenderfoot
 - [x] Invasive Maneuvers
 - [x] Kavaron Harrier
-- [ ] Kavaron, Memorial World
+- [x] Kavaron, Memorial World
 - [x] Kavaron Skywarden
 - [x] Kavaron Turbodrone
 - [ ] Kav Landseeker
 - [x] Knight Luminary
-- [ ] Larval Scoutlander
+- [x] Larval Scoutlander
 - [x] Lashwhip Predator
 - [x] Lightless Evangel
 - [ ] Lightstall Inquisitor
-- [ ] Lithobraking
+- [x] Lithobraking
 - [x] Loading Zone
 - [x] Lost in Space
 - [x] Lumen-Class Frigate
-- [ ] Luxknight Breacher
+- [x] Luxknight Breacher
 - [x] Mechan Assembler
 - [x] Mechan Navigator
 - [x] Mechanozoa
 - [x] Mechan Shieldmate
 - [x] Melded Moxite
-- [ ] Meltstrider Eulogist
+- [x] Meltstrider Eulogist
 - [x] Meltstrider's Gear
 - [x] Meltstrider's Resolve
 - [x] Memorial Team Leader
@@ -175,14 +175,14 @@
 - [x] Remnant Elemental
 - [x] Requiem Monolith
 - [x] Reroute Systems
-- [ ] Rescue Skiff
+- [x] Rescue Skiff
 - [x] Rig for War
 - [ ] Roving Actuator
 - [x] Ruinous Rampage
 - [x] Rust Harvester
 - [x] Sacred Foundry
 - [x] Sami's Curiosity
-- [ ] Sami, Ship's Engineer
+- [x] Sami, Ship's Engineer
 - [ ] Sami, Wildcat Captain
 - [x] Scour for Scrap
 - [x] Scout for Survivors
@@ -208,18 +208,18 @@
 - [x] Starfield Vocalist
 - [x] Starfighter Pilot
 - [x] Starport Security
-- [ ] Starwinder
-- [ ] Station Monitor
+- [x] Starwinder
+- [x] Station Monitor
 - [x] Steelswarm Operator
 - [x] Stomping Ground
 - [x] Sunset Saboteur
-- [ ] Sunstar Chaplain
+- [x] Sunstar Chaplain
 - [x] Sunstar Expansionist
 - [x] Sunstar Lightsmith
 - [x] Survey Mechan
 - [x] Susurian Dirgecraft
 - [x] Susurian Voidborn
-- [ ] Susur Secundi, Void Altar
+- [x] Susur Secundi, Void Altar
 - [x] Swarm Culler
 - [x] Synthesizer Labship
 - [x] Syr Vondam, Sunstar Exemplar
@@ -242,7 +242,7 @@
 - [x] The Seriema
 - [ ] Thrumming Hivepool
 - [x] Timeline Culler
-- [ ] Tractor Beam
+- [x] Tractor Beam
 - [x] Tragic Trajectory
 - [x] Umbral Collar Zealot
 - [x] Unravel
@@ -254,7 +254,7 @@
 - [x] Virus Beetle
 - [x] Voidforged Titan
 - [x] Vote Out
-- [ ] Warmaker Gunship
+- [x] Warmaker Gunship
 - [x] Watery Grave
 - [ ] Weapons Manufacturing
 - [x] Wedgelight Rammer
