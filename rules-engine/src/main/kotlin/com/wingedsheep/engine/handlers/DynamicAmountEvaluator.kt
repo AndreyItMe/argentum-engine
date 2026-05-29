@@ -79,6 +79,8 @@ class DynamicAmountEvaluator(
 
             is DynamicAmount.TotalManaSpent -> context.totalManaSpent
 
+            is DynamicAmount.ManaSpentOnX -> context.manaSpentOnXByColor[amount.color] ?: 0
+
             is DynamicAmount.YourLifeTotal -> {
                 state.getEntity(context.controllerId)?.get<LifeTotalComponent>()?.life ?: 0
             }

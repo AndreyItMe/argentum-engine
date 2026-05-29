@@ -571,9 +571,14 @@ class CastSpellHandler(
         // permission carries that flag (e.g. Taster of Wares, Cruelclaw's Heist).
         val effectiveCost = if (isCastWithAnyManaType(state, action)) cost.relaxColors() else cost
 
+        // "Spend only [colors] on X" restriction (Soul Burn) — limits which mana can pay X.
+        val cardDef = cardComponent?.let { cardRegistry.getCard(it.cardDefinitionId) }
+        val xManaRestriction = (action.faceIndex?.let { cardDef?.cardFaces?.getOrNull(it)?.script }
+            ?: cardDef?.script)?.xManaRestriction ?: emptySet()
+
         return when (action.paymentStrategy) {
             is PaymentStrategy.AutoPay -> {
-                if (!manaSolver.canPay(state, action.playerId, effectiveCost, xValue, spellContext = spellCtx)) {
+                if (!manaSolver.canPay(state, action.playerId, effectiveCost, xValue, spellContext = spellCtx, xManaRestriction = xManaRestriction)) {
                     "Not enough mana to cast this spell"
                 } else null
             }
@@ -1817,8 +1822,13 @@ class CastSpellHandler(
             effectiveCost = effectiveCost.relaxColors()
         }
 
+        // "Spend only [colors] on X" restriction (Soul Burn). Use the cast face's script for
+        // split/adventure cards, otherwise the card's own script.
+        val xManaRestriction = (action.faceIndex?.let { cardDef?.cardFaces?.getOrNull(it)?.script }
+            ?: cardDef?.script)?.xManaRestriction ?: emptySet()
+
         // Handle mana payment via dedicated processor
-        val paymentResult = paymentProcessor.processPayment(currentState, action, effectiveCost, cardComponent.name, xValue, spellContext)
+        val paymentResult = paymentProcessor.processPayment(currentState, action, effectiveCost, cardComponent.name, xValue, spellContext, xManaRestriction)
         if (paymentResult.error != null) {
             return ExecutionResult.error(currentState, paymentResult.error)
         }
@@ -2044,6 +2054,7 @@ class CastSpellHandler(
             manaSpentRed = manaSpentEvent?.red ?: 0,
             manaSpentGreen = manaSpentEvent?.green ?: 0,
             manaSpentColorless = manaSpentEvent?.colorless ?: 0,
+            manaSpentOnXByColor = paymentResult.xManaSpentByColor,
             faceIndex = action.faceIndex,
             paidWithTreasureMana = paymentResult.paidWithTreasureMana
         )

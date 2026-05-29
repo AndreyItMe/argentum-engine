@@ -110,6 +110,12 @@ the `CardDefinition`.
 - `warp` — cast from anywhere; exiled at end of turn.
 - `conditionalFlash` — flash while condition holds.
 - `cantBeCountered` — spell is uncounterable.
+- `xManaRestriction = setOf(Color.BLACK, Color.RED)` — "spend only [colors] on X." Restricts which
+  mana may pay the `{X}` portion of the cost (the fixed colored/generic portion is unaffected).
+  Available in both `spell { }` and `activatedAbility { }` blocks; honored by the mana solver and the
+  payment path. Per-color amount spent on X is then readable via `DynamicAmount.ManaSpentOnX(color)`.
+  Soul Burn (`spell { xManaRestriction = setOf(Color.BLACK, Color.RED) }`) and Atalya, Samite Master
+  (`activatedAbility { xManaRestriction = setOf(Color.WHITE) }`) are the first users.
 
 **`AdditionalCost`** — extra costs paid alongside the mana cost.
 
@@ -1302,6 +1308,12 @@ Numbers computed at resolution time.
 
 - `Fixed(n)` — literal constant.
 - `XValue` — the X chosen for the spell/ability.
+- `TotalManaSpent` — total mana paid from the pool to cast the current spell (sum of every per-color
+  bucket; for X spells the X portion is included). E.g. Memory Deluge "where X is the mana spent."
+- `ManaSpentOnX(color)` — the amount of `{color}` mana spent on the `{X}` portion specifically, broken
+  down by color. Used by payoffs that scale with how much of a color went into X — Soul Burn ("you gain
+  life equal to the amount of black mana spent on X"). Pair with `xManaRestriction` (see below) so the X
+  can only be paid with the relevant colors.
 - `Add(a, b)` — `a + b`.
 - `Subtract(a, b)` — `a − b`.
 - `Multiply(a, b)` — `a × b`.

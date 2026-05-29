@@ -176,7 +176,14 @@ data class ManaSolution(
      * ability contributes [ManaSpellRider.MakesSpellUncounterable] when tapped for
      * a color, but its colorless `{T}: Add {C}` ability does not).
      */
-    val consumedRiders: Set<ManaSpellRider> = emptySet()
+    val consumedRiders: Set<ManaSpellRider> = emptySet(),
+    /**
+     * For a color-restricted `{X}` cost ("spend only [colors] on X"), the per-color
+     * breakdown of mana this solution allocated to the X portion specifically. Empty
+     * when the cost has no X restriction. The cast/ability payment path adds this to the
+     * mana-spent-on-X accumulator that backs `DynamicAmount.ManaSpentOnX`.
+     */
+    val xRestrictedManaSpent: Map<Color, Int> = emptyMap()
 )
 
 /**
@@ -242,7 +249,14 @@ class ManaSolver(
         xValue: Int = 0,
         excludeSources: Set<EntityId> = emptySet(),
         spellContext: SpellPaymentContext? = null,
-        precomputedSources: List<ManaSource>? = null
+        precomputedSources: List<ManaSource>? = null,
+        /**
+         * Colors that may be spent on the `{X}` portion of [cost] ("spend only [colors] on X").
+         * Empty (default) means X behaves like ordinary generic. When non-empty, the X mana is
+         * paid by a dedicated pass that only taps sources able to produce one of these colors,
+         * and the per-color amount is reported in [ManaSolution.xRestrictedManaSpent].
+         */
+        xManaRestriction: Set<Color> = emptySet()
     ): ManaSolution? {
         // Get all untapped mana sources controlled by the player.
         //
@@ -458,9 +472,48 @@ class ManaSolver(
             activationCostRemaining--
         }
 
-        // 2. Pay generic costs (and X), using bonus mana first
-        // xValue here is the total extra generic mana needed for X (callers handle XX multiplication)
-        var genericRemaining = cost.genericAmount + xValue
+        // 1c. Pay the color-restricted X portion ("spend only [colors] on X"), if any.
+        //     Runs before the generic pass so unrestricted generic mana isn't consumed by a
+        //     source that could have paid the restricted X. Only sources able to produce one
+        //     of the allowed colors are eligible; the per-color amount is reported back so the
+        //     payment path can expose it via DynamicAmount.ManaSpentOnX.
+        val xRestrictedSpent = mutableMapOf<Color, Int>()
+        if (xManaRestriction.isNotEmpty() && xValue > 0) {
+            // Spend bonus mana of an allowed color (or an any-color bonus) toward X.
+            fun spendBonusManaOnX(): Color? {
+                val idx = bonusManaPool.indexOfFirst {
+                    it.amount > 0 && (it.color in xManaRestriction || it.anyColor)
+                }
+                if (idx < 0) return null
+                val entry = bonusManaPool[idx]
+                val color = if (entry.color in xManaRestriction) entry.color else xManaRestriction.first()
+                bonusManaPool[idx] = entry.copy(amount = entry.amount - 1)
+                return color
+            }
+            var xRemaining = xValue
+            while (xRemaining > 0) {
+                val bonusColor = spendBonusManaOnX()
+                if (bonusColor != null) {
+                    xRestrictedSpent[bonusColor] = (xRestrictedSpent[bonusColor] ?: 0) + 1
+                    xRemaining--
+                    continue
+                }
+                val source = remainingSources
+                    .filter { src -> src.availableColorsFor(spellContext).any { it in xManaRestriction } }
+                    .minByOrNull { calculateTapPriority(it, handRequirements, availableSourcesByColor) }
+                    ?: return null // Can't pay X with the allowed colors
+                val colorToUse = source.availableColorsFor(spellContext).first { it in xManaRestriction }
+                manaProduced[source.entityId] = ManaProduction(color = colorToUse, amount = source.manaAmount)
+                useSource(source, colorToUse)
+                xRestrictedSpent[colorToUse] = (xRestrictedSpent[colorToUse] ?: 0) + 1
+                xRemaining--
+            }
+        }
+
+        // 2. Pay generic costs (and unrestricted X), using bonus mana first.
+        // xValue here is the total extra generic mana needed for X (callers handle XX multiplication).
+        // When X is color-restricted it was already paid by pass 1c above, so it's excluded here.
+        var genericRemaining = cost.genericAmount + (if (xManaRestriction.isEmpty()) xValue else 0)
 
         while (genericRemaining > 0) {
             // Try to spend bonus mana first
@@ -506,7 +559,13 @@ class ManaSolver(
             val color = manaProduced[source.entityId]?.color ?: return@flatMapTo emptySet()
             source.colorRiders[color] ?: emptySet()
         }
-        return ManaSolution(usedSources, manaProduced, bonusManaPool.filter { it.amount > 0 }, consumedRiders)
+        return ManaSolution(
+            usedSources,
+            manaProduced,
+            bonusManaPool.filter { it.amount > 0 },
+            consumedRiders,
+            xRestrictedManaSpent = xRestrictedSpent
+        )
     }
 
     /**
@@ -1441,7 +1500,9 @@ class ManaSolver(
         xValue: Int = 0,
         excludeSources: Set<EntityId> = emptySet(),
         spellContext: SpellPaymentContext? = null,
-        precomputedSources: List<ManaSource>? = null
+        precomputedSources: List<ManaSource>? = null,
+        /** Colors that may pay the `{X}` portion ("spend only [colors] on X"); empty = any. */
+        xManaRestriction: Set<Color> = emptySet()
     ): Boolean {
         // Get the player's floating mana pool
         val poolComponent = state.getEntity(playerId)?.get<ManaPoolComponent>()
@@ -1467,7 +1528,12 @@ class ManaSolver(
         // Calculate how much X mana is needed (multiply by X symbol count for XX costs)
         val xSymbolCount = cost.xCount.coerceAtLeast(1)
         val totalXMana = xValue * xSymbolCount
-        val xPaidFromPool = poolAfterPartial.total.coerceAtMost(totalXMana)
+        // Only allowed-color pool mana counts toward a color-restricted X.
+        val xPaidFromPool = if (xManaRestriction.isEmpty()) {
+            poolAfterPartial.total.coerceAtMost(totalXMana)
+        } else {
+            xManaRestriction.sumOf { poolAfterPartial.get(it) }.coerceAtMost(totalXMana)
+        }
         val xRemainingToPay = totalXMana - xPaidFromPool
 
         // If nothing remains after using pool (including X), we can pay
@@ -1476,7 +1542,7 @@ class ManaSolver(
         }
 
         // Check if we can tap sources for the remaining cost (including remaining X)
-        if (solve(state, playerId, remainingCost, xRemainingToPay, excludeSources, spellContext, precomputedSources) != null) return true
+        if (solve(state, playerId, remainingCost, xRemainingToPay, excludeSources, spellContext, precomputedSources, xManaRestriction) != null) return true
 
         // Fallback: check if "extras" — mana abilities the auto-tap solver doesn't pick — can
         // cover the remaining cost. Two flavors:

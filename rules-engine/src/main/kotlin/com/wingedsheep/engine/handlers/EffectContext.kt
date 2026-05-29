@@ -34,6 +34,12 @@ data class EffectContext(
      * not the same as [xValue]. Used by `DynamicAmount.TotalManaSpent`.
      */
     val totalManaSpent: Int = 0,
+    /**
+     * Per-color mana spent on the `{X}` portion of the spell or activated ability, for a
+     * color-restricted X (e.g. Soul Burn's "spend only black and/or red mana on X").
+     * Read by `DynamicAmount.ManaSpentOnX`. Empty when X was unrestricted.
+     */
+    val manaSpentOnXByColor: Map<Color, Int> = emptyMap(),
     val wasKicked: Boolean = false,
     /** True if the spell's optional Blight additional cost was paid (BlightOrPay path chosen). */
     val wasBlightPaid: Boolean = false,

@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting
 
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -36,7 +37,14 @@ data class ActivatedAbility(
      *  amount returned for the source. Used by cards like The Dominion Bracelet whose
      *  granted activated ability "costs {X} less to activate, where X is this creature's power."
      *  Per Scryfall ruling, the reduced cost is locked in before costs are paid. */
-    val genericCostReduction: DynamicAmount? = null
+    val genericCostReduction: DynamicAmount? = null,
+    /**
+     * Colors that may be spent on the `{X}` portion of this ability's cost.
+     * Empty means no restriction (the default). Used for abilities like Atalya, Samite
+     * Master ("Spend only white mana on X"). Honored by the mana solver and the
+     * activated-ability payment path.
+     */
+    val xManaRestriction: Set<Color> = emptySet()
 ) : TextReplaceable<ActivatedAbility> {
     /** Backward-compatible secondary constructor for single-target abilities. */
     constructor(

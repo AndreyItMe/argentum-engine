@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.state.components.stack
 
 import com.wingedsheep.engine.state.Component
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityId
@@ -50,6 +51,12 @@ data class SpellOnStackComponent(
     val manaSpentRed: Int = 0,
     val manaSpentGreen: Int = 0,
     val manaSpentColorless: Int = 0,
+    /**
+     * Per-color mana spent on the `{X}` portion of this spell, for a color-restricted X
+     * (e.g. Soul Burn's "spend only black and/or red mana on X"). Read at resolution via
+     * `DynamicAmount.ManaSpentOnX`. Empty when X was unrestricted or the spell has no X.
+     */
+    val manaSpentOnXByColor: Map<Color, Int> = emptyMap(),
     /**
      * For split-layout cards (CR 709), the index of the face that was cast into
      * [com.wingedsheep.sdk.model.CardDefinition.cardFaces]. Threaded from

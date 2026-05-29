@@ -375,7 +375,20 @@ prevention.
 
 ---
 
-### #8 — Color-restricted X-spend + per-color mana tracking · Soul Burn, Atalya
+### #8 — Color-restricted X-spend + per-color mana tracking · Soul Burn, Atalya ✅ DONE
+
+> **Implemented (primitive + both cards).** `xManaRestriction: Set<Color>` on `CardScript` (spell) and
+> `ActivatedAbility`, surfaced through the `spell { }` / `activatedAbility { }` DSL. The mana solver
+> grew an `xManaRestriction` parameter + dedicated restricted-X pass (`ManaSolution.xRestrictedManaSpent`
+> reports the per-color X allocation); `CastPaymentProcessor` and `ActivateAbilityHandler` restrict the
+> floating-mana X loops to the allowed colors (colorless disallowed) and `canPay` only counts allowed-color
+> pool mana toward X. Per-color mana spent on X is stored on `SpellOnStackComponent.manaSpentOnXByColor`,
+> plumbed into `EffectContext`, and read by the new `DynamicAmount.ManaSpentOnX(color)`. **Soul Burn**
+> ({X}{2}{B}, `xManaRestriction = {BLACK, RED}`, life = `Effects.GainLife(DynamicAmount.ManaSpentOnX(BLACK))`)
+> and **Atalya, Samite Master** (modal `{X},{T}` ability, `xManaRestriction = {WHITE}`) authored in
+> `definitions/inv/cards/`. Covered by `SoulBurnAndAtalyaXManaTest`. **Scoping note:** Soul Burn implements
+> the original Invasion life-gain wording (life = black spent on X); the modern Oracle's secondary caps
+> (damage dealt / target's life / loyalty / toughness) are omitted as edge-case-only refinements.
 
 **What exists.** Per-color spent buckets (`manaSpentWhite…`) live on `SpellOnStackComponent`
 (`StackComponents.kt:47-52`) but are **not** exposed to `EffectContext` (only the

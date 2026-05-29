@@ -748,7 +748,8 @@ class CardBuilder(private val name: String) {
             classLevels = classLevelsList.toList(),
             sagaChapters = sagaChaptersList.toList(),
             selfExileOnResolve = spellBuilder?.exilesOnResolve ?: false,
-            selfAlternativeCost = selfAlternativeCost
+            selfAlternativeCost = selfAlternativeCost,
+            xManaRestriction = spellBuilder?.xManaRestriction ?: emptySet()
         )
 
         // Build metadata
@@ -827,6 +828,8 @@ class SpellBuilder {
     var effect: Effect? = null
     var target: TargetRequirement? = null
     var condition: Condition? = null
+    /** Colors that may be spent on the `{X}` portion of this spell's cost (empty = any). */
+    var xManaRestriction: Set<Color> = emptySet()
     private var selfExileOnResolve: Boolean = false
 
     /**
@@ -1122,6 +1125,8 @@ class ActivatedAbilityBuilder {
     var hasConvoke: Boolean = false
     var holdPriority: Boolean = false
     var genericCostReduction: DynamicAmount? = null
+    /** Colors that may be spent on the `{X}` portion of this ability's cost (empty = any). */
+    var xManaRestriction: Set<Color> = emptySet()
 
     // Named target bindings (for multi-target abilities)
     private val namedTargets: MutableList<Pair<String, TargetRequirement>> = mutableListOf()
@@ -1161,7 +1166,8 @@ class ActivatedAbilityBuilder {
             descriptionOverride = description,
             hasConvoke = hasConvoke,
             holdPriority = holdPriority,
-            genericCostReduction = genericCostReduction
+            genericCostReduction = genericCostReduction,
+            xManaRestriction = xManaRestriction
         )
     }
 }

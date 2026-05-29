@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.model
 
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.scripting.ClassLevelAbility
 import com.wingedsheep.sdk.scripting.SagaChapterAbility
 import com.wingedsheep.sdk.scripting.*
@@ -213,7 +214,19 @@ data class CardScript(
      * option alongside the normal cast option, provided the player can afford
      * the alternative mana cost and pay any required additional costs.
      */
-    val selfAlternativeCost: SelfAlternativeCost? = null
+    val selfAlternativeCost: SelfAlternativeCost? = null,
+
+    /**
+     * Colors that may be spent on the `{X}` portion of this spell's mana cost.
+     * Empty means no restriction (X can be paid with any mana, the default).
+     *
+     * Used for cards like Soul Burn ("Spend only black and/or red mana on X"). The
+     * restriction applies only to the variable `{X}` symbols — the fixed colored/generic
+     * portion of the cost is unaffected. Honored by the mana solver and cast payment path,
+     * and the per-color amount actually spent on X is exposed via
+     * [com.wingedsheep.sdk.scripting.values.DynamicAmount.ManaSpentOnX].
+     */
+    val xManaRestriction: Set<Color> = emptySet()
 ) {
     /**
      * Whether this card has any scripted behavior.

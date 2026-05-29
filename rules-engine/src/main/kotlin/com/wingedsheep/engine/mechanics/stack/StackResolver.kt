@@ -124,6 +124,7 @@ class StackResolver(
         manaSpentRed: Int = 0,
         manaSpentGreen: Int = 0,
         manaSpentColorless: Int = 0,
+        manaSpentOnXByColor: Map<Color, Int> = emptyMap(),
         faceIndex: Int? = null,
         paidWithTreasureMana: Boolean = false
     ): ExecutionResult {
@@ -185,6 +186,7 @@ class StackResolver(
                 manaSpentRed = manaSpentRed,
                 manaSpentGreen = manaSpentGreen,
                 manaSpentColorless = manaSpentColorless,
+                manaSpentOnXByColor = manaSpentOnXByColor,
                 faceIndex = faceIndex
             ))
             if (effectiveTargets.isNotEmpty()) {
@@ -1246,6 +1248,7 @@ class StackResolver(
                 totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
                     spellComponent.manaSpentBlack + spellComponent.manaSpentRed +
                     spellComponent.manaSpentGreen + spellComponent.manaSpentColorless,
+                manaSpentOnXByColor = spellComponent.manaSpentOnXByColor,
                 wasKicked = spellComponent.wasKicked,
                 wasBlightPaid = spellComponent.wasBlightPaid,
                 sacrificedPermanents = spellComponent.sacrificedPermanents,

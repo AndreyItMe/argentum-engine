@@ -38,7 +38,14 @@ data class PaymentResult(
      * onto the engine [com.wingedsheep.engine.core.SpellCastEvent] so triggers
      * filtering on "paid with Treasure mana" can fire.
      */
-    val paidWithTreasureMana: Boolean = false
+    val paidWithTreasureMana: Boolean = false,
+    /**
+     * For a color-restricted `{X}` cost ("spend only [colors] on X"), the per-color
+     * breakdown of mana spent on the X portion. The cast handler stores this on the spell's
+     * stack object so it can be read at resolution via `DynamicAmount.ManaSpentOnX`
+     * (e.g. Soul Burn's "gain life equal to the {B} spent on X"). Empty when X is unrestricted.
+     */
+    val xManaSpentByColor: Map<Color, Int> = emptyMap()
 )
 
 /**
@@ -78,11 +85,12 @@ class CastPaymentProcessor(
         effectiveCost: ManaCost,
         cardName: String,
         xValue: Int,
-        spellContext: SpellPaymentContext? = null
+        spellContext: SpellPaymentContext? = null,
+        xManaRestriction: Set<Color> = emptySet()
     ): PaymentResult {
         return when (action.paymentStrategy) {
-            is PaymentStrategy.FromPool -> payFromPool(state, action.playerId, effectiveCost, cardName, xValue, spellContext)
-            is PaymentStrategy.AutoPay -> autoPay(state, action.playerId, effectiveCost, cardName, xValue, spellContext)
+            is PaymentStrategy.FromPool -> payFromPool(state, action.playerId, effectiveCost, cardName, xValue, spellContext, xManaRestriction)
+            is PaymentStrategy.AutoPay -> autoPay(state, action.playerId, effectiveCost, cardName, xValue, spellContext, xManaRestriction = xManaRestriction)
             is PaymentStrategy.Explicit -> explicitPay(
                 state,
                 action.playerId,
@@ -90,7 +98,8 @@ class CastPaymentProcessor(
                 effectiveCost,
                 cardName,
                 xValue,
-                spellContext
+                spellContext,
+                xManaRestriction
             )
         }
     }
@@ -101,7 +110,8 @@ class CastPaymentProcessor(
         cost: ManaCost,
         cardName: String,
         xValue: Int,
-        spellContext: SpellPaymentContext? = null
+        spellContext: SpellPaymentContext? = null,
+        xManaRestriction: Set<Color> = emptySet()
     ): PaymentResult {
         val poolComponent = state.getEntity(playerId)?.get<ManaPoolComponent>()
             ?: ManaPoolComponent()
@@ -135,11 +145,19 @@ class CastPaymentProcessor(
         // Pay for X from remaining pool (multiply by X symbol count for XX costs)
         val xSymbolCount = cost.xCount.coerceAtLeast(1)
         var xRemainingToPay = xValue * xSymbolCount
+        // Per-color mana spent on the X portion (for DynamicAmount.ManaSpentOnX).
+        val xSpentByColor = mutableMapOf<Color, Int>()
+        // When X is color-restricted, only these colors may pay it (and colorless can't).
+        val xColorsAllowed: Set<Color> =
+            if (xManaRestriction.isEmpty()) Color.entries.toSet() else xManaRestriction
 
         // Spend eligible restricted mana for X first
         if (spellContext != null) {
             for (entry in poolAfterPayment.restrictedMana.toList()) {
                 if (xRemainingToPay <= 0) break
+                // A color-restricted X can't be paid with off-color or colorless restricted mana.
+                if (entry.color != null && entry.color !in xColorsAllowed) continue
+                if (entry.color == null && xManaRestriction.isNotEmpty()) continue
                 if (entry.restriction.isSatisfiedBy(spellContext)) {
                     val spent = poolAfterPayment.spendRestricted(entry.color, spellContext)
                     if (spent != null) {
@@ -152,6 +170,7 @@ class CastPaymentProcessor(
                                 Color.RED -> redSpent++
                                 Color.GREEN -> greenSpent++
                             }
+                            xSpentByColor[entry.color] = (xSpentByColor[entry.color] ?: 0) + 1
                         } else colorlessSpent++
                         xRemainingToPay--
                     }
@@ -159,15 +178,18 @@ class CastPaymentProcessor(
             }
         }
 
-        // Spend colorless first for X
-        while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-            poolAfterPayment = poolAfterPayment.spendColorless()!!
-            colorlessSpent++
-            xRemainingToPay--
+        // Spend colorless first for X — never allowed when X is color-restricted.
+        if (xManaRestriction.isEmpty()) {
+            while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
+                poolAfterPayment = poolAfterPayment.spendColorless()!!
+                colorlessSpent++
+                xRemainingToPay--
+            }
         }
 
-        // Spend colored mana for remaining X
+        // Spend colored mana for remaining X (restricted to allowed colors).
         for (color in Color.entries) {
+            if (color !in xColorsAllowed) continue
             while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
                 poolAfterPayment = poolAfterPayment.spend(color)!!
                 when (color) {
@@ -177,6 +199,7 @@ class CastPaymentProcessor(
                     Color.RED -> redSpent++
                     Color.GREEN -> greenSpent++
                 }
+                xSpentByColor[color] = (xSpentByColor[color] ?: 0) + 1
                 xRemainingToPay--
             }
         }
@@ -209,7 +232,14 @@ class CastPaymentProcessor(
         )
 
         val consumedRiders = ridersConsumedDuringPayment(poolComponent.restrictedMana, poolAfterPayment.restrictedMana)
-        return PaymentResult(newState, listOf(event), null, consumedRiders, paidWithTreasureMana = treasureConsumed > 0)
+        return PaymentResult(
+            newState,
+            listOf(event),
+            null,
+            consumedRiders,
+            paidWithTreasureMana = treasureConsumed > 0,
+            xManaSpentByColor = xSpentByColor
+        )
     }
 
     private fun autoPay(
@@ -219,7 +249,8 @@ class CastPaymentProcessor(
         cardName: String,
         xValue: Int,
         spellContext: SpellPaymentContext? = null,
-        excludeSources: Set<EntityId> = emptySet()
+        excludeSources: Set<EntityId> = emptySet(),
+        xManaRestriction: Set<Color> = emptySet()
     ): PaymentResult {
         var currentState = state
         val events = mutableListOf<GameEvent>()
@@ -244,11 +275,19 @@ class CastPaymentProcessor(
         // Use remaining floating mana for X cost (multiply by X symbol count for XX costs)
         val xSymbolCount = cost.xCount.coerceAtLeast(1)
         var xRemainingToPay = xValue * xSymbolCount
+        // Per-color mana spent on the X portion (for DynamicAmount.ManaSpentOnX).
+        val xSpentByColor = mutableMapOf<Color, Int>()
+        // When X is color-restricted, only these colors may pay it (and colorless can't).
+        val xColorsAllowed: Set<Color> =
+            if (xManaRestriction.isEmpty()) Color.entries.toSet() else xManaRestriction
 
         // Spend eligible restricted mana for X first
         if (spellContext != null) {
             for (entry in poolAfterPayment.restrictedMana.toList()) {
                 if (xRemainingToPay <= 0) break
+                // A color-restricted X can't be paid with off-color or colorless restricted mana.
+                if (entry.color != null && entry.color !in xColorsAllowed) continue
+                if (entry.color == null && xManaRestriction.isNotEmpty()) continue
                 if (entry.restriction.isSatisfiedBy(spellContext)) {
                     val spent = poolAfterPayment.spendRestricted(entry.color, spellContext)
                     if (spent != null) {
@@ -261,6 +300,7 @@ class CastPaymentProcessor(
                                 Color.RED -> redSpent++
                                 Color.GREEN -> greenSpent++
                             }
+                            xSpentByColor[entry.color] = (xSpentByColor[entry.color] ?: 0) + 1
                         } else colorlessSpent++
                         xRemainingToPay--
                     }
@@ -268,15 +308,18 @@ class CastPaymentProcessor(
             }
         }
 
-        // Spend colorless first for X
-        while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-            poolAfterPayment = poolAfterPayment.spendColorless()!!
-            colorlessSpent++
-            xRemainingToPay--
+        // Spend colorless first for X — never allowed when X is color-restricted.
+        if (xManaRestriction.isEmpty()) {
+            while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
+                poolAfterPayment = poolAfterPayment.spendColorless()!!
+                colorlessSpent++
+                xRemainingToPay--
+            }
         }
 
-        // Spend colored mana for remaining X
+        // Spend colored mana for remaining X (restricted to allowed colors).
         for (color in Color.entries) {
+            if (color !in xColorsAllowed) continue
             while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
                 poolAfterPayment = poolAfterPayment.spend(color)!!
                 when (color) {
@@ -286,6 +329,7 @@ class CastPaymentProcessor(
                     Color.RED -> redSpent++
                     Color.GREEN -> greenSpent++
                 }
+                xSpentByColor[color] = (xSpentByColor[color] ?: 0) + 1
                 xRemainingToPay--
             }
         }
@@ -314,9 +358,13 @@ class CastPaymentProcessor(
         // Tap lands for remaining cost (using xRemainingToPay instead of full xValue)
         var solutionConsumedRiders: Set<ManaSpellRider> = emptySet()
         if (!remainingCost.isEmpty() || xRemainingToPay > 0) {
-            val solution = manaSolver.solve(currentState, playerId, remainingCost, xRemainingToPay, excludeSources = excludeSources, spellContext = spellContext)
+            val solution = manaSolver.solve(currentState, playerId, remainingCost, xRemainingToPay, excludeSources = excludeSources, spellContext = spellContext, xManaRestriction = xManaRestriction)
                 ?: return PaymentResult(currentState, events, "Not enough mana to auto-pay")
             solutionConsumedRiders = solution.consumedRiders
+            // Fold the X portion the solver tapped (allowed colors only) into the X-by-color tally.
+            for ((color, amount) in solution.xRestrictedManaSpent) {
+                xSpentByColor[color] = (xSpentByColor[color] ?: 0) + amount
+            }
 
             // Tap each source AND run any non-mana side effects of the matching
             // activated mana ability (e.g. Adarkar Wastes' "this land deals 1
@@ -376,7 +424,8 @@ class CastPaymentProcessor(
             events,
             null,
             consumedRiders,
-            paidWithTreasureMana = treasureConsumedFromPool > 0
+            paidWithTreasureMana = treasureConsumedFromPool > 0,
+            xManaSpentByColor = xSpentByColor
         )
     }
 
@@ -401,14 +450,15 @@ class CastPaymentProcessor(
         cost: ManaCost,
         cardName: String,
         xValue: Int,
-        spellContext: SpellPaymentContext? = null
+        spellContext: SpellPaymentContext? = null,
+        xManaRestriction: Set<Color> = emptySet()
     ): PaymentResult {
         val chosenSet = strategy.manaAbilitiesToActivate.toSet()
         val excluded = manaSolver.findAvailableManaSources(state, playerId)
             .map { it.entityId }
             .filter { it !in chosenSet }
             .toSet()
-        return autoPay(state, playerId, cost, cardName, xValue, spellContext, excluded)
+        return autoPay(state, playerId, cost, cardName, xValue, spellContext, excluded, xManaRestriction)
     }
 
     /**

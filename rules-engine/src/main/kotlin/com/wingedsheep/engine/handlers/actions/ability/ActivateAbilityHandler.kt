@@ -412,7 +412,7 @@ class ActivateAbilityHandler(
                         .filter { it !in chosen }
                         .toSet() + selfExcludedSources
                     val solution = manaSolver.solve(
-                        currentState, action.playerId, manaCost, manaXValue, excludeSources = excluded
+                        currentState, action.playerId, manaCost, manaXValue, excludeSources = excluded, xManaRestriction = ability.xManaRestriction
                     ) ?: return ExecutionResult.error(state, "Selected mana sources cannot pay this ability's cost")
                     for (source in solution.sources) {
                         val sourceName = currentState.getEntity(source.entityId)
@@ -424,7 +424,7 @@ class ActivateAbilityHandler(
                     }
                 }
                 else -> {
-                    val autoTapResult = autoTapForManaCost(currentState, action.playerId, manaPool, manaCost, cardComponent.name, manaXValue, selfExcludedSources, executeAbilityContext)
+                    val autoTapResult = autoTapForManaCost(currentState, action.playerId, manaPool, manaCost, cardComponent.name, manaXValue, selfExcludedSources, executeAbilityContext, ability.xManaRestriction)
                         ?: return ExecutionResult.error(state, "Not enough mana to activate this ability")
                     currentState = autoTapResult.newState
                     manaPool = autoTapResult.newPool
@@ -502,15 +502,21 @@ class ActivateAbilityHandler(
         if (action.paymentStrategy !is PaymentStrategy.Explicit && manaCost != null && manaCost.hasX && xValue > 0) {
             val xSymbolCount = manaCost.xCount.coerceAtLeast(1)
             var xRemainingToPay = xValue * xSymbolCount
+            val xManaRestriction = ability.xManaRestriction
+            val xColorsAllowed: Set<Color> =
+                if (xManaRestriction.isEmpty()) Color.entries.toSet() else xManaRestriction
 
-            // Spend colorless first for X
-            while (xRemainingToPay > 0 && manaPool.colorless > 0) {
-                manaPool = manaPool.spendColorless()!!
-                xRemainingToPay--
+            // Spend colorless first for X — never allowed when X is color-restricted ("spend only [colors] on X").
+            if (xManaRestriction.isEmpty()) {
+                while (xRemainingToPay > 0 && manaPool.colorless > 0) {
+                    manaPool = manaPool.spendColorless()!!
+                    xRemainingToPay--
+                }
             }
 
-            // Spend colored mana for remaining X
+            // Spend colored mana for remaining X (restricted to allowed colors).
             for (color in Color.entries) {
+                if (color !in xColorsAllowed) continue
                 while (xRemainingToPay > 0 && manaPool.get(color) > 0) {
                     manaPool = manaPool.spend(color)!!
                     xRemainingToPay--
@@ -1048,6 +1054,7 @@ class ActivateAbilityHandler(
         xValue: Int = 0,
         excludeSources: Set<com.wingedsheep.sdk.model.EntityId> = emptySet(),
         abilityContext: SpellPaymentContext? = null,
+        xManaRestriction: Set<Color> = emptySet(),
     ): AutoTapResult? {
         // Determine what the floating pool can cover (with the ability context so restricted
         // mana eligible for this activation counts toward coverage)
@@ -1060,8 +1067,9 @@ class ActivateAbilityHandler(
             return AutoTapResult(state, pool, emptyList())
         }
 
-        // Tap sources for the remaining cost (xValue is treated as additional generic mana)
-        val solution = manaSolver.solve(state, playerId, remainingCost, xValue, excludeSources = excludeSources, spellContext = abilityContext)
+        // Tap sources for the remaining cost (xValue is treated as additional generic mana,
+        // or restricted to xManaRestriction colors for "spend only [colors] on X" abilities)
+        val solution = manaSolver.solve(state, playerId, remainingCost, xValue, excludeSources = excludeSources, spellContext = abilityContext, xManaRestriction = xManaRestriction)
             ?: return null
 
         var currentState = state

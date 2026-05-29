@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.values
 
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -245,6 +246,24 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     @Serializable
     data object TotalManaSpent : DynamicAmount {
         override val description: String = "the total mana spent to cast this spell"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
+    }
+
+    /**
+     * The amount of mana of a specific [color] that was spent on the `{X}` portion of the
+     * current spell or activated ability.
+     *
+     * Distinct from [TotalManaSpent] (which sums every color across the whole cost): this
+     * counts only mana paid toward the variable `{X}` symbols, broken down by color. Used
+     * by cards whose payoff scales with how much of a color was spent on X — e.g. Soul Burn
+     * ("You gain life equal to the amount of {B} spent on X"). Typically paired with an
+     * `xManaRestriction` on the spell/ability so the X portion can only be paid with the
+     * relevant colors.
+     */
+    @SerialName("ManaSpentOnX")
+    @Serializable
+    data class ManaSpentOnX(val color: Color) : DynamicAmount {
+        override val description: String = "the amount of {${color.symbol}} spent on X"
         override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
