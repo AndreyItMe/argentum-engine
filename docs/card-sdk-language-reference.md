@@ -100,6 +100,14 @@ the `CardDefinition`.
 - `Costs.PayLife(amount)` — pay N life.
 - `Costs.Sacrifice(filter)` — sacrifice a permanent matching the filter (may include self).
 - `Costs.SacrificeAnother(filter)` — sacrifice a *different* permanent matching the filter.
+- `Costs.DiscardCard` — discard a card you choose (any card).
+- `Costs.Discard(filter, count = 1, atRandom = false)` — discard `count` cards matching the filter.
+  When `atRandom` is true the engine picks the cards (no player selection); otherwise the player
+  chooses which cards to discard.
+- `Costs.DiscardAtRandom(count, filter)` — discard `count` cards chosen at random (Meteor Storm:
+  "Discard two cards at random").
+- `Costs.DiscardHand` — discard your entire hand.
+- `Costs.DiscardSelf` — discard this card (cycling-style).
 - `Costs.Composite(c1, c2, ...)` — multiple costs paid together.
 
 **Spell-level alternatives**

@@ -171,16 +171,27 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     }
 
     /**
-     * Discard a card
+     * Discard one or more cards.
      *
      * @property filter Which cards can be discarded
+     * @property count How many cards to discard
+     * @property atRandom When true, the engine chooses the discarded cards at random
+     *   (no player selection); otherwise the player picks which cards to discard.
      */
     @SerialName("CostDiscard")
     @Serializable
     data class Discard(
-        val filter: GameObjectFilter = GameObjectFilter.Any
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val count: Int = 1,
+        val atRandom: Boolean = false
     ) : AbilityCost {
-        override val description: String = "Discard a ${filter.description}"
+        override val description: String = buildString {
+            append("Discard ")
+            if (count == 1) append("a ") else append("$count ")
+            append(filter.description)
+            if (count != 1) append("s")
+            if (atRandom) append(" at random")
+        }
 
         override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
             val newFilter = filter.applyTextReplacement(replacer)

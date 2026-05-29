@@ -94,10 +94,22 @@ object Costs {
     val DiscardCard: AbilityCost = AbilityCost.Discard()
 
     /**
-     * Discard a card matching the filter.
+     * Discard one or more cards matching the filter.
+     *
+     * @param count how many cards to discard
+     * @param atRandom when true, the engine picks the discarded cards at random (no player choice)
      */
-    fun Discard(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.Discard(filter)
+    fun Discard(
+        filter: GameObjectFilter = GameObjectFilter.Any,
+        count: Int = 1,
+        atRandom: Boolean = false
+    ): AbilityCost = AbilityCost.Discard(filter, count, atRandom)
+
+    /**
+     * Discard [count] cards chosen at random (e.g. Meteor Storm's "Discard two cards at random").
+     */
+    fun DiscardAtRandom(count: Int, filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
+        AbilityCost.Discard(filter, count, atRandom = true)
 
     /**
      * Discard your entire hand.

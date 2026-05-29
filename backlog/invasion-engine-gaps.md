@@ -417,16 +417,28 @@ covers the small family of "spend only [color] on X" spells.
 
 ---
 
-### #9 — Discard (incl. at random) as a cost · Meteor Storm
+### #9 — Discard (incl. at random) as a cost · Meteor Storm ✅ DONE
 
-**What exists.** `AbilityCost.Discard(filter)` (single, chosen) and `AdditionalCost.DiscardCards(count,
-filter)`. No "at random" and `AbilityCost.Discard` has no count.
+> **Implemented (primitive + card).** `AbilityCost.Discard` grew `count: Int = 1` and
+> `atRandom: Boolean = false`; facades `Costs.Discard(filter, count, atRandom)` and
+> `Costs.DiscardAtRandom(count, filter)`. When `atRandom`, `CostHandler.payAbilityCost` picks the
+> discarded cards itself (`eligible.shuffled().take(count)`, the same unseeded pattern as
+> `PayOrSufferExecutor.executeRandomDiscard`) — no player selection; otherwise the player's
+> `discardChoices` (first `count`) are discarded via `ZoneTransitionService.discardCards`. Both the
+> standalone and composite `AbilityCost.Discard` arms of `ActivatedAbilityEnumerator` now gate on
+> `targets.size >= count` and skip the discard-selection `AdditionalCostData` when `atRandom` (it
+> surfaces `discardCount = cost.count` otherwise). The payability check widened from `isNotEmpty()` to
+> `size >= count`. **Meteor Storm** authored in `definitions/inv/cards/MeteorStorm.kt` ({R}{G}
+> Enchantment; `Costs.Composite(Mana("{2}{R}{G}"), DiscardAtRandom(2))` → `DealDamage(4, any target)`).
+> Covered by `MeteorStormDiscardCostTest`.
+>
+> **Scoping note:** the `AdditionalCost.DiscardCards` "for symmetry" `atRandom` tweak was intentionally
+> skipped — no card in the set needs random discard as a *spell* additional cost, and adding an
+> unhonored field would mislead. Revisit when such a card appears.
 
-**Plan.** Add `count: Int = 1` and `atRandom: Boolean = false` to `AbilityCost.Discard` (and `atRandom`
-to `AdditionalCost.DiscardCards` for symmetry). The `CostHandler` selects randomly when `atRandom`.
-Cost is a distinct family from Effects, so widening it (rather than composing) is the right call here.
-- **Meteor Storm** = activated ability, cost `Composite(Mana("{R}"), Discard(count = 2, atRandom =
-  true))`, effect `DealDamage(3, AnyTarget)`.
+**What existed.** `AbilityCost.Discard(filter)` (single, chosen) and `AdditionalCost.DiscardCards(count,
+filter)`. No "at random" and `AbilityCost.Discard` had no count. Cost is a distinct family from Effects,
+so widening it (rather than composing) was the right call here.
 
 **Leverage.** Random discard recurs (Browbeat-likes, Wheel-of-Fortune riders). Small, contained.
 

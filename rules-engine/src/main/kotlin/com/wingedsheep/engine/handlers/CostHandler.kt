@@ -99,7 +99,7 @@ class CostHandler(
             }
             is AbilityCost.Discard -> {
                 val handZone = ZoneKey(controllerId, Zone.HAND)
-                findMatchingCardsUnified(state, state.getZone(handZone), cost.filter, controllerId).isNotEmpty()
+                findMatchingCardsUnified(state, state.getZone(handZone), cost.filter, controllerId).size >= cost.count
             }
             is AbilityCost.DiscardHand -> {
                 // You can always discard your hand, even if it's empty
@@ -324,16 +324,24 @@ class CostHandler(
                 CostPaymentResult.success(newState, manaPool, events)
             }
             is AbilityCost.Discard -> {
-                val toDiscard = choices.discardChoices.firstOrNull()
-                    ?: return CostPaymentResult.failure("No discard target chosen")
-
-                val discardContainer = state.getEntity(toDiscard)
-                    ?: return CostPaymentResult.failure("Card to discard not found")
-                val discardOwner = discardContainer.get<ControllerComponent>()?.playerId
-                    ?: return CostPaymentResult.failure("Card to discard has no owner")
+                val toDiscard: List<EntityId> = if (cost.atRandom) {
+                    // Engine chooses the discarded cards at random — no player selection.
+                    val eligible = findMatchingCardsUnified(
+                        state, state.getZone(ZoneKey(controllerId, Zone.HAND)), cost.filter, controllerId
+                    )
+                    if (eligible.size < cost.count) {
+                        return CostPaymentResult.failure("Not enough cards to discard at random")
+                    }
+                    eligible.shuffled().take(cost.count)
+                } else {
+                    if (choices.discardChoices.size < cost.count) {
+                        return CostPaymentResult.failure("Must choose ${cost.count} card(s) to discard")
+                    }
+                    choices.discardChoices.take(cost.count)
+                }
 
                 val result = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                    .discardCard(state, discardOwner, toDiscard)
+                    .discardCards(state, controllerId, toDiscard)
                 CostPaymentResult.success(result.state, manaPool, result.events)
             }
             is AbilityCost.DiscardHand -> {

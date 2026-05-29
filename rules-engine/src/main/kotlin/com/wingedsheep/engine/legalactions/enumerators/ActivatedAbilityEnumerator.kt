@@ -244,9 +244,13 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         if (blightCreatures.isEmpty()) continue
                     }
                     is AbilityCost.Discard -> {
-                        discardCost = effectiveCost
-                        discardTargets = context.costUtils.findDiscardTargets(state, playerId, effectiveCost.filter)
-                        if (discardTargets.isEmpty()) continue
+                        val targets = context.costUtils.findDiscardTargets(state, playerId, effectiveCost.filter)
+                        if (targets.size < effectiveCost.count) continue
+                        // Random discard is paid automatically at cost time — no player selection.
+                        if (!effectiveCost.atRandom) {
+                            discardCost = effectiveCost
+                            discardTargets = targets
+                        }
                     }
                     is AbilityCost.RemoveCounterFromSelf -> {
                         val counters = container.get<CountersComponent>()
@@ -391,11 +395,15 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     }
                                 }
                                 is AbilityCost.Discard -> {
-                                    discardCost = subCost
-                                    discardTargets = context.costUtils.findDiscardTargets(state, playerId, subCost.filter)
-                                    if (discardTargets.isEmpty()) {
+                                    val targets = context.costUtils.findDiscardTargets(state, playerId, subCost.filter)
+                                    if (targets.size < subCost.count) {
                                         costCanBePaid = false
                                         break
+                                    }
+                                    // Random discard is paid automatically at cost time — no player selection.
+                                    if (!subCost.atRandom) {
+                                        discardCost = subCost
+                                        discardTargets = targets
                                     }
                                 }
                                 is AbilityCost.ExileXFromGraveyard -> {
@@ -833,7 +841,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 description = discardCost.description,
                 costType = "DiscardCard",
                 validDiscardTargets = discardTargets,
-                discardCount = 1,
+                discardCount = discardCost.count,
                 counterRemovalCreatures = counterRemovalCreatures
             )
         }
