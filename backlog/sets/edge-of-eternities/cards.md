@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 221 / 261
+**Implemented:** 222 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -213,7 +213,7 @@
 - [x] Steelswarm Operator
 - [x] Stomping Ground
 - [x] Sunset Saboteur
-- [ ] Sunstar Chaplain
+- [x] Sunstar Chaplain
 - [x] Sunstar Expansionist
 - [x] Sunstar Lightsmith
 - [x] Survey Mechan
