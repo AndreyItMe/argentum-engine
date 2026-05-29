@@ -408,6 +408,18 @@ sealed interface Modification {
         override val layer get() = Layer.ABILITY
     }
 
+    /**
+     * Grants each affected entity "protection from the colors of permanents the source's
+     * controller controls". Read at apply-time: collects the projected colors of every
+     * battlefield permanent controlled by the source's (projected) controller, then adds
+     * `PROTECTION_FROM_<COLOR>` for each. Applied in Layer 6 (ABILITY) after Layer 5 colors
+     * are final, so it tracks the controller's board in real time. Used for Pledge of Loyalty.
+     */
+    @Serializable
+    data object GrantProtectionFromControlledColors : Modification {
+        override val layer get() = Layer.ABILITY
+    }
+
     @Serializable
     data object SetCantAttack : Modification {
         override val layer get() = Layer.ABILITY

@@ -180,6 +180,22 @@ internal class EffectApplicator(
                         values.keywords.add("HEXPROOF_FROM_$colorName")
                     }
                 }
+                is Modification.GrantProtectionFromControlledColors -> {
+                    // Protection from the colors of permanents the source's controller controls
+                    // (e.g., Pledge of Loyalty). Read the projected controller + projected colors
+                    // so color-changing effects (Layer 5) are reflected; colorless permanents add
+                    // no color.
+                    val sourceController = projectedValues[effect.sourceId]?.controllerId
+                        ?: state.getEntity(effect.sourceId)?.get<ControllerComponent>()?.playerId
+                    if (sourceController != null) {
+                        for (other in projectedValues.values) {
+                            if (other.controllerId != sourceController) continue
+                            for (colorName in other.colors) {
+                                values.keywords.add("PROTECTION_FROM_$colorName")
+                            }
+                        }
+                    }
+                }
                 is Modification.SetCantAttack -> {
                     values.cantAttack = true
                 }

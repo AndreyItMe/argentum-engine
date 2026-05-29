@@ -4,8 +4,9 @@ Cross-reference of the **248 remaining (unimplemented) Invasion cards** against 
 actual capabilities (SDK reference + source verification, May 2026). Generated to scope what
 must be built before the set can be completed.
 
-**Status:** 87 / 335 implemented (26%) — up from 59 / 335 (18%) at time of writing, after gaps
-#1–#13 (incl. Blind Seer, Backlash, Agonizing Demise, Tsabo Tavoc) and the cards they unlocked.
+**Status:** 89 / 335 implemented (27%) — up from 59 / 335 (18%) at time of writing, after gaps
+#1–#15 (incl. Blind Seer, Backlash, Agonizing Demise, Tsabo Tavoc, Traveler's Cloak, Pledge of
+Loyalty) and the cards they unlocked.
 Card list comes from `scripts/card-status --list --set INV`.
 
 ## Bottom line
@@ -571,18 +572,33 @@ it to the enchanted creature. Reuses the existing landwalk keywords and chosen-t
 
 ---
 
-### #15 — Dynamic multi-color protection from a board-computed set · Pledge of Loyalty
+### #15 — Dynamic multi-color protection from a board-computed set · Pledge of Loyalty ✅ DONE
 
-**What exists.** `ProtectionScope.Colors(Set<Color>)` is a fixed set; protection is synthesized as
-per-color keywords at projection (`StateProjector.kt:100-101`).
+> **Implemented (primitive + card).** New SDK static ability
+> `GrantProtectionFromControlledColors(filter = attachedCreature())` (in `ProtectionStaticAbilities.kt`)
+> → engine `Modification.GrantProtectionFromControlledColors` (Layer 6 / ABILITY). At apply-time
+> `EffectApplicator` collects the **projected** colors of every battlefield permanent controlled by the
+> source's **projected** controller and adds `PROTECTION_FROM_<COLOR>` to each affected entity — so the
+> set is board-derived, reflects Layer-5 color changes, and a colorless permanent contributes nothing.
+> Downstream targeting/blocking/combat checks are unchanged (they already consume the synthesized
+> per-color keywords). **Pledge of Loyalty** authored in `definitions/inv/cards/PledgeOfLoyalty.kt`
+> (`{1}{W}` Aura, `staticAbility { ability = GrantProtectionFromControlledColors() }`). Covered by
+> `PledgeOfLoyaltyTest` (enchant-an-opponent's-creature proves "you" = Aura controller; adding a
+> colored permanent updates the set dynamically).
+>
+> **Scoping corrections.** (1) The original plan proposed an *innate* `ProtectionScope.DynamicColors`
+> wired into `StateProjector`'s base-keyword synthesis. That's the wrong model — Pledge is an Aura that
+> *grants* protection to the enchanted creature, so this belongs in the `GrantProtection`/
+> `GrantHexproofFromOwnColorsToGroup` static-ability family, not the per-card `ProtectionComponent`
+> path. (2) The printed "This effect doesn't remove this Aura" clause is a no-op here: `UnattachedAurasCheck`
+> (704.5n) only detaches an Aura whose object is gone or that is unattached, never one whose enchanted
+> object gained protection from the Aura's color — so no exception logic is needed.
 
-**Plan.** Add `ProtectionScope.DynamicColors(val filter: GroupFilter)`. At projection, compute the
-color set from permanents matching `filter` (for Pledge: "permanents you control"), then synthesize
-the same per-color protection keywords already used by `Colors`. The only new logic is computing the
-set at projection time; the downstream protection checks are unchanged.
+**What existed.** `ProtectionScope.Colors(Set<Color>)` is a fixed set; protection is synthesized as
+per-color keywords at projection (`StateProjector.kt:100-102`). `GrantHexproofFromOwnColorsToGroup`
+was the precedent for a projection-time, board-derived keyword grant.
 
-**Leverage.** Reusable for any "protection from the colors of [group]" (Voidmage Apprentice-style,
-Akroma variants).
+**Leverage.** Reusable for any "protection from the colors of permanents you control" card.
 
 ---
 
@@ -699,7 +715,7 @@ filter.
 7. **Name-a-card choice + filter** (#10) ✅ — `OptionType.CARD_NAME` / `Effects.ChooseCardName` +
    `StoreCardName` (capture-from-chosen-card) + `NameEqualsChosen` filter; Desperate Research + Lobotomy done.
 8. **Pile-separation trio** (#21) — 5 cards from three composable additions.
-9. Scope additions: protection supertype (#13), dynamic-color protection (#15), chosen-type landwalk
-   (#14 ✅), discard-at-random cost (#9 ✅) — small, independent.
+9. Scope additions: protection supertype (#13 ✅), dynamic-color protection (#15 ✅), chosen-type
+   landwalk (#14 ✅), discard-at-random cost (#9 ✅) — small, independent.
 10. Bespoke / heavier: stack color-change (#11), Mana Maze restriction (#18), reveal-and-compare
     (#19), text-changing (#17), life auction (#16).

@@ -1033,6 +1033,11 @@ staticAbility {
   the chosen type" — grants the landwalk keyword matching the source's `ChosenLandTypeComponent`
   (Plains→Plainswalk, Island→Islandwalk, …) at projection time. Chosen-value counterpart to
   `GrantKeyword`; pair with `EntersWithChoice(ChoiceType.BASIC_LAND_TYPE)`. (Traveler's Cloak)
+- `GrantProtectionFromControlledColors(filter = attachedCreature())` — "[filter] have protection from
+  the colors of permanents you control" — grants the affected creature(s) protection from every color
+  among the permanents the source's controller controls, recomputed at projection (Layer 6, after
+  Layer 5 colors) so it tracks the board in real time. Colorless permanents add no color. (Pledge of
+  Loyalty)
 - `GrantCardType(cardType, filter)` / `RemoveCardType(cardType, filter)` — Layer 4 type-changing statics that add or
   remove a card type (e.g. `"CREATURE"`). `RemoveCardType` backs Impending's "isn't a creature while it has a time
   counter" (wrapped in a `ConditionalStaticAbility`); reuse it for any "it's no longer a [type]" effect.

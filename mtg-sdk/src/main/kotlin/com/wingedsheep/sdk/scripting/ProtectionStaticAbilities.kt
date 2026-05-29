@@ -72,6 +72,31 @@ data class GrantHexproofFromOwnColorsToGroup(
 }
 
 /**
+ * Grants each affected creature protection from the colors of permanents the source's
+ * controller currently controls. The protection set is board-derived and re-evaluated at
+ * projection (after Layer 5), so it tracks the controller's permanents in real time; a
+ * colorless permanent contributes no color.
+ *
+ * Used by Pledge of Loyalty ("Enchanted creature has protection from the colors of permanents
+ * you control."). The "you" is the controller of the permanent holding this ability; the
+ * default filter applies it to the enchanted creature.
+ *
+ * @property filter The group of creatures that gain the dynamic protection
+ */
+@SerialName("GrantProtectionFromControlledColors")
+@Serializable
+data class GrantProtectionFromControlledColors(
+    val filter: GroupFilter = GroupFilter.attachedCreature()
+) : StaticAbility {
+    override val description: String =
+        "${filter.description} have protection from the colors of permanents you control"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
  * Prevents a permanent from having counters put on it.
  * Used for Auras like Blossombind.
  */
