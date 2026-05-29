@@ -51,7 +51,7 @@ class LibraryExecutors(
         GatherSubtypesExecutor(),
         CaptureControllersExecutor(),
         ChooseCreatureTypePipelineExecutor(),
-        ChooseOptionPipelineExecutor(),
+        ChooseOptionPipelineExecutor(cardRegistry = cardRegistry),
         GatherCardsExecutor(),
         SelectFromCollectionExecutor(),
         ChoosePileExecutor(),
@@ -59,6 +59,7 @@ class LibraryExecutors(
         MoveCollectionExecutor(cardRegistry = cardRegistry, targetFinder = targetFinder),
         FilterCollectionExecutor(),
         PutOnTopOrBottomOfLibraryExecutor(),
-        StoreNumberExecutor()
+        StoreNumberExecutor(),
+        StoreCardNameExecutor()
     )
 }

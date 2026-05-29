@@ -472,6 +472,7 @@ internal class AffectsFilterResolver {
         is CardPredicate.SharesColorWith,
         is CardPredicate.HasSubtypeFromVariable,
         is CardPredicate.HasSubtypeInStoredList,
+        is CardPredicate.NameEqualsChosen,
         is CardPredicate.HasSubtypeInEachStoredGroup -> false
         // Stack-only predicates — never match a battlefield entity being projected.
         CardPredicate.IsActivatedOrTriggeredAbility,

@@ -203,6 +203,11 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.NameEquals(name)
     )
 
+    /** Match cards whose name equals the card name stored in chosenValues[variableName] */
+    fun namedFromVariable(variableName: String) = copy(
+        cardPredicates = cardPredicates + CardPredicate.NameEqualsChosen(variableName)
+    )
+
     /** Mana value equals */
     fun manaValue(value: Int) = copy(
         cardPredicates = cardPredicates + CardPredicate.ManaValueEquals(value)

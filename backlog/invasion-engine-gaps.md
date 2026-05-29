@@ -432,25 +432,31 @@ Cost is a distinct family from Effects, so widening it (rather than composing) i
 
 ---
 
-### #10 — "Name a card" choice + name-matching filter · Desperate Research, Lobotomy
+### #10 — "Name a card" choice + name-matching filter · Desperate Research, Lobotomy ✅ DONE
 
-**What exists.** Only `CardPredicate.NameEquals(static)`. No `CARD_NAME` option type, no choose-a-name
+> **Implemented (primitives + both cards).** Two halves of the "name a card" family, no per-card
+> executors. **Naming half:** `OptionType.CARD_NAME` (options = `CardRegistry.allCardNames()` sorted —
+> the existing `ChooseOptionDecision` renders it as a searchable list, so no client change and no
+> free-text entry) surfaced via `Effects.ChooseCardName(storeAs, prompt?, excludeBasicLandNames?)`;
+> `ChooseOptionPipelineExecutor` now takes the registry. **Capture half:** `Effects.StoreCardName(from,
+> storeAs)` + `StoreCardNameExecutor` record the name of a chosen card into `chosenValues` — threaded
+> through a new `EffectResult.updatedChosenValues` channel merged by `CompositeEffectExecutor` and
+> `EffectContinuationRunner`. **Matching:** `CardPredicate.NameEqualsChosen(variableName)` +
+> `GameObjectFilter.namedFromVariable(variableName)` (case-insensitive; fails closed in
+> static/projection — wired into `PredicateEvaluator`, `AffectsFilterResolver`, `CostCalculator`).
+> Cards authored in `definitions/inv/cards/`: **Desperate Research** (`ChooseCardName` → reveal top 7 →
+> `SelectFromCollection(All, namedFromVariable)` matches to hand, rest exiled) and **Lobotomy**
+> (`RevealHand` → choose a non-basic-land card → `StoreCardName` → gather all same-named across
+> graveyard/hand/library → exile → shuffle). Covered by `DesperateResearchTest` + `LobotomyTest`.
+> **Scoping note:** Lobotomy's oracle wording is "choose a card from the revealed hand" (capture-name
+> half), not a typed name; the doc's original framing of both as free naming was corrected.
+
+**What existed.** Only `CardPredicate.NameEquals(static)`. No `CARD_NAME` option type, no choose-a-name
 effect.
 
-**Plan.**
-1. Add `OptionType.CARD_NAME` + `ChooseCardNameEffect(storeAs)` storing the chosen name in
-   `EffectContext` (`chosenCardName: String?` plus a named pipeline variable). The client gets a
-   name-entry/autocomplete decision.
-2. Add `CardPredicate.NameEqualsChosen` matching the stored chosen name.
-
-**Composition** (both reuse the existing gather/search/move pipeline):
-- **Lobotomy** = `ChooseCardName` → search target player's hand+graveyard+library with
-  `NameEqualsChosen` → exile all matches.
-- **Desperate Research** = `ChooseCardName` → gather library → partition by `NameEqualsChosen` →
-  matches to hand, remainder to graveyard.
-
 **Leverage.** Unlocks the whole "name a card" family (Pithing Needle is a different axis, but Cranial
-Extraction, Memoricide, Sadistic Sacrament all follow this exact shape).
+Extraction, Memoricide, Sadistic Sacrament all follow this exact shape); `StoreCardName` /
+`NameEqualsChosen` also serve any "choose a card, then act on cards with that name" effect.
 
 ---
 
@@ -637,7 +643,8 @@ filter.
    `CapDamage`, `PreventDamage.restrictions`, `RedirectDamage` (now wired), `ControllerOfDamageSource`;
    unlocked 5 cards and enriched the shared event system. Protective Sphere still waits on #8.
 6. **Tapped-for-mana event + rider + replacement** (#3) — 3 cards, reusable mana hooks.
-7. **Name-a-card choice + filter** (#10) — 2 cards, large external family.
+7. **Name-a-card choice + filter** (#10) ✅ — `OptionType.CARD_NAME` / `Effects.ChooseCardName` +
+   `StoreCardName` (capture-from-chosen-card) + `NameEqualsChosen` filter; Desperate Research + Lobotomy done.
 8. **Pile-separation trio** (#21) — 5 cards from three composable additions.
 9. Scope additions: protection supertype (#13), dynamic-color protection (#15), chosen-type landwalk
    (#14), discard-at-random cost (#9) — small, independent.

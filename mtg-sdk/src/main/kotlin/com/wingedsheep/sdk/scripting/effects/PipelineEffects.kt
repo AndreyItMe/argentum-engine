@@ -805,7 +805,14 @@ enum class OptionType {
     /** Choose from the five Magic colors */
     COLOR,
     /** Choose from the five basic land types (Plains, Island, Swamp, Mountain, Forest) */
-    BASIC_LAND_TYPE
+    BASIC_LAND_TYPE,
+    /**
+     * Name a card. Options are every card name the engine knows about (the registry),
+     * sorted alphabetically, so the player searches/filters a list rather than typing
+     * free text. Pair the stored name with [com.wingedsheep.sdk.scripting.predicates.CardPredicate.NameEqualsChosen]
+     * to match cards by it. Used by "name a card" effects (Desperate Research, etc.).
+     */
+    CARD_NAME
 }
 
 /**
@@ -834,6 +841,7 @@ data class ChooseOptionEffect(
             OptionType.CREATURE_TYPE -> "a creature type"
             OptionType.COLOR -> "a color"
             OptionType.BASIC_LAND_TYPE -> "a basic land type"
+            OptionType.CARD_NAME -> "a card name"
         })
     }
 
@@ -1196,4 +1204,28 @@ data class StoreNumberEffect(
         val newAmount = amount.applyTextReplacement(replacer)
         return if (newAmount !== amount) copy(amount = newAmount) else this
     }
+}
+
+/**
+ * Read the name of the first card in a stored collection and store it under [storeAs] in
+ * pipeline `chosenValues`. Subsequent effects can match cards against it via
+ * [com.wingedsheep.sdk.scripting.predicates.CardPredicate.NameEqualsChosen] (e.g.
+ * `GameObjectFilter.namedFromVariable(storeAs)`).
+ *
+ * This is the "capture a card's name" counterpart to [ChooseOptionEffect] with
+ * [OptionType.CARD_NAME]: instead of the player naming a card, the name is taken from a
+ * card they selected. Used by Lobotomy ("you choose a card … search for all cards with
+ * the same name"). A no-op when [from] is empty or missing.
+ *
+ * @property from Stored collection whose first card's name to capture.
+ * @property storeAs Key under which the captured name is stored in `chosenValues`.
+ */
+@SerialName("StoreCardName")
+@Serializable
+data class StoreCardNameEffect(
+    val from: String,
+    val storeAs: String = "chosenCardName"
+) : Effect {
+    override val description: String = "Note the name of the $from card"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

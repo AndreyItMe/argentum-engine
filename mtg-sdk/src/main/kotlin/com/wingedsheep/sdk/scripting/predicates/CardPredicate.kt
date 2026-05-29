@@ -250,6 +250,21 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
     }
 
+    /**
+     * Matches cards whose name equals the value stored in `chosenValues[variableName]` —
+     * a card name chosen earlier in the pipeline (via [com.wingedsheep.sdk.scripting.effects.OptionType.CARD_NAME]
+     * or [com.wingedsheep.sdk.scripting.effects.StoreCardNameEffect]). Matching is
+     * case-insensitive. Fails closed (no match) when nothing has been stored yet, or in
+     * static/projection contexts that have no pipeline. Used by "name a card … cards with
+     * that name" effects (Desperate Research, Lobotomy).
+     */
+    @SerialName("NameEqualsChosen")
+    @Serializable
+    data class NameEqualsChosen(val variableName: String) : CardPredicate {
+        override val description: String = "with the chosen name"
+        override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
+    }
+
     // =============================================================================
     // Keyword Predicates
     // =============================================================================

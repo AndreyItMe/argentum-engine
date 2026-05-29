@@ -2094,6 +2094,36 @@ object Effects {
         excludedOptions: List<String> = emptyList()
     ): Effect = ChooseOptionEffect(optionType, storeAs, prompt, excludedOptions)
 
+    /** The five basic land card names, excluded by "name a card other than a basic land card name" effects. */
+    private val BASIC_LAND_CARD_NAMES = listOf("Plains", "Island", "Swamp", "Mountain", "Forest")
+
+    /**
+     * Name a card. The chosen name is stored in `chosenValues[storeAs]`; match cards
+     * against it later with [com.wingedsheep.sdk.scripting.filters.unified.GameObjectFilter.namedFromVariable].
+     * Used by "name a card …" effects (Desperate Research).
+     *
+     * @param excludeBasicLandNames When true, the five basic land card names are not
+     *   offered ("other than a basic land card name").
+     */
+    fun ChooseCardName(
+        storeAs: String = "chosenCardName",
+        prompt: String? = null,
+        excludeBasicLandNames: Boolean = false
+    ): Effect = ChooseOptionEffect(
+        optionType = OptionType.CARD_NAME,
+        storeAs = storeAs,
+        prompt = prompt,
+        excludedOptions = if (excludeBasicLandNames) BASIC_LAND_CARD_NAMES else emptyList()
+    )
+
+    /**
+     * Capture the name of the first card in stored collection [from] into
+     * `chosenValues[storeAs]`. The "choose a card, then act on cards with that name"
+     * counterpart to [ChooseCardName] (Lobotomy).
+     */
+    fun StoreCardName(from: String, storeAs: String = "chosenCardName"): Effect =
+        com.wingedsheep.sdk.scripting.effects.StoreCardNameEffect(from, storeAs)
+
     /**
      * Choose a creature type. Creatures of the chosen type get +X/+Y until end of turn,
      * optionally gaining a keyword.

@@ -410,6 +410,11 @@ class PredicateEvaluator {
             }
 
             // Context-relative predicates (pipeline variable references)
+            is CardPredicate.NameEqualsChosen -> {
+                val chosenName = context?.chosenValues?.get(predicate.variableName) ?: return false
+                card.name.equals(chosenName, ignoreCase = true)
+            }
+
             is CardPredicate.HasSubtypeFromVariable -> {
                 val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
                 val entitySubtypes = projectedValues?.subtypes ?: card.typeLine.subtypes.map { it.value }.toSet()
@@ -767,6 +772,7 @@ class PredicateEvaluator {
 
             // Name predicates — not stored in record
             is CardPredicate.NameEquals -> false
+            is CardPredicate.NameEqualsChosen -> false
 
             // Keyword predicates — not stored in record
             is CardPredicate.HasKeyword, is CardPredicate.NotKeyword -> false

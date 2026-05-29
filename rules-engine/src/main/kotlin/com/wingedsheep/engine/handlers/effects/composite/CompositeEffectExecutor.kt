@@ -103,31 +103,35 @@ class CompositeEffectExecutor(
             }
             allEvents.addAll(result.events)
 
-            // Merge any updated collections / subtype groups / stored numbers from the sub-effect into the context
+            // Merge any updated collections / subtype groups / stored numbers / chosen values from the sub-effect into the context
             if (result.updatedCollections.isNotEmpty() ||
                 result.updatedSubtypeGroups.isNotEmpty() ||
-                result.updatedStoredNumbers.isNotEmpty()
+                result.updatedStoredNumbers.isNotEmpty() ||
+                result.updatedChosenValues.isNotEmpty()
             ) {
                 currentContext = currentContext.copy(
                     pipeline = currentContext.pipeline.copy(
                         storedCollections = currentContext.pipeline.storedCollections + result.updatedCollections,
                         storedSubtypeGroups = currentContext.pipeline.storedSubtypeGroups + result.updatedSubtypeGroups,
-                        storedNumbers = currentContext.pipeline.storedNumbers + result.updatedStoredNumbers
+                        storedNumbers = currentContext.pipeline.storedNumbers + result.updatedStoredNumbers,
+                        chosenValues = currentContext.pipeline.chosenValues + result.updatedChosenValues
                     )
                 )
             }
         }
 
-        // Return accumulated collections / subtype groups / stored numbers so parent composites can see them
+        // Return accumulated collections / subtype groups / stored numbers / chosen values so parent composites can see them
         val accumulatedCollections = currentContext.pipeline.storedCollections - context.pipeline.storedCollections.keys
         val accumulatedSubtypeGroups = currentContext.pipeline.storedSubtypeGroups - context.pipeline.storedSubtypeGroups.keys
         val accumulatedStoredNumbers = currentContext.pipeline.storedNumbers - context.pipeline.storedNumbers.keys
+        val accumulatedChosenValues = currentContext.pipeline.chosenValues - context.pipeline.chosenValues.keys
         return EffectResult(
             currentState,
             allEvents,
             updatedCollections = accumulatedCollections,
             updatedSubtypeGroups = accumulatedSubtypeGroups,
-            updatedStoredNumbers = accumulatedStoredNumbers
+            updatedStoredNumbers = accumulatedStoredNumbers,
+            updatedChosenValues = accumulatedChosenValues
         )
     }
 }

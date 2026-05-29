@@ -21,7 +21,9 @@ data class EffectResult(
     /** Subtype-group lists produced by pipeline effects (GatherSubtypes, etc.) */
     val updatedSubtypeGroups: Map<String, List<Set<String>>> = emptyMap(),
     /** Named numeric values produced by pipeline effects (StoreNumber, etc.). */
-    val updatedStoredNumbers: Map<String, Int> = emptyMap()
+    val updatedStoredNumbers: Map<String, Int> = emptyMap(),
+    /** Named string values produced by pipeline effects (StoreCardName, etc.). */
+    val updatedChosenValues: Map<String, String> = emptyMap()
 ) {
     val isSuccess: Boolean get() = error == null && pendingDecision == null
     val isPaused: Boolean get() = pendingDecision != null
