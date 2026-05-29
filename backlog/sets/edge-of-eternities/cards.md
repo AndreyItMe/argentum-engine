@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 226 / 261
+**Implemented:** 227 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -242,7 +242,7 @@
 - [x] The Seriema
 - [ ] Thrumming Hivepool
 - [x] Timeline Culler
-- [ ] Tractor Beam
+- [x] Tractor Beam
 - [x] Tragic Trajectory
 - [x] Umbral Collar Zealot
 - [x] Unravel
