@@ -253,12 +253,25 @@ data class TimestampComponent(
 @Serializable
 data class AbilityActivatedThisTurnComponent(
     val abilityIds: Set<AbilityId> = emptySet(),
-    val loyaltyActivationCount: Int = 0
+    val loyaltyActivationCount: Int = 0,
+    /**
+     * How many times each ability was activated this turn. Used by
+     * [com.wingedsheep.sdk.scripting.ActivationRestriction.MaxPerTurn] (e.g. Phyrexian
+     * Battleflies' "Activate no more than twice each turn"). Distinct from [abilityIds],
+     * which only records whether an ability was activated at all (once-per-turn).
+     */
+    val activationCounts: Map<AbilityId, Int> = emptyMap()
 ) : Component {
     fun withActivated(abilityId: AbilityId): AbilityActivatedThisTurnComponent =
-        copy(abilityIds = abilityIds + abilityId)
+        copy(
+            abilityIds = abilityIds + abilityId,
+            activationCounts = activationCounts + (abilityId to (activationCounts[abilityId] ?: 0) + 1)
+        )
 
     fun hasActivated(abilityId: AbilityId): Boolean = abilityId in abilityIds
+
+    /** Number of times [abilityId] has been activated this turn. */
+    fun activationCount(abilityId: AbilityId): Int = activationCounts[abilityId] ?: 0
 
     fun withLoyaltyActivated(): AbilityActivatedThisTurnComponent =
         copy(loyaltyActivationCount = loyaltyActivationCount + 1)

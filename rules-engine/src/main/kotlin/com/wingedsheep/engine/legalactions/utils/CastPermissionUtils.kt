@@ -68,6 +68,13 @@ class CastPermissionUtils(
                     tracker == null || !tracker.hasActivated(abilityId)
                 }
             }
+            is ActivationRestriction.MaxPerTurn -> {
+                if (sourceId == null || abilityId == null) true
+                else {
+                    val tracker = state.getEntity(sourceId)?.get<AbilityActivatedThisTurnComponent>()
+                    (tracker?.activationCount(abilityId) ?: 0) < restriction.count
+                }
+            }
             is ActivationRestriction.Once -> {
                 if (sourceId == null || abilityId == null) true
                 else {

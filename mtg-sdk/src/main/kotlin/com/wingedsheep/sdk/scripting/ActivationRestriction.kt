@@ -64,6 +64,14 @@ sealed interface ActivationRestriction {
     data object OncePerTurn : ActivationRestriction
 
     /**
+     * Restrict activation to at most [count] times per turn.
+     * Example: Phyrexian Battleflies: "Activate no more than twice each turn." ([count] = 2).
+     */
+    @SerialName("MaxPerTurn")
+    @Serializable
+    data class MaxPerTurn(val count: Int) : ActivationRestriction
+
+    /**
      * Restrict activation to only once ever (for the lifetime of the permanent).
      * Example: "Activate only once."
      */

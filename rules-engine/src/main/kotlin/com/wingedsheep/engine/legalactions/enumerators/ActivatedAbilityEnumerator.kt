@@ -555,7 +555,8 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                     && effectStacksOnRepeat(ability.effect)
                     && !ability.restrictions.any {
                     it is ActivationRestriction.OncePerTurn || it is ActivationRestriction.Once ||
-                        (it is ActivationRestriction.All && it.restrictions.any { r -> r is ActivationRestriction.OncePerTurn || r is ActivationRestriction.Once })
+                        it is ActivationRestriction.MaxPerTurn ||
+                        (it is ActivationRestriction.All && it.restrictions.any { r -> r is ActivationRestriction.OncePerTurn || r is ActivationRestriction.Once || r is ActivationRestriction.MaxPerTurn })
                 }
                 val maxRepeatableActivations: Int? = if (isRepeatEligible && abilityManaCost != null) {
                     val availableSources = context.manaSolver.getAvailableManaCount(state, playerId, precomputedSources = context.availableManaSources)

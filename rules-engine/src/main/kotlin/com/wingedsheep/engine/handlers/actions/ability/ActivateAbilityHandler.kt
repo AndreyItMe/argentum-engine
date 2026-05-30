@@ -573,8 +573,11 @@ class ActivateAbilityHandler(
             else -> {}
         }
 
-        // Track once-per-turn activation if the ability has an OncePerTurn restriction
-        if (ability.restrictions.any { it is ActivationRestriction.OncePerTurn || (it is ActivationRestriction.All && it.restrictions.any { r -> r is ActivationRestriction.OncePerTurn }) }) {
+        // Track per-turn activation if the ability has an OncePerTurn or MaxPerTurn restriction
+        fun isPerTurnTracked(r: ActivationRestriction): Boolean =
+            r is ActivationRestriction.OncePerTurn || r is ActivationRestriction.MaxPerTurn ||
+                (r is ActivationRestriction.All && r.restrictions.any { isPerTurnTracked(it) })
+        if (ability.restrictions.any { isPerTurnTracked(it) }) {
             // Only track if source is still on the battlefield (it might have been bounced as cost)
             if (currentState.getEntity(action.sourceId) != null) {
                 currentState = currentState.updateEntity(action.sourceId) { c ->
@@ -1202,6 +1205,12 @@ class ActivateAbilityHandler(
                 val tracker = state.getEntity(sourceId)?.get<AbilityActivatedThisTurnComponent>()
                 if (tracker != null && tracker.hasActivated(abilityId)) {
                     "This ability can only be activated once each turn"
+                } else null
+            }
+            is ActivationRestriction.MaxPerTurn -> {
+                val tracker = state.getEntity(sourceId)?.get<AbilityActivatedThisTurnComponent>()
+                if ((tracker?.activationCount(abilityId) ?: 0) >= restriction.count) {
+                    "This ability can't be activated more than ${restriction.count} times each turn"
                 } else null
             }
             is ActivationRestriction.Once -> {

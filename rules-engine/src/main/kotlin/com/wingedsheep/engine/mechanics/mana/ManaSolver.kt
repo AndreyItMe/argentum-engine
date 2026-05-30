@@ -1156,6 +1156,10 @@ class ManaSolver(
             val tracker = state.getEntity(sourceId)?.get<AbilityActivatedThisTurnComponent>()
             tracker == null || !tracker.hasActivated(ability.id)
         }
+        is ActivationRestriction.MaxPerTurn -> {
+            val tracker = state.getEntity(sourceId)?.get<AbilityActivatedThisTurnComponent>()
+            (tracker?.activationCount(ability.id) ?: 0) < restriction.count
+        }
         is ActivationRestriction.Once -> {
             val tracker = state.getEntity(sourceId)?.get<AbilityActivatedEverComponent>()
             tracker == null || !tracker.hasActivated(ability.id)
