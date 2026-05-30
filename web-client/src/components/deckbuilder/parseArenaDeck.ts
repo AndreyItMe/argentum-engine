@@ -39,6 +39,11 @@ export interface ParseResult {
   commander: ParsedEntry[]
   /** Lines that looked like card entries but couldn't be parsed. */
   errors: Array<{ line: number; raw: string; reason: string }>
+  /**
+   * Deck name pulled from an Arena-style `Name <…>` line in the leading
+   * `About` block, if present.
+   */
+  deckName?: string
 }
 
 // Count + optional 'x' suffix (e.g. `4` or `4x`), name (lazy), optional
@@ -102,6 +107,7 @@ export function parseArenaDeckList(text: string): ParseResult {
   const sideboard: ParsedEntry[] = []
   const commander: ParsedEntry[] = []
   const errors: ParseResult['errors'] = []
+  let deckName: string | undefined
 
   let section: Section = 'main'
 
@@ -121,7 +127,18 @@ export function parseArenaDeckList(text: string): ParseResult {
     const { line: cleaned, sideboard: lineIsSideboard } = preprocessLine(trimmed)
     const targetSection: Section = lineIsSideboard ? 'side' : section
 
-    if (targetSection === 'ignore') continue
+    if (targetSection === 'ignore') {
+      // Arena's About block carries a `Name <deck-name>` metadata line. Grab
+      // the first one so the import flow can suggest a deck name.
+      if (deckName === undefined) {
+        const nameMatch = cleaned.match(/^name\s*:?\s+(.+)$/i)
+        if (nameMatch) {
+          const value = nameMatch[1]!.trim().replace(/^"(.*)"$/, '$1').trim()
+          if (value) deckName = value
+        }
+      }
+      continue
+    }
 
     const match = ENTRY_RE.exec(cleaned)
     if (!match) {
@@ -146,7 +163,9 @@ export function parseArenaDeckList(text: string): ParseResult {
     else entries.push(entry)
   }
 
-  return { entries, sideboard, commander, errors }
+  return deckName !== undefined
+    ? { entries, sideboard, commander, errors, deckName }
+    : { entries, sideboard, commander, errors }
 }
 
 export interface ResolvedEntry {

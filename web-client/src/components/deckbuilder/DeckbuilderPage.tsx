@@ -1466,7 +1466,7 @@ function ImportDeckModal({
       ? catalog.find((c) => c.name.toLowerCase() === commanderEntry.name.toLowerCase())?.name
         ?? commanderEntry.name
       : null
-    onImport(merged, null, commanderName)
+    onImport(merged, preview.parsed.deckName ?? null, commanderName)
   }
 
   return (

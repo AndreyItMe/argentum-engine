@@ -36,6 +36,7 @@ import {
   computeDeckStats,
   type DeckValidationResult,
 } from './DeckSummary'
+import { parseArenaDeckList } from '../deckbuilder/parseArenaDeck'
 import styles from './DeckPicker.module.css'
 
 type Tab = 'saved' | 'examples' | 'paste' | 'random'
@@ -107,30 +108,24 @@ interface ExampleDeck {
 
 type ValidationResult = DeckValidationResult
 
-function parseDeckText(text: string): Record<string, number> {
-  const result: Record<string, number> = {}
-  for (const rawLine of text.split('\n')) {
-    const line = rawLine.trim()
-    if (!line) continue
-    const leading = line.match(/^(\d+)\s+(.+)$/)
-    const trailing = line.match(/^(.+?)\s*x(\d+)$/i)
-    let name: string
-    let count: number
-    if (leading) {
-      count = parseInt(leading[1]!, 10)
-      name = leading[2]!.trim()
-    } else if (trailing) {
-      name = trailing[1]!.trim()
-      count = parseInt(trailing[2]!, 10)
-    } else {
-      name = line
-      count = 1
-    }
-    if (name && Number.isFinite(count) && count > 0) {
-      result[name] = (result[name] ?? 0) + count
-    }
+function parseDeckText(text: string): { cards: Record<string, number>; deckName?: string } {
+  // Delegate to the shared Arena/Moxfield/plain-text parser so section headers
+  // (`About`, `Deck`, `Sideboard`, …) and Arena's `Name <deck-name>` metadata
+  // line don't end up as bogus card entries.
+  const parsed = parseArenaDeckList(text)
+  const cards: Record<string, number> = {}
+  for (const entry of parsed.entries) {
+    cards[entry.name] = (cards[entry.name] ?? 0) + entry.count
   }
-  return result
+  // Tolerate the "bare card name = 1 copy" shorthand the old parser supported,
+  // since the picker's textarea never required a leading count.
+  for (const err of parsed.errors) {
+    if (err.reason !== 'unrecognised line format') continue
+    const name = err.raw.trim()
+    if (!name) continue
+    cards[name] = (cards[name] ?? 0) + 1
+  }
+  return parsed.deckName !== undefined ? { cards, deckName: parsed.deckName } : { cards }
 }
 
 function formatDeckText(cards: Record<string, number>): string {
@@ -234,13 +229,15 @@ export function DeckPicker({
     }
   }, [])
 
+  const parsedPaste = useMemo(() => parseDeckText(pasteText), [pasteText])
+
   // The deck list emitted to the parent based on the active tab.
   const currentDeck: Record<string, number> = useMemo(() => {
     switch (tab) {
       case 'random':
         return {}
       case 'paste':
-        return parseDeckText(pasteText)
+        return parsedPaste.cards
       case 'saved': {
         const saved = decks.find((d) => d.id === selectedSavedId)
         if (!saved) return {}
@@ -258,7 +255,17 @@ export function DeckPicker({
         // we treat it as "no deck chosen yet".
         return {}
     }
-  }, [tab, pasteText, decks, selectedSavedId])
+  }, [tab, parsedPaste, decks, selectedSavedId])
+
+  // Auto-populate the Save-deck name from an Arena export's `Name <…>` line.
+  // Only fills when the user hasn't typed something themselves, so we don't
+  // trample manual edits when they re-paste or tweak the textarea.
+  useEffect(() => {
+    if (parsedPaste.deckName && pendingName.trim() === '') {
+      setPendingName(parsedPaste.deckName)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedPaste.deckName])
 
   // Commander designation. Saved decks store one explicitly; commander-shape examples carry
   // theirs through Paste via [pasteCommander]. Random has no commander hint.
