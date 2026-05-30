@@ -118,6 +118,16 @@ data class ManaSource(
      */
     val requiresSacrifice: Boolean = false,
     /**
+     * Colors this source can produce *only* by sacrificing itself, when it also has at
+     * least one non-sacrifice mana ability (e.g. Irrigation Ditch — `{T}: Add {W}` plus
+     * `{T}, Sacrifice this land: Add {G}{U}`). The source-level [requiresSacrifice] flag
+     * stays false for such mixed sources (the {W} path is sacrifice-free), so the auto-pay
+     * solver must drop these specific colors instead — otherwise it would silently pick the
+     * sacrifice ability to produce {G}/{U}. Manual mana-source selection still offers the
+     * sacrifice ability for these colors so the choice is explicit.
+     */
+    val colorsRequiringSacrifice: Set<Color> = emptySet(),
+    /**
      * Tapping this source also requires tapping another permanent (e.g. Springleaf
      * Drum — "{T}, Tap an untapped creature you control: Add one mana of any color").
      * Auto-pay refuses to pick these because silently tapping someone else's permanent
@@ -290,6 +300,14 @@ class ManaSolver(
             .filter { source ->
                 if (source.restriction == null || spellContext == null) true
                 else source.restriction.isSatisfiedBy(spellContext)
+            }
+            // Drop colors a mixed source can only make by sacrificing itself (e.g. Irrigation
+            // Ditch's {G}{U}, kept behind its sacrifice-free {W} ability). Auto-pay must not
+            // silently sacrifice; the {W} path remains usable, and manual selection still
+            // offers the sacrifice ability for these colors.
+            .map { source ->
+                if (source.colorsRequiringSacrifice.isEmpty()) source
+                else source.copy(producesColors = source.producesColors - source.colorsRequiringSacrifice)
             }
 
         if (availableSources.isEmpty() && cost.cmc > 0) {
@@ -813,6 +831,11 @@ class ManaSolver(
             val perColorRestrictions = mutableMapOf<Color, ManaRestriction?>()
             // Track the minimum mana-cost-to-activate per color (cheapest ability producing it)
             val perColorActivationCost = mutableMapOf<Color, Int>()
+            // Track which colors are produceable WITHOUT sacrificing the source. A color is
+            // sacrifice-free if any accepted ability producing it has no SacrificeSelf cost.
+            // Colors in `combinedColors` but not here can only be made by sacrificing — the
+            // auto-pay solver must not pick those (see ManaSource.colorsRequiringSacrifice).
+            val sacrificeFreeColors = mutableSetOf<Color>()
             // Spell riders contributed per color by abilities on this source (e.g.
             // Cavern of Souls' "Add one mana of any color" carries
             // MakesSpellUncounterable on every color it can produce, while its
@@ -993,6 +1016,11 @@ class ManaSolver(
                     else minOf(existing, abilityActivationManaCost)
                 }
 
+                // Record which colors this ability can produce without sacrifice.
+                if (!abilityRequiresSacrifice) {
+                    sacrificeFreeColors.addAll(effectColors)
+                }
+
                 // Track per-color restrictions: null means unrestricted
                 for (color in effectColors) {
                     val existing = perColorRestrictions[color]
@@ -1052,6 +1080,13 @@ class ManaSolver(
                 // preferred and the source is offered without sacrifice.
                 val requiresSacrifice = anyAcceptedWithSac && !anyAcceptedWithoutSac
 
+                // Colors this mixed source can only produce by sacrificing. When the whole
+                // source is sacrifice-bound (requiresSacrifice == true) this stays empty — the
+                // source is dropped from auto-pay entirely by the existing filter, so there's
+                // no need to also tag individual colors.
+                val colorsRequiringSacrifice = if (requiresSacrifice) emptySet()
+                else combinedColors - sacrificeFreeColors
+
                 // Same rule for the tap-another-permanent sub-cost: surface it only when
                 // every accepted ability requires the secondary tap. If any plain mana
                 // ability was accepted, that path is preferred.
@@ -1079,6 +1114,7 @@ class ManaSolver(
                     colorRestrictions = restrictedColors,
                     colorActivationManaCost = colorActivationCosts,
                     requiresSacrifice = requiresSacrifice,
+                    colorsRequiringSacrifice = colorsRequiringSacrifice,
                     hasContextSensitiveAbilities = hasMixedRestrictions,
                     tapPermanentsSubCost = tapPermanentsSubCost,
                 )
