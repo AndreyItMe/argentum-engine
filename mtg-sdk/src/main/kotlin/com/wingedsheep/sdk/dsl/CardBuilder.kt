@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.costs.PayCost
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
+import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.GrantKeywordEffect
@@ -435,6 +436,35 @@ class CardBuilder(private val name: String) {
                 descriptionOverride = "Whenever this creature attacks, create $article tapped " +
                     "and attacking 1/1 red Warrior creature $tokenWord. Sacrifice $pronoun at the " +
                     "beginning of the next end step."
+            )
+        )
+    }
+
+    /**
+     * Add Decayed (CR 702.147, Innistrad: Midnight Hunt) — keyword + static ability
+     * + triggered ability.
+     *
+     * "This creature can't block, and when it attacks, sacrifice it at end of combat."
+     *
+     * The keyword is display-only (no separate Decayed handler exists); the behavior is
+     * composed here from existing primitives: a [CantBlock] static ability on the source
+     * for "can't block", plus an attack-triggered [CreateDelayedTriggerEffect] scheduled
+     * for [Step.END_COMBAT] that sacrifices the source (mirroring Mardu Blazebringer's
+     * "sacrifice it at end of combat" wiring).
+     */
+    fun decayed() {
+        keywordSet.add(Keyword.DECAYED)
+        staticAbilities.add(CantBlock(GroupFilter.source()))
+        triggeredAbilities.add(
+            TriggeredAbility.create(
+                trigger = Triggers.Attacks.event,
+                binding = Triggers.Attacks.binding,
+                effect = CreateDelayedTriggerEffect(
+                    step = Step.END_COMBAT,
+                    effect = Effects.SacrificeTarget(EffectTarget.Self)
+                ),
+                descriptionOverride = "Decayed (This creature can't block, and when it " +
+                    "attacks, sacrifice it at end of combat.)"
             )
         )
     }

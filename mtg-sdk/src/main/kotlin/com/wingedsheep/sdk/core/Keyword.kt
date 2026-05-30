@@ -155,6 +155,19 @@ enum class Keyword(val displayName: String) {
      */
     ASCEND("Ascend"),
 
+    /**
+     * Decayed (CR 702.147, Innistrad: Midnight Hunt). A static ability plus a
+     * triggered ability: "This creature can't block" and "When this creature
+     * attacks, sacrifice it at end of combat."
+     *
+     * The keyword itself is display-only; the behavior is composed by the
+     * `decayed()` DSL helper on [com.wingedsheep.sdk.dsl.CardBuilder] — a
+     * [com.wingedsheep.sdk.scripting.CantBlock] static ability plus an
+     * attack-triggered [com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect]
+     * that sacrifices the source at the end-of-combat step.
+     */
+    DECAYED("Decayed"),
+
     // ── Damage modification ──────────────────────────────
     WITHER("Wither"),
     TOXIC("Toxic"),

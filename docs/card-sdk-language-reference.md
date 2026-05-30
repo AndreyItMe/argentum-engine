@@ -1369,6 +1369,11 @@ composite abilities).
   ability plus a "whenever this attacks" triggered `CreateTokenEffect` (`tapped = true`, `attacking = true`)
   whose `sacrificeAtStep = Step.END` schedules one delayed `SacrificeTargetEffect` per created token at the
   next end step (mirrors `rampage()`). `n` may be any fixed value (Mobilize 1/2/3, …).
+- `Decayed` — "This creature can't block, and when it attacks, sacrifice it at end of combat" (CR 702.147,
+  Innistrad: Midnight Hunt). Display-only; wire the behavior with the `card { decayed() }` builder helper, which adds
+  the keyword plus a `CantBlock(GroupFilter.source())` static ability and a "whenever this attacks" triggered
+  `CreateDelayedTriggerEffect(step = Step.END_COMBAT, effect = Effects.SacrificeTarget(EffectTarget.Self))` (mirrors
+  Mardu Blazebringer's end-of-combat self-sacrifice). No parameter.
 - `Toxic(n)` — adds poison counters on combat damage.
 - `Cycling(cost)` — pay cost, discard, draw a card.
 - `BasicLandcycling(cost)` — cycling that fetches a basic land type.
