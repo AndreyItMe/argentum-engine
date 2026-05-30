@@ -107,7 +107,8 @@ class LandwalkRule : BlockEvasionRule {
         Keyword.SWAMPWALK to Subtype.SWAMP,
         Keyword.ISLANDWALK to Subtype.ISLAND,
         Keyword.MOUNTAINWALK to Subtype.MOUNTAIN,
-        Keyword.PLAINSWALK to Subtype.PLAINS
+        Keyword.PLAINSWALK to Subtype.PLAINS,
+        Keyword.DESERTWALK to Subtype.DESERT
     )
 
     override fun check(ctx: BlockCheckContext): String? {

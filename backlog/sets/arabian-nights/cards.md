@@ -52,7 +52,7 @@
 - [x] Ali Baba
 - [ ] Ali from Cairo
 - [x] Bird Maiden
-- [ ] Desert Nomads
+- [x] Desert Nomads
 - [x] Hurr Jackal
 - [x] Kird Ape
 - [ ] Magnetic Mountain

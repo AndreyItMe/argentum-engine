@@ -176,6 +176,9 @@ value class Subtype(val value: String) {
         val MOUNTAIN = Subtype("Mountain")
         val FOREST = Subtype("Forest")
 
+        // Nonbasic land types
+        val DESERT = Subtype("Desert")
+
         // Enchantment subtypes
         val AURA = Subtype("Aura")
         val CLASS = Subtype("Class")
