@@ -1972,6 +1972,20 @@ object Effects {
         )
 
     /**
+     * Prevent all damage that would be dealt to a target this turn by a source of your choice
+     * that shares a color with the mana spent — i.e. only colored sources are eligible
+     * (a colorless source shares a color with no mana). Protective Sphere.
+     */
+    fun PreventAllDamageFromChosenColoredSource(
+        target: EffectTarget = EffectTarget.Controller
+    ): Effect =
+        PreventDamageEffect(
+            target = target,
+            amount = null,
+            sourceFilter = PreventionSourceFilter.ChosenColoredSource
+        )
+
+    /**
      * Prevent the next time a creature of the chosen type would deal damage to you this turn.
      */
     fun PreventNextDamageFromChosenCreatureType(): Effect =

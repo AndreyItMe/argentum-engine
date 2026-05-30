@@ -48,6 +48,12 @@ sealed interface PreventionSourceFilter {
     @SerialName("AttackingCreatures") @Serializable data object AttackingCreatures : PreventionSourceFilter
     /** Player chooses a damage source on resolution. */
     @SerialName("ChosenSource") @Serializable data object ChosenSource : PreventionSourceFilter
+    /**
+     * Player chooses a damage source on resolution, but only colored sources are eligible
+     * — i.e. "a source of your choice that shares a color with the mana spent" (Protective
+     * Sphere). A colorless source shares a color with no mana, so it can never be chosen.
+     */
+    @SerialName("ChosenColoredSource") @Serializable data object ChosenColoredSource : PreventionSourceFilter
     /** Uses the chosen creature type from the source permanent's component. */
     @SerialName("ChosenCreatureType") @Serializable data object ChosenCreatureType : PreventionSourceFilter
     /** Only damage from creatures matching a group filter. */
@@ -110,6 +116,8 @@ data class PreventDamageEffect(
             PreventionSourceFilter.AnySource -> {}
             PreventionSourceFilter.AttackingCreatures -> append(" by attacking creatures")
             PreventionSourceFilter.ChosenSource -> append(" by a source of your choice")
+            PreventionSourceFilter.ChosenColoredSource ->
+                append(" by a source of your choice that shares a color with the mana spent")
             PreventionSourceFilter.ChosenCreatureType -> append(" by a creature of the chosen type")
             is PreventionSourceFilter.FromGroup ->
                 append(" by ${sourceFilter.filter.description.replaceFirstChar { it.lowercase() }}")

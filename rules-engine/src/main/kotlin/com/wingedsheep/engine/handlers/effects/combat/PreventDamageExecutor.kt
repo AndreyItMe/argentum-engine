@@ -44,8 +44,12 @@ class PreventDamageExecutor(
         effect: PreventDamageEffect,
         context: EffectContext
     ): EffectResult {
-        // Handle ChosenSource filter: requires player decision before creating shield
-        if (effect.sourceFilter is PreventionSourceFilter.ChosenSource) {
+        // Handle ChosenSource / ChosenColoredSource filters: require a player decision before
+        // creating the shield. ChosenColoredSource additionally restricts the candidate list to
+        // colored sources (Protective Sphere).
+        if (effect.sourceFilter is PreventionSourceFilter.ChosenSource ||
+            effect.sourceFilter is PreventionSourceFilter.ChosenColoredSource
+        ) {
             return handleChosenSource(state, effect, context)
         }
 
@@ -64,18 +68,21 @@ class PreventDamageExecutor(
         context: EffectContext
     ): EffectResult {
         val controllerId = context.controllerId
+        // "a source of your choice that shares a color with the mana spent" — only colored
+        // sources qualify (Protective Sphere). A colorless source shares a color with no mana.
+        val coloredOnly = effect.sourceFilter is PreventionSourceFilter.ChosenColoredSource
 
         // Gather all possible damage sources: permanents + spells on stack
         val sourceIds = mutableListOf<EntityId>()
         for (entityId in state.getBattlefield()) {
-            if (state.getEntity(entityId)?.get<CardComponent>() != null) {
-                sourceIds.add(entityId)
-            }
+            if (state.getEntity(entityId)?.get<CardComponent>() == null) continue
+            if (coloredOnly && state.projectedState.getColors(entityId).isEmpty()) continue
+            sourceIds.add(entityId)
         }
         for (entityId in state.stack) {
-            if (state.getEntity(entityId)?.get<CardComponent>() != null) {
-                sourceIds.add(entityId)
-            }
+            val cardComponent = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            if (coloredOnly && cardComponent.colors.isEmpty()) continue
+            sourceIds.add(entityId)
         }
 
         if (sourceIds.isEmpty()) return EffectResult.success(state)
