@@ -117,6 +117,8 @@ import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfEquippedCreatureEf
 import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfSourceEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfTargetEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
+import com.wingedsheep.sdk.scripting.effects.ModalEffect
+import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.effects.CREATED_TOKENS
 import com.wingedsheep.sdk.scripting.effects.CreatePredefinedTokenEffect
 import com.wingedsheep.sdk.scripting.effects.CreateRoleTokenEffect
@@ -2156,6 +2158,54 @@ object Effects {
             GrantTriggeredAbilityEffect(returnTapped, target, Duration.Permanent),
         ))
     }
+
+    /**
+     * Endure N (Tarkir: Dragonstorm keyword action) — the enduring permanent's
+     * controller chooses one: put N +1/+1 counters on the enduring permanent,
+     * or create an N/N white Spirit creature token.
+     *
+     * Modeled as data — no new keyword. "Endure N" never appears in a card's
+     * keyword line; it is always the effect of a triggered or activated ability
+     * ("Whenever this attacks, endure 2"), so it composes a
+     * [ModalEffect.chooseOne] of the two existing halves: an
+     * [AddDynamicCountersEffect] on the enduring permanent and a single N/N
+     * white Spirit [CreateTokenEffect]. The mode choice is made by the ability's
+     * controller at resolution time (the modal executor's resolution-time path).
+     *
+     * @param amount N — [DynamicAmount.Fixed] for "endure 2",
+     *   [DynamicAmount.XValue] for "endures X" (Krumar Initiate), or any other
+     *   dynamic value (Warden of the Grove endures "the number of counters on
+     *   this creature").
+     * @param target the permanent that endures. Defaults to [EffectTarget.Self]
+     *   ("it"/"this creature endures"); cards like Warden of the Grove endure the
+     *   triggering creature, so pass [EffectTarget.TriggeringEntity].
+     */
+    fun Endure(
+        amount: DynamicAmount,
+        target: EffectTarget = EffectTarget.Self
+    ): Effect = ModalEffect.chooseOne(
+        Mode.noTarget(
+            AddDynamicCountersEffect(Counters.PLUS_ONE_PLUS_ONE, amount, target),
+            "Put ${amount.description} +1/+1 counter(s) on ${target.description}"
+        ),
+        Mode.noTarget(
+            CreateTokenEffect(
+                count = DynamicAmount.Fixed(1),
+                power = 0,
+                toughness = 0,
+                colors = setOf(Color.WHITE),
+                creatureTypes = setOf("Spirit"),
+                dynamicPower = amount,
+                dynamicToughness = amount
+            ),
+            "Create a ${amount.description}/${amount.description} white Spirit creature token"
+        ),
+        countsAsModalSpell = false
+    )
+
+    /** Endure N with a fixed [amount] — sugar for `Endure(DynamicAmount.Fixed(amount), target)`. */
+    fun Endure(amount: Int, target: EffectTarget = EffectTarget.Self): Effect =
+        Endure(DynamicAmount.Fixed(amount), target)
 
     /**
      * Target permanent becomes a creature with specified characteristics.

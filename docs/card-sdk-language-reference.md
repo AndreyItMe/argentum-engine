@@ -1973,6 +1973,12 @@ Card authors rarely reference these directly; they are created/updated by the ma
 - **Evoke** — `evoke = "{U}"`; pay alt cost, sacrifice on ETB.
 - **Earthbend** — `Effects.Earthbend` composes AnimateLand + GrantKeyword + AddCounters + granted self-triggers (no fake
   keyword).
+- **Endure N** — `Effects.Endure(amount, target = EffectTarget.Self)` composes a `ModalEffect.chooseOne` of
+  AddDynamicCounters (N +1/+1 counters on the enduring permanent) and a single N/N white Spirit `CreateTokenEffect`
+  (no fake keyword — endure is always the effect of a triggered/activated ability, resolved at resolution time). `amount`
+  is `DynamicAmount.Fixed` for "endure 2" or any dynamic value for "endure X" (e.g. Warden of the Grove reads
+  `EntityProperty(Source, CounterCount(...))`); `target` defaults to `Self` ("it endures") but takes
+  `EffectTarget.TriggeringEntity` when a card endures the creature that triggered it.
 - **Forage** — `EffectPatterns.forage`; cast-from-graveyard permissions need a branch in `CastSpellHandler.validate`.
 - **Blight X** — `AdditionalCost.BlightVariable` + `DynamicAmount.AdditionalCostBlightAmount` +
   `Conditions.BlightWasPaid(n)`.
