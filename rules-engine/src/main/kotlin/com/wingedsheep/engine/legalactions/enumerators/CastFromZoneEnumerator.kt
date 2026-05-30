@@ -56,6 +56,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
         enumerateGraveyardPermanents(context, result)
         enumerateGraveyardCreaturesWithForage(context, result)
         enumerateFlashback(context, result)
+        enumerateHarmonize(context, result)
         enumerateGraveyardCast(context, result)
         enumerateWarp(context, result)
         enumerateCommandZone(context, result)
@@ -1150,6 +1151,120 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         manaCostString = costString,
                         additionalCostInfo = flashbackBeholdInfo,
                         autoTapPreview = autoTapPreview,
+                        sourceZone = "GRAVEYARD"
+                    )
+                )
+            }
+        }
+    }
+
+    // =========================================================================
+    // Harmonize (cards in graveyard with Harmonize keyword)
+    // =========================================================================
+
+    private fun enumerateHarmonize(
+        context: EnumerationContext,
+        result: MutableList<LegalAction>
+    ) {
+        val state = context.state
+        val playerId = context.playerId
+        val graveyardCards = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
+
+        for (cardId in graveyardCards) {
+            val container = state.getEntity(cardId) ?: continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+            val cardDef = context.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
+
+            val harmonize = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.Harmonize>()
+                .firstOrNull() ?: continue
+
+            // Timing: instants at instant speed, sorceries at sorcery speed (all current
+            // Harmonize cards are sorceries, but gate generically).
+            val isInstant = cardComponent.typeLine.isInstant
+            if (!isInstant && !context.canPlaySorcerySpeed) continue
+
+            if (context.cantCastSpells) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithHarmonize",
+                        description = "Cast ${cardComponent.name} (Harmonize)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = harmonize.cost.toString(),
+                        hasHarmonize = true,
+                        sourceZone = "GRAVEYARD"
+                    )
+                )
+                continue
+            }
+
+            val castRestrictions = cardDef.script.castRestrictions
+            if (!context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)) continue
+
+            val effectiveCost = context.costCalculator.calculateEffectiveCostWithAlternativeBase(
+                state, cardDef, harmonize.cost, playerId
+            )
+            val costString = effectiveCost.toString()
+            val harmonizeCreatures = context.costUtils.findHarmonizeCreatures(state, playerId)
+            val canAfford = context.costUtils.canAffordWithHarmonize(
+                state, playerId, effectiveCost, harmonizeCreatures, precomputedSources = context.availableManaSources
+            )
+
+            if (!canAfford) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithHarmonize",
+                        description = "Cast ${cardComponent.name} (Harmonize)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = costString,
+                        hasHarmonize = true,
+                        harmonizeCreatures = harmonizeCreatures,
+                        sourceZone = "GRAVEYARD"
+                    )
+                )
+                continue
+            }
+
+            val targetReqs = buildList {
+                addAll(cardDef.script.targetRequirements)
+                cardDef.script.auraTarget?.let { add(it) }
+            }
+
+            if (targetReqs.isNotEmpty()) {
+                val targetInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
+                val allSatisfied = context.targetUtils.allRequirementsSatisfied(targetInfos)
+                if (allSatisfied) {
+                    val firstReq = targetReqs.first()
+                    val firstInfo = targetInfos.first()
+                    result.add(
+                        LegalAction(
+                            actionType = "CastWithHarmonize",
+                            description = "Cast ${cardComponent.name} (Harmonize)",
+                            action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                            validTargets = firstInfo.validTargets,
+                            requiresTargets = true,
+                            targetCount = firstReq.count,
+                            minTargets = firstReq.effectiveMinCount,
+                            targetDescription = firstReq.description,
+                            targetRequirements = if (targetInfos.size > 1) targetInfos else null,
+                            manaCostString = costString,
+                            hasHarmonize = true,
+                            harmonizeCreatures = harmonizeCreatures,
+                            sourceZone = "GRAVEYARD"
+                        )
+                    )
+                }
+            } else {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithHarmonize",
+                        description = "Cast ${cardComponent.name} (Harmonize)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        manaCostString = costString,
+                        hasHarmonize = true,
+                        harmonizeCreatures = harmonizeCreatures,
                         sourceZone = "GRAVEYARD"
                     )
                 )

@@ -57,12 +57,14 @@ class LegalActionEnricher(
             hasDelve = action.hasDelve,
             validDelveCards = action.delveCards?.map { it.toDto() },
             minDelveNeeded = action.minDelveNeeded,
+            hasHarmonize = action.hasHarmonize,
+            validHarmonizeCreatures = action.harmonizeCreatures?.map { it.toDto() },
             manaCostString = action.manaCostString,
             requiresDamageDistribution = action.requiresDamageDistribution,
             totalDamageToDistribute = action.totalDamageToDistribute,
             minDamagePerTarget = action.minDamagePerTarget,
             autoTapPreview = action.autoTapPreview,
-            availableManaSources = if (action.autoTapPreview != null || action.hasConvoke || action.hasDelve) manaSourceInfos else null,
+            availableManaSources = if (action.autoTapPreview != null || action.hasConvoke || action.hasDelve || action.hasHarmonize) manaSourceInfos else null,
             sourceZone = action.sourceZone,
             hasCrew = action.hasCrew,
             crewPower = action.crewPower,
@@ -158,6 +160,12 @@ class LegalActionEnricher(
         entityId = entityId,
         name = name,
         imageUri = imageUri
+    )
+
+    private fun HarmonizeCreatureData.toDto() = HarmonizeCreatureInfo(
+        entityId = entityId,
+        name = name,
+        power = power
     )
 
     private fun CrewCreatureData.toDto() = CrewCreatureInfo(

@@ -90,6 +90,18 @@ enum class Keyword(val displayName: String) {
     // ── Spell mechanics ─────────────────────────────────────
     STORM("Storm"),
     FLASHBACK("Flashback"),
+
+    /**
+     * Harmonize—[cost] (Tarkir: Dragonstorm). "You may cast this card from your
+     * graveyard for its harmonize cost. You may tap a creature you control to
+     * reduce that cost by an amount of generic mana equal to its power. Then exile
+     * this spell."
+     *
+     * Modelled like [FLASHBACK] (graveyard cast + exile-on-resolution) plus a
+     * Convoke-style single-creature reduction routed through the alternative-payment
+     * pipeline. See [com.wingedsheep.sdk.scripting.KeywordAbility.Harmonize].
+     */
+    HARMONIZE("Harmonize"),
     EVOKE("Evoke"),
 
     /**

@@ -78,6 +78,8 @@ data class LegalActionInfo(
     val hasDelve: Boolean = false,
     val validDelveCards: List<DelveCardInfo>? = null,
     val minDelveNeeded: Int? = null,
+    val hasHarmonize: Boolean = false,
+    val validHarmonizeCreatures: List<HarmonizeCreatureInfo>? = null,
     val manaCostString: String? = null,
     val requiresDamageDistribution: Boolean = false,
     val totalDamageToDistribute: Int? = null,
@@ -140,6 +142,13 @@ data class DelveCardInfo(
     val entityId: EntityId,
     val name: String,
     val imageUri: String? = null
+)
+
+@Serializable
+data class HarmonizeCreatureInfo(
+    val entityId: EntityId,
+    val name: String,
+    val power: Int
 )
 
 @Serializable

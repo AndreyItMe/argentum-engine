@@ -218,6 +218,22 @@ class CastZoneResolver(
     }
 
     /**
+     * Check if a card in the graveyard has a Harmonize keyword ability, allowing it to
+     * be cast from the graveyard for its harmonize cost (and exiled on resolution).
+     */
+    fun hasHarmonizePermission(
+        state: GameState,
+        playerId: EntityId,
+        cardId: EntityId
+    ): Boolean {
+        val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
+        if (cardId !in state.getZone(graveyardZone)) return false
+        val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return false
+        return cardDef.keywordAbilities.any { it is KeywordAbility.Harmonize }
+    }
+
+    /**
      * Get the flashback cost for a card, or null if it doesn't have flashback.
      */
     fun getFlashbackCost(cardId: EntityId, state: GameState): com.wingedsheep.sdk.core.ManaCost? {

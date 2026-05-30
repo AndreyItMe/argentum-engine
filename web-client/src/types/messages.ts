@@ -743,6 +743,10 @@ export interface LegalActionInfo {
   readonly validDelveCards?: readonly DelveCardInfo[]
   /** Minimum number of cards to exile via Delve to afford this spell */
   readonly minDelveNeeded?: number
+  /** Whether this is a Harmonize cast (from the graveyard; optionally tap one creature) */
+  readonly hasHarmonize?: boolean
+  /** Creatures that can be tapped to reduce the generic harmonize cost by their power */
+  readonly validHarmonizeCreatures?: readonly HarmonizeCreatureInfo[]
   /** The spell's mana cost string for Convoke/Delve UI display */
   readonly manaCostString?: string
   /** Whether this spell requires damage distribution at cast time (for DividedDamageEffect) */
@@ -798,6 +802,17 @@ export interface ConvokeCreatureInfo {
   readonly name: string
   /** Colors this creature can pay (based on its colors) */
   readonly colors: readonly string[]
+}
+
+/**
+ * Information about a creature that can be tapped for Harmonize. [power] is the amount of
+ * generic mana the harmonize cost is reduced by if this creature is tapped.
+ */
+export interface HarmonizeCreatureInfo {
+  readonly entityId: EntityId
+  readonly name: string
+  /** Projected power of this creature */
+  readonly power: number
 }
 
 /**

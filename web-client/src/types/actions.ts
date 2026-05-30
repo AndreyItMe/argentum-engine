@@ -78,6 +78,8 @@ export interface AdditionalCostPayment {
 export interface AlternativePaymentChoice {
   readonly delvedCards: readonly EntityId[]
   readonly convokedCreatures: Record<EntityId, ConvokePayment>
+  /** Single creature tapped for Harmonize, reducing the generic cost by its power. */
+  readonly harmonizeCreature?: EntityId | null
 }
 
 export interface ConvokePayment {

@@ -1301,8 +1301,11 @@ class StackResolver(
                 val ownerId = cardComponent?.ownerId ?: spellComponent.casterId
                 val pausedCardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
                 val pausedSelfExile = pausedCardDef?.script?.selfExileOnResolve == true
+                // Flashback and Harmonize both cast from the graveyard and exile on resolution.
                 val pausedFlashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-                    pausedCardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
+                    pausedCardDef?.keywordAbilities?.any {
+                        it is KeywordAbility.Flashback || it is KeywordAbility.Harmonize
+                    } == true
                 val pausedExileAfterResolveComp = effectResult.state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
                 val pausedExileAfterResolve = pausedExileAfterResolveComp != null
                 val pausedAdventureFaceExile = pausedCardDef?.layout == com.wingedsheep.sdk.model.CardLayout.ADVENTURE &&
@@ -1383,8 +1386,11 @@ class StackResolver(
         val ownerId = cardComponent?.ownerId ?: spellComponent.casterId
         val cardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
         val selfExile = cardDef?.script?.selfExileOnResolve == true
+        // Flashback and Harmonize both cast from the graveyard and exile on resolution.
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-            cardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
+            cardDef?.keywordAbilities?.any {
+                it is KeywordAbility.Flashback || it is KeywordAbility.Harmonize
+            } == true
         val exileAfterResolveComp = newState.getEntity(spellId)?.get<ExileAfterResolveComponent>()
         val exileAfterResolve = exileAfterResolveComp != null
         // Adventure face (CR 715.3d): when an Adventure resolves, exile it instead of putting
@@ -1513,8 +1519,11 @@ class StackResolver(
 
         val ownerId = cardComponent?.ownerId ?: spellComponent.casterId
         val cardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
+        // Flashback and Harmonize both cast from the graveyard and exile on resolution.
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-            cardDef?.keywordAbilities?.any { it is KeywordAbility.Flashback } == true
+            cardDef?.keywordAbilities?.any {
+                it is KeywordAbility.Flashback || it is KeywordAbility.Harmonize
+            } == true
         val exileAfterResolveComp = state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
         // Goliath Daydreamer-style components only exile on actual resolution; if the spell
         // fizzles or is countered they go to graveyard normally.

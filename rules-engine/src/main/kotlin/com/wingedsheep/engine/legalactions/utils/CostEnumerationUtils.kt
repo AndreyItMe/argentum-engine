@@ -6,6 +6,7 @@ import com.wingedsheep.engine.legalactions.AdditionalCostData
 import com.wingedsheep.engine.legalactions.ConvokeCreatureData
 import com.wingedsheep.engine.legalactions.CounterRemovalCreatureData
 import com.wingedsheep.engine.legalactions.DelveCardData
+import com.wingedsheep.engine.legalactions.HarmonizeCreatureData
 import com.wingedsheep.engine.mechanics.mana.CostCalculator
 import com.wingedsheep.engine.mechanics.mana.ManaSource
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
@@ -246,6 +247,49 @@ class CostEnumerationUtils(
         val creaturesForGeneric = convokeCreatures.size - creaturesUsedForColors
         val resourcesForGeneric = availableMana + creaturesForGeneric
         return resourcesForGeneric >= genericRequired
+    }
+
+    // --- Harmonize ---
+
+    /**
+     * Untapped creatures the player controls that may be tapped for Harmonize. [power] is
+     * the projected power (the generic-mana reduction tapping the creature would grant).
+     */
+    fun findHarmonizeCreatures(state: GameState, playerId: EntityId): List<HarmonizeCreatureData> {
+        val projected = state.projectedState
+        return projected.getBattlefieldControlledBy(playerId).mapNotNull { entityId ->
+            val container = state.getEntity(entityId) ?: return@mapNotNull null
+            val cardComponent = container.get<CardComponent>() ?: return@mapNotNull null
+            if (!projected.isCreature(entityId)) return@mapNotNull null
+            if (container.has<TappedComponent>()) return@mapNotNull null
+            val power = (projected.getPower(entityId) ?: 0).coerceAtLeast(0)
+            HarmonizeCreatureData(entityId, cardComponent.name, power)
+        }
+    }
+
+    /**
+     * Can the player pay [manaCost] either as-is or after tapping a single Harmonize creature
+     * (reducing the generic portion by its power)? A creature tapped for Harmonize can't also
+     * tap for mana, so it is excluded from the mana sources when evaluating its reduction.
+     */
+    fun canAffordWithHarmonize(
+        state: GameState,
+        playerId: EntityId,
+        manaCost: ManaCost,
+        harmonizeCreatures: List<HarmonizeCreatureData>,
+        precomputedSources: List<ManaSource>? = null
+    ): Boolean {
+        if (manaSolver.canPay(state, playerId, manaCost, precomputedSources = precomputedSources)) return true
+        val generic = manaCost.genericAmount
+        for (creature in harmonizeCreatures) {
+            val reduction = minOf(creature.power, generic)
+            if (reduction <= 0) continue
+            val reducedCost = manaCost.reduceGeneric(reduction)
+            val sourcesForMana = (precomputedSources ?: manaSolver.findAvailableManaSources(state, playerId))
+                .filter { it.entityId != creature.entityId }
+            if (manaSolver.canPay(state, playerId, reducedCost, precomputedSources = sourcesForMana)) return true
+        }
+        return false
     }
 
     // --- Delve ---

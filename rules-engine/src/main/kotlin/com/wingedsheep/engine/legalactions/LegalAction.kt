@@ -69,6 +69,11 @@ data class LegalAction(
     val delveCards: List<DelveCardData>? = null,
     val minDelveNeeded: Int? = null,
 
+    // Harmonize (cast from graveyard; optionally tap one creature to reduce the generic
+    // cost by its power). The client may pick at most one of [harmonizeCreatures].
+    val hasHarmonize: Boolean = false,
+    val harmonizeCreatures: List<HarmonizeCreatureData>? = null,
+
     // Mana abilities
     val isManaAbility: Boolean = false,
     val requiresManaColorChoice: Boolean = false,
@@ -194,6 +199,16 @@ data class ConvokeCreatureData(
     val entityId: EntityId,
     val name: String,
     val colors: Set<Color>
+)
+
+/**
+ * Information about a creature that can be tapped for Harmonize. [power] is the
+ * projected power — the amount of generic mana the cost is reduced by if tapped.
+ */
+data class HarmonizeCreatureData(
+    val entityId: EntityId,
+    val name: String,
+    val power: Int
 )
 
 /**

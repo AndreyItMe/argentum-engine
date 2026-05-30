@@ -16,6 +16,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AlternativePaymentChoice
+import com.wingedsheep.sdk.scripting.KeywordAbility
 
 /**
  * Result of applying alternative payment.
@@ -86,6 +87,15 @@ class AlternativePaymentHandler(
                 reducedCost = convokeResult.reducedCost
                 events.addAll(convokeResult.events)
             }
+        }
+
+        // Handle Harmonize — tap one creature you control to reduce the generic cost by its power.
+        val harmonizeCreature = payment.harmonizeCreature
+        if (harmonizeCreature != null && hasHarmonize(cardDef)) {
+            val harmonizeResult = applyHarmonize(currentState, reducedCost, harmonizeCreature, playerId)
+            currentState = harmonizeResult.newState
+            reducedCost = harmonizeResult.reducedCost
+            events.addAll(harmonizeResult.events)
         }
 
         return AlternativePaymentResult(reducedCost, currentState, events)
@@ -199,6 +209,45 @@ class AlternativePaymentHandler(
     }
 
     /**
+     * Apply Harmonize payment by tapping a single creature you control, reducing the
+     * generic portion of the cost by that creature's (projected) power. Invalid choices
+     * (creature missing, tapped, not controlled, not a creature) are silently ignored —
+     * the enumerator and handler validation gate the legal choices.
+     */
+    private fun applyHarmonize(
+        state: GameState,
+        cost: ManaCost,
+        creatureId: EntityId,
+        playerId: EntityId
+    ): AlternativePaymentResult {
+        val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
+        if (creatureId !in state.getZone(battlefieldZone)) {
+            return AlternativePaymentResult(cost, state, emptyList())
+        }
+        val container = state.getEntity(creatureId)
+            ?: return AlternativePaymentResult(cost, state, emptyList())
+        val cardComponent = container.get<CardComponent>()
+            ?: return AlternativePaymentResult(cost, state, emptyList())
+        val projected = state.projectedState
+        if (!projected.isCreature(creatureId)) return AlternativePaymentResult(cost, state, emptyList())
+        if (container.has<TappedComponent>()) return AlternativePaymentResult(cost, state, emptyList())
+        if (container.get<ControllerComponent>()?.playerId != playerId) {
+            return AlternativePaymentResult(cost, state, emptyList())
+        }
+
+        // Use projected power so continuous effects / +1/+1 counters are honored. A
+        // negative power reduces the cost by nothing (you can't add to it).
+        val power = (projected.getPower(creatureId) ?: 0).coerceAtLeast(0)
+        val newState = state.updateEntity(creatureId) { c -> c.with(TappedComponent) }
+        val events = listOf<GameEvent>(TappedEvent(creatureId, cardComponent.name))
+        val reducedCost = if (power > 0) reduceGenericCost(cost, power) else cost
+        return AlternativePaymentResult(reducedCost, newState, events)
+    }
+
+    private fun hasHarmonize(cardDef: CardDefinition): Boolean =
+        cardDef.keywordAbilities.any { it is KeywordAbility.Harmonize }
+
+    /**
      * Reduce generic mana cost by specified amount.
      */
     private fun reduceGenericCost(cost: ManaCost, reduction: Int): ManaCost {
@@ -266,6 +315,12 @@ class AlternativePaymentHandler(
                     reduceGenericCost(reducedCost, 1)
                 }
             }
+        }
+
+        val harmonizeCreature = payment.harmonizeCreature
+        if (harmonizeCreature != null && state != null && hasHarmonize(cardDef)) {
+            val power = (state.projectedState.getPower(harmonizeCreature) ?: 0).coerceAtLeast(0)
+            if (power > 0) reducedCost = reduceGenericCost(reducedCost, power)
         }
 
         return reducedCost

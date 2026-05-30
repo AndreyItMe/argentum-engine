@@ -10,20 +10,25 @@ import kotlinx.serialization.Serializable
  * These are specified when casting a spell and affect how the mana cost is paid:
  * - **Delve**: Exile cards from graveyard, each pays {1} generic mana
  * - **Convoke**: Tap creatures, each pays {1} or one mana of the creature's color
+ * - **Harmonize**: Tap a single creature you control to reduce the (harmonize) cost
+ *   by an amount of generic mana equal to its power
  *
  * @property delvedCards Cards to exile from graveyard for Delve payment
  * @property convokedCreatures Creatures to tap for Convoke payment, with color choice
+ * @property harmonizeCreature Single creature tapped for Harmonize, reducing the generic
+ *           portion of the cost by its power. Null when no creature is tapped.
  */
 @Serializable
 data class AlternativePaymentChoice(
     val delvedCards: List<EntityId> = emptyList(),
-    val convokedCreatures: Map<EntityId, ConvokePayment> = emptyMap()
+    val convokedCreatures: Map<EntityId, ConvokePayment> = emptyMap(),
+    val harmonizeCreature: EntityId? = null
 ) {
     /**
      * Whether any alternative payment is being used.
      */
     val isEmpty: Boolean
-        get() = delvedCards.isEmpty() && convokedCreatures.isEmpty()
+        get() = delvedCards.isEmpty() && convokedCreatures.isEmpty() && harmonizeCreature == null
 
     /**
      * Total generic mana reduction from Delve.
