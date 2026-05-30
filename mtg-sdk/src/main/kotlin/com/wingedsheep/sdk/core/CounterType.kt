@@ -28,6 +28,9 @@ enum class CounterType {
     FIRST_STRIKE,
     LIFELINK,
     INDESTRUCTIBLE,
+    DEATHTOUCH,
+    TRAMPLE,
+    HEXPROOF,
     STASH,
     BLIGHT,
     COIN,
@@ -66,6 +69,9 @@ object Counters {
     const val FIRST_STRIKE = "first strike"
     const val LIFELINK = "lifelink"
     const val INDESTRUCTIBLE = "indestructible"
+    const val DEATHTOUCH = "deathtouch"
+    const val TRAMPLE = "trample"
+    const val HEXPROOF = "hexproof"
     const val STASH = "stash"
     const val BLIGHT = "blight"
     const val COIN = "coin"

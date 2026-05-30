@@ -815,6 +815,31 @@ class LayerSystemTest : FunSpec({
             projected.hasKeyword(bears, Keyword.FLYING) shouldBe true
         }
 
+        test("deathtouch / trample / hexproof counters grant their keyword (Rule 122.1b)") {
+            val driver = createDriver()
+            driver.init()
+            val p = driver.activePlayer!!
+
+            val deathtoucher = driver.putCreatureOnBattlefield(p, "Grizzly Bears")
+            driver.addCounters(deathtoucher, CounterType.DEATHTOUCH, 1)
+
+            val trampler = driver.putCreatureOnBattlefield(p, "Grizzly Bears")
+            driver.addCounters(trampler, CounterType.TRAMPLE, 1)
+
+            val hexproofed = driver.putCreatureOnBattlefield(p, "Grizzly Bears")
+            driver.addCounters(hexproofed, CounterType.HEXPROOF, 1)
+
+            val projected = projector.project(driver.state)
+            projected.hasKeyword(deathtoucher, Keyword.DEATHTOUCH) shouldBe true
+            projected.hasKeyword(trampler, Keyword.TRAMPLE) shouldBe true
+            projected.hasKeyword(hexproofed, Keyword.HEXPROOF) shouldBe true
+
+            // A counter only grants its own keyword, not the others.
+            projected.hasKeyword(deathtoucher, Keyword.TRAMPLE) shouldBe false
+            projected.hasKeyword(trampler, Keyword.HEXPROOF) shouldBe false
+            projected.hasKeyword(hexproofed, Keyword.DEATHTOUCH) shouldBe false
+        }
+
         test("zero stat creature with counters has correct final P/T") {
             val driver = createDriver(FreezeAura)
             driver.init()

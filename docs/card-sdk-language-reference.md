@@ -1867,6 +1867,10 @@ substitution.
   `blood`, `cage`, `doom`, `storage`, `divinity`, `charm`, `music`, `crumble`, `corpse`, `germ`, `ink`, `growth`,
   `hour`, `energy`, `scry`, `aura`, `chapter`, `citation`, `rune`, `scar`, `crux`, `omen`, `secret`, `feather` —
   assorted printed counter kinds.
+- **Keyword counters** (Rule 122.1b) — `flying`, `first strike`, `lifelink`, `indestructible`, `deathtouch`,
+  `trample`, `hexproof`. `StateProjector` grants the matching `Keyword` to any permanent carrying one (mapped in
+  `KEYWORD_COUNTER_MAP`, re-applied after Layer 6 so "loses all abilities" can't wipe a counter-granted keyword).
+  Add via `AddCounters(Counters.DEATHTOUCH, ...)` etc.; no static ability needed.
 
 Counter effects live in §4 (`AddCounters`, `RemoveCounters`, `Proliferate`, `MoveAllLastKnownCounters`, etc.).
 
