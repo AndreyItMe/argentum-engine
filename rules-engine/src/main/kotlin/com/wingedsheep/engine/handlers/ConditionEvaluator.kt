@@ -394,8 +394,13 @@ class ConditionEvaluator {
         val projected = ctx.projectedStateFor(state)
         val predicateContext = when (ctx) {
             is Resolution -> PredicateContext.fromEffectContext(ctx.effectContext)
-            is Projection -> ctx.controllerId?.let { PredicateContext(controllerId = it) }
-                ?: PredicateContext(controllerId = sourceId)
+            is Projection -> {
+                // "You" (for any controller predicate in [filter]) is the Aura's controller.
+                // Fall back to the source's projected controller rather than miscasting the
+                // source entity id as a player id; if even that is unknown, we can't evaluate.
+                val controller = ctx.controllerId ?: projected.getController(sourceId) ?: return false
+                PredicateContext(controllerId = controller)
+            }
         }
         return PredicateEvaluator().matches(state, projected, permanentId, condition.filter, predicateContext)
     }
