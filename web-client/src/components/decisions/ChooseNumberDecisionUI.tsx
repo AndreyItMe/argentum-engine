@@ -24,11 +24,13 @@ function ManaDistributionUI({
   firstColor,
   secondColor,
   total,
+  onMinimize,
 }: {
   decision: ChooseNumberDecision
   firstColor: string
   secondColor: string
   total: number
+  onMinimize?: (() => void) | undefined
 }) {
   const [firstAmount, setFirstAmount] = useState(0)
   const submitNumberDecision = useGameStore((s) => s.submitNumberDecision)
@@ -139,10 +141,17 @@ function ManaDistributionUI({
         </button>
       </div>
 
-      {/* Confirm */}
-      <button onClick={handleConfirm} className={styles.confirmButton}>
-        Add Mana
-      </button>
+      {/* Confirm + optional View Battlefield */}
+      <div className={styles.buttonContainer}>
+        {onMinimize && (
+          <button onClick={onMinimize} className={styles.viewBattlefieldButton}>
+            View Battlefield
+          </button>
+        )}
+        <button onClick={handleConfirm} className={styles.confirmButton}>
+          Add Mana
+        </button>
+      </div>
     </>
   )
 }
@@ -246,8 +255,10 @@ const manaDistStyles: Record<string, React.CSSProperties> = {
  */
 export function ChooseNumberDecisionUI({
   decision,
+  onMinimize,
 }: {
   decision: ChooseNumberDecision
+  onMinimize?: () => void
 }) {
   // Check if this is a mana distribution prompt
   const manaDistribution = useMemo(() => parseManaDistributionPrompt(decision.prompt), [decision.prompt])
@@ -259,6 +270,7 @@ export function ChooseNumberDecisionUI({
         firstColor={manaDistribution.firstColor}
         secondColor={manaDistribution.secondColor}
         total={manaDistribution.total}
+        onMinimize={onMinimize}
       />
     )
   }
@@ -267,14 +279,21 @@ export function ChooseNumberDecisionUI({
   const [selectedNumber, setSelectedNumber] = useState(decision.minValue)
   const submitNumberDecision = useGameStore((s) => s.submitNumberDecision)
 
+  const clamp = (n: number) => Math.min(decision.maxValue, Math.max(decision.minValue, n))
+
   const handleConfirm = () => {
-    submitNumberDecision(selectedNumber)
+    submitNumberDecision(clamp(selectedNumber))
   }
 
-  // Generate number options
-  const numbers = []
-  for (let i = decision.minValue; i <= decision.maxValue; i++) {
-    numbers.push(i)
+  // A short range is fastest to tap as a button grid; a wide range (e.g.
+  // "any number", sent as 0–99) becomes an unusable wall of buttons, so we
+  // switch to a stepper with direct numeric entry.
+  const rangeSize = decision.maxValue - decision.minValue + 1
+  const useStepper = rangeSize > 12
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const parsed = parseInt(e.target.value, 10)
+    setSelectedNumber(Number.isNaN(parsed) ? decision.minValue : clamp(parsed))
   }
 
   return (
@@ -289,23 +308,66 @@ export function ChooseNumberDecisionUI({
         </p>
       )}
 
-      {/* Number selection buttons */}
-      <div className={styles.numberContainer}>
-        {numbers.map((num) => (
-          <button
-            key={num}
-            onClick={() => setSelectedNumber(num)}
-            className={`${styles.numberButton} ${selectedNumber === num ? styles.numberButtonSelected : ''}`}
-          >
-            {num}
-          </button>
-        ))}
-      </div>
+      {useStepper ? (
+        <>
+          <div className={styles.stepperContainer}>
+            <button
+              type="button"
+              className={styles.stepperButton}
+              onClick={() => setSelectedNumber((n) => clamp(n - 1))}
+              disabled={selectedNumber <= decision.minValue}
+              aria-label="Decrease"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              className={styles.stepperInput}
+              min={decision.minValue}
+              max={decision.maxValue}
+              value={selectedNumber}
+              onChange={handleInputChange}
+            />
+            <button
+              type="button"
+              className={styles.stepperButton}
+              onClick={() => setSelectedNumber((n) => clamp(n + 1))}
+              disabled={selectedNumber >= decision.maxValue}
+              aria-label="Increase"
+            >
+              +
+            </button>
+          </div>
+          <p className={styles.stepperRangeHint}>
+            {decision.minValue} – {decision.maxValue}
+          </p>
+        </>
+      ) : (
+        /* Number selection buttons */
+        <div className={styles.numberContainer}>
+          {Array.from({ length: rangeSize }, (_, i) => decision.minValue + i).map((num) => (
+            <button
+              key={num}
+              onClick={() => setSelectedNumber(num)}
+              className={`${styles.numberButton} ${selectedNumber === num ? styles.numberButtonSelected : ''}`}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Confirm button */}
-      <button onClick={handleConfirm} className={styles.confirmButton}>
-        Confirm
-      </button>
+      {/* Confirm + optional View Battlefield */}
+      <div className={styles.buttonContainer}>
+        {onMinimize && (
+          <button onClick={onMinimize} className={styles.viewBattlefieldButton}>
+            View Battlefield
+          </button>
+        )}
+        <button onClick={handleConfirm} className={styles.confirmButton}>
+          Confirm
+        </button>
+      </div>
     </>
   )
 }

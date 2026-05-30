@@ -361,6 +361,64 @@
   border-width: 3px;
 }
 
+/* Stepper — used for wide ranges (e.g. "any number") where a button grid
+ * would be an unusable wall of buttons. */
+.stepperContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.stepperButton {
+  width: 56px;
+  height: 56px;
+  font-size: var(--font-2xl);
+  line-height: 1;
+  background-color: var(--bg-surface-6);
+  color: var(--text-primary);
+  border: 2px solid var(--text-disabled);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
+}
+
+.stepperButton:hover:not(:disabled) {
+  border-color: var(--text-muted);
+  background-color: var(--bg-surface-5);
+}
+
+.stepperButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stepperInput {
+  width: 110px;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-2xl);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  background-color: var(--bg-surface-6);
+  color: var(--text-primary);
+  border: 2px solid var(--text-disabled);
+  border-radius: var(--radius-lg);
+}
+
+.stepperInput:focus {
+  outline: none;
+  border-color: #66aaff;
+}
+
+.stepperRangeHint {
+  margin: var(--space-3) 0 0 0;
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
 /* =========================================================================
  * Card Container
  * ========================================================================= */

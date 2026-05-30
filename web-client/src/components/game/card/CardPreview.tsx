@@ -120,12 +120,14 @@ export function CardPreview() {
   if (hasStatModifications) extraHeight += 80 + GAP
   if (card.keywords.length > 0 || (card.abilityFlags && card.abilityFlags.length > 0)) extraHeight += 40 + GAP
 
-  // Rooms (CR 709.5) — display the printed-portrait image rotated landscape, and
-  // dim the locked half with an upright lock chip. Source image stores face[1] on top
-  // and face[0] on bottom; after +90° (CW) rotation that maps face[1] → right of
-  // visible, face[0] → left.
+  // Split-layout cards (CR 709) — Rooms and classic Invasion split spells like
+  // Pain // Suffering — are printed portrait with the two halves stacked, so display
+  // the image rotated +90° (CW) to read landscape with the halves side by side. Source
+  // stores face[1] on top and face[0] on bottom; after rotation face[1] → right, face[0]
+  // → left. Rooms additionally dim the locked half with an upright lock chip (below).
   const isRoom = card.isRoom === true
-  const roomImageRotateDeg: 0 | 90 = isRoom ? 90 : 0
+  const isSplit = card.cardFaces != null && card.cardFaces.length === 2
+  const splitImageRotateDeg: 0 | 90 = isSplit ? 90 : 0
 
   // Mana cost overlay badge for the card image (only for hand cards)
   const previewOverlay = (
@@ -232,7 +234,7 @@ export function CardPreview() {
       pos={hoverPosition}
       rulings={card.rulings}
       extraHeight={extraHeight}
-      imageRotateDeg={roomImageRotateDeg}
+      imageRotateDeg={splitImageRotateDeg}
       overlay={previewOverlay}
     >
       {/* Stats box (for creatures with modifications) */}

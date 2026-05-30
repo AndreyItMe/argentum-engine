@@ -60,11 +60,11 @@ export function DecisionUI() {
   const pendingDecision = useGameStore((state) => state.pendingDecision)
   const gameState = useGameStore((state) => state.gameState)
   const responsive = useResponsive()
-  const [yesNoMinimized, setYesNoMinimized] = useState(false)
+  const [decisionMinimized, setDecisionMinimized] = useState(false)
 
   // Reset minimized state when decision changes
   useEffect(() => {
-    setYesNoMinimized(false)
+    setDecisionMinimized(false)
   }, [pendingDecision?.id])
 
   if (!pendingDecision) return null
@@ -103,11 +103,11 @@ export function DecisionUI() {
         return null
       }
     }
-    if (yesNoMinimized) {
+    if (decisionMinimized) {
       return (
         <button
           className={styles.floatingReturnButton}
-          onClick={() => setYesNoMinimized(false)}
+          onClick={() => setDecisionMinimized(false)}
         >
           Return to decision
         </button>
@@ -118,7 +118,7 @@ export function DecisionUI() {
         <YesNoDecisionUI
           decision={pendingDecision}
           gameState={gameState}
-          onMinimize={() => setYesNoMinimized(true)}
+          onMinimize={() => setDecisionMinimized(true)}
         />
       </div>
     )
@@ -126,9 +126,22 @@ export function DecisionUI() {
 
   // Handle ChooseNumberDecision (e.g., "Choose how many cards to draw")
   if (pendingDecision.type === 'ChooseNumberDecision') {
+    if (decisionMinimized) {
+      return (
+        <button
+          className={styles.floatingReturnButton}
+          onClick={() => setDecisionMinimized(false)}
+        >
+          Return to decision
+        </button>
+      )
+    }
     return (
       <div className={styles.overlay}>
-        <ChooseNumberDecisionUI decision={pendingDecision} />
+        <ChooseNumberDecisionUI
+          decision={pendingDecision}
+          onMinimize={() => setDecisionMinimized(true)}
+        />
       </div>
     )
   }

@@ -373,12 +373,14 @@ export function ActionMenu() {
     return (
       <div className={styles.container}>
         <div className={styles.panel}>
-          {/* Large card image — rotated landscape for Rooms (CR 709.5) */}
+          {/* Large card image — rotated landscape for split-layout cards (CR 709):
+              Rooms and classic split spells like Pain // Suffering are printed portrait
+              with the two halves stacked. */}
           {cardImageUrl && (
             <CardImage
               imageUrl={cardImageUrl}
               cardName={cardInfo?.name ?? 'Card'}
-              rotateDeg={cardInfo?.isRoom ? 90 : 0}
+              rotateDeg={cardInfo?.cardFaces?.length === 2 ? 90 : 0}
             />
           )}
 
