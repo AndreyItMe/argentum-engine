@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 238 / 261
+**Implemented:** 240 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -183,7 +183,7 @@
 - [x] Sacred Foundry
 - [x] Sami's Curiosity
 - [x] Sami, Ship's Engineer
-- [ ] Sami, Wildcat Captain
+- [x] Sami, Wildcat Captain
 - [x] Scour for Scrap
 - [x] Scout for Survivors
 - [x] Scrounge for Eternity
@@ -240,7 +240,7 @@
 - [x] The Endstone
 - [x] The Eternity Elevator
 - [x] The Seriema
-- [ ] Thrumming Hivepool
+- [x] Thrumming Hivepool
 - [x] Timeline Culler
 - [x] Tractor Beam
 - [x] Tragic Trajectory

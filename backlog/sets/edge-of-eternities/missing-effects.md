@@ -184,17 +184,21 @@ aura-attached "copy of enchanted permanent" token source.
 
 ---
 
-## 14. Affinity granted to the spells you cast / affinity for a subtype
+## 14. Affinity granted to the spells you cast / affinity for a subtype — RESOLVED
 
 **Cards:** Sami, Wildcat Captain (affinity for artifacts on all your spells);
 Thrumming Hivepool (affinity for Slivers on itself).
 
 **Clause:** "Spells you cast have affinity for artifacts." / "Affinity for Slivers."
 
-**Plan:** Affinity for artifacts exists as a per-card keyword, but (a) granting it to *all spells a
-player casts* via a static, and (b) an affinity-for-`<subtype>` variant, are both missing. Sami's
-double strike + vigilance and Hivepool's Sliver anthem / upkeep Sliver tokens are already
-expressible.
+**Resolution:** No new engine work needed.
+- `KeywordAbility.AffinityForSubtype` already exists, so Hivepool's "Affinity for Slivers"
+  is just `KeywordAbility.AffinityForSubtype(Subtype.SLIVER)`.
+- Per CR 702.41a, "affinity for artifacts" is *defined* as "this spell costs {1} less for
+  each artifact you control", so Sami's "spells you cast have affinity for artifacts" is
+  mechanically identical to a battlefield-sourced
+  `ModifySpellCost(YouCast(Any), ReduceGenericBy(ArtifactsYouControl))` — no separate
+  "granted affinity" plumbing required.
 
 ---
 

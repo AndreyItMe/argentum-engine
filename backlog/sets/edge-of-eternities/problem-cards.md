@@ -3,9 +3,9 @@ https://api.scryfall.com/cards/named?exact=Beyond%20the%20Quiet&set=eoe
 
 # Problem Cards
 
-## Status: cards still blocked on engine work (23)
+## Status: cards still blocked on engine work (21)
 
-The booster set is at **238 / 261**. The cards below are the only unimplemented ones; each is
+The booster set is at **240 / 261**. The cards below are the only unimplemented ones; each is
 blocked on a missing engine/SDK feature. The blocking clause and the engine change needed are
 summarized here and detailed in [`missing-effects.md`](missing-effects.md) (section numbers in
 parentheses).
@@ -24,8 +24,6 @@ parentheses).
 | Weapons Manufacturing | create the noncreature "Munitions" artifact token with a leaves-battlefield damage trigger | Noncreature tokens with embedded triggers (§11) |
 | Lightstall Inquisitor | "each opponent exiles a card from their hand and may play that card ..." (+cost/tapped) | Opponent exile-from-hand-may-play with modifiers (§12) |
 | Moonlit Meditation | "instead create that many tokens that are copies of enchanted permanent" (once/turn) | Token-creation replacement → copies (§13) |
-| Sami, Wildcat Captain | "Spells you cast have affinity for artifacts" | Affinity granted to your spells (§14) |
-| Thrumming Hivepool | "Affinity for Slivers" | Affinity for a subtype (§14) |
 | Tannuk, Steadfast Second | "Artifact cards and red creature cards in your hand have warp {2}{R}" | Grant Warp to hand cards (§15) |
 | Terminal Velocity | put a permanent from hand and grant it haste + an LTB trigger + an end-step self-sac | Grant arbitrary abilities to a put-in permanent (§16) |
 | Terrasymbiosis | "Whenever you put ... +1/+1 counters on a creature ... draw that many. Do this only once each turn." | Once-per-turn gating for triggered abilities (§17) |
