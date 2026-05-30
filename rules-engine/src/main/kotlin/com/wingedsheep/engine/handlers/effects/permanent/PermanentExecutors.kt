@@ -38,7 +38,6 @@ import com.wingedsheep.engine.handlers.effects.permanent.protection.ChooseColorP
 import com.wingedsheep.engine.handlers.effects.permanent.protection.ChooseColorThenExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.protection.GrantCantBeBlockedByChosenColorExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.protection.GrantHexproofFromChosenColorExecutor
-import com.wingedsheep.engine.handlers.effects.permanent.protection.GrantProtectionFromColorExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.stats.ModifyStatsExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.stats.SetBasePowerExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.stats.SetBasePowerToughnessExecutor
@@ -160,7 +159,6 @@ class PermanentExecutors(
         ChooseColorProtectionTargetExecutor(decisionHandler),
         ChooseColorThenExecutor(decisionHandler),
         GrantHexproofFromChosenColorExecutor(),
-        GrantProtectionFromColorExecutor(),
         GrantCantBeBlockedByChosenColorExecutor(),
         GrantToxicExecutor()
     )

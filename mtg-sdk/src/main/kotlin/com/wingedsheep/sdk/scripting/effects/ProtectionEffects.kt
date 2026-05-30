@@ -1,6 +1,5 @@
 package com.wingedsheep.sdk.scripting.effects
 
-import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
@@ -12,33 +11,6 @@ import kotlinx.serialization.Serializable
 // =============================================================================
 // Protection Effects
 // =============================================================================
-
-/**
- * Grant protection from a fixed color to a target until [duration].
- * "{W}: Target creature gains protection from red until end of turn." (Crimson Acolyte)
- *
- * Unlike [ChooseColorAndGrantProtectionToTargetEffect], the color is fixed at authoring time,
- * so no player decision is required — the executor immediately creates a Layer 6 (ABILITY)
- * floating effect granting `PROTECTION_FROM_<COLOR>`.
- *
- * @property color The color the target gains protection from
- * @property target Which permanent gains protection
- * @property duration How long the effect lasts
- */
-@SerialName("GrantProtectionFromColor")
-@Serializable
-data class GrantProtectionFromColorEffect(
-    val color: Color,
-    val target: EffectTarget = EffectTarget.ContextTarget(0),
-    val duration: Duration = Duration.EndOfTurn
-) : Effect {
-    override val description: String = buildString {
-        append("${target.description} gains protection from ${color.displayName.lowercase()}")
-        if (duration.description.isNotEmpty()) append(" ${duration.description}")
-    }
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
-}
 
 /**
  * Choose a color, then grant protection from that color to a group of creatures until end of turn.

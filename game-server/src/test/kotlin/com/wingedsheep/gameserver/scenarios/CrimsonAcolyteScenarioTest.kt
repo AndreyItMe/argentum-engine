@@ -16,8 +16,9 @@ import io.kotest.matchers.shouldNotBe
  * {1}{W} 1/1 Human Cleric with protection from red and
  * "{W}: Target creature gains protection from red until end of turn."
  *
- * Exercises the new [com.wingedsheep.sdk.scripting.effects.GrantProtectionFromColorEffect]:
- * a fixed-color protection grant (no player color choice).
+ * Exercises [com.wingedsheep.sdk.dsl.Effects.GrantProtectionFromColor]: a fixed-color
+ * protection grant (no player color choice), composed from the `PROTECTION_FROM_<COLOR>`
+ * string keyword via the existing GrantKeyword path.
  */
 class CrimsonAcolyteScenarioTest : ScenarioTestBase() {
 
