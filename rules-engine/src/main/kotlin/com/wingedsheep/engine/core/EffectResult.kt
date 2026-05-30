@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.core
 
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
 import com.wingedsheep.sdk.model.EntityId
 
 /**
@@ -23,7 +24,15 @@ data class EffectResult(
     /** Named numeric values produced by pipeline effects (StoreNumber, etc.). */
     val updatedStoredNumbers: Map<String, Int> = emptyMap(),
     /** Named string values produced by pipeline effects (StoreCardName, etc.). */
-    val updatedChosenValues: Map<String, String> = emptyMap()
+    val updatedChosenValues: Map<String, String> = emptyMap(),
+    /**
+     * LKI snapshots of permanents sacrificed by a sacrifice *effect* during this step.
+     * Composite executors merge these into [EffectContext.sacrificedPermanents] so a
+     * following sibling effect (e.g. "gain life equal to its toughness") can read the
+     * sacrificed permanent's characteristics as it last existed (Rule 608.2h). Mirrors
+     * the cost-sacrifice path, which captures the same snapshots at cost-payment time.
+     */
+    val updatedSacrificedPermanents: List<PermanentSnapshot> = emptyList()
 ) {
     val isSuccess: Boolean get() = error == null && pendingDecision == null
     val isPaused: Boolean get() = pendingDecision != null

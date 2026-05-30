@@ -1,12 +1,18 @@
 # Invasion — Engine Gap Analysis
 
-Cross-reference of the **248 remaining (unimplemented) Invasion cards** against the engine's
-actual capabilities (SDK reference + source verification, May 2026). Generated to scope what
-must be built before the set can be completed.
+> **✅ COMPLETE — 335 / 335 implemented (100%).** As of May 2026 every Invasion card is
+> implemented; `scripts/card-status --set INV` reports 0 missing. The final two cards were
+> Spinal Embrace (cast-only-during-combat steal + delayed end-step sacrifice) and Temporal
+> Distortion (hourglass counter / doesn't-untap). The gap analysis below is retained for
+> historical reference.
 
-**Status:** 91 / 335 implemented (27%) — up from 59 / 335 (18%) at time of writing, after gaps
-#1–#17 (incl. Blind Seer, Backlash, Agonizing Demise, Tsabo Tavoc, Traveler's Cloak, Pledge of
-Loyalty, Mages' Contest, Crystal Spray) and the cards they unlocked.
+Cross-reference of the (then-)remaining unimplemented Invasion cards against the engine's
+actual capabilities (SDK reference + source verification, May 2026). Generated to scope what
+must be built before the set could be completed.
+
+**Status (historical):** 91 / 335 implemented (27%) at time of writing — up from 59 / 335 (18%),
+after gaps #1–#17 (incl. Blind Seer, Backlash, Agonizing Demise, Tsabo Tavoc, Traveler's Cloak,
+Pledge of Loyalty, Mages' Contest, Crystal Spray) and the cards they unlocked.
 Card list comes from `scripts/card-status --list --set INV`.
 
 ## Bottom line

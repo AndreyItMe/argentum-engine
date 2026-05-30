@@ -900,12 +900,24 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     /**
      * When a permanent becomes tapped.
      * Binding SELF = "whenever this becomes tapped".
+     * [filter] optionally restricts which permanents count (e.g. only creatures or
+     * lands) — used with [TriggerBinding.ANY] for "whenever a creature or land becomes
+     * tapped" effects (Temporal Distortion). Null = any permanent.
      */
     @SerialName("TapEvent")
     @Serializable
-    data object TapEvent : GameEvent {
-        override val description: String = "this permanent becomes tapped"
-        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    data class TapEvent(
+        val filter: GameObjectFilter? = null
+    ) : GameEvent {
+        override val description: String = buildString {
+            append("a ")
+            append(filter?.description ?: "permanent")
+            append(" becomes tapped")
+        }
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = filter?.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**

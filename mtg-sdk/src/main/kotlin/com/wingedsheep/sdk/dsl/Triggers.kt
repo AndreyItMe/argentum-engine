@@ -960,7 +960,7 @@ object Triggers {
      * Whenever this permanent becomes tapped.
      */
     val BecomesTapped: TriggerSpec = TriggerSpec(
-        event = TapEvent,
+        event = TapEvent(),
         binding = TriggerBinding.SELF
     )
 
@@ -975,10 +975,15 @@ object Triggers {
     /**
      * Generic "becomes tapped" factory — use [BecomesTapped] for SELF;
      * reach for this factory for ATTACHED ("enchanted permanent becomes
-     * tapped", Uncontrolled Infestation) or other bindings.
+     * tapped", Uncontrolled Infestation) or other bindings. Pass [filter] with
+     * [TriggerBinding.ANY] for "whenever a creature or land becomes tapped"
+     * (Temporal Distortion).
      */
-    fun becomesTapped(binding: TriggerBinding = TriggerBinding.SELF): TriggerSpec =
-        TriggerSpec(event = TapEvent, binding = binding)
+    fun becomesTapped(
+        binding: TriggerBinding = TriggerBinding.SELF,
+        filter: GameObjectFilter? = null
+    ): TriggerSpec =
+        TriggerSpec(event = TapEvent(filter), binding = binding)
 
     /**
      * Whenever any player taps a land for mana. (ANY binding.)

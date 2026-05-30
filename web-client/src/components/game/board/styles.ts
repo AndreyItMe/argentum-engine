@@ -1220,6 +1220,21 @@ export const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     zIndex: 5,
   } as React.CSSProperties,
+  // Hourglass counter badge (Temporal Distortion — "doesn't untap" lock)
+  hourglassCounterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(70, 55, 20, 0.95)',
+    borderRadius: 4,
+    border: '1px solid rgba(220, 190, 110, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: '#f0d89a',
+    fontWeight: 700,
+    zIndex: 5,
+  } as React.CSSProperties,
   // Dream counter badge (for Goliath Daydreamer's exiled instants/sorceries)
   dreamCounterBadge: {
     position: 'absolute',

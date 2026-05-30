@@ -38,6 +38,7 @@ import {
   getChorusCounters,
   getDreamCounters,
   getQuestCounters,
+  getHourglassCounters,
   getGrowthCounters,
   getFeatherCounters,
   getTimeCounters,
@@ -1565,6 +1566,20 @@ export function GameCard({
           <SvgGlyph url={counterSvgIcon.QUEST!} size={responsive.badges.counterIconFontSize} color="#d8e8a0" />
           <span style={{ fontWeight: 700 }}>
             {getQuestCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Hourglass counter badge (Temporal Distortion — keeps the permanent from untapping) */}
+      {battlefield && getHourglassCounters(card) > 0 && (
+        <div style={{
+          ...styles.hourglassCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <SvgGlyph url={counterSvgIcon.HOURGLASS!} size={responsive.badges.counterIconFontSize} color="#f0d89a" />
+          <span style={{ fontWeight: 700 }}>
+            {getHourglassCounters(card)}
           </span>
         </div>
       )}

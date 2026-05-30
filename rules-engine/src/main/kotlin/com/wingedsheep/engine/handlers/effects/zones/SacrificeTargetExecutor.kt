@@ -8,6 +8,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
+import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
 import kotlin.reflect.KClass
@@ -65,6 +66,13 @@ class SacrificeTargetExecutor : EffectExecutor<SacrificeTargetEffect> {
             ?: cardComponent.ownerId
             ?: controllerId
 
+        // Capture the permanent's characteristics as it last existed on the battlefield
+        // (Rule 608.2h) BEFORE the zone change, so a following sibling effect — e.g.
+        // "sacrifice it. If you do, you gain life equal to its toughness" — can read its
+        // P/T via DynamicAmount.Sacrificed. Composite executors thread this snapshot into
+        // the next sub-effect's context.
+        val snapshot = capturePermanentSnapshots(listOf(targetId), state.projectedState)
+
         // Track Food sacrifice before zone transition
         var newState = ZoneTransitionService.trackFoodSacrifice(state, listOf(targetId), controllerId)
 
@@ -78,5 +86,6 @@ class SacrificeTargetExecutor : EffectExecutor<SacrificeTargetEffect> {
         events.addAll(transitionResult.events)
 
         return EffectResult.success(transitionResult.state, events)
+            .copy(updatedSacrificedPermanents = snapshot)
     }
 }

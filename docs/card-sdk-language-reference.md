@@ -654,6 +654,9 @@ Every `TargetRequirement` carries count semantics (defaults shown):
 **Chained predicates**
 
 - `.youControl()` / `.controlledByOpponent()` — control predicate.
+- `.controlledByActivePlayer()` — controlled by the player whose turn it is (`ControllerPredicate.ControlledByActivePlayer`).
+  Pairs with `Triggers.EachUpkeep` for "at the beginning of each player's upkeep, do X to permanents that player
+  controls" (the upkeep player is the active player — Temporal Distortion).
 - `.targetPlayerControls(target)` — controlled by a referenced player. Resolves `EffectTarget`
   bindings/context targets, plus `EffectTarget.ControllerOfTriggeringEntity` (controller of the
   entity that fired the trigger — e.g. Tectonic Instability "tap all lands its controller controls").
@@ -879,6 +882,7 @@ Named sugar for the common cases; reach for the factories for any other combinat
 
 - `dealsDamage(damageType?, recipient?, sourceFilter?, binding?)` — outgoing-damage trigger. Pick `DamageType.{Any,Combat,NonCombat}`, `RecipientFilter.{Any,AnyPlayer,AnyPlayerOrPlaneswalker,AnyCreature,…}`, an optional source `GameObjectFilter`, and `TriggerBinding.{SELF,ANY,ATTACHED}`. Covers "deals combat damage to a player or planeswalker", "creature you control deals combat damage to a player" (`binding = ANY` + `sourceFilter = Creature.youControl()`), "nontoken creature you control deals…" (`.nontoken()`), and "enchanted creature deals damage" (`binding = ATTACHED`).
 - `takesDamage(source?, binding?)` — incoming-damage trigger. Pick `SourceFilter.{Any,Creature,Spell,Combat,NonCombat,HasColor(c),…}` and `TriggerBinding.{SELF,ATTACHED}`. Covers "damaged by a creature/spell" and "enchanted creature is dealt damage" (`binding = ATTACHED`, Aurification / Frozen Solid shape).
+- `becomesTapped(binding?, filter?)` — "becomes tapped" trigger. `BecomesTapped` is the SELF constant; pass `binding = TriggerBinding.ANY` with an optional `filter: GameObjectFilter` for "whenever a [filter] becomes tapped" (e.g. `GameObjectFilter.CreatureOrLand` — Temporal Distortion). The filter is matched against the tapped permanent via projected state.
 
 ### Phase & turn
 
@@ -1881,8 +1885,10 @@ substitution.
 - `loyalty` — planeswalker loyalty.
 - `charge`, `time`, `level`, `quest`, `shield`, `fade`, `vanishing`, `experience`, `age`, `velocity`, `awakening`,
   `blood`, `cage`, `doom`, `storage`, `divinity`, `charm`, `music`, `crumble`, `corpse`, `germ`, `ink`, `growth`,
-  `hour`, `energy`, `scry`, `aura`, `chapter`, `citation`, `rune`, `scar`, `crux`, `omen`, `secret`, `feather` —
-  assorted printed counter kinds.
+  `hour`, `energy`, `scry`, `aura`, `chapter`, `citation`, `rune`, `scar`, `crux`, `omen`, `secret`, `feather`,
+  `hourglass` — assorted printed counter kinds. (`hourglass`: Temporal Distortion — a permanent with one doesn't untap
+  during its controller's untap step; model the restriction with `GrantKeyword(AbilityFlag.DOESNT_UNTAP.name,
+  GroupFilter(... .withCounter(Counters.HOURGLASS)))` so it stays projection-scoped.)
 - **Keyword counters** (Rule 122.1b) — `flying`, `first strike`, `lifelink`, `indestructible`, `deathtouch`,
   `trample`, `hexproof`. `StateProjector` grants the matching `Keyword` to any permanent carrying one (mapped in
   `KEYWORD_COUNTER_MAP`, re-applied after Layer 6 so "loses all abilities" can't wipe a counter-granted keyword).

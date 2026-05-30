@@ -87,7 +87,10 @@ class BeginningPhaseManager(
             }
         }
 
-        // Filter out permanents with CANT_UNTAP keyword (e.g., Goblin Sharpshooter)
+        // Filter out permanents with CANT_UNTAP keyword (e.g., Goblin Sharpshooter).
+        // Temporal Distortion's hourglass counters route through this same flag: it
+        // grants DOESNT_UNTAP via a counter-keyed static ability (so the restriction
+        // is projection-scoped and disappears if Temporal Distortion leaves play).
         val permanentsAfterCantUntap = permanentsToUntap.filter { entityId ->
             !projected.hasKeyword(entityId, AbilityFlag.DOESNT_UNTAP)
         }

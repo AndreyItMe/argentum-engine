@@ -39,6 +39,17 @@ sealed interface ControllerPredicate {
         override val description: String = ""
     }
 
+    /**
+     * Controlled by the active player (the player whose turn it is). Useful for
+     * "each player's upkeep, do X to permanents that player controls" patterns,
+     * where the upkeep player is the active player (Temporal Distortion).
+     */
+    @SerialName("ControlledByActivePlayer")
+    @Serializable
+    data object ControlledByActivePlayer : ControllerPredicate {
+        override val description: String = "the active player controls"
+    }
+
     /** Controlled by the targeted opponent */
     @SerialName("ControlledByTargetOpponent")
     @Serializable

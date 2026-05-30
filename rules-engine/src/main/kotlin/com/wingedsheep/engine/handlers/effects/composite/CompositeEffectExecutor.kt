@@ -118,6 +118,15 @@ class CompositeEffectExecutor(
                     )
                 )
             }
+
+            // Thread sacrifice snapshots from a sacrifice effect into the context so a
+            // following sibling effect (e.g. "gain life equal to its toughness") can read
+            // the sacrificed permanent's last-known P/T via DynamicAmount.Sacrificed.
+            if (result.updatedSacrificedPermanents.isNotEmpty()) {
+                currentContext = currentContext.copy(
+                    sacrificedPermanents = currentContext.sacrificedPermanents + result.updatedSacrificedPermanents
+                )
+            }
         }
 
         // Return accumulated collections / subtype groups / stored numbers / chosen values so parent composites can see them
@@ -125,13 +134,15 @@ class CompositeEffectExecutor(
         val accumulatedSubtypeGroups = currentContext.pipeline.storedSubtypeGroups - context.pipeline.storedSubtypeGroups.keys
         val accumulatedStoredNumbers = currentContext.pipeline.storedNumbers - context.pipeline.storedNumbers.keys
         val accumulatedChosenValues = currentContext.pipeline.chosenValues - context.pipeline.chosenValues.keys
+        val accumulatedSacrificed = currentContext.sacrificedPermanents.drop(context.sacrificedPermanents.size)
         return EffectResult(
             currentState,
             allEvents,
             updatedCollections = accumulatedCollections,
             updatedSubtypeGroups = accumulatedSubtypeGroups,
             updatedStoredNumbers = accumulatedStoredNumbers,
-            updatedChosenValues = accumulatedChosenValues
+            updatedChosenValues = accumulatedChosenValues,
+            updatedSacrificedPermanents = accumulatedSacrificed
         )
     }
 }

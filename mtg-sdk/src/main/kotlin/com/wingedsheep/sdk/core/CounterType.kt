@@ -40,7 +40,8 @@ enum class CounterType {
     QUEST,
     GROWTH,
     TIME,
-    FEATHER
+    FEATHER,
+    HOURGLASS
 }
 
 /**
@@ -82,4 +83,5 @@ object Counters {
     const val GROWTH = "growth"
     const val TIME = "time"
     const val FEATHER = "feather"
+    const val HOURGLASS = "hourglass"
 }

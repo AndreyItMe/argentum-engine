@@ -519,6 +519,7 @@ class PredicateEvaluator {
                     ControllerPredicate.ControlledByYou -> controllerId == context.controllerId
                     ControllerPredicate.ControlledByOpponent -> controllerId != context.controllerId
                     ControllerPredicate.ControlledByAny -> true
+                    ControllerPredicate.ControlledByActivePlayer -> controllerId == state.activePlayerId
                     ControllerPredicate.ControlledByTargetOpponent -> {
                         context.targetOpponentId?.let { controllerId == it } ?: false
                     }

@@ -8,6 +8,7 @@
 import persistSvgUrl from './persist.svg'
 import bandingSvgUrl from './banding.svg'
 import questCounterSvgUrl from '../counters/quest.svg'
+import hourglassCounterSvgUrl from '../counters/hourglass.svg'
 
 /** Maps engine keyword names to local SVG URLs (used when mana-font has no glyph). */
 export const keywordSvgIcon: Record<string, string> = {
@@ -18,6 +19,7 @@ export const keywordSvgIcon: Record<string, string> = {
 /** Maps engine CounterType names to local SVG URLs (used when mana-font has no glyph or we prefer custom art). */
 export const counterSvgIcon: Record<string, string> = {
   QUEST: questCounterSvgUrl,
+  HOURGLASS: hourglassCounterSvgUrl,
 }
 
 /** Maps engine keyword names to mana-font ability class suffixes */

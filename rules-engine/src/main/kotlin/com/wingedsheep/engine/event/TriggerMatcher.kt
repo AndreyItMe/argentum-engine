@@ -224,7 +224,19 @@ class TriggerMatcher(
                 false
             }
             is GameEvent.TapEvent -> {
-                event is TappedEvent && (binding != TriggerBinding.SELF || event.entityId == sourceId)
+                if (event !is TappedEvent) return false
+                if (binding == TriggerBinding.SELF && event.entityId != sourceId) return false
+                val filter = trigger.filter
+                if (filter != null) {
+                    val predicateEvaluator = PredicateEvaluator()
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId
+                    )
+                    predicateEvaluator.matches(
+                        state, state.projectedState, event.entityId, filter, predicateContext
+                    )
+                } else true
             }
             is GameEvent.UntapEvent -> {
                 event is UntappedEvent && (binding != TriggerBinding.SELF || event.entityId == sourceId)

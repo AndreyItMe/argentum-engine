@@ -415,6 +415,14 @@ export function getQuestCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of hourglass counters on a card. Hourglass counters (Temporal
+ * Distortion) keep a permanent from untapping during its controller's untap step.
+ */
+export function getHourglassCounters(card: ClientCard): number {
+  return card.counters[CounterType.HOURGLASS] ?? 0
+}
+
+/**
  * Get the number of growth counters on a card. Growth counters appear on
  * Simic Ascendancy and accumulate toward a 20-counter win condition.
  */
