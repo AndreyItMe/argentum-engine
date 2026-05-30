@@ -825,6 +825,34 @@ filter.
 
 ---
 
+### #22 — "[Effect] unless any player pays N life" punisher · Aether Rift ⛔ NOT DONE
+
+**What exists.** `AnyPlayerMayPayEffect(cost, consequence)` runs `consequence` **when a player pays**,
+and its executor (`AnyPlayerMayPayExecutor` + `AnyPlayerMayPayContinuation` resumer) only supports
+`PayCost.Sacrifice`. `PayOrSufferEffect` supports `PayLife` but is **single-player** (the controller),
+not "any player". Neither expresses the *inverted* "the consequence happens **unless** some player pays".
+
+**The gap (two parts).**
+1. **Inverted branch** — a consequence that fires only when *no* player paid (add an `ifNoOnePaid`
+   branch to `AnyPlayerMayPayEffect`, mirroring `OptionalCostEffect.ifNotPaid`).
+2. **`PayCost.PayLife` support in the any-player path** — the executor/continuation hard-code the
+   sacrifice flow (card-selection decision); a life-payment path needs a yes/no decision per player in
+   APNAP order plus the life deduction (the logic already exists in
+   `SacrificeAndPayContinuationResumer.resumePayOrSufferPayLife`, but for the single-player effect).
+
+→ **Aether Rift** ("…return it from your graveyard to the battlefield **unless any player pays 5
+life**"). Skipped this PR — it's a multi-file engine change (executor + continuation + resumer + an
+inverted branch) rather than card authoring. The rest of the card (upkeep trigger → discard a card at
+random → gate on "discarded a creature card") is all buildable today
+(`Triggers.YourUpkeep` + a `GatherCards(HAND) → SelectFromCollection(Random, 1) → MoveCollection(GRAVEYARD)`
+discard pipeline + `ConditionalOnCollectionEffect`); only the punisher tail is blocked.
+
+**Leverage.** "[do X] unless any player pays [life/mana]" is a recurring punisher idiom (Tariff,
+Falter-likes, many older reanimators), so the inverted branch + `PayLife` any-player support unlock a
+family, not just Aether Rift.
+
+---
+
 ## Suggested build order (highest leverage first)
 
 0. **Close the already-buildable cards** (#6 ✅, #12, #20 ✅, Coalition Victory ✅, Rewards of Diversity ✅) —
