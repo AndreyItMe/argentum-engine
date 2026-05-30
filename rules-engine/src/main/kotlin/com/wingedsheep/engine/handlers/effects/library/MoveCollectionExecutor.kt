@@ -62,8 +62,8 @@ class MoveCollectionExecutor(
                 val destPlayerId = resolvePlayer(destination.player, context, state)
                 if (destPlayerId != null) {
                     val destZoneKey = ZoneKey(destPlayerId, Zone.LIBRARY)
-                    val library = state.getZone(destZoneKey)
-                    val newState = state.copy(zones = state.zones + (destZoneKey to library.shuffled()))
+                    val (shuffledLibrary, shuffledState) = state.nextRandom { shuffle(state.getZone(destZoneKey)) }
+                    val newState = shuffledState.copy(zones = shuffledState.zones + (destZoneKey to shuffledLibrary))
                     return EffectResult.success(newState, listOf(LibraryShuffledEvent(destPlayerId)))
                 }
             }
@@ -194,9 +194,13 @@ class MoveCollectionExecutor(
         }
 
         // Random ordering: shuffle the cards before placing them (player has no knowledge of order)
-        val orderedCards = if (order == CardOrder.Random) cards.shuffled() else cards
+        val (orderedCards, stateForMove) = if (order == CardOrder.Random) {
+            state.nextRandom { shuffle(cards) }
+        } else {
+            cards to state
+        }
 
-        val result = moveCardsToZone(state, context, orderedCards, destination, destPlayerId, revealed, moveType, faceDown, noRegenerate, storeMovedAs, underOwnersControl, revealToSelf)
+        val result = moveCardsToZone(stateForMove, context, orderedCards, destination, destPlayerId, revealed, moveType, faceDown, noRegenerate, storeMovedAs, underOwnersControl, revealToSelf)
 
         // Random library placement: the mover doesn't know where the cards landed, so strip
         // their reveal markers. moveCardsToZone marks moved cards as revealed to the controller
@@ -659,8 +663,8 @@ class MoveCollectionExecutor(
                 val destZoneKey = ZoneKey(libraryOwnerId, Zone.LIBRARY)
                 // Strip reveals before shuffling — once shuffled, no one knows positions any more
                 newState = LibraryRevealUtils.clearLibraryReveals(newState, libraryOwnerId)
-                val library = newState.getZone(destZoneKey)
-                newState = newState.copy(zones = newState.zones + (destZoneKey to library.shuffled()))
+                val (shuffledLibrary, shuffledState) = newState.nextRandom { shuffle(newState.getZone(destZoneKey)) }
+                newState = shuffledState.copy(zones = shuffledState.zones + (destZoneKey to shuffledLibrary))
                 events.add(LibraryShuffledEvent(libraryOwnerId))
             }
         }

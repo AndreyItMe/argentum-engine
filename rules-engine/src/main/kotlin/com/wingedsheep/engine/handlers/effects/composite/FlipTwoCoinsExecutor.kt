@@ -25,8 +25,8 @@ class FlipTwoCoinsExecutor(
         effect: FlipTwoCoinsEffect,
         context: EffectContext
     ): EffectResult {
-        val coin1 = kotlin.random.Random.nextBoolean()
-        val coin2 = kotlin.random.Random.nextBoolean()
+        val (coin1, s1) = state.nextRandom { nextBoolean() }
+        val (coin2, s2) = s1.nextRandom { nextBoolean() }
 
         val sourceId = context.sourceId
         val sourceName = sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name } ?: "Unknown"
@@ -43,10 +43,10 @@ class FlipTwoCoinsExecutor(
         }
 
         if (subEffect == null) {
-            return EffectResult.success(state, events)
+            return EffectResult.success(s2, events)
         }
 
-        val result = effectExecutor(state, subEffect, context)
+        val result = effectExecutor(s2, subEffect, context)
         return result.copy(events = events + result.events)
     }
 }

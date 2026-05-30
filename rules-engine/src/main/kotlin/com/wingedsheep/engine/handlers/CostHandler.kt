@@ -324,6 +324,7 @@ class CostHandler(
                 CostPaymentResult.success(newState, manaPool, events)
             }
             is AbilityCost.Discard -> {
+                var workState = state
                 val toDiscard: List<EntityId> = if (cost.atRandom) {
                     // Engine chooses the discarded cards at random — no player selection.
                     val eligible = findMatchingCardsUnified(
@@ -332,7 +333,9 @@ class CostHandler(
                     if (eligible.size < cost.count) {
                         return CostPaymentResult.failure("Not enough cards to discard at random")
                     }
-                    eligible.shuffled().take(cost.count)
+                    val (shuffled, advanced) = state.nextRandom { shuffle(eligible) }
+                    workState = advanced
+                    shuffled.take(cost.count)
                 } else {
                     if (choices.discardChoices.size < cost.count) {
                         return CostPaymentResult.failure("Must choose ${cost.count} card(s) to discard")
@@ -341,7 +344,7 @@ class CostHandler(
                 }
 
                 val result = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                    .discardCards(state, controllerId, toDiscard)
+                    .discardCards(workState, controllerId, toDiscard)
                 CostPaymentResult.success(result.state, manaPool, result.events)
             }
             is AbilityCost.DiscardHand -> {

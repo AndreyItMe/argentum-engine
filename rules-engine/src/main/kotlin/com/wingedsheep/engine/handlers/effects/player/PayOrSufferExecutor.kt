@@ -868,8 +868,9 @@ class PayOrSufferExecutor(
             }
 
             // Randomly select cards to discard
-            val cardsToDiscard = validCards.shuffled().take(count)
-            var newState = state
+            val (shuffledValid, stateAfterShuffle) = state.nextRandom { shuffle(validCards) }
+            val cardsToDiscard = shuffledValid.take(count)
+            var newState = stateAfterShuffle
             val events = mutableListOf<GameEvent>()
 
             for (cardId in cardsToDiscard) {

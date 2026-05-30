@@ -466,8 +466,8 @@ object ZoneTransitionService {
                 currentState = com.wingedsheep.engine.handlers.effects.library.LibraryRevealUtils
                     .clearLibraryReveals(currentState, ownerId)
                 val libraryZone = ZoneKey(ownerId, Zone.LIBRARY)
-                val library = currentState.getZone(libraryZone).shuffled()
-                currentState = currentState.copy(zones = currentState.zones + (libraryZone to library))
+                val (library, shuffledState) = currentState.nextRandom { shuffle(currentState.getZone(libraryZone)) }
+                currentState = shuffledState.copy(zones = shuffledState.zones + (libraryZone to library))
                 allEvents.add(com.wingedsheep.engine.core.LibraryShuffledEvent(ownerId))
             }
         }
@@ -607,8 +607,8 @@ object ZoneTransitionService {
                 state.copy(zones = state.zones + (libraryZoneKey to currentLibrary + entityId))
             }
             LibraryPlacement.Shuffled -> {
-                val newLibrary = (currentLibrary + entityId).shuffled()
-                state.copy(zones = state.zones + (libraryZoneKey to newLibrary))
+                val (newLibrary, shuffledState) = state.nextRandom { shuffle(currentLibrary + entityId) }
+                shuffledState.copy(zones = shuffledState.zones + (libraryZoneKey to newLibrary))
             }
             is LibraryPlacement.NthFromTop -> {
                 val insertIndex = placement.position.coerceAtMost(currentLibrary.size)

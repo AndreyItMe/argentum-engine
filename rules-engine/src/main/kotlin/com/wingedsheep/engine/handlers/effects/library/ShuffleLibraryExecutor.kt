@@ -30,11 +30,11 @@ class ShuffleLibraryExecutor : EffectExecutor<ShuffleLibraryEffect> {
         // Strip reveals before shuffling — once shuffled, no player can claim
         // to know positions any more, even cards previously revealed via Scry/Surveil.
         val cleared = LibraryRevealUtils.clearLibraryReveals(state, targetId)
-        val library = cleared.getZone(libraryZone).shuffled()
+        val (library, advanced) = cleared.nextRandom { shuffle(cleared.getZone(libraryZone)) }
 
-        val newZones = cleared.zones + (libraryZone to library)
+        val newZones = advanced.zones + (libraryZone to library)
         return EffectResult.success(
-            cleared.copy(zones = newZones),
+            advanced.copy(zones = newZones),
             listOf(LibraryShuffledEvent(targetId))
         )
     }

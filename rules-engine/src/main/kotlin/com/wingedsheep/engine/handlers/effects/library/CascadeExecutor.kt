@@ -160,7 +160,9 @@ class CascadeExecutor(
         ): List<EngineGameEvent> {
             val events = mutableListOf<EngineGameEvent>()
             var current = state
-            for (cardId in cards.shuffled()) {
+            val (shuffledCards, advanced) = current.nextRandom { shuffle(cards) }
+            current = advanced
+            for (cardId in shuffledCards) {
                 val result = ZoneTransitionService.moveToZone(
                     state = current,
                     entityId = cardId,

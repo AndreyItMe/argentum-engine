@@ -27,7 +27,7 @@ class FlipCoinExecutor(
         effect: FlipCoinEffect,
         context: EffectContext
     ): EffectResult {
-        val won = kotlin.random.Random.nextBoolean()
+        val (won, advanced) = state.nextRandom { nextBoolean() }
 
         val sourceId = context.sourceId
         val sourceName = sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name } ?: "Unknown"
@@ -36,10 +36,10 @@ class FlipCoinExecutor(
         val subEffect = if (won) effect.wonEffect else effect.lostEffect
 
         if (subEffect == null) {
-            return EffectResult.success(state, listOf(event))
+            return EffectResult.success(advanced, listOf(event))
         }
 
-        val result = effectExecutor(state, subEffect, context)
+        val result = effectExecutor(advanced, subEffect, context)
         return result.copy(events = listOf(event) + result.events)
     }
 }

@@ -63,17 +63,17 @@ class ReselectTargetRandomlyExecutor : EffectExecutor<ReselectTargetRandomlyEffe
         }
 
         // 4. Randomly pick one (may be the same as current — per ruling)
-        val chosenTargetId = legalTargets.random()
+        val (chosenTargetId, stateAfterPick) = state.nextRandom { pick(legalTargets) }
 
         // 5. Build the new ChosenTarget based on what was chosen
-        val newTarget = buildChosenTarget(state, chosenTargetId, currentTarget)
-            ?: return EffectResult.success(state)
+        val newTarget = buildChosenTarget(stateAfterPick, chosenTargetId, currentTarget)
+            ?: return EffectResult.success(stateAfterPick)
 
         // 6. Update the target on the stack entity
         val newTargetsComponent = targetsComponent.copy(
             targets = listOf(newTarget)
         )
-        val newState = state.updateEntity(triggeringEntityId) { container ->
+        val newState = stateAfterPick.updateEntity(triggeringEntityId) { container ->
             container.with(newTargetsComponent)
         }
 
