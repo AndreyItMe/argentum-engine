@@ -138,8 +138,11 @@ data class TakeExtraTurnEffect(
 data class PreventLandPlaysThisTurnEffect(
     val target: EffectTarget = EffectTarget.Controller
 ) : Effect {
-    override val description: String =
-        "${target.description.replaceFirstChar { it.uppercase() }} can't play lands this turn"
+    override val description: String = when (target) {
+        is EffectTarget.Controller -> "You can't play lands this turn"
+        is EffectTarget.ContextTarget -> "Target player can't play lands this turn"
+        else -> "${target.description.replaceFirstChar { it.uppercase() }} can't play lands this turn"
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

@@ -3,6 +3,7 @@ package com.wingedsheep.gameserver.scenarios
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.core.DeclareAttackers
 import com.wingedsheep.engine.mechanics.layers.StateProjector
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
@@ -42,15 +43,17 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
         }
     }
 
-    // A plain creature attacker for the Orim's Touch prevention test.
-    private val bear = CardDefinition.creature(
-        name = "Test Bear", manaCost = ManaCost.parse("{G}"),
-        subtypes = setOf(Subtype("Bear")), power = 2, toughness = 2
+    // A 5-power attacker for the Orim's Touch prevention tests. Power > 4 so the unkicked
+    // (prevent 2) and kicked (prevent 4) branches deal *different* amounts of unprevented
+    // damage — that's what distinguishes the two prevention amounts.
+    private val ogre = CardDefinition.creature(
+        name = "Test Ogre", manaCost = ManaCost.parse("{G}"),
+        subtypes = setOf(Subtype("Ogre")), power = 5, toughness = 5
     )
 
     init {
         cardRegistry.register(tappingLand)
-        cardRegistry.register(bear)
+        cardRegistry.register(ogre)
 
         context("Turf Wound") {
             test("target player can't play lands this turn and caster draws a card") {
@@ -80,12 +83,12 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
         }
 
         context("Orim's Touch") {
-            test("unkicked prevents the next 2 damage to a player") {
+            test("unkicked prevents exactly the next 2 damage; the rest gets through") {
                 val game = scenario()
                     .withPlayers("Defender", "Attacker")
                     .withCardInHand(1, "Orim's Touch")
                     .withLandsOnBattlefield(1, "Plains", 1) // {W}
-                    .withCardOnBattlefield(2, "Test Bear")  // 2/2 attacker
+                    .withCardOnBattlefield(2, "Test Ogre")   // 5/5 attacker
                     .withActivePlayer(2)
                     .withPriorityPlayer(1)                   // defender holds priority to cast at instant speed
                     .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
@@ -93,7 +96,7 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
 
                 val startLife = game.getLifeTotal(1)
 
-                // Defender casts Orim's Touch on themselves to pre-empt the incoming 2 damage.
+                // Defender casts Orim's Touch (unkicked) on themselves to blunt the incoming 5 damage.
                 val orimCast = game.castSpellTargetingPlayer(1, "Orim's Touch", 1)
                 withClue("Orim's Touch cast should succeed: ${orimCast.error}") {
                     orimCast.error shouldBe null
@@ -103,31 +106,36 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
                     game.state.floatingEffects.any { game.player1Id in it.effect.affectedEntities } shouldBe true
                 }
 
-                val bearId = game.findPermanent("Test Bear")!!
+                val ogreId = game.findPermanent("Test Ogre")!!
                 game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
-                game.execute(DeclareAttackers(game.player2Id, mapOf(bearId to game.player1Id)))
+                game.execute(DeclareAttackers(game.player2Id, mapOf(ogreId to game.player1Id)))
                 game.passUntilPhase(Phase.POSTCOMBAT_MAIN, Step.POSTCOMBAT_MAIN)
                 game.resolveStack()
 
-                withClue("All 2 combat damage should have been prevented") {
-                    game.getLifeTotal(1) shouldBe startLife
+                withClue("Exactly 2 of the 5 combat damage should be prevented, so 3 gets through") {
+                    game.getLifeTotal(1) shouldBe startLife - 3
                 }
             }
 
-            test("kicked prevents up to 4 damage") {
+            test("kicked prevents exactly the next 4 damage; the rest gets through") {
                 val game = scenario()
                     .withPlayers("Defender", "Attacker")
                     .withCardInHand(1, "Orim's Touch")
                     .withLandsOnBattlefield(1, "Plains", 2) // {W} + kicker {1}
-                    .withActivePlayer(1)
+                    .withCardOnBattlefield(2, "Test Ogre")   // 5/5 attacker
+                    .withActivePlayer(2)
+                    .withPriorityPlayer(1)                   // defender holds priority to cast at instant speed
                     .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
                     .build()
+
+                val startLife = game.getLifeTotal(1)
 
                 val hand = game.state.getHand(game.player1Id)
                 val touchId = hand.first {
                     game.state.getEntity(it)?.get<CardComponent>()?.name == "Orim's Touch"
                 }
 
+                // Defender casts Orim's Touch *kicked* on themselves.
                 val cast = game.execute(
                     CastSpell(
                         game.player1Id,
@@ -140,8 +148,16 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
                     cast.error shouldBe null
                 }
                 game.resolveStack()
-                // Resolution succeeding (no error) confirms the kicked branch was reachable;
-                // the prevention amount is exercised by the unkicked combat test above.
+
+                val ogreId = game.findPermanent("Test Ogre")!!
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+                game.execute(DeclareAttackers(game.player2Id, mapOf(ogreId to game.player1Id)))
+                game.passUntilPhase(Phase.POSTCOMBAT_MAIN, Step.POSTCOMBAT_MAIN)
+                game.resolveStack()
+
+                withClue("The kicked branch should prevent 4 (not 2) of the 5 damage, so only 1 gets through") {
+                    game.getLifeTotal(1) shouldBe startLife - 1
+                }
             }
         }
 
@@ -180,6 +196,37 @@ class InvasionTsabosWebTurfWoundOrimsTouchScenarioTest : ScenarioTestBase() {
                 }
 
                 game.findPermanent("Tsabo's Web") shouldNotBe null
+            }
+
+            test("a tapped land with a non-mana ability stays tapped through its controller's untap step") {
+                // Player 2's turn is ending; advancing to Player 1's upkeep passes through
+                // Player 1's untap step, which is where DOESNT_UNTAP actually takes effect.
+                val game = scenario()
+                    .withPlayers("Owner", "Opponent")
+                    .withCardOnBattlefield(1, "Tsabo's Web")
+                    .withCardOnBattlefield(1, "Vault Land", tapped = true) // non-mana activated ability
+                    .withCardOnBattlefield(1, "Forest", tapped = true)     // mana-only; should untap
+                    .withActivePlayer(2)
+                    .inPhase(Phase.ENDING, Step.END)
+                    .build()
+
+                val vaultLandId = game.findPermanent("Vault Land")!!
+                val forestId = game.findPermanent("Forest")!!
+
+                withClue("Both lands start tapped") {
+                    game.state.getEntity(vaultLandId)!!.has<TappedComponent>() shouldBe true
+                    game.state.getEntity(forestId)!!.has<TappedComponent>() shouldBe true
+                }
+
+                // Advance into Player 1's turn, through Player 1's untap step.
+                game.passUntilPhase(Phase.BEGINNING, Step.UPKEEP)
+
+                withClue("Vault Land (non-mana activated ability) must NOT untap") {
+                    game.state.getEntity(vaultLandId)!!.has<TappedComponent>() shouldBe true
+                }
+                withClue("Forest (mana-only) untaps normally") {
+                    game.state.getEntity(forestId)!!.has<TappedComponent>() shouldBe false
+                }
             }
         }
     }
