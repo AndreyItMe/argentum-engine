@@ -871,6 +871,18 @@ object Effects {
         MoveAllLastKnownCountersEffect(target)
 
     /**
+     * Double the number of counters of [counterType] already on a target (one-shot).
+     * Reads the current count and puts that many more on the target, so the total
+     * doubles. Distinct from the [DoubleCounterPlacement] replacement, which doubles
+     * counters as they are placed in the future. Used by Sage of the Fang.
+     */
+    fun DoubleCounters(
+        counterType: String = Counters.PLUS_ONE_PLUS_ONE,
+        target: EffectTarget = EffectTarget.ContextTarget(0)
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.DoubleCountersEffect(counterType, target)
+
+    /**
      * Remove counters of a given type from a target. No-op if the target has fewer
      * than `count` counters of that type.
      */

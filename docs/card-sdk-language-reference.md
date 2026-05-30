@@ -281,6 +281,10 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `AddCounters(type, count, target)` — add N counters of `type`.
 - `AddDynamicCounters(type, amount, target)` — count is computed at resolution.
+- `DoubleCounters(type?, target?)` — one-shot doubling of the `type` counters (default `+1/+1`) already on the
+  target: reads the current count and places that many more (so the total doubles). Distinct from the
+  `DoubleCounterPlacement` replacement (which doubles *future* placements); the added counters still trigger
+  placement replacements like Hardened Scales. No-op with zero counters. Sage of the Fang.
 - `RemoveCounters(type, count, target)` — remove N counters.
 - `RemoveAnyNumberOfCounters(target)` — player removes 0 or more.
 - `RemoveAllCounters(target)` — wipe every counter.

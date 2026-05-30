@@ -65,6 +65,32 @@ data class MoveAllLastKnownCountersEffect(
 }
 
 /**
+ * Double the number of counters of a given kind already on a target (one-shot).
+ * "Double the number of +1/+1 counters on that creature."
+ *
+ * Distinct from the `DoubleCounterPlacement` replacement effect, which doubles
+ * counters as they are *placed* in the future. This is an immediate doubling of
+ * the counters present at resolution: the executor reads the current count of
+ * [counterType] on the target and puts that many more on it (so the total
+ * doubles). Putting those counters still triggers counter-placement replacement
+ * effects (e.g., Hardened Scales), matching the rules treatment of doubling as
+ * additional counter placement.
+ *
+ * No-op when the target has no counters of [counterType].
+ */
+@SerialName("DoubleCounters")
+@Serializable
+data class DoubleCountersEffect(
+    val counterType: String = Counters.PLUS_ONE_PLUS_ONE,
+    val target: EffectTarget = EffectTarget.ContextTarget(0)
+) : Effect {
+    override val description: String =
+        "Double the number of $counterType counters on ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Remove counters effect.
  * "Remove X -1/-1 counters from target creature"
  */

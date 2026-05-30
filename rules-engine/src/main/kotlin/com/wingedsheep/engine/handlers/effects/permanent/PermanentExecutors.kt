@@ -27,6 +27,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.counters.AddCountersToC
 import com.wingedsheep.engine.handlers.effects.permanent.counters.AddDynamicCountersExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.MoveAllLastKnownCountersExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.DistributeCountersAmongTargetsExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.counters.DoubleCountersExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.DistributeCountersFromSelfExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.ProliferateExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.RemoveAllCountersExecutor
@@ -95,6 +96,7 @@ class PermanentExecutors(
         AddDynamicCountersExecutor(),
         MoveAllLastKnownCountersExecutor(),
         AddCountersToCollectionExecutor(),
+        DoubleCountersExecutor(),
         RemoveCountersExecutor(),
         RemoveAnyNumberOfCountersExecutor(),
         RemoveAllCountersExecutor(),
