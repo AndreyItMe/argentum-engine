@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 50 / 78
+**Implemented:** 51 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -91,5 +91,5 @@
 - [x] Elephant Graveyard
 - [x] Island of Wak-Wak
 - [x] Library of Alexandria
-- [ ] Mountain
+- [x] Mountain
 - [x] Oasis
