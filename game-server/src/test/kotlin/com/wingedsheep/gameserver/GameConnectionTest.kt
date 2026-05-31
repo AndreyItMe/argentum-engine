@@ -49,7 +49,10 @@ class GameConnectionTest : GameServerTestBase() {
                 client.connectAs("Alice")
                 client.send(ClientMessage.CreateGame(emptyMap()))
 
-                eventually(5.seconds) {
+                // Empty deck => the server generates and shuffles a random deck before
+                // replying, which is the slowest CreateGame path. Allow a generous budget
+                // so this stays green under CI load (it was an intermittent 5s timeout).
+                eventually(15.seconds) {
                     client.messages.any { it is ServerMessage.GameCreated } shouldBe true
                 }
                 val gameCreated = client.messages.filterIsInstance<ServerMessage.GameCreated>().first()
