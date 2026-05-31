@@ -72,6 +72,7 @@ import com.wingedsheep.engine.state.components.identity.PlayerComponent
 import com.wingedsheep.engine.state.components.identity.HexproofFromColorComponent
 import com.wingedsheep.engine.state.components.identity.ToxicComponent
 import com.wingedsheep.engine.state.components.identity.ProtectionComponent
+import com.wingedsheep.engine.state.components.identity.TokenComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
 import com.wingedsheep.engine.state.components.combat.BlockersDeclaredThisCombatComponent
@@ -240,13 +241,19 @@ abstract class ScenarioTestBase : FunSpec() {
         /**
          * Add a card to the battlefield under a player's control.
          * By default, removes summoning sickness (as if it's been there).
+         *
+         * Set [isToken] to mark the permanent as a token (adds [TokenComponent]) — needed so
+         * `IsToken` / `IsNontoken` filters and token-only sacrifice costs evaluate correctly.
+         * The permanent's stats/types still come from the named (token) card definition, e.g.
+         * a predefined token like "Treasure" or a creature-token script.
          */
         fun withCardOnBattlefield(
             playerNumber: Int,
             cardName: String,
             tapped: Boolean = false,
             summoningSickness: Boolean = false,
-            classLevel: Int? = null
+            classLevel: Int? = null,
+            isToken: Boolean = false
         ): ScenarioBuilder {
             val playerId = if (playerNumber == 1) player1Id!! else player2Id!!
             val cardId = createCard(cardName, playerId)
@@ -264,6 +271,10 @@ abstract class ScenarioTestBase : FunSpec() {
 
             if (summoningSickness) {
                 container = container.with(SummoningSicknessComponent)
+            }
+
+            if (isToken) {
+                container = container.with(TokenComponent)
             }
 
             // Add continuous effects from static abilities (e.g., "Other creatures you control have...")

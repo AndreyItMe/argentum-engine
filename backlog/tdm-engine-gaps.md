@@ -5,7 +5,7 @@ capabilities (SDK reference + source verification, May 2026). Generated to scope
 built before the set can be completed.
 
 **Status:** 49 / 271 implemented (18%). All five wedge clan keywords (Tier 1), every Tier-2
-primitive, and all but three Tier-3 one-offs are now built — only items 15, 18, and 20 remain.
+primitive, and all but two Tier-3 one-offs are now built — only items 15 and 18 remain.
 Card list comes from `scripts/card-status --list --set TDM`. Oracle text pulled from Scryfall
 (`set:tdm`, 277 printings → 271 unique cards).
 
@@ -43,7 +43,7 @@ What follows are the **genuine gaps** — elements no current SDK primitive expr
 
 > **Update (May 2026):** Tier 1 (all five clan keywords + Decayed) and Tier 2 (keyword counters,
 > leaves-graveyard trigger, one-shot counter doubling, group P/T doubling) are **complete**, as are
-> Tier-3 items 11–14, 16, 17, and 19. Only **items 15, 18, and 20** remain.
+> Tier-3 items 11–14, 16, 17, 19, and 20. Only **items 15 and 18** remain.
 
 ---
 
@@ -211,7 +211,14 @@ the overwhelming majority of the set.
     a "can't cast spells with even mana value" (Void Winnower) prohibition is left as a future sibling.
     → **Voice of Victory**
 
-20. **Sacrifice-a-token as a cost** (minor — verify a token-only sacrifice-cost filter exists).
+20. **Sacrifice-a-token as a cost.** ✅ **DONE.** No new SDK was needed — "Sacrifice a token" is the
+    existing generic sacrifice cost narrowed by the `GameObjectFilter.Token` filter (`IsToken` →
+    `has<TokenComponent>`). `Costs.Sacrifice(GameObjectFilter.Token)` already renders as "Sacrifice a
+    token" and is gated by `canPayAbilityCost`, so the ability is only offered (and only payable) when
+    a token is on the battlefield; a nontoken permanent can't satisfy it. Fountainport
+    (`{2}, {T}, Sacrifice a token: Draw a card`) was already a user. Locked in by
+    `HardenedTacticianScenarioTest`, plus a reusable `isToken` flag on the scenario builder's
+    `withCardOnBattlefield` so tests can place real tokens.
     → **Hardened Tactician**
 
 ---
@@ -222,7 +229,7 @@ the overwhelming majority of the set.
    modest. Unlocks ~30 cards quickly.
 2. ✅ **Renew** (enumerator extension) + **Harmonize** (new alt-cost) — bigger lifts, ~22 cards.
 3. ✅ **Keyword counters + Decayed + leaves-graveyard trigger** (Tier 2) — small, scattered unlocks.
-4. **Tier-3 one-offs** as the relevant legendaries / rares come up. *(remaining work — items 15, 18, 20)*
+4. **Tier-3 one-offs** as the relevant legendaries / rares come up. *(remaining work — items 15, 18)*
 
 The clan keywords (Tier 1) cover the bulk of the remaining cards. Behold and Omen already being done
 means Temur spells and the 13 DFC dragons are essentially ready once the shared supporting effects
