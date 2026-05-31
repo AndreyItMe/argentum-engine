@@ -1221,6 +1221,12 @@ staticAbility {
   remove a card type (e.g. `"CREATURE"`). `RemoveCardType` backs Impending's "isn't a creature while it has a time
   counter" (wrapped in a `ConditionalStaticAbility`); reuse it for any "it's no longer a [type]" effect.
 - `ConditionalStaticAbility` — static gated by a runtime `Condition`.
+- `CantBlockCreaturesWithGreaterPower(filter = source())` — blocker-side evasion (Spitfire Handler): this
+  creature can't block creatures whose projected power exceeds its own.
+- `CantBeBlockedByCreaturesWithLessPower(filter = source())` — attacker-side dual (Formation Breaker): this
+  creature can't be blocked by creatures whose projected power is less than its own. Resolved by
+  `CantBeBlockedByCreaturesWithLessPowerRule`; both sides use projected power, so a P/T buff raises the
+  threshold.
 - `Effects.CreatePermanentEmblem(...)` — emblem with static abilities (planeswalker ultimates).
 - `AttackTax(amountPerAttacker: DynamicAmount)` — Propaganda / Ghostly Prison / Windborn Muse /
   Collective Restraint. Per-attacker generic-mana tax for attacking the source's controller; the

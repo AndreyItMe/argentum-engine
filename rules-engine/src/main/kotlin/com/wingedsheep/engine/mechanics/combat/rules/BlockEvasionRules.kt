@@ -418,6 +418,34 @@ class CantBlockCreaturesWithGreaterPowerRule : BlockEvasionRule {
 }
 
 /**
+ * CantBeBlockedByCreaturesWithLessPower: Attacker can't be blocked by creatures whose power is
+ * less than the attacker's power (e.g. Formation Breaker). The attacker-side dual of
+ * [CantBlockCreaturesWithGreaterPowerRule].
+ */
+class CantBeBlockedByCreaturesWithLessPowerRule : BlockEvasionRule {
+    override fun check(ctx: BlockCheckContext): String? {
+        // Face-down creatures have no abilities — restriction doesn't apply
+        if (ctx.state.getEntity(ctx.attackerId)?.has<FaceDownComponent>() == true) return null
+        val attackerCard = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>() ?: return null
+        val cardDef = ctx.cardRegistry.getCard(attackerCard.cardDefinitionId) ?: return null
+        val restriction = cardDef.staticAbilities
+            .filterIsInstance<com.wingedsheep.sdk.scripting.CantBeBlockedByCreaturesWithLessPower>().firstOrNull()
+            ?: return null
+
+        if (restriction.filter.scope !is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self) return null
+
+        val attackerPower = ctx.projected.getPower(ctx.attackerId) ?: 0
+        val blockerPower = ctx.projected.getPower(ctx.blockerId) ?: 0
+
+        if (blockerPower < attackerPower) {
+            val blockerName = ctx.state.getEntity(ctx.blockerId)?.get<CardComponent>()?.name ?: "Creature"
+            return "$blockerName can't block ${attackerCard.name} (power $blockerPower is less than ${attackerCard.name}'s power $attackerPower)"
+        }
+        return null
+    }
+}
+
+/**
  * GrantCantBeBlockedToSmallCreatures: Attacker can't be blocked if it has power or toughness
  * at most N and its controller controls a permanent with this static ability
  * (e.g., Tetsuko Umezawa, Fugitive).
@@ -517,5 +545,6 @@ fun defaultBlockEvasionRules(
     ProtectionFromEachOpponentRule(),
     CanOnlyBlockCreaturesWithRule(predicateEvaluator),
     CantBlockCreaturesWithGreaterPowerRule(),
+    CantBeBlockedByCreaturesWithLessPowerRule(),
     RingBearerCantBeBlockedByGreaterPowerRule()
 )

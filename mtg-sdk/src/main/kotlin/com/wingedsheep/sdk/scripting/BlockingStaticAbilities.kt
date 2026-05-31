@@ -104,6 +104,25 @@ data class CantBlockCreaturesWithGreaterPower(
 }
 
 /**
+ * This creature can't be blocked by creatures with power less than this creature's power.
+ * Used for cards like Formation Breaker. The attacker-side dual of
+ * [CantBlockCreaturesWithGreaterPower].
+ *
+ * The comparison uses projected power for both the attacker (source) and each potential
+ * blocker, so it accounts for buffs/debuffs that change power.
+ *
+ * @property filter What this ability applies to (typically [GroupFilter.source])
+ */
+@SerialName("CantBeBlockedByCreaturesWithLessPower")
+@Serializable
+data class CantBeBlockedByCreaturesWithLessPower(
+    val filter: GroupFilter = GroupFilter.source()
+) : StaticAbility {
+    override val description: String = "can't be blocked by creatures with power less than this creature's power"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * This creature can't be blocked by more than N creatures.
  * Used for Charging Rhino: "can't be blocked by more than one creature."
  *
