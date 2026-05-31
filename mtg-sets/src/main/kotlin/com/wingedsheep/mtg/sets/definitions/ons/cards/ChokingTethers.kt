@@ -1,10 +1,9 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
-import com.wingedsheep.sdk.scripting.effects.TapTargetCreaturesEffect
-import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.TargetCreature
 import com.wingedsheep.sdk.dsl.Triggers
@@ -25,7 +24,7 @@ val ChokingTethers = card("Choking Tethers") {
 
     spell {
         target = TargetCreature(count = 4, optional = true, filter = TargetFilter.Creature)
-        effect = TapTargetCreaturesEffect(maxTargets = 4)
+        effect = Effects.TapEachTarget()
     }
 
     keywordAbility(KeywordAbility.cycling("{1}{U}"))
@@ -34,7 +33,7 @@ val ChokingTethers = card("Choking Tethers") {
         trigger = Triggers.YouCycleThis
         optional = true
         val t = target("target", TargetCreature(filter = TargetFilter.Creature))
-        effect = TapUntapEffect(t, tap = true)
+        effect = Effects.Tap(t)
     }
 
     metadata {

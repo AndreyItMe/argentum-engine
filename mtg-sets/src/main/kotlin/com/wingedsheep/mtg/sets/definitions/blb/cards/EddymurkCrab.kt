@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.blb.cards
 
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.Conditions
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
@@ -12,7 +13,6 @@ import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.ModifySpellCost
 import com.wingedsheep.sdk.scripting.SpellCostTarget
-import com.wingedsheep.sdk.scripting.effects.TapTargetCreaturesEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.TargetCreature
 
@@ -60,7 +60,7 @@ val EddymurkCrab = card("Eddymurk Crab") {
             optional = true,
             filter = TargetFilter.Creature
         )
-        effect = TapTargetCreaturesEffect(maxTargets = 2)
+        effect = Effects.TapEachTarget()
     }
 
     metadata {

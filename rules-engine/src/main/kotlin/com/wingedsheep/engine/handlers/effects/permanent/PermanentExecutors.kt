@@ -43,7 +43,6 @@ import com.wingedsheep.engine.handlers.effects.permanent.stats.ModifyStatsExecut
 import com.wingedsheep.engine.handlers.effects.permanent.stats.SetBasePowerExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.stats.SetBasePowerToughnessExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.phasing.PhaseOutExecutor
-import com.wingedsheep.engine.handlers.effects.permanent.tapping.TapTargetCreaturesExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.tapping.TapUntapCollectionExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.tapping.TapUntapExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.AddCardTypeExecutor
@@ -152,7 +151,6 @@ class PermanentExecutors(
         ExploreEffectExecutor(),
         // tapping
         TapUntapExecutor(),
-        TapTargetCreaturesExecutor(),
         TapUntapCollectionExecutor(),
         // phasing
         PhaseOutExecutor(),

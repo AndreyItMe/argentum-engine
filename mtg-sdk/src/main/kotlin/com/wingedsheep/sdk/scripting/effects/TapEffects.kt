@@ -39,21 +39,6 @@ data class TapUntapCollectionEffect(
 }
 
 /**
- * Tap up to X target creatures.
- * Used for Tidal Surge: "Tap up to three target creatures without flying."
- * Note: The targeting filter is specified in the spell's TargetCreature, not here.
- */
-@SerialName("TapTargetCreatures")
-@Serializable
-data class TapTargetCreaturesEffect(
-    val maxTargets: Int
-) : Effect {
-    override val description: String = "Tap up to $maxTargets target creature${if (maxTargets > 1) "s" else ""}"
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
-}
-
-/**
  * Phase out the target permanent (and anything attached to it).
  *
  * "Phased out" is a per-permanent status (Rule 702.26): while a permanent is phased

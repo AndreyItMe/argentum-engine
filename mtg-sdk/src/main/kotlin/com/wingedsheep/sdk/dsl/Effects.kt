@@ -1864,6 +1864,19 @@ object Effects {
         TapUntapEffect(target, tap = false)
 
     /**
+     * Tap every creature/permanent chosen as a target ("tap up to N target creatures").
+     *
+     * Composes [ForEachTargetEffect] over [Effects.Tap], so the number of targets is owned
+     * entirely by the spell's `TargetCreature`/`TargetPermanent` (its `count`, `unlimited`, or
+     * `dynamicMaxCount`) — not duplicated on the effect. Used by Tidal Surge, Choking Tethers,
+     * Eddymurk Crab, Icy Blast.
+     */
+    fun TapEachTarget(): Effect =
+        com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect(
+            listOf(TapUntapEffect(EffectTarget.ContextTarget(0), tap = true))
+        )
+
+    /**
      * Phase out a target permanent (Rule 702.26). It's treated as though it
      * doesn't exist until it phases back in before its controller's next untap step.
      */
