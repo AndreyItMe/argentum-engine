@@ -8,6 +8,9 @@ Guidance for Claude Code working in this repository.
   revert, stash, or discard others' changes — that's likely another agent's in-flight work. Pause until the user
   confirms it is safe to continue.
 - **Implementing a card from a backlog file** (e.g., `backlog/sets/scourge/cards.md`) → always use the `add-card` skill.
+- **Adding an engine/SDK/server/client feature** (a new effect, trigger, condition, keyword, decision flow, or any
+  capability that isn't a single card) → always use the `add-feature` skill. It enforces composition-over-monoliths,
+  designing each new SDK type for reuse, full cross-layer tracing, and performance + UX review.
 - **Verify MTG rule numbers before citing them.** Rule numbers are easy to misremember (613.8 vs 613.7, 704.5 vs
   704.6, etc.). Whenever you reference a specific rule number in code comments, commit messages, PR descriptions,
   or chat, look it up first at <https://yawgatog.com/resources/magic-rules/> to confirm the number matches the
@@ -83,6 +86,10 @@ anti-corruption layer between engine and clients.
   scenario test).
 - **Adding a mechanic** → prefer composing in `EffectPatterns.kt` first; only add a new `Effect` type + executor in
   `rules-engine/handlers/effects/` when atomic primitives don't suffice.
+- **Adding an engine/SDK/server/client feature** (a new primitive, mechanic, decision flow, or capability that isn't a
+  single card) → use the `add-feature` skill. It enforces composition-over-monoliths, designing each new SDK type for
+  the *next* card (not just the one in front of you), full cross-layer tracing (SDK → engine → projection/triggers →
+  continuations → server DTO → client), and performance + UX/UI review.
 
 Detailed DSL reference: [`docs/card-sdk-language-reference.md`](docs/card-sdk-language-reference.md) — a complete
 catalog of every building block (effects, triggers, conditions, filters, costs, keywords, dynamic amounts, etc.).

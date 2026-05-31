@@ -8,6 +8,27 @@ argument-hint: <card-name> [--set <set-code>]
 
 Implement the card specified in `$ARGUMENTS`. The card name is the main argument; `--set <set-code>` is optional (defaults to `por` for Portal).
 
+## Guiding principle: rules-faithful, no shortcuts
+
+The implementation must be **faithful to the actual Magic rules** — model exactly what the
+card does under the Comprehensive Rules, not a convenient approximation. No shortcuts:
+
+- **Don't fake a mechanic** that the engine doesn't yet support with a lookalike that only
+  works in the common case. If the card needs a new effect/trigger/condition/replacement,
+  build it properly (Step 4) rather than hardcoding the happy path.
+- **Don't drop edge cases** — "may" declines, fizzles, the source leaving the battlefield,
+  zero/empty inputs, simultaneous triggers, replacement-effect interactions, layer/timestamp
+  ordering. If you can't cover an interaction, say so explicitly; don't silently skip it.
+- **Don't approximate timing** — cast-time vs resolution-time choices, intervening "if"
+  clauses, last-known-information, and turn/step boundaries follow the rules (and Scryfall
+  rulings), not whatever is easiest to wire up.
+- **Honor oracle text literally** — every word maps to behavior. Don't simplify "up to N
+  target" to "N target", "you may" to "you do", or "each" to "target".
+
+When the faithful implementation is more work than a shortcut, do the work — or stop and tell
+the user what's missing. A card that looks right but resolves wrong is worse than an
+unimplemented one.
+
 ## Step 1: Look Up Card Data on Scryfall
 
 **REQUIRED**: Always fetch exact card data before implementing. Never guess card text or stats.
@@ -483,3 +504,4 @@ If `backlog/sets/{set-name}/cards.md` exists:
 11. **Verify against Scryfall before committing** — Re-check every field against the API data (Step 10)
 12. **Walkthrough new mechanics** — If new effects/engine changes, trace through all layers (Step 9)
 13. **Build/test before committing** — `just build` (simple) or `just test` (new effects)
+14. **Be rules-faithful, no shortcuts** — Model the card exactly as the Comprehensive Rules dictate; cover edge cases and timing rather than the happy path. If a faithful implementation isn't feasible, stop and tell the user what's missing (see "Guiding principle" above)

@@ -259,6 +259,68 @@ For AlphaZero-shaped projects that want tree search in the JVM and only use Pyth
 
 See [`gym-trainer/README.md`](gym-trainer/README.md) for the full design write-up and a 30-line hello-world.
 
+## Contributing
+
+Contributions are very welcome, and I'm genuinely grateful for every PR. To keep the project
+healthy, there's one rule above all others:
+
+> **No slop PRs.** A reviewer's time is the scarcest resource here. Please open a PR only when
+> you've built and tested it yourself, kept the change focused, and made it faithful to the actual
+> Magic rules (no shortcuts). A polished small PR is worth far more than a large unverified one.
+
+### Using AI to implement cards
+
+Using AI to implement cards is encouraged — most of the card catalog is data, and the project ships
+[Claude Code](https://claude.com/claude-code) skills that automate the workflow correctly (Scryfall
+lookup, oracle errata, set registration, scenario tests, reprint handling):
+
+- **`add-card <CARD_NAME> <SET_CODE>`** — implement a specific card.
+- **`add-random-card <SET_CODE>`** — pick a random unimplemented card from a set and implement it.
+
+**If a card adds a new UI / UX element, test it manually** before opening the PR — AI can build the
+flow, but a human needs to confirm it actually feels right in the client. Run the app (`just server`
++ `just client`), set up the situation (the `generate-scenario` skill can inject a board state), and
+click through the decision yourself.
+
+### Implementing a whole set
+
+When bringing up an entire set, this flow has proven much faster than implementing cards one at a
+time (it's how Invasion was done):
+
+1. **Gap analysis.** Diff the set against the SDK/engine: which effects, triggers, conditions,
+   keywords, costs, or mechanics are *missing* that you need before any card can be implemented
+   cleanly? Produce the full list up front. (Invasion needed roughly 25 new features.)
+2. **Plan each missing feature for elegance and reuse.** For every gap, design the implementation so
+   it composes complex effects from small reusable atoms rather than a one-off type per card — think
+   about the SDK as a whole and the *next* card, not just the one in front of you. Use the
+   **`add-feature`** skill, which encodes these principles end to end.
+3. **Implement the features one by one, with care.** This is the step that pays off later, so give it
+   attention: write tests, and **manually test the UX** for anything that touches the client. Some
+   features are deep — Invasion's banding required rewriting the whole combat system — so don't rush
+   them.
+4. **Then fan out the cards.** Once the building blocks exist, most cards need no engine changes. Add
+   them in parallel — e.g. spawn a few agents, each using the `add-card` skill to implement a handful
+   of cards, and have each open a PR when its batch is done.
+5. **Review engine changes.** Cards will occasionally still need a small engine tweak. When a PR adds
+   or changes engine/SDK code, run **`review-changes <PR_URL>`** on it — this checks for elegance and
+   correctness and keeps the engine/SDK clean. (Card-only PRs with no engine changes don't need it.)
+
+### Guidelines
+
+- Read [`CLAUDE.md`](CLAUDE.md) and [`docs/architecture-principles.md`](docs/architecture-principles.md)
+  first — they describe the load-bearing rules (immutability, projected state, events-not-mutations,
+  server-authoritative client) that PRs are reviewed against.
+- Prefer composing existing primitives over adding new SDK types; when you do add a type, parameterize
+  it and name the mechanic, not the card.
+- Update [`docs/card-sdk-language-reference.md`](docs/card-sdk-language-reference.md) in the same
+  change whenever you add or change anything in the SDK.
+- Verify Comprehensive Rules numbers at <https://yawgatog.com/resources/magic-rules/> before citing
+  them in code, comments, or commit messages.
+- Run `just build` (simple changes) or `just test` (new effects/engine changes) and confirm green
+  before opening the PR.
+
+Questions or ideas? [Join the Discord](https://discord.gg/dy6eSRPWzu).
+
 ## Why "Argentum"?
 
 Argentum was a plane of mathematical perfection, created by the planeswalker Karn. Every angle intentional, every law
