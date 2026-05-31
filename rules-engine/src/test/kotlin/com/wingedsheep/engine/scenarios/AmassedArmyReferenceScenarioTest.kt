@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
+import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
 import com.wingedsheep.sdk.scripting.values.EntityReference
@@ -66,6 +67,26 @@ class AmassedArmyReferenceScenarioTest : FunSpec({
         }
     }
 
+    // {0} sorcery — Foray of Orcs' actual shape (reflexive trigger). Amass first, then a
+    // "when you do" reflexive ability targets a creature an opponent controls as it goes
+    // on the stack (CR 603.2c, Scryfall 2023-06-16 ruling). Mirrors the printed card so the
+    // ReflexiveTriggerEffect plumbing for the AmassedArmy pipeline slot is covered both
+    // synchronously (executor merge) and asynchronously (AmassContinuationResumer threading
+    // updatedCollections into the pending ReflexiveTriggerTargetContinuation).
+    val ForayReflexive = card("Foray Reflexive Shape") {
+        manaCost = "{0}"
+        typeLine = "Sorcery"
+        oracleText = "Amass Orcs 2. When you do, this deals damage equal to the amassed Army's power to target creature an opponent controls."
+        spell {
+            effect = ReflexiveTriggerEffect(
+                action = Effects.Amass(2, "Orc"),
+                optional = false,
+                reflexiveEffect = Effects.DealDamage(amassedArmyPower, EffectTarget.ContextTarget(0)),
+                reflexiveTargetRequirements = listOf(Targets.CreatureOpponentControls)
+            )
+        }
+    }
+
     // Pre-existing Armies for the multi-Army choice. Base 2/2 so they survive state-based actions.
     val ZombieArmyA = card("Zombie Army Alpha") {
         manaCost = "{0}"
@@ -81,7 +102,7 @@ class AmassedArmyReferenceScenarioTest : FunSpec({
     fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
         driver.registerCards(
-            TestCards.all + listOf(ForayShape, ForayShapeOne, ZombieArmyA, ZombieArmyB)
+            TestCards.all + listOf(ForayShape, ForayShapeOne, ForayReflexive, ZombieArmyA, ZombieArmyB)
         )
         return driver
     }
@@ -151,5 +172,84 @@ class AmassedArmyReferenceScenarioTest : FunSpec({
         // Beta is now 4/4; the composite's follow-up damage reads Beta's power.
         projector.project(driver.state).getPower(beta) shouldBe 4
         driver.getLifeTotal(opponent) shouldBe startingLife - 4
+    }
+
+    test("ReflexiveTriggerEffect threads the amassed-Army slot through executeActionThenTarget (sync, no prior Army)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40))
+        val active = driver.activePlayer!!
+        val opponent = driver.getOpponent(active)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        // Opponent's 2/2 — the future reflexive target. 2 damage is exactly lethal.
+        val bear = driver.putCreatureOnBattlefield(opponent, "Grizzly Bears")
+
+        val foray = driver.putCardInHand(active, "Foray Reflexive Shape")
+        driver.castSpell(active, foray, emptyList())
+        // Drain stack: spell resolves → amass runs → reflexive trigger lands on stack and
+        // pauses asking for the creature target.
+        var safety = 0
+        while (driver.pendingDecision == null && driver.stackSize > 0 && safety < 20) {
+            driver.bothPass()
+            safety++
+        }
+        // Select the bear for the reflexive damage.
+        driver.submitTargetSelection(active, listOf(bear))
+        driver.bothPass()
+
+        // 2 damage to a 2/2 — bear dies. If the AmassedArmy slot had been lost between
+        // the action and the reflexive resolve, the damage would have been 0 and the bear
+        // would have survived.
+        (bear in driver.state.getBattlefield()) shouldBe false
+    }
+
+    test("ReflexiveTriggerEffect's amassed-Army slot survives the multi-Army choice continuation") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40))
+        val active = driver.activePlayer!!
+        val opponent = driver.getOpponent(active)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        // Two pre-existing 2/2 Armies — amass will pause for the choice. Plus an opponent's
+        // 5-toughness creature so the reflexive damage doesn't trivially kill it via the
+        // wrong power — we can read the damage off the marked component to verify the chosen
+        // Army's power was what fed the reflexive amount.
+        val alpha = driver.putCreatureOnBattlefield(active, "Zombie Army Alpha")
+        val beta = driver.putCreatureOnBattlefield(active, "Zombie Army Beta")
+        val bigBear = driver.putCreatureOnBattlefield(opponent, "Force of Nature") // 5/5
+
+        val foray = driver.putCardInHand(active, "Foray Reflexive Shape")
+        driver.castSpell(active, foray, emptyList())
+        // Drain stack until the amass pauses for the multi-Army choice.
+        var amassSafety = 0
+        while (driver.pendingDecision == null && driver.stackSize > 0 && amassSafety < 20) {
+            driver.bothPass()
+            amassSafety++
+        }
+
+        // First pending decision: choose which Army to amass.
+        val amassDecision = driver.pendingDecision
+        (amassDecision is SelectCardsDecision) shouldBe true
+        amassDecision as SelectCardsDecision
+        amassDecision.options.toSet() shouldBe setOf(alpha, beta)
+        driver.submitDecision(active, CardsSelectedResponse(amassDecision.id, listOf(beta)))
+
+        // After amass resumes, the reflexive trigger fires and asks for the creature target.
+        var safety = 0
+        while (driver.pendingDecision == null && driver.stackSize > 0 && safety < 20) {
+            driver.bothPass()
+            safety++
+        }
+        driver.submitTargetSelection(active, listOf(bigBear))
+        driver.bothPass()
+
+        // Beta grew to 4/4 (2 base + 2 counters). The reflexive damage to Force of Nature
+        // should be 4 — read marked damage to confirm. If the AmassedArmy slot had been
+        // lost through the multi-Army pause, the damage would have been 0.
+        val markedDamage = driver.state.getEntity(bigBear)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.DamageComponent>()
+            ?.amount ?: 0
+        markedDamage shouldBe 4
+        projector.project(driver.state).getPower(beta) shouldBe 4
     }
 })

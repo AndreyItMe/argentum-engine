@@ -29,6 +29,7 @@ import com.wingedsheep.mtg.sets.definitions.arn.ArabianNightsSet
 import com.wingedsheep.mtg.sets.definitions.lea.AlphaSet
 import com.wingedsheep.mtg.sets.definitions.lgn.LegionsSet
 import com.wingedsheep.mtg.sets.definitions.lrw.LorwynSet
+import com.wingedsheep.mtg.sets.definitions.ltr.LordOfTheRingsSet
 import com.wingedsheep.mtg.sets.definitions.mbs.MirrodinBesiegedSet
 import com.wingedsheep.mtg.sets.definitions.mid.InnistradMidnightHuntSet
 import com.wingedsheep.mtg.sets.definitions.mir.MirageSet
@@ -132,6 +133,7 @@ abstract class ScenarioTestBase : FunSpec() {
         register(LegionsSet.cards); register(LegionsSet.basicLands)
         register(LorwynEclipsedSet.cards); register(LorwynEclipsedSet.basicLands)
         register(LorwynSet.cards); register(LorwynSet.basicLands)
+        register(LordOfTheRingsSet.cards)
         register(LostCavernsOfIxalanSet.cards)
         register(Magic2012Set.cards)
         register(MarchOfTheMachineSet.cards)

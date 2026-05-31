@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.DecisionResponse
 import com.wingedsheep.engine.core.EffectContinuation
 import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.core.ExecutionResult
+import com.wingedsheep.engine.core.ReflexiveTriggerTargetContinuation
 import com.wingedsheep.engine.handlers.effects.player.AmassResolution
 import com.wingedsheep.engine.state.GameState
 
@@ -49,23 +50,39 @@ class AmassContinuationResumer(
 
         // The synchronous Amass paths thread `updatedCollections` (the AmassedArmy pipeline
         // slot) back through the composite executor. The multi-Army resume path runs after
-        // the parent composite has already pushed its EffectContinuation, so we inject the
-        // slot into that pending frame directly — same pattern as LibraryAndZoneContinuationResumer.
+        // the parent has already pushed its continuation, so we inject the slot into that
+        // pending frame directly — same pattern as LibraryAndZoneContinuationResumer.
+        // Both EffectContinuation (composite siblings, e.g. AmassedArmyReferenceScenarioTest)
+        // and ReflexiveTriggerTargetContinuation (`When you do, …` reflexive triggers like
+        // Foray of Orcs) carry an effectContext whose pipeline.storedCollections is read
+        // by the next effect's evaluator.
         val stateWithArmyExposed = if (result.updatedCollections.isNotEmpty()) {
-            val nextFrame = result.state.peekContinuation()
-            if (nextFrame is EffectContinuation) {
-                val (_, stateAfterPop) = result.state.popContinuation()
-                stateAfterPop.pushContinuation(
-                    nextFrame.copy(
-                        effectContext = nextFrame.effectContext.copy(
-                            pipeline = nextFrame.effectContext.pipeline.copy(
-                                storedCollections = nextFrame.effectContext.pipeline.storedCollections + result.updatedCollections
+            when (val nextFrame = result.state.peekContinuation()) {
+                is EffectContinuation -> {
+                    val (_, stateAfterPop) = result.state.popContinuation()
+                    stateAfterPop.pushContinuation(
+                        nextFrame.copy(
+                            effectContext = nextFrame.effectContext.copy(
+                                pipeline = nextFrame.effectContext.pipeline.copy(
+                                    storedCollections = nextFrame.effectContext.pipeline.storedCollections + result.updatedCollections
+                                )
                             )
                         )
                     )
-                )
-            } else {
-                result.state
+                }
+                is ReflexiveTriggerTargetContinuation -> {
+                    val (_, stateAfterPop) = result.state.popContinuation()
+                    stateAfterPop.pushContinuation(
+                        nextFrame.copy(
+                            effectContext = nextFrame.effectContext.copy(
+                                pipeline = nextFrame.effectContext.pipeline.copy(
+                                    storedCollections = nextFrame.effectContext.pipeline.storedCollections + result.updatedCollections
+                                )
+                            )
+                        )
+                    )
+                }
+                else -> result.state
             }
         } else {
             result.state
