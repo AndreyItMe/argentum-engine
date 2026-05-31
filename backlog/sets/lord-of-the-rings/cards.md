@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 179 / 291
+**Implemented:** 180 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -100,7 +100,7 @@ starter-deck/special cards and basic lands.
 - [x] Soothing of Sméagol
 - [x] Stern Scolding
 - [x] Storm of Saruman
-- [ ] Surrounded by Orcs
+- [x] Surrounded by Orcs
 - [x] Treason of Isengard
 - [x] The Watcher in the Water
 - [x] Willow-Wind
