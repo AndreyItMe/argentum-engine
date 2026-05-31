@@ -131,8 +131,14 @@ the overwhelming majority of the set.
     permanents — none copies a card *in the graveyard* into a castable spell copy.
     → **Shiko, Paragon of the Way**
 
-12. **Cost-linked relative mana value target.** Sacrifice a creature of MV X → return a creature of
-    MV **X+1** from graveyard. No predicate for "MV exactly the sacrificed cost-object's MV + 1".
+12. **Cost-linked relative mana value target.** ✅ **DONE.** Sacrifice a creature of MV X → return a creature of
+    MV **X+1** from graveyard. No new predicate was needed: the existing
+    `FilterCollectionEffect` + `CollectionFilter.ManaValueEquals(DynamicAmount)` already evaluate a
+    dynamic mana value at resolution, and `DynamicAmount.EntityProperty(EntityReference.Sacrificed(0),
+    ManaValue)` reads X off the cost-sacrificed permanent's last-known snapshot (Rule 112.7a). Modeled
+    as a resolution-time chain — gather graveyard creatures → keep MV == X+1 → choose one → return —
+    rather than a cast-time cost-linked target (target validation runs before cost payment, so
+    `EntityReference.Sacrificed` is unresolvable there).
     → **Sidisi, Regent of the Mire**
 
 13. **Choose-and-exile from a target opponent's revealed hand.** Existing primitives reveal /
