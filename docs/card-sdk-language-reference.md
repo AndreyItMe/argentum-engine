@@ -1416,7 +1416,8 @@ composite abilities).
   `SuspendedComponent` marker. So an arbitrary card with no printed suspend can be suspended.
   - **Putting a card into suspend** is a chain you compose; `Effects.Suspend(target, timeCounters)` is the reusable
     two-step tail (`AddCounters(TIME, n)` + `GrantSuspendEffect` — the latter sets the marker **and** arms a dormant
-    permanent haste effect on the card). The caller supplies the exile step first, because it differs by source zone:
+    haste effect on the card with duration `WhileControlledByController`, so the haste ends the moment the player who
+    played it loses control of the permanent — CR 702.62g). The caller supplies the exile step first, because it differs by source zone:
     a spell on the stack uses `CounterSpellToExile` / `CounterEffect(counterDestination = Exile())` (it can't be lifted
     off the stack with a zone-move); a printed `suspend N—[cost]` exiles from hand as its cast cost.
   - **Taigam, Master Opportunist** is the first user: `Composite(CopyTargetSpell(TriggeringEntity),

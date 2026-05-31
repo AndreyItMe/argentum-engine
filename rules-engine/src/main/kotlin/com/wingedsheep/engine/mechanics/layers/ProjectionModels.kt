@@ -182,7 +182,13 @@ data class ContinuousEffect(
     val modification: Modification,
     val affectedEntities: Set<EntityId> = emptySet(),
     val sourceCondition: Condition? = null,
-    val affectsFilter: AffectsFilter? = null
+    val affectsFilter: AffectsFilter? = null,
+    /**
+     * When non-null, this effect applies only to affected entities whose *projected* controller
+     * is this player (a "for as long as you control it" gate, e.g. suspend haste — CR 702.62g).
+     * Evaluated after Layer 2 control is established, so it tracks control-changing effects.
+     */
+    val controllerGate: EntityId? = null
 ) {
     val layer: Layer get() = modification.layer
     val sublayer: Sublayer? get() = modification.sublayer

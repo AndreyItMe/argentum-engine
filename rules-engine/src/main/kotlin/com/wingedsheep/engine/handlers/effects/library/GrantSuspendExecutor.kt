@@ -19,13 +19,17 @@ import kotlin.reflect.KClass
  *
  * - The [SuspendedComponent] marker is what makes the engine grant the exile-side
  *   countdown-and-cast triggered ability (see [com.wingedsheep.sdk.scripting.Suspend]).
- * - CR 702.62g: a creature played via suspend has haste. A normal `GrantKeyword(HASTE)` can't
- *   be used here because the card is in exile (not a projected creature), so we add a
- *   self-sourced, permanent floating haste effect keyed to the card. It lies dormant while the
- *   card sits in exile and takes effect once the card is played onto the battlefield (the
- *   permanent reuses the same entity id). Harmless for a non-creature card, which never becomes
- *   a creature on the battlefield. (Permanent duration is a deliberate simplification of
- *   "until you lose control of it"; the effect is cleared when the permanent leaves play.)
+ * - CR 702.62g: a creature played via suspend "gains haste until you lose control of the spell
+ *   or the permanent it becomes." A normal `GrantKeyword(HASTE)` can't be used here because the
+ *   card is in exile (not a projected creature), so we add a self-sourced floating haste effect
+ *   keyed to the card. It lies dormant while the card sits in exile and takes effect once the
+ *   card is played onto the battlefield (the permanent reuses the same entity id). Harmless for
+ *   a non-creature card, which never becomes a creature on the battlefield.
+ *
+ *   The duration is [Duration.WhileControlledByController], not `Permanent`: the projector drops
+ *   the haste the instant the permanent's projected controller stops being the player who played
+ *   it (the card's owner — only the owner ever plays a suspended card, per CR 702.62a), faithfully
+ *   modeling "until you lose control of it." It's still cleared outright when the card leaves play.
  *
  * The marker step does not move the card or add time counters; the
  * [com.wingedsheep.sdk.dsl.Effects.Suspend] chain composes those from a move/counter step.
@@ -49,9 +53,12 @@ class GrantSuspendExecutor : EffectExecutor<GrantSuspendEffect> {
             layer = Layer.ABILITY,
             modification = SerializableModification.GrantKeyword(Keyword.HASTE.name),
             affectedEntities = setOf(targetId),
-            duration = Duration.Permanent,
+            // CR 702.62g — haste lasts "until you lose control" of the permanent it becomes.
+            duration = Duration.WhileControlledByController,
             // Self-source the haste so it survives the granter (e.g. Taigam) leaving play
-            // during the time the card waits in exile.
+            // during the time the card waits in exile. context.controllerId — the player who
+            // suspended/will play the card — is captured as the floating effect's controller
+            // and becomes the gate the projector checks against.
             context = context.copy(sourceId = targetId),
         )
         return EffectResult.success(newState)

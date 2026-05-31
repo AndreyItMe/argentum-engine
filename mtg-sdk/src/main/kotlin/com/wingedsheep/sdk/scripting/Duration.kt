@@ -131,6 +131,22 @@ sealed interface Duration {
     ) : Duration {
         override val description = "for as long as $sourceDescription remains tapped"
     }
+
+    /**
+     * Effect lasts for as long as the effect's controller controls the affected object —
+     * it ends the moment that object's controller becomes a different player ("for as long
+     * as you control it"). Evaluated against the *projected* controller, so it responds to
+     * every kind of control-changing effect (one-shot steals, Threaten, and static control
+     * Auras alike).
+     *
+     * Example: Suspend (CR 702.62g) — a creature played via suspend "gains haste until you
+     * lose control of the spell or the permanent it becomes."
+     */
+    @SerialName("WhileControlledByController")
+    @Serializable
+    data object WhileControlledByController : Duration {
+        override val description = "for as long as you control it"
+    }
 }
 
 /**

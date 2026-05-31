@@ -80,7 +80,9 @@ class SuspendMechanicTest : FunSpec({
                         modification = SerializableModification.GrantKeyword(Keyword.HASTE.name),
                         affectedEntities = setOf(cardId),
                     ),
-                    duration = Duration.Permanent,
+                    // Mirrors GrantSuspendExecutor: haste lasts "until you lose control" (CR 702.62g),
+                    // gated by the projector against the owner who plays the suspended card.
+                    duration = Duration.WhileControlledByController,
                     sourceId = cardId,
                     sourceName = cardName,
                     controllerId = owner,
@@ -163,5 +165,53 @@ class SuspendMechanicTest : FunSpec({
         projector.project(driver.state).hasKeyword(perm!!, Keyword.HASTE) shouldBe true
         // The marker is gone once it leaves exile.
         driver.state.getEntity(perm)?.has<SuspendedComponent>() shouldBe false
+    }
+
+    test("suspend haste ends when you lose control of the permanent it became") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40))
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val player = driver.activePlayer!!
+        val opponent = if (player == driver.player1) driver.player2 else driver.player1
+        val cardId = suspendInExile(driver, player, "Suspended Bear", timeCounters = 1)
+
+        // Owner's upkeep: 1 -> 0, play it for free; it enters under the owner's control with haste.
+        resolveNextOwnerUpkeep(driver, player)
+        driver.submitYesNo(player, true)
+        driver.bothPass()
+
+        val perm = driver.findPermanent(player, "Suspended Bear")
+        perm shouldNotBe null
+        projector.project(driver.state).hasKeyword(perm!!, Keyword.HASTE) shouldBe true
+
+        // An opponent steals it (CR 702.62g: haste lasts only "until you lose control of ...
+        // the permanent it becomes"). Model the steal exactly as GainControlExecutor does —
+        // a Layer 2 control-changing floating effect.
+        driver.replaceState(
+            driver.state.addFloatingEffects(
+                listOf(
+                    ActiveFloatingEffect(
+                        id = EntityId.generate(),
+                        effect = FloatingEffectData(
+                            layer = Layer.CONTROL,
+                            modification = SerializableModification.ChangeController(opponent),
+                            affectedEntities = setOf(perm),
+                        ),
+                        duration = Duration.Permanent,
+                        sourceId = perm,
+                        sourceName = "Steal Effect",
+                        controllerId = opponent,
+                        timestamp = driver.state.timestamp,
+                    )
+                )
+            )
+        )
+
+        val projected = projector.project(driver.state)
+        // Control actually moved to the opponent...
+        projected.getController(perm) shouldBe opponent
+        // ...so the suspend haste is gone — it was "for as long as you control it".
+        projected.hasKeyword(perm, Keyword.HASTE) shouldBe false
     }
 })

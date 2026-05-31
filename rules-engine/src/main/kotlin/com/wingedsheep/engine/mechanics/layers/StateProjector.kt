@@ -149,6 +149,7 @@ class StateProjector(
 
         // Re-resolve controller-dependent filters for layers 3-6 now that control is established
         val nonControlNonPTEffects = sortedEffects.filter { it.layer != Layer.CONTROL && it.layer != Layer.POWER_TOUGHNESS }
+            .map { effect -> applyControllerGate(effect, projectedValues) }
             .map { effect ->
                 if (effect.affectsFilter != null && filterResolver.isControllerDependentFilter(effect.affectsFilter)) {
                     effect.copy(affectedEntities = filterResolver.resolveAffectedEntities(state, effect.sourceId, effect.affectsFilter, projectedValues))
@@ -227,7 +228,8 @@ class StateProjector(
         // removing a lord's abilities means its continuous effects no longer apply in Layer 7).
         // Exception: sources that themselves generate RemoveAllAbilities are exempt — their effects
         // are self-sustaining (e.g., Humility's own P/T-setting effect persists).
-        val resolvedLayer7Effects = sortedEffects.mapNotNull { effect ->
+        val resolvedLayer7Effects = sortedEffects.mapNotNull { rawEffect ->
+            val effect = applyControllerGate(rawEffect, projectedValues)
             if (effect.layer != Layer.POWER_TOUGHNESS) return@mapNotNull effect
 
             // Suppress effects from sources that lost all abilities (e.g., a lord under Humility),
@@ -373,6 +375,27 @@ class StateProjector(
         return types
     }
 
+    /**
+     * Enforce a [ContinuousEffect.controllerGate] ("for as long as you control it"): drop any
+     * affected entity whose projected controller is no longer the gating player. Called after
+     * Layer 2 control is resolved, so it reflects every control-changing effect (steals,
+     * Threaten, static control Auras). A no-op for effects without a gate.
+     */
+    private fun applyControllerGate(
+        effect: ContinuousEffect,
+        projectedValues: Map<EntityId, MutableProjectedValues>
+    ): ContinuousEffect {
+        val gate = effect.controllerGate ?: return effect
+        val stillControlled = effect.affectedEntities.filterTo(mutableSetOf()) { entityId ->
+            projectedValues[entityId]?.controllerId == gate
+        }
+        return if (stillControlled.size == effect.affectedEntities.size) {
+            effect
+        } else {
+            effect.copy(affectedEntities = stillControlled)
+        }
+    }
+
     private fun collectContinuousEffects(
         state: GameState,
         projectedValues: Map<EntityId, MutableProjectedValues>
@@ -444,7 +467,15 @@ class StateProjector(
                         sourceId = floating.sourceId ?: EntityId("floating-${floating.id}"),
                         timestamp = floating.timestamp,
                         modification = floating.effect.modification.toModification(),
-                        affectedEntities = validAffectedEntities
+                        affectedEntities = validAffectedEntities,
+                        // "for as long as you control it" (e.g. suspend haste — CR 702.62g):
+                        // the gate is applied after Layer 2, against the projected controller,
+                        // so the effect drops the instant another player gains control.
+                        controllerGate = if (floating.duration is Duration.WhileControlledByController) {
+                            floating.controllerId
+                        } else {
+                            null
+                        }
                     )
                 )
             }
