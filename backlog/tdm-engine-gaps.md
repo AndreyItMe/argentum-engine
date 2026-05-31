@@ -163,9 +163,14 @@ the overwhelming majority of the set.
     capture/forward the prevented amount.
     → **New Way Forward**
 
-17. **Free-cast-from-exile gated by a dynamic MV cap.** Exile top X of opponent's library (X =
-    combat damage) and cast any number of those with MV ≤ X for free. The free-cast-from-exile grants
-    exist, but not a dynamic MV-≤-X cap on the playable set.
+17. **Free-cast-from-exile gated by a dynamic MV cap.** ✅ **DONE.** Exile top X of the damaged
+    player's library (X = combat damage) and cast any number of those with MV ≤ X for free. No new
+    effect was needed: the dynamic cap is already expressible as
+    `CollectionFilter.ManaValueAtMost(DynamicAmount.ContextProperty(TRIGGER_DAMAGE_AMOUNT))`, and the
+    free cast reuses the existing `GrantMayPlayFromExile` + `GrantPlayWithoutPayingCost` grants — the
+    same chain as Villainous Wealth, driven by `Triggers.DealsCombatDamageToPlayer` over
+    `Player.TriggeringPlayer`'s library. Modeled as a resolution-time pipeline (gather top X → exile →
+    keep nonland → keep MV ≤ X → grant free cast).
     → **Kotis, the Fangkeeper**
 
 18. **Per-activation cost reduction by a target's color count.** Equip cost "costs {1} less to
