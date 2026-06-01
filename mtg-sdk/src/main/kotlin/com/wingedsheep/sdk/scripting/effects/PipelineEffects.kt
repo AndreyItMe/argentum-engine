@@ -1225,6 +1225,24 @@ sealed interface CollectionFilter {
     @SerialName("ExcludeOtherCollection")
     @Serializable
     data class ExcludeOtherCollection(val otherCollectionName: String) : CollectionFilter
+
+    /**
+     * Keep only entities that are currently in [zone].
+     *
+     * Pipeline collections track entity references, not the cards' live location, so a card
+     * gathered into a collection can subsequently leave the zone it was in (e.g. an exiled
+     * card cast for free during the same resolution moves to the stack). This filter re-reads
+     * each card's current zone so a downstream step acts only on the cards still there.
+     *
+     * Used by "exile cards … you may cast it … if you don't, put that card into your hand"
+     * effects (the Tarkir: Dragonstorm "…storm" enchantments): after the optional free-cast,
+     * keep only the nonland card still in exile and move it to hand.
+     *
+     * @property zone The zone a card must currently be in to be kept.
+     */
+    @SerialName("InZone")
+    @Serializable
+    data class InZone(val zone: com.wingedsheep.sdk.core.Zone) : CollectionFilter
 }
 
 /**

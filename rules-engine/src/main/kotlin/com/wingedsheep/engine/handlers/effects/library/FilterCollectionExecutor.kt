@@ -133,6 +133,14 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
                     ?.toSet() ?: emptySet()
                 cards.partition { it !in excluded }
             }
+
+            is CollectionFilter.InZone -> {
+                cards.partition { cardId ->
+                    state.zones.entries.any { (key, entities) ->
+                        key.zoneType == filter.zone && cardId in entities
+                    }
+                }
+            }
         }
 
         val updatedCollections = mutableMapOf(effect.storeMatching to matching)
