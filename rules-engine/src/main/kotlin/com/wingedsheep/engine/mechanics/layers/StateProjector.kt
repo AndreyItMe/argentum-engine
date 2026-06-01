@@ -121,6 +121,15 @@ class StateProjector(
                             projectedValues[entityId]?.keywords?.add(keywordName)
                         }
                     }
+                    // CR 702.147a: a decayed counter grants the Decayed keyword ability — the
+                    // "can't block" static half is realized here (the attack-triggered "sacrifice
+                    // at end of combat" half is detected by TriggerDetector off the counter).
+                    if (countersComponent.getCount(CounterType.DECAYED) > 0) {
+                        projectedValues[entityId]?.let {
+                            it.keywords.add(Keyword.DECAYED.name)
+                            it.cantBlock = true
+                        }
+                    }
                 }
 
                 if (Keyword.CHANGELING in cardComponent.baseKeywords) {
@@ -209,6 +218,12 @@ class StateProjector(
                 if (countersComponent.getCount(counterType) > 0) {
                     values.keywords.add(keywordName)
                 }
+            }
+            // Re-apply the decayed counter's Decayed grant after Layer 6 for the same reason
+            // (a "loses all abilities" effect must not wipe a counter-granted ability).
+            if (countersComponent.getCount(CounterType.DECAYED) > 0) {
+                values.keywords.add(Keyword.DECAYED.name)
+                values.cantBlock = true
             }
         }
 

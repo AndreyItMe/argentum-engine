@@ -487,6 +487,15 @@ export function getFeatherCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of decayed counters on a card. A decayed counter (CR 702.147a, TDM)
+ * grants the Decayed ability: the creature can't block and is sacrificed at end of combat
+ * if it attacks.
+ */
+export function getDecayedCounters(card: ClientCard): number {
+  return card.counters[CounterType.DECAYED] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {

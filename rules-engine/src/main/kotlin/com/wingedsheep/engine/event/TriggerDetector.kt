@@ -263,6 +263,10 @@ class TriggerDetector(
         // create a "sacrifice self" delayed trigger (CR 702.74)
         detectEvokeSacrificeTriggers(state, events, triggers)
 
+        // Detect the Decayed counter's attack trigger (CR 702.147a): when a creature with a
+        // decayed counter is declared as an attacker, it must be sacrificed at end of combat.
+        detectDecayedCounterAttackTriggers(state, events, triggers)
+
         // Filter out once-per-turn triggers that have already fired this turn
         val filteredTriggers = triggers.filter { trigger ->
             if (!trigger.ability.oncePerTurn) return@filter true
@@ -493,6 +497,54 @@ class TriggerDetector(
                     sourceName = cardComponent.name,
                     controllerId = controllerId,
                     triggerContext = TriggerContext(triggeringEntityId = event.entityId)
+                )
+            )
+        }
+    }
+
+    /**
+     * CR 702.147a — Decayed's triggered half, driven by a decayed counter rather than a printed
+     * ability. When a creature with one or more decayed counters is declared as an attacker, fire
+     * an attack-triggered ability that schedules a "sacrifice it at end of combat" delayed trigger
+     * (via [CreateDelayedTriggerEffect], step [Step.END_COMBAT]) — the exact composition the
+     * printed `card { decayed() }` helper uses. The "can't block" static half is handled in
+     * projection ([StateProjector]).
+     */
+    private fun detectDecayedCounterAttackTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>
+    ) {
+        val declaredAttackers = events.filterIsInstance<AttackersDeclaredEvent>()
+            .flatMap { it.attackers }
+            .distinct()
+        for (attackerId in declaredAttackers) {
+            val entity = state.getEntity(attackerId) ?: continue
+            val counters = entity.get<CountersComponent>() ?: continue
+            if (counters.getCount(com.wingedsheep.sdk.core.CounterType.DECAYED) <= 0) continue
+            val cardComponent = entity.get<CardComponent>() ?: continue
+            val controllerId = entity.get<com.wingedsheep.engine.state.components.identity.ControllerComponent>()
+                ?.playerId ?: continue
+
+            val sacrificeAtEndOfCombat = TriggeredAbility.create(
+                trigger = com.wingedsheep.sdk.scripting.GameEvent.AttackEvent(),
+                binding = TriggerBinding.SELF,
+                effect = com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect(
+                    step = Step.END_COMBAT,
+                    effect = com.wingedsheep.sdk.dsl.Effects.SacrificeTarget(
+                        com.wingedsheep.sdk.scripting.targets.EffectTarget.Self
+                    )
+                ),
+                descriptionOverride = "Decayed — When ${cardComponent.name} attacks, " +
+                    "sacrifice it at end of combat."
+            )
+            triggers.add(
+                PendingTrigger(
+                    ability = sacrificeAtEndOfCombat,
+                    sourceId = attackerId,
+                    sourceName = cardComponent.name,
+                    controllerId = controllerId,
+                    triggerContext = TriggerContext(triggeringEntityId = attackerId)
                 )
             )
         }

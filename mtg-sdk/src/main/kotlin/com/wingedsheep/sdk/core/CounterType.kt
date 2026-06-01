@@ -42,7 +42,8 @@ enum class CounterType {
     GROWTH,
     TIME,
     FEATHER,
-    HOURGLASS
+    HOURGLASS,
+    DECAYED
 }
 
 /**
@@ -86,6 +87,16 @@ object Counters {
     const val TIME = "time"
     const val FEATHER = "feather"
     const val HOURGLASS = "hourglass"
+
+    /**
+     * Decayed counter (Tarkir: Dragonstorm). A keyword-ability counter (CR 702.147a): a creature
+     * with one or more decayed counters has Decayed — "This creature can't block" and "When this
+     * creature attacks, sacrifice it at end of combat." Granted to *any* creature, independent of
+     * its printed abilities (e.g. Rot-Curse Rakshasa's Renew). The behavior is realized by the
+     * engine off the counter, mirroring how the printed [com.wingedsheep.sdk.dsl.card]`.decayed()`
+     * helper composes the same static + triggered ability.
+     */
+    const val DECAYED = "decayed"
 
     /**
      * Wildcard sentinel for triggers/events that fire on counters of *any* type, e.g.

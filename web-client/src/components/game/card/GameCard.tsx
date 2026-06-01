@@ -34,6 +34,7 @@ import {
   getLifelinkCounters,
   getReachCounters,
   getBlightCounters,
+  getDecayedCounters,
   getFloodCounters,
   getCoinCounters,
   getChorusCounters,
@@ -1499,6 +1500,20 @@ function GameCardImpl({
           <i className={`ms ms-${counterManaClass.BLIGHT}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
           <span style={{ fontWeight: 700 }}>
             {getBlightCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Decayed counter badge */}
+      {battlefield && getDecayedCounters(card) > 0 && (
+        <div style={{
+          ...styles.decayedCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.DECAYED}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getDecayedCounters(card)}
           </span>
         </div>
       )}

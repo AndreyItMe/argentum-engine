@@ -315,7 +315,10 @@ class ActivateAbilityHandler(
                 action.playerId,
                 sourceColors = cardComponent.colors,
                 sourceSubtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
-                sourceId = action.sourceId
+                sourceId = action.sourceId,
+                // X-clamped target counts (e.g. Rot-Curse Rakshasa's Renew "X target creatures")
+                // need the chosen X to validate more than one target — mirror the spell path.
+                xValue = action.xValue
             )
             if (targetError != null) {
                 return targetError

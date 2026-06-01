@@ -202,6 +202,8 @@ export enum Keyword {
   PERSIST = 'PERSIST',
   // Resolution-time city's blessing grant (Ixalan)
   ASCEND = 'ASCEND',
+  // Token decay (Innistrad: Midnight Hunt / TDM decayed counter)
+  DECAYED = 'DECAYED',
   // Ability words
   EERIE = 'EERIE',
 }
@@ -257,6 +259,7 @@ export const KeywordDisplayNames: Record<Keyword, string> = {
   [Keyword.TOXIC]: 'Toxic',
   [Keyword.PERSIST]: 'Persist',
   [Keyword.ASCEND]: 'Ascend',
+  [Keyword.DECAYED]: 'Decayed',
   [Keyword.EERIE]: 'Eerie',
 }
 
@@ -343,6 +346,7 @@ export enum CounterType {
   TIME = 'TIME',
   FEATHER = 'FEATHER',
   HOURGLASS = 'HOURGLASS',
+  DECAYED = 'DECAYED',
 }
 
 export const CounterTypeDisplayNames: Record<CounterType, string> = {
@@ -380,6 +384,7 @@ export const CounterTypeDisplayNames: Record<CounterType, string> = {
   [CounterType.TIME]: 'Time',
   [CounterType.FEATHER]: 'Feather',
   [CounterType.HOURGLASS]: 'Hourglass',
+  [CounterType.DECAYED]: 'Decayed',
 }
 
 /**

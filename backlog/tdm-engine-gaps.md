@@ -101,8 +101,10 @@ the overwhelming majority of the set.
 ## Tier 2 — Small recurring primitives — ✅ **ALL DONE**
 
 7. **New keyword counter types.** ✅ **DONE.** The engine has flying / first-strike / lifelink / indestructible /
-   stun / finality counters, but is **missing `deathtouch`, `trample`, `hexproof`, `decayed`**.
-   Needs the `CounterType` constants + their keyword-counter mapping in `StateProjector`.
+   stun / finality / deathtouch / trample / hexproof counters via `KEYWORD_COUNTER_MAP`, plus the **decayed**
+   counter (`Counters.DECAYED`) — a *composite-ability* counter (not a single keyword): `StateProjector` grants the
+   `DECAYED` keyword + `cantBlock = true`, and `TriggerDetector.detectDecayedCounterAttackTriggers` schedules the
+   end-of-combat self-sacrifice when a decayed-countered creature attacks (CR 702.147a).
    → Champion of Dusan (trample), Qarsi Revenant (deathtouch), Kheru Goldkeeper (flying — exists),
      Perennation (hexproof), Rot-Curse Rakshasa (decayed)
 
