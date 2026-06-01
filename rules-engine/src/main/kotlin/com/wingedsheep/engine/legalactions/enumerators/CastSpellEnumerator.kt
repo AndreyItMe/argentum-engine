@@ -80,12 +80,27 @@ class CastSpellEnumerator : ActionEnumerator {
             // fields. (MODAL_DFC, ADVENTURE, and OMEN differ only at resolution — exile-then-recast
             // for Adventure, shuffle-into-library for Omen, plain graveyard for modal DFC — which
             // is handled in StackResolver, not here.)
+            // When true, the secondary (spell) face of an Adventure/Omen/modal-DFC card is
+            // affordable. The primary-face logic below reads this so that, when the primary
+            // (creature) face itself is unaffordable, it can still surface a grayed-out
+            // placeholder — keeping both faces in the drag-to-play action menu.
+            var secondaryFaceAffordable = false
             if ((cardDef.layout == com.wingedsheep.sdk.model.CardLayout.ADVENTURE ||
                     cardDef.layout == com.wingedsheep.sdk.model.CardLayout.OMEN ||
                     cardDef.layout == com.wingedsheep.sdk.model.CardLayout.MODAL_DFC) &&
                 cardDef.cardFaces.isNotEmpty()
             ) {
-                enumerateSecondaryFace(context, cardId, cardDef, result)
+                // Approximate primary-face affordability (plain mana only — convoke/delve/alt
+                // costs are ignored here; a false negative just means we don't surface a
+                // grayed-out secondary face in those rare cases). Used by enumerateSecondaryFace
+                // to decide whether an unaffordable secondary face is still worth showing.
+                val primaryFaceCost = context.costCalculator.calculateMinPossibleCost(state, cardDef, playerId)
+                val primaryFaceAffordable = context.manaSolver.canPay(
+                    state, playerId, primaryFaceCost, precomputedSources = context.availableManaSources
+                )
+                secondaryFaceAffordable = enumerateSecondaryFace(
+                    context, cardId, cardDef, result, primaryFaceAffordable = primaryFaceAffordable
+                )
                 // Don't `continue` — let the surrounding loop also enumerate the primary face.
             }
 
@@ -374,7 +389,23 @@ class CastSpellEnumerator : ActionEnumerator {
                 context.manaSolver.canPay(state, playerId, beholdBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
             } else false
 
-            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath) continue
+            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath) {
+                // The primary face can't be paid for by any path. Normally we skip it entirely.
+                // But if this is an Adventure/Omen/modal-DFC card whose *secondary* face is
+                // affordable, surface a grayed-out placeholder for the primary face so the
+                // drag-to-play menu shows both faces — the player picks the affordable one or
+                // cancels, instead of the menu silently auto-firing the only enumerated option.
+                if (secondaryFaceAffordable) {
+                    result.add(LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${cardComponent.name}",
+                        action = CastSpell(playerId, cardId),
+                        affordable = false,
+                        manaCostString = effectiveCost.toString(),
+                    ))
+                }
+                continue
+            }
 
             val targetReqs = buildList {
                 addAll(cardDef.script.targetRequirements)
@@ -1776,27 +1807,51 @@ class CastSpellEnumerator : ActionEnumerator {
      * costs declared on the face's script are honoured for affordability but the full
      * additional-cost UX (sacrifice picker, blight, etc.) is not yet wired for these faces —
      * cards that need that can extend this method later.
+     *
+     * @param primaryFaceAffordable Whether the card's primary (creature) face is affordable.
+     *        When the secondary face is unaffordable but the primary is affordable, a grayed-out
+     *        placeholder for the secondary face is still emitted so the drag-to-play menu shows
+     *        both faces.
+     * @return True if an *affordable* secondary-face cast was emitted. The caller uses this to
+     *        decide whether to emit a grayed-out placeholder for an unaffordable primary face.
      */
     private fun enumerateSecondaryFace(
         context: EnumerationContext,
         cardId: EntityId,
         cardDef: CardDefinition,
         result: MutableList<LegalAction>,
-    ) {
+        primaryFaceAffordable: Boolean,
+    ): Boolean {
         val state = context.state
         val playerId = context.playerId
-        val face = cardDef.cardFaces.firstOrNull() ?: return
-        val playerEntity = state.getEntity(playerId) ?: return
+        val face = cardDef.cardFaces.firstOrNull() ?: return false
+        state.getEntity(playerId) ?: return false
 
         val isInstantAdventure = face.typeLine.isInstant
-        if (!isInstantAdventure && !context.canPlaySorcerySpeed) return
+        if (!isInstantAdventure && !context.canPlaySorcerySpeed) return false
 
         val effectiveCost = context.costCalculator
             .calculateEffectiveCostWithAlternativeBase(state, cardDef, face.manaCost, playerId)
         val cachedSources = context.availableManaSources
         val canAfford = context.manaSolver
             .canPay(state, playerId, effectiveCost, precomputedSources = cachedSources)
-        if (!canAfford) return
+        if (!canAfford) {
+            // Secondary face is unaffordable. If the primary face is affordable, still surface
+            // this face as a grayed-out option so the drag-to-play menu presents both and the
+            // player can choose deliberately or cancel (rather than auto-firing the primary).
+            if (primaryFaceAffordable) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${face.name}",
+                        action = CastSpell(playerId, cardId, faceIndex = 0),
+                        affordable = false,
+                        manaCostString = effectiveCost.toString(),
+                    )
+                )
+            }
+            return false
+        }
 
         val targetReqs = face.script.targetRequirements
         val autoTapPreview = if (context.skipAutoTapPreview) null else {
@@ -1816,11 +1871,11 @@ class CastSpellEnumerator : ActionEnumerator {
                     autoTapPreview = autoTapPreview,
                 )
             )
-            return
+            return true
         }
 
         val targetInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
-        if (!context.targetUtils.allRequirementsSatisfied(targetInfos)) return
+        if (!context.targetUtils.allRequirementsSatisfied(targetInfos)) return false
         val firstReq = targetReqs.first()
         val firstInfo = targetInfos.first()
         result.add(
@@ -1838,5 +1893,6 @@ class CastSpellEnumerator : ActionEnumerator {
                 autoTapPreview = autoTapPreview,
             )
         )
+        return true
     }
 }
