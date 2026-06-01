@@ -68,6 +68,7 @@ import com.wingedsheep.mtg.sets.definitions.otj.OutlawsOfThunderJunctionSet
 import com.wingedsheep.mtg.sets.definitions.spm.SpiderManSet
 import com.wingedsheep.mtg.sets.definitions.tdm.TarkirDragonstormSet
 import com.wingedsheep.mtg.sets.definitions.tla.AvatarTheLastAirbenderSet
+import com.wingedsheep.mtg.sets.definitions.tmt.TeenageMutantNinjaTurtlesSet
 import com.wingedsheep.mtg.sets.definitions.war.WarOfTheSparkSet
 import com.wingedsheep.mtg.sets.definitions.woe.WildsOfEldrainSet
 import com.wingedsheep.mtg.sets.definitions.wwk.WorldwakeSet
@@ -137,6 +138,7 @@ object MtgSetCatalog {
         SpiderManSet,
         TarkirDragonstormSet,
         AvatarTheLastAirbenderSet,
+        TeenageMutantNinjaTurtlesSet,
         WarOfTheSparkSet,
         OdysseySet,
         JudgmentSet,
