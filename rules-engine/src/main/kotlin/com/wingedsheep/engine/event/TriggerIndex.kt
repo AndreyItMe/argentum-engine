@@ -165,6 +165,10 @@ class TriggerIndex(
                     if (trigger.source == SourceFilter.Any) listOf(TriggerCategory.DAMAGE_RECEIVED) else emptyList()
                 is SdkGameEvent.SpellCastEvent -> listOf(TriggerCategory.SPELL_CAST)
                 is SdkGameEvent.NthSpellCastEvent -> listOf(TriggerCategory.SPELL_CAST)
+                // "When you cast this spell" fires only via TriggerDetector's self-cast path while
+                // the spell is on the stack — never index it against battlefield permanents, or a
+                // resolved Sage of the Skies would re-fire on every later spell.
+                is SdkGameEvent.CastThisSpellEvent -> emptyList()
                 is SdkGameEvent.ExpendEvent -> listOf(TriggerCategory.SPELL_CAST)
                 is SdkGameEvent.SpellOrAbilityOnStackEvent -> listOf(TriggerCategory.SPELL_OR_ABILITY)
                 is SdkGameEvent.AbilityActivatedEvent -> listOf(TriggerCategory.SPELL_OR_ABILITY)

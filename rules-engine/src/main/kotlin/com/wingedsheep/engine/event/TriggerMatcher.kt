@@ -166,6 +166,13 @@ class TriggerMatcher(
                 val currentCount = state.playerSpellsCastThisTurn[event.casterId] ?: 0
                 currentCount == trigger.nthSpell
             }
+            is GameEvent.CastThisSpellEvent -> {
+                // "When you cast this spell" — fires on the spell's own cast while on the stack.
+                // detectSelfCastTriggers only invokes the matcher for the spell being cast, so
+                // this just confirms the event is that very spell's cast (intervening-if, if any,
+                // is enforced separately by filterByTriggerCondition per CR 603.4).
+                event is SpellCastEvent && event.spellEntityId == sourceId
+            }
             is GameEvent.ExpendEvent -> {
                 // Expend triggers when cumulative mana spent on spells this turn
                 // crosses the threshold. Fires on SpellCastEvent only.

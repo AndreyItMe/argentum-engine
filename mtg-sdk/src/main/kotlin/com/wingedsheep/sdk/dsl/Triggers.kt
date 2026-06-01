@@ -1284,6 +1284,20 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    /**
+     * When you cast this spell — a "cast trigger" that fires on the spell's own cast while it is
+     * still on the stack, distinct from [SpellCast] (which observes *other* spells from the
+     * battlefield). Pair with `triggerCondition` for an intervening "if" (CR 603.4).
+     *
+     * Example: Sage of the Skies — "When you cast this spell, if you've cast another spell this
+     * turn, copy this spell." (`triggerCondition = Conditions.YouCastSpellsThisTurn(atLeast = 2)`,
+     * since the spell itself is already counted when its cast trigger is checked.)
+     */
+    fun WhenYouCastThisSpell(): TriggerSpec = TriggerSpec(
+        event = CastThisSpellEvent,
+        binding = TriggerBinding.SELF
+    )
+
     // =========================================================================
     // Expend Triggers (Bloomburrow)
     // =========================================================================

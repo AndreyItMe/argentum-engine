@@ -1156,6 +1156,17 @@ Triggers.youCastSpell(
 ### Conditional
 
 - `NthSpellCast(n, player?)` — fires on the Nth spell cast.
+- `WhenYouCastThisSpell()` — a "cast trigger" that fires on the spell's **own** cast while it is on
+  the stack (`GameEvent.CastThisSpellEvent`, `binding = SELF`). Distinct from a battlefield
+  `SpellCast`/`NthSpellCast` trigger that observes *other* spells: this one travels with the spell
+  onto the stack and is detected only by `TriggerDetector`'s self-cast path (it is deliberately
+  **not** indexed against battlefield permanents, so it never fires after the spell resolves).
+  Pair with a `triggerCondition` for an intervening "if" (CR 603.4). Sage of the Skies — "When you
+  cast this spell, if you've cast another spell this turn, copy this spell" — uses
+  `triggerCondition = Conditions.YouCastSpellsThisTurn(atLeast = 2)` (the spell itself is already
+  counted, so "two or more" = "another spell") and `Effects.CopyTargetSpell(TriggeringEntity)` to
+  copy itself; copying a permanent spell yields a token (CR 707.10f), and the copy isn't cast so it
+  doesn't re-trigger (CR 707.10).
 - `Expend(threshold)` — Expend N (CLB mechanic).
 
 ### Delayed & granted triggers

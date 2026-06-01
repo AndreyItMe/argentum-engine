@@ -1017,25 +1017,32 @@ class TriggerDetector(
             detectControlChangeTriggers(state, event, triggers)
         }
 
-        // Handle NthSpellCast triggers on the spell currently being cast (e.g. Hearthborn
-        // Battler cast as the second spell of the turn). The spell is on the stack, not the
-        // battlefield, so the main index scan above skips it.
+        // Handle self-cast triggers on the spell currently being cast — both NthSpellCast
+        // (e.g. Hearthborn Battler cast as the second spell of the turn) and "when you cast
+        // this spell" cast triggers (e.g. Sage of the Skies). The spell is on the stack, not
+        // the battlefield, so the main index scan above skips it.
         if (event is SpellCastEvent) {
-            detectSelfCastNthSpellTriggers(state, event, triggers)
+            detectSelfCastTriggers(state, event, triggers)
         }
 
         return triggers
     }
 
     /**
-     * Detect NthSpellCast triggers on the spell currently being cast.
+     * Detect self-cast triggers on the spell currently being cast — triggers whose event keys off
+     * the spell's own casting and travels with it onto the stack.
      *
-     * When a card like Hearthborn Battler is itself the Nth spell cast this turn, its
-     * trigger ("whenever a player casts their second spell each turn") should fire even
-     * though the card is on the stack rather than the battlefield. The trigger event is
-     * the cast itself, and the ability travels with the spell onto the stack.
+     * Two kinds qualify:
+     *  - [GameEvent.NthSpellCastEvent] — when a card like Hearthborn Battler is itself the Nth
+     *    spell cast this turn ("whenever a player casts their second spell each turn").
+     *  - [GameEvent.CastThisSpellEvent] — a "when you cast this spell" cast trigger (Sage of the
+     *    Skies). These are never indexed against battlefield permanents, so this is the only path
+     *    that fires them.
+     *
+     * The spell is on the stack rather than the battlefield, so the main index scan skips it; this
+     * pass reads the cast spell's own triggered abilities and matches them against the cast event.
      */
-    private fun detectSelfCastNthSpellTriggers(
+    private fun detectSelfCastTriggers(
         state: GameState,
         event: SpellCastEvent,
         triggers: MutableList<PendingTrigger>
@@ -1049,7 +1056,9 @@ class TriggerDetector(
         val controllerId = event.casterId
 
         for (ability in abilities) {
-            if (ability.trigger !is GameEvent.NthSpellCastEvent) continue
+            if (ability.trigger !is GameEvent.NthSpellCastEvent &&
+                ability.trigger !is GameEvent.CastThisSpellEvent
+            ) continue
             if (matcher.matchesTrigger(ability.trigger, ability.binding, event, entityId, controllerId, state)) {
                 triggers.add(
                     PendingTrigger(

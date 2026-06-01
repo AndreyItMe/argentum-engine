@@ -757,6 +757,26 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
+     * When you cast this spell — a "cast trigger" (CR 603.2) that fires on the spell's *own*
+     * cast while it is on the stack; the ability travels with the spell. This is distinct from
+     * [SpellCastEvent], which observes *other* spells being cast from a permanent on the
+     * battlefield. A [CastThisSpellEvent] trigger is detected only via the dedicated self-cast
+     * path in the engine's TriggerDetector and is never indexed against battlefield permanents,
+     * so it cannot fire once the spell has resolved into a permanent.
+     *
+     * The controller is always the caster, so there is no player parameter. For an intervening
+     * "if" (CR 603.4) such as Sage of the Skies' "if you've cast another spell this turn",
+     * attach a `triggerCondition` to the triggered ability rather than encoding it here.
+     */
+    @SerialName("CastThisSpellEvent")
+    @Serializable
+    data object CastThisSpellEvent : GameEvent {
+        override val description: String = "you cast this spell"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    }
+
+    /**
      * When you expend N — i.e., you spend your Nth total mana to cast spells
      * during a turn. Triggers at most once per turn per threshold.
      *
