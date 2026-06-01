@@ -1549,6 +1549,17 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
 - `TargetControlsCreature(target)` — target player has a creature.
 - `TargetControlsLand(target)` — target player has a land.
 - `TargetMatchesFilter(filter, targetIndex = 0)` — the context target matches a `GameObjectFilter`.
+- `IfTargetTookExcessDamage(targetIndex = 0)` — true post-damage when the target creature's marked
+  damage strictly exceeds its (projected) toughness. Chain after `Effects.DealDamage` in a composite
+  so the marked-damage update applies before the condition reads it. Used by Orbital Plunge ("If
+  excess damage was dealt this way, create a Lander token"). Semantics caveat: the read is
+  `marked > toughness` regardless of which preceding step dealt the damage — Composite doesn't
+  interleave SBA or fire triggers mid-chain, so for the canonical "deal N, then check" pipeline
+  this is equivalent to "did the preceding step deal excess". A chain that deals damage in
+  multiple steps within the same composite would see cumulative damage; reach for a different
+  condition there. Defensive guards return false for non-creature targets and targets no longer
+  on the battlefield (unreachable under `Targets.Creature` + Composite, retained for future
+  callers).
 - `TargetSharesMostCommonColor(targetIndex = 0)` — the context target shares a color with the
   most common color among all permanents, or a color tied for most common. Tallies each of the
   five colors across every battlefield permanent (multicolored permanents count once per color,
@@ -2014,6 +2025,19 @@ replacementEffect {
   the copy ("When you do, exile that card"). `filterByTotalManaSpent` restricts copy targets to mana
   value ≤ total mana spent (Mockingbird). The copy snapshots a `CopyOfComponent` so it reverts to its
   printed identity when it leaves the battlefield (CR 400.7 / 707.2).
+- `ModifyDrawAmount(modifier, restrictions, appliesTo)` — modify the number of cards a draw
+  instruction announces by a fixed amount, optionally gated by extra `restrictions: List<Condition>`
+  evaluated against the drawing player as controller. Applied **once** per draw instruction at the
+  announcement site — `DrawCardsExecutor.execute` for spell/ability draws and
+  `DrawPhaseManager.performDrawStep` for the draw step (CR 121.2a: "An instruction to draw multiple
+  cards can be modified by replacement effects that refer to the number of cards drawn. This
+  modification occurs before considering any of the individual card draws.") — so a paused-and-
+  resumed per-card loop doesn't double-modify. Note that "you" in restriction text reads as the
+  drawing player, not the source's controller; for `DrawEvent(player = Player.You)` they coincide,
+  but `DrawEvent(player = Player.Opponent)` cards needing "you" = source controller would have to
+  use a source-relative condition instead. Use for "if you would draw one or more cards, you draw
+  that many cards plus N instead" (Quantum Riddler:
+  `ModifyDrawAmount(modifier = 1, restrictions = listOf(Conditions.CardsInHandAtMost(1)), appliesTo = DrawEvent(player = Player.You))`).
 - Custom — implement the `ReplacementEffect` interface directly.
 
 Amount-modifying replacements expose **both** `multiplier` (×) and `modifier` (±) on the same type — do not split into

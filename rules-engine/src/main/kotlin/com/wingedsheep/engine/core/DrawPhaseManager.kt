@@ -62,14 +62,25 @@ class DrawPhaseManager(
             )
         }
 
+        // Apply ModifyDrawAmount replacements once at the draw-step's announcement
+        // site (CR 121.2a) — e.g., Quantum Riddler's "draw that many cards plus one
+        // instead" turns this step's draw of 1 into 2 while its restriction holds.
+        val drawCount = dispatcher.applyDrawAmountModifier(state, activePlayer, 1)
+        if (drawCount <= 0) {
+            return ExecutionResult.success(
+                state.withPriority(activePlayer),
+                listOf(StepChangedEvent(Step.DRAW))
+            )
+        }
+
         // Ask "prompt on draw" abilities (e.g., Words of Wind) once up-front.
         // The draw loop runs with skipPromptOnDraw=true to avoid asking again.
-        val promptResult = checkPromptOnDraw(state, activePlayer, 1, isDrawStep = true)
+        val promptResult = checkPromptOnDraw(state, activePlayer, drawCount, isDrawStep = true)
         if (promptResult != null) {
             return promptResult
         }
 
-        val drawResult = drawCards(state, activePlayer, 1)
+        val drawResult = drawCards(state, activePlayer, drawCount)
         if (!drawResult.isSuccess) {
             return drawResult
         }

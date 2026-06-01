@@ -62,6 +62,7 @@ import com.wingedsheep.sdk.scripting.conditions.WasCastFromZone
 import com.wingedsheep.engine.state.components.battlefield.CastFromGraveyardComponent
 import com.wingedsheep.sdk.scripting.conditions.SacrificedPermanentHadSubtype
 import com.wingedsheep.sdk.scripting.conditions.AnotherPermanentWithSameNameAsTarget
+import com.wingedsheep.sdk.scripting.conditions.TargetMarkedDamageExceedsToughness
 import com.wingedsheep.sdk.scripting.conditions.TargetMatchesFilter
 import com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor
 import com.wingedsheep.sdk.scripting.conditions.ColorIsMostCommon
@@ -228,6 +229,8 @@ class ConditionEvaluator(
             is TriggeringSpellHasSingleTarget -> ifResolution { evaluateTriggeringSpellHasSingleTarget(state, it) }
             is TriggeringSpellMatchesFilter -> ifResolution { evaluateTriggeringSpellMatchesFilter(state, condition, it) }
             is TargetMatchesFilter -> ifResolution { evaluateTargetMatchesFilter(state, condition, it) }
+            is TargetMarkedDamageExceedsToughness ->
+                ifResolution { evaluateTargetMarkedDamageExceedsToughness(state, condition, it) }
             is TargetSharesMostCommonColor -> ifResolution { evaluateTargetSharesMostCommonColor(state, condition, it) }
             is AnotherPermanentWithSameNameAsTarget ->
                 ifResolution { evaluateAnotherPermanentWithSameNameAsTarget(state, condition, it) }
@@ -690,6 +693,36 @@ class ConditionEvaluator(
         val predicateContext = PredicateContext.fromEffectContext(context)
         val projected = state.projectedState
         return predicateEvaluator.matches(state, projected, entityId, condition.filter, predicateContext)
+    }
+
+    /**
+     * Evaluate "if excess damage was dealt this way" — true when the target creature's
+     * marked damage strictly exceeds its (projected) toughness. Chained after a `DealDamage`
+     * step in a composite, so the marked-damage component reflects damage just dealt by
+     * the preceding step (Composite doesn't interleave SBA or fire other triggers between
+     * its sub-effects, so for the canonical pipeline no other source contributes marked
+     * damage in scope).
+     *
+     * The non-creature and not-on-battlefield branches return false defensively — under
+     * `Targets.Creature` + Composite they can't fire, but they keep this condition safe
+     * if a future caller wraps it in a longer chain that crosses SBA or re-targets.
+     */
+    private fun evaluateTargetMarkedDamageExceedsToughness(
+        state: GameState,
+        condition: TargetMarkedDamageExceedsToughness,
+        context: EffectContext
+    ): Boolean {
+        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
+            ?.entityId ?: return false
+        if (entityId !in state.getBattlefield()) return false
+        val projected = state.projectedState
+        if (!projected.isCreature(entityId)) return false
+        val marked = state.getEntity(entityId)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.DamageComponent>()
+            ?.amount ?: 0
+        val toughness = projected.getToughness(entityId) ?: return false
+        return marked > toughness
     }
 
     /**

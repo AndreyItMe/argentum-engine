@@ -34,23 +34,30 @@ function isPlayerOnlyTargeting(decision: ChooseTargetsDecision, playerIds: Entit
 }
 
 /**
- * Check if all legal targets in a ChooseTargetsDecision are in graveyards.
- * Returns the graveyard cards if true, null otherwise.
+ * Check if all legal targets in a ChooseTargetsDecision live in a hidden-from-battlefield zone
+ * (graveyard or exile). Returns the cards if true, null otherwise — the caller routes the
+ * resulting list into [GraveyardTargetingUI], which handles both zones (rendering owner-keyed
+ * tabs and selection) since their pile semantics are identical for targeting.
+ *
+ * Mixed-zone target sets fall through to `null` here so they reach the battlefield targeting
+ * path instead — that's a degenerate case today (Blade of the Swarm only targets exile, no
+ * known card mixes graveyard + exile in one target slot).
  */
-function getGraveyardTargets(decision: ChooseTargetsDecision, gameState: ClientGameState | null) {
+function getGraveyardOrExileTargets(decision: ChooseTargetsDecision, gameState: ClientGameState | null) {
   if (!gameState) return null
   const legalTargets = decision.legalTargets[0] ?? []
   if (legalTargets.length === 0) return null
 
-  const graveyardCards = []
+  const cards = []
   for (const targetId of legalTargets) {
     const card = gameState.cards[targetId]
-    if (!card || card.zone?.zoneType !== ZoneType.GRAVEYARD) {
-      return null // Not all targets are graveyard cards
+    const zoneType = card?.zone?.zoneType
+    if (!card || (zoneType !== ZoneType.GRAVEYARD && zoneType !== ZoneType.EXILE)) {
+      return null
     }
-    graveyardCards.push(card)
+    cards.push(card)
   }
-  return graveyardCards
+  return cards
 }
 
 /**
@@ -230,14 +237,14 @@ export function DecisionUI() {
   if (pendingDecision.type === 'ChooseTargetsDecision') {
     const playerIds = gameState?.players.map((p) => p.playerId) ?? []
     const isPlayerOnly = isPlayerOnlyTargeting(pendingDecision, playerIds)
-    const graveyardTargets = getGraveyardTargets(pendingDecision, gameState)
+    const zoneTargets = getGraveyardOrExileTargets(pendingDecision, gameState)
 
-    // If all targets are in graveyards, show a selection overlay
-    if (graveyardTargets && graveyardTargets.length > 0) {
+    // If all targets are in graveyards or exile, show a pile-selection overlay
+    if (zoneTargets && zoneTargets.length > 0) {
       return (
         <GraveyardTargetingUI
           decision={pendingDecision}
-          graveyardCards={graveyardTargets}
+          graveyardCards={zoneTargets}
           responsive={responsive}
         />
       )

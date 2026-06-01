@@ -511,6 +511,63 @@ data class CapDamage(
 // =============================================================================
 
 /**
+ * Modify the number of cards a draw event draws by a fixed amount, optionally gated by
+ * additional [restrictions]. Applied at the call site where the original draw count is
+ * announced (spell/ability resolution and the draw step), so the modifier fires once per
+ * draw instruction (CR 121.2a: "An instruction to draw multiple cards can be modified by
+ * replacement effects that refer to the number of cards drawn. This modification occurs
+ * before considering any of the individual card draws.") and is not re-applied when a
+ * paused per-card draw loop resumes.
+ *
+ * Each entry in [restrictions] is a [Condition] evaluated against the drawing player as
+ * the controller context; the modification only applies when ALL restrictions hold. This
+ * mirrors [ModifyLifeLoss]'s shape — use it for cards whose extra-draw clause is gated by
+ * arbitrary additional conditions. Note that "you" in restriction text reads as the drawing
+ * player, not the source's controller — for `DrawEvent(player = Player.You)` they're the
+ * same, but a future `DrawEvent(player = Player.Opponent)` card whose restriction means
+ * "you" = source controller would need a source-relative condition instead.
+ *
+ * Examples:
+ * - Quantum Riddler ("As long as you have one or fewer cards in hand, if you would draw
+ *   one or more cards, you draw that many cards plus one instead"):
+ *     `ModifyDrawAmount(modifier = 1,
+ *                       restrictions = listOf(Conditions.CardsInHandAtMost(1)),
+ *                       appliesTo = DrawEvent(player = Player.You))`
+ *
+ * @param modifier Flat amount added to the draw count when the event fires for a matching
+ *        player. Negative values reduce the draw (clamped to ≥ 0 by the caller).
+ * @param restrictions Additional [Condition]s gating when the modifier applies. Evaluated
+ *        against the drawing player as controller; ALL must hold.
+ */
+@SerialName("ModifyDrawAmount")
+@Serializable
+data class ModifyDrawAmount(
+    val modifier: Int,
+    val restrictions: List<Condition> = emptyList(),
+    override val appliesTo: GameEvent = GameEvent.DrawEvent()
+) : ReplacementEffect {
+    override val description: String = buildString {
+        val restrictionDesc = restrictions.joinToString(" and ") { it.description.removePrefix("if ") }
+        if (restrictionDesc.isNotEmpty()) {
+            append(restrictionDesc.replaceFirstChar { it.uppercase() })
+            append(", if ")
+        } else {
+            append("If ")
+        }
+        append(appliesTo.description)
+        append(", they draw that many cards plus $modifier instead")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newRestrictions = restrictions.map { it.applyTextReplacement(replacer) }
+        val anyChanged = newAppliesTo !== appliesTo ||
+            newRestrictions.zip(restrictions).any { (n, o) -> n !== o }
+        return if (anyChanged) copy(appliesTo = newAppliesTo, restrictions = newRestrictions) else this
+    }
+}
+
+/**
  * Replace drawing with another effect.
  * Example: Underrealm Lich (look at 3, put 1 in hand, rest in graveyard)
  */

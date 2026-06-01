@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.ModifyDrawAmount
 import com.wingedsheep.sdk.scripting.PreventDraw
 import com.wingedsheep.sdk.scripting.ReplaceDrawWithEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -351,5 +352,60 @@ class DrawReplacementDispatcher(
             }
         }
         return null
+    }
+
+    /**
+     * Apply [ModifyDrawAmount] replacements to an announced draw count for [playerId]
+     * (CR 121.2a — the draw-N instruction is modified by replacement effects that refer
+     * to the number of cards drawn before any individual card draws). Called once at the
+     * call site where the draw instruction is announced — spell/ability resolution and the
+     * draw step — and NOT at every iteration of the per-card draw loop, so a paused-and-
+     * resumed loop doesn't double-modify.
+     *
+     * Iterates every battlefield permanent's replacement effects, gates each by the
+     * [DrawEvent]'s `player` filter relative to [playerId] and the source's controller,
+     * and (if all `restrictions` hold) sums the modifier into [originalCount]. The
+     * final result is clamped to `≥ 0`.
+     */
+    fun applyDrawAmountModifier(
+        state: GameState,
+        playerId: EntityId,
+        originalCount: Int
+    ): Int {
+        if (originalCount <= 0) return originalCount
+        val conditionEvaluator = com.wingedsheep.engine.handlers.ConditionEvaluator()
+        var adjusted = originalCount
+        for (entityId in state.getBattlefield()) {
+            val container = state.getEntity(entityId) ?: continue
+            val replacementSource = container.get<ReplacementEffectSourceComponent>() ?: continue
+            val sourceControllerId = container.get<ControllerComponent>()?.playerId
+
+            for (effect in replacementSource.replacementEffects) {
+                if (effect !is ModifyDrawAmount) continue
+                val drawEvent = effect.appliesTo as? com.wingedsheep.sdk.scripting.GameEvent.DrawEvent ?: continue
+
+                val matchesPlayer = when (drawEvent.player) {
+                    Player.Each -> true
+                    Player.You -> sourceControllerId != null && playerId == sourceControllerId
+                    Player.Opponent, Player.EachOpponent ->
+                        sourceControllerId != null && playerId != sourceControllerId
+                    else -> false
+                }
+                if (!matchesPlayer) continue
+
+                val effectContext = com.wingedsheep.engine.handlers.EffectContext(
+                    sourceId = entityId,
+                    controllerId = playerId,
+                    opponentId = state.getOpponent(playerId),
+                )
+                val restrictionsHold = effect.restrictions.all { restriction ->
+                    conditionEvaluator.evaluate(state, restriction, effectContext)
+                }
+                if (!restrictionsHold) continue
+
+                adjusted += effect.modifier
+            }
+        }
+        return adjusted.coerceAtLeast(0)
     }
 }

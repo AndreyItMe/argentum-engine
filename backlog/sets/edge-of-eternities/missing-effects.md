@@ -4,23 +4,23 @@ Engine features required to implement the remaining EOE cards. Each section list
 unblocks, the exact oracle clause that can't be expressed with current primitives, and a sketch of
 the engine/SDK work needed.
 
-As of the latest pass, **238 / 261** booster cards are implemented. The cards below remain
+As of the latest pass, **247 / 261** booster cards are implemented. The cards below remain
 blocked on the engine features listed here. Cards whose every clause maps to an existing primitive
 have already been implemented and are not listed.
 
 ---
 
-## 1. Conditional draw-replacement static
+## 1. Conditional draw-replacement static — RESOLVED
 
 **Cards:** Quantum Riddler.
 
-**Clause:** "As long as you have one or fewer cards in hand, if you would draw one or more cards,
-you draw that many cards plus one instead."
-
-**Plan:** Add a continuous draw-replacement static ability that intercepts draw events for its
-controller, adds a fixed amount, and is gated by a `Condition` (hand-size). The flying body, the
-ETB "draw a card", and `Warp {1}{U}` are all already expressible — only the replacement static is
-missing.
+**Resolution:** Added `ModifyDrawAmount(modifier, restrictions, appliesTo)` replacement effect
+(SDK) plus `DrawReplacementDispatcher.applyDrawAmountModifier()` in the engine. The modifier is
+consulted exactly once per draw instruction at the announcement site (CR 121.2a — instructions to
+draw multiple cards are modified before any individual card draws) — `DrawCardsExecutor.execute`
+for spell/ability draws and `DrawPhaseManager.performDrawStep` for the draw step — so a paused-and-
+resumed per-card loop doesn't double-modify. `restrictions: List<Condition>` mirrors
+`ModifyLifeLoss.restrictions` for the hand-size gate.
 
 ---
 
@@ -36,27 +36,28 @@ expressible; only the damage-history conditional is missing.
 
 ---
 
-## 3. Excess-damage detection
+## 3. Excess-damage detection — RESOLVED
 
 **Cards:** Orbital Plunge.
 
-**Clause:** "If excess damage was dealt this way, create a Lander token."
-
-**Plan:** Add a way for a damage effect to report whether it dealt damage in excess of lethal
-(toughness minus marked damage), surfaced as a condition or follow-up trigger. The base "deals 6
-damage to target creature" and `Effects.CreateLander()` already exist.
+**Resolution:** Added `Conditions.IfTargetTookExcessDamage(targetIndex)` (backed by the
+`TargetMarkedDamageExceedsToughness` condition class). Reads the target's marked-damage component
+strictly greater than its projected toughness, so chaining it AFTER `Effects.DealDamage` in a
+composite gates a payoff on lethal-exceeding damage. Returns `false` for non-creature targets and
+for targets that have left the battlefield, so the chain stays safe without bespoke "DealDamageWithExcessFollowup"
+plumbing.
 
 ---
 
-## 4. Targeting cards in the warp-exile zone
+## 4. Targeting cards in the warp-exile zone — RESOLVED
 
 **Cards:** Blade of the Swarm.
 
-**Clause:** "Put target exiled card with warp on the bottom of its owner's library."
-
-**Plan:** Make cards exiled with warp targetable: a `TargetFilter` for "exiled card with warp" plus
-a move-to-library-bottom effect for an exile-zone target. The modal "two +1/+1 counters" branch is
-already expressible.
+**Resolution:** Extended `TargetEnumerationUtils.findValidObjectTargets` with a `Zone.EXILE` branch
+(`findValidExileTargets`), mirroring `findValidGraveyardTargets`. Combined with the existing
+`GameObjectFilter.warpExiled()` (`StatePredicate.IsWarpExiled`) and `MoveToZoneEffect(target, Zone.LIBRARY,
+ZonePlacement.Bottom)`, the modal targeting branch composes from existing atoms — no new effect or
+filter class needed.
 
 ---
 
@@ -89,15 +90,15 @@ if you do, draw a card and create a Robot token") is close to expressible but de
 
 ---
 
-## 7. Characteristic-defining P/T from cards in exile
+## 7. Characteristic-defining P/T from cards in exile — RESOLVED
 
 **Cards:** Cosmogoyf.
 
-**Clause:** "Cosmogoyf's power is equal to the number of cards you own in exile and its toughness is
-equal to that number plus 1."
-
-**Plan:** Add a `DynamicAmount` that counts cards a player owns across all exile sub-zones, then use
-it as a characteristic-defining P/T (Layer 7b set-base from a dynamic value, applied in all zones).
+**Resolution:** No new engine work needed. `DynamicAmount.AggregateZone(Player.You, Zone.EXILE,
+aggregation = COUNT)` already counts cards in the controller's exile sub-zone (cards in exile live
+in their owner's keyed exile bucket), and `dynamicStats(source, toughnessOffset = 1)` wires the
+same source as a CDA P/T through `CharacteristicValue.DynamicWithOffset`. The implementation is one
+DSL call: `dynamicStats(DynamicAmounts.zone(Player.You, Zone.EXILE).count(), toughnessOffset = 1)`.
 
 ---
 
@@ -240,15 +241,14 @@ many cards. Do this only once each turn."
 
 ---
 
-## 18. Copy a card from a zone and cast the copy for free
+## 18. Copy a card from a zone and cast the copy for free — RESOLVED
 
 **Cards:** Roving Actuator.
 
-**Clause:** "exile up to one target instant or sorcery card with mana value 2 or less from your
-graveyard. Copy it. You may cast the copy without paying its mana cost."
-
-**Plan:** Add an effect that creates a copy of a *card* (not a spell on the stack) and offers to cast
-the copy without paying its cost. The Void trigger gate is already expressible.
+**Resolution:** No new engine work needed. The Shiko, Paragon of the Way pattern (`MoveToZoneEffect` →
+exile, `Effects.CopyCardIntoCollection`, `Effects.CastFromCollectionWithoutPayingCost` inside
+`MayEffect`) already implements "copy a card in a zone, then cast the copy" (Rule 707.12). Roving
+Actuator wraps the chain in a Void-gated ETB trigger via `triggerCondition = Conditions.Void`.
 
 ---
 

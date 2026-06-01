@@ -190,6 +190,40 @@ data class TargetMatchesFilter(
 }
 
 /**
+ * Condition: "if excess damage was dealt this way" — true when the target creature's
+ * marked damage now strictly exceeds its (projected) toughness.
+ *
+ * Reads post-damage state, so chain it AFTER a [com.wingedsheep.sdk.scripting.effects.DealDamageEffect]
+ * with `Effects.Composite(DealDamage(N, t), ConditionalEffect(IfTargetTookExcessDamage(0), ...))`.
+ *
+ * What this actually checks is `marked > toughness` on the target at evaluation time,
+ * regardless of which preceding step in the chain dealt the damage. CompositeEffect
+ * resolves sub-effects sequentially without an interleaved SBA pass or mid-chain trigger
+ * processing, so for the canonical "deal N to a target, then check" pipeline this is
+ * equivalent to "did the preceding deal-damage step push the target past lethal" — there
+ * is no other source of marked damage in scope. Don't reuse this in a chain that deals
+ * damage in multiple steps within the same composite, or that runs past SBA somehow; you'd
+ * see cumulative marked damage instead, and the condition would lie about which step caused
+ * the excess.
+ *
+ * Defensive guards (target is not a creature, target left the battlefield) return false.
+ * In the canonical Orbital Plunge chain these can't fire — `Targets.Creature` rules out
+ * non-creature targets, and Composite never reaches SBA between steps so the target is
+ * still on the battlefield. They exist for future callers that might wrap this in a longer
+ * chain crossing SBA or re-target between steps.
+ *
+ * Used by Orbital Plunge: "If excess damage was dealt this way, create a Lander token."
+ */
+@SerialName("TargetMarkedDamageExceedsToughness")
+@Serializable
+data class TargetMarkedDamageExceedsToughness(
+    val targetIndex: Int = 0
+) : Condition {
+    override val description: String = "if excess damage was dealt this way"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+/**
  * Condition: "if another permanent with the same name as [target] is on the battlefield".
  *
  * Resolves the context target at [targetIndex], reads its card name, and returns true when at

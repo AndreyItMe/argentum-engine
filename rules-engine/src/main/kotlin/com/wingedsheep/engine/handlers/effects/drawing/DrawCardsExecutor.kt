@@ -42,11 +42,15 @@ class DrawCardsExecutor(
             return EffectResult.error(state, "No valid player for draw")
         }
 
-        val count = amountEvaluator.evaluate(state, effect.count, context)
+        val baseCount = amountEvaluator.evaluate(state, effect.count, context)
 
         var currentState = state
         val allEvents = mutableListOf<GameEvent>()
         for (playerId in playerIds) {
+            // Apply ModifyDrawAmount once per draw instruction (CR 121.2a), at the
+            // announcement site — Quantum Riddler-style "draw N+1 instead". Re-applying
+            // inside the per-card loop or on resume would double-fire; do it here only.
+            val count = applyDrawAmountModifier(currentState, playerId, baseCount)
             val result = executeDraws(currentState, playerId, count)
             currentState = result.state
             allEvents.addAll(result.events)
@@ -94,6 +98,23 @@ class DrawCardsExecutor(
             emptyLibraryReason = "Empty library"
         )
     }
+
+    /**
+     * Apply [com.wingedsheep.sdk.scripting.ModifyDrawAmount] replacements to an
+     * announced draw count of [originalCount] for [playerId] (CR 121.2a). Used by
+     * other announcement sites that bypass [execute] and drive [executeDraws]
+     * directly (cycling's "Draw a card" — CR 702.32a; Grothama-style "each player
+     * draws cards equal to the damage they dealt to this creature") so that the
+     * +N modifier still fires once per draw instruction. The resume paths inside
+     * [com.wingedsheep.engine.handlers.continuations.DrawReplacementContinuationResumer]
+     * and [com.wingedsheep.engine.handlers.continuations.CoreAutoResumerModule]
+     * intentionally skip this — they're continuing an already-modified instruction.
+     */
+    fun applyDrawAmountModifier(
+        state: GameState,
+        playerId: EntityId,
+        originalCount: Int
+    ): Int = dispatcher.applyDrawAmountModifier(state, playerId, originalCount)
 
     /**
      * Expose the prompt-on-draw check so

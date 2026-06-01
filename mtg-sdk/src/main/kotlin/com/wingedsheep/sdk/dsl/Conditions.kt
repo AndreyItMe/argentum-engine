@@ -233,6 +233,25 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.TargetSharesMostCommonColor(targetIndex)
 
     /**
+     * "If excess damage was dealt this way" — true post-damage when the target creature's
+     * marked damage strictly exceeds its (projected) toughness. Chain after `DealDamage`
+     * in a composite to fire a payoff on lethal-exceeding damage. Used by Orbital Plunge:
+     * `Composite(DealDamage(6, t), Conditional(IfTargetTookExcessDamage(), CreateLander()))`.
+     *
+     * Semantics caveat: the condition reads marked-damage > toughness on the target as it
+     * stands when the chain reaches this step, regardless of which preceding effect dealt
+     * the damage. CompositeEffect resolves sub-effects sequentially without an interleaved
+     * SBA pass and without firing other triggered abilities mid-chain, so for a "deal N
+     * to a target, then check" pipeline the only marked damage in play is the damage just
+     * dealt — making this read equivalent to "did the source effect deal excess to the
+     * target". A future card that deals damage in multiple steps within the same composite
+     * (or chains past SBA somehow) would see cumulative marked damage instead, so prefer
+     * a different condition for those shapes.
+     */
+    fun IfTargetTookExcessDamage(targetIndex: Int = 0): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.TargetMarkedDamageExceedsToughness(targetIndex)
+
+    /**
      * If another permanent with the same name as the target is on the battlefield.
      * The target permanent itself is excluded from the comparison. Used by Winnow.
      */

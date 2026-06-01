@@ -175,8 +175,34 @@ class TargetEnumerationUtils(
         return when (filter.zone) {
             Zone.BATTLEFIELD -> findValidPermanentTargets(state, playerId, filter, sourceId)
             Zone.GRAVEYARD -> findValidGraveyardTargets(state, playerId, filter, sourceId)
+            Zone.EXILE -> findValidExileTargets(state, playerId, filter, sourceId)
             Zone.STACK -> findValidSpellTargets(state, playerId, filter)
             else -> emptyList()
+        }
+    }
+
+    /**
+     * Enumerate exile-zone targets. Mirrors [findValidGraveyardTargets]: when the filter
+     * restricts to cards you own/control, only scan the targeting player's exile sub-zone;
+     * otherwise scan every player's exile. Used for cards that target cards in exile
+     * directly — e.g., Blade of the Swarm's "target exiled card with warp" mode.
+     */
+    fun findValidExileTargets(
+        state: GameState,
+        playerId: EntityId,
+        filter: TargetFilter,
+        sourceId: EntityId? = null
+    ): List<EntityId> {
+        val playerIds = when (filter.baseFilter.controllerPredicate) {
+            ControllerPredicate.ControlledByYou, ControllerPredicate.OwnedByYou -> listOf(playerId)
+            else -> state.turnOrder.toList()
+        }
+        val context = PredicateContext(controllerId = playerId, sourceId = sourceId)
+        return playerIds.flatMap { pid ->
+            state.getExile(pid).filter { entityId ->
+                if (filter.excludeSelf && entityId == sourceId) return@filter false
+                predicateEvaluator.matches(state, state.projectedState, entityId, filter.baseFilter, context)
+            }
         }
     }
 

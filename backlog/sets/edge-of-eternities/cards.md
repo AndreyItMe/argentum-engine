@@ -2,7 +2,7 @@
 
 **Set Size:** 261 booster cards (excluding basic lands)
 **Release Date:** August 1, 2025
-**Implemented:** 242 / 261
+**Implemented:** 247 / 261
 ---
 
 - [x] Adagia, Windswept Bastion
@@ -24,7 +24,7 @@
 - [x] Biomechan Engineer
 - [x] Biosynthic Burst
 - [x] Biotech Specialist
-- [ ] Blade of the Swarm
+- [x] Blade of the Swarm
 - [x] Blooming Stinger
 - [x] Bombard
 - [x] Breeding Pool
@@ -40,7 +40,7 @@
 - [x] Comet Crawler
 - [x] Command Bridge
 - [x] Consult the Star Charts
-- [ ] Cosmogoyf
+- [x] Cosmogoyf
 - [x] Cosmogrand Zenith
 - [x] Cryogen Relic
 - [x] Cryoshatter
@@ -155,7 +155,7 @@
 - [x] Nebula Dragon
 - [x] Nova Hellkite
 - [x] Nutrient Block
-- [ ] Orbital Plunge
+- [x] Orbital Plunge
 - [x] Oreplate Pangolin
 - [x] Ouroboroid
 - [x] Pain for All
@@ -167,7 +167,7 @@
 - [x] Possibility Technician
 - [ ] Pull Through the Weft
 - [x] Pulsar Squadron Ace
-- [ ] Quantum Riddler
+- [x] Quantum Riddler
 - [x] Radiant Strike
 - [x] Ragost, Deft Gastronaut
 - [x] Rayblade Trooper
@@ -177,7 +177,7 @@
 - [x] Reroute Systems
 - [x] Rescue Skiff
 - [x] Rig for War
-- [ ] Roving Actuator
+- [x] Roving Actuator
 - [x] Ruinous Rampage
 - [x] Rust Harvester
 - [x] Sacred Foundry

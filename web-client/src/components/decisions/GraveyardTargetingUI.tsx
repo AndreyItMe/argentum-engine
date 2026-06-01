@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useGameStore } from '@/store/gameStore.ts'
+import { ZoneType } from '@/types'
 import type { EntityId, ChooseTargetsDecision, ClientCard } from '@/types'
 import { calculateFittingCardWidth, type ResponsiveSizes } from '@/hooks/useResponsive.ts'
 import { ZoneSelectionUI, type ZoneCardInfo } from './ZoneSelectionUI'
@@ -7,8 +8,10 @@ import { getCardImageUrl } from '@/utils/cardImages.ts'
 import styles from './DecisionUI.module.css'
 
 /**
- * Graveyard targeting UI - uses the shared ZoneSelectionUI component.
- * Supports selecting from multiple graveyards with tabs.
+ * Graveyard / exile pile targeting UI — uses the shared ZoneSelectionUI component.
+ * Supports selecting from multiple piles with owner tabs. Labels adapt to the cards'
+ * actual zone (Graveyard vs Exile) so the same component renders Blade of the Swarm's
+ * exile-targeting mode and the existing graveyard-target spells with the right wording.
  */
 export function GraveyardTargetingUI({
   decision,
@@ -68,11 +71,16 @@ export function GraveyardTargetingUI({
     }))
   }, [currentCards])
 
+  // The list is homogenous-zone by construction (the caller's filter routes mixed-zone
+  // sets elsewhere), so we read the first card's zone to pick wording for everything.
+  const pileZoneType = graveyardCards[0]?.zone?.zoneType ?? ZoneType.GRAVEYARD
+  const pileNoun = pileZoneType === ZoneType.EXILE ? 'Exile' : 'Graveyard'
+
   // Get player names for tabs
   const getPlayerLabel = (ownerId: EntityId): string => {
-    if (ownerId === viewingPlayerId) return 'Your Graveyard'
+    if (ownerId === viewingPlayerId) return `Your ${pileNoun}`
     const player = gameState?.players.find((p) => p.playerId === ownerId)
-    return player ? `${player.name}'s Graveyard` : "Opponent's Graveyard"
+    return player ? `${player.name}'s ${pileNoun}` : `Opponent's ${pileNoun}`
   }
 
   const handleConfirm = (selectedCards: EntityId[]) => {
@@ -88,7 +96,7 @@ export function GraveyardTargetingUI({
   const isOptionalTarget = minTargets === 0
   const isMultiTarget = maxTargets > 1
   const sourceName = decision.context.sourceName ?? 'this ability'
-  const title = isOptionalTarget ? `Resolve ${sourceName}` : 'Choose from Graveyard'
+  const title = isOptionalTarget ? `Resolve ${sourceName}` : `Choose from ${pileNoun}`
 
   // Derive the action verb from effectHint so the button/text matches the actual effect
   // (e.g., "Exile card in a graveyard" → "Exile"; "Return … to its owner's hand" → "Return to Hand").
