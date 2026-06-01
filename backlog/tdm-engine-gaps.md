@@ -251,6 +251,20 @@ the overwhelming majority of the set.
     the Saga's post-III sacrifice).
     → **Thunder of Unity**
 
+22. **Runtime-granted Harmonize (Rule 702.180).** ✅ **DONE.** "Target instant or sorcery card in your
+    graveyard gains harmonize until end of turn. Its harmonize cost is equal to its mana cost."
+    Harmonize was only a *printed* `KeywordAbility.Harmonize(cost)` read straight off
+    `cardDef.keywordAbilities` by the cast-from-graveyard enumerator and the alternative-payment
+    handler, so a card couldn't grant it. Added a runtime `GrantedKeywordAbility(entityId, ability,
+    duration)` record on `GameState` (mirroring `GrantedActivatedAbility`), an `Effects.GrantHarmonize`
+    effect + executor (cost defaults to the targeted card's own mana cost), end-of-turn cleanup, and a
+    single `HarmonizeGrants.effectiveHarmonize` resolver that every read site now consults
+    (enumerator, `CastZoneResolver`/`CastSpellHandler` cost + X-payment, `AlternativePaymentHandler`
+    tap-for-power reduction, and `StackResolver`'s exile-on-resolution clause). The grant is keyed to
+    the card entity so it survives the graveyard → stack move; a "Granted Ability" badge surfaces it on
+    the client. Locked in by `SongcrafterMageTest`.
+    → **Songcrafter Mage**
+
 ---
 
 ## Recommended build order
