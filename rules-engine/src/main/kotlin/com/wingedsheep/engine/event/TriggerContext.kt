@@ -76,7 +76,14 @@ data class TriggerContext(
      * looked at" payoffs (Celeborn the Wise, Elrond Master of Healing) scale correctly.
      * `null` when the trigger was not driven by a scry.
      */
-    val scryCount: Int? = null
+    val scryCount: Int? = null,
+    /**
+     * Damage past lethal dealt to the trigger's creature recipient (CR 120.4a). Captured
+     * from `DamageDealtEvent.excessAmount` so payoffs like Fall of Cair Andros — "amass
+     * Orcs X, where X is the excess damage" — can read it via
+     * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`. `null` for non-damage triggers.
+     */
+    val excessDamageAmount: Int? = null
 ) {
     companion object {
         fun fromEvent(event: com.wingedsheep.engine.core.GameEvent): TriggerContext {
@@ -96,7 +103,8 @@ data class TriggerContext(
                 )
                 is DamageDealtEvent -> TriggerContext(
                     triggeringEntityId = event.targetId,
-                    damageAmount = event.amount
+                    damageAmount = event.amount,
+                    excessDamageAmount = event.excessAmount.takeIf { it > 0 }
                 )
                 is com.wingedsheep.engine.core.DamagePreventedEvent -> TriggerContext(
                     // The prevented source — so "deal that much to that source's controller" resolves

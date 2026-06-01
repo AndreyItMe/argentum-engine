@@ -122,7 +122,17 @@ data class DamageDealtEvent(
     val sourceName: String? = null,
     val targetName: String? = null,
     val targetIsPlayer: Boolean = false,
-    val targetWasFaceDown: Boolean = false
+    val targetWasFaceDown: Boolean = false,
+    /**
+     * Damage in excess of what the creature target needed to be destroyed (CR 120.4a) —
+     * i.e. `max(0, amount - max(0, projectedToughness - markedDamageBeforeThisHit))`, or
+     * `max(0, amount - 1)` if the source has deathtouch. Always 0 for non-creature targets
+     * (planeswalkers, players). Used by triggers like
+     * Fall of Cair Andros that fire on "excess [non]combat damage" via
+     * `DealsDamageEvent(requireExcess = true)` and by payoffs that read
+     * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`.
+     */
+    val excessAmount: Int = 0
 ) : GameEvent
 
 /**

@@ -867,7 +867,11 @@ class TriggerMatcher(
         } else {
             true
         }
-        return combatMatches && recipientMatches && sourceMatches
+        // "Excess damage" triggers (Fall of Cair Andros) fire only when the recipient took
+        // damage past lethal — CR 120.4a. Non-creature targets and at-or-below-lethal hits leave
+        // event.excessAmount at 0 and silently fail this gate.
+        val excessMatches = !trigger.requireExcess || event.excessAmount > 0
+        return combatMatches && recipientMatches && sourceMatches && excessMatches
     }
 
     fun matchesStepTrigger(
@@ -987,7 +991,8 @@ class TriggerMatcher(
                 triggerMinusOneMinusOneCounterCount = trigger.triggerContext.minusOneMinusOneCounterCount,
                 triggerLastKnownPower = trigger.triggerContext.lastKnownPower,
                 triggerLastKnownToughness = trigger.triggerContext.lastKnownToughness,
-                triggerScryCount = trigger.triggerContext.scryCount
+                triggerScryCount = trigger.triggerContext.scryCount,
+                triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount
             )
             conditionEvaluator.evaluate(state, condition, context)
         }

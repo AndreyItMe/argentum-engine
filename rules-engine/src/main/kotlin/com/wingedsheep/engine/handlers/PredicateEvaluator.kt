@@ -591,6 +591,7 @@ class PredicateEvaluator {
             is EntityReference.AffectedEntity -> context?.affectedEntityId
             is EntityReference.IterationEntity -> null // Only available during ForEachInGroup iteration
             is EntityReference.FromCostStorage -> null // Cost-pipeline state is not threaded into PredicateContext
+            is EntityReference.AmassedArmy -> null // Pipeline state is not threaded into PredicateContext
             is EntityReference.EnchantedCreature -> null // Attachment lookup needs state, not threaded here
         }
     }

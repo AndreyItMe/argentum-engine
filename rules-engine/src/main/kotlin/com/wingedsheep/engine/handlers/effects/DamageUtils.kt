@@ -180,6 +180,10 @@ object DamageUtils {
         if (effectiveAmount <= 0) return EffectResult.success(newState)
 
         val events = mutableListOf<EngineGameEvent>()
+        // Excess damage (CR 120.4a) is only computed below for the non-wither creature
+        // branch — planeswalker (above loyalty), battle (above defense), and wither (damage
+        // dealt as -1/-1 counters) paths are not yet modelled and stay at 0 here.
+        var creatureExcessDamage = 0
 
         // Check if target is a player, planeswalker, or creature
         val lifeComponent = newState.getEntity(targetId)?.get<LifeTotalComponent>()
@@ -229,6 +233,14 @@ object DamageUtils {
                         deathtouchDamageReceived = hasDeathtouch || (existingDamage?.deathtouchDamageReceived == true)
                     ))
                 }
+                // Excess damage (CR 120.4a) — damage in excess of what was needed to be
+                // lethal. With deathtouch, any amount of damage greater than 1 is excess —
+                // lethal collapses to a flat 1 regardless of marked damage (CR 120.4a refs
+                // 702.2).
+                val toughness = projected.getToughness(targetId) ?: 0
+                val lethalNeeded = if (hasDeathtouch) 1
+                else (toughness - currentDamage).coerceAtLeast(0)
+                creatureExcessDamage = (effectiveAmount - lethalNeeded).coerceAtLeast(0)
             }
             // Mark creature as having been dealt damage this turn
             newState = newState.updateEntity(targetId) { container ->
@@ -256,7 +268,7 @@ object DamageUtils {
         val targetName = targetContainer?.get<CardComponent>()?.name
         val targetIsPlayer = targetContainer?.get<LifeTotalComponent>() != null
         val targetIsFaceDown = targetContainer?.has<FaceDownComponent>() == true
-        events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, false, sourceName = sourceName, targetName = targetName, targetIsPlayer = targetIsPlayer, targetWasFaceDown = targetIsFaceDown))
+        events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, false, sourceName = sourceName, targetName = targetName, targetIsPlayer = targetIsPlayer, targetWasFaceDown = targetIsFaceDown, excessAmount = creatureExcessDamage))
 
         // Lifelink: if the source has lifelink, its controller gains life equal to the damage dealt (Rule 702.15)
         if (sourceId != null) {

@@ -1053,6 +1053,10 @@ internal class CombatDamageManager(
             if (targetId !in newState.getBattlefield()) return newState
             val projected = newState.projectedState
             val hasWither = projected.hasKeyword(sourceId, Keyword.WITHER)
+            // Excess damage (CR 120.4a) is only computed for the non-wither path below.
+            // Wither damage (dealt as -1/-1 counters per CR 702.80a), planeswalker (above
+            // loyalty), and battle (above defense) excess paths are not yet modelled.
+            var excess = 0
             if (hasWither) {
                 // Wither (CR 702.80): damage to creatures is dealt in the form of -1/-1 counters
                 val counters = newState.getEntity(targetId)?.get<CountersComponent>() ?: CountersComponent()
@@ -1074,6 +1078,15 @@ internal class CombatDamageManager(
                         deathtouchDamageReceived = hasDeathtouch || (existingDamage?.deathtouchDamageReceived == true)
                     ))
                 }
+                // Excess damage (CR 120.4a): damage past lethal needed. With deathtouch any
+                // damage greater than 1 is excess — lethal collapses to a flat 1 regardless
+                // of marked damage (CR 120.4a refs 702.2). Trample is already removed by
+                // combat damage assignment, so any damage that reaches this creature was
+                // assigned to it — the leftover above lethal is excess.
+                val toughness = projected.getToughness(targetId) ?: 0
+                val lethalNeeded = if (hasDeathtouch) 1
+                else (toughness - currentDamage).coerceAtLeast(0)
+                excess = (amount - lethalNeeded).coerceAtLeast(0)
             }
             // Mark creature as having been dealt damage this turn
             newState = newState.updateEntity(targetId) { container ->
@@ -1090,7 +1103,7 @@ internal class CombatDamageManager(
             val targetName = newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature"
             val targetIsFaceDown = newState.getEntity(targetId)?.has<FaceDownComponent>() == true
             events.add(DamageDealtEvent(sourceId, targetId, amount, true,
-                sourceName = sourceName, targetName = targetName, targetIsPlayer = false, targetWasFaceDown = targetIsFaceDown))
+                sourceName = sourceName, targetName = targetName, targetIsPlayer = false, targetWasFaceDown = targetIsFaceDown, excessAmount = excess))
         }
 
         return newState

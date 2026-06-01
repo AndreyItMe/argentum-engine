@@ -74,7 +74,8 @@ class EffectAndTriggerContinuationResumer(
                     triggerTotalCounterCount = continuation.triggerTotalCounterCount,
                     triggerLastKnownCounters = continuation.triggerLastKnownCounters,
                     triggerLastKnownDamageDealtByPlayers = continuation.triggerLastKnownDamageDealtByPlayers,
-                    triggerScryCount = continuation.triggerScryCount
+                    triggerScryCount = continuation.triggerScryCount,
+                    triggerExcessDamageAmount = continuation.triggerExcessDamageAmount
                 )
                 val stackResult = services.stackResolver.putTriggeredAbility(state, elseComponent, emptyList())
                 if (!stackResult.isSuccess) return stackResult
@@ -106,7 +107,8 @@ class EffectAndTriggerContinuationResumer(
             triggerLastKnownDamageDealtByPlayers = continuation.triggerLastKnownDamageDealtByPlayers,
             triggerModesChosenCount = continuation.triggerModesChosenCount,
             enchantedCreatureLastKnownPower = continuation.enchantedCreatureLastKnownPower,
-            triggerScryCount = continuation.triggerScryCount
+            triggerScryCount = continuation.triggerScryCount,
+            triggerExcessDamageAmount = continuation.triggerExcessDamageAmount
         )
 
         val stackResult = services.stackResolver.putTriggeredAbility(

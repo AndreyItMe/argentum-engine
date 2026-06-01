@@ -560,7 +560,16 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     data class DealsDamageEvent(
         val damageType: DamageType = DamageType.Any,
         val recipient: RecipientFilter = RecipientFilter.Any,
-        val sourceFilter: GameObjectFilter? = null
+        val sourceFilter: GameObjectFilter? = null,
+        /**
+         * When true, the trigger fires only on damage that exceeded what was needed to be
+         * lethal (CR 120.4a). Combined with the existing damageType / recipient / sourceFilter
+         * gates — e.g. Fall of Cair Andros uses
+         * `DealsDamageEvent(damageType = NonCombat, recipient = Matching(creatureOpponentControls),
+         *  requireExcess = true)` and reads the excess via
+         * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`.
+         */
+        val requireExcess: Boolean = false
     ) : GameEvent {
         override val description: String = buildString {
             if (sourceFilter != null) {
@@ -568,6 +577,7 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
                 append(" ")
             }
             append("deals ")
+            if (requireExcess) append("excess ")
             if (damageType != DamageType.Any) {
                 append(damageType.description)
                 append(" ")

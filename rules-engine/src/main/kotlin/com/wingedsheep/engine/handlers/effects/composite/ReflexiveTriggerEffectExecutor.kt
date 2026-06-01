@@ -196,9 +196,23 @@ class ReflexiveTriggerEffectExecutor(
             return EffectResult.success(stateWithoutCont, result.events.toList())
         }
 
-        // Action succeeded — pop our continuation, present reflexive targets
+        // Action succeeded — pop our continuation, present reflexive targets. Merge any
+        // pipeline state the action stashed (e.g. `EntityReference.AmassedArmy` from
+        // `Effects.Amass(...)`, Foray of Orcs) into the context so the reflexive
+        // effect's evaluators can read it. Mirrors `CompositeEffectExecutor`'s
+        // sibling-to-sibling propagation.
         val (_, stateAfterPop) = result.state.popContinuation()
-        return presentReflexiveTargets(stateAfterPop, effect.reflexiveEffect, effect.reflexiveTargetRequirements, context, result.events.toList())
+        val contextWithUpdates = if (result.updatedCollections.isNotEmpty() || result.updatedSubtypeGroups.isNotEmpty()) {
+            context.copy(
+                pipeline = context.pipeline.copy(
+                    storedCollections = context.pipeline.storedCollections + result.updatedCollections,
+                    storedSubtypeGroups = context.pipeline.storedSubtypeGroups + result.updatedSubtypeGroups
+                )
+            )
+        } else {
+            context
+        }
+        return presentReflexiveTargets(stateAfterPop, effect.reflexiveEffect, effect.reflexiveTargetRequirements, contextWithUpdates, result.events.toList())
     }
 
     /**

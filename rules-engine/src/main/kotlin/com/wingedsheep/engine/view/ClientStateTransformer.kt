@@ -1456,7 +1456,8 @@ class ClientStateTransformer(
         targetingSourceEntityId = triggered.targetingSourceEntityId,
         triggerLastKnownPower = triggered.lastKnownPower,
         triggerLastKnownToughness = triggered.lastKnownToughness,
-        triggerScryCount = triggered.triggerScryCount
+        triggerScryCount = triggered.triggerScryCount,
+        triggerExcessDamageAmount = triggered.triggerExcessDamageAmount
     )
 
     /**

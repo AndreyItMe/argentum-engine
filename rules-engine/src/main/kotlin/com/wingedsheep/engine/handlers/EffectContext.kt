@@ -139,6 +139,11 @@ data class EffectContext(
      * `ContextPropertyKey.TRIGGER_SCRY_COUNT` (Celeborn the Wise, Elrond Master of Healing).
      */
     val triggerScryCount: Int? = null,
+    /**
+     * Damage past lethal dealt to the trigger's creature recipient (CR 120.4a). Read by
+     * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT` (Fall of Cair Andros).
+     */
+    val triggerExcessDamageAmount: Int? = null,
     // --- Choice state ---
     /** Color chosen for "add one mana of any color" abilities */
     val manaColorChoice: Color? = null,

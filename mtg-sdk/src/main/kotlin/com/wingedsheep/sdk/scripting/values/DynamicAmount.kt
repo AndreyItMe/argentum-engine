@@ -130,6 +130,13 @@ enum class ContextPropertyKey(val description: String) {
      * ... for each card looked at" payoffs (Celeborn the Wise, Elrond Master of Healing).
      */
     TRIGGER_SCRY_COUNT("the number of cards looked at"),
+    /**
+     * Damage in excess of lethal dealt to the creature target in the trigger payload
+     * (CR 120.4a). Set from `DamageDealtEvent.excessAmount`; non-zero only when the trigger
+     * is a `DealsDamageEvent(requireExcess = true)`. Used by Fall of Cair Andros — "amass
+     * Orcs X, where X is the excess damage."
+     */
+    TRIGGER_EXCESS_DAMAGE_AMOUNT("the excess damage"),
 }
 
 /**

@@ -10,11 +10,27 @@ Verify status anytime with: `scripts/card-status --set LTR` (and `--list --set L
 
 ## Status
 
-Draft cards at **163/261**. Every card still unchecked in `cards.md` (excluding the five
-basic lands, which `basicLandsFallback` covers) needs at least one new engine primitive —
-see the "Engine gaps blocking the remaining cards" section below. Each card is listed under
+Draft cards at **166/261**. Almost every card still unchecked in `cards.md` (excluding the
+five basic lands, which `basicLandsFallback` covers) needs at least one new engine primitive
+— see the "Engine gaps blocking the remaining cards" section below. Each card is listed under
 the primitive it is waiting on, with the exact blocking clause. Stop and open a dedicated
 PR per gap rather than approximating.
+
+Now-composable (no remaining gap, just need to be added via `/add-card`): **Arwen Undómiel**,
+**Celeborn the Wise**, **Chance-Met Elves**, **Council's Deliberation**, **Elrond, Master of
+Healing**, **Glorfindel, Dauntless Rescuer**, **Legolas, Counter of Kills**, **Nimrodel
+Watcher**, and **Elvish Mariner** (Extra) — all unblocked when the `WheneverYouScry` trigger
+landed. Elrond Lord of Rivendell, Galadriel of Lothlórien, Lost Isle Calling, and Palantír of
+Orthanc previously listed under that gap still need a secondary primitive (see Gaps 3, 6).
+The Gap 12 primitives (`EntityReference.AmassedArmy` + excess-damage trigger), now followed
+by `ReflexiveTriggerEffect`/`AmassContinuationResumer` threading the AmassedArmy pipeline
+slot, shipped **Foray of Orcs**, **Surrounded by Orcs**, and **Fall of Cair Andros**.
+Grishnákh, Brash Instigator still needs pipeline state threaded into target-predicate
+filters (its "with power ≤ the amassed Army's power" filter resolves the reference to
+`null` during targeting today). Shagrat Loot Bearer still needs attach-equipment-on-attack,
+and The Mouth of Sauron still needs a dynamic Amass amount keyed to a targeted player's
+graveyard — both expressible by composing existing dynamic-amount primitives in those
+cards' implementations.
 
 ## Data sources — do NOT hit the network
 
@@ -79,25 +95,11 @@ Verified present today and used by the composed batch: `Effects.TheRingTemptsYou
 `Triggers.RingTemptsYou`, `Conditions.SourceIsRingBearer`, `Conditions.CreatureDiedThisTurn`,
 `Effects.Amass` (incl. `DynamicAmount.XValue`), `EffectPatterns.scry`/`mill`/`searchLibrary`,
 `ForEachInGroupEffect` + `GroupFilter`, `GrantKeyword` static, `Targets.UpToCreatures` +
-`ForEachTargetEffect`.
-
-### Gap 1 — "Whenever you scry" trigger
-**Engine change:** emit a `ScriedEvent` carrying the number of cards looked at, add a
-`Triggers.WheneverYouScry`, and a `DynamicAmount` for "cards looked at while scrying this way".
-- **Arwen Undómiel** — "Whenever you scry, put a +1/+1 counter on target creature."
-- **Celeborn the Wise** — "Whenever you scry, Celeborn gets +1/+1 … for each card looked at."
-- **Chance-Met Elves** — "Whenever you scry, put a +1/+1 counter on this creature." (once/turn)
-- **Council's Deliberation** — "Whenever you scry, … exile this card from your graveyard …"
-- **Elrond, Lord of Rivendell** — scry on each creature ETB; needs "second time this ability
-  resolved this turn" counter as well.
-- **Elrond, Master of Healing** — "Whenever you scry, put a +1/+1 counter on each of up to X
-  target creatures, where X is the number of cards looked at."
-- **Galadriel of Lothlórien** — "Whenever you scry, you may reveal the top card …" (also Gap 3).
-- **Glorfindel, Dauntless Rescuer** — "Whenever you scry, choose one and Glorfindel gets +1/+1."
-- **Legolas, Counter of Kills** — "Whenever you scry, if Legolas is tapped, you may untap it."
-- **Nimrodel Watcher** — "Whenever you scry, this creature gets +1/+0 and can't be blocked."
-- **Lost Isle Calling** — "Whenever you scry, put a verse counter on this." (also Gap 6 counter)
-- **Elvish Mariner** (Extra) — "Whenever you scry, tap up to X target nonland permanents …"
+`ForEachTargetEffect`, `Triggers.WheneverYouScry` (+ `ScriedEvent` carrying cards-looked-at,
+`DynamicAmount` for "cards looked at while scrying this way"),
+`EntityReference.AmassedArmy` (+ `DynamicAmount.EntityProperty(AmassedArmy, Power/Toughness)` for
+"the amassed Army's power"), `DealsDamageEvent(requireExcess = true)` + `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`
+(+ `DamageDealtEvent.excessAmount`).
 
 ### Gap 2 — "draw your second card each turn" trigger
 **Engine change:** an Nth-card-drawn-per-turn trigger (per player), the draw analogue of
@@ -114,7 +116,7 @@ creature other than {source} as your Ring-bearer" (CR 701.52d).
 - **Faramir, Field Commander** — "…if you chose a creature other than Faramir…, create a token."
 - **Gandalf, Friend of the Shire** — "…if you chose a creature other than Gandalf…, draw a card."
   (also Gap 4 cast-as-flash).
-- **Galadriel of Lothlórien** — chapter-one half (also Gap 1).
+- **Galadriel of Lothlórien** — chapter-one half.
 
 ### Gap 4 — "cast [filter] spells as though they had flash" permission
 **Engine change:** a static/one-shot permission granting flash-timing to a filtered set of
@@ -132,8 +134,8 @@ spells.
 **Engine change:** add the counter type across `CounterType`, `StateProjector`, and the three
 web-client files; some also need "enters with N counters where N = …".
 - **Dawn of a New Age** — hope counter; "enters with a hope counter for each creature you control."
-- **Lost Isle Calling** — verse counter (also Gap 1).
-- **Palantír of Orthanc** — influence counter (also Gap 1 scry + complex opponent choice).
+- **Lost Isle Calling** — verse counter; "Whenever you scry, put a verse counter on this."
+- **Palantír of Orthanc** — influence counter (also complex opponent choice on the scry trigger).
 - **The One Ring** — burden counter (also Gap 9 protection-from-everything).
 - **Scroll of Isildur** — stun counter (also Saga gain-control-for-duration).
 
@@ -172,20 +174,6 @@ mana cost"; and bouncing a spell off the stack.
 - **Gollum's Bite** — "{3}{B}, Exile this card from your graveyard: The Ring tempts you."
 - **Gollum, Patient Plotter** — "{B}, Sacrifice a creature: Return this card from your
   graveyard to your hand." (LTB Ring tempts half is composable).
-
-### Gap 12 — reflexive reference to "the amassed Army"
-**Engine change:** expose the just-amassed Army to a reflexive "when you do" effect (its power),
-and an excess-damage trigger.
-- **Foray of Orcs** — "…deals X damage…, where X is the amassed Army's power."
-- **Grishnákh, Brash Instigator** — "…gain control of target … creature … with power ≤ the
-  amassed Army's power."
-- **Shagrat, Loot Bearer** — "…amass Orcs X, where X is the number of Equipment attached…"
-  (also attach-equipment-on-attack).
-- **Fall of Cair Andros** — "Whenever a creature an opponent controls is dealt excess noncombat
-  damage, amass Orcs X…" (excess-damage trigger).
-- **Surrounded by Orcs** — "…target player mills X cards, where X is the amassed Army's power."
-- **The Mouth of Sauron** — "amass Orcs X, where X is the number of instant and sorcery cards in
-  **that player's** graveyard" (dynamic count keyed to a targeted player's graveyard).
 
 ### Gap 13 — set base power AND toughness
 **Engine change:** `SetBaseToughness` / `SetBasePowerAndToughness` (only `SetBasePower` exists).

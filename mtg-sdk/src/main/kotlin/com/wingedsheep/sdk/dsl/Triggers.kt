@@ -426,11 +426,13 @@ object Triggers {
         recipient: RecipientFilter = RecipientFilter.Any,
         sourceFilter: GameObjectFilter? = null,
         binding: TriggerBinding = TriggerBinding.SELF,
+        requireExcess: Boolean = false,
     ): TriggerSpec = TriggerSpec(
         event = DealsDamageEvent(
             damageType = damageType,
             recipient = recipient,
             sourceFilter = sourceFilter,
+            requireExcess = requireExcess,
         ),
         binding = binding,
     )

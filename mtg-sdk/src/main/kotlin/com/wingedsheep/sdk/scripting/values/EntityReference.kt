@@ -100,4 +100,35 @@ sealed interface EntityReference {
     ) : EntityReference {
         override val description: String = "the chosen $collectionName"
     }
+
+    /**
+     * The Army chosen by the most recent Amass step in the current resolution pipeline —
+     * "the amassed Army," whether or not it received counters (CR 701.47c).
+     *
+     * Composed with [com.wingedsheep.sdk.scripting.effects.CompositeEffect] of
+     * `[AmassEffect, ...]` so a follow-up effect can read the just-amassed Army's
+     * power/toughness/etc. via `DynamicAmount.EntityProperty(AmassedArmy, ...)`.
+     *
+     * Examples:
+     * - Foray of Orcs: "Amass Orcs 2, then ~ deals damage to any target equal to the
+     *   amassed Army's power."
+     * - Surrounded by Orcs: "Amass Orcs 1, then target player mills cards equal to the
+     *   amassed Army's power."
+     *
+     * The engine writes the chosen Army's id into
+     * `EffectContext.pipeline.storedCollections[STORAGE_KEY]` after Amass resolves and
+     * carries the slot across composite sub-effects (and through the multi-Army choice
+     * continuation), so the next sibling effect's evaluator can read it.
+     */
+    @SerialName("AmassedArmy")
+    @Serializable
+    data object AmassedArmy : EntityReference {
+        override val description: String = "the amassed Army"
+
+        /**
+         * Reserved pipeline-storage key — engine writers and SDK readers must agree
+         * on this string so neither side has to import the other's module.
+         */
+        const val STORAGE_KEY: String = "__amassed_army"
+    }
 }

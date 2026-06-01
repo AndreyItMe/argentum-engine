@@ -368,6 +368,8 @@ class DynamicAmountEvaluator(
 
         ContextPropertyKey.TRIGGER_SCRY_COUNT -> context.triggerScryCount ?: 0
 
+        ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT -> context.triggerExcessDamageAmount ?: 0
+
         ContextPropertyKey.LINKED_EXILE_CARD_COUNT -> {
             val sourceId = context.sourceId
             if (sourceId == null) 0 else state.getEntity(sourceId)
@@ -667,6 +669,8 @@ class DynamicAmountEvaluator(
             is EntityReference.IterationEntity -> context.pipeline.iterationTarget
             is EntityReference.FromCostStorage ->
                 context.pipeline.storedCollections[ref.collectionName]?.getOrNull(ref.index)
+            is EntityReference.AmassedArmy ->
+                context.pipeline.storedCollections[EntityReference.AmassedArmy.STORAGE_KEY]?.firstOrNull()
         }
 
     // =========================================================================
