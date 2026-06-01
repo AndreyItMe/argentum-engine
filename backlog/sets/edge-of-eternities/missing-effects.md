@@ -6,58 +6,9 @@ the engine/SDK work needed.
 
 As of the latest pass, **248 / 261** booster cards are implemented. The cards below remain
 blocked on the engine features listed here. Cards whose every clause maps to an existing primitive
-have already been implemented and are not listed.
-
----
-
-## 1. Conditional draw-replacement static — RESOLVED
-
-**Cards:** Quantum Riddler.
-
-**Resolution:** Added `ModifyDrawAmount(modifier, restrictions, appliesTo)` replacement effect
-(SDK) plus `DrawReplacementDispatcher.applyDrawAmountModifier()` in the engine. The modifier is
-consulted exactly once per draw instruction at the announcement site (CR 121.2a — instructions to
-draw multiple cards are modified before any individual card draws) — `DrawCardsExecutor.execute`
-for spell/ability draws and `DrawPhaseManager.performDrawStep` for the draw step — so a paused-and-
-resumed per-card loop doesn't double-modify. `restrictions: List<Condition>` mirrors
-`ModifyLifeLoss.restrictions` for the hand-size gate.
-
----
-
-## 2. "Was dealt damage this turn" tracking
-
-**Cards:** Faller's Faithful.
-
-**Clause:** "If that creature wasn't dealt damage this turn, its controller draws two cards."
-
-**Plan:** Track per-permanent "damaged this turn" state (cleared at cleanup) and expose it as a
-`Condition` usable on a context target. The ETB "destroy up to one target creature" is already
-expressible; only the damage-history conditional is missing.
-
----
-
-## 3. Excess-damage detection — RESOLVED
-
-**Cards:** Orbital Plunge.
-
-**Resolution:** Added `Conditions.IfTargetTookExcessDamage(targetIndex)` (backed by the
-`TargetMarkedDamageExceedsToughness` condition class). Reads the target's marked-damage component
-strictly greater than its projected toughness, so chaining it AFTER `Effects.DealDamage` in a
-composite gates a payoff on lethal-exceeding damage. Returns `false` for non-creature targets and
-for targets that have left the battlefield, so the chain stays safe without bespoke "DealDamageWithExcessFollowup"
-plumbing.
-
----
-
-## 4. Targeting cards in the warp-exile zone — RESOLVED
-
-**Cards:** Blade of the Swarm.
-
-**Resolution:** Extended `TargetEnumerationUtils.findValidObjectTargets` with a `Zone.EXILE` branch
-(`findValidExileTargets`), mirroring `findValidGraveyardTargets`. Combined with the existing
-`GameObjectFilter.warpExiled()` (`StatePredicate.IsWarpExiled`) and `MoveToZoneEffect(target, Zone.LIBRARY,
-ZonePlacement.Bottom)`, the modal targeting branch composes from existing atoms — no new effect or
-filter class needed.
+have already been implemented and are not listed. Section numbers are preserved from earlier
+revisions of this document so that [`problem-cards.md`](problem-cards.md) cross-references stay
+stable; gaps in the numbering correspond to features that have since been resolved.
 
 ---
 
@@ -72,45 +23,6 @@ that entered the battlefield under your control this turn."
 turn". (b) Add a continuous static replacement that adds ETB +1/+1 counters to *other* creatures
 you control (not just self), with a dynamic count. The "create a Lander" ETB is already
 expressible.
-
----
-
-## 6. `DynamicAmount` = mana spent to cast (usable in ETB replacement)
-
-**Cards:** Dyadrine, Synthesis Amalgam.
-
-**Clause:** "Dyadrine enters with a number of +1/+1 counters on it equal to the amount of mana spent
-to cast it."
-
-**Plan:** Persist `manaSpentToCast` on the permanent and expose a `DynamicAmount` that
-`EntersWithDynamicCounters` can read (today `TotalManaSpent` is only meaningful during cast
-resolution). The attack ability ("remove a +1/+1 counter from each of two creatures you control;
-if you do, draw a card and create a Robot token") is close to expressible but depends on a
-"remove a counter from each of N chosen creatures" cost/effect — verify before implementing.
-
----
-
-## 7. Characteristic-defining P/T from cards in exile — RESOLVED
-
-**Cards:** Cosmogoyf.
-
-**Resolution:** No new engine work needed. `DynamicAmount.AggregateZone(Player.You, Zone.EXILE,
-aggregation = COUNT)` already counts cards in the controller's exile sub-zone (cards in exile live
-in their owner's keyed exile bucket), and `dynamicStats(source, toughnessOffset = 1)` wires the
-same source as a CDA P/T through `CharacteristicValue.DynamicWithOffset`. The implementation is one
-DSL call: `dynamicStats(DynamicAmounts.zone(Player.You, Zone.EXILE).count(), toughnessOffset = 1)`.
-
----
-
-## 7b. Land: "sacrifice unless you tap an untapped permanent"
-
-**Cards:** Command Bridge.
-
-**Clause:** "When this land enters, sacrifice it unless you tap an untapped permanent you control."
-
-**Plan:** Add an ETB "sacrifice this unless you pay <cost>" intervening-choice effect where the
-alternative cost is tapping an untapped permanent you control. The "enters tapped" and the
-any-color mana ability are already expressible.
 
 ---
 
@@ -182,24 +94,6 @@ aura-attached "copy of enchanted permanent" token source.
 
 ---
 
-## 14. Affinity granted to the spells you cast / affinity for a subtype — RESOLVED
-
-**Cards:** Sami, Wildcat Captain (affinity for artifacts on all your spells);
-Thrumming Hivepool (affinity for Slivers on itself).
-
-**Clause:** "Spells you cast have affinity for artifacts." / "Affinity for Slivers."
-
-**Resolution:** No new engine work needed.
-- `KeywordAbility.AffinityForSubtype` already exists, so Hivepool's "Affinity for Slivers"
-  is just `KeywordAbility.AffinityForSubtype(Subtype.SLIVER)`.
-- Per CR 702.41a, "affinity for artifacts" is *defined* as "this spell costs {1} less for
-  each artifact you control", so Sami's "spells you cast have affinity for artifacts" is
-  mechanically identical to a battlefield-sourced
-  `ModifySpellCost(YouCast(Any), ReduceGenericBy(ArtifactsYouControl))` — no separate
-  "granted affinity" plumbing required.
-
----
-
 ## 15. Grant the Warp alternative-cast cost to cards in hand
 
 **Cards:** Tannuk, Steadfast Second.
@@ -235,17 +129,6 @@ many cards. Do this only once each turn."
 **Plan:** The trigger and "draw that many"
 (`ContextPropertyKey.TRIGGER_COUNTERS_PLACED_AMOUNT`) likely exist; the gap is a generic
 "do this only once each turn" limiter on a triggered ability.
-
----
-
-## 18. Copy a card from a zone and cast the copy for free — RESOLVED
-
-**Cards:** Roving Actuator.
-
-**Resolution:** No new engine work needed. The Shiko, Paragon of the Way pattern (`MoveToZoneEffect` →
-exile, `Effects.CopyCardIntoCollection`, `Effects.CastFromCollectionWithoutPayingCost` inside
-`MayEffect`) already implements "copy a card in a zone, then cast the copy" (Rule 707.12). Roving
-Actuator wraps the chain in a Void-gated ETB trigger via `triggerCondition = Conditions.Void`.
 
 ---
 
@@ -287,19 +170,6 @@ addition to its other types and has no abilities."
 
 ---
 
-## 22. Odd/even mass destroy + mass temporary control of all creatures
-
-**Cards:** Mutinous Massacre.
-
-**Clause:** "Choose odd or even. Destroy each creature with mana value of the chosen quality. Then
-gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."
-
-**Plan:** Add (a) an odd/even mana-value filter (parity predicate) for the destroy, and (b) mass
-"gain control of all creatures until end of turn" (today `Effects.GainControl` targets a single
-permanent). Untap-all + grant-haste-all are expressible.
-
----
-
 ## 23. Multi-group graveyard return with split destinations
 
 **Cards:** Pull Through the Weft.
@@ -326,12 +196,3 @@ creature.'"
 recurring combat-trigger ability, and (b) a "becomes a 0/0 Robot artifact creature" type-set on a
 noncreature artifact. The passive ("whenever an artifact you control enters, add a loyalty
 counter"), the 0 untap, and the −3 tutor are expressible.
-
----
-
-## Already covered elsewhere
-
-Poison counters (Virulent Silencer), token doubling (Exalted Sunborn), devour-land (Famished
-Worldsire), "mana spent" for X-counters (Astelli Reclaimer), and "your next turn" delayed-trigger
-timing (Kav Landseeker — `CreateDelayedTriggerEffect.timing = DelayedTriggerTiming.NEXT_TURN`) were previously listed
-here and are now implemented; their entries have been removed.
