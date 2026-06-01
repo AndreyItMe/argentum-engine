@@ -27,8 +27,11 @@ import com.wingedsheep.engine.state.components.combat.BlockersDeclaredThisCombat
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
+import com.wingedsheep.engine.legalactions.LegalActionEnumerator
 import com.wingedsheep.engine.view.ClientGameState
 import com.wingedsheep.engine.view.ClientStateTransformer
+import com.wingedsheep.engine.view.LegalActionEnricher
+import com.wingedsheep.engine.view.LegalActionInfo
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
@@ -744,6 +747,34 @@ abstract class ScenarioTestBase : FunSpec() {
         fun getClientState(playerNumber: Int): ClientGameState {
             val playerId = if (playerNumber == 1) player1Id else player2Id
             return stateTransformer.transform(state, playerId)
+        }
+
+        // Built lazily and shared across calls; both are stateless (they take the
+        // current [state] as an argument), so a single pair serves the whole game.
+        private val legalActionEngine by lazy {
+            val services = EngineServices(cardRegistry)
+            LegalActionEnumerator(
+                services.cardRegistry, services.manaSolver, services.costCalculator,
+                services.predicateEvaluator, services.conditionEvaluator, services.turnManager
+            ) to LegalActionEnricher(services.manaSolver, services.cardRegistry)
+        }
+
+        /**
+         * Enumerate the enriched legal actions a player may take right now.
+         *
+         * Mirrors `GameSession.getLegalActions` (including the priority/actor gating and the
+         * pending-decision guard) so legal-action assertions read identically to how they did
+         * against the server harness — but the computation is pure engine
+         * ([LegalActionEnumerator] + [LegalActionEnricher], both in `rules-engine`).
+         */
+        fun getLegalActions(playerNumber: Int): List<LegalActionInfo> {
+            val playerId = if (playerNumber == 1) player1Id else player2Id
+            val priorityPlayer = state.priorityPlayerId ?: return emptyList()
+            if (state.actorFor(priorityPlayer) != playerId) return emptyList()
+            if (state.pendingDecision != null) return emptyList()
+            val (enumerator, enricher) = legalActionEngine
+            val engineActions = enumerator.enumerate(state, priorityPlayer)
+            return enricher.enrich(engineActions, state, priorityPlayer)
         }
 
         /**

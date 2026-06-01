@@ -12,16 +12,17 @@ terminal respectively — they get tested for *the things only they do*
 (masking, DTO transformation, protocol, rendering, interaction), not for
 whether Lightning Bolt deals 3.
 
-Today that principle is ~90% true in practice (455 engine scenario tests) but
-muddied by history: 104 scenario tests live in `game-server` even though they
-have **zero** game-server dependencies — they're engine tests that happened to
-be written against a harness that lives in the server module. And the engine has
-*two* setup styles with no shared "nice" builder.
+This principle is now upheld in practice. It used to be muddied by history: 104 scenario
+tests lived in `game-server` despite having **zero** game-server dependencies — engine
+tests that happened to be written against a harness that lived in the server module. All
+four phases are now done: the harness was relocated into the engine, the skills point at
+it, and 102 of those 104 tests have moved home (the 2 that remain are genuinely
+server-level). See the phase log below for the details and the audit that confirmed only
+2 belonged in `game-server`.
 
-The plan is **not** a big-bang migration. It's: (1) name the convention, (2)
-give the engine one nice harness by **relocating** (not duplicating) the good
-builder into the engine, (3) let the misplaced tests drift home as they're
-touched.
+The plan was deliberately **not** a big-bang migration: (1) name the convention, (2) give
+the engine one nice harness by **relocating** (not duplicating) the good builder into the
+engine, (3) move the misplaced tests once the audit showed the risk was low.
 
 ---
 
@@ -51,7 +52,7 @@ touched.
 | **SDK data**                  | `mtg-sdk` unit tests                                   | A new data type serializes, round-trips, and composes as intended. Pure-data invariants.                                                                                                                                                                                                                                        | Anything requiring a running game.                                                  |
 | **Engine unit / integration** | `rules-engine/.../{mechanics,handlers,predicates,...}` | An executor / projector / detector / solver in isolation: construct `GameState` directly, assert on the result. Layer ordering, mana solving, trigger detection paths.                                                                                                                                                          | End-to-end card flows (use a scenario instead).                                     |
 | **Engine scenario** ⭐         | `rules-engine/.../engine/scenarios/`                   | **The primary home for card behavior and rules.** A card or mechanic exercised through the real `ActionProcessor` on a realistic board. Every CR rule/ruling you researched gets a paired assertion. Edge cases: fizzle, "may" declined, source leaves, zero/multiple instances, replacement vs trigger order, last-known info. | Frontend concerns; network.                                                         |
-| **Server**                    | `game-server`                                          | **Only what the server uniquely does:** state masking (hidden info per viewer), `ClientStateTransformer` DTO shape, session/idempotency (`lastProcessedMessageId`), tournament/lobby orchestration, the engine↔client message protocol.                                                                                         | Card behavior. Rules correctness.                                                   |
+| **Server**                    | `game-server`                                          | **Only what the server uniquely does:** session/idempotency (`lastProcessedMessageId`), the auto-pass priority loop (`AutoPassManager`), tournament/lobby orchestration, the live WebSocket message protocol round-trip. **Note:** masking and DTO transformation are *not* here — `ClientStateTransformer`/`LegalActionEnricher` live in `rules-engine/.../engine/view`, so DTO-shape and per-viewer-masking *correctness* are engine-testable (the harness exposes `getClientState`). | Card behavior. Rules correctness. DTO/masking correctness (that's engine `view`).   |
 | **E2E**                       | `e2e-scenarios/` (Playwright, 53 specs)                | Full-stack player flows: a decision actually renders and is clickable, targeting/priority/stack UX, animations driven by events. The frontend↔engine↔frontend round trip.                                                                                                                                                       | Exhaustive rules coverage (one representative flow per UI surface, not every card). |
 | **Self-play / smoke**         | `gym` HTTP step loop                                   | Shake out new-set cards that don't behave as printed by driving full games; surfaces crashes/soft-locks no unit test predicted.                                                                                                                                                                                                 | Deterministic assertions (it's exploratory).                                        |
 | **Differential (future)**     | `forge-parity-harness`                                 | Record-and-replay diff vs Forge as oracle for rules divergences.                                                                                                                                                                                                                                                                | (Aspirational — see its own backlog doc.)                                           |
@@ -68,17 +69,19 @@ touched.
 
 ## Current state (2026-06)
 
-- **`rules-engine` scenario tests: 455** under `engine/scenarios/`, plus ~65 more
-  focused engine tests (520 engine test files total). These use **`GameTestDriver`**
-  (in `rules-engine/src/testFixtures`) + **`TestCards.all`**, which registers the
-  *entire* `MtgSetCatalog` (every set's cards + basic lands) plus test-only cards.
-  This is already the de-facto primary card-test home.
-- **`game-server` scenario tests: 104**, all extending **`ScenarioTestBase`**
-  (`game-server/.../gameserver/ScenarioTestBase.kt`). Crucially, this base imports
-  **only engine classes** (`ActionProcessor`, `GameState`, `ClientStateTransformer`)
-  — no Spring, no WebSocket, no `@SpringBootTest`. **These are engine tests living
-  in the wrong module** for historical reasons. They are not slower or less pure
-  than engine tests; they're just mislocated.
+- **`rules-engine` scenario tests: ~560** under `engine/scenarios/` (was 455; +104 from
+  the Phase 3 migration below), plus ~65 more focused engine tests. These use either
+  **`GameTestDriver`** (live game) or **`ScenarioTestBase`** (static board) — both now in
+  `rules-engine/src/testFixtures` — over **`TestCards.all`**, which registers the *entire*
+  `MtgSetCatalog` (every set's cards + basic lands) plus test-only cards. This is the
+  primary card-test home.
+- **`game-server` scenario tests: 2** (was 104). The other 102 had **zero** server
+  dependency and migrated to `rules-engine/.../engine/scenarios/` (Phase 3, below). The
+  two that remain genuinely exercise server-only behavior:
+  `AshlingsCommandPriorityScenarioTest` (the `AutoPassManager` priority loop) and
+  `ProtocolTestBase` (`@SpringBootTest` + live WebSocket round-trip). The
+  `game-server/.../gameserver/ScenarioTestBase.kt` typealias shim stays as long as
+  `AshlingsCommand` extends it.
 - **Two setup styles, no shared builder:**
     - `GameTestDriver` — *live game*: real `GameInitializer`, decks, advance through
       real turns/priority/mana. Imperative. Per-test `registerCards(...)` boilerplate.
@@ -96,26 +99,29 @@ touched.
 
 ### Problems to fix
 
-1. The nicest authoring harness lives in the module we're steering tests *away* from.
-2. Skill templates point at a harness unavailable in the target module.
-3. 104 engine tests are mislocated (low harm, but they model the wrong convention
-   for newcomers and contradict game-server's own "no game logic" charter).
+1. ~~The nicest authoring harness lives in the module we're steering tests *away* from.~~ (Fixed — Phase 1.)
+2. ~~Skill templates point at a harness unavailable in the target module.~~ (Fixed — Phase 2.)
+3. ~~104 engine tests are mislocated~~ (Fixed — Phase 3 migrated all but the 2 genuinely
+   server-level ones.)
 
 ---
 
-## Target state
+## Target state (reached)
 
-- **One canonical scenario harness in `rules-engine/src/testFixtures`**, offering
+- ✅ **One canonical scenario harness in `rules-engine/src/testFixtures`**, offering
   *both* setup styles against the real engine:
-    - live-game flow (today's `GameTestDriver`), and
-    - the fluent static-board builder + name-based action/decision API (today's
-      `ScenarioBuilder`/`TestGame`), backed by `TestCards.all`.
-- **`game-server` consumes that harness** via `testFixtures(project(":rules-engine"))`;
-  its own `ScenarioTestBase` becomes a one-line shim (or is deleted once empty), so
-  the truly server-level tests (masking/DTO/protocol/tournament) keep a home.
-- **Skill templates teach the engine harness**, so every new card/feature test
+    - live-game flow (`GameTestDriver`), and
+    - the fluent static-board builder + name-based action/decision API
+      (`ScenarioBuilder`/`TestGame`), backed by `TestCards.all`. The static-board harness
+      now also exposes `getLegalActions(playerNumber)` and `getClientState(playerNumber)`
+      so legal-action and client-DTO assertions need no server `GameSession`.
+- ✅ **`game-server` consumes that harness** via `testFixtures(project(":rules-engine"))`;
+  its own `ScenarioTestBase` is a one-line typealias shim, kept only for the lone remaining
+  server-level scenario test that still uses the static-board builder.
+- ✅ **Skill templates teach the engine harness**, so every new card/feature test
   lands in `rules-engine`.
-- **Misplaced tests migrate on touch**, not in a risky big bang.
+- ✅ **Misplaced tests migrated** — 102 of 104 moved home (see Phase 3); the genuinely
+  server-level tests (auto-pass loop, protocol) stayed.
 
 Acceptable end state: two *setup styles* coexist in one module — they're
 complementary (live-flow vs static-board), not redundant. Fully converging them
@@ -177,16 +183,36 @@ game-server scenario tests compile and pass with only 3 one-token receiver-type 
   its two links from `docs/card-sdk-language-reference.md`. Its stale
   `game-server/src/test/.../scenarios/` template is gone with it.
 
-### Phase 3 — Migrate misplaced tests *on touch* (no big bang)
+### Phase 3 — Migrate misplaced tests (DONE)
 
-- Rule: when you edit a `game-server` scenario test that has no server dependency,
-  move it to `rules-engine/.../engine/scenarios/` (package + import swap; the
-  superclass name is unchanged thanks to the shim, so it's nearly verbatim).
-- Optionally do a one-time sweep later if/when game-server's scenario folder is
-  mostly empty and the shim can be deleted. Track remaining server-level tests
-  (masking/DTO/tournament) — those *stay* and justify keeping the folder.
-- **Do not** schedule a mass relocation as a milestone; the payoff (organizational
-  tidiness) doesn't justify 90+ simultaneous moves and their regression risk.
+What started as "migrate on touch" was completed in one pass once the audit showed the
+risk was low and the remainder small. **102 of the 104 `game-server` scenario tests moved
+to `rules-engine/.../engine/scenarios/`; 2 genuinely server-level tests stayed.**
+
+How the 102 split:
+
+1. **88 were a verbatim move** — only a package line (`com.wingedsheep.gameserver.scenarios`
+   → `com.wingedsheep.engine.scenarios`) and the `ScenarioTestBase` import
+   (`com.wingedsheep.gameserver.ScenarioTestBase` → `com.wingedsheep.engine.support.ScenarioTestBase`)
+   changed. `git mv` + a two-line `perl` swap.
+2. **16 needed a small rewrite.** They built a throwaway server `GameSession` (+ mock
+   `WebSocketSession`s + `injectStateForTesting`) purely to call `getLegalActions`. But
+   `GameSession.getLegalActions` just delegates to `LegalActionEnumerator`
+   (`engine.legalactions`) + `LegalActionEnricher` (`engine.view`) — both engine classes —
+   plus a thin priority/actor gate. So a new `TestGame.getLegalActions(playerNumber)` helper
+   was added to the engine harness (mirroring that gate exactly), and each test swapped
+   `session.getLegalActions(game.playerNId)` → `game.getLegalActions(N)`, dropping the
+   `GameSession`/mockk scaffolding. (The three that also asserted on client-state DTO content
+   already used the harness's `game.getClientState(...)`, which is engine `view`.)
+
+**Audit conclusion — only 2 tests justify staying in `game-server`:**
+`AshlingsCommandPriorityScenarioTest` (drives the `AutoPassManager` + `GameSession`
+auto-pass priority loop — genuinely server logic) and `ProtocolTestBase`
+(`@SpringBootTest` + live WebSocket round-trip). Everything else was engine behavior
+reached through a server convenience wrapper.
+
+The `game-server` `ScenarioTestBase` typealias shim stays while `AshlingsCommand` extends
+it; it can be deleted if that test is ever reworked to not need the static-board builder.
 
 ### Phase 4 (optional) — Converge setup styles
 
@@ -221,13 +247,16 @@ game-server scenario tests compile and pass with only 3 one-token receiver-type 
 
 ## Decisions / open questions
 
-- **Naming on relocation:** keep the engine class named `ScenarioTestBase` (so the
-  game-server shim and migrated tests need no rename) vs. a fresh name like
-  `EngineScenarioTest` (clearer, but forces import churn). _Leaning: keep the name._
-- **Delete the game-server shim eventually?** Only once no genuine server-level
-  scenario test remains. Likely a few masking/tournament tests justify keeping it.
-- **`TestCards.all` cost:** registering the full catalog per spec is already what
-  455 engine tests do; if registry build time ever shows up in profiles, cache a
+- **Naming on relocation:** ~~keep `ScenarioTestBase` vs. rename to `EngineScenarioTest`~~
+  _Resolved: kept the name_ — the shim and all 102 migrated tests needed no rename.
+- **Delete the game-server shim eventually?** Now blocked only on
+  `AshlingsCommandPriorityScenarioTest`, the sole remaining test that extends it (for the
+  static-board builder). Masking/DTO did *not* turn out to justify keeping it — that logic
+  is engine `view`, not server. Rework `AshlingsCommand` to build state without the shim
+  (or accept it referencing the engine `support.ScenarioTestBase` directly) and the shim
+  can go.
+- **`TestCards.all` cost:** registering the full catalog per spec is already what every
+  engine scenario test does; if registry build time ever shows up in profiles, cache a
   shared registry across the spec (it's immutable input).
 - **Convergence (Phase 4):** worth it only if the two-style split generates real
   confusion. Revisit after Phases 1–3 settle.
