@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 51 / 78
+**Implemented:** 53 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -39,7 +39,7 @@
 - [x] Unstable Mutation
 - [ ] Cuombajj Witches
 - [x] El-Hajjâj
-- [ ] Erg Raiders
+- [x] Erg Raiders
 - [ ] Guardian Beast
 - [x] Hasran Ogress
 - [x] Junún Efreet

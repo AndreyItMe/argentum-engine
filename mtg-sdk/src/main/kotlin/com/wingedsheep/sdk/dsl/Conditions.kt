@@ -472,6 +472,14 @@ object Conditions {
         SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.enteredThisTurn())
 
     /**
+     * If this creature was declared as an attacker at least once during the current turn.
+     * Used by intervening-if triggers like Erg Raiders' "if this creature didn't attack this
+     * turn, deal 2 damage to you" (negate via [com.wingedsheep.sdk.scripting.conditions.NotCondition]).
+     */
+    val SourceAttackedThisTurn: ConditionInterface =
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.attackedThisTurn())
+
+    /**
      * As long as this creature is a specific subtype.
      * Used for conditional static abilities like "has defender as long as it's a Wall."
      */

@@ -396,6 +396,14 @@ data class GameObjectFilter(
     )
 
     /**
+     * Must have been declared as an attacker at least once during the current turn.
+     * Survives leaving combat; cleared at end-of-turn cleanup.
+     */
+    fun attackedThisTurn() = copy(
+        statePredicates = statePredicates + StatePredicate.AttackedThisTurn
+    )
+
+    /**
      * Must be in the same combat band as the effect's source (the source itself, or a band-mate
      * sharing its band id — CR 702.22). Source-relative; only matches while the source attacks.
      */

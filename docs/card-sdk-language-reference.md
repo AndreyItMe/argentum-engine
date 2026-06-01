@@ -1632,6 +1632,9 @@ contexts.
 - `SourceIsTapped` — source is tapped.
 - `SourceIsUntapped` — source is untapped.
 - `SourceEnteredThisTurn` — source entered the battlefield this turn.
+- `SourceAttackedThisTurn` — source was declared as an attacker at least once during the
+  current turn (per-creature, derived from the controller's `PlayerAttackersThisTurnComponent`).
+  Negate via `Conditions.Not(...)` for Erg Raiders-style "if it didn't attack this turn".
 - `SourceHasDealtDamage` — source has dealt damage since entering the battlefield.
 - `SourceHasDealtCombatDamageToPlayer` — saboteur-style payoff gate.
 - `SourceIsModified` — has counters, attached Equipment, or controller-owned Aura
