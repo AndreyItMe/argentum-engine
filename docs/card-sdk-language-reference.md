@@ -2269,9 +2269,16 @@ substitution.
 - `charge`, `time`, `level`, `quest`, `shield`, `fade`, `vanishing`, `experience`, `age`, `velocity`, `awakening`,
   `blood`, `cage`, `doom`, `storage`, `divinity`, `charm`, `music`, `crumble`, `corpse`, `germ`, `ink`, `growth`,
   `hour`, `energy`, `scry`, `aura`, `chapter`, `citation`, `rune`, `scar`, `crux`, `omen`, `secret`, `feather`,
-  `hourglass` — assorted printed counter kinds. (`hourglass`: Temporal Distortion — a permanent with one doesn't untap
-  during its controller's untap step; model the restriction with `GrantKeyword(AbilityFlag.DOESNT_UNTAP.name,
-  GroupFilter(... .withCounter(Counters.HOURGLASS)))` so it stays projection-scoped.)
+  `hourglass`, `hope`, `verse`, `influence`, `burden` — assorted printed counter kinds. (`hourglass`: Temporal Distortion
+  — a permanent with one doesn't untap during its controller's untap step; model the restriction with
+  `GrantKeyword(AbilityFlag.DOESNT_UNTAP.name, GroupFilter(... .withCounter(Counters.HOURGLASS)))` so it stays
+  projection-scoped.) (`hope` / `verse` / `influence` / `burden`: LTR — Dawn of a New Age / Lost Isle Calling /
+  Palantír of Orthanc / The One Ring. Pure passive counters with no inherent rule; the cards that use them read the
+  count via `DynamicAmounts.countersOnSelf(CounterTypeFilter.Named(Counters.X))`.)
+- `stun` — CR 122.1d, a built-in replacement: "If a permanent with a stun counter on it would become untapped,
+  instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
+  which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the
+  sacrifice/pay continuation resumer. Adding stun counters is done by `AddCounters(Counters.STUN, n, target)`.
 - **Keyword counters** (Rule 122.1b) — `flying`, `first strike`, `lifelink`, `indestructible`, `deathtouch`,
   `trample`, `hexproof`, `reach`. `StateProjector` grants the matching `Keyword` to any permanent carrying one (mapped in
   `KEYWORD_COUNTER_MAP`, re-applied after Layer 6 so "loses all abilities" can't wipe a counter-granted keyword).

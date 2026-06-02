@@ -44,6 +44,10 @@ import {
   getGrowthCounters,
   getFeatherCounters,
   getTimeCounters,
+  getHopeCounters,
+  getVerseCounters,
+  getInfluenceCounters,
+  getBurdenCounters,
 } from '../board/shared'
 import { styles, bandColorFor } from '../board/styles'
 import {
@@ -1514,6 +1518,62 @@ function GameCardImpl({
           <i className={`ms ms-${counterManaClass.DECAYED}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
           <span style={{ fontWeight: 700 }}>
             {getDecayedCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Hope counter badge (LTR — Dawn of a New Age) */}
+      {battlefield && getHopeCounters(card) > 0 && (
+        <div style={{
+          ...styles.hopeCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.HOPE}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getHopeCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Verse counter badge (LTR — Lost Isle Calling) */}
+      {battlefield && getVerseCounters(card) > 0 && (
+        <div style={{
+          ...styles.verseCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.VERSE}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getVerseCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Influence counter badge (LTR — Palantír of Orthanc) */}
+      {battlefield && getInfluenceCounters(card) > 0 && (
+        <div style={{
+          ...styles.influenceCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.INFLUENCE}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getInfluenceCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Burden counter badge (LTR — The One Ring) */}
+      {battlefield && getBurdenCounters(card) > 0 && (
+        <div style={{
+          ...styles.burdenCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.BURDEN}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getBurdenCounters(card)}
           </span>
         </div>
       )}

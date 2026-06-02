@@ -496,6 +496,34 @@ export function getDecayedCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of hope counters on a card (LTR — Dawn of a New Age).
+ */
+export function getHopeCounters(card: ClientCard): number {
+  return card.counters[CounterType.HOPE] ?? 0
+}
+
+/**
+ * Get the number of verse counters on a card (LTR — Lost Isle Calling).
+ */
+export function getVerseCounters(card: ClientCard): number {
+  return card.counters[CounterType.VERSE] ?? 0
+}
+
+/**
+ * Get the number of influence counters on a card (LTR — Palantír of Orthanc).
+ */
+export function getInfluenceCounters(card: ClientCard): number {
+  return card.counters[CounterType.INFLUENCE] ?? 0
+}
+
+/**
+ * Get the number of burden counters on a card (LTR — The One Ring).
+ */
+export function getBurdenCounters(card: ClientCard): number {
+  return card.counters[CounterType.BURDEN] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {
