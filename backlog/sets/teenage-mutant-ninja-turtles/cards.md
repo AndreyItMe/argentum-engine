@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 8 / 190
+**Implemented:** 9 / 190
 ---
 
 - [ ] Action News Crew
@@ -28,7 +28,7 @@
 - [ ] Cowabunga!
 - [ ] Crustacean Commando
 - [ ] Dark Leo & Shredder
-- [ ] Death in the Family
+- [x] Death in the Family
 - [ ] Dimension X
 - [ ] Dimensional Exile
 - [ ] Does Machines
