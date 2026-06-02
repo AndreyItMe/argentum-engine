@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaSpendOnChosenTypeEff
 import com.wingedsheep.sdk.scripting.effects.AddManaOfChoiceEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
+import com.wingedsheep.sdk.scripting.values.EntityReference
 import com.wingedsheep.sdk.scripting.values.LandControllerScope
 import com.wingedsheep.sdk.scripting.values.ManaColorSet
 import com.wingedsheep.sdk.scripting.effects.AddOneManaOfEachColorAmongEffect
@@ -37,6 +38,7 @@ import com.wingedsheep.sdk.scripting.effects.ChooseColorThenEffect
 import com.wingedsheep.sdk.scripting.effects.ChooseNumberThenEffect
 import com.wingedsheep.sdk.scripting.effects.GrantHexproofFromChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.GrantProtectionFromChosenColorEffect
+import com.wingedsheep.sdk.scripting.effects.ForEachColorOfEffect
 import com.wingedsheep.sdk.scripting.effects.GrantCantBeBlockedByChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.GrantHarmonizeEffect
 import com.wingedsheep.sdk.scripting.effects.GrantToxicEffect
@@ -1499,6 +1501,28 @@ object Effects {
         target: EffectTarget = EffectTarget.ContextTarget(0),
         duration: Duration = Duration.EndOfTurn
     ): Effect = GrantProtectionFromChosenColorEffect(target, duration)
+
+    /**
+     * Run [effect] once per color of [source], with that color set as the context's chosen
+     * color — the non-interactive sibling of [ChooseColorThen]. Compose with any per-color
+     * atom that reads the chosen color (e.g. [GrantProtectionFromChosenColor]).
+     *
+     * "[group] gain protection from each of [source]'s colors" (Éowyn, Fearless Knight) is:
+     *
+     *     Effects.ForEachColorOf(
+     *         source = EntityReference.Target(0),
+     *         effect = ForEachInGroupEffect(group, Effects.GrantProtectionFromChosenColor(EffectTarget.Self)),
+     *     )
+     *
+     * Colors are read from projected state on the battlefield (Layer-5 / Devoid honored),
+     * else from printed colors (last-known information); a colorless source runs zero times.
+     * When [source] is an about-to-leave permanent, run [ForEachColorOf] **before** the
+     * exile/destroy step so its projected colors are still readable.
+     */
+    fun ForEachColorOf(
+        source: EntityReference,
+        effect: Effect
+    ): Effect = ForEachColorOfEffect(source, effect)
 
     /**
      * Grant "can't be blocked by creatures of the chosen color" to a target.

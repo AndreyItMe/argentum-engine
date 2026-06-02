@@ -10,6 +10,7 @@ import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.references.Player
+import com.wingedsheep.sdk.scripting.values.EntityReference
 
 /**
  * Utility functions for resolving effect targets from symbolic references to concrete entity IDs.
@@ -187,6 +188,34 @@ object TargetResolutionUtils {
             else -> resolvePlayerTarget(effectTarget, context, state)?.let { listOf(it) } ?: emptyList()
         }
     }
+
+    /**
+     * Resolve an [EntityReference] (AST-level "which entity" reference used by effects,
+     * filters, and dynamic amounts) to a concrete entity id against the current [context]
+     * and [state].
+     *
+     * Counterpart to [resolveTarget], which resolves [EffectTarget]s. [EntityReference] is the
+     * value-AST reference (source / chosen target / sacrificed / tapped-as-cost / triggering /
+     * affected / iteration / cost-storage / amassed army / enchanted creature). A `Target`
+     * resolves to whatever the chosen target points at — permanent, card-in-zone, spell, or
+     * player — via [toEntityId]; `EnchantedCreature` reads the source's attachment from [state].
+     */
+    fun resolveEntityReference(ref: EntityReference, context: EffectContext, state: GameState): EntityId? =
+        when (ref) {
+            is EntityReference.Source -> context.sourceId
+            is EntityReference.EnchantedCreature ->
+                context.sourceId?.let { state.getEntity(it)?.get<AttachedToComponent>()?.targetId }
+            is EntityReference.Target -> context.targets.getOrNull(ref.index)?.toEntityId()
+            is EntityReference.Sacrificed -> context.sacrificedPermanents.getOrNull(ref.index)?.entityId
+            is EntityReference.TappedAsCost -> context.tappedPermanents.getOrNull(ref.index)
+            is EntityReference.Triggering -> context.triggeringEntityId
+            is EntityReference.AffectedEntity -> context.affectedEntityId
+            is EntityReference.IterationEntity -> context.pipeline.iterationTarget
+            is EntityReference.FromCostStorage ->
+                context.pipeline.storedCollections[ref.collectionName]?.getOrNull(ref.index)
+            is EntityReference.AmassedArmy ->
+                context.pipeline.storedCollections[EntityReference.AmassedArmy.STORAGE_KEY]?.firstOrNull()
+        }
 
     /**
      * Convert a ChosenTarget to an EntityId.

@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
+import com.wingedsheep.sdk.scripting.values.EntityReference
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -39,6 +40,42 @@ data class ForEachInGroupEffect(
         val newEffect = effect.applyTextReplacement(replacer)
         return if (newFilter !== filter || newEffect !== effect)
             copy(filter = newFilter, effect = newEffect) else this
+    }
+}
+
+/**
+ * Iterate the colors of a referenced entity and run [effect] once per color, exposing the
+ * current color through the chosen-color context — the same channel `ChooseColorThen` feeds.
+ * This makes `ForEachColorOf` the non-interactive sibling of `ChooseColorThen`: any per-color
+ * atom that reads the chosen color (`GrantProtectionFromChosenColor`,
+ * `GrantHexproofFromChosenColor`, `GrantCantBeBlockedByChosenColor`, …) composes inside it.
+ *
+ * The entity's colors are read from projected state while it is on the battlefield (so Layer-5
+ * color changes and Devoid are honored), else from its printed colors as last-known information.
+ * A colorless source produces zero iterations (colorless is not a color, CR 105.2).
+ *
+ * Example — "[group] gain protection from each of [source]'s colors" (Éowyn, Fearless Knight):
+ *
+ *     ForEachColorOf(
+ *         source = EntityReference.Target(0),
+ *         effect = ForEachInGroupEffect(group, GrantProtectionFromChosenColor(EffectTarget.Self)),
+ *     )
+ *
+ * @property source The entity whose colors are iterated
+ * @property effect The effect run once per color, with that color set as the context's chosen color
+ */
+@SerialName("ForEachColorOf")
+@Serializable
+data class ForEachColorOfEffect(
+    val source: EntityReference,
+    val effect: Effect,
+) : Effect {
+    override val description: String =
+        "for each color of ${source.description}, ${effect.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
     }
 }
 

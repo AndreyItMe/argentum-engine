@@ -6,14 +6,13 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CollectionFilter
 import com.wingedsheep.sdk.scripting.effects.FilterCollectionEffect
-import com.wingedsheep.sdk.scripting.values.EntityReference
-import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import kotlin.reflect.KClass
 
 /**
@@ -124,7 +123,7 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
             }
 
             is CollectionFilter.ExcludeEntity -> {
-                val excludedId = resolveEntityReference(filter.entity, context)
+                val excludedId = TargetResolutionUtils.resolveEntityReference(filter.entity, context, state)
                 cards.partition { it != excludedId }
             }
 
@@ -151,28 +150,4 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
 
         return EffectResult.success(state).copy(updatedCollections = updatedCollections)
     }
-
-    private fun resolveEntityReference(ref: EntityReference, context: EffectContext): EntityId? =
-        when (ref) {
-            is EntityReference.Source -> context.sourceId
-            is EntityReference.Target -> {
-                val target = context.targets.getOrNull(ref.index)
-                when (target) {
-                    is ChosenTarget.Permanent -> target.entityId
-                    is ChosenTarget.Spell -> target.spellEntityId
-                    is ChosenTarget.Player -> target.playerId
-                    else -> null
-                }
-            }
-            is EntityReference.Sacrificed -> context.sacrificedPermanents.getOrNull(ref.index)?.entityId
-            is EntityReference.TappedAsCost -> context.tappedPermanents.getOrNull(ref.index)
-            is EntityReference.Triggering -> context.triggeringEntityId
-            is EntityReference.AffectedEntity -> context.affectedEntityId
-            is EntityReference.IterationEntity -> context.pipeline.iterationTarget
-            is EntityReference.FromCostStorage ->
-                context.pipeline.storedCollections[ref.collectionName]?.getOrNull(ref.index)
-            is EntityReference.AmassedArmy ->
-                context.pipeline.storedCollections[EntityReference.AmassedArmy.STORAGE_KEY]?.firstOrNull()
-            is EntityReference.EnchantedCreature -> null // Attachment lookup needs state, not threaded here
-        }
 }

@@ -1,9 +1,9 @@
 package com.wingedsheep.engine.handlers
 
+import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
-import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsStationUsingToughnessComponent
@@ -167,7 +167,7 @@ class DynamicAmountEvaluator(
 
             // Composable entity property — replaces SourcePower, TargetPower, CountersOnSelf, etc.
             is DynamicAmount.EntityProperty -> {
-                val entityId = resolveEntityId(amount.entity, context, state)
+                val entityId = TargetResolutionUtils.resolveEntityReference(amount.entity, context, state)
                 // Enchanted-creature power reads use last-known information when the source aura
                 // has detached: the enchanted creature (and the aura) can leave the battlefield
                 // before the ability resolves — e.g. removed in response to the aura's ETB
@@ -674,44 +674,6 @@ class DynamicAmountEvaluator(
             }
         }
     }
-
-    // =========================================================================
-    // Entity Reference Resolution
-    // =========================================================================
-
-    /**
-     * Resolve an [EntityReference] to an [EntityId] using the current effect context.
-     */
-    private fun resolveEntityId(ref: EntityReference, context: EffectContext, state: GameState): EntityId? =
-        when (ref) {
-            is EntityReference.Source -> context.sourceId
-            is EntityReference.EnchantedCreature -> {
-                val sourceId = context.sourceId
-                sourceId?.let { state.getEntity(it)?.get<AttachedToComponent>()?.targetId }
-            }
-            is EntityReference.Target -> {
-                val target = context.targets.getOrNull(ref.index)
-                when (target) {
-                    is com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent -> target.entityId
-                    // A card targeted in a zone (graveyard/exile/hand) — e.g. "that card's mana
-                    // value" for a reanimation target. Resolves to the card entity so numeric
-                    // properties (mana value, power, …) can be read, mirroring ConditionEvaluator.
-                    is com.wingedsheep.engine.state.components.stack.ChosenTarget.Card -> target.cardId
-                    is com.wingedsheep.engine.state.components.stack.ChosenTarget.Spell -> target.spellEntityId
-                    is com.wingedsheep.engine.state.components.stack.ChosenTarget.Player -> target.playerId
-                    else -> null
-                }
-            }
-            is EntityReference.Sacrificed -> context.sacrificedPermanents.getOrNull(ref.index)?.entityId
-            is EntityReference.TappedAsCost -> context.tappedPermanents.getOrNull(ref.index)
-            is EntityReference.Triggering -> context.triggeringEntityId
-            is EntityReference.AffectedEntity -> context.affectedEntityId
-            is EntityReference.IterationEntity -> context.pipeline.iterationTarget
-            is EntityReference.FromCostStorage ->
-                context.pipeline.storedCollections[ref.collectionName]?.getOrNull(ref.index)
-            is EntityReference.AmassedArmy ->
-                context.pipeline.storedCollections[EntityReference.AmassedArmy.STORAGE_KEY]?.firstOrNull()
-        }
 
     // =========================================================================
     // Station Toughness Override
