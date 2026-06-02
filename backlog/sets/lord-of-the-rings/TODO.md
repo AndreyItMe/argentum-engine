@@ -118,11 +118,24 @@ spells.
 ### Gap 6 — new counter types (each spans the 5 counter layers)
 **Engine change:** add the counter type across `CounterType`, `StateProjector`, and the three
 web-client files; some also need "enters with N counters where N = …".
-- **Dawn of a New Age** — hope counter; "enters with a hope counter for each creature you control."
-- **Lost Isle Calling** — verse counter; "Whenever you scry, put a verse counter on this."
-- **Palantír of Orthanc** — influence counter (also complex opponent choice on the scry trigger).
-- **The One Ring** — burden counter (also Gap 8 protection-from-everything).
-- **Scroll of Isildur** — stun counter (also Gap 37 Saga gain-control-for-duration).
+
+**Status:** LANDED for hope/verse/influence/burden (see PR `ltr-gap6-counter-types`); stun was
+already wired (CR 122.1d via `untapOrConsumeStun`, tested by `StunCounterTest`). Cards still
+blocked are gated on *other* gaps — they need Gap 6 plus what's noted inline:
+- **Dawn of a New Age** — ✅ implemented (hope counter; ETB with N = creatures you control).
+- **Lost Isle Calling** — needs a *new gap*: read source counters at activation time after
+  `ExileSelf` cost (CR 122.2 wipes the counters at zone change, but the effect "Draw a card for
+  each verse counter on this enchantment" still needs to see the pre-exile count). Capture
+  source's `CountersComponent.counters` into the activation `EffectContext` and expose a new
+  `DynamicAmount.LastKnownSourceCounters(CounterTypeFilter)` / `LastKnownTotalSourceCounters`
+  primitive. Generalises beyond LTR (any "exile this: do X per counter on it" card).
+- **Palantír of Orthanc** — needs **opponent-makes-a-may-decision on your trigger** (the
+  "target opponent may have you draw a card" half routes the yes/no to the targeted opponent,
+  not the controller — distinct from `MayEffect`'s controller-yes/no), plus a
+  `DynamicAmount.ManaValueSumOfCollection(name)` for "lose life equal to the total mana value of
+  those cards" over the just-milled pile.
+- **The One Ring** — burden counter type ready; still needs Gap 8 (protection-from-everything).
+- **Scroll of Isildur** — stun counter type ready; still needs Gap 37 (Saga gain-control-for-duration).
 
 ### Gap 7 — keyword counters + "choose a kind of counter"
 **Engine change:** first-strike/vigilance/deathtouch/lifelink counters wired through the
