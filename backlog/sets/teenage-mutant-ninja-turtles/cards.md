@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 52 / 190
+**Implemented:** 53 / 190
 ---
 
 - [ ] Action News Crew
@@ -164,7 +164,7 @@
 - [ ] Splinter, Hamato Yoshi
 - [ ] Splinter, Radical Rat
 - [x] Squirrelanoids
-- [ ] Stockman, Mad Fly-entist
+- [x] Stockman, Mad Fly-entist
 - [ ] Stomped by the Foot
 - [ ] Super Shredder
 - [ ] Tainted Treats
