@@ -87,7 +87,7 @@ data class SetBaseToughnessForCreatureGroup(
  *
  * @property power The base power to set
  * @property toughness The base toughness to set
- * @property target What this ability applies to (typically AttachedCreature for auras)
+ * @property filter What this ability applies to (typically AttachedCreature for auras)
  */
 @SerialName("SetBasePowerToughnessStatic")
 @Serializable

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  * Used for auras like Crown of Awe: "Enchanted creature has protection from black and from red."
  *
  * @property color The color to grant protection from
- * @property target What this ability applies to (typically AttachedCreature for auras)
+ * @property filter What this ability applies to (typically AttachedCreature for auras)
  */
 @SerialName("GrantProtection")
 @Serializable

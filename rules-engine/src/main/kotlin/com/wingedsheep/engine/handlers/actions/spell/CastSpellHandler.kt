@@ -358,7 +358,7 @@ class CastSpellHandler(
                             // Check self-alternative cost (e.g., Zahid's {3}{U} + tap artifact)
                             val selfAltCost = cardDef.script.selfAlternativeCost
                             if (selfAltCost != null) {
-                                val altMana = ManaCost.parse(selfAltCost.manaCost)
+                                val altMana = selfAltCost.manaCost
                                 costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altMana, action.playerId)
                             } else {
                                 // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
@@ -1342,7 +1342,7 @@ class CastSpellHandler(
                         } else {
                             val selfAltCost = cardDef.script.selfAlternativeCost
                             if (selfAltCost != null) {
-                                val altMana = ManaCost.parse(selfAltCost.manaCost)
+                                val altMana = selfAltCost.manaCost
                                 costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altMana, action.playerId)
                             } else {
                                 val altCosts = costCalculator.findAlternativeCastingCosts(currentState, action.playerId)

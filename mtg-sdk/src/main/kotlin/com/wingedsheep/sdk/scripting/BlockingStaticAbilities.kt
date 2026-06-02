@@ -29,7 +29,7 @@ data class CantBeBlocked(
  * - Can't be blocked by black/red creatures: `CantBeBlockedBy(GameObjectFilter.Creature.withAnyColor(BLACK, RED))`
  *
  * @property blockerFilter Filter describing which creatures cannot block this creature
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CantBeBlockedBy")
 @Serializable
@@ -49,7 +49,7 @@ data class CantBeBlockedBy(
  * - Can't be blocked except by flyers: `CantBeBlockedExceptBy(GameObjectFilter.Creature.withKeyword(FLYING))`
  *
  * @property blockerFilter Filter describing which creatures CAN block this creature
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CantBeBlockedExceptBy")
 @Serializable
@@ -92,7 +92,7 @@ data class CanOnlyBlockCreaturesWith(
  *
  * The comparison uses projected power (accounts for buffs/debuffs).
  *
- * @property target What this ability applies to (typically SourceCreature)
+ * @property filter What this ability applies to (typically SourceCreature)
  */
 @SerialName("CantBlockCreaturesWithGreaterPower")
 @Serializable
@@ -127,7 +127,7 @@ data class CantBeBlockedByCreaturesWithLessPower(
  * Used for Charging Rhino: "can't be blocked by more than one creature."
  *
  * @property maxBlockers The maximum number of creatures that can block this creature
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CantBeBlockedByMoreThan")
 @Serializable
@@ -172,7 +172,7 @@ data class GrantCantBeBlockedToSmallCreatures(
  * against those records.
  *
  * @property spellFilter The filter that cast spells must match to grant unblockability
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CantBeBlockedIfCastSpellType")
 @Serializable
@@ -188,7 +188,7 @@ data class CantBeBlockedIfCastSpellType(
  * This creature can block any number of creatures.
  * Used for Ironfist Crusher and similar cards.
  *
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CanBlockAnyNumber")
 @Serializable
@@ -224,7 +224,7 @@ data class CanBlockAdditionalForCreatureGroup(
  * three or more creatures that share a creature type."
  *
  * @property minSharedCount The minimum number of creatures sharing a type required to allow blocking
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("CantBeBlockedUnlessDefenderSharesCreatureType")
 @Serializable

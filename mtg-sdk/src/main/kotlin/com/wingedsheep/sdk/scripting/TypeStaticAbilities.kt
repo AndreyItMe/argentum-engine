@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
  * This is a Layer 4 (type-changing) continuous effect that adds a subtype.
  *
  * @property subtype The creature subtype to add (e.g., "Knight")
- * @property target What this ability applies to (typically SourceCreature for Auras → enchanted creature)
+ * @property filter What this ability applies to (typically SourceCreature for Auras → enchanted creature)
  */
 @SerialName("GrantSubtype")
 @Serializable
@@ -36,7 +36,7 @@ data class GrantSubtype(
  *
  * This is a Layer 4 (type-changing) continuous effect.
  *
- * @property target What this ability applies to (typically AttachedCreature for Equipment)
+ * @property filter What this ability applies to (typically AttachedCreature for Equipment)
  */
 @SerialName("IsAllCreatureTypes")
 @Serializable
@@ -54,7 +54,7 @@ data class IsAllCreatureTypes(
  * This is a Layer 4 (type-changing) continuous effect that adds a card type.
  *
  * @property cardType The card type to add (e.g., "CREATURE", "ARTIFACT")
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("GrantCardType")
 @Serializable
@@ -98,7 +98,7 @@ data class RemoveCardType(
  * This is a Layer 4 (type-changing) continuous effect that adds a supertype.
  *
  * @property supertype The supertype to add (e.g., "LEGENDARY")
- * @property target What this ability applies to (typically AttachedCreature for auras)
+ * @property filter What this ability applies to (typically AttachedCreature for auras)
  */
 @SerialName("GrantSupertype")
 @Serializable
@@ -117,7 +117,7 @@ data class GrantSupertype(
  * This is a Layer 5 (color-changing) continuous effect that adds a color.
  *
  * @property color The color to add
- * @property target What this ability applies to (typically AttachedCreature for auras)
+ * @property filter What this ability applies to (typically AttachedCreature for auras)
  */
 @SerialName("GrantColor")
 @Serializable
@@ -136,7 +136,7 @@ data class GrantColor(
  * This is a Layer 5 (color-changing) continuous effect. If the source has no chosen color
  * (e.g., somehow on the battlefield without a choice), no color is added.
  *
- * @property target What this ability applies to (typically AttachedCreature for auras;
+ * @property filter What this ability applies to (typically AttachedCreature for auras;
  *   for enchant-land auras use `GroupFilter.attachedCreature()` — it resolves to whatever
  *   permanent the aura is attached to via `AttachedToComponent`).
  */
@@ -201,7 +201,7 @@ data class AddLandTypeByCounter(
  * This is a Layer 6 (ABILITY) continuous effect that clears all keywords and
  * suppresses activated, triggered, and static abilities.
  *
- * @property target What this ability applies to (typically AttachedCreature for auras)
+ * @property filter What this ability applies to (typically AttachedCreature for auras)
  */
 @SerialName("LoseAllAbilities")
 @Serializable
@@ -330,7 +330,7 @@ data class AnimateLandGroup(
  * @property setCardTypes Card types to set (replaces ALL existing card types)
  * @property setSubtypes Subtypes to set (replaces ALL existing subtypes)
  * @property setColors Colors to set (null = don't change, empty = colorless)
- * @property target What this ability applies to
+ * @property filter What this ability applies to
  */
 @SerialName("TransformPermanent")
 @Serializable
