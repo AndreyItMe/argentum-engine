@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 26 / 190
+**Implemented:** 27 / 190
 ---
 
 - [ ] Action News Crew
@@ -61,7 +61,7 @@
 - [x] Hard-Won Jitte
 - [x] Henchbots
 - [x] High-Flying Ace
-- [ ] Ice Cream Kitty
+- [x] Ice Cream Kitty
 - [x] Illegitimate Business
 - [ ] Improvised Arsenal
 - [ ] Insectoid Exterminator
