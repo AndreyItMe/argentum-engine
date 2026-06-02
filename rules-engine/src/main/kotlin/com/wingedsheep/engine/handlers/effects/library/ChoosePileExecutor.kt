@@ -54,6 +54,14 @@ class ChoosePileExecutor : EffectExecutor<ChoosePileEffect> {
                     ?: state.getEntity(deriveFrom)?.get<ControllerComponent>()?.playerId
                     ?: return EffectResult.error(state, "Could not resolve controller for ChoosePile ControllerOfSelection chooser")
             }
+            Chooser.ControllerOfTarget -> {
+                val targetId = context.targets.firstOrNull()?.let {
+                    TargetResolutionUtils.run { it.toEntityId() }
+                } ?: return EffectResult.error(state, "No target for ChoosePile ControllerOfTarget chooser")
+                state.getEntity(targetId)?.get<ControllerComponent>()?.playerId
+                    ?: state.getEntity(targetId)?.get<CardComponent>()?.ownerId
+                    ?: return EffectResult.error(state, "Could not resolve controller for ChoosePile ControllerOfTarget chooser")
+            }
         }
 
         val sourceName = context.sourceId?.let { sourceId ->

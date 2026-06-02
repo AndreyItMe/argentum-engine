@@ -105,6 +105,16 @@ class SelectFromCollectionExecutor : EffectExecutor<SelectFromCollectionEffect> 
                     ?: state.getEntity(deriveFrom)?.get<ControllerComponent>()?.playerId
                     ?: return EffectResult.error(state, "Could not resolve controller for ControllerOfSelection chooser")
             }
+            Chooser.ControllerOfTarget -> {
+                val targetId = context.targets.firstOrNull()?.let {
+                    TargetResolutionUtils.run { it.toEntityId() }
+                } ?: return EffectResult.error(state, "No target for ControllerOfTarget chooser")
+                // Controller of the targeted permanent; fall back to its owner once it has
+                // left the battlefield (e.g. destroyed earlier in the same resolution).
+                state.getEntity(targetId)?.get<ControllerComponent>()?.playerId
+                    ?: state.getEntity(targetId)?.get<CardComponent>()?.ownerId
+                    ?: return EffectResult.error(state, "Could not resolve controller for ControllerOfTarget chooser")
+            }
         }
 
         // OnePerColor(matchControllerPermanentColors = true) narrows eligibility to

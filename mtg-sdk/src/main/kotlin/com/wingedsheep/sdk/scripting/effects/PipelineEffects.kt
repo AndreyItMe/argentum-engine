@@ -412,7 +412,18 @@ enum class Chooser {
      * first card in the source collection. Used by Barrin's Spite ("their controller
      * chooses and sacrifices one of them").
      */
-    ControllerOfSelection
+    ControllerOfSelection,
+
+    /**
+     * The controller of the targeted permanent (`context.targets[0]`) decides — distinct
+     * from [TargetPlayer], which treats the target itself as the deciding player. Resolves
+     * through the target's `ControllerComponent`, falling back to its owner when the
+     * permanent has already left the battlefield (e.g. it was destroyed earlier in the same
+     * resolution). Used by "destroy target permanent. Its controller searches their
+     * library…"-style effects (Magmatic Hellkite), where the destroyed permanent's
+     * controller performs a follow-up search/choice.
+     */
+    ControllerOfTarget
 }
 
 /**

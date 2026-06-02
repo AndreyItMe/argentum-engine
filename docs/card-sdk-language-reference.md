@@ -2377,12 +2377,15 @@ Counter effects live in §4 (`AddCounters`, `RemoveCounters`, `Proliferate`, `Mo
   rest"). Each restriction also exposes a boolean flag on `SelectCardsDecision` (`onePerBasicLandType`, …) so the UI
   can disable redundant picks.
   - `chooser` (`Chooser`, default `Controller`) — who makes the selection: `Controller`, `Opponent`, `TargetPlayer`
-    (`context.targets[0]`), `TriggeringPlayer`, `SourceController` (the source's controller, ignoring per-iteration
-    swaps), or `ControllerOfSelection` (the controller of the cards in `from` — resolved from the first card's
-    projected controller). Use `ControllerOfSelection` for "their controller chooses…" where the deciding player is
-    whoever controls the gathered cards and may be you or an opponent (Barrin's Spite: gather the two targeted
-    creatures, their controller sacrifices one, the other is returned to hand). The same `chooser` set is accepted by
-    `ChoosePileEffect`.
+    (`context.targets[0]` treated as the player), `TriggeringPlayer`, `SourceController` (the source's controller,
+    ignoring per-iteration swaps), `ControllerOfSelection` (the controller of the cards in `from` — resolved from the
+    first card's projected controller), or `ControllerOfTarget` (the controller of the targeted *permanent*,
+    `context.targets[0]`, falling back to its owner once it has left the battlefield). Use `ControllerOfSelection` for
+    "their controller chooses…" where the deciding player is whoever controls the gathered cards and may be you or an
+    opponent (Barrin's Spite: gather the two targeted creatures, their controller sacrifices one, the other is returned
+    to hand). Use `ControllerOfTarget` for "destroy target permanent. Its controller searches/chooses…" where the
+    targeted permanent's controller performs a follow-up (Magmatic Hellkite: destroy target nonbasic land, *its
+    controller* searches for a basic). The same `chooser` set is accepted by `ChoosePileEffect`.
 
 **Linked exile**
 
