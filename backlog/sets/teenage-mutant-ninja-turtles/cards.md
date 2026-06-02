@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 44 / 190
+**Implemented:** 45 / 190
 ---
 
 - [ ] Action News Crew
@@ -144,7 +144,7 @@
 - [ ] Renet, Temporal Apprentice
 - [ ] Retro-Mutation
 - [ ] Return to the Sewers
-- [ ] Rock Soldiers
+- [x] Rock Soldiers
 - [ ] Rocksteady, Crash Courser
 - [ ] Sally Pride, Lioness Leader
 - [ ] Savanti Romero, Time's Exile
