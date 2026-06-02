@@ -1711,6 +1711,9 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
 ### Battlefield state
 
 - `YouControl(filter)` — you control ≥1 matching permanent.
+- `YouControlAtLeast(count, filter)` — you control `count` or more matching permanents (the
+  filtered-count generalization of `ControlCreaturesAtLeast`/`ControlLandsAtLeast`; e.g.
+  `YouControlAtLeast(3, GameObjectFilter.Creature.attacking())` for Stormbeacon Blade).
 - `ControlCreature` — you control any creature.
 - `ControlMoreCreatures` — you control more creatures than each opponent.
 - `OpponentControlsCreature` — at least one opponent has a creature.

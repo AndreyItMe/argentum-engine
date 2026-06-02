@@ -181,6 +181,21 @@ object Conditions {
         )
 
     /**
+     * If you control [count] or more permanents matching [filter].
+     *
+     * The general-purpose filtered-count form of [ControlCreaturesAtLeast] /
+     * [ControlLandsAtLeast] — pass any [GameObjectFilter] (e.g.
+     * `GameObjectFilter.Creature.attacking()` for "three or more attacking creatures",
+     * Stormbeacon Blade). [YouControl] checks mere existence; this counts the group.
+     */
+    fun YouControlAtLeast(count: Int, filter: GameObjectFilter): ConditionInterface =
+        Compare(
+            DynamicAmount.AggregateBattlefield(Player.You, filter),
+            ComparisonOperator.GTE,
+            DynamicAmount.Fixed(count)
+        )
+
+    /**
      * If [count] or more different kinds of counters are among permanents you control matching
      * [filter] (default: creatures). Counts distinct counter kinds across the whole group — a
      * +1/+1 and a finality counter on two creatures is two kinds; the same kind on several
