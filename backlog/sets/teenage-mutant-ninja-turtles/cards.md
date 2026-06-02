@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 47 / 190
+**Implemented:** 48 / 190
 ---
 
 - [ ] Action News Crew
@@ -146,7 +146,7 @@
 - [ ] Return to the Sewers
 - [x] Rock Soldiers
 - [x] Rocksteady, Crash Courser
-- [ ] Sally Pride, Lioness Leader
+- [x] Sally Pride, Lioness Leader
 - [ ] Savanti Romero, Time's Exile
 - [ ] Saved by the Shell
 - [ ] Sewer-veillance Cam
