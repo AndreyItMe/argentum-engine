@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 17 / 190
+**Implemented:** 18 / 190
 ---
 
 - [ ] Action News Crew
@@ -38,7 +38,7 @@
 - [ ] Donatello, Gadget Master
 - [ ] Donatello, Mutant Mechanic
 - [x] Donatello, Turtle Techie
-- [ ] Donatello, Way with Machines
+- [x] Donatello, Way with Machines
 - [ ] Dream Beavers
 - [ ] East Wind Avatar
 - [ ] EPF Point Squad
