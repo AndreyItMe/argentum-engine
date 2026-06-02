@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 32 / 190
+**Implemented:** 33 / 190
 ---
 
 - [ ] Action News Crew
@@ -74,7 +74,7 @@
 - [ ] Koya, Death from Above
 - [ ] Krang & Shredder
 - [ ] Krang, Master Mind
-- [ ] Krang, Utrom Warlord
+- [x] Krang, Utrom Warlord
 - [ ] Leader's Talent
 - [ ] Leatherhead, Swamp Stalker
 - [ ] Leonardo's Technique
