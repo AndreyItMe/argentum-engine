@@ -423,8 +423,7 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Enchantment"
 
                 staticAbility {
-                    effect = Effects.ModifyStats(+1, +1)
-                    filter = Filters.Group.creaturesYouControl
+                    ability = ModifyStats(+1, +1, Filters.Group.creaturesYouControl)
                 }
             }
 
@@ -440,11 +439,10 @@ class CardDslTest : DescribeSpec({
                 auraTarget = Targets.Creature
 
                 staticAbility {
-                    effect = Effects.Composite(
-                        Effects.ModifyStats(+2, +0),
-                        Effects.GrantKeyword(Keyword.TRAMPLE)
-                    )
-                    filter = Filters.EnchantedCreature
+                    ability = ModifyStats(+2, +0, Filters.EnchantedCreature)
+                }
+                staticAbility {
+                    ability = GrantKeyword(Keyword.TRAMPLE, Filters.EnchantedCreature)
                 }
 
                 triggeredAbility {
@@ -455,7 +453,7 @@ class CardDslTest : DescribeSpec({
 
             rancor.typeLine.isAura shouldBe true
             rancor.script.auraTarget shouldNotBe null
-            rancor.staticAbilities shouldHaveSize 1
+            rancor.staticAbilities shouldHaveSize 2
             rancor.triggeredAbilities shouldHaveSize 1
         }
     }
@@ -468,12 +466,13 @@ class CardDslTest : DescribeSpec({
                 typeLine = "Artifact — Equipment"
 
                 staticAbility {
-                    effect = Effects.Composite(
-                        Effects.ModifyStats(+3, +0),
-                        Effects.GrantKeyword(Keyword.TRAMPLE),
-                        Effects.GrantKeyword(Keyword.LIFELINK)
-                    )
-                    filter = Filters.EquippedCreature
+                    ability = ModifyStats(+3, +0, Filters.EquippedCreature)
+                }
+                staticAbility {
+                    ability = GrantKeyword(Keyword.TRAMPLE, Filters.EquippedCreature)
+                }
+                staticAbility {
+                    ability = GrantKeyword(Keyword.LIFELINK, Filters.EquippedCreature)
                 }
 
                 equipAbility("{3}")

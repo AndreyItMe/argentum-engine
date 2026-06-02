@@ -1240,13 +1240,20 @@ Triggers.youCastSpell(
 
 ```kotlin
 staticAbility {
-    ability = Modification.GrantKeyword(Keyword.FLYING)
-    filter = GroupFilter.CreaturesYouControl.withSubtype("Soldier")
-    duration = Duration.Permanent
-    layer = Layer.PT_POWER_TOUGHNESS    // optional; usually inferred
-    condition = Conditions.YouControl(Filters.Swamp)
+    // The whole continuous modification is the `ability`; the affected objects (filter),
+    // layer, and duration all live on the StaticAbility itself, not on the block.
+    ability = GrantKeyword(
+        Keyword.FLYING,
+        GroupFilter.CreaturesYouControl.withSubtype("Soldier")
+    )
+    condition = Conditions.YouControl(Filters.Swamp)   // optional intervening condition
 }
 ```
+
+> A static ability is a continuous modification, so `ability = <StaticAbility>` is the only
+> path — there is no `effect =` shorthand. For a permanent that grants several modifications,
+> use one `staticAbility { }` block per `StaticAbility` (e.g. an Equipment that gives +2/+1 and
+> trample is two blocks).
 
 **`Modification` options**
 
