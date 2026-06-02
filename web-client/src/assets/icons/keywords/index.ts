@@ -99,4 +99,8 @@ export const counterManaClass: Record<string, string> = {
   TIME: 'counter-time',
   FEATHER: 'counter-charge',
   DECAYED: 'ability-decayed',
+  HOPE: 'counter-charge',
+  VERSE: 'counter-verse',
+  INFLUENCE: 'counter-devotion',
+  BURDEN: 'counter-doom',
 }

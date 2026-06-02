@@ -1543,6 +1543,45 @@ export const styles: Record<string, React.CSSProperties> = {
 }
 
 /**
+ * Color palette for the LTR passive-counter badges (hope/verse/influence/burden).
+ * The badge geometry is shared; only the colors differ per counter type, so the
+ * per-type styles are generated from this map rather than copy-pasted.
+ */
+interface CounterBadgePalette { bg: string; border: string; color: string; glow?: string }
+
+const passiveCounterPalette: Record<string, CounterBadgePalette> = {
+  HOPE: { bg: 'rgba(80, 70, 20, 0.95)', border: 'rgba(240, 220, 120, 0.7)', color: '#f0e090', glow: 'rgba(240, 220, 120, 0.6)' },
+  VERSE: { bg: 'rgba(20, 50, 90, 0.95)', border: 'rgba(120, 180, 230, 0.6)', color: '#a0c8e8' },
+  INFLUENCE: { bg: 'rgba(40, 20, 60, 0.95)', border: 'rgba(180, 130, 220, 0.6)', color: '#c898e0' },
+  BURDEN: { bg: 'rgba(60, 25, 15, 0.95)', border: 'rgba(220, 160, 60, 0.7)', color: '#e8b860', glow: 'rgba(220, 160, 60, 0.6)' },
+}
+
+const fallbackCounterPalette: CounterBadgePalette = { bg: 'rgba(40, 40, 40, 0.95)', border: 'rgba(180, 180, 180, 0.6)', color: '#e0e0e0' }
+
+/**
+ * Build the badge style for an LTR passive counter from its palette. These counters
+ * never co-occur on one permanent, so they all render in the same top-right corner.
+ */
+export function passiveCounterBadgeStyle(type: string): React.CSSProperties {
+  const p = passiveCounterPalette[type] ?? fallbackCounterPalette
+  return {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: p.bg,
+    borderRadius: 4,
+    border: `1px solid ${p.border}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: p.color,
+    fontWeight: 700,
+    zIndex: 5,
+    ...(p.glow ? { textShadow: `0 0 4px ${p.glow}` } : {}),
+  }
+}
+
+/**
  * Per-band visual color palette. Each band declared in declare-attackers mode picks
  * the next color in order; the ring + badge on every banded creature use the same
  * shade so the grouping is obvious at a glance.

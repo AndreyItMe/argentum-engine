@@ -496,6 +496,26 @@ export function getDecayedCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of counters of a given type on a card.
+ */
+export function getCounterCount(card: ClientCard, type: CounterType): number {
+  return card.counters[type] ?? 0
+}
+
+/**
+ * LTR passive counters (hope/verse/influence/burden) — pure marker counters whose only
+ * UI is a colored badge with a count. They have no inherent rule and never co-occur on
+ * one permanent. Rendered data-driven in GameCard; per-type palette lives in
+ * styles.passiveCounterBadgeStyle and icon in counterManaClass.
+ */
+export const PASSIVE_COUNTER_TYPES: readonly CounterType[] = [
+  CounterType.HOPE,
+  CounterType.VERSE,
+  CounterType.INFLUENCE,
+  CounterType.BURDEN,
+]
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {

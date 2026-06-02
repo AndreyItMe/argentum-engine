@@ -349,6 +349,10 @@ export enum CounterType {
   FEATHER = 'FEATHER',
   HOURGLASS = 'HOURGLASS',
   DECAYED = 'DECAYED',
+  HOPE = 'HOPE',
+  VERSE = 'VERSE',
+  INFLUENCE = 'INFLUENCE',
+  BURDEN = 'BURDEN',
 }
 
 export const CounterTypeDisplayNames: Record<CounterType, string> = {
@@ -387,6 +391,10 @@ export const CounterTypeDisplayNames: Record<CounterType, string> = {
   [CounterType.FEATHER]: 'Feather',
   [CounterType.HOURGLASS]: 'Hourglass',
   [CounterType.DECAYED]: 'Decayed',
+  [CounterType.HOPE]: 'Hope',
+  [CounterType.VERSE]: 'Verse',
+  [CounterType.INFLUENCE]: 'Influence',
+  [CounterType.BURDEN]: 'Burden',
 }
 
 /**

@@ -44,8 +44,10 @@ import {
   getGrowthCounters,
   getFeatherCounters,
   getTimeCounters,
+  getCounterCount,
+  PASSIVE_COUNTER_TYPES,
 } from '../board/shared'
-import { styles, bandColorFor } from '../board/styles'
+import { styles, bandColorFor, passiveCounterBadgeStyle } from '../board/styles'
 import {
   TARGET_COLOR, TARGET_COLOR_BRIGHT, TARGET_GLOW, TARGET_GLOW_BRIGHT, TARGET_GLOW_OUTER, TARGET_SHADOW,
   SELECTED_COLOR, SELECTED_GLOW, SELECTED_SHADOW,
@@ -1517,6 +1519,24 @@ function GameCardImpl({
           </span>
         </div>
       )}
+
+      {/* LTR passive-counter badges (hope/verse/influence/burden) */}
+      {battlefield && PASSIVE_COUNTER_TYPES.map((type) => {
+        const count = getCounterCount(card, type)
+        if (count <= 0) return null
+        return (
+          <div key={type} style={{
+            ...passiveCounterBadgeStyle(type),
+            fontSize: responsive.badges.counterTextFontSize,
+            padding: responsive.badges.badgePadding,
+          }}>
+            <i className={`ms ms-${counterManaClass[type]}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+            <span style={{ fontWeight: 700 }}>
+              {count}
+            </span>
+          </div>
+        )
+      })}
 
       {/* Flood counter badge */}
       {battlefield && getFloodCounters(card) > 0 && (

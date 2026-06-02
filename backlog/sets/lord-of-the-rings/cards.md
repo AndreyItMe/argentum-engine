@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 189 / 291
+**Implemented:** 190 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -29,7 +29,7 @@ starter-deck/special cards and basic lands.
 - [x] The Battle of Bywater
 - [ ] Bill the Pony
 - [ ] Boromir, Warden of the Tower
-- [ ] Dawn of a New Age
+- [x] Dawn of a New Age
 - [x] Dúnedain Blade
 - [x] Eagles of the North
 - [x] Eastfarthing Farmer
