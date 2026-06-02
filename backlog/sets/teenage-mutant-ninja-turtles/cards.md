@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 54 / 190
+**Implemented:** 55 / 190
 ---
 
 - [ ] Action News Crew
@@ -179,7 +179,7 @@
 - [ ] Tokka & Rahzar, Terrible Twos
 - [ ] Transdimensional Bovine
 - [ ] Triceraton Commander
-- [ ] Tunnel Rats
+- [x] Tunnel Rats
 - [ ] Turncoat Kunoichi
 - [ ] Turtle Blimp
 - [ ] Turtle Lair
