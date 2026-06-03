@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 87 / 190
+**Implemented:** 88 / 190
 ---
 
 - [ ] Action News Crew
@@ -192,6 +192,6 @@
 - [ ] Venus, Torn Between Worlds
 - [x] Weather Maker
 - [ ] West Wind Avatar
-- [ ] Wingnut, Bat on the Belfry
+- [x] Wingnut, Bat on the Belfry
 - [x] Zog, Triceraton Castaway
 - [ ] Zoo Escapees
