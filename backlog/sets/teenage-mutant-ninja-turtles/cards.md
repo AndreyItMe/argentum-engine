@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 58 / 190
+**Implemented:** 59 / 190
 ---
 
 - [ ] Action News Crew
@@ -158,7 +158,7 @@
 - [x] Skateboard
 - [ ] Slash, Reptile Rampager
 - [ ] Slithering Cryptid
-- [ ] South Wind Avatar
+- [x] South Wind Avatar
 - [x] Spicy Oatmeal Pizza
 - [ ] Splinter's Technique
 - [ ] Splinter, Hamato Yoshi
