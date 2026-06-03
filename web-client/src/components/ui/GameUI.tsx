@@ -9,7 +9,7 @@ import { randomBackground } from '@/utils/background.ts'
 import { ReplayViewer, type GameSummary } from '../admin/ReplayViewer'
 import type { ReplayData } from '@/replay/reconstructSnapshots.ts'
 import { QuickGameLobbyOverlay } from './QuickGameLobbyOverlay'
-import { useDeckLibrary } from '@/store/deckLibrary'
+import { useDeckLibrary, buildDraftedDeckSave, type SavedDeckEntry } from '@/store/deckLibrary'
 import { DeckPicker } from './DeckPicker'
 import { labelForFormat } from '@/utils/deckLegality'
 import styles from './GameUI.module.css'
@@ -1641,16 +1641,14 @@ function TournamentOverlay({
   const saveDeckToLibrary = useDeckLibrary((s) => s.saveDeck)
   useEffect(() => { hydrateDeckLibrary() }, [hydrateDeckLibrary])
 
-  const buildCardsFromDraftedDeck = (): Record<string, number> | null => {
+  const buildDeckSave = (): { cards: Record<string, number>; entries: SavedDeckEntry[] | undefined } | null => {
     if (!deckBuildingState) return null
-    const cards: Record<string, number> = {}
-    for (const name of deckBuildingState.deck) {
-      cards[name] = (cards[name] ?? 0) + 1
-    }
-    for (const [name, count] of Object.entries(deckBuildingState.landCounts)) {
-      if (count > 0) cards[name] = (cards[name] ?? 0) + count
-    }
-    return Object.keys(cards).length === 0 ? null : cards
+    const built = buildDraftedDeckSave(
+      deckBuildingState.deck,
+      deckBuildingState.landCounts,
+      [...deckBuildingState.cardPool, ...deckBuildingState.basicLands],
+    )
+    return Object.keys(built.cards).length === 0 ? null : built
   }
 
   const openSaveDeckDialog = () => {
@@ -1663,10 +1661,10 @@ function TournamentOverlay({
 
   const confirmSaveDeck = () => {
     if (!saveDeckDialog) return
-    const cards = buildCardsFromDraftedDeck()
-    if (!cards) return
+    const built = buildDeckSave()
+    if (!built) return
     const name = saveDeckDialog.name.trim() || `Drafted deck – ${new Date().toLocaleDateString()}`
-    saveDeckToLibrary({ name, cards })
+    saveDeckToLibrary({ name, cards: built.cards, ...(built.entries ? { entries: built.entries } : {}) })
     setSaveDeckDialog(null)
     setDeckSavedAt(Date.now())
     setTimeout(() => setDeckSavedAt(null), 2000)
@@ -2388,15 +2386,14 @@ function DeckViewerModal({
           <button
             type="button"
             onClick={() => {
-              // Combine non-basic deck cards with basic-land counts. The picker accepts the same shape.
-              const cards: Record<string, number> = {}
-              for (const name of deckBuildingState.deck) {
-                cards[name] = (cards[name] ?? 0) + 1
-              }
-              for (const [name, count] of Object.entries(deckBuildingState.landCounts)) {
-                if (count > 0) cards[name] = (cards[name] ?? 0) + count
-              }
-              saveDeck({ name: saveName.trim() || defaultDeckName, cards })
+              // Combine non-basic deck cards with basic-land counts, pinning each to the
+              // printing it was drafted as so the saved deck keeps the exact art/printing.
+              const { cards, entries } = buildDraftedDeckSave(
+                deckBuildingState.deck,
+                deckBuildingState.landCounts,
+                [...deckBuildingState.cardPool, ...deckBuildingState.basicLands],
+              )
+              saveDeck({ name: saveName.trim() || defaultDeckName, cards, ...(entries ? { entries } : {}) })
               setSavedAt(Date.now())
               setTimeout(() => setSavedAt(null), 2000)
             }}

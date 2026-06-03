@@ -978,6 +978,14 @@ export interface SealedCardInfo {
    * this from the authoritative Scryfall override when one exists.
    */
   readonly colorIdentity?: readonly string[]
+  /**
+   * Specific printing this pool card was opened/drafted as — Scryfall's unique
+   * `(setCode, collectorNumber)` key. Lets the deckbuilder save a drafted/sealed deck
+   * to the library while preserving the exact printing the player drafted, instead of
+   * falling back to the card's default printing. Absent for test cards lacking metadata.
+   */
+  readonly setCode?: string | null
+  readonly collectorNumber?: string | null
 }
 
 /**

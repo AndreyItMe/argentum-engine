@@ -619,7 +619,9 @@ class ConnectionHandler(
                 backFaceTypeLine = backFace?.typeLine?.toString(),
                 backFaceOracleText = backFace?.oracleText?.takeIf { it.isNotBlank() },
                 backFaceImageUri = backFace?.metadata?.imageUri,
-                colorIdentity = card.colorIdentity.map { it.name }
+                colorIdentity = card.colorIdentity.map { it.name },
+                setCode = card.setCode,
+                collectorNumber = card.metadata.collectorNumber
             )
         }
     }

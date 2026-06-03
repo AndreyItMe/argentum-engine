@@ -299,7 +299,13 @@ sealed interface ServerMessage {
         // archetype matcher. Parsing the printed mana cost would miss off-color activation
         // costs (e.g., a green-cost card with a {B}: ability has identity GB) and lands whose
         // basic-land subtypes contribute color.
-        val colorIdentity: List<String> = emptyList()
+        val colorIdentity: List<String> = emptyList(),
+        // Specific printing this pool card was opened/drafted as — `(setCode, collectorNumber)`,
+        // Scryfall's unique printing key. Lets the client preserve the exact printing when the
+        // player saves a drafted/sealed deck to their library (otherwise the save falls back to
+        // the card's default printing). Either may be null for test cards lacking metadata.
+        val setCode: String? = null,
+        val collectorNumber: String? = null
     )
 
     /**

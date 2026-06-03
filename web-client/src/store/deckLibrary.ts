@@ -173,6 +173,58 @@ export function toCardEntries(
   return out
 }
 
+/** Minimal pool-card shape needed to recover a card's drafted printing. */
+export interface PoolCardPrinting {
+  readonly name: string
+  readonly setCode?: string | null
+  readonly collectorNumber?: string | null
+}
+
+/**
+ * Build the `{ cards, entries }` pair for saving a drafted/sealed deck to the library,
+ * pinning each card to the exact printing it was opened/drafted as.
+ *
+ * A drafted/sealed deck is tracked only by card name (the spell list plus basic-land
+ * counts), so the printing has to be recovered from the original pool — each pool card
+ * carries the `(setCode, collectorNumber)` it was opened as. We look each deck card up by
+ * name and attach that printing; without this the save falls back to the card's default
+ * printing and the player loses (e.g.) the specific art they drafted.
+ *
+ * `entries` is returned only when at least one card resolved to a printing — otherwise the
+ * save stays name-only (identical to the legacy path), avoiding noise for pools whose cards
+ * lack printing metadata (e.g. test cards).
+ */
+export function buildDraftedDeckSave(
+  deckCardNames: readonly string[],
+  landCounts: Record<string, number>,
+  pool: readonly PoolCardPrinting[],
+): { cards: Record<string, number>; entries: SavedDeckEntry[] | undefined } {
+  const printingByName = new Map<string, PrintingRef>()
+  for (const card of pool) {
+    if (card.setCode && card.collectorNumber && !printingByName.has(card.name)) {
+      printingByName.set(card.name, { setCode: card.setCode, collectorNumber: card.collectorNumber })
+    }
+  }
+
+  const counts = new Map<string, number>()
+  for (const name of deckCardNames) counts.set(name, (counts.get(name) ?? 0) + 1)
+  for (const [name, count] of Object.entries(landCounts)) {
+    if (count > 0) counts.set(name, (counts.get(name) ?? 0) + count)
+  }
+
+  const cards: Record<string, number> = {}
+  const entries: SavedDeckEntry[] = []
+  let anyPrinting = false
+  for (const [name, count] of counts) {
+    cards[name] = count
+    const printing = printingByName.get(name)
+    if (printing) anyPrinting = true
+    entries.push(printing ? { name, count, printing } : { name, count })
+  }
+
+  return { cards, entries: anyPrinting ? entries : undefined }
+}
+
 export const useDeckLibrary = create<DeckLibraryState>((set, get) => ({
   decks: [],
   hydrated: false,
