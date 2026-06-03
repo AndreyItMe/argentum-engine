@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 95 / 190
+**Implemented:** 96 / 190
 ---
 
 - [x] Action News Crew
@@ -181,7 +181,7 @@
 - [x] Triceraton Commander
 - [x] Tunnel Rats
 - [ ] Turncoat Kunoichi
-- [ ] Turtle Blimp
+- [x] Turtle Blimp
 - [ ] Turtle Lair
 - [x] Turtle Power!
 - [ ] Turtle Van
