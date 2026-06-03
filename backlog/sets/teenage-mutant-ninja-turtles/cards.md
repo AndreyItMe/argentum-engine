@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 77 / 190
+**Implemented:** 78 / 190
 ---
 
 - [ ] Action News Crew
@@ -120,7 +120,7 @@
 - [x] Omni-Cheese Pizza
 - [ ] Ooze Spill
 - [ ] Oroku Saki, Shredder Rising
-- [ ] Pain 101
+- [x] Pain 101
 - [ ] Paramecia Coloniex
 - [ ] Party Dude
 - [ ] Pizza Face, Gastromancer
