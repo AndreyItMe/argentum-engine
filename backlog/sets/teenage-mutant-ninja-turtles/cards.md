@@ -2,14 +2,14 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 93 / 190
+**Implemented:** 94 / 190
 ---
 
 - [x] Action News Crew
 - [x] Agent Bishop, Man in Black
 - [x] Anchovy & Banana Pizza
 - [ ] April O'Neil, Hacktivist
-- [ ] April O'Neil, Kunoichi Trainee
+- [x] April O'Neil, Kunoichi Trainee
 - [x] April, Reporter of the Weird
 - [x] Armaggon, Future Shark
 - [x] Baxter Stockman
