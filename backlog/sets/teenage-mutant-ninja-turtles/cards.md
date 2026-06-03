@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 84 / 190
+**Implemented:** 85 / 190
 ---
 
 - [ ] Action News Crew
@@ -156,7 +156,7 @@
 - [ ] Shredder's Technique
 - [ ] Shredder, Unrelenting
 - [x] Skateboard
-- [ ] Slash, Reptile Rampager
+- [x] Slash, Reptile Rampager
 - [ ] Slithering Cryptid
 - [x] South Wind Avatar
 - [x] Spicy Oatmeal Pizza
