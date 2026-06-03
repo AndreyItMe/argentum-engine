@@ -6,8 +6,9 @@ import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.GrantKeyword
+import com.wingedsheep.sdk.scripting.ModifyStats
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetPermanent
 
 /**
@@ -36,13 +37,11 @@ val BespokeBo = card("Bespoke Bō") {
     }
 
     staticAbility {
-        effect = Effects.ModifyStats(+2, +1)
-        filter = Filters.EquippedCreature
+        ability = ModifyStats(+2, +1, Filters.EquippedCreature)
     }
 
     staticAbility {
-        effect = Effects.GrantKeyword(Keyword.VIGILANCE, EffectTarget.EquippedCreature)
-        filter = Filters.EquippedCreature
+        ability = GrantKeyword(Keyword.VIGILANCE, Filters.EquippedCreature)
     }
 
     equipAbility("{3}")

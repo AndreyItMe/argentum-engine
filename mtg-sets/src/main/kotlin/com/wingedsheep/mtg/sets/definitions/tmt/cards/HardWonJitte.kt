@@ -1,11 +1,10 @@
 package com.wingedsheep.mtg.sets.definitions.tmt.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.GrantKeyword
 
 /**
  * Hard-Won Jitte
@@ -22,8 +21,7 @@ val HardWonJitte = card("Hard-Won Jitte") {
     oracleText = "Equipped creature has double strike.\nEquip {2}"
 
     staticAbility {
-        effect = Effects.GrantKeyword(Keyword.DOUBLE_STRIKE, EffectTarget.EquippedCreature)
-        filter = Filters.EquippedCreature
+        ability = GrantKeyword(Keyword.DOUBLE_STRIKE, Filters.EquippedCreature)
     }
 
     equipAbility("{2}")

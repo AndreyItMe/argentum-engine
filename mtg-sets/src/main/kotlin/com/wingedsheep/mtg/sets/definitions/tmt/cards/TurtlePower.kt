@@ -1,10 +1,10 @@
 package com.wingedsheep.mtg.sets.definitions.tmt.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.ModifyStats
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 
 /**
@@ -24,8 +24,11 @@ val TurtlePower = card("Turtle Power!") {
     keywords(Keyword.FLASH)
 
     staticAbility {
-        effect = Effects.ModifyStats(2, 2)
-        filter = GroupFilter(GameObjectFilter.Creature.withSubtype("Turtle").youControl())
+        ability = ModifyStats(
+            2,
+            2,
+            filter = GroupFilter(GameObjectFilter.Creature.withSubtype("Turtle").youControl()),
+        )
     }
 
     metadata {

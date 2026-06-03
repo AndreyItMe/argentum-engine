@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
@@ -66,7 +67,8 @@ val Cowabunga = card("Cowabunga!") {
                 ),
                 MoveCollectionEffect(
                     from = "rest",
-                    destination = CardDestination.ToZone(Zone.LIBRARY, placement = ZonePlacement.Bottom)
+                    destination = CardDestination.ToZone(Zone.LIBRARY, placement = ZonePlacement.Bottom),
+                    order = CardOrder.Random,
                 ),
             )
         )

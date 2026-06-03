@@ -26,17 +26,6 @@ import com.wingedsheep.sdk.scripting.targets.TargetObject
  *   battlefield if it's an artifact creature card. Otherwise, return
  *   it to the battlefield and it's a 3/3 Robot artifact creature with
  *   flying.
- *
- * Mode 2 mirrors the EOE Xu-Ifit, Osteoharmonist reanimate-with-rider
- * shape: `MoveToZoneEffect(... from GRAVEYARD to BATTLEFIELD)` plus an
- * `Effects.BecomeCreature(target, 3, 3, keywords = {FLYING},
- * creatureTypes = {"Robot"}, duration = Duration.Permanent)` gated by
- * `Conditions.Not(TargetMatchesFilter(GameObjectFilter.Creature))`.
- * The target is an artifact-card-in-your-graveyard so it already has
- * the Artifact card type — only the Creature card type, Robot subtype,
- * base 3/3 P/T, and flying need to be added when the original card
- * isn't already a creature, matching the printed "and it's a 3/3
- * Robot artifact creature with flying" rider.
  */
 val BrillianceUnleashed = card("Brilliance Unleashed") {
     manaCost = "{4}{U}{R}"

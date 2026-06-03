@@ -27,7 +27,6 @@ val AnchovyAndBananaPizza = card("Anchovy & Banana Pizza") {
         effect = Effects.Destroy(target)
     }
 
-    // Standard Food ability: {2}, {T}, Sacrifice: You gain 3 life
     activatedAbility {
         cost = Costs.Composite(
             Costs.Mana("{2}"),

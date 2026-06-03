@@ -22,14 +22,6 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * Vigilance
  * Channel — {6}, Discard this card: Put a +1/+1 counter on each
  * creature you control. Draw a card.
- *
- * Channel is implemented as an activated ability whose mana cost is
- * paired with `Costs.DiscardSelf` and activated from `Zone.HAND`. The
- * `Keyword.CHANNEL` display marker does not yet exist in the SDK, so
- * the ability text on the rendered card reads as a plain activated
- * ability (no italic "Channel —" prefix), but the mechanics are
- * faithful — discarding the card from hand pays the cost, then the
- * effect resolves.
  */
 val ActionNewsCrew = card("Action News Crew") {
     manaCost = "{1}{W}"

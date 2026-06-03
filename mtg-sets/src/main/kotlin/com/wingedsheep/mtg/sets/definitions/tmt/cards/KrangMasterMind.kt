@@ -9,6 +9,8 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantDynamicStatsEffect
 import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.conditions.Compare
+import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -36,12 +38,15 @@ val KrangMasterMind = card("Krang, Master Mind") {
 
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
+        triggerCondition = Compare(
+            DynamicAmount.Count(Player.You, Zone.HAND, GameObjectFilter.Any),
+            ComparisonOperator.LT,
+            DynamicAmount.Fixed(4),
+        )
         effect = Effects.DrawCards(
-            DynamicAmount.IfPositive(
-                DynamicAmount.Subtract(
-                    DynamicAmount.Fixed(4),
-                    DynamicAmount.Count(Player.You, Zone.HAND, GameObjectFilter.Any)
-                )
+            DynamicAmount.Subtract(
+                DynamicAmount.Fixed(4),
+                DynamicAmount.Count(Player.You, Zone.HAND, GameObjectFilter.Any),
             )
         )
     }
@@ -49,13 +54,11 @@ val KrangMasterMind = card("Krang, Master Mind") {
     staticAbility {
         ability = GrantDynamicStatsEffect(
             filter = GroupFilter.source(),
-            powerBonus = DynamicAmount.IfPositive(
-                DynamicAmount.Subtract(
-                    DynamicAmount.AggregateBattlefield(Player.You, GameObjectFilter.Artifact),
-                    DynamicAmount.Fixed(1)
-                )
+            powerBonus = DynamicAmount.Subtract(
+                DynamicAmount.AggregateBattlefield(Player.You, GameObjectFilter.Artifact),
+                DynamicAmount.Fixed(1),
             ),
-            toughnessBonus = DynamicAmount.Fixed(0)
+            toughnessBonus = DynamicAmount.Fixed(0),
         )
     }
 

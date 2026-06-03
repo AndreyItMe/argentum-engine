@@ -6,10 +6,8 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.Duration
-import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
-import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.targets.TargetPermanent
 
 /**
@@ -37,14 +35,7 @@ val HighFlyingAce = card("High-Flying Ace") {
         timing = TimingRule.SorcerySpeed
         val creature = target(
             "creature without flying",
-            TargetPermanent(
-                filter = TargetFilter(
-                    GameObjectFilter.Creature.copy(
-                        cardPredicates = GameObjectFilter.Creature.cardPredicates +
-                            CardPredicate.Not(CardPredicate.HasKeyword(Keyword.FLYING))
-                    )
-                )
-            )
+            TargetPermanent(filter = TargetFilter.Creature.withoutKeyword(Keyword.FLYING)),
         )
         effect = Effects.GrantKeyword(Keyword.FLYING, creature, Duration.EndOfTurn)
     }

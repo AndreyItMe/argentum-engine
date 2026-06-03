@@ -7,7 +7,8 @@ import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.GrantKeyword
+import com.wingedsheep.sdk.scripting.ModifyStats
 
 /**
  * Skateboard
@@ -30,13 +31,11 @@ val Skateboard = card("Skateboard") {
     }
 
     staticAbility {
-        effect = Effects.ModifyStats(1, 0)
-        filter = Filters.EquippedCreature
+        ability = ModifyStats(1, 0, Filters.EquippedCreature)
     }
 
     staticAbility {
-        effect = Effects.GrantKeyword(Keyword.HASTE, EffectTarget.EquippedCreature)
-        filter = Filters.EquippedCreature
+        ability = GrantKeyword(Keyword.HASTE, Filters.EquippedCreature)
     }
 
     equipAbility("{1}")

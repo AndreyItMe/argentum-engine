@@ -1,23 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.tmt.cards
 
 import com.wingedsheep.sdk.core.Step
-import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.CardDestination
-import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
-import com.wingedsheep.sdk.scripting.effects.ConditionalOnCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
-import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
-import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
-import com.wingedsheep.sdk.scripting.effects.MoveType
-import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
-import com.wingedsheep.sdk.scripting.effects.SelectionMode
-import com.wingedsheep.sdk.scripting.references.Player
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
  * Casey Jones, Vigilante
@@ -44,33 +34,8 @@ val CaseyJonesVigilante = card("Casey Jones, Vigilante") {
                 CreateDelayedTriggerEffect(
                     step = Step.UPKEEP,
                     fireOnlyOnControllersTurn = true,
-                    effect = CompositeEffect(
-                        listOf(
-                            GatherCardsEffect(
-                                source = CardSource.FromZone(Zone.HAND, Player.You),
-                                storeAs = "hand"
-                            ),
-                            ConditionalOnCollectionEffect(
-                                collection = "hand",
-                                ifNotEmpty = CompositeEffect(
-                                    listOf(
-                                        SelectFromCollectionEffect(
-                                            from = "hand",
-                                            selection = SelectionMode.Random(DynamicAmount.Fixed(3)),
-                                            storeSelected = "discarded"
-                                        ),
-                                        MoveCollectionEffect(
-                                            from = "discarded",
-                                            destination = CardDestination.ToZone(Zone.GRAVEYARD, Player.You),
-                                            moveType = MoveType.Discard
-                                        )
-                                    )
-                                ),
-                                ifEmpty = CompositeEffect(listOf())
-                            )
-                        )
-                    )
-                )
+                    effect = EffectPatterns.discardRandom(3),
+                ),
             )
         )
     }

@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.ModifyStats
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -31,8 +32,7 @@ val ShreddersArmor = card("Shredder's Armor") {
     oracleText = "Equipped creature gets +2/+1.\nWhen this Equipment enters, attach it to target creature you control.\nEquip—Sacrifice another nonland permanent. Activate only once each turn."
 
     staticAbility {
-        effect = Effects.ModifyStats(2, 1)
-        filter = Filters.EquippedCreature
+        ability = ModifyStats(2, 1, Filters.EquippedCreature)
     }
 
     triggeredAbility {

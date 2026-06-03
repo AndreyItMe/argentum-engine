@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.effects.CREATED_TOKENS
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
@@ -31,16 +32,14 @@ import com.wingedsheep.sdk.scripting.targets.TargetPermanent
  * {1}{W}: Target attacking creature token gains indestructible until
  * end of turn.
  *
- * Mirrors the EOE Systems Override pattern: a `CreateDelayedTriggerEffect`
- * scheduled for the next end step that targets the just-created token
- * via `EffectTarget.ContextTarget(0)` (the slot `CreateTokenEffect`
- * publishes the new token id into, same as the EOE Auxiliary Boosters
- * ETB-attach chain). The delayed trigger uses `MoveToZoneEffect(...,
- * byDestruction = true)`, which goes through the engine's destroy
- * pipeline — so the second ability's UEOT indestructible grant
- * legitimately saves the token, matching printed "Destroy" semantics
- * (a `sacrificeAtStep` shortcut would *not* respect indestructible
- * and would mis-implement that interaction).
+ * The delayed end-step destroy resolves the freshly-created token via
+ * `EffectTarget.PipelineTarget(CREATED_TOKENS, 0)` — `CreateTokenEffect`
+ * publishes new token ids into the `CREATED_TOKENS` pipeline collection
+ * (see `EffectPatterns.incubate` for the established precedent).
+ * `byDestruction = true` routes the cleanup through the destroy
+ * pipeline so the second ability's UEOT indestructible grant
+ * legitimately saves the token (a `sacrificeAtStep` shortcut would
+ * silently bypass indestructible).
  */
 val OldHobAlleycatBlues = card("Old Hob, Alleycat Blues") {
     manaCost = "{4}{R}"
@@ -63,7 +62,7 @@ val OldHobAlleycatBlues = card("Old Hob, Alleycat Blues") {
             CreateDelayedTriggerEffect(
                 step = Step.END,
                 effect = MoveToZoneEffect(
-                    target = EffectTarget.ContextTarget(0),
+                    target = EffectTarget.PipelineTarget(CREATED_TOKENS, 0),
                     destination = Zone.GRAVEYARD,
                     byDestruction = true,
                 )
@@ -74,16 +73,12 @@ val OldHobAlleycatBlues = card("Old Hob, Alleycat Blues") {
 
     activatedAbility {
         cost = Costs.Mana("{1}{W}")
+        val attackingTokenFilter = GameObjectFilter.Creature.attacking().let { base ->
+            base.copy(cardPredicates = base.cardPredicates + CardPredicate.IsToken)
+        }
         val token = target(
             "target attacking creature token",
-            TargetPermanent(
-                filter = TargetFilter(
-                    GameObjectFilter.Creature.attacking().copy(
-                        cardPredicates = GameObjectFilter.Creature.attacking().cardPredicates +
-                            CardPredicate.IsToken
-                    )
-                )
-            )
+            TargetPermanent(filter = TargetFilter(attackingTokenFilter)),
         )
         effect = Effects.GrantKeyword(Keyword.INDESTRUCTIBLE, token, Duration.EndOfTurn)
     }

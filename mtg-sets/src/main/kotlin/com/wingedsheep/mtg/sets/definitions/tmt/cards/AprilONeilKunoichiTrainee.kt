@@ -15,14 +15,6 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
  *
  * When April O'Neil enters, scry 2.
  * April O'Neil can't be blocked by creatures with power 3 or greater.
- *
- * Mirrors the BLB Azure Beastbinder evasion shape — `CantBeBlockedBy`
- * parameterised on `GameObjectFilter.Creature.powerAtLeast(N)` already
- * covers any "can't be blocked by creatures with power N or greater"
- * wording with a fixed N. (Closes Gap O. The relative-comparison
- * Gap HH — "with greater power" than the source — is a separate
- * static and still needs a `CantBeBlockedByCreaturesWithGreaterPower`
- * primitive.)
  */
 val AprilONeilKunoichiTrainee = card("April O'Neil, Kunoichi Trainee") {
     manaCost = "{1}{W}"
