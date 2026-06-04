@@ -32,6 +32,7 @@ import com.wingedsheep.sdk.scripting.MayCastSelfFromZones
 import com.wingedsheep.sdk.scripting.effects.DividedDamageEffect
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.engine.mechanics.HarmonizeGrants
+import com.wingedsheep.engine.mechanics.WarpGrants
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 
@@ -1318,9 +1319,16 @@ class CastFromZoneEnumerator : ActionEnumerator {
 
             val cardDef = context.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
 
-            val warpAbility = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Warp>()
-                .firstOrNull() ?: continue
+            // Printed warp wins; otherwise consult battlefield grants
+            // ([com.wingedsheep.sdk.scripting.GrantWarpToCardsInHand]). Granted warp is
+            // hand-only, so it never satisfies a graveyard pass.
+            val printedWarp = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Warp>().firstOrNull()
+            val warpAbility: KeywordAbility.Warp = printedWarp
+                ?: if (zone == Zone.HAND) {
+                    WarpGrants.effectiveWarp(
+                        state, cardId, cardDef, playerId, context.cardRegistry, context.predicateEvaluator
+                    ) ?: continue
+                } else continue
 
             // Graveyard casts are only legal for warp abilities that explicitly opt in
             // (CR 702.185a — default warp is hand-only).

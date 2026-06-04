@@ -15,6 +15,7 @@ import com.wingedsheep.engine.core.CardsRevealedEvent
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.ManaSpentEvent
 import com.wingedsheep.engine.mechanics.HarmonizeGrants
+import com.wingedsheep.engine.mechanics.WarpGrants
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.core.PermanentsSacrificedEvent
@@ -291,14 +292,15 @@ class CastSpellHandler(
             }
         }
 
-        // Validate warp's bundled additional cost (e.g., "Warp—{B}, Pay 2 life." on Timeline Culler)
+        // Validate warp's bundled additional cost (e.g., "Warp—{B}, Pay 2 life." on Timeline Culler).
+        // Granted warps ([com.wingedsheep.sdk.scripting.GrantWarpToCardsInHand]) currently carry no
+        // additional cost, but [WarpGrants] is the source of truth either way.
         if (action.useAlternativeCost && cardDef != null &&
             zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)
         ) {
-            val warpAdditional = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.Warp>()
-                .firstOrNull()
-                ?.additionalCost
+            val warpAdditional = WarpGrants.effectiveWarp(
+                state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+            )?.additionalCost
             if (warpAdditional != null) {
                 val warpCostError = validateAdditionalCosts(state, listOf(warpAdditional), action)
                 if (warpCostError != null) return warpCostError
@@ -351,8 +353,12 @@ class CastSpellHandler(
                 // applied afterward via alternativePayment.
                 costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, harmonizeAbility.cost, action.playerId)
             } else {
-                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular mana cost.
-                val warpAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Warp>().firstOrNull()
+                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular
+                // mana cost. Printed warp wins; a battlefield grant ([GrantWarpToCardsInHand])
+                // supplies the cost when the card has no printed warp.
+                val warpAbility = WarpGrants.effectiveWarp(
+                    state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+                )
                 if (warpAbility != null && zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)) {
                     costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, warpAbility.cost, action.playerId)
                 } else {
@@ -1339,8 +1345,12 @@ class CastSpellHandler(
             } else if (harmonizeAbility != null && zoneResolver.hasHarmonizePermission(currentState, action.playerId, action.cardId)) {
                 costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, harmonizeAbility.cost, action.playerId)
             } else {
-                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular mana cost.
-                val warpAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Warp>().firstOrNull()
+                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular
+                // mana cost. Printed warp wins; a battlefield grant ([GrantWarpToCardsInHand])
+                // supplies the cost when the card has no printed warp.
+                val warpAbility = WarpGrants.effectiveWarp(
+                    currentState, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+                )
                 if (warpAbility != null && zoneResolver.hasWarpPermission(currentState, action.playerId, action.cardId)) {
                     costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, warpAbility.cost, action.playerId)
                 } else {
@@ -1487,12 +1497,14 @@ class CastSpellHandler(
                         ?.additionalCost
                     if (flashbackAdditional != null) add(flashbackAdditional)
                 }
-                // Warp's bundled additional cost (e.g., "Pay 2 life" on Timeline Culler)
+                // Warp's bundled additional cost (e.g., "Pay 2 life" on Timeline Culler). Use
+                // [WarpGrants] so granted warps ([GrantWarpToCardsInHand]) participate too —
+                // currently they carry no additional cost, but routing through the same helper
+                // keeps the seam.
                 if (zoneResolver.hasWarpPermission(currentState, action.playerId, action.cardId)) {
-                    val warpAdditional = cardDef.keywordAbilities
-                        .filterIsInstance<KeywordAbility.Warp>()
-                        .firstOrNull()
-                        ?.additionalCost
+                    val warpAdditional = WarpGrants.effectiveWarp(
+                        currentState, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+                    )?.additionalCost
                     if (warpAdditional != null) add(warpAdditional)
                 }
             }
@@ -2058,9 +2070,14 @@ class CastSpellHandler(
             if (pauseResult != null) return pauseResult
         }
 
-        // Determine if this spell is being cast using warp
+        // Determine if this spell is being cast using warp. Mirrors the cost-resolution
+        // heuristic above (printed warp OR a battlefield grant gives this card warp); set when
+        // the alternative path could plausibly be warp so the post-resolution exile trigger
+        // fires for granted warps too.
         val wasWarped = action.useAlternativeCost && cardDef != null &&
-            cardDef.keywordAbilities.any { it is KeywordAbility.Warp }
+            WarpGrants.effectiveWarp(
+                currentState, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+            ) != null
 
         // Determine if this spell is being cast using evoke
         val wasEvoked = action.useAlternativeCost && cardDef != null &&
