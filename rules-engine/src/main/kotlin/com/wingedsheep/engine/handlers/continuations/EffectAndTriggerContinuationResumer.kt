@@ -30,6 +30,7 @@ class EffectAndTriggerContinuationResumer(
         },
         resumer(MayAbilityContinuation::class, ::resumeMayAbility),
         resumer(MayRevealCardFromHandContinuation::class, ::resumeMayRevealCardFromHand),
+        resumer(BeholdContinuation::class, ::resumeBehold),
         resumer(MayTriggerContinuation::class, ::resumeMayTrigger),
         resumer(ReflexiveTriggerResolveContinuation::class, ::resumeReflexiveTriggerResolve)
     )
@@ -330,6 +331,45 @@ class EffectAndTriggerContinuationResumer(
                 state, continuation.revealerId, chosenCardId, continuation.sourceName,
             )
         return checkForMore(revealedState, listOf(revealEvent))
+    }
+
+    private fun resumeBehold(
+        state: GameState,
+        continuation: BeholdContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is CardsSelectedResponse) {
+            return ExecutionResult.error(state, "Expected card selection response for behold")
+        }
+
+        val chosenId = response.selectedCards.firstOrNull()
+        if (chosenId == null) {
+            // Player declined to behold — the "if you do" payoff doesn't run.
+            return checkForMore(state, emptyList())
+        }
+
+        // If the beheld object was a card in hand, reveal it publicly. Battlefield permanents
+        // are chosen, not revealed.
+        var currentState = state
+        val events = mutableListOf<GameEvent>()
+        if (chosenId in continuation.handOptionIds) {
+            val (revealedState, revealEvent) = com.wingedsheep.engine.handlers.effects.composite
+                .MayRevealCardFromHandEffectExecutor.emitReveal(
+                    currentState, continuation.beholderId, chosenId, continuation.sourceName,
+                )
+            currentState = revealedState
+            events += revealEvent
+        }
+
+        val ifBeheld = continuation.ifBeheld
+            ?: return checkForMore(currentState, events)
+
+        val result = services.effectExecutorRegistry
+            .execute(currentState, ifBeheld, continuation.effectContext)
+            .toExecutionResult()
+        if (result.isPaused) return result
+        return checkForMore(result.state, events + result.events.toList())
     }
 
     private fun resumeReflexiveTriggerResolve(

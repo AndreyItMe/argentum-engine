@@ -306,6 +306,14 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   express "if you don't, X" riders — e.g. SOI shadow lands wrap this in
   `OnEnterRunEffect(...)` with `otherwise = Effects.Tap(EffectTarget.Self)` for the
   "this land enters tapped" branch.
+- `Effects.Behold(filter, ifBeheld?)` — resolution-time **behold** (`BeholdEffect`): "you may
+  behold a `filter`. If you do, `ifBeheld`." The behold itself is optional — the controller may
+  choose a matching permanent they control **or** reveal a matching card from hand (revealing emits
+  `CardsRevealedEvent`; battlefield permanents are merely chosen). If they decline, or control no
+  matching permanent and hold no matching card, `ifBeheld` does not run. Distinct from the cast-time
+  `AdditionalCost.Behold` / `AdditionalCost.BeholdOrPay` (which behold as a casting cost). Sarkhan,
+  Dragon Ascendant ETB: `Effects.Behold(GameObjectFilter.Any.withSubtype(Subtype.DRAGON),
+  ifBeheld = Effects.CreateTreasure())`.
 
 ### Library reveal & free cast
 
@@ -1286,6 +1294,14 @@ Triggers.youCastSpell(
     control on your next attack). With `fireOnce = false` (default) it fires on every matching event
     until expiry (double-strike combat damage). One-shot consumption happens when the trigger goes
     on the stack (`TriggerProcessor`), so a second matching event the same turn won't re-fire it.
+  - `targetRequirement = <TargetRequirement>` — a target chosen **each time** the delayed trigger
+    fires, exposed to `effect` as `EffectTarget.ContextTarget`. Use for delayed triggers whose payoff
+    targets: Rediscover the Way chapter III installs
+    `CreateDelayedTriggerEffect(trigger = Triggers.YouCastNoncreature, fireOnce = false,
+    expiry = EndOfTurn, targetRequirement = Targets.CreatureYouControl,
+    effect = Effects.GrantKeyword(Keyword.DOUBLE_STRIKE))` — "whenever you cast a noncreature spell
+    this turn, target creature you control gains double strike". Works on both event-based and
+    step-based delayed triggers; null (default) for non-targeting delayed triggers.
 
 ---
 
@@ -2179,6 +2195,10 @@ restriction matches the spell context.
   creature- or mana-value-gated.
 - `ManaRestriction.SubtypeSpellsOrAbilitiesOnly(subtype, creatureOnly?)` — Cavern of Souls /
   Unclaimed Territory: only spells of a baked subtype, optionally creature-only.
+- `ManaRestriction.SubtypeSpellsOnly(subtypes)` — multi-subtype spend restriction: only spells
+  whose type line carries **any** of the given subtypes (OR-joined). Spell-only (no ability
+  variant). Maelstrom of the Spirit Dragon: `SubtypeSpellsOnly(setOf("Dragon", "Omen"))`
+  ("a Dragon spell or an Omen spell").
 - `ManaRestriction.CastFromExileOnly` — only spells cast from exile.
 - `ManaRestriction.CardTypeSpellsOrAbilitiesOnly(cardType, allowSpells?, allowAbilities?)` —
   Steelswarm Operator shape.

@@ -52,6 +52,9 @@ fun ManaRestriction.isSatisfiedBy(context: SpellPaymentContext): Boolean = when 
         (!creatureOnly || (!context.isAbilityActivation && context.isCreature)) &&
             context.subtypes.any { it.equals(subtype, ignoreCase = true) }
     is ManaRestriction.CastFromExileOnly -> !context.isAbilityActivation && context.isFromExile
+    is ManaRestriction.SubtypeSpellsOnly ->
+        !context.isAbilityActivation &&
+            subtypes.any { sub -> context.subtypes.any { it.equals(sub, ignoreCase = true) } }
     is ManaRestriction.CardTypeSpellsOrAbilitiesOnly ->
         if (context.isAbilityActivation) allowAbilities && cardType in context.abilitySourceCardTypes
         else allowSpells && cardType in context.cardTypes

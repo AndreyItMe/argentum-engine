@@ -381,6 +381,44 @@ sealed interface SuccessCriterion {
 }
 
 /**
+ * "Behold a [filter]" as a resolution-time effect (CR: a player beholds a permanent by either
+ * choosing a matching permanent they control or revealing a matching card from their hand).
+ * Unlike the cast-time [AdditionalCost.Behold] / [AdditionalCost.BeholdOrPay], this is the
+ * *effect-side* behold used inside abilities such as Sarkhan, Dragon Ascendant's ETB
+ * ("you may behold a Dragon. If you do, create a Treasure token.").
+ *
+ * The behold is optional: the player may decline (or be unable to behold if they control no
+ * matching permanent and hold no matching card), in which case [ifBeheld] does not run. When a
+ * choice is made, a matching hand card is revealed (battlefield permanents are merely chosen,
+ * not revealed) and [ifBeheld] runs. No information about the beheld object is otherwise stored —
+ * per the "behold reveals are identity, not parameters" principle, this effect only models the
+ * Dragon-storm behold-then-payoff shape.
+ *
+ * @property filter Which permanents/cards qualify to be beheld
+ * @property ifBeheld Effect that runs only if the player successfully beholds
+ */
+@SerialName("Behold")
+@Serializable
+data class BeholdEffect(
+    val filter: GameObjectFilter = GameObjectFilter.Any,
+    val ifBeheld: Effect? = null
+) : Effect {
+    override val description: String = buildString {
+        val filterDesc = filter.description
+        val article = if (filterDesc.firstOrNull()?.lowercase() in listOf("a", "e", "i", "o", "u")) "an" else "a"
+        append("You may behold $article $filterDesc")
+        if (ifBeheld != null) append(". If you do, ${ifBeheld.description.replaceFirstChar { it.lowercase() }}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newIfBeheld = ifBeheld?.applyTextReplacement(replacer)
+        return if (newFilter !== filter || newIfBeheld !== ifBeheld)
+            copy(filter = newFilter, ifBeheld = newIfBeheld) else this
+    }
+}
+
+/**
  * Effect with an optional cost - "You may [cost]. If you do, [ifPaid]."
  *
  * This is the fundamental building block for optional effects like:
@@ -589,7 +627,15 @@ data class CreateDelayedTriggerEffect(
      * [DelayedTriggerTiming]. Orthogonal to [fireOnlyOnControllersTurn], which gates
      * whose turn the trigger fires on.
      */
-    val timing: DelayedTriggerTiming = DelayedTriggerTiming.CURRENT_TURN_OR_LATER
+    val timing: DelayedTriggerTiming = DelayedTriggerTiming.CURRENT_TURN_OR_LATER,
+    /**
+     * Target requirement chosen *each time* the delayed trigger fires. Used for delayed
+     * triggers whose effect targets, e.g. "Whenever you cast a noncreature spell this turn,
+     * **target** creature you control gains double strike" (Rediscover the Way). The chosen
+     * target is exposed to [effect] as [com.wingedsheep.sdk.scripting.targets.EffectTarget.ContextTarget].
+     * Null for non-targeting delayed triggers (the common case).
+     */
+    val targetRequirement: TargetRequirement? = null
 ) : Effect {
     override val description: String = when {
         trigger != null -> "create a delayed trigger that fires on ${trigger.event::class.simpleName}"

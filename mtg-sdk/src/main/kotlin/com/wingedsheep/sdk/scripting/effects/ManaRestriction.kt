@@ -112,6 +112,28 @@ sealed interface ManaRestriction {
     }
 
     /**
+     * "Spend this mana only to cast a spell that has any of the given subtypes."
+     *
+     * Generalizes [SubtypeSpellsOrAbilitiesOnly] to a *set* of subtypes joined by OR, for
+     * cards whose mana is usable on more than one named subtype — e.g. Maelstrom of the
+     * Spirit Dragon ("a Dragon spell or an Omen spell"). The [subtypes] are baked into the
+     * restriction at the moment the mana is produced, so the restriction stays
+     * self-contained and serializable. Unlike [SubtypeSpellsOrAbilitiesOnly] this matches
+     * spells only (not activated abilities of sources of the subtype) — every printed
+     * multi-subtype variant so far is spell-only.
+     */
+    @SerialName("SubtypeSpellsOnly")
+    @Serializable
+    data class SubtypeSpellsOnly(
+        val subtypes: Set<String>
+    ) : ManaRestriction {
+        override val description: String = buildString {
+            append("Spend this mana only to cast ")
+            append(subtypes.joinToString(" or ") { "a $it spell" })
+        }
+    }
+
+    /**
      * "Spend this mana only to cast [cardType] spells [or activate abilities of [cardType] sources]."
      *
      * Parameterized over card type so the same restriction shape covers Steelswarm Operator

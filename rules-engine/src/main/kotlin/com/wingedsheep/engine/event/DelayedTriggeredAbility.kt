@@ -51,5 +51,12 @@ data class DelayedTriggeredAbility(
      */
     val fireOnce: Boolean = false,
     /** If set, this trigger won't fire before this turn number. Used for "your next end step" effects. */
-    val notBeforeTurn: Int? = null
+    val notBeforeTurn: Int? = null,
+    /**
+     * Target requirement chosen each time this delayed trigger fires. Threaded into the
+     * synthesised [com.wingedsheep.sdk.scripting.TriggeredAbility] so the player picks a
+     * target per firing (e.g. Rediscover the Way chapter III). Null for non-targeting
+     * delayed triggers.
+     */
+    val targetRequirement: com.wingedsheep.sdk.scripting.targets.TargetRequirement? = null
 )

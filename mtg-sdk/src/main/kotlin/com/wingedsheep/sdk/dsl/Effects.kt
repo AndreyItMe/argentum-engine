@@ -1314,6 +1314,16 @@ object Effects {
         CreatePredefinedTokenEffect("Treasure", count, tapped = tapped)
 
     /**
+     * "You may behold a [filter]. If you do, [ifBeheld]." — the resolution-time behold
+     * (choose a matching permanent you control or reveal a matching card from hand). See
+     * [com.wingedsheep.sdk.scripting.effects.BeholdEffect]. Used by Sarkhan, Dragon Ascendant.
+     */
+    fun Behold(
+        filter: com.wingedsheep.sdk.scripting.GameObjectFilter,
+        ifBeheld: Effect? = null
+    ): Effect = com.wingedsheep.sdk.scripting.effects.BeholdEffect(filter, ifBeheld)
+
+    /**
      * Create Food artifact tokens.
      * "{2}, {T}, Sacrifice this artifact: You gain 3 life."
      *

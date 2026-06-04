@@ -212,6 +212,27 @@ data class MayRevealCardFromHandContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after the player chooses to behold (or declines) for
+ * [com.wingedsheep.sdk.scripting.effects.BeholdEffect].
+ *
+ * @property beholderId The player who was asked to behold
+ * @property sourceName Name of the source for prompts/events
+ * @property handOptionIds The subset of the decision options that live in the beholder's hand
+ *                          (revealed when chosen); battlefield options are merely chosen.
+ * @property ifBeheld Effect to run when the player successfully beholds
+ * @property effectContext Effect context propagated to [ifBeheld]
+ */
+@Serializable
+data class BeholdContinuation(
+    override val decisionId: String,
+    val beholderId: EntityId,
+    val sourceName: String?,
+    val handOptionIds: Set<EntityId>,
+    val ifBeheld: Effect?,
+    val effectContext: EffectContext,
+) : ContinuationFrame
+
+/**
  * Resume placing a triggered ability on the stack after the player answers a "may" question.
  *
  * When a triggered ability has both a MayEffect wrapper and targets (like Invigorating Boon's

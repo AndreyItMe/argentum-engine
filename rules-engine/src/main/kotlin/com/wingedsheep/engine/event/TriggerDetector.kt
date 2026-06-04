@@ -303,7 +303,8 @@ class TriggerDetector(
                 ability = TriggeredAbility.create(
                     trigger = EventPattern.StepEvent(Step.END, Player.Each),
                     binding = TriggerBinding.ANY,
-                    effect = delayed.effect
+                    effect = delayed.effect,
+                    targetRequirement = delayed.targetRequirement
                 ),
                 sourceId = delayed.sourceId,
                 sourceName = delayed.sourceName,
@@ -578,7 +579,8 @@ class TriggerDetector(
                         ability = TriggeredAbility.create(
                             trigger = spec.event,
                             binding = spec.binding,
-                            effect = delayed.effect
+                            effect = delayed.effect,
+                            targetRequirement = delayed.targetRequirement
                         ),
                         sourceId = delayed.sourceId,
                         sourceName = delayed.sourceName,
@@ -624,6 +626,11 @@ class TriggerDetector(
             // "when a [filtered] creature next attacks" (AttackEvent).
             is com.wingedsheep.sdk.scripting.EventPattern.YouAttackEvent,
             is com.wingedsheep.sdk.scripting.EventPattern.AttackEvent ->
+                matcher.matchesTrigger(specEvent, spec.binding, event, sourceId, controllerId, state)
+            // Spell-cast delayed triggers ("whenever you cast a [filtered] spell this turn, …",
+            // Rediscover the Way chapter III) are filter-scoped: delegate to the canonical
+            // spell-cast matcher so the spell filter and casting-player predicate are honored.
+            is com.wingedsheep.sdk.scripting.EventPattern.SpellCastEvent ->
                 matcher.matchesTrigger(specEvent, spec.binding, event, sourceId, controllerId, state)
             is com.wingedsheep.sdk.scripting.EventPattern.DealsDamageEvent -> {
                 if (event !is com.wingedsheep.engine.core.DamageDealtEvent) return false
