@@ -127,6 +127,50 @@ class SurrakElusiveHunterScenarioTest : ScenarioTestBase() {
                     game.state.getHand(game.player1Id).size shouldBe handBefore
                 }
             }
+
+            // Regression guard: emitting BecomesTargetEvent for spell targets must not make
+            // permanent-only "a creature you control becomes the target" triggers fire on a
+            // creature SPELL. Pawpatch Recruit (no `includeSpellTargets`) must stay quiet when an
+            // opponent counters a creature spell you control. Only Surrak opts into spell targets.
+            test("permanent-only becomes-target triggers do NOT fire on a creature spell (Pawpatch Recruit)") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Pawpatch Recruit")
+                    .withCardInHand(1, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Forest", 2)
+                    .withCardInHand(2, "Exclude")
+                    .withLandsOnBattlefield(2, "Island", 3)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val pawpatch = game.findPermanent("Pawpatch Recruit")!!
+
+                game.castSpell(1, "Grizzly Bears").error shouldBe null
+                game.execute(PassPriority(game.player1Id))
+
+                val creatureSpell = game.state.stack.first { id ->
+                    game.state.getEntity(id)?.get<CardComponent>()?.name == "Grizzly Bears"
+                }
+                val exclude = game.state.getHand(game.player2Id).first { id ->
+                    game.state.getEntity(id)?.get<CardComponent>()?.name == "Exclude"
+                }
+                game.execute(
+                    CastSpell(game.player2Id, exclude, listOf(ChosenTarget.Spell(creatureSpell)))
+                ).error shouldBe null
+
+                game.resolveStack()
+
+                withClue("Pawpatch's trigger must not have fired (no pending counter-target decision)") {
+                    game.state.pendingDecision shouldBe null
+                }
+                withClue("Pawpatch stays 2/1 — no wrongful +1/+1 counter from a spell target") {
+                    game.state.projectedState.getPower(pawpatch) shouldBe 2
+                }
+                withClue("Grizzly Bears was countered into the graveyard") {
+                    game.isInGraveyard(1, "Grizzly Bears") shouldBe true
+                }
+            }
         }
     }
 

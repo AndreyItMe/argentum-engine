@@ -40,7 +40,10 @@ val SurrakElusiveHunter = card("Surrak, Elusive Hunter") {
     keywords(Keyword.TRAMPLE)
 
     triggeredAbility {
-        trigger = Triggers.CreatureYouControlBecomesTargetByOpponent(GameObjectFilter.Creature)
+        trigger = Triggers.CreatureYouControlBecomesTargetByOpponent(
+            GameObjectFilter.Creature,
+            includeSpellTargets = true
+        )
         effect = Effects.DrawCards(1)
     }
 

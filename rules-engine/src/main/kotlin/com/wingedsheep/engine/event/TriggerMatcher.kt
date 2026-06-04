@@ -829,6 +829,11 @@ class TriggerMatcher(
             TriggerBinding.ATTACHED -> return false // handled by AttachmentTriggerDetector
         }
 
+        // Spell targets fire only for triggers that opted in ("... or a creature spell you control",
+        // e.g. Surrak). Permanent-only wording ("a creature you control" — Pawpatch Recruit, Daru
+        // Spiritualist) must not react to a creature spell on the stack being targeted.
+        if (event.targetIsSpell && !trigger.includeSpellTargets) return false
+
         // Valiant: check if the targeting spell/ability is controlled by "you" (the trigger's controller)
         if (trigger.byYou && event.controllerId != controllerId) return false
 

@@ -922,16 +922,19 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     // ---- Targeting Triggers ----
 
     /**
-     * When a permanent or spell becomes the target of a spell or ability.
+     * When a permanent (or, opt-in, a spell on the stack) becomes the target of a spell or ability.
      * Binding SELF = "when this creature becomes the target",
      * ANY = "whenever a creature you control becomes the target".
      *
      * The [targetFilter] restricts what type of object can trigger this
-     * (e.g., Cleric creatures you control). The filter is matched against the
-     * targeted object's card data, so it also matches spells on the stack — a
-     * creature spell you control matches a `Creature` filter (Surrak, Elusive
-     * Hunter: "a creature you control or a creature spell you control becomes
-     * the target").
+     * (e.g., Cleric creatures you control).
+     *
+     * By default this matches **permanent** targets only — "a creature you control" means a creature
+     * on the battlefield (Pawpatch Recruit, Daru Spiritualist), not a creature spell on the stack.
+     * Set [includeSpellTargets] for the rarer "... or a creature spell you control" wording, which
+     * also fires when a spell on the stack is targeted; the [targetFilter] is then matched against
+     * the spell's card data, so a creature spell matches a `Creature` filter (Surrak, Elusive Hunter:
+     * "a creature you control or a creature spell you control becomes the target").
      *
      * [byYou] restricts to spells or abilities controlled by the trigger's controller.
      * [firstTimeEachTurn] restricts to the first time each turn (used by Valiant).
@@ -942,7 +945,8 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
         val targetFilter: GameObjectFilter = GameObjectFilter.Any,
         val byYou: Boolean = false,
         val byOpponent: Boolean = false,
-        val firstTimeEachTurn: Boolean = false
+        val firstTimeEachTurn: Boolean = false,
+        val includeSpellTargets: Boolean = false
     ) : EventPattern {
         override val description: String = buildString {
             append(describeObjectForEvent(targetFilter))

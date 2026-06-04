@@ -1214,13 +1214,15 @@ Triggers.youCastSpell(
 - `CreatureTurnedFaceUp(player?)` — when a creature you control turns face up.
 - `GainControlOfSelf` — you gain control of source.
 - `BecomesTarget(filter?)` — source becomes target of spell/ability. The engine emits the
-  underlying `BecomesTargetEvent` for both permanent targets and spell targets on the stack, and
-  the `filter` is matched against the targeted object's card data — so a `Creature` filter also
-  matches a creature spell on the stack (Surrak, Elusive Hunter: "a creature you control or a
-  creature spell you control becomes the target"). Ward never sees spell targets because it is
-  generated only from battlefield permanents.
-- `CreatureYouControlBecomesTargetByOpponent(filter?)` — your creature (permanent or creature spell)
-  gets targeted by an opponent's spell or ability.
+  underlying `BecomesTargetEvent` for both permanent targets and spell targets on the stack, but the
+  trigger matches **permanent targets only** by default — "a creature you control" is a battlefield
+  creature, not a creature spell. Set `includeSpellTargets = true` on the event for the "... or a
+  creature spell you control" wording (Surrak, Elusive Hunter); the `filter` is then also matched
+  against the spell's card data, so a `Creature` filter matches a creature spell on the stack. Ward
+  never sees spell targets because it is generated only from battlefield permanents.
+- `CreatureYouControlBecomesTargetByOpponent(filter?, includeSpellTargets = false)` — your creature
+  gets targeted by an opponent's spell or ability. Permanent-only unless `includeSpellTargets = true`
+  (Surrak), which also fires when an opponent targets a matching creature spell you control.
 - `Transforms` — source transforms (either direction).
 - `TransformsToFront` — to front face.
 - `TransformsToBack` — to back face.

@@ -329,8 +329,13 @@ class StackResolver(
     }
 
     /**
-     * Emit a [BecomesTargetEvent] for a permanent or spell target and mark it as targeted by
-     * [controllerId]. Players and other target kinds emit nothing. Returns the updated state.
+     * Emit a [BecomesTargetEvent] for a permanent or spell target. Players and other target kinds
+     * emit nothing. Returns the updated state.
+     *
+     * Only permanents participate in the "targeted by this controller this turn" tracking (Valiant's
+     * "first time each turn"): a spell's stack entity can be reused as the resolved permanent's
+     * entity, so marking it would leak a stale flag onto the permanent. Spell-target events carry
+     * `firstTime = true` and leave the tracking untouched.
      */
     private fun emitBecomesTarget(
         state: GameState,
@@ -339,13 +344,14 @@ class StackResolver(
         controllerId: EntityId,
         events: MutableList<GameEvent>
     ): GameState {
+        val isSpell = target is ChosenTarget.Spell
         val targetEntityId = when (target) {
             is ChosenTarget.Permanent -> target.entityId
             is ChosenTarget.Spell -> target.spellEntityId
             else -> return state
         }
         val targetName = state.getEntity(targetEntityId)?.get<CardComponent>()?.name ?: "Unknown"
-        val firstTime = !hasBeenTargetedByController(state, targetEntityId, controllerId)
+        val firstTime = isSpell || !hasBeenTargetedByController(state, targetEntityId, controllerId)
         events.add(
             BecomesTargetEvent(
                 targetEntityId,
@@ -353,10 +359,10 @@ class StackResolver(
                 sourceEntityId,
                 controllerId,
                 firstTime,
-                targetIsSpell = target is ChosenTarget.Spell
+                targetIsSpell = isSpell
             )
         )
-        return markTargetedByController(state, targetEntityId, controllerId)
+        return if (isSpell) state else markTargetedByController(state, targetEntityId, controllerId)
     }
 
     /**
