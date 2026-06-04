@@ -344,8 +344,9 @@ class BoosterGenerator(
         val setConfig = availableSets[setCode]
             ?: throw IllegalArgumentException("Unknown set code: $setCode")
 
-        // Return one variant of each basic land type
+        // Return one variant of each basic land type (only those in the draft/sealed product)
         return setConfig.basicLands
+            .filter { it.metadata.inBooster }
             .groupBy { it.name }
             .mapValues { (_, variants) -> variants.first() }
     }
@@ -375,7 +376,9 @@ class BoosterGenerator(
         val setConfig = availableSets[setCode]
             ?: throw IllegalArgumentException("Unknown set code: $setCode")
 
-        return setConfig.basicLands.groupBy { it.name }
+        return setConfig.basicLands
+            .filter { it.metadata.inBooster }
+            .groupBy { it.name }
     }
 
     /**

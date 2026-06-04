@@ -31,10 +31,13 @@ val TdmPlains278 = basicLand("Plains") {
     imageUri = "https://cards.scryfall.io/normal/front/b/8/b8c391f2-b340-43c7-89e6-afac5b70491f.jpg?1743205099"
 }
 
+// Cards 287-291 are the "Dragon's Eye" full-art cycle (one per type, Ron Spencer). They're kept
+// defined for collection/display but excluded from the draft/sealed deck-building basic pool.
 val TdmPlains287 = basicLand("Plains") {
     collectorNumber = "287"
     artist = "Ron Spencer"
     imageUri = "https://cards.scryfall.io/normal/front/3/e/3e8c67e5-587a-43b2-af47-bbad1f8b52e9.jpg?1743205132"
+    inBooster = false
 }
 
 // =============================================================================
@@ -63,6 +66,7 @@ val TdmIsland288 = basicLand("Island") {
     collectorNumber = "288"
     artist = "Ron Spencer"
     imageUri = "https://cards.scryfall.io/normal/front/b/3/b300be80-6618-4284-b5c3-95c1ab373e6f.jpg?1743205137"
+    inBooster = false
 }
 
 // =============================================================================
@@ -91,6 +95,7 @@ val TdmSwamp289 = basicLand("Swamp") {
     collectorNumber = "289"
     artist = "Ron Spencer"
     imageUri = "https://cards.scryfall.io/normal/front/5/7/57da24a0-89a7-4756-b4ca-4dea132e8f67.jpg?1743205139"
+    inBooster = false
 }
 
 // =============================================================================
@@ -119,6 +124,7 @@ val TdmMountain290 = basicLand("Mountain") {
     collectorNumber = "290"
     artist = "Ron Spencer"
     imageUri = "https://cards.scryfall.io/normal/front/a/4/a4db1b7a-93f2-40a5-b649-80a099ddeb62.jpg?1743205146"
+    inBooster = false
 }
 
 // =============================================================================
@@ -147,6 +153,7 @@ val TdmForest291 = basicLand("Forest") {
     collectorNumber = "291"
     artist = "Ron Spencer"
     imageUri = "https://cards.scryfall.io/normal/front/7/e/7e33e540-2828-46ad-a441-366552843d9c.jpg?1743205146"
+    inBooster = false
 }
 
 /**

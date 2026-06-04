@@ -20,7 +20,8 @@ section; do not let SDK additions land without a corresponding doc update.
 
 - `card("Name") { ... }` — open the builder for a standard card.
 - `basicLand("Plains" | "Island" | "Swamp" | "Mountain" | "Forest")` — shortcut for basic lands (sets type line,
-  intrinsic mana ability, supertype).
+  intrinsic mana ability, supertype). Supports `collectorNumber`, `artist`, `flavorText`, `imageUri`, `rarity`, and
+  `inBooster` (set `false` to keep an art variant defined but exclude it from the draft/sealed deck-building basic pool).
 
 **Card builder properties**
 
@@ -106,7 +107,8 @@ section; do not let SDK additions land without a corresponding doc update.
 - `imageUri: String?` — art URL; auto-fetched from Scryfall if omitted.
 - `scryfallId: String?` — Scryfall UUID.
 - `releaseDate: String?` — `YYYY-MM-DD`.
-- `inBooster: Boolean` — appears in draft boosters (default `true`; `false` for Special Guests / starter exclusives).
+- `inBooster: Boolean` — part of the draft/sealed product (default `true`; `false` for Special Guests / starter
+  exclusives). Gates both the booster pool and the basic-land variants offered during limited deck building.
 - `oracleTextOverride: String?` — bypass auto-generated oracle text.
 
 **Reprints** — add a `Printing` row in the new set's `Reprints.kt` and wire it into `MtgSet.printings`. Never duplicate
