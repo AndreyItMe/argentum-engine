@@ -74,6 +74,7 @@ import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityEnteredOrWasCastFromGraveyard
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityHadMinusOneMinusOneCounter
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasHistoric
+import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasCast
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasNotPutByThisSource
 import com.wingedsheep.sdk.scripting.conditions.TriggeringSpellHasSingleTarget
 import com.wingedsheep.sdk.scripting.conditions.TriggeringSpellMatchesFilter
@@ -269,6 +270,7 @@ class ConditionEvaluator(
             }
             is SacrificedPermanentHadSubtype -> ifResolution { evaluateSacrificedPermanentHadSubtype(condition, it) }
             is TriggeringEntityWasHistoric -> ifResolution { evaluateTriggeringEntityWasHistoric(state, it) }
+            is TriggeringEntityWasCast -> ifResolution { evaluateTriggeringEntityWasCast(state, it) }
             is TriggeringEntityEnteredOrWasCastFromGraveyard ->
                 ifResolution { evaluateTriggeringEntityEnteredOrWasCastFromGraveyard(state, it) }
             is TriggeringEntityHadMinusOneMinusOneCounter ->
@@ -699,6 +701,19 @@ class ConditionEvaluator(
         val entityId = context.triggeringEntityId ?: return false
         val card = state.getEntity(entityId)?.get<CardComponent>() ?: return false
         return card.typeLine.isHistoric
+    }
+
+    /**
+     * "if you cast it" referring to the triggering (entering) permanent. Mirrors
+     * [evaluateWasCast] but reads the cast-origin markers off the triggering entity rather than
+     * the ability's source, so it works for "whenever a creature you control enters, if you cast
+     * it" triggers where the source is a separate permanent. Tokens, reanimated, and
+     * "put onto the battlefield" permanents lack these markers and are correctly excluded.
+     */
+    private fun evaluateTriggeringEntityWasCast(state: GameState, context: EffectContext): Boolean {
+        val entityId = context.triggeringEntityId ?: return false
+        val entity = state.getEntity(entityId) ?: return false
+        return entity.has<CastFromHandComponent>() || entity.has<CastFromGraveyardComponent>()
     }
 
     private fun evaluateTriggeringEntityEnteredOrWasCastFromGraveyard(

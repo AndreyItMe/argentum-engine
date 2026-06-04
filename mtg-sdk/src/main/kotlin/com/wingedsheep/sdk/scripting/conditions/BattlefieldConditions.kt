@@ -96,6 +96,21 @@ data object TriggeringEntityWasHistoric : Condition {
 }
 
 /**
+ * Condition: "if you cast it" referring to the *triggering* entity (not the ability's source).
+ * True when the entering permanent that triggered the ability was cast — i.e. it carries a
+ * cast-origin marker (cast from hand or graveyard) — and false when it was put onto the
+ * battlefield by another effect (token, reanimation, "put onto the battlefield"). This is the
+ * sibling of [com.wingedsheep.sdk.scripting.conditions.WasCast] for "whenever a creature you
+ * control enters, if you cast it" triggers, where the source is a separate permanent and the
+ * cast subject is the entering creature (e.g. The Sibsig Ceremony).
+ */
+@SerialName("TriggeringEntityWasCast")
+@Serializable
+data object TriggeringEntityWasCast : Condition {
+    override val description: String = "if you cast it"
+}
+
+/**
  * Condition: "if it entered or was cast from a graveyard".
  * True when the triggering entity has either EnteredFromGraveyardComponent (reanimated
  * directly from graveyard → battlefield) or CastFromGraveyardComponent (spell was cast

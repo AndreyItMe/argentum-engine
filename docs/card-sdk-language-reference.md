@@ -1817,6 +1817,13 @@ keywordAbilities(KeywordAbility.Protection(Color.BLUE), KeywordAbility.Annihilat
 ### Cast / cost
 
 - `WasCast` — source was cast (not put onto the stack).
+- `TriggeringEntityWasCast` — the *triggering* entity (not the ability's source) was cast — i.e. it
+  carries a cast-origin marker (`CastFromHandComponent` / `CastFromGraveyardComponent`). The
+  cast-subject sibling of `WasCast`, for "whenever a creature you control enters, **if you cast it**,
+  …" intervening-if triggers where the source is a separate permanent and the cast subject is the
+  entering creature. Tokens, reanimated permanents, and "put onto the battlefield" permanents lack
+  the markers and are correctly excluded. Used by **The Sibsig Ceremony** (a plain `WasCast` there
+  would test the enchantment, not the entering creature). Resolution-only.
 - `WasCastFromHand` — cast specifically from hand.
 - `WasCastFromZone(zone)` — cast from a specific zone. For resolving spells it reads the spell's
   cast-origin; for a permanent already on the battlefield it falls back to the cast-origin marker

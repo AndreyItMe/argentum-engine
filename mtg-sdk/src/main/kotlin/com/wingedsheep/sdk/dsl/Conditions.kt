@@ -835,6 +835,15 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasHistoric
 
     /**
+     * If you cast the triggering entity (the entering permanent), as opposed to it being put
+     * onto the battlefield by another effect. Sibling of [WasCast] for triggers whose source is
+     * a separate permanent (e.g. "whenever a creature you control enters, if you cast it" on
+     * The Sibsig Ceremony).
+     */
+    val TriggeringEntityWasCast: ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasCast
+
+    /**
      * If the triggering entity entered or was cast from a graveyard.
      * Used by Twilight Diviner: "if they entered or were cast from a graveyard".
      */
