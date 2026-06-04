@@ -84,6 +84,13 @@ class AiGameManager(
     }
 
     /**
+     * Master AI toggle, ignoring the LLM-key gate that [isEnabled] also applies. Use this
+     * for code paths that force engine mode (e.g. dev scenarios) and so don't need a key
+     * even when the server's global config is LLM.
+     */
+    val aiEnabledToggle: Boolean get() = gameProperties.ai.enabled
+
+    /**
      * Look up the LLM model override for an AI player by querying its identity in the SessionRegistry.
      * The override is stored on `PlayerIdentity.aiModelOverride` so it survives server restart.
      */
@@ -134,6 +141,57 @@ class AiGameManager(
     )
 
     /**
+     * Wire the AI plumbing common to every bring-up path: synthetic [AiWebSocketSession],
+     * its [PlayerSession]/[PlayerIdentity], registration with [SessionRegistry] +
+     * [activeSessions] + [aiPlayerIds].
+     *
+     * Each caller is responsible for the game-state side (deck list, [GameSession.addPlayer]
+     * vs [GameSession.associatePlayer], persistence info) since those vary per flow.
+     */
+    private fun registerAiSession(
+        gameSession: GameSession,
+        aiPlayerId: EntityId,
+        playerName: String,
+        controller: AiPlayerController,
+        modelOverride: String? = null,
+        onActionReady: (EntityId, GameAction) -> Unit,
+        onMulliganKeep: (EntityId) -> Unit,
+        onMulliganTake: (EntityId) -> Unit,
+        onBottomCards: (EntityId, List<EntityId>) -> Unit,
+    ): Pair<PlayerSession, PlayerIdentity> {
+        val aiSession = AiWebSocketSession(
+            aiPlayerId = aiPlayerId,
+            controller = controller,
+            thinkingDelayMs = gameProperties.ai.thinkingDelayMs,
+            onActionReady = onActionReady,
+            onMulliganKeep = onMulliganKeep,
+            onMulliganTake = onMulliganTake,
+            onBottomCards = onBottomCards
+        )
+
+        val playerSession = PlayerSession(
+            webSocketSession = aiSession,
+            playerId = aiPlayerId,
+            playerName = playerName
+        )
+
+        val identity = PlayerIdentity(
+            token = "ai-token-${UUID.randomUUID().toString().take(8)}",
+            playerId = aiPlayerId,
+            playerName = playerName,
+            isAi = true,
+            aiModelOverride = modelOverride
+        )
+        identity.webSocketSession = aiSession
+        identity.currentGameSessionId = gameSession.sessionId
+        sessionRegistry.register(identity, aiSession, playerSession)
+
+        activeSessions[gameSession.sessionId] = aiSession
+        aiPlayerIds.add(aiPlayerId)
+        return playerSession to identity
+    }
+
+    /**
      * Create an AI opponent and add it to the game session.
      *
      * @param gameSession The game session to add the AI to.
@@ -155,36 +213,20 @@ class AiGameManager(
         require(isEnabled) { "AI is not enabled. Set game.ai.enabled=true." }
 
         val aiPlayerId = EntityId("ai-${UUID.randomUUID().toString().take(8)}")
-        val aiProperties = gameProperties.ai
         val aiName = randomAiName()
 
         val controller = createController(aiPlayerId, gameSession)
 
-        val aiSession = AiWebSocketSession(
+        val (playerSession, identity) = registerAiSession(
+            gameSession = gameSession,
             aiPlayerId = aiPlayerId,
+            playerName = aiName,
             controller = controller,
-            thinkingDelayMs = aiProperties.thinkingDelayMs,
             onActionReady = onActionReady,
             onMulliganKeep = onMulliganKeep,
             onMulliganTake = onMulliganTake,
-            onBottomCards = onBottomCards
+            onBottomCards = onBottomCards,
         )
-
-        val playerSession = PlayerSession(
-            webSocketSession = aiSession,
-            playerId = aiPlayerId,
-            playerName = aiName
-        )
-
-        // Register a fake identity and session so MessageSender can find the lock
-        val identity = com.wingedsheep.gameserver.session.PlayerIdentity(
-            token = "ai-token-${UUID.randomUUID().toString().take(8)}",
-            playerId = aiPlayerId,
-            playerName = aiName,
-            isAi = true
-        )
-        identity.webSocketSession = aiSession
-        sessionRegistry.register(identity, aiSession, playerSession)
 
         // Quick games use a sealed deck — use same set as human player if provided
         val aiDeck = if (setCode != null) deckGenerator.generate(setCode) else deckGenerator.generate()
@@ -195,12 +237,64 @@ class AiGameManager(
 
         // Store persistence info
         gameSession.setPlayerPersistenceInfo(aiPlayerId, aiName, identity.token, isAi = true)
-        identity.currentGameSessionId = gameSession.sessionId
-
-        activeSessions[gameSession.sessionId] = aiSession
 
         logger.info("Created AI opponent ({}) for game {} [mode={}]",
-            aiPlayerId.value, gameSession.sessionId, aiProperties.mode)
+            aiPlayerId.value, gameSession.sessionId, gameProperties.ai.mode)
+        return playerSession
+    }
+
+    /**
+     * Wire an AI opponent into an existing dev-scenario seat.
+     *
+     * Unlike [createAiOpponent], this does NOT generate a fresh `ai-<uuid>` entity or call
+     * `gameSession.addPlayer(...)` — the player entity (with all its zones and life total) was
+     * already built by [com.wingedsheep.gameserver.controller.DevScenarioController]'s
+     * `ScenarioBuilder` and lives in the injected GameState under the supplied [aiPlayerId].
+     *
+     * Dev scenarios always use the in-process engine AI, never the LLM controller: scenarios
+     * have no deck list to ground prompts against, the engine AI reads zones straight from
+     * GameState, and we don't want test runs to need API keys or burn LLM tokens.
+     *
+     * @return the AI's [PlayerSession] (also added to [GameSession.players]).
+     */
+    fun wireAiForDevScenario(
+        gameSession: GameSession,
+        aiPlayerId: EntityId,
+        playerName: String,
+        onActionReady: (EntityId, GameAction) -> Unit,
+        onMulliganKeep: (EntityId) -> Unit,
+        onMulliganTake: (EntityId) -> Unit,
+        onBottomCards: (EntityId, List<EntityId>) -> Unit
+    ): PlayerSession {
+        // Only check the master toggle — engine AI doesn't need the LLM API key that
+        // [isEnabled] also gates on, so dev scenarios run even when the server is
+        // configured for LLM mode without a key.
+        require(gameProperties.ai.enabled) { "AI is not enabled. Set game.ai.enabled=true." }
+
+        val controller = EngineAiPlayerController(
+            cardRegistry = cardRegistry,
+            playerId = aiPlayerId,
+            gameStateProvider = { gameSession.getStateSnapshot() }
+        )
+
+        val (playerSession, identity) = registerAiSession(
+            gameSession = gameSession,
+            aiPlayerId = aiPlayerId,
+            playerName = playerName,
+            controller = controller,
+            onActionReady = onActionReady,
+            onMulliganKeep = onMulliganKeep,
+            onMulliganTake = onMulliganTake,
+            onBottomCards = onBottomCards,
+        )
+
+        // Add the AI to gameSession.players so player1/player2 accessors and broadcastStateUpdate see it.
+        // (No addPlayer — that requires a deck list, but the dev scenario already injected the full state.)
+        gameSession.associatePlayer(playerSession)
+        gameSession.setPlayerPersistenceInfo(aiPlayerId, playerName, identity.token, isAi = true)
+
+        logger.info("Wired AI ({}) into dev scenario {} [engine mode forced]",
+            aiPlayerId.value, gameSession.sessionId)
         return playerSession
     }
 

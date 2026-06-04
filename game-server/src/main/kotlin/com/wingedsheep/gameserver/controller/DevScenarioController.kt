@@ -19,6 +19,8 @@ import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.view.ClientStateTransformer
+import com.wingedsheep.gameserver.ai.AiGameManager
+import com.wingedsheep.gameserver.handler.GamePlayHandler
 import com.wingedsheep.gameserver.repository.GameRepository
 import com.wingedsheep.gameserver.session.GameSession
 import com.wingedsheep.gameserver.session.PlayerIdentity
@@ -59,7 +61,9 @@ class DevScenarioController(
     private val cardRegistry: CardRegistry,
     private val printingRegistry: com.wingedsheep.engine.registry.PrintingRegistry,
     private val gameRepository: GameRepository,
-    private val sessionRegistry: SessionRegistry
+    private val sessionRegistry: SessionRegistry,
+    private val aiGameManager: AiGameManager,
+    private val gamePlayHandler: GamePlayHandler,
 ) {
     private val stateTransformer = ClientStateTransformer(cardRegistry)
 
@@ -401,7 +405,24 @@ class DevScenarioController(
         @RequestParam(required = false) player1Token: String?,
         @RequestParam(required = false) player2Token: String?
     ): ResponseEntity<ScenarioResponse> {
-        logger.info("Creating dev scenario: player1=${request.player1Name}, player2=${request.player2Name}")
+        logger.info("Creating dev scenario: player1=${request.player1Name}, player2=${request.player2Name}, aiPlayer=${request.aiPlayer}")
+
+        if (request.aiPlayer != null && request.aiPlayer !in setOf(1, 2)) {
+            return ResponseEntity.badRequest().body(ScenarioResponse(
+                sessionId = "",
+                player1 = PlayerInfo("", "", ""),
+                player2 = PlayerInfo("", "", ""),
+                message = "aiPlayer must be 1 or 2 (got ${request.aiPlayer})"
+            ))
+        }
+        if (request.aiPlayer != null && !aiGameManager.aiEnabledToggle) {
+            return ResponseEntity.badRequest().body(ScenarioResponse(
+                sessionId = "",
+                player1 = PlayerInfo("", "", ""),
+                player2 = PlayerInfo("", "", ""),
+                message = "AI is not enabled on this server. Set game.ai.enabled=true to play scenarios against the AI."
+            ))
+        }
 
         try {
             val builder = ScenarioBuilder(cardRegistry)
@@ -489,46 +510,90 @@ class DevScenarioController(
             // Save the session
             gameRepository.save(gameSession)
 
-            // Create player identities with matching player IDs from the scenario
-            // Default to stable tokens "p1"/"p2" for easy dev workflow (bookmark browser tabs)
+            // Create player identities with matching player IDs from the scenario.
+            // Default to stable tokens "p1"/"p2" for easy dev workflow (bookmark browser tabs).
+            // When [aiPlayer] is set, that seat is filled by AiGameManager.wireAiForDevScenario
+            // (which registers its own AI identity) — we only pre-register the human seat.
             val p1Name = request.player1Name ?: "Player1"
             val p2Name = request.player2Name ?: "Player2"
 
-            val identity1 = PlayerIdentity(
-                token = player1Token ?: "p1",
-                playerId = player1Id,
-                playerName = p1Name
-            ).apply {
-                currentGameSessionId = gameSession.sessionId
-            }
+            val humanIdentity1 = if (request.aiPlayer != 1) {
+                PlayerIdentity(
+                    token = player1Token ?: "p1",
+                    playerId = player1Id,
+                    playerName = p1Name
+                ).apply { currentGameSessionId = gameSession.sessionId }
+                    .also { sessionRegistry.preRegisterIdentity(it) }
+            } else null
 
-            val identity2 = PlayerIdentity(
-                token = player2Token ?: "p2",
-                playerId = player2Id,
-                playerName = p2Name
-            ).apply {
-                currentGameSessionId = gameSession.sessionId
-            }
+            val humanIdentity2 = if (request.aiPlayer != 2) {
+                PlayerIdentity(
+                    token = player2Token ?: "p2",
+                    playerId = player2Id,
+                    playerName = p2Name
+                ).apply { currentGameSessionId = gameSession.sessionId }
+                    .also { sessionRegistry.preRegisterIdentity(it) }
+            } else null
 
-            // Pre-register identities so players can connect with their tokens
-            sessionRegistry.preRegisterIdentity(identity1)
-            sessionRegistry.preRegisterIdentity(identity2)
+            // Wire the AI seat (if any). This associates the AI's PlayerSession with the
+            // GameSession so subsequent broadcastStateUpdate calls reach the AI controller.
+            if (request.aiPlayer != null) {
+                val (aiSeatId, aiSeatName) = if (request.aiPlayer == 1) {
+                    player1Id to p1Name
+                } else {
+                    player2Id to p2Name
+                }
+                aiGameManager.wireAiForDevScenario(
+                    gameSession = gameSession,
+                    aiPlayerId = aiSeatId,
+                    playerName = aiSeatName,
+                    onActionReady = { id, action -> gamePlayHandler.handleAiAction(gameSession, id, action) },
+                    onMulliganKeep = { id -> gamePlayHandler.handleAiMulliganKeep(gameSession, id) },
+                    onMulliganTake = { id -> gamePlayHandler.handleAiMulliganTake(gameSession, id) },
+                    onBottomCards = { id, cardIds -> gamePlayHandler.handleAiBottomCards(gameSession, id, cardIds) }
+                )
+                // Kick off the AI: if it holds priority in the injected state, this triggers
+                // its first action. If the human has priority, the AI receives state and waits.
+                gamePlayHandler.broadcastStateUpdate(gameSession, emptyList())
+            }
 
             logger.info("Created scenario session ${gameSession.sessionId}")
 
+            val player1Info = PlayerInfo(
+                name = p1Name,
+                token = humanIdentity1?.token ?: "(AI)",
+                playerId = player1Id.value
+            )
+            val player2Info = PlayerInfo(
+                name = p2Name,
+                token = humanIdentity2?.token ?: "(AI)",
+                playerId = player2Id.value
+            )
+
+            // Exactly one human identity is null iff [aiPlayer] selected that seat — assert
+            // the invariant so a future reordering of the pre-registration block fails
+            // loudly here rather than producing a malformed URL.
+            val openMessage = when (request.aiPlayer) {
+                1 -> {
+                    val token = checkNotNull(humanIdentity2) { "humanIdentity2 must be non-null when aiPlayer=1" }.token
+                    "Scenario created vs AI. Open http://localhost:5173/?token=$token (you are Player 2)"
+                }
+                2 -> {
+                    val token = checkNotNull(humanIdentity1) { "humanIdentity1 must be non-null when aiPlayer=2" }.token
+                    "Scenario created vs AI. Open http://localhost:5173/?token=$token (you are Player 1)"
+                }
+                else -> {
+                    val t1 = checkNotNull(humanIdentity1) { "humanIdentity1 must be non-null when aiPlayer is null" }.token
+                    val t2 = checkNotNull(humanIdentity2) { "humanIdentity2 must be non-null when aiPlayer is null" }.token
+                    "Scenario created. Open http://localhost:5173/?token=$t1 (Player 1) or http://localhost:5173/?token=$t2 (Player 2)"
+                }
+            }
+
             return ResponseEntity.ok(ScenarioResponse(
                 sessionId = gameSession.sessionId,
-                player1 = PlayerInfo(
-                    name = p1Name,
-                    token = identity1.token,
-                    playerId = player1Id.value
-                ),
-                player2 = PlayerInfo(
-                    name = p2Name,
-                    token = identity2.token,
-                    playerId = player2Id.value
-                ),
-                message = "Scenario created. Open http://localhost:5173/?token=${identity1.token} (Player 1) or http://localhost:5173/?token=${identity2.token} (Player 2)"
+                player1 = player1Info,
+                player2 = player2Info,
+                message = openMessage
             ))
         } catch (e: Exception) {
             logger.error("Failed to create scenario", e)
@@ -888,7 +953,14 @@ data class ScenarioRequest(
     /** Steps where player 1 should stop on opponent's turn (prevents auto-pass) */
     val player1OpponentStopAtSteps: List<Step>? = null,
     /** Steps where player 2 should stop on opponent's turn (prevents auto-pass) */
-    val player2OpponentStopAtSteps: List<Step>? = null
+    val player2OpponentStopAtSteps: List<Step>? = null,
+    /**
+     * If set to 1 or 2, that seat is played by the built-in engine AI opponent (driven by
+     * [com.wingedsheep.gameserver.ai.AiGameManager]). Requires `game.ai.enabled=true`.
+     * The other seat is connected normally over WebSocket with the returned token. Dev
+     * scenarios always use the in-process engine AI — no LLM, no API key.
+     */
+    val aiPlayer: Int? = null
 )
 
 data class PlayerConfig(
