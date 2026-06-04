@@ -868,7 +868,7 @@ class CastSpellEnumerator : ActionEnumerator {
                         if (freeCastResult != null) {
                             result.add(LegalAction(
                                 actionType = "CastWithoutPayingManaCost",
-                                description = "Cast ${cardComponent.name}",
+                                description = "Cast ${cardComponent.name} (Free)",
                                 action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget), useWithoutPayingManaCost = true),
                                 manaCostString = freeCastResult.manaCostString,
                                 requiresDamageDistribution = requiresDamageDistribution,
@@ -1010,7 +1010,7 @@ class CastSpellEnumerator : ActionEnumerator {
                         if (freeCastResult != null) {
                             result.add(LegalAction(
                                 actionType = "CastWithoutPayingManaCost",
-                                description = "Cast ${cardComponent.name}",
+                                description = "Cast ${cardComponent.name} (Free)",
                                 action = CastSpell(playerId, cardId, useWithoutPayingManaCost = true),
                                 validTargets = firstReqInfo.validTargets,
                                 requiresTargets = true,
@@ -1130,7 +1130,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 if (freeCastResult != null) {
                     result.add(LegalAction(
                         actionType = "CastWithoutPayingManaCost",
-                        description = "Cast ${cardComponent.name}",
+                        description = "Cast ${cardComponent.name} (Free)",
                         action = CastSpell(playerId, cardId, useWithoutPayingManaCost = true),
                         manaCostString = freeCastResult.manaCostString,
                         autoTapPreview = freeCastResult.autoTapPreview

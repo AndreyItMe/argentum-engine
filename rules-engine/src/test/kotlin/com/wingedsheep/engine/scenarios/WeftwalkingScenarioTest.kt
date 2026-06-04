@@ -131,7 +131,7 @@ class WeftwalkingScenarioTest : FunSpec({
         ).isSuccess shouldBe false
     }
 
-    test("legal-action label for the free-cast variant reads 'Cast X' with actionType 'CastWithoutPayingManaCost' and manaCostString '{0}'") {
+    test("legal-action label for the free-cast variant reads 'Cast X (Free)' with actionType 'CastWithoutPayingManaCost' and manaCostString '{0}'") {
         val driver = createDriver()
         val player = driver.activePlayer!!
 
@@ -146,7 +146,7 @@ class WeftwalkingScenarioTest : FunSpec({
                 (la.action as? CastSpell)?.cardId == bears
         }
         freeCast shouldNotBe null
-        freeCast!!.description shouldBe "Cast Grizzly Bears"
+        freeCast!!.description shouldBe "Cast Grizzly Bears (Free)"
         freeCast.manaCostString shouldBe "{0}"
         (freeCast.action as CastSpell).useWithoutPayingManaCost shouldBe true
     }

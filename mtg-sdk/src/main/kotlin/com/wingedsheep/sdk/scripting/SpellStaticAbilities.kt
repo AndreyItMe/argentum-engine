@@ -259,32 +259,6 @@ data object CantCastSpellsSharingColorWithLastCast : StaticAbility {
 }
 
 /**
- * A continuous prohibition on casting spells, scoped along three independent axes — each a
- * reused SDK primitive, so one type covers a whole family of "can't cast" cards:
- *
- *  - **who** — [affected], a [Player] reference interpreted *relative to this permanent's
- *    controller*: `EachOpponent` / `Opponent` (your opponents), `You` (the controller), `Each`
- *    (everyone).
- *  - **which** — [spellFilter], matched against the card being cast (card predicates work in any
- *    zone). Defaults to every spell.
- *  - **when** — [condition], evaluated in the controller's context, so `IsYourTurn` reads as
- *    "during your turn" and `IsNotYourTurn` as "during an opponent's turn". `null` = always.
- *
- * Read at cast-legality time (never on the stack), so it composes with every casting path —
- * hand, graveyard flashback/harmonize, exile, top of library. Control is read from projected
- * state, so a control-changing effect flips who is restricted.
- *
- *  - Voice of Victory: `PlayersCantCastSpells(Player.EachOpponent, condition = IsYourTurn)`
- *    ("Your opponents can't cast spells during your turn.")
- *  - Grand Abolisher's cast clause: `PlayersCantCastSpells(Player.EachOpponent)` (every turn).
- *  - Void Winnower: `PlayersCantCastSpells(Player.EachOpponent, spellFilter =
- *    GameObjectFilter(cardPredicates = listOf(CardPredicate.ManaValueIsEven)))`.
- *
- * @property affected Who is forbidden, relative to the source's controller.
- * @property spellFilter Which spells are forbidden (matched against the card being cast).
- * @property condition Optional timing/state gate, evaluated in the controller's context; null = always.
- */
-/**
  * Generic "may cast a spell without paying its mana cost" battlefield permission. The static is
  * read at cast-legality time on every permanent on the battlefield; when its gates are open it
  * surfaces a `CastWithoutPayingManaCost` [com.wingedsheep.engine.legalactions.LegalAction]
@@ -335,6 +309,32 @@ data class MayCastWithoutPayingManaCost(
     }
 }
 
+/**
+ * A continuous prohibition on casting spells, scoped along three independent axes — each a
+ * reused SDK primitive, so one type covers a whole family of "can't cast" cards:
+ *
+ *  - **who** — [affected], a [Player] reference interpreted *relative to this permanent's
+ *    controller*: `EachOpponent` / `Opponent` (your opponents), `You` (the controller), `Each`
+ *    (everyone).
+ *  - **which** — [spellFilter], matched against the card being cast (card predicates work in any
+ *    zone). Defaults to every spell.
+ *  - **when** — [condition], evaluated in the controller's context, so `IsYourTurn` reads as
+ *    "during your turn" and `IsNotYourTurn` as "during an opponent's turn". `null` = always.
+ *
+ * Read at cast-legality time (never on the stack), so it composes with every casting path —
+ * hand, graveyard flashback/harmonize, exile, top of library. Control is read from projected
+ * state, so a control-changing effect flips who is restricted.
+ *
+ *  - Voice of Victory: `PlayersCantCastSpells(Player.EachOpponent, condition = IsYourTurn)`
+ *    ("Your opponents can't cast spells during your turn.")
+ *  - Grand Abolisher's cast clause: `PlayersCantCastSpells(Player.EachOpponent)` (every turn).
+ *  - Void Winnower: `PlayersCantCastSpells(Player.EachOpponent, spellFilter =
+ *    GameObjectFilter(cardPredicates = listOf(CardPredicate.ManaValueIsEven)))`.
+ *
+ * @property affected Who is forbidden, relative to the source's controller.
+ * @property spellFilter Which spells are forbidden (matched against the card being cast).
+ * @property condition Optional timing/state gate, evaluated in the controller's context; null = always.
+ */
 @SerialName("PlayersCantCastSpells")
 @Serializable
 data class PlayersCantCastSpells(
