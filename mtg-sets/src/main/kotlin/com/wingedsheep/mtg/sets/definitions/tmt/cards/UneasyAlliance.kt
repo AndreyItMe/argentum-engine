@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.scripting.CantAttack
 import com.wingedsheep.sdk.scripting.CantBlock
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -31,11 +32,11 @@ val UneasyAlliance = card("Uneasy Alliance") {
     auraTarget = Targets.Creature
 
     staticAbility {
-        ability = CantAttack()
+        ability = CantAttack(filter = GroupFilter.attachedCreature())
     }
 
     staticAbility {
-        ability = CantBlock()
+        ability = CantBlock(filter = GroupFilter.attachedCreature())
     }
 
     activatedAbility {

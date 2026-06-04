@@ -52,6 +52,7 @@ val SallyPrideLionessLeader = card("Sally Pride, Lioness Leader") {
                 toughness = 2,
                 colors = setOf(Color.RED),
                 creatureTypes = setOf("Mutant"),
+                imageUri = "https://cards.scryfall.io/normal/front/5/1/51e33613-7a24-461c-8d9f-12680af4b92a.jpg?1771590526"
             )
         )
     }
