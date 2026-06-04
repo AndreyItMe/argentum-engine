@@ -379,9 +379,12 @@ class CostEnumerationUtils(
         val container = state.getEntity(entityId) ?: return false
         if (container.has<TappedComponent>()) return false
         val cardComponent = container.get<CardComponent>() ?: return false
-        if (!cardComponent.typeLine.isLand && cardComponent.typeLine.isCreature) {
+        // Read creature-ness / haste from projected state so a Vehicle or animated permanent
+        // that is currently a creature is gated. Lands keep the carve-out (basic-land mana
+        // abilities are not restricted by summoning sickness).
+        if (!cardComponent.typeLine.isLand && state.projectedState.isCreature(entityId)) {
             val hasSummoningSickness = container.has<SummoningSicknessComponent>()
-            val hasHaste = cardComponent.baseKeywords.contains(Keyword.HASTE)
+            val hasHaste = state.projectedState.hasKeyword(entityId, Keyword.HASTE)
             if (hasSummoningSickness && !hasHaste) return false
         }
         return true
@@ -396,10 +399,11 @@ class CostEnumerationUtils(
             ?: return false
         val attachedEntity = state.getEntity(attachedId) ?: return false
         if (attachedEntity.has<TappedComponent>()) return false
-        val attachedCard = attachedEntity.get<CardComponent>()
-        if (attachedCard != null && attachedCard.typeLine.isCreature) {
+        // Read creature-ness / haste from projected state so a Vehicle or animated permanent
+        // currently being a creature is gated.
+        if (state.projectedState.isCreature(attachedId)) {
             val hasSummoningSickness = attachedEntity.has<SummoningSicknessComponent>()
-            val hasHaste = attachedCard.baseKeywords.contains(Keyword.HASTE)
+            val hasHaste = state.projectedState.hasKeyword(attachedId, Keyword.HASTE)
             if (hasSummoningSickness && !hasHaste) return false
         }
         return true

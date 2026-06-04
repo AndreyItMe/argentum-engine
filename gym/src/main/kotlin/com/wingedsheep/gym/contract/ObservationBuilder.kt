@@ -254,7 +254,14 @@ class ObservationBuilder(
             power = if (onBattlefield) projected.getPower(entityId) else null,
             toughness = if (onBattlefield) projected.getToughness(entityId) else null,
             tapped = onBattlefield && container.get<TappedComponent>() != null,
-            summoningSick = onBattlefield && container.get<SummoningSicknessComponent>() != null,
+            // Only creatures meaningfully suffer summoning sickness — the engine attaches the
+            // marker to every entering permanent so Vehicles / animated lands inherit the
+            // restriction when they become creatures, but for non-creatures the marker is a
+            // no-op (all {T}/attack gates are creature-conditional). Reporting it on a freshly
+            // played Mountain would mislead the agent into thinking it can't tap for mana.
+            summoningSick = onBattlefield
+                && container.get<SummoningSicknessComponent>() != null
+                && projected.isCreature(entityId),
             faceDown = container.get<FaceDownComponent>() != null,
             damageMarked = container.get<DamageComponent>()?.amount ?: 0,
             counters = container.get<CountersComponent>()?.counters

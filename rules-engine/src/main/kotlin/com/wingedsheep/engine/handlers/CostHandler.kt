@@ -156,11 +156,12 @@ class CostHandler(
                     ?: return false
                 val attachedEntity = state.getEntity(attachedId) ?: return false
                 if (attachedEntity.has<TappedComponent>()) return false
-                // Check summoning sickness on the attached creature
-                val card = attachedEntity.get<CardComponent>()
-                if (card != null && card.typeLine.isCreature) {
+                // Check summoning sickness on the attached creature. Read creature-ness and
+                // haste from projected state so a Vehicle / animated permanent currently
+                // being a creature is gated correctly.
+                if (state.projectedState.isCreature(attachedId)) {
                     val hasSummoningSickness = attachedEntity.has<SummoningSicknessComponent>()
-                    val hasHaste = card.baseKeywords.contains(com.wingedsheep.sdk.core.Keyword.HASTE)
+                    val hasHaste = state.projectedState.hasKeyword(attachedId, com.wingedsheep.sdk.core.Keyword.HASTE)
                     if (hasSummoningSickness && !hasHaste) return false
                 }
                 true

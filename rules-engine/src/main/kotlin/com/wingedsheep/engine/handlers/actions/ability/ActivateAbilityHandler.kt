@@ -221,16 +221,16 @@ class ActivateAbilityHandler(
         }
 
         // Check summoning sickness for TapAttachedCreature cost (before general cost check
-        // to give a specific error message)
+        // to give a specific error message). Read creature-ness and haste from projected
+        // state so a Vehicle / animated land currently being a creature is gated correctly.
         if (effectiveCost is AbilityCost.TapAttachedCreature ||
             (effectiveCost is AbilityCost.Composite && effectiveCost.costs.any { it is AbilityCost.TapAttachedCreature })) {
             val attachedId = container.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()?.targetId
             if (attachedId != null) {
                 val attachedContainer = state.getEntity(attachedId)
-                val attachedCard = attachedContainer?.get<CardComponent>()
-                if (attachedCard != null && attachedCard.typeLine.isCreature) {
+                if (attachedContainer != null && state.projectedState.isCreature(attachedId)) {
                     val hasSummoningSickness = attachedContainer.has<SummoningSicknessComponent>()
-                    val hasHaste = attachedCard.baseKeywords.contains(Keyword.HASTE)
+                    val hasHaste = state.projectedState.hasKeyword(attachedId, Keyword.HASTE)
                     if (hasSummoningSickness && !hasHaste) {
                         return "Enchanted creature has summoning sickness"
                     }
@@ -288,12 +288,16 @@ class ActivateAbilityHandler(
             }
         }
 
-        // Check summoning sickness for tap abilities
+        // Check summoning sickness for tap abilities. CR 302.6 restricts a *creature's* {T}/{Q}
+        // activated ability — read creature-ness and haste from projected state so a Vehicle
+        // or animated permanent that became a creature this turn is gated correctly. The
+        // `!typeLine.isLand` carve-out is preserved (basic-land mana abilities are not
+        // restricted by summoning sickness).
         if (effectiveCost is AbilityCost.Tap ||
             (effectiveCost is AbilityCost.Composite && effectiveCost.costs.any { it is AbilityCost.Tap })) {
-            if (!cardComponent.typeLine.isLand && cardComponent.typeLine.isCreature) {
+            if (!cardComponent.typeLine.isLand && state.projectedState.isCreature(action.sourceId)) {
                 val hasSummoningSickness = container.has<SummoningSicknessComponent>()
-                val hasHaste = cardComponent.baseKeywords.contains(Keyword.HASTE)
+                val hasHaste = state.projectedState.hasKeyword(action.sourceId, Keyword.HASTE)
                 if (hasSummoningSickness && !hasHaste) {
                     return "This creature has summoning sickness"
                 }
