@@ -324,8 +324,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `ReturnLinkedExileUnderOwnersControl()` — return under each card's owner.
 - `ReturnLinkedExileToHand()` — return all from linked exile to hand.
 - `ReturnOneFromLinkedExile()` — return one chosen card.
-- `GrantMayPlayFromExile(from, restriction?)` — owner may play matching cards from exile.
+- `GrantMayPlayFromExile(from, expiry?, withAnyManaType?, condition?, landEntersTapped?)` — controller may play matching cards from exile. `landEntersTapped=true` forces a played land tapped regardless of its own ETB script (Lightstall Inquisitor); PlayLandHandler reads the flag off the active `MayPlayPermission` at play time and stamps `TappedComponent` before the card's intrinsic `EntersTapped` branch runs.
 - `GrantPlayWithoutPayingCost(from)` — same, without paying mana costs.
+- `GrantPlayWithCostIncrease(from, amount)` — stamp `PlayWithCostIncreaseComponent(controllerId, amount)` on every card in the collection, so the next cast pays `{amount}` extra generic. Pair with `GrantMayPlayFromExile` for "each spell cast this way costs {N} more" clauses (Lightstall Inquisitor); for target-based "exile this permanent, owner may play it, opponents tax" effects use `Effects.ExileAndGrantOwnerPlayPermission` instead.
 - `GrantFreeCastTargetFromExile(target)` — cast specific exiled card for free.
 
 ### Stats & keywords
