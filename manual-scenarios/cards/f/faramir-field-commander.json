@@ -1,0 +1,59 @@
+{
+  "player1Name": "Alice",
+  "player2Name": "Bob",
+  "player1": {
+    "lifeTotal": 20,
+    "hand": [
+      "Birthday Escape",
+      "Birthday Escape",
+      "Goatnap",
+      "Claim the Precious",
+      "Blue Sun's Twilight"
+    ],
+    "battlefield": [
+      {"name": "Faramir, Field Commander"},
+      {"name": "Eastfarthing Farmer"},
+      {"name": "Goblin Assailant"},
+      {"name": "Mountain"},
+      {"name": "Island"},
+      {"name": "Island"},
+      {"name": "Island"},
+      {"name": "Swamp"},
+      {"name": "Swamp"},
+      {"name": "Swamp"}
+    ],
+    "graveyard": [],
+    "library": [
+      "Birthday Escape",
+      "Island",
+      "Swamp",
+      "Plains",
+      "Plains"
+    ]
+  },
+  "player2": {
+    "lifeTotal": 20,
+    "hand": ["Birthday Escape"],
+    "battlefield": [
+      {"name": "Island"},
+      {"name": "Island"},
+      {"name": "Eastfarthing Farmer"},
+      {"name": "Serra Angel"}
+    ],
+    "graveyard": [],
+    "library": [
+      "Plains",
+      "Plains",
+      "Plains",
+      "Plains",
+      "Plains"
+    ]
+  },
+  "phase": "PRECOMBAT_MAIN",
+  "activePlayer": 1,
+  "priorityPlayer": 1,
+  "player1StopAtSteps": ["END"],
+  "player2StopAtSteps": [],
+  "player1OpponentStopAtSteps": [],
+  "player2OpponentStopAtSteps": []
+}

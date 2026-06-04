@@ -10,7 +10,7 @@ Verify status anytime with: `scripts/card-status --set LTR` (and `--list --set L
 
 ## Status
 
-Draft cards at **172/261**. Every remaining unchecked card in `cards.md` (excluding the five
+Draft cards at **175/261**. Every remaining unchecked card in `cards.md` (excluding the five
 basic lands, which `basicLandsFallback` covers) needs at least one new engine primitive — see
 the "Engine gaps blocking the remaining cards" section below. Each card is listed under the
 primitive it is waiting on, with the exact blocking clause. Stop and open a dedicated PR per
@@ -87,11 +87,13 @@ than one gap is listed under its dominant gap with the secondary one noted inlin
 in its own PR, then attach all of its cards.
 
 ### Gap 2 — "draw your second card each turn" trigger
-**Engine change:** an Nth-card-drawn-per-turn trigger (per player), the draw analogue of
-`Triggers.NthSpellCast`.
-- **Knights of Dol Amroth** — "Whenever you draw your second card each turn, put a +1/+1 counter."
-- **Prince Imrahil the Fair** — "Whenever you draw your second card each turn, create a token."
-- **Stalwarts of Osgiliath** — same trigger (ETB Ring tempts half is already composable).
+**Status:** LANDED as `Triggers.NthCardDrawn(n, player)` (PR `Add NthCardDrawn trigger primitive`).
+Reads the per-player `CardsDrawnThisTurnComponent` (reset by `TurnManager` at turn start) and fires
+exactly once when a `CardsDrawnEvent` crosses the Nth-card threshold inside its batch (CR 121.2);
+non-draw "put into hand" effects (CR 121.5) don't advance the count.
+- **Knights of Dol Amroth** — ✅ implemented.
+- **Prince Imrahil the Fair** — ✅ implemented.
+- **Stalwarts of Osgiliath** — ✅ implemented.
 
 ### Gap 3 — "the Ring tempted you and you chose a creature other than this" condition
 **Status:** LANDED as `Conditions.YouChoseOtherCreatureAsRingBearer` (PR
