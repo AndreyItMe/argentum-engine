@@ -105,16 +105,15 @@ class JandorsRingScenarioTest : ScenarioTestBase() {
                 game.state.lastCardDrawnThisTurnByPlayer.containsKey(game.player1Id) shouldBe false
 
                 val ring = game.findPermanent("Jandor's Ring")!!
-                val payableRingActivations = game.getLegalActions(1).filter { info ->
-                    info.isAffordable &&
-                        (info.action as? ActivateAbility)?.sourceId == ring &&
-                        (info.action as? ActivateAbility)?.abilityId == ringAbilityId
+                val ringActivations = game.getLegalActions(1).filter { info ->
+                    (info.action as? ActivateAbility)?.sourceId == ring &&
+                        info.action.abilityId == ringAbilityId
                 }
                 // The enumerator still emits the ability as a greyed-out unaffordable entry so
-                // the UI can show "you can't activate this yet" — the assertion is that nothing
-                // affordable is offered, not that the ability is omitted entirely.
-                withClue("With no card drawn this turn, no payable activation must be enumerated") {
-                    payableRingActivations shouldBe emptyList()
+                // the UI can show "you can't activate this yet" — the ability is not omitted
+                // entirely, it is offered as a single unaffordable action.
+                withClue("With no card drawn this turn, the ring is offered only as a greyed-out unaffordable action") {
+                    ringActivations.map { it.isAffordable } shouldBe listOf(false)
                 }
             }
 
@@ -134,16 +133,16 @@ class JandorsRingScenarioTest : ScenarioTestBase() {
                 )
 
                 val ring = game.findPermanent("Jandor's Ring")!!
-                val payableRingActivations = game.getLegalActions(1).filter { info ->
-                    info.isAffordable &&
-                        (info.action as? ActivateAbility)?.sourceId == ring &&
-                        (info.action as? ActivateAbility)?.abilityId == ringAbilityId
+                val ringActivations = game.getLegalActions(1).filter { info ->
+                    (info.action as? ActivateAbility)?.sourceId == ring &&
+                        info.action.abilityId == ringAbilityId
                 }
                 withClue(
                     "Per Scryfall ruling: 'If you do not have the card still in your hand, " +
-                        "you can't pay the cost.' — the activation must drop out of payable actions."
+                        "you can't pay the cost.' — the ring stays enumerated but only as a " +
+                        "greyed-out unaffordable action."
                 ) {
-                    payableRingActivations shouldBe emptyList()
+                    ringActivations.map { it.isAffordable } shouldBe listOf(false)
                 }
             }
 
