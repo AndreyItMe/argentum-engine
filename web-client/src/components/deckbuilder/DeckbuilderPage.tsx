@@ -260,6 +260,36 @@ export function DeckbuilderPage() {
     return out
   }, [catalog])
 
+  // Reverse index for share-link decoding: `SET:collector` → card name. Share codes identify
+  // cards by printing rather than name (much shorter), so resolving a code back into a deck
+  // means mapping each printing to its name via the catalog's default printings.
+  const nameByPrinting = useMemo(() => {
+    const out = new Map<string, string>()
+    for (const c of catalog) {
+      if (c.setCode && c.collectorNumber) {
+        out.set(`${c.setCode.toUpperCase()}:${c.collectorNumber}`, c.name)
+      }
+    }
+    return out
+  }, [catalog])
+
+  // Share-link resolvers (paired inverses). `resolvePrinting` gives a card's catalog-default
+  // printing for encoding; `resolveName` maps a printing back to a name for decoding.
+  const resolvePrinting = useCallback(
+    (name: string): PrintingRef | null => {
+      const c = catalogIndex[name]
+      return c?.setCode && c?.collectorNumber
+        ? { setCode: c.setCode, collectorNumber: c.collectorNumber }
+        : null
+    },
+    [catalogIndex],
+  )
+  const resolveName = useCallback(
+    (printing: PrintingRef): string | null =>
+      nameByPrinting.get(`${printing.setCode.toUpperCase()}:${printing.collectorNumber}`) ?? null,
+    [nameByPrinting],
+  )
+
   // Working deck state.
   const [deckName, setDeckName] = useState('Untitled deck')
   const [deckCards, setDeckCards] = useState<Record<string, number>>({})
@@ -336,8 +366,12 @@ export function DeckbuilderPage() {
   useEffect(() => {
     const code = searchParams.get(SHARE_PARAM)
     if (!code || sharedLoadedRef.current) return
+    // v2 share codes identify cards by printing, so decoding needs the catalog's reverse index.
+    // Wait for `/api/cards` to land before resolving — the effect re-runs when `catalog` arrives,
+    // and the ref guard still fires it exactly once.
+    if (catalog.length === 0) return
     sharedLoadedRef.current = true
-    void decodeSharedDeck(code).then((shared) => {
+    void decodeSharedDeck(code, resolveName).then((shared) => {
       // Apply the URL rewrite and the decoded deck as one low-priority update. react-router's
       // BrowserRouter commits location changes inside `startTransition`, so the `fmt` stamp
       // below lands in a transition lane. If we set `commander` as a normal (urgent) update it
@@ -371,9 +405,10 @@ export function DeckbuilderPage() {
         setPinnedPrintings(pins)
       })
     })
-    // setSearchParams is stable; searchParams churn is filtered by the ref guard.
+    // setSearchParams is stable; searchParams churn is filtered by the ref guard. `catalog.length`
+    // re-triggers once the catalog loads so a code present on first paint still decodes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams])
+  }, [searchParams, catalog.length, resolveName])
 
   // Transient "Link copied!" feedback for the Share button.
   const [shareCopied, setShareCopied] = useState(false)
@@ -850,14 +885,17 @@ export function DeckbuilderPage() {
       if (name in cardsForShare) printings[name] = ref
     }
     const commanderPrinting = designated ? pinnedPrintings[designated] : undefined
-    const code = await encodeSharedDeck({
-      name: deckName.trim() || 'Untitled deck',
-      cards: cardsForShare,
-      ...(Object.keys(printings).length > 0 ? { printings } : {}),
-      ...(activeFormat ? { format: activeFormat } : {}),
-      ...(designated ? { commander: designated } : {}),
-      ...(commanderPrinting ? { commanderPrinting } : {}),
-    })
+    const code = await encodeSharedDeck(
+      {
+        name: deckName.trim() || 'Untitled deck',
+        cards: cardsForShare,
+        ...(Object.keys(printings).length > 0 ? { printings } : {}),
+        ...(activeFormat ? { format: activeFormat } : {}),
+        ...(designated ? { commander: designated } : {}),
+        ...(commanderPrinting ? { commanderPrinting } : {}),
+      },
+      resolvePrinting,
+    )
     const url = buildShareUrl(window.location.origin, code)
     try {
       await navigator.clipboard.writeText(url)
