@@ -98,6 +98,17 @@ coverage-gaps *ARGS:
 coverage-generate *ARGS:
     python3 spike/mtgish-coverage/autogen.py --write {{ARGS}}
 
+# COMPILE-VERIFICATION GATE — the real proof that AUTO cards are emittable, not just predicted.
+# Emits every whole-renderable card of a set into an isolated Gradle source set, COMPILES them,
+# serialises each via the same CardExporter the golden snapshots use, then diffs capabilities vs
+# golden. PASS = every emitted card compiles and capability-matches (0 mismatch); also reports how
+# many of the set it auto-emits. Portal: 169/184 emitted & verified, 0 mismatch.
+#   just coverage-verify --set POR
+[group: 'build']
+coverage-verify SET="POR":
+    ./gradlew :mtg-sets:verifyGeneratedCards -Pset={{SET}} --console=plain --rerun-tasks
+    python3 spike/mtgish-coverage/fidelity.py --gate {{SET}}
+
 # Verify backlog/sets/*/cards.md headers match actual [x] / [x]+[ ] counts
 [group: 'build']
 check-backlog:

@@ -25,16 +25,19 @@ in the mapping, not a real feature gap.
   `ignore` = a structural mtgish envelope (`SpellActions`, `TriggerA`, the `May/Unless/If`
   gate cluster) whose capability lives in nested nodes.
 
+> **Update — Portal taken to 100% coverage + a compile-verified emitter (see
+> "Maturation" section at the end).** Calibration is now 200/200 (100%); the two formerly-unmapped
+> tags (`EachPermanentDoesntUntapDuringControllersNextUntap`→`SkipUntap`,
+> `SkipAllCombatPhasesTheirNextTurn`→`SkipCombatPhases`) are mapped. The numbers below are the
+> original spike measurement, kept for the methodology narrative.
+
 ## Results
 
 **Calibration (Portal, 184 implemented cards):**
 
 ```
-RECALL: 182/184 = 98.9% coverable-now
+RECALL: 182/184 = 98.9% coverable-now      (now 200/200 = 100% — two tags since mapped)
   - 0 tags mapped to a MISSING engine capability  ← every effect/keyword guess validated
-  - 2 blocked cards = the 2 tags left deliberately unmapped:
-      Exhaustion   (EachPermanentDoesntUntapDuringControllersNextUntap)
-      False Peace  (SkipAllCombatPhasesTheirNextTurn)
 ```
 
 **Vocabulary is small and Zipfian.** Portal's entire 184-card corpus uses **77 distinct
@@ -279,3 +282,60 @@ Tempest cards out of AUTOGEN — silent-wrong avoided by construction.
   `composed` entries carry `tags` naming the concrete primitives they'd compile to (for fidelity).
 - `data/mtgish.lines.json` — 32k-card mtgish IR (gitignored; auto-downloaded on first run).
 - `registry.effects.txt` — generated dump of effect SerialNames (gitignored).
+- `emitter.py` — the mtgish→cardDef renderer (the single source of truth for "what we'd emit").
+
+## Maturation — complete-code emitter + a COMPILE-VERIFICATION gate (`just coverage-verify`)
+
+The spike measured *feasibility*; this round made the generator a usable tool and, crucially, replaced
+the "could we?" estimate with a "does it?" proof.
+
+**1. The emitter is now one renderer (`emitter.py`), and AUTO means it renders the WHOLE card.**
+Previously the AUTO tier came from a lenient structural check (`unrecoverable_reasons`) that the
+illustrative emitter didn't have to satisfy — so "AUTO" over-counted. Now `fidelity.py`, `autogen.py`,
+and the gate all tier on the *same* renderer: a card is AUTO ⟺ the emitter emits every action/ability.
+This is stricter and honest by construction (no flag can be flipped without code that emits).
+
+**2. Generated code is COMPLETE — no TODO stubs.** `scripts/card-status`'s Scryfall cache (schema v5)
+now retains per-printing rarity/collector/artist/imageUri/flavor/color-identity; the emitter renders a
+full `metadata { … }` block + `colorIdentity` matching the hand-authored idiom.
+
+**3. The Kotlin compile-verification gate (Hybrid design).** `just coverage-verify --set POR`:
+emits every whole-renderable card into an isolated `generatedCards` Gradle source set, **compiles
+them** (a draft that won't compile fails the build), serialises each with the same `CardExporter`
+that writes the golden snapshots, and diffs capabilities against the golden via the *same* function
+on both sides. This turns AUTO from a static-tag prediction into **"compiles + capability-matches."**
+
+```
+Portal (POR):
+  coverage calibration         200/200 = 100%
+  auto-emitted & COMPILED       174/184   (every emitted card compiles — Gradle)
+  VERIFIED (caps match golden)  174        capability MISMATCH: 0
+  left to hand                   10        (the emitter DECLINES rather than emit a wrong card)
+```
+
+The gate **passes** when every emitted card is correct (0 mismatch); coverage (174/184) is reported,
+not pass/failed — a generator declining a card it can't render faithfully is correct behaviour.
+
+**The 10 it declines are the genuinely engine-feature-complex residue** — exactly the tail the spike
+predicted needs hand-authoring (`add-card`): delayed/global triggers (Last Chance, Harsh Justice), a
+damage-prevention replacement (Deep Wood), a static "can't attack unless the defender controls an
+Island" (Deep-Sea Serpent), "sacrifice unless you sacrifice X" (Plant Elemental, Primeval Force,
+Thing from the Deep), and exotic dynamic amounts (Cruel Bargain's half-life, Final Strike's
+power-of-the-sacrificed-creature, Ebon Dragon's discard-then-may rider). The each-player loops
+(Flux, Winds of Change, Noxious Toad) and conditional spells (Gift of Estates, Balance of Power) are
+now emitted via the `EffectPatterns.eachPlayer*`/`wheelEffect`/`Conditions.*` facades.
+
+**Honest cross-set reality — the strict metric corrects the old inflation.** Re-running `--all` with
+the renders-whole definition:
+
+```
+  SET   AUTO   (old lenient AUTO)
+  POR   88.6%  (was 75%)
+  INV   17.6%  (was 48%)   ONS 15.0% (was 38%)   KTK 19.0% (was 47%) …
+```
+
+Portal rose (real emitter work + 100% mapping); **unseen sets fell** — because the old ~45% was
+inflated by a structure-check the emitter never had to honour. ~15–20% is the honest "renders whole,
+compiles, caps-match" rate on a Portal-tuned emitter, and the convergence path is unchanged: each
+emitter handler/mapping line added helps every set (the recall column is the KPI). The verdict stands —
+a **reviewed-draft scaffolder**, now with a real compile gate; the scenario test remains the final word.

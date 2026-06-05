@@ -63,28 +63,32 @@ First run auto-downloads the 29 MB mtgish IR (gitignored).
 just coverage --set TMP                 # implemented / FREE-to-implement / blocked + feature leaderboard
 just coverage --set TMP --free          # also list the implementable-today cards
 just coverage --card "Shivan Dragon"    # one card: required capabilities + verdict
-just coverage --calibrate POR           # trust check: implemented cards must classify coverable (~99%)
+just coverage --calibrate POR           # trust check: implemented cards must classify coverable (POR 100%)
 
 # FIDELITY — could we AUTO-AUTHOR a card? Diffs the bridge vs each card's compiled golden snapshot.
-just coverage-fidelity --set POR        # tiers cards AUTO / SCAFFOLD / MISS + mean recall
-just coverage-fidelity --all            # cross-set generalization table (AUTO ~75% on Portal, ~45% unseen)
-just coverage-fidelity --emit "Lava Axe"  # print the generated cardDef DSL for one card
+just coverage-fidelity --set POR        # tiers cards AUTO / SCAFFOLD / MISS (AUTO ⟺ emitter renders whole)
+just coverage-fidelity --all            # cross-set table (renders-whole AUTO: POR ~89%, unseen ~15-20%)
+just coverage-fidelity --emit "Lava Axe"  # print the generated cardDef DSL (complete metadata, no TODO)
 
 # AUTO-GEN — turn the bridge on a set's UNIMPLEMENTED cards.
 just coverage-gaps --set TMP            # AUTOGEN / SCAFFOLD / BLOCKED counts + blocked-capability leaderboard
 just coverage-generate --set TMP        # draft .kt for the AUTOGEN cards -> spike/mtgish-coverage/generated/<set>/
+
+# VERIFY — the real gate: COMPILE the emitted cards + diff serialized caps vs golden.
+just coverage-verify --set POR          # POR: 174/184 emitted & compile-verified, 0 capability mismatch
 ```
 
 **When to use.** Spoiler-season/backlog triage (`coverage` leaderboard = which feature unlocks the
 most cards); deciding whether a missing card is pure authoring vs. needs `add-feature`
-(`coverage-gaps`); getting a blank-page head-start on simple cards (`coverage-generate`).
+(`coverage-gaps`); getting a blank-page head-start on simple cards (`coverage-generate`);
+`coverage-verify` proves the emitted drafts actually compile and capability-match before you trust them.
 
 **Hard rules.** Generated `.kt` are **DRAFTS in a staging dir** — they must compile, get a scenario
-test, and be human-reviewed before moving into a set's `cards/` package. Treat coverage/AUTOGEN as
-*advisory ranking*, never a gate: mtgish IR is approximate (it can emit a clean-looking but
-subtly-wrong target), and the bridge is Portal-tuned, so AUTO drops to ~45% on unseen sets until you
-extend `mapping.json` (which converges — one entry helps all sets). Keep using the `add-card` skill
-for real implementation.
+test, and be human-reviewed before moving into a set's `cards/` package. `coverage-verify` proves
+*compile + capabilities*, NOT behaviour (a filter/count can be subtly wrong — scenario test is the
+real gate). The emitter is Portal-tuned: it renders ~89% of Portal whole but only ~15-20% of unseen
+sets, converging as you add emitter handlers / `mapping.json` entries (one helps all sets). Keep using
+the `add-card` skill for real implementation.
 
 ## Module Layout
 

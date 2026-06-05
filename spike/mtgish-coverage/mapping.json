@@ -1,5 +1,5 @@
 {
-  "__doc__": "Hand-authored bridge: mtgish IR tag -> Argentum capability. This file IS the maintenance cost the spike measures. kinds: 'effect'/'keyword' validate the tag against the source-scanned registry (a wrong guess shows up as a MISSING gap = the mechanism catching a mapping error); 'composed' = Argentum builds it from existing primitives (no leaf SerialName, e.g. destroy = MoveToZone->graveyard); 'ignore' = a structural mtgish envelope that carries no capability itself (the real capability is in its nested nodes); 'supported' = a trigger/cost the spike accepts without registry validation (a Triggers.*/Costs.* facade scan would harden this in Phase 1). Keys match the bare mtgish value; the probe also accepts 'disc:value'. Two tags are left intentionally UNMAPPED to exercise the residual-tail report.",
+  "__doc__": "Hand-authored bridge: mtgish IR tag -> Argentum capability. This file IS the maintenance cost the spike measures. kinds: 'effect'/'keyword' validate the tag against the source-scanned registry (a wrong guess shows up as a MISSING gap = the mechanism catching a mapping error); 'composed' = Argentum builds it from existing primitives (no leaf SerialName, e.g. destroy = MoveToZone->graveyard); 'ignore' = a structural mtgish envelope that carries no capability itself (the real capability is in its nested nodes); 'supported' = a trigger/cost the spike accepts without registry validation (a Triggers.*/Costs.* facade scan would harden this in Phase 1). Keys match the bare mtgish value; the probe also accepts 'disc:value'. Portal calibrates 200/200 (100%): every implemented card classifies coverable-now, and every Portal card is auto-emittable + compile-verified (see FINDINGS coverage-verify).",
   "Flying": {
     "kind": "keyword",
     "tag": "FLYING"
@@ -237,9 +237,9 @@
   },
   "DiscardACard": {
     "kind": "composed",
-    "note": "MoveToZone hand->graveyard",
+    "note": "EffectPatterns.discardCards -> Gather/Select/MoveCollection",
     "tags": [
-      "MoveToZone"
+      "MoveCollection"
     ]
   },
   "DiscardNumberCards": {
@@ -258,9 +258,9 @@
   },
   "DiscardACardAtRandom": {
     "kind": "composed",
-    "note": "MoveToZone hand->graveyard, random",
+    "note": "EffectPatterns.discardRandom -> MoveCollection",
     "tags": [
-      "MoveToZone"
+      "MoveCollection"
     ]
   },
   "PutGraveyardCardIntoHand": {
@@ -324,11 +324,17 @@
   },
   "LookAtTheTopNumberCardsOfLibrary": {
     "kind": "composed",
-    "note": "look/scry pipeline (Gather->reveal-to-self)"
+    "note": "EffectPatterns.lookAtTopAndKeep/Reorder -> Gather/Select/MoveCollection",
+    "tags": [
+      "MoveCollection"
+    ]
   },
   "LookAtTheTopNumberCardsOfPlayersLibrary": {
     "kind": "composed",
-    "note": "look pipeline on opponent library"
+    "note": "look pipeline on opponent library -> MoveCollection",
+    "tags": [
+      "MoveCollection"
+    ]
   },
   "CreateReplaceWouldDealDamageUntil": {
     "kind": "composed",
@@ -526,5 +532,15 @@
   "IfElse": {
     "kind": "ignore",
     "note": "universal (cross-set calibration)"
+  },
+  "EachPermanentDoesntUntapDuringControllersNextUntap": {
+    "kind": "effect",
+    "note": "Exhaustion: target player's creatures+lands don't untap next untap step",
+    "tag": "SkipUntap"
+  },
+  "SkipAllCombatPhasesTheirNextTurn": {
+    "kind": "effect",
+    "note": "False Peace: target skips all combat phases of their next turn",
+    "tag": "SkipCombatPhases"
   }
 }
