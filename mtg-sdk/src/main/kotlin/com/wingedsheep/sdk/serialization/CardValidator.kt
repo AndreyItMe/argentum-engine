@@ -5,7 +5,6 @@ import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AddMinusCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AnyPlayerMayPayEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureTypeEffect
-import com.wingedsheep.sdk.scripting.effects.BlightEffect
 import com.wingedsheep.sdk.scripting.effects.CantBeRegeneratedEffect
 import com.wingedsheep.sdk.scripting.effects.ChangeCreatureTypeTextEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -42,7 +41,6 @@ import com.wingedsheep.sdk.scripting.effects.RemoveDamageShieldEffect
 import com.wingedsheep.sdk.scripting.effects.RemoveFromCombatEffect
 import com.wingedsheep.sdk.scripting.effects.StoreCountEffect
 import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
-import com.wingedsheep.sdk.scripting.effects.TapCreatureForEffectEffect
 import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
 import com.wingedsheep.sdk.scripting.effects.TransformAllCreaturesEffect
 import com.wingedsheep.sdk.scripting.effects.TransformEffect
@@ -194,8 +192,6 @@ object CardValidator {
             }
             is StoreResultEffect -> collectIndicesRecursive(effect.effect, indices)
             is StoreCountEffect -> collectIndicesRecursive(effect.effect, indices)
-            is BlightEffect -> collectIndicesRecursive(effect.innerEffect, indices)
-            is TapCreatureForEffectEffect -> collectIndicesRecursive(effect.innerEffect, indices)
             is MayPayManaEffect -> collectIndicesRecursive(effect.effect, indices)
             is ModalEffect -> effect.modes.forEach { collectIndicesRecursive(it.effect, indices) }
             is PayOrSufferEffect -> collectIndicesRecursive(effect.suffer, indices)

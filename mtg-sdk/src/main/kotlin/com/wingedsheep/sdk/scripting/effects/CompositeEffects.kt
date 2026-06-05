@@ -3,7 +3,6 @@ package com.wingedsheep.sdk.scripting.effects
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
-import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.TriggerSpec
@@ -667,60 +666,6 @@ data class StoreCountEffect(
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newEffect = effect.applyTextReplacement(replacer)
         return if (newEffect !== effect) copy(effect = newEffect) else this
-    }
-}
-
-/**
- * Blight effect - "may blight N. If you do, [effect]"
- * Blight N means "put N -1/-1 counters on a creature you control".
- * This is an optional cost-gated effect used in triggered abilities.
- *
- * The player may choose a creature they control to blight. If they do,
- * the inner effect happens. If they don't (or can't), nothing happens.
- *
- * @property blightAmount Number of -1/-1 counters to place
- * @property innerEffect The effect that happens if the player blights
- * @property targetId The creature chosen to receive the counters (filled in during resolution)
- */
-@SerialName("Blight")
-@Serializable
-data class BlightEffect(
-    val blightAmount: Int,
-    val innerEffect: Effect,
-    val targetId: EntityId? = null
-) : Effect {
-    override val description: String = buildString {
-        append("You may blight $blightAmount. If you do, ")
-        append(innerEffect.description.replaceFirstChar { it.lowercase() })
-    }
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val newInnerEffect = innerEffect.applyTextReplacement(replacer)
-        return if (newInnerEffect !== innerEffect) copy(innerEffect = newInnerEffect) else this
-    }
-}
-
-/**
- * "May tap another untapped creature you control. If you do, [effect]."
- * This is an optional cost-gated effect - the player may pay the cost to get the effect.
- *
- * @property innerEffect The effect that happens if the player pays the tap cost
- * @property targetId The creature chosen to tap (filled in during resolution)
- */
-@SerialName("TapCreatureForEffect")
-@Serializable
-data class TapCreatureForEffectEffect(
-    val innerEffect: Effect,
-    val targetId: EntityId? = null
-) : Effect {
-    override val description: String = buildString {
-        append("You may tap another untapped creature you control. If you do, ")
-        append(innerEffect.description.replaceFirstChar { it.lowercase() })
-    }
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val newInnerEffect = innerEffect.applyTextReplacement(replacer)
-        return if (newInnerEffect !== innerEffect) copy(innerEffect = newInnerEffect) else this
     }
 }
 
