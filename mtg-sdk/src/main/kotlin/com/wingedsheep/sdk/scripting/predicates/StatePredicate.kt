@@ -244,6 +244,21 @@ sealed interface StatePredicate {
         override val description: String = "saddled"
     }
 
+    /**
+     * Creature that crewed (CR 702.122) or saddled (CR 702.171) the effect's source permanent this
+     * turn — i.e. one of the creatures tapped to pay that permanent's Crew/Saddle cost. Source-
+     * relative: resolves against the source entity supplied in the evaluation context (its
+     * `CrewSaddleContributorsComponent`), so it only matches creatures recorded on *that* Mount /
+     * Vehicle. Yields false with no source context. Used for Mount/Vehicle payoffs that target,
+     * choose, sacrifice, or return "a creature that crewed/saddled it this turn" (Giant Beaver,
+     * Rambling Possum, The Gitrog, Calamity).
+     */
+    @SerialName("CrewedOrSaddledSourceThisTurn")
+    @Serializable
+    data object CrewedOrSaddledSourceThisTurn : Entity {
+        override val description: String = "that crewed or saddled it this turn"
+    }
+
     // =============================================================================
     // Zone-Specific Markers (Entity)
     // =============================================================================

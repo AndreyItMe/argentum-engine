@@ -11,6 +11,7 @@ import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.stack.StackResolver
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
@@ -135,6 +136,13 @@ class CrewVehicleHandler(
                 c.with(TappedComponent)
             }
             events.add(TappedEvent(creatureId, creatureName))
+        }
+
+        // Record the crew so Vehicle payoffs can read "creatures that crewed it this turn"
+        // (e.g. Luxurious Locomotive). Union across activations within the turn.
+        currentState = currentState.updateEntity(action.vehicleId) { c ->
+            val existing = c.get<CrewSaddleContributorsComponent>()?.creatureIds ?: emptySet()
+            c.with(CrewSaddleContributorsComponent(existing + action.crewCreatures))
         }
 
         // Create the crew ability effect: Vehicle becomes an artifact creature

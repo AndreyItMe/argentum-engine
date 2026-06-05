@@ -104,6 +104,30 @@ data object EvokedComponent : Component
 data object SaddledComponent : Component
 
 /**
+ * Records the distinct creatures that have crewed (CR 702.122) or saddled (CR 702.171) this
+ * permanent during the current turn — the creatures tapped to pay a Crew or Saddle cost on it.
+ * A permanent is only ever a Vehicle (crew) or a Mount (saddle), so one set covers both keywords.
+ *
+ * Two payoff shapes read this, both source-relative (keyed off the ability's source permanent):
+ *  - membership, via
+ *    [com.wingedsheep.sdk.scripting.predicates.StatePredicate.CrewedOrSaddledSourceThisTurn], for
+ *    "target/choose/return a creature that crewed/saddled it this turn" (Giant Beaver, Rambling
+ *    Possum, The Gitrog, Calamity) — the target system already restricts those to live creatures.
+ *  - count, via [com.wingedsheep.sdk.scripting.values.DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn],
+ *    for "for each creature that crewed it this turn" (Luxurious Locomotive). The recorded ids
+ *    persist even after a contributor leaves the battlefield, so the count includes creatures no
+ *    longer present as the ability resolves (per the Luxurious Locomotive ruling).
+ *
+ * Transient: the union across every crew/saddle activation this turn (saddle may be activated
+ * repeatedly), cleared in [CleanupPhaseManager.cleanupEndOfTurn] and naturally gone if this
+ * permanent itself leaves the battlefield (a fresh entity has no battlefield components).
+ */
+@Serializable
+data class CrewSaddleContributorsComponent(
+    val creatureIds: Set<EntityId>
+) : Component
+
+/**
  * Marks a permanent as having been cast for its impending cost (CR 702.176a).
  * The "isn't a creature" static and the end-step time-counter trigger both gate on
  * impending-cost-paid AND has-time-counter, so this marker survives for as long as

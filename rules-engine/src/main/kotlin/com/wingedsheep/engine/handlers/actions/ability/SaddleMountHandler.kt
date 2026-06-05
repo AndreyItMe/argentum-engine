@@ -11,6 +11,7 @@ import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.stack.StackResolver
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
@@ -131,6 +132,13 @@ class SaddleMountHandler(
                 c.with(TappedComponent)
             }
             events.add(TappedEvent(creatureId, creatureName))
+        }
+
+        // Record the saddlers so Mount payoffs can read "creatures that saddled it this turn".
+        // Union across activations: saddle may be activated again even while already saddled.
+        currentState = currentState.updateEntity(action.mountId) { c ->
+            val existing = c.get<CrewSaddleContributorsComponent>()?.creatureIds ?: emptySet()
+            c.with(CrewSaddleContributorsComponent(existing + action.saddleCreatures))
         }
 
         // Put the saddle ability on the stack: this permanent becomes saddled until end of turn.

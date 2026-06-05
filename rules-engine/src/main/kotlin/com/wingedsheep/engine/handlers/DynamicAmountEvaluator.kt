@@ -372,6 +372,15 @@ class DynamicAmountEvaluator(
                 }
             }
 
+            is DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn -> {
+                val sourceId = context.sourceId
+                if (sourceId == null) 0 else {
+                    state.getEntity(sourceId)
+                        ?.get<com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent>()
+                        ?.creatureIds?.size ?: 0
+                }
+            }
+
         }
     }
 

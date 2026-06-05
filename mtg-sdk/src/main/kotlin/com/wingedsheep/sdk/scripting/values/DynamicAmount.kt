@@ -839,4 +839,24 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
         override val description: String = "the total power of the exiled cards used to craft it"
     }
 
+    /**
+     * Number of distinct creatures that crewed (CR 702.122) or saddled (CR 702.171) the source
+     * permanent this turn.
+     *
+     * Source-relative: reads the source's
+     * `com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent` and
+     * returns the size of the recorded set. The set retains contributors that have since left the
+     * battlefield, so this counts every creature that crewed/saddled it this turn even if some are
+     * no longer present as the ability resolves (per the Luxurious Locomotive ruling). A plain
+     * battlefield-filter count ([Count] over [CrewedOrSaddledSourceThisTurn]) cannot express that,
+     * which is why this reads the record directly. Evaluates to zero with no source / no component.
+     *
+     * Used by "for each creature that crewed it this turn" (Luxurious Locomotive).
+     */
+    @SerialName("CreaturesThatCrewedOrSaddledThisTurn")
+    @Serializable
+    data object CreaturesThatCrewedOrSaddledThisTurn : DynamicAmount {
+        override val description: String = "the number of creatures that crewed or saddled it this turn"
+    }
+
 }

@@ -857,6 +857,10 @@ Every `TargetRequirement` carries count semantics (defaults shown):
   / cost calculation report `false` (no X context).
 - `.tapped()` / `.untapped()` — tap state.
 - `.saddled()` — permanent is saddled (CR 702.171b); backed by `StatePredicate.IsSaddled`.
+- `.crewedOrSaddledSourceThisTurn()` — source-relative: creature crewed (CR 702.122) or saddled
+  (CR 702.171) the effect's source permanent this turn; backed by
+  `StatePredicate.CrewedOrSaddledSourceThisTurn` (see Object-state predicates). For
+  "target/choose/return a creature that crewed/saddled it this turn".
 - `.nontoken()` / `.token()` — token vs printed.
 - `.faceDown()` — face-down state.
 - `.card(filter)` — defer to a card-shape filter for off-battlefield checks.
@@ -910,6 +914,14 @@ work for abilities-on-stack (which carry no `CardComponent`).
   creature". Note: it's only evaluated where the context carries a source entity — currently the
   recipient filter of a `PreventDamage` replacement (see §15); it's inert in group/projection,
   untap, and trigger-gating contexts.
+- `CrewedOrSaddledSourceThisTurn` (filter builder `crewedOrSaddledSourceThisTurn()`) —
+  source-relative (CR 702.122 / 702.171): matches a creature that crewed or saddled the effect's
+  source permanent this turn (i.e. one tapped to pay that permanent's Crew/Saddle cost). Resolves
+  against `PredicateContext.sourceId` by reading the source's `CrewSaddleContributorsComponent`;
+  inert with no source context (group/projection, untap, trigger-gating). Used for Mount/Vehicle
+  payoffs that target/choose/sacrifice/return "a creature that crewed/saddled it this turn" (Giant
+  Beaver, Rambling Possum, The Gitrog, Calamity). For the *count* of those creatures use
+  `DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn` instead.
 - `IsFaceDown` — currently face-down.
 - `HasCounter(type)` — has at least one counter of `type`.
 - `AttachedToCardType(cardType)` — Aura/Equipment whose `AttachedToComponent` points to a
@@ -2156,6 +2168,14 @@ Numbers computed at resolution time.
   permanent (CR 702.167c). Reads the source's `CraftedFromExiledComponent`. Used for the
   `*`-power CDA on Mastercraft Raptor (Saheeli's Lattice back face). Evaluates to 0 when the
   source has no recorded materials.
+- `CreaturesThatCrewedOrSaddledThisTurn` (facade `DynamicAmounts.creaturesThatCrewedOrSaddledThisTurn()`)
+  — number of distinct creatures that crewed (CR 702.122) or saddled (CR 702.171) the source
+  permanent this turn. Source-relative: reads the source's `CrewSaddleContributorsComponent` and
+  returns its size. Retains contributors that have since left the battlefield, so the count
+  includes creatures no longer present as the ability resolves (Luxurious Locomotive ruling) — a
+  plain `Count` over `crewedOrSaddledSourceThisTurn()` can't express that. Evaluates to 0 with no
+  source / no component. For *which* creatures (targeting/gathering) use the
+  `CrewedOrSaddledSourceThisTurn` state predicate instead.
 
 ### Counters
 

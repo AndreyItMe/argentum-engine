@@ -363,4 +363,13 @@ object DynamicAmounts {
 
     fun triggeringToughness(): DynamicAmount =
         DynamicAmount.EntityProperty(EntityReference.Triggering, EntityNumericProperty.Toughness)
+
+    /**
+     * Number of distinct creatures that crewed or saddled this permanent this turn (source-
+     * relative; includes contributors that have since left the battlefield). See
+     * [DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn]. Used by "for each creature that
+     * crewed it this turn" (Luxurious Locomotive).
+     */
+    fun creaturesThatCrewedOrSaddledThisTurn(): DynamicAmount =
+        DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn
 }

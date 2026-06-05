@@ -372,6 +372,7 @@ val engineSerializersModule = SerializersModule {
         subclass(WasKickedComponent::class)
         subclass(EvokedComponent::class)
         subclass(SaddledComponent::class)
+        subclass(CrewSaddleContributorsComponent::class)
         subclass(CastForImpendingComponent::class)
         subclass(SuspendedComponent::class)
         subclass(CastRecordComponent::class)

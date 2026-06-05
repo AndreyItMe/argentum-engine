@@ -11,11 +11,10 @@ basics).
 ## Bottom line
 
 OTJ is built around a small set of named mechanics, **most of which the engine already supports**:
-Plot, Spree, "commit a crime", the Outlaw creature-type group, Treasure, and Crew are all done.
-The **one headline keyword gap is Saddle / Mount** (17 cards) — there is zero engine support for
-it. Everything else is a handful of small recurring primitives plus ~12 genuinely one-off cards.
-Once Saddle lands, the overwhelming majority of the set is buildable today (standard creatures,
-removal, Deserts, Plot/Spree spells, crime payoffs, token-makers).
+Plot, Spree, "commit a crime", the Outlaw creature-type group, Treasure, Crew, **and now Saddle /
+Mount** are all done. With Saddle landed, the overwhelming majority of the set is buildable today
+(standard creatures, removal, Deserts, Plot/Spree spells, crime payoffs, token-makers). What's left
+is a handful of small recurring primitives plus ~12 genuinely one-off cards.
 
 ### Already supported — no new engine work
 
@@ -51,11 +50,16 @@ What follows are the **genuine gaps** — elements no current SDK primitive expr
 
 ## Tier 1 — Headline keyword (17 cards, highest leverage)
 
-### 1. Saddle N + Mount subtype — **the one big gap**
+### 1. Saddle N + Mount subtype — ✅ DONE
 
-Zero engine references to "saddle" anywhere in `mtg-sdk/src` or `rules-engine/src`. (The `Mount`
-subtype *string* already exists in `Subtype.kt`, so Mount-referencing filters like "you control a
-Mount" work — only the keyword action and saddled state are missing.)
+**Implemented:** `Keyword.SADDLE` + `KeywordAbility.saddle(n)` DSL, the `SaddleMount` special action
++ `SaddleMountHandler` (taps other untapped creatures totalling power ≥ N, sorcery-speed gated),
+`SaddledComponent` (cleared in `CleanupPhaseManager`), `StatePredicate.IsSaddled` /
+`Conditions.SourceIsSaddled` for "while saddled" gating, and `SaddleEnumerator` for the tap-for-power
+selection UI. Tests: `SaddleScenarioTest`. The `Mount` subtype string already existed in
+`Subtype.kt`.
+
+<details><summary>Original gap description</summary>
 
 Saddle is an activated special action: **"Tap any number of other untapped creatures you control
 with total power N or greater: This Mount becomes saddled until end of turn. Saddle only as a
@@ -77,21 +81,35 @@ saddled**, …" or "As long as it's saddled, …".
   Courser, Ornery Tumblewagg, Quilled Charger, Rambling Possum, Seraphic Steed, Stubborn
   Burrowfiend, The Gitrog Ravenous Ride, Trained Arynx.
 
+</details>
+
 ---
 
 ## Tier 2 — Small recurring primitives
 
-### 2. "Contributed this turn" set-tracker (saddled-it / crewed-it)
+### 2. "Contributed this turn" set-tracker (saddled-it / crewed-it) — ✅ DONE
 
 Several Mounts and one Vehicle pay off the **set of creatures that saddled / crewed this permanent
-this turn** — to put counters on them, bounce them, or count them. Crew and (the new) Saddle both
-perform the action but record nothing afterward. Needs one shared per-permanent, per-turn
-**"contributors this turn"** record (cleared each turn) with a `DynamicAmount.Count` / collection
-gather over it.
+this turn** — to put counters on them, bounce them, or count them.
 
-→ Giant Beaver, Ornery Tumblewagg, Rambling Possum (saddlers get counters / bounce),
+**Implemented:** a per-permanent `CrewSaddleContributorsComponent(creatureIds)` recorded by both
+`CrewVehicleHandler` and `SaddleMountHandler` (union across activations) and cleared at end of turn
+in `CleanupPhaseManager`. Two source-relative read surfaces, both keyed off the ability's source via
+`PredicateContext.sourceId`:
+  - membership — `StatePredicate.CrewedOrSaddledSourceThisTurn` /
+    `GameObjectFilter.crewedOrSaddledSourceThisTurn()`, for "target/choose/return a creature that
+    crewed/saddled it this turn" (the target system restricts to live creatures).
+  - count — `DynamicAmount.CreaturesThatCrewedOrSaddledThisTurn` /
+    `DynamicAmounts.creaturesThatCrewedOrSaddledThisTurn()`. Retains contributors that have since
+    left, so it counts every creature that crewed it even if some are gone as the ability resolves
+    (Luxurious Locomotive ruling).
+
+Tests: `CrewSaddleContributorsScenarioTest`.
+
+→ Unblocks: Giant Beaver, Ornery Tumblewagg, Rambling Possum (saddlers get counters / bounce),
   The Gitrog Ravenous Ride & Calamity (consume the saddlers), **Luxurious Locomotive** (Treasure per
-  creature that crewed it this turn). Same shape — build once, share between Saddle and Crew.
+  creature that crewed it this turn — note: dynamic-count Treasure creation is still Int-only; that
+  card additionally needs a dynamic `CreateTreasure` or a `CreateTokenEffect`-based Treasure).
 
 ### 3. `DynamicAmount` over spells cast this turn (filtered, per-player, exclude-self) — ✅ DONE
 
@@ -206,12 +224,10 @@ this turn" can't be expressed. Add the tracker (engine accumulates on draw event
 
 ## Recommended build order
 
-1. **Saddle N + Mount** (Tier 1) — the single highest-leverage feature; unlocks 17 cards. Build the
-   keyword, the tap-creatures-totalling-power-N special action (reuse Convoke/Harmonize selection),
-   the `SaddledComponent`, and the "while saddled" condition.
-2. **Tier 2 shared primitives** — the contributors-this-turn tracker (#2, shared by Saddle and
-   Crew), the spells-cast `DynamicAmount` (#3), the `fromHand` cast-zone flag (#4), the cast-for-free
-   condition (#5), `CARDS_DRAWN` (#6). Small, each unlocks a few scattered cards.
+1. ✅ **Saddle N + Mount** (Tier 1) — done.
+2. **Tier 2 shared primitives** — ✅ contributors-this-turn tracker (#2), ✅ spells-cast
+   `DynamicAmount` (#3). Remaining: the `fromHand` cast-zone flag (#4), the cast-for-free condition
+   (#5), `CARDS_DRAWN` (#6). Small, each unlocks a few scattered cards. **Next up: #4 (`fromHand`).**
 3. **Tier-3 one-offs** as the relevant legendaries / rares come up — none block large numbers of
    cards; pick them off individually.
 

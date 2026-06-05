@@ -466,6 +466,14 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.IsSaddled
     )
 
+    /**
+     * Must have crewed (CR 702.122) or saddled (CR 702.171) the effect's source permanent this
+     * turn. Source-relative — see [StatePredicate.CrewedOrSaddledSourceThisTurn].
+     */
+    fun crewedOrSaddledSourceThisTurn() = copy(
+        statePredicates = statePredicates + StatePredicate.CrewedOrSaddledSourceThisTurn
+    )
+
     /** Must be face-down */
     fun faceDown() = copy(
         statePredicates = statePredicates + StatePredicate.IsFaceDown

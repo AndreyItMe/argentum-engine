@@ -4,6 +4,7 @@ import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
+import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.EnteredThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtCombatDamageToPlayerComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtDamageComponent
@@ -682,6 +683,16 @@ class PredicateEvaluator {
                     sourceAttacking.bandId == null -> false
                     else -> container.get<AttackingComponent>()?.bandId == sourceAttacking.bandId
                 }
+            }
+
+            // Crewed/saddled the effect's source permanent this turn (CR 702.122 / 702.171).
+            // Source-relative: reads the source's CrewSaddleContributorsComponent and checks
+            // membership. Inert with no source context.
+            StatePredicate.CrewedOrSaddledSourceThisTurn -> {
+                val sourceId = context?.sourceId
+                val contributors = sourceId
+                    ?.let { state.getEntity(it)?.get<CrewSaddleContributorsComponent>() }
+                contributors != null && entityId in contributors.creatureIds
             }
 
             // Summoning sickness / ETB

@@ -4,6 +4,7 @@ import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
+import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.SaddledComponent
 import com.wingedsheep.engine.state.components.battlefield.AbilityResolutionCountThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.DamageComponent
@@ -464,6 +465,10 @@ class CleanupPhaseManager(
             if (container.has<SaddledComponent>()) {
                 needsUpdate = true
             }
+            // "Creatures that crewed/saddled it this turn" resets each turn
+            if (container.has<CrewSaddleContributorsComponent>()) {
+                needsUpdate = true
+            }
             if (needsUpdate) {
                 newState = newState.updateEntity(entityId) { c ->
                     c.without<AbilityActivatedThisTurnComponent>()
@@ -479,6 +484,7 @@ class CleanupPhaseManager(
                         .without<WasDealtDamageThisTurnComponent>()
                         .without<DamageDealtByPlayersThisTurnComponent>()
                         .without<SaddledComponent>()
+                        .without<CrewSaddleContributorsComponent>()
                 }
             }
         }

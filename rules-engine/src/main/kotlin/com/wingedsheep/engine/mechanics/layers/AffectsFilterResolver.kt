@@ -341,6 +341,10 @@ internal class AffectsFilterResolver {
         // (there's no per-recipient "source" here); it's only evaluated in damage-prevention
         // recipient filters via PredicateEvaluator. Never match in this context.
         StatePredicate.InSameBandAsSource -> false
+        // Likewise source-relative: "crewed/saddled the source this turn" needs the ability's
+        // source permanent, absent in group-static projection. Only meaningful in target/count
+        // contexts via PredicateEvaluator / DynamicAmountEvaluator. Never match here.
+        StatePredicate.CrewedOrSaddledSourceThisTurn -> false
         StatePredicate.EnteredThisTurn -> container.has<EnteredThisTurnComponent>()
         StatePredicate.WasDealtDamageThisTurn -> container.has<WasDealtDamageThisTurnComponent>()
         StatePredicate.HasDealtDamage -> container.has<HasDealtDamageComponent>()
