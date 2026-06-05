@@ -65,7 +65,7 @@ Where the frame lives:
 | `BlightEffect` | ✅ deleted | #486 | **Was dead code** — no card/facade built it, no executor, not in any snapshot. Deleted, not lowered. |
 | `TapCreatureForEffectEffect` | ✅ deleted | #486 | Same — dead code, deleted. |
 | `MayPayManaEffect` | ✅ done | #488 | Facade → `Gate.MayPay(PayManaCostEffect)`. **Read §3 — it set two precedents you will reuse.** |
-| `ConditionalEffect` | ✅ done | (this PR) | Facade → `Gate.WhenCondition(condition)` — a synchronous state-test gate (no decision/pause). Added `Effect.asConditional()` matcher (§3a); routed the 3 `is ConditionalEffect` engine sites (ClientStateTransformer stack-resolve, ActivatedAbilityEnumerator stacking, LimitedCardRater) through it. Deleted `ConditionalEffectExecutor`. 171 snapshot lowerings, pure rename. |
+| `ConditionalEffect` | ✅ done | #491 | Facade → `Gate.WhenCondition(condition)` — a synchronous state-test gate (no decision/pause). Added `Effect.asConditional()` matcher (§3a); routed the 3 `is ConditionalEffect` engine sites (ClientStateTransformer stack-resolve, ActivatedAbilityEnumerator stacking, LimitedCardRater) through it. Deleted `ConditionalEffectExecutor`. 171 snapshot lowerings, pure rename. |
 
 The remaining wrappers are in §5 (start with #2 `MayEffect` next).
 
