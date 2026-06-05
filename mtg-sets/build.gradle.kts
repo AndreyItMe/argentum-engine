@@ -49,3 +49,41 @@ tasks.register<JavaExec>("syncColorIdentityFromDump") {
     mainClass.set("com.wingedsheep.mtg.sets.colors.SyncColorIdentityFromDumpKt")
     workingDir = rootProject.projectDir
 }
+
+// === mtgish auto-generator: compile-verification gate (Hybrid design) ===========================
+// The Python emitter (spike/mtgish-coverage/) writes draft cards into this isolated source set
+// under a distinct `generated.<set>.cards` package (never colliding with the real definitions on
+// the classpath). Gradle compiles them — so a draft that doesn't compile fails the build — and the
+// verifier serialises each via the same CardExporter that produces the golden snapshots. A small
+// Python step (`fidelity.py --gate`) then diffs the serialised trees against the golden, turning the
+// fidelity AUTO tier from a static prediction into a real "compiles + capability-matches" check.
+// Run with: just coverage-verify --set POR   (or ./gradlew :mtg-sets:verifyGeneratedCards -Pset=POR)
+val generatedCardsDir = layout.buildDirectory.dir("generated-cards/src")
+val generatorSet = (project.findProperty("set") as String? ?: "POR").toString().uppercase()
+
+sourceSets { create("generatedCards") }
+kotlin.sourceSets.named("generatedCards") { kotlin.srcDir(generatedCardsDir) }
+dependencies { "generatedCardsImplementation"(project(":mtg-sdk")) }
+
+val emitGeneratedCards by tasks.registering(Exec::class) {
+    description = "Emit whole-renderable cards for -Pset=CODE via the mtgish bridge."
+    group = "verification"
+    workingDir = rootProject.projectDir
+    commandLine("python3", "spike/mtgish-coverage/autogen.py", "--set", generatorSet,
+        "--emit-all", "--out", generatedCardsDir.get().asFile.absolutePath)
+}
+tasks.named("compileGeneratedCardsKotlin") { dependsOn(emitGeneratedCards) }
+
+tasks.register<JavaExec>("verifyGeneratedCards") {
+    description = "Compile the mtgish-generated cards and serialise them for the capability gate."
+    group = "verification"
+    dependsOn("compileGeneratedCardsKotlin")
+    classpath = files(sourceSets["generatedCards"].output, sourceSets["main"].runtimeClasspath)
+    mainClass.set("com.wingedsheep.mtg.sets.codegen.GeneratedCardVerifierKt")
+    workingDir = rootProject.projectDir
+    args(
+        "com.wingedsheep.mtg.sets.generated.${generatorSet.lowercase()}.cards",
+        layout.buildDirectory.file("generated-cards/${generatorSet.lowercase()}.generated.json")
+            .get().asFile.absolutePath
+    )
+}

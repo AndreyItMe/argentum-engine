@@ -177,6 +177,21 @@ def canonical_names(set_code: str, *, refresh: bool = False):
     return draft, extra
 
 
+_SCRYFALL_META: dict[str, dict] = {}
+
+
+def scryfall_card(set_code: str, name: str) -> dict | None:
+    """Per-printing Scryfall metadata (rarity/collector_number/artist/image_uri/flavor_text/
+    color_identity) for one card, from card-status's cache (schema v5+). front-faced key;
+    None if the set has no cache or the name is absent (older v<5 caches have no `cards` map)."""
+    code = set_code.upper()
+    if code not in _SCRYFALL_META:
+        payload = CS.load_canonical(code, force_refresh=False)
+        _SCRYFALL_META[code] = (payload or {}).get("cards", {})
+    cards = _SCRYFALL_META[code]
+    return cards.get(front(name)) or cards.get(name)
+
+
 def load_mtgish_index(names: set[str]) -> dict[str, dict]:
     """Map front-faced name -> mtgish card, for the requested names only."""
     ensure_data()
