@@ -631,12 +631,17 @@ object Conditions {
      * Counts every spell cast — countered, fizzled, or still on the stack all count.
      * Defaults to any spell, matching the typical "you've cast two or more spells
      * this turn" pattern (Brightspear Zealot, Illvoi Infiltrator).
+     *
+     * Pass [fromZone] to restrict to spells cast from that zone, independently of [filter].
+     * Negate with [not] for the Prairie Dog cycle's "you haven't cast a spell from your hand
+     * this turn": `not(YouCastSpellsThisTurn(1, fromZone = Zone.HAND))`.
      */
     fun YouCastSpellsThisTurn(
         atLeast: Int,
-        filter: com.wingedsheep.sdk.scripting.GameObjectFilter = com.wingedsheep.sdk.scripting.GameObjectFilter.Any
+        filter: com.wingedsheep.sdk.scripting.GameObjectFilter = com.wingedsheep.sdk.scripting.GameObjectFilter.Any,
+        fromZone: com.wingedsheep.sdk.core.Zone? = null
     ): ConditionInterface =
-        PlayerCastSpellsThisTurn(Player.You, filter, atLeast)
+        PlayerCastSpellsThisTurn(Player.You, filter, atLeast, fromZone)
 
     /**
      * If this is the first spell you've cast this turn that mana from a Treasure was

@@ -2047,8 +2047,15 @@ default to "you" so card authors don't need to pass it explicitly.
 
 - `YouAttackedWithCreaturesThisTurn(filter, atLeast)` — Raid/Battalion shape. Backed by
   `PlayerAttackedWithCreaturesThisTurn(Player.You, filter, atLeast)`.
-- `YouCastSpellsThisTurn(atLeast, filter)` — Prowess/Magecraft shape. Backed by
-  `PlayerCastSpellsThisTurn(Player.You, filter, atLeast)`.
+- `YouCastSpellsThisTurn(atLeast, filter, fromZone?)` — Prowess/Magecraft shape. Backed by
+  `PlayerCastSpellsThisTurn(Player.You, filter, atLeast, fromZone)`. `fromZone` (default any) restricts
+  the count to spells cast from that zone, matched independently of `filter` (a face-down/morph spell
+  cast from hand still counts, CR 708.2). With `fromZone = Zone.HAND`, negating gives the Prairie Dog
+  cycle's "you haven't cast a spell from your hand this turn":
+  `Not(YouCastSpellsThisTurn(1, fromZone = Zone.HAND))` (Inventive Wingsmith, Prairie Dog, Canyon Crab,
+  Emergent Haunting, Wrangler of the Damned). The origin zone is captured on each `CastSpellRecord`
+  (`castFromZone`) at cast time, so flashback/forage (GRAVEYARD), plot/foretell (EXILE), and commander
+  (COMMAND) casts are all distinguished from hand casts.
 - `TriggeringSpellMatches(filter)` — intervening-if guard: the spell that triggered this ability
   matches `filter`. Reads the triggering entity's static card characteristics (so it stays correct
   after the spell leaves the stack). General "whenever you cast a spell, if it's a/an X ..." gate.
@@ -2166,13 +2173,15 @@ Numbers computed at resolution time.
 - `HandSize(player)` — cards in hand.
 - `TurnCount(player)` — turn number for that player.
 - `TurnTracking(player, TurnTracker)` — value of a per-turn counter (see below).
-- `SpellsCastThisTurn(player, filter?, excludeSelf?)` — count of spells `player` has cast this
-  turn, read from the per-player cast history (`GameState.spellsCastThisTurnByPlayer`). `filter`
+- `SpellsCastThisTurn(player, filter?, excludeSelf?, fromZone?)` — count of spells `player` has cast
+  this turn, read from the per-player cast history (`GameState.spellsCastThisTurnByPlayer`). `filter`
   matches a spell characteristic captured at cast time — type/color/mana value (face-down casts
   never match a non-empty filter); defaults to `GameObjectFilter.Any`. `excludeSelf` (default
   `false`) drops the resolving spell's *own* record, matched by its stack entity id, for "the
-  number of **other** spells you've cast this turn". The triggering spell is already recorded and
-  counts unless `excludeSelf`. DSL: `DynamicAmounts.spellsCastThisTurn(player, filter, excludeSelf)`.
+  number of **other** spells you've cast this turn". `fromZone` (default any) restricts to spells cast
+  from that zone (`CastSpellRecord.castFromZone`), matched independently of `filter`. The triggering
+  spell is already recorded and counts unless `excludeSelf`. DSL:
+  `DynamicAmounts.spellsCastThisTurn(player, filter, excludeSelf, fromZone)`.
   - Thunder Salvo ("2 plus the number of other spells you've cast this turn"):
     `Add(Fixed(2), SpellsCastThisTurn(Player.You, excludeSelf = true))`.
   - Magebane Lizard ("the number of noncreature spells they've cast this turn"):

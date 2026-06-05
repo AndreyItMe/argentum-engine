@@ -794,13 +794,15 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
      * @param player Whose cast history to count (summed when the ref resolves to several players)
      * @param filter Spell characteristics to match (default [GameObjectFilter.Any])
      * @param excludeSelf Exclude the resolving spell's own cast record (default false)
+     * @param fromZone Restrict to spells cast from this zone, independently of [filter] (default any zone)
      */
     @SerialName("SpellsCastThisTurn")
     @Serializable
     data class SpellsCastThisTurn(
         val player: Player = Player.You,
         val filter: GameObjectFilter = GameObjectFilter.Any,
-        val excludeSelf: Boolean = false
+        val excludeSelf: Boolean = false,
+        val fromZone: Zone? = null
     ) : DynamicAmount {
         override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
             val newFilter = filter.applyTextReplacement(replacer)
@@ -816,6 +818,7 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
                 Player.You -> append("you've cast")
                 else -> append("${player.description} has cast")
             }
+            if (fromZone != null) append(" from ${fromZone.name.lowercase()}")
             append(" this turn")
         }
     }

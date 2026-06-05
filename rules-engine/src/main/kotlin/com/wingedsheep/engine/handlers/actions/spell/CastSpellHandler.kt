@@ -2139,6 +2139,12 @@ class CastSpellHandler(
                 // The cast card moves to the stack keeping its entity id, so this matches the
                 // resolving spell's EffectContext.sourceId (used by SpellsCastThisTurn excludeSelf).
                 sourceEntityId = action.cardId,
+                // Origin zone of the cast (HAND for a normal cast; GRAVEYARD/EXILE/COMMAND for
+                // flashback/forage, plot/foretell, commander, …). The card is still in its origin
+                // zone here — stackResolver.castSpell (below) moves it — so this resolves the same
+                // way castSpell stamps SpellOnStackComponent.castFromZone. Powers "you haven't cast
+                // a spell from your hand this turn" (Prairie Dog cycle).
+                castFromZone = stackResolver.findCastFromZone(currentState, action.cardId, action.playerId),
             )
             val existing = currentState.spellsCastThisTurnByPlayer[action.playerId] ?: emptyList()
             currentState = currentState.copy(

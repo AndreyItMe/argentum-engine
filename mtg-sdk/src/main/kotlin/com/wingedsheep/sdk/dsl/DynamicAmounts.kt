@@ -291,13 +291,17 @@ object DynamicAmounts {
      * // "noncreature spells they've cast this turn" (Magebane Lizard)
      * DynamicAmounts.spellsCastThisTurn(Player.TriggeringPlayer, GameObjectFilter.Noncreature)
      * ```
+     *
+     * Pass [fromZone] to count only spells cast from that zone (e.g. `Zone.HAND`), matched
+     * independently of [filter].
      */
     fun spellsCastThisTurn(
         player: Player = Player.You,
         filter: GameObjectFilter = GameObjectFilter.Any,
-        excludeSelf: Boolean = false
+        excludeSelf: Boolean = false,
+        fromZone: Zone? = null
     ): DynamicAmount =
-        DynamicAmount.SpellsCastThisTurn(player, filter, excludeSelf)
+        DynamicAmount.SpellsCastThisTurn(player, filter, excludeSelf, fromZone)
 
     /** The starting life total of a player (20 in standard, 40 in commander). */
     fun startingLifeTotal(player: Player = Player.You): DynamicAmount =

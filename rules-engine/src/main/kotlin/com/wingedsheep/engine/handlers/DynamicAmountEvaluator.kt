@@ -352,6 +352,8 @@ class DynamicAmountEvaluator(
                     val records = state.spellsCastThisTurnByPlayer[playerId] ?: emptyList()
                     records.count { record ->
                         (selfId == null || record.sourceEntityId != selfId) &&
+                            // Zone qualifier is checked independently of the filter (see condition note).
+                            (amount.fromZone == null || record.castFromZone == amount.fromZone) &&
                             predicateEvaluator.matchesFilter(record, amount.filter)
                     }
                 }

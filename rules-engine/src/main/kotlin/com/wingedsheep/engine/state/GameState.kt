@@ -650,6 +650,13 @@ data class CommanderDamageEntry(
  * It lets a resolving spell exclude its own record from a count of spells cast this turn —
  * e.g. Thunder Salvo's "the number of *other* spells you've cast this turn". Null for synthetic
  * records constructed only for retroactive filter matching.
+ *
+ * [castFromZone] is the zone the spell was cast from (HAND for a normal cast, GRAVEYARD for
+ * flashback/forage, EXILE for a plotted/foretold/impulse cast, COMMAND for a commander, …). It
+ * lets "you haven't cast a spell *from your hand* this turn" (Inventive Wingsmith, Prairie Dog,
+ * Canyon Crab, Emergent Haunting, Wrangler of the Damned) distinguish hand casts from casts
+ * originating in any other zone. Null for synthetic records and for casts whose origin zone
+ * couldn't be determined.
  */
 @Serializable
 data class CastSpellRecord(
@@ -659,4 +666,5 @@ data class CastSpellRecord(
     val isFaceDown: Boolean,
     val paidWithTreasureMana: Boolean = false,
     val sourceEntityId: EntityId? = null,
+    val castFromZone: Zone? = null,
 )

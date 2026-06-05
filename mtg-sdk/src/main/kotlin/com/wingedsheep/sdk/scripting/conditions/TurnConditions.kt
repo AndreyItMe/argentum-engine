@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.conditions
 import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -129,19 +130,28 @@ data class PlayerAttackedWithCreaturesThisTurn(
  * Used for cards like Brightspear Zealot ("as long as you've cast two or more
  * spells this turn") and Illvoi Infiltrator ("if you've cast two or more spells
  * this turn"). Pass `GameObjectFilter.Any` for the unfiltered "any spell" form.
+ *
+ * [fromZone] optionally restricts the count to spells cast from that zone. With
+ * `fromZone = Zone.HAND` this expresses "you('ve) cast a spell from your hand this turn"
+ * (negate it for the Prairie Dog cycle's "you haven't cast a spell from your hand this turn").
+ * The zone qualifier is matched independently of [filter], so a face-down (morph) spell cast
+ * from hand still counts even though its characteristics are unknown (CR 708.2).
  */
 @SerialName("PlayerCastSpellsThisTurn")
 @Serializable
 data class PlayerCastSpellsThisTurn(
     val player: Player = Player.You,
     val filter: GameObjectFilter = GameObjectFilter.Any,
-    val atLeast: Int
+    val atLeast: Int,
+    val fromZone: Zone? = null
 ) : Condition {
-    override val description: String =
-        if (filter == GameObjectFilter.Any)
-            "if ${player.description} cast $atLeast or more spells this turn"
-        else
-            "if ${player.description} cast $atLeast or more ${DynamicAmount.pluralize(filter.description)} spells this turn"
+    override val description: String = buildString {
+        append("if ${player.description} cast $atLeast or more ")
+        if (filter != GameObjectFilter.Any) append("${DynamicAmount.pluralize(filter.description)} ")
+        append("spells")
+        if (fromZone != null) append(" from ${fromZone.name.lowercase()}")
+        append(" this turn")
+    }
     override fun applyTextReplacement(replacer: TextReplacer): Condition {
         val newFilter = filter.applyTextReplacement(replacer)
         return if (newFilter !== filter) copy(filter = newFilter) else this

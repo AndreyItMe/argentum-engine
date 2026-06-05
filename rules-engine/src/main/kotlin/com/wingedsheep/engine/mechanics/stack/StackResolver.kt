@@ -2194,9 +2194,12 @@ class StackResolver(
     // =========================================================================
 
     /**
-     * Determine which zone a card is being cast from.
+     * Determine which zone a card is being cast from. Called internally by [castSpell] (before the
+     * card is removed from its origin zone) and by `CastSpellHandler` to stamp `castFromZone` on the
+     * turn's [com.wingedsheep.engine.state.CastSpellRecord]; both invoke it while the card is still
+     * in its origin zone so they agree on the result.
      */
-    private fun findCastFromZone(
+    internal fun findCastFromZone(
         state: GameState,
         cardId: EntityId,
         playerId: EntityId

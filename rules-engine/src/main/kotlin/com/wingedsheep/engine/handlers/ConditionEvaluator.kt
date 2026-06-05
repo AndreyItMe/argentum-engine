@@ -545,14 +545,16 @@ class ConditionEvaluator(
         val playerId = resolvePlayer(state, condition.player, ctx) ?: return false
         val records = state.spellsCastThisTurnByPlayer[playerId] ?: return false
         if (records.size < condition.atLeast) return false
-        if (condition.filter == GameObjectFilter.Any) return true
         val evaluator = PredicateEvaluator()
         var matches = 0
         for (record in records) {
-            if (evaluator.matchesFilter(record, condition.filter)) {
-                matches++
-                if (matches >= condition.atLeast) return true
-            }
+            // The zone qualifier is checked independently of the filter: a face-down (morph) spell
+            // cast from hand still counts as "cast a spell from your hand" even though matchesFilter
+            // bails on face-down characteristics (CR 708.2).
+            if (condition.fromZone != null && record.castFromZone != condition.fromZone) continue
+            if (condition.filter != GameObjectFilter.Any && !evaluator.matchesFilter(record, condition.filter)) continue
+            matches++
+            if (matches >= condition.atLeast) return true
         }
         return false
     }

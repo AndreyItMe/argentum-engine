@@ -127,7 +127,23 @@ stack entity id via a new `CastSpellRecord.sourceEntityId`. Both cards are now b
 Salvo via `Add(Fixed(2), …excludeSelf=true)`; Magebane via the `Noncreature` filter). Tests:
 `SpellsCastThisTurnAmountTest`.
 
-### 4. "Cast from your hand" cast-zone qualifier on the spell-cast tracker
+### 4. "Cast from your hand" cast-zone qualifier on the spell-cast tracker — ✅ DONE
+
+**Implemented:** `CastSpellRecord` now carries `castFromZone: Zone?`, stamped in `CastSpellHandler`
+from `StackResolver.findCastFromZone(...)` at cast time (the card is still in its origin zone there, so
+it agrees with the `SpellOnStackComponent.castFromZone` that `castSpell` sets). Both read surfaces gained
+a symmetric `fromZone` qualifier, matched **independently of the spell filter** so a face-down/morph
+cast from hand still counts (CR 708.2):
+  - condition — `PlayerCastSpellsThisTurn(..., fromZone)` / `Conditions.YouCastSpellsThisTurn(atLeast,
+    filter, fromZone)`. The Prairie Dog cycle's "you haven't cast a spell from your hand this turn" is
+    `Not(YouCastSpellsThisTurn(1, fromZone = Zone.HAND))`.
+  - count — `DynamicAmount.SpellsCastThisTurn(..., fromZone)` /
+    `DynamicAmounts.spellsCastThisTurn(..., fromZone)`.
+
+Flashback/forage (GRAVEYARD), plot/foretell (EXILE), and commander (COMMAND) casts are all distinguished
+from hand casts. Tests: `CastFromZoneThisTurnTest`.
+
+<details><summary>Original gap description</summary>
 
 `CastSpellRecord` (verified: `typeLine, manaValue, colors, isFaceDown, paidWithTreasureMana`) has
 **no source-zone field**, so "you haven't cast a spell **from your hand** this turn" can't be
@@ -137,6 +153,8 @@ distinguished from plotted / flashback / impulse casts. Add a `fromHand` (or `so
 → Inventive Wingsmith, Prairie Dog, Canyon Crab, Emergent Haunting, Jem Lightfoote, Wrangler of the
   Damned, Annie Flash the Veteran. (Stoic Sphinx says "haven't cast a spell this turn" with no zone
   qualifier — buildable today.)
+
+</details>
 
 ### 5. "Cast for free / no mana was spent" cast-state condition
 
@@ -226,8 +244,8 @@ this turn" can't be expressed. Add the tracker (engine accumulates on draw event
 
 1. ✅ **Saddle N + Mount** (Tier 1) — done.
 2. **Tier 2 shared primitives** — ✅ contributors-this-turn tracker (#2), ✅ spells-cast
-   `DynamicAmount` (#3). Remaining: the `fromHand` cast-zone flag (#4), the cast-for-free condition
-   (#5), `CARDS_DRAWN` (#6). Small, each unlocks a few scattered cards. **Next up: #4 (`fromHand`).**
+   `DynamicAmount` (#3), ✅ `fromHand` cast-zone flag (#4). Remaining: the cast-for-free condition
+   (#5), `CARDS_DRAWN` (#6). Small, each unlocks a few scattered cards. **Next up: #5 (cast-for-free).**
 3. **Tier-3 one-offs** as the relevant legendaries / rares come up — none block large numbers of
    cards; pick them off individually.
 
