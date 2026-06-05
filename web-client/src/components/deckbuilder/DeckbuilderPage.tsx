@@ -9,7 +9,7 @@
  * Decoupled from gameStore — runs offline. Persistence is via useDeckLibrary
  * (localStorage). Server validation reuses POST /api/decks/validate.
  */
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
@@ -338,29 +338,38 @@ export function DeckbuilderPage() {
     if (!code || sharedLoadedRef.current) return
     sharedLoadedRef.current = true
     void decodeSharedDeck(code).then((shared) => {
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev)
-          params.delete(SHARE_PARAM)
-          // Stamp the deck's format so the commander-format guard (which would otherwise
-          // wipe a just-loaded commander) and the legality filter both see it — same trick
-          // as the saved-deck hydration above, done in one URL write.
-          if (shared?.format) params.set('fmt', shared.format.toUpperCase())
-          // Open shared decks in the Moxfield-style deck view: the recipient is here to
-          // read the list, not browse the catalog to build from scratch.
-          if (shared) params.set('view', 'deck')
-          return params
-        },
-        { replace: true },
-      )
-      if (!shared) return
-      setDeckName(shared.name || 'Shared deck')
-      setDeckCards(mergeCommanderIntoCards(shared.cards, shared.commander ?? null))
-      setCommander(shared.commander ?? null)
-      setActiveDeckId(null)
-      const pins: Record<string, PrintingRef> = { ...(shared.printings ?? {}) }
-      if (shared.commander && shared.commanderPrinting) pins[shared.commander] = shared.commanderPrinting
-      setPinnedPrintings(pins)
+      // Apply the URL rewrite and the decoded deck as one low-priority update. react-router's
+      // BrowserRouter commits location changes inside `startTransition`, so the `fmt` stamp
+      // below lands in a transition lane. If we set `commander` as a normal (urgent) update it
+      // commits FIRST — in a render where `activeFormat` is still stale (no `fmt` yet) — and the
+      // "clear commander when not a commander format" effect immediately wipes the just-loaded
+      // designation, dropping the commander from every shared Commander deck. Scheduling our
+      // own updates in the same transition coalesces them with the URL change, so `activeFormat`
+      // and `commander` commit together and that guard never sees the inconsistent in-between.
+      startTransition(() => {
+        setSearchParams(
+          (prev) => {
+            const params = new URLSearchParams(prev)
+            params.delete(SHARE_PARAM)
+            // Stamp the deck's format so the commander-format guard and the legality filter
+            // both see it — same trick as the saved-deck hydration above, done in one URL write.
+            if (shared?.format) params.set('fmt', shared.format.toUpperCase())
+            // Open shared decks in the Moxfield-style deck view: the recipient is here to
+            // read the list, not browse the catalog to build from scratch.
+            if (shared) params.set('view', 'deck')
+            return params
+          },
+          { replace: true },
+        )
+        if (!shared) return
+        setDeckName(shared.name || 'Shared deck')
+        setDeckCards(mergeCommanderIntoCards(shared.cards, shared.commander ?? null))
+        setCommander(shared.commander ?? null)
+        setActiveDeckId(null)
+        const pins: Record<string, PrintingRef> = { ...(shared.printings ?? {}) }
+        if (shared.commander && shared.commanderPrinting) pins[shared.commander] = shared.commanderPrinting
+        setPinnedPrintings(pins)
+      })
     })
     // setSearchParams is stable; searchParams churn is filtered by the ref guard.
     // eslint-disable-next-line react-hooks/exhaustive-deps
