@@ -64,6 +64,40 @@ check:
 card-status *ARGS:
     scripts/card-status {{ARGS}}
 
+# Predict engine coverage via the mtgish bridge — which missing cards are free vs blocked.
+# Whole set:   just coverage --set TMP            (implemented / FREE / blocked + leaderboard)
+#              just coverage --set TMP --free     (also list the free-to-implement cards)
+#              just coverage --set TMP --blocked  (also list blocked cards + reasons)
+# One card:    just coverage --card "Shivan Dragon"
+# Trust check: just coverage --calibrate POR      (implemented cards must classify coverable)
+[group: 'build']
+coverage *ARGS:
+    python3 spike/mtgish-coverage/probe.py {{ARGS}}
+
+# Generation fidelity — could we AUTO-AUTHOR a card from mtgish? Diffs the bridge's output
+# against each card's compiled golden snapshot, tiering AUTO / SCAFFOLD / MISS.
+# Whole set:  just coverage-fidelity --set POR
+#             just coverage-fidelity --set POR --list SCAFFOLD
+# Cross-set:  just coverage-fidelity --all          (generalization table — bridge applied unchanged)
+# One card:   just coverage-fidelity --emit "Shivan Dragon"   (prints generated cardDef DSL)
+[group: 'build']
+coverage-fidelity *ARGS:
+    python3 spike/mtgish-coverage/fidelity.py {{ARGS}}
+
+# Auto-gen gap: of a set's UNIMPLEMENTED cards, how many could the bridge draft now?
+#   just coverage-gaps --set TMP                 # AUTOGEN / SCAFFOLD / BLOCKED + leaderboard
+#   just coverage-gaps --set TMP --list AUTOGEN  # list the draftable cards
+[group: 'build']
+coverage-gaps *ARGS:
+    python3 spike/mtgish-coverage/autogen.py --gaps {{ARGS}}
+
+# Generate draft .kt files for a set's AUTOGEN-predicted missing cards into a STAGING dir.
+# DRAFTS ONLY — they must compile + pass a scenario test + be reviewed before use.
+#   just coverage-generate --set TMP             # -> spike/mtgish-coverage/generated/tmp/
+[group: 'build']
+coverage-generate *ARGS:
+    python3 spike/mtgish-coverage/autogen.py --write {{ARGS}}
+
 # Verify backlog/sets/*/cards.md headers match actual [x] / [x]+[ ] counts
 [group: 'build']
 check-backlog:

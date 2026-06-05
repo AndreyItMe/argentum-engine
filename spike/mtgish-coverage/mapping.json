@@ -1,0 +1,530 @@
+{
+  "__doc__": "Hand-authored bridge: mtgish IR tag -> Argentum capability. This file IS the maintenance cost the spike measures. kinds: 'effect'/'keyword' validate the tag against the source-scanned registry (a wrong guess shows up as a MISSING gap = the mechanism catching a mapping error); 'composed' = Argentum builds it from existing primitives (no leaf SerialName, e.g. destroy = MoveToZone->graveyard); 'ignore' = a structural mtgish envelope that carries no capability itself (the real capability is in its nested nodes); 'supported' = a trigger/cost the spike accepts without registry validation (a Triggers.*/Costs.* facade scan would harden this in Phase 1). Keys match the bare mtgish value; the probe also accepts 'disc:value'. Two tags are left intentionally UNMAPPED to exercise the residual-tail report.",
+  "Flying": {
+    "kind": "keyword",
+    "tag": "FLYING"
+  },
+  "Haste": {
+    "kind": "keyword",
+    "tag": "HASTE"
+  },
+  "Vigilance": {
+    "kind": "keyword",
+    "tag": "VIGILANCE"
+  },
+  "Reach": {
+    "kind": "keyword",
+    "tag": "REACH"
+  },
+  "Defender": {
+    "kind": "keyword",
+    "tag": "DEFENDER"
+  },
+  "Landwalk": {
+    "kind": "composed",
+    "note": "specific *WALK keywords (SWAMPWALK, FORESTWALK, ...)"
+  },
+  "SpellActions": {
+    "kind": "ignore",
+    "note": "envelope: 'this spell does X'"
+  },
+  "CastEffect": {
+    "kind": "ignore",
+    "note": "envelope: on-cast actions"
+  },
+  "PermanentRuleEffect": {
+    "kind": "ignore",
+    "note": "envelope: static ability"
+  },
+  "TriggerA": {
+    "kind": "ignore",
+    "note": "envelope: triggered ability (cond in _Trigger)"
+  },
+  "Activated": {
+    "kind": "ignore",
+    "note": "envelope: activated ability"
+  },
+  "ActivatedWithModifiers": {
+    "kind": "ignore",
+    "note": "envelope: activated ability"
+  },
+  "PayMana": {
+    "kind": "supported",
+    "note": "cost: pay mana (universal)"
+  },
+  "And": {
+    "kind": "ignore",
+    "note": "envelope: cost/action conjunction"
+  },
+  "MayAction": {
+    "kind": "ignore",
+    "note": "gate envelope: 'you may' (Lesson 1 cluster)"
+  },
+  "MayCost": {
+    "kind": "ignore",
+    "note": "gate envelope: 'you may pay' (Lesson 1 cluster)"
+  },
+  "Unless": {
+    "kind": "ignore",
+    "note": "gate envelope: 'unless ...' (Lesson 1 cluster)",
+    "tags": [
+      "PayOrSuffer"
+    ]
+  },
+  "If": {
+    "kind": "ignore",
+    "note": "conditional envelope"
+  },
+  "PlayerAction": {
+    "kind": "ignore",
+    "note": "envelope: 'target player does X'"
+  },
+  "EachPlayerAction": {
+    "kind": "ignore",
+    "note": "envelope: APNAP each-player"
+  },
+  "EachPlayerActions": {
+    "kind": "ignore",
+    "note": "envelope: APNAP each-player (plural)"
+  },
+  "HavePlayerTakeAction": {
+    "kind": "ignore",
+    "note": "envelope: delegated action"
+  },
+  "CreatePermanentLayerEffectUntil": {
+    "kind": "ignore",
+    "note": "envelope: continuous effect (capability is the _LayerEffect)"
+  },
+  "CreateEachPermanentLayerEffectUntil": {
+    "kind": "ignore",
+    "note": "envelope: continuous effect, each"
+  },
+  "CreateEachPermanentRuleEffectUntil": {
+    "kind": "ignore",
+    "note": "envelope: continuous rule, each"
+  },
+  "CreatePlayerEffectUntil": {
+    "kind": "ignore",
+    "note": "envelope: player-scoped continuous effect"
+  },
+  "SpellDealsDamage": {
+    "kind": "effect",
+    "tag": "DealDamage"
+  },
+  "PermanentDealsDamage": {
+    "kind": "effect",
+    "tag": "DealDamage"
+  },
+  "SpellDealsDistributedDamage": {
+    "kind": "effect",
+    "tag": "DividedDamage"
+  },
+  "DrawNumberCards": {
+    "kind": "effect",
+    "tag": "DrawCards"
+  },
+  "DrawACard": {
+    "kind": "effect",
+    "tag": "DrawCards"
+  },
+  "DrawUptoNumberCards": {
+    "kind": "effect",
+    "tag": "DrawUpTo"
+  },
+  "GainLife": {
+    "kind": "effect",
+    "tag": "GainLife"
+  },
+  "LoseLife": {
+    "kind": "effect",
+    "tag": "LoseLife"
+  },
+  "SacrificePermanent": {
+    "kind": "effect",
+    "tag": "Sacrifice"
+  },
+  "CounterSpell": {
+    "kind": "effect",
+    "tag": "Counter"
+  },
+  "TakeAnExtraTurn": {
+    "kind": "effect",
+    "tag": "TakeExtraTurn"
+  },
+  "LoseTheGame": {
+    "kind": "effect",
+    "tag": "LoseGame"
+  },
+  "Shuffle": {
+    "kind": "effect",
+    "tag": "ShuffleLibrary"
+  },
+  "RevealHand": {
+    "kind": "effect",
+    "tag": "RevealHand"
+  },
+  "LookAtPlayersHand": {
+    "kind": "effect",
+    "tag": "LookAtTargetHand"
+  },
+  "TapPermanent": {
+    "kind": "effect",
+    "tag": "TapUntap"
+  },
+  "UntapPermanent": {
+    "kind": "effect",
+    "tag": "TapUntap"
+  },
+  "TapEachPermanent": {
+    "kind": "composed",
+    "tag": "TapUntapCollection",
+    "tags": [
+      "TapUntap"
+    ]
+  },
+  "UntapEachPermanent": {
+    "kind": "composed",
+    "tag": "TapUntapCollection",
+    "tags": [
+      "TapUntap"
+    ]
+  },
+  "AdjustPT": {
+    "kind": "effect",
+    "tag": "ModifyStats"
+  },
+  "AddAbility": {
+    "kind": "effect",
+    "tag": "GrantKeyword"
+  },
+  "GainLifeForEach": {
+    "kind": "composed",
+    "note": "GainLife + DynamicAmount",
+    "tags": [
+      "GainLife"
+    ]
+  },
+  "DestroyPermanent": {
+    "kind": "composed",
+    "note": "MoveToZone -> graveyard",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "DestroyEachPermanent": {
+    "kind": "composed",
+    "note": "MoveCollection -> graveyard",
+    "tags": [
+      "MoveCollection",
+      "MoveToZone"
+    ]
+  },
+  "DestroyEachPermanentNoRegen": {
+    "kind": "composed",
+    "note": "MoveCollection -> graveyard, no-regen flag",
+    "tags": [
+      "MoveCollection",
+      "MoveToZone"
+    ]
+  },
+  "SearchLibrary": {
+    "kind": "composed",
+    "note": "Gather->Select->Move SearchLibrary pattern",
+    "tags": [
+      "MoveCollection",
+      "ShuffleLibrary"
+    ]
+  },
+  "DiscardACard": {
+    "kind": "composed",
+    "note": "MoveToZone hand->graveyard",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "DiscardNumberCards": {
+    "kind": "composed",
+    "note": "MoveToZone hand->graveyard, N",
+    "tags": [
+      "MoveCollection"
+    ]
+  },
+  "DiscardAnyNumberOfCards": {
+    "kind": "composed",
+    "note": "MoveToZone hand->graveyard, any",
+    "tags": [
+      "MoveCollection"
+    ]
+  },
+  "DiscardACardAtRandom": {
+    "kind": "composed",
+    "note": "MoveToZone hand->graveyard, random",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "PutGraveyardCardIntoHand": {
+    "kind": "composed",
+    "note": "MoveCollection graveyard->hand",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "PutGraveyardCardOntoBattlefield": {
+    "kind": "composed",
+    "note": "MoveCollection graveyard->battlefield (reanimate)",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "ShuffleGraveyardCardIntoLibrary": {
+    "kind": "composed",
+    "note": "MoveCollection + ShuffleLibrary",
+    "tags": [
+      "MoveToZone",
+      "ShuffleLibrary"
+    ]
+  },
+  "ReturnDeadGraveyardCardToTopOfLibrary": {
+    "kind": "composed",
+    "note": "MoveCollection -> library top",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "ShuffleHandIntoLibrary": {
+    "kind": "composed",
+    "note": "MoveCollection hand->library + ShuffleLibrary",
+    "tags": [
+      "MoveCollection",
+      "ShuffleLibrary"
+    ]
+  },
+  "PutPermanentIntoItsOwnersHand": {
+    "kind": "composed",
+    "note": "bounce: MoveToZone/ForceReturnOwnPermanent",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "PutEachPermanentIntoItsOwnersHand": {
+    "kind": "composed",
+    "note": "EachPlayerReturnsPermanentToHand",
+    "tags": [
+      "MoveCollection",
+      "MoveToZone"
+    ]
+  },
+  "PutPermanentOnTopOfOwnersLibrary": {
+    "kind": "composed",
+    "note": "PutOnLibraryPositionOfChoice",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "LookAtTheTopNumberCardsOfLibrary": {
+    "kind": "composed",
+    "note": "look/scry pipeline (Gather->reveal-to-self)"
+  },
+  "LookAtTheTopNumberCardsOfPlayersLibrary": {
+    "kind": "composed",
+    "note": "look pipeline on opponent library"
+  },
+  "CreateReplaceWouldDealDamageUntil": {
+    "kind": "composed",
+    "note": "PreventDamageShield / RedirectNextDamage",
+    "tags": [
+      "PreventDamageShield"
+    ]
+  },
+  "CreateTriggerUntil": {
+    "kind": "composed",
+    "note": "CreateGlobalTriggeredAbility (duration)",
+    "tags": [
+      "CreateGlobalTriggeredAbility"
+    ]
+  },
+  "CreateFutureTrigger": {
+    "kind": "composed",
+    "note": "CreateDelayedTrigger",
+    "tags": [
+      "CreateDelayedTrigger"
+    ]
+  },
+  "SacrificeAPermanent": {
+    "kind": "supported",
+    "note": "cost: sacrifice"
+  },
+  "SacrificeNumberPermanents": {
+    "kind": "supported",
+    "note": "cost: sacrifice N"
+  },
+  "DiscardACardOfType": {
+    "kind": "composed",
+    "note": "cost: discard filtered"
+  },
+  "WhenAPermanentEntersTheBattlefield": {
+    "kind": "supported",
+    "note": "trigger: ETB (Triggers.* scan validates in P1)"
+  },
+  "WhenACreatureOrPlaneswalkerDies": {
+    "kind": "supported",
+    "note": "trigger: dies"
+  },
+  "WhenACreatureAttacks": {
+    "kind": "supported",
+    "note": "trigger: attacks"
+  },
+  "WhenACreatureDealsCombatDamageToAPlayer": {
+    "kind": "supported",
+    "note": "trigger: combat damage to player"
+  },
+  "AddMana": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "AddMana"
+  },
+  "AddManaRepeated": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "AddMana"
+  },
+  "AddColorlessMana": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "AddColorlessMana"
+  },
+  "CreateTokens": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "CreateToken"
+  },
+  "PutACounterOfTypeOnPermanent": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "AddCounters"
+  },
+  "PutNumberCountersOfTypeOnPermanent": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "AddCounters"
+  },
+  "CreatePermanentLayerEffect": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)"
+  },
+  "CreatePermanentRuleEffectUntil": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)"
+  },
+  "RegeneratePermanent": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "Regenerate"
+  },
+  "GainControlOfPermanent": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "GainControl"
+  },
+  "GainControlOfPermanentUntil": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "GainControl"
+  },
+  "RemoveCreatureFromCombat": {
+    "kind": "effect",
+    "note": "universal (cross-set calibration)",
+    "tag": "RemoveFromCombat"
+  },
+  "DestroyPermanentNoRegen": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "ExilePermanent": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "ExileGraveyardCard": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "ExileEachPermanent": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveCollection",
+      "MoveToZone"
+    ]
+  },
+  "ReturnGraveyardCardToHand": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveToZone"
+    ]
+  },
+  "PutEachGraveyardCardIntoHand": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveCollection"
+    ]
+  },
+  "MillNumberCards": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveCollection"
+    ]
+  },
+  "MillCards": {
+    "kind": "composed",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "MoveCollection"
+    ]
+  },
+  "PlayerMayAction": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "May"
+    ]
+  },
+  "PlayerMayCost": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "May"
+    ]
+  },
+  "MayActions": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)",
+    "tags": [
+      "May"
+    ]
+  },
+  "ChooseACreatureType": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)"
+  },
+  "ChooseAColor": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)"
+  },
+  "IfElse": {
+    "kind": "ignore",
+    "note": "universal (cross-set calibration)"
+  }
+}
