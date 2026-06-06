@@ -19,6 +19,10 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         val tgt = refTarget(args, tvar) ?: return@on null
         "Effects.${if (node.strField("_Action") == "TapPermanent") "Tap" else "Untap"}($tgt)"
     }
+    on("GoadCreature") { _, args, tvar ->  // CR 701.15: goad target creature
+        val tgt = refTarget(args, tvar) ?: return@on null
+        "Effects.Goad($tgt)"
+    }
     on("RegeneratePermanent") { _, args, _ ->
         // Self-regeneration ("{cost}: Regenerate this") renders faithfully. A chosen target's
         // requirement isn't always recovered exactly (e.g. "Regenerate target Zombie" flattens the

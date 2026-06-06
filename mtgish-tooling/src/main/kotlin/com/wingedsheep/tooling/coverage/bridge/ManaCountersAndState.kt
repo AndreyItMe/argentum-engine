@@ -10,7 +10,10 @@ internal fun BridgeBuilder.manaCountersAndState() {
     composed("AddManaRepeated", UNIVERSAL, composes = listOf("AddMana", "AddColorlessMana", "AddManaOfChoice"))
     effect("AddColorlessMana", "AddColorlessMana", UNIVERSAL)
 
-    effect("CreateTokens", "CreateToken", UNIVERSAL)
+    // CreateTokens lowers to either the generic CreateToken (creature tokens) or a predefined-token
+    // facade (Treasure -> CreatePredefinedToken); the capability scorer can't see which from the tag
+    // alone, so name both — mirroring the AddMana family above.
+    composed("CreateTokens", UNIVERSAL, composes = listOf("CreateToken", "CreatePredefinedToken"))
     // "becomes the creature type of your choice" — a ChooseACreatureType + an AddCreatureTypeVariable
     // layer effect collapse to one BecomeCreatureTypeEffect (Mistform cycle, Imagecrafter).
     effect("AddCreatureTypeVariable", "BecomeCreatureType", UNIVERSAL)
@@ -19,6 +22,9 @@ internal fun BridgeBuilder.manaCountersAndState() {
     effect("RegeneratePermanent", "Regenerate", UNIVERSAL)
     effects("GainControlOfPermanent", "GainControlOfPermanentUntil", tag = "GainControl", note = UNIVERSAL)
     effect("RemoveCreatureFromCombat", "RemoveFromCombat", UNIVERSAL)
+    // Goad (CR 701.15): targeted GoadCreature renders; mass GoadEachCreature carries the same
+    // capability but its group filter often scaffolds in the emitter.
+    effects("GoadCreature", "GoadEachCreature", tag = "Goad", note = UNIVERSAL)
 
     effect("EachPermanentDoesntUntapDuringControllersNextUntap", "SkipUntap",
         "Exhaustion: target player's creatures+lands don't untap next untap step")

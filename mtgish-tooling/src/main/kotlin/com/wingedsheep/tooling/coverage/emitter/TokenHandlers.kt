@@ -9,9 +9,10 @@ import com.wingedsheep.tooling.coverage.strField
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 
-/** Token creation: a `CreateTokens` action -> `Effects.CreateToken(...)`. Only plain creature tokens
- *  with a P/T, colours, creature subtypes and (optionally) keyword abilities are rendered exactly;
- *  anything else (artifact/enchantment tokens, copy tokens, tokens with full abilities) scaffolds. */
+/** Token creation: a `CreateTokens` action -> `Effects.CreateToken(...)` / a predefined-token facade.
+ *  Plain creature tokens (P/T, colours, creature subtypes, optional keyword abilities) and the
+ *  predefined Treasure token render exactly; anything else (other artifact/enchantment tokens, copy
+ *  tokens, tokens with full abilities) scaffolds. */
 internal val tokenHandlers: Map<String, ActionHandler> = actionHandlers {
     on("CreateTokens") { _, args, _ ->
         val spec = args.asArr?.firstOrNull() as? JsonObject ?: return@on null
@@ -33,6 +34,9 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1): String? {
             val inner = a.getOrNull(1) as? JsonObject ?: return null
             return createTokenDsl(inner, n)
         }
+        // Predefined artifact token with fixed characteristics -> its dedicated facade
+        // (serialises as CreatePredefinedToken, not the generic CreateToken).
+        "TreasureToken" -> return "Effects.CreateTreasure($count)"
         "TokenWithPT" -> {
             // args: [ {_PT [p,t]}, {_TokenColorList [names]}, [supertypes], [cardtypes],
             //         {_TokenSubtypes [subs]}, [abilities] ]

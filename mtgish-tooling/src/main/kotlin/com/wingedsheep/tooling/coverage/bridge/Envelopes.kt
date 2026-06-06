@@ -7,6 +7,7 @@ internal fun BridgeBuilder.structuralEnvelopes() {
     envelope("CastEffect", "envelope: on-cast actions")
     envelope("PermanentRuleEffect", "envelope: static ability")
     envelope("TriggerA", "envelope: triggered ability (cond in _Trigger)")
+    envelope("TriggerOnceEachTurn", "envelope: triggered ability that triggers only once each turn")
     envelope("Activated", "envelope: activated ability")
     envelope("ActivatedWithModifiers", "envelope: activated ability")
     envelope("And", "envelope: cost/action conjunction")

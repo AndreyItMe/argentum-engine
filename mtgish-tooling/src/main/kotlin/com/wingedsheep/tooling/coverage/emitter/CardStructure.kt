@@ -141,13 +141,11 @@ private val TRIGGER_SPEC = mapOf(
     "WhenACreatureDealsCombatDamageToAPlayer" to "Triggers.DealsCombatDamageToPlayer",
 )
 
-/** A TriggerA rule (self-triggered) -> triggeredAbility { trigger; [target]; effect }. */
-internal fun EmitCtx.triggerBlock(rule: JsonObject): List<String>? {
-    var spec: String? = null
-    for ((mtTrigger, dsl) in TRIGGER_SPEC) {
-        if (jsonContains(rule, "_Trigger", mtTrigger) && jsonContains(rule, "_Permanent", "ThisPermanent")) { spec = dsl; break }
-    }
-    if (spec == null) { reasons.add("trigger-shape"); return null }
+/** A TriggerA rule (self-triggered) -> triggeredAbility { trigger; [target]; effect }.
+ *  [oncePerTurn] is set by the `TriggerOnceEachTurn` rule envelope, whose body is otherwise shaped
+ *  identically to a TriggerA. */
+internal fun EmitCtx.triggerBlock(rule: JsonObject, oncePerTurn: Boolean = false): List<String>? {
+    val spec = triggerSpecFor(rule) ?: run { reasons.add("trigger-shape"); return null }
     val (targets, actions) = extractEnvelope(rule)
     if (actions == null) { reasons.add("trigger-actions"); return null }
     val (tdsl, tvar) = spellTarget(targets, actions)
@@ -161,10 +159,27 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject): List<String>? {
     val edsl = renderEffectList(effectActions, tvar) ?: return null
 
     val lines = mutableListOf("    triggeredAbility {", "        trigger = $spec")
+    if (oncePerTurn) lines.add("        oncePerTurn = true")
     if (mayWrapped) lines.add("        optional = true")
     if (tvar != null) lines.add("        val t = target(\"target\", $tdsl)")
     lines.addAll(listOf("        effect = $edsl", "    }"))
     return lines
+}
+
+/** The triggered-ability trigger spec for a TriggerA / TriggerOnceEachTurn rule, or null (-> SCAFFOLD)
+ *  for a trigger shape we can't render exactly. */
+private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
+    for ((mtTrigger, dsl) in TRIGGER_SPEC) {
+        if (jsonContains(rule, "_Trigger", mtTrigger) && jsonContains(rule, "_Permanent", "ThisPermanent")) return dsl
+    }
+    // "Whenever you cast a historic spell" — WhenAPlayerCastsASpell scoped to {You, IsHistoric}.
+    // Require all three so only the you-cast-historic shape maps (an opponent/any-player or a
+    // non-historic spell filter is a different trigger and must scaffold).
+    if (jsonContains(rule, "_Trigger", "WhenAPlayerCastsASpell") &&
+        jsonContains(rule, "_Player", "You") && jsonContains(rule, "_Spells", "IsHistoric")) {
+        return "Triggers.YouCastHistoric"
+    }
+    return null
 }
 
 /**
@@ -290,6 +305,7 @@ private fun EmitCtx.costFilterDsl(node: JsonElement?): String? {
     val obj = node as? JsonObject
     when (obj?.strField("_Permanents")) {
         "IsCreatureType" -> return obj["args"].asStr()?.let { "GameObjectFilter.Creature.withSubtype(\"$it\")" }
+        "IsArtifactType" -> return obj["args"].asStr()?.let { "GameObjectFilter.Artifact.withSubtype(\"$it\")" }
         "AnyPermanent" -> return "GameObjectFilter.Permanent"
     }
     val base = gameObjectFilterDsl(node) ?: return null

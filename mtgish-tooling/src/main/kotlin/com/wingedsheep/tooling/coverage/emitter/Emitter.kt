@@ -77,6 +77,7 @@ object Emitter {
                 }
                 rname == "SpellActions" -> block = ctx.spellBlock(card)
                 rname == "TriggerA" -> block = ctx.triggerBlock(rule)
+                rname == "TriggerOnceEachTurn" -> block = ctx.triggerBlock(rule, oncePerTurn = true)
                 rname == "PermanentRuleEffect" -> block = ctx.staticBlock(rule)
                 rname == "EnchantPermanent" -> block = ctx.auraTargetBlock(rule)
                 rname == "PermanentLayerEffect" -> block = ctx.staticHostBlock(rule)
