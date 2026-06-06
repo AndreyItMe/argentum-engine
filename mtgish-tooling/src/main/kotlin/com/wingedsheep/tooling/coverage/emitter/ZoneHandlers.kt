@@ -73,6 +73,10 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
 
 internal fun EmitCtx.renderSearch(args: JsonElement?): String? {
     val blob = compact(args)
+    // A destination CHOICE ("put it into your hand or graveyard") or a destination we don't model
+    // (graveyard) can't be rendered as a single fixed SearchDestination — scaffold rather than silently
+    // pick one arm (Dina's Guidance).
+    if ("ChooseAnAction" in blob || "PutFoundCardsIntoGraveyard" in blob) return null
     val dest = when {
         "PutFoundCardsOntoBattlefield" in blob -> "BATTLEFIELD"
         "PutFoundCardsIntoHand" in blob -> "HAND"
@@ -100,6 +104,10 @@ internal fun EmitCtx.renderSearch(args: JsonElement?): String? {
 internal fun EmitCtx.renderLook(node: JsonObject, args: JsonElement?, tvar: String?): String? {
     val look = findInteger(node) ?: return null
     val blob = compact(node)
+    // A conditional look ("...if there is an instant and a sorcery card in your graveyard, instead put
+    // two of them...") branches the kept count; the flat lookAtTopAndKeep can't express it (and the
+    // keep-count regex below would wrongly read the conditional branch's number), so scaffold.
+    if ("IfElse" in blob || "_Condition" in blob) return null
     if (oracleText?.contains("target", ignoreCase = true) == true) {
         if (node.strField("_Action") != "LookAtTheTopNumberCardsOfPlayersLibrary" || tvar == null) return null
         if ("PutAGenericCardIntoGraveyard" !in blob || "PutTheRemainingCardsOnTopOfLibraryInAnyOrder" !in blob) return null

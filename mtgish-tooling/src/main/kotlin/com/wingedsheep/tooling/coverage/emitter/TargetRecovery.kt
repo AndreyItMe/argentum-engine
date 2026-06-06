@@ -20,18 +20,33 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? {
     // restriction has no faithful filter rendering yet, so drop to SCAFFOLD rather than omit it.
     val nonCardtypes = Regex(""""IsNonCardtype",\s*"args":\s*"(\w+)"""").findAll(blob).map { it.groupValues[1] }.toList()
     if (nonCardtypes.any { it != "Artifact" }) return null
+    // "target creature you control" / "...an opponent controls" — the controller restriction is a
+    // ControlledByAPlayer clause. Preserve it as a `.youControl()` / `.opponentControls()` suffix; never
+    // drop it (an unrestricted target would let the spell hit any creature). Only the plain-creature
+    // path below can compose it, so the special shapes scaffold when a controller clause is present.
+    val controller = when {
+        "ControlledByAPlayer" !in blob -> ""
+        "\"Opponent\"" in blob -> ".opponentControls()"
+        "\"You\"" in blob -> ".youControl()"
+        else -> return null
+    }
     // Whole-creature shapes whose helpers live on GameObjectFilter (not TargetFilter), or are a named
     // TargetFilter constant. ONS targets use these in isolation, so render them as the whole filter.
     if ("IsAttacking" in blob && "IsBlocking" in blob) {
+        if (controller.isNotEmpty()) return null
         // "...with flying" composes onto the attacking-or-blocking base (Venomspout Brackus).
         return if ("\"Flying\"" in blob) "TargetFilter(GameObjectFilter.Creature.attackingOrBlocking().withKeyword(Keyword.FLYING))"
         else "TargetFilter.AttackingOrBlockingCreature"
     }
-    if ("IsFaceDown" in blob) return "TargetFilter(GameObjectFilter.Creature.faceDown())"
+    if ("IsFaceDown" in blob) {
+        if (controller.isNotEmpty()) return null
+        return "TargetFilter(GameObjectFilter.Creature.faceDown())"
+    }
     // "Goblin creature" / "Elf or Soldier creature": one subtype -> withSubtype; several -> an Or of
     // per-subtype creature filters (matches golden's distributed Or[And[IsCreature, HasSubtype X]…]).
     val subs = Regex(""""IsCreatureType",\s*"args":\s*"(\w+)"""").findAll(blob).map { it.groupValues[1] }.toList()
     if (subs.isNotEmpty()) {
+        if (controller.isNotEmpty()) return null
         return "TargetFilter(${subs.joinToString(" or ") { "GameObjectFilter.Creature.withSubtype(\"$it\")" }})"
     }
     var suffix = ""
@@ -50,7 +65,10 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? {
     Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""").find(blob)?.let {
         suffix += ".powerAtMost(${it.groupValues[1]})"
     }
-    return "TargetFilter.Creature$suffix"
+    Regex(""""PowerIs".*?"GreaterThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""").find(blob)?.let {
+        suffix += ".powerAtLeast(${it.groupValues[1]})"
+    }
+    return "TargetFilter.Creature$suffix$controller"
 }
 
 private fun targetTypes(args: JsonElement?): Set<String> =

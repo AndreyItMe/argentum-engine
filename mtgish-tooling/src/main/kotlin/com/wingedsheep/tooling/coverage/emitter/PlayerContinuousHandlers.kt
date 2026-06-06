@@ -66,11 +66,16 @@ internal fun EmitCtx.renderPlayerAction(node: JsonObject, tvar: String?): String
     val ptv = refTarget(args, tvar)  // the player the action applies to
     when (inner.strField("_Action")) {
         "DiscardACard", "DiscardNumberCards", "DiscardAnyNumberOfCards" -> {
-            val n = (findInteger(inner["args"]) as? Int) ?: 1
+            // discardCards takes a fixed Int — a derived/X count (Arcane Omens' "colours of mana spent")
+            // can't be expressed, so scaffold rather than default to a wrong fixed amount.
+            val n = if (inner.strField("_Action") == "DiscardACard") "1" else strictCardCount(inner["args"])
+            if (n == null) return null
             return if (ptv != null) "Patterns.Hand.discardCards($n, $ptv)" else "Patterns.Hand.discardCards($n)"
         }
         "DrawNumberCards", "DrawACard" -> {
-            val amt = if (inner.strField("_Action") == "DrawACard") "1" else amount(inner["args"])
+            // Only a fixed Integer or X count renders; a derived count (Mathemagics' "2ˣ") scaffolds.
+            val amt = if (inner.strField("_Action") == "DrawACard") "1"
+                      else strictCardCount(inner["args"], forX = "DynamicAmount.XValue")
             if (amt == null) return null
             return if (ptv != null) "DrawCardsEffect($amt, $ptv)" else "DrawCardsEffect($amt)"
         }

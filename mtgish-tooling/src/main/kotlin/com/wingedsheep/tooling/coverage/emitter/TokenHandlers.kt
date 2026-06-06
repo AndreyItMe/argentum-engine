@@ -51,10 +51,19 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1): String? {
             val subs = ((a.getOrNull(4) as? JsonObject)?.get("args").asArr ?: JsonArray(emptyList()))
                 .mapNotNull { it.asStr() }
             if (subs.isEmpty()) return null
-            val tokenKeywords = ((a.getOrNull(5) as? JsonArray) ?: JsonArray(emptyList()))
-                .mapNotNull { (it as? JsonObject)?.strField("_Rule") }
-                .map { pascalToUpperSnake(it) }
-                .filter { it in keywords }
+            // The token's ability list (a[5]). Every entry must be a single BARE keyword we can grant;
+            // a granted triggered/activated ability (e.g. a Pest token's "Whenever this token attacks,
+            // you gain 1 life") or a parameterized keyword carries structure CreateToken can't
+            // reproduce, so scaffold rather than silently drop it.
+            val tokenKeywords = mutableListOf<String>()
+            for (ability in ((a.getOrNull(5) as? JsonArray) ?: JsonArray(emptyList()))) {
+                val abilityRule = ability as? JsonObject ?: return null
+                val rname = abilityRule.strField("_Rule") ?: return null
+                if (abilityRule["args"] != null) return null  // TriggerA / parameterized -> SCAFFOLD
+                val kw = pascalToUpperSnake(rname)
+                if (kw !in keywords) return null
+                tokenKeywords.add(kw)
+            }
             val parts = mutableListOf("power = $power", "toughness = $toughness")
             if (colors.isNotEmpty()) parts.add("colors = setOf(${colors.joinToString(", ") { "Color.$it" }})")
             parts.add("creatureTypes = setOf(${subs.joinToString(", ") { "\"$it\"" }})")

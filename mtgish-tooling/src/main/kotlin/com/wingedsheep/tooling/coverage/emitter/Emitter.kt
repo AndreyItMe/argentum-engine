@@ -91,9 +91,15 @@ object Emitter {
                 rname == "Activated" || rname == "ActivatedWithModifiers" -> block = ctx.activatedBlock(rule)
                 rname == "Cycling" -> block = manaKeywordCost(rule)?.let { listOf("    keywordAbility(KeywordAbility.cycling(\"$it\"))") }
                 rname == "Morph" -> block = manaKeywordCost(rule)?.let { listOf("    morph = \"$it\"") }
+                rname == "Flashback" -> block = manaKeywordCost(rule)?.let { listOf("    keywordAbility(KeywordAbility.flashback(\"$it\"))") }
+                rname == "Crew" -> block = rule["args"].asInt()?.let { listOf("    keywordAbility(KeywordAbility.crew($it))") }
                 rname == "Protection" -> block = protectionScopeDsl(rule)?.let { listOf("    keywordAbility(KeywordAbility.Protection($it))") }
                 rname != null && (rname in handledRules || Bridge[rname]?.kind == "keyword") -> continue
-                rname != null && pascalToUpperSnake(rname) in keywords -> continue  // auto-keyword rule
+                // A bare auto-keyword rule (Flying, Menace, …) carries no args. A keyword rule that DOES
+                // carry args is parameterized (Crew N, Flashback {cost}, Bushido N, …) — those must be
+                // rendered exactly by an explicit case above or scaffold; never silently stamped bare,
+                // which would drop the parameter.
+                rname != null && pascalToUpperSnake(rname) in keywords && rule["args"] == null -> continue
                 else -> { ctx.reasons.add(rname ?: "unknown-rule"); return incomplete(ctx, body, scryfall, pkg) }
             }
             if (block == null) return incomplete(ctx, body, scryfall, pkg)

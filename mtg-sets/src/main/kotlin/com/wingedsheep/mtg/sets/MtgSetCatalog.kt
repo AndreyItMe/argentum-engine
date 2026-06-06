@@ -75,6 +75,7 @@ import com.wingedsheep.mtg.sets.definitions.roe.RiseOfTheEldraziSet
 import com.wingedsheep.mtg.sets.definitions.scg.ScourgeSet
 import com.wingedsheep.mtg.sets.definitions.soi.ShadowsOverInnistradSet
 import com.wingedsheep.mtg.sets.definitions.stx.StrixhavenSchoolOfMagesSet
+import com.wingedsheep.mtg.sets.definitions.sos.SecretsOfStrixhavenSet
 import com.wingedsheep.mtg.sets.definitions.tmp.TempestSet
 import com.wingedsheep.mtg.sets.definitions.usg.UrzasSagaSet
 import com.wingedsheep.mtg.sets.definitions.vis.VisionsSet
@@ -194,6 +195,7 @@ object MtgSetCatalog {
         WorldwakeSet,
         LordOfTheRingsSet,
         StrixhavenSchoolOfMagesSet,
+        SecretsOfStrixhavenSet,
     )
 
     private val byCode: Map<String, MtgSet> = all.associateBy { it.code }

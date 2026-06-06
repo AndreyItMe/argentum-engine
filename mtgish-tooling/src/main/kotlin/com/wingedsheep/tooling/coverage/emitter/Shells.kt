@@ -139,7 +139,10 @@ internal fun keywordLines(card: JsonObject, keywords: Set<String>): Set<String> 
         val entry = Bridge.entry("_Rule", rname)
         val auto = pascalToUpperSnake(rname)
         if (entry is MappingEntry.Keyword) out.add(entry.tag)
-        else if (auto in keywords) out.add(auto)
+        // Only a bare keyword rule (no args) is an intrinsic card keyword. A parameterized keyword rule
+        // (Crew N, Flashback {cost}, …) carries args and is rendered as an explicit keywordAbility(...)
+        // by the Emitter — stamping it bare here would drop its parameter (e.g. "Crew" without the N).
+        else if (auto in keywords && r["args"] == null) out.add(auto)
     }
     return out
 }

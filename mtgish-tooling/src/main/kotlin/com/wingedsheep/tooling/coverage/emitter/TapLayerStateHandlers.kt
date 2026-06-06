@@ -2,9 +2,9 @@ package com.wingedsheep.tooling.coverage.emitter
 
 import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.asInt
-import com.wingedsheep.tooling.coverage.findAdjustPt
 import com.wingedsheep.tooling.coverage.findInteger
 import com.wingedsheep.tooling.coverage.jsonContains
+import com.wingedsheep.tooling.coverage.pascalToUpperSnake
 import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
 import kotlinx.serialization.json.JsonArray
@@ -59,7 +59,10 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
 }
 
 /** CreatePermanentLayerEffectUntil / its each-permanent form -> ModifyStats / GrantKeyword,
- *  optionally over a group (ForEachInGroup). The `_Expiration` is honoured exactly: end-of-turn uses
+ *  optionally over a group (ForEachInGroup). The `args` are always `[target/filter, [layerEffects],
+ *  expiration]`; EVERY entry in the layer-effects list must render, or the whole card scaffolds — a
+ *  layer effect we silently drop (e.g. an AddAbility granting a triggered ability alongside a P/T
+ *  buff) would emit a confidently-wrong card. The `_Expiration` is honoured exactly: end-of-turn uses
  *  the default-duration facade; "for as long as it remains tapped" carries an explicit
  *  Duration.WhileSourceTapped(); any other expiration scaffolds rather than emit a wrong duration. */
 internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: String?): String? {
@@ -68,25 +71,31 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
     if (target == null) return null
     val duration = expirationDsl(node) ?: return null  // unknown expiration -> SCAFFOLD
     val durArg = if (duration.isEmpty()) "" else ", $duration"
+
+    // The layer-effects list (mtgish always shapes the action's args as [target/filter, list, expiration]).
+    val layerEffects = (node["args"].asArr)?.getOrNull(1) as? JsonArray ?: return null
+    if (layerEffects.isEmpty()) return null
     val inner = mutableListOf<String>()
-    val pt = findAdjustPt(node)
-    if (pt is JsonArray && pt.size == 2) {
-        // ModifyStats' facade carries no duration param, so a non-default duration uses the raw effect.
-        inner.add(
-            if (duration.isEmpty()) "Effects.ModifyStats(${pt[0].asInt()}, ${pt[1].asInt()}, $target)"
-            else "ModifyStatsEffect(${pt[0].asInt()}, ${pt[1].asInt()}, $target, $duration)"
-        )
-    }
-    if (jsonContains(node, "_LayerEffect", "AddAbility")) {
-        var kw: String? = null
-        if (jsonContains(node, "_Rule", "Landwalk")) {  // AddAbility{Landwalk{Forest}} -> FORESTWALK
-            val subs = subtypes(node)
-            if (subs.isNotEmpty() && (subs[0].uppercase() + "WALK") in keywords) kw = subs[0].uppercase() + "WALK"
+    for (le in layerEffects) {
+        val leObj = le as? JsonObject ?: return null
+        when (leObj.strField("_LayerEffect")) {
+            "AdjustPT" -> {
+                val pt = leObj["args"].asArr
+                if (pt == null || pt.size != 2) return null
+                // ModifyStats' facade carries no duration param, so a non-default duration uses the raw effect.
+                inner.add(
+                    if (duration.isEmpty()) "Effects.ModifyStats(${pt[0].asInt()}, ${pt[1].asInt()}, $target)"
+                    else "ModifyStatsEffect(${pt[0].asInt()}, ${pt[1].asInt()}, $target, $duration)"
+                )
+            }
+            "AddAbility" -> {
+                // Only a bare keyword grant renders faithfully; a granted triggered/activated ability or a
+                // parameterized keyword can't be reproduced here, so scaffold instead of dropping it.
+                val kw = grantedKeyword(leObj) ?: return null
+                inner.add("Effects.GrantKeyword(Keyword.$kw, $target$durArg)")
+            }
+            else -> return null  // any other layer effect (e.g. set base P/T, lose abilities) -> SCAFFOLD
         }
-        kw = kw ?: keywordOf(node)
-        if (kw != null) {
-            inner.add("Effects.GrantKeyword(Keyword.$kw, $target$durArg)")
-        } else return null
     }
     if (inner.isEmpty()) return null
     val effect = if (inner.size == 1) inner[0] else composite(inner)
@@ -96,6 +105,23 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
         return "Effects.ForEachInGroup($filter, $effect)"
     }
     return effect
+}
+
+/** The granted [Keyword] for an `AddAbility` layer effect, or null (-> SCAFFOLD) when the grant is not
+ *  a single bare keyword — a granted triggered/activated ability or a parameterized keyword carries
+ *  structure this faithful-keyword grant can't reproduce. */
+private fun EmitCtx.grantedKeyword(addAbility: JsonObject): String? {
+    val rule = (addAbility["args"].asArr)?.getOrNull(0) as? JsonObject ?: return null
+    val rname = rule.strField("_Rule") ?: return null
+    if (rname == "Landwalk") {  // AddAbility{Landwalk{Forest}} -> FORESTWALK
+        val sub = subtypes(rule).firstOrNull()?.let { it.uppercase() + "WALK" }
+        return if (sub != null && sub in keywords) sub else null
+    }
+    // A bare keyword rule carries no further structure. Anything with args (TriggerA, a parameterized
+    // keyword, ...) is not a faithful bare-keyword grant.
+    if (rule["args"] != null) return null
+    val kw = pascalToUpperSnake(rname)
+    return if (kw in keywords) kw else null
 }
 
 /** The layer effect's `_Expiration` -> "" for the default (end-of-turn) facade, an explicit

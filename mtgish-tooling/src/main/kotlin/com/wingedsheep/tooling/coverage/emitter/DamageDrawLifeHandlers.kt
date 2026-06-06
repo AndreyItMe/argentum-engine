@@ -39,7 +39,13 @@ internal val damageDrawLifeHandlers: Map<String, ActionHandler> = actionHandlers
     }
 
     on("DrawNumberCards", "DrawACard") { node, args, _ ->
-        val amt = if (node.strField("_Action") == "DrawACard") "1" else (amount(args) ?: dynamicAmount(amountNode(args)))
+        // A fixed Integer / X renders directly; a recognised dynamic count (e.g. "draw a card for each
+        // tapped creature target opponent controls") renders via dynamicAmount. A derived count we model
+        // neither way (Mathemagics' "2ˣ") scaffolds rather than emit a misleading literal dug out of the
+        // expression — strictCardCount reads only the TOP-LEVEL game number so it can't be fooled.
+        val amt = if (node.strField("_Action") == "DrawACard") "1"
+                  else strictCardCount(amountNode(args), forX = "DynamicAmount.XValue")
+                      ?: dynamicAmount(amountNode(args))
         if (amt != null) "DrawCardsEffect($amt)" else null
     }
 
@@ -66,8 +72,10 @@ internal val damageDrawLifeHandlers: Map<String, ActionHandler> = actionHandlers
         "LoseLifeEffect($amt, EffectTarget.Controller)"
     }
 
-    on("DiscardACard", "DiscardNumberCards", "DiscardAnyNumberOfCards") { _, args, _ ->
-        "Patterns.Hand.discardCards(${(findInteger(args) as? Int) ?: 1})"
+    on("DiscardACard", "DiscardNumberCards", "DiscardAnyNumberOfCards") { node, args, _ ->
+        // discardCards takes a fixed Int; a derived/X count can't be expressed, so scaffold.
+        val n = if (node.strField("_Action") == "DiscardACard") "1" else strictCardCount(amountNode(args))
+        if (n != null) "Patterns.Hand.discardCards($n)" else null
     }
 
     on("LookAtPlayersHand") { _, args, tvar ->

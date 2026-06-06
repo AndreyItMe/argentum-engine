@@ -91,6 +91,18 @@ internal fun EmitCtx.amount(node: JsonElement?): String? {
     return n.toString()
 }
 
+/** A "draw/discard N cards" count read from the amount's TOP-LEVEL `_GameNumber` only: a fixed Integer
+ *  (-> the int), or X (-> [forX], when the caller's effect accepts a DynamicAmount). Any derived game
+ *  number (Power for "2ˣ", "number of colours of mana spent", …) returns null (-> SCAFFOLD). Unlike
+ *  [amount]/findInteger, it never digs a misleading literal out of a nested expression (e.g. the base
+ *  `2` of "2ˣ"), which would emit a confidently-wrong fixed count. */
+internal fun strictCardCount(amountNode: JsonElement?, forX: String? = null): String? =
+    when ((amountNode as? JsonObject)?.strField("_GameNumber")) {
+        "Integer" -> (amountNode as JsonObject)["args"].asInt()?.toString()
+        "XValue", "X", "ValueX" -> forX
+        else -> null
+    }
+
 /** GainLifeForEach args = [perAmount, countExpr] -> a synthetic Multiply(count, per) node. */
 internal fun gainForEachAmount(args: JsonElement?): JsonElement? {
     val arr = args.asArr
