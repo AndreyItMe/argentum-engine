@@ -1,0 +1,73 @@
+// Perilous Forays
+{
+    "name": "Perilous Forays",
+    "manaCost": "{3}{G}{G}",
+    "typeLine": "Enchantment",
+    "oracleText": "{1}, Sacrifice a creature: Search your library for a land card with a basic land type, put it onto the battlefield tapped, then shuffle.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostMana",
+                            "cost": "{1}"
+                        },
+                        {
+                            "type": "CostSacrifice",
+                            "filter": "creature"
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library",
+                                "filter": "land Plains|Island|Swamp|Mountain|Forest"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield",
+                                "placement": "Tapped"
+                            }
+                        },
+                        "ShuffleLibrary"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "176",
+        "rarity": "UNCOMMON",
+        "artist": "Chris Dien",
+        "flavorText": "\"This is the place? This map has got to be wrong . . . .\"\n—Svania Trul, wayfinder novice, last words",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/2/4210a148-d16c-42de-b0d6-83c05c553dd4.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
