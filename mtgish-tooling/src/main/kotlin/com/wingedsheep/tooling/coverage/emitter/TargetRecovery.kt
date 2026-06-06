@@ -15,8 +15,22 @@ import kotlinx.serialization.json.JsonObject
  * to SCAFFOLD rather than emitting a confidently-wrong target.
  */
 internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String {
-    var suffix = ""
     val blob = compact(filterNode)
+    // Whole-creature shapes whose helpers live on GameObjectFilter (not TargetFilter), or are a named
+    // TargetFilter constant. ONS targets use these in isolation, so render them as the whole filter.
+    if ("IsAttacking" in blob && "IsBlocking" in blob) {
+        // "...with flying" composes onto the attacking-or-blocking base (Venomspout Brackus).
+        return if ("\"Flying\"" in blob) "TargetFilter(GameObjectFilter.Creature.attackingOrBlocking().withKeyword(Keyword.FLYING))"
+        else "TargetFilter.AttackingOrBlockingCreature"
+    }
+    if ("IsFaceDown" in blob) return "TargetFilter(GameObjectFilter.Creature.faceDown())"
+    // "Goblin creature" / "Elf or Soldier creature": one subtype -> withSubtype; several -> an Or of
+    // per-subtype creature filters (matches golden's distributed Or[And[IsCreature, HasSubtype X]…]).
+    val subs = Regex(""""IsCreatureType",\s*"args":\s*"(\w+)"""").findAll(blob).map { it.groupValues[1] }.toList()
+    if (subs.isNotEmpty()) {
+        return "TargetFilter(${subs.joinToString(" or ") { "GameObjectFilter.Creature.withSubtype(\"$it\")" }})"
+    }
+    var suffix = ""
     Regex(""""IsNonColor".*?"_Color":\s*"(\w+)"""").find(blob)?.let {
         suffix += ".notColor(Color.${it.groupValues[1].uppercase()})"
     }
@@ -28,6 +42,9 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String {
     }
     if ("IsTapped" in blob) suffix += ".tapped()"
     if ("IsAttacking" in blob) suffix += ".attacking()"
+    Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""").find(blob)?.let {
+        suffix += ".powerAtMost(${it.groupValues[1]})"
+    }
     return "TargetFilter.Creature$suffix"
 }
 
