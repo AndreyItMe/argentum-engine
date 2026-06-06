@@ -25,6 +25,12 @@ class RemoveFromCombatExecutor : EffectExecutor<RemoveFromCombatEffect> {
     ): EffectResult {
         val targetId = context.resolveTarget(effect.target)
             ?: return EffectResult.success(state)
-        return EffectResult.success(CombatRemovalHelper.removeFromCombat(state, targetId))
+        return EffectResult.success(
+            CombatRemovalHelper.removeFromCombat(
+                state,
+                targetId,
+                unblockSoleBlockedAttackers = effect.unblockSoleBlockedAttackers,
+            )
+        )
     }
 }

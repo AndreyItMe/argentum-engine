@@ -376,13 +376,27 @@ data class CantAttackEffect(
  * Removes all combat-related components (attacking, blocking, blocked, damage assignment).
  * Also cleans up any blockers that were blocking the removed creature.
  * Used for Gustcloak creatures: "you may untap it and remove it from combat."
+ *
+ * @property unblockSoleBlockedAttackers When true, any attacker the target was sole blocker
+ *   of becomes unblocked — its `BlockedComponent` and damage-assignment components are
+ *   cleared. Defaults to false (modern CR 509.1h: a blocked creature stays blocked even if
+ *   all blockers leave combat). Set to true for cards like Ydwen Efreet whose oracle text
+ *   explicitly overrides 509.1h: "Creatures it was blocking that had become blocked by only
+ *   this creature this combat become unblocked."
  */
 @SerialName("RemoveFromCombat")
 @Serializable
 data class RemoveFromCombatEffect(
-    val target: EffectTarget
+    val target: EffectTarget,
+    val unblockSoleBlockedAttackers: Boolean = false
 ) : Effect {
-    override val description: String = "Remove ${target.description} from combat"
+    override val description: String = buildString {
+        append("Remove ${target.description} from combat")
+        if (unblockSoleBlockedAttackers) {
+            append(". Creatures it was blocking that had become blocked by only this creature ")
+            append("this combat become unblocked")
+        }
+    }
 }
 
 /**

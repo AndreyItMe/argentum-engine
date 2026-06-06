@@ -2351,9 +2351,15 @@ object Effects {
 
     /**
      * Remove a creature from combat.
+     *
+     * @param unblockSoleBlockedAttackers If true, attackers the target was sole blocker
+     *   of become unblocked (their `BlockedComponent` is cleared). Defaults to false; only
+     *   set for cards whose oracle text explicitly says creatures become unblocked, e.g.
+     *   Ydwen Efreet's "Creatures it was blocking that had become blocked by only this
+     *   creature this combat become unblocked."
      */
-    fun RemoveFromCombat(target: EffectTarget): Effect =
-        RemoveFromCombatEffect(target)
+    fun RemoveFromCombat(target: EffectTarget, unblockSoleBlockedAttackers: Boolean = false): Effect =
+        RemoveFromCombatEffect(target, unblockSoleBlockedAttackers)
 
     /**
      * Let a creature attack this turn as though it didn't have defender (Krotiq Nestguard).

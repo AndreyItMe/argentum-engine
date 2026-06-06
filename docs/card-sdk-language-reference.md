@@ -518,7 +518,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `CantAttackGroupEffect(filter, condition?)` — group-scoped can't-attack.
 - `CantBlockGroupEffect(filter, condition?)` — group-scoped can't-block.
 - `Effects.Suspect(target)` — target becomes Suspected (MKM keyword). Composite: `SetSuspectedEffect` (named status, CR 701.60d dedup) + `GrantKeywordEffect(MENACE)` + `CantBlockEffect`.
-- `RemoveFromCombatEffect(target)` — yank target out of combat.
+- `RemoveFromCombatEffect(target, unblockSoleBlockedAttackers = false)` — yank target out of combat.
+  Set `unblockSoleBlockedAttackers = true` for the old-rules behavior (Ydwen Efreet): attackers the
+  target was sole blocker of become unblocked (CR 509.1h normally keeps them blocked).
 - `Effects.CanAttackDespiteDefenderThisTurn(target = Self)` (`CanAttackDespiteDefenderThisTurnEffect`) — target can attack this
   turn as though it didn't have defender. Adds a transient `CanAttackDespiteDefenderThisTurnComponent`
   honored by the defender attack-restriction rule and cleaned up at end of turn. The
