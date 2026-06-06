@@ -102,6 +102,7 @@ data class GameObjectFilter(
         )
         val Noncreature = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsNoncreature))
         val Nonenchantment = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsNonenchantment))
+        val Nonartifact = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsNonartifact))
         val Token = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsToken))
         val Multicolored = GameObjectFilter(cardPredicates = listOf(CardPredicate.IsMulticolored))
 
@@ -197,6 +198,11 @@ data class GameObjectFilter(
     /** Exclude a subtype */
     fun notSubtype(subtype: Subtype) = copy(
         cardPredicates = cardPredicates + CardPredicate.NotSubtype(subtype)
+    )
+
+    /** Restrict to nonartifact objects ("nonartifact creature", the Terror template). */
+    fun nonartifact() = copy(
+        cardPredicates = cardPredicates + CardPredicate.IsNonartifact
     )
 
     /** Add a keyword requirement */

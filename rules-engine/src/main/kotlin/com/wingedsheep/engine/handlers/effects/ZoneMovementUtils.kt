@@ -514,6 +514,7 @@ object ZoneMovementUtils {
                 CardPredicate.IsNonland -> !cardComponent.typeLine.isLand
                 CardPredicate.IsNoncreature -> !cardComponent.typeLine.isCreature
                 CardPredicate.IsNonenchantment -> !cardComponent.typeLine.isEnchantment
+                CardPredicate.IsNonartifact -> !cardComponent.typeLine.isArtifact
                 CardPredicate.IsPermanent -> cardComponent.typeLine.isPermanent
                 CardPredicate.IsLegendary -> cardComponent.typeLine.isLegendary
                 CardPredicate.IsNonlegendary -> !cardComponent.typeLine.isLegendary

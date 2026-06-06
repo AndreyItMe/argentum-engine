@@ -134,6 +134,15 @@ class PredicateEvaluatorRecordTest : FunSpec({
                 record(TypeLine.enchantment()),
                 filter(CardPredicate.IsNonenchantment)
             ) shouldBe false
+
+            evaluator.matchesFilter(
+                record(TypeLine.creature()),
+                filter(CardPredicate.IsNonartifact)
+            ) shouldBe true
+            evaluator.matchesFilter(
+                record(TypeLine.artifact()),
+                filter(CardPredicate.IsNonartifact)
+            ) shouldBe false
         }
 
         test("token predicates: spells are never tokens") {

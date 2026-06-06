@@ -75,7 +75,7 @@ just coverage-fidelity --all            # cross-set table (renders-whole AUTO: P
 just coverage-fidelity --emit "Lava Axe"  # print the generated cardDef DSL (complete metadata, no TODO)
 
 # AUTO-GEN — turn the bridge on a set's UNIMPLEMENTED cards.
-just coverage-gaps --set TMP            # AUTOGEN / SCAFFOLD / BLOCKED counts + blocked-capability leaderboard
+just coverage-gaps --set TMP            # AUTOGEN / SCAFFOLD / BLOCKED counts + scaffold-gap & blocked-capability leaderboards
 just coverage-generate --set TMP        # draft .kt for the AUTOGEN cards -> mtgish-tooling/generated/<set>/
 just coverage-relocate TMP              # backfill canonicals of cards whose earliest printing is another set
 

@@ -1395,6 +1395,8 @@ class TriggerDetector(
                     !cardComponent.typeLine.isLand
                 is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNoncreature ->
                     !cardComponent.typeLine.isCreature
+                is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact ->
+                    !cardComponent.typeLine.isArtifact
                 is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
                     cardComponent.typeLine.hasSubtype(predicate.subtype)
                 else -> true
@@ -1702,6 +1704,7 @@ class TriggerDetector(
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> info.cardComponent.typeLine.isCreature
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNoncreature -> !info.cardComponent.typeLine.isCreature
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland -> !info.cardComponent.typeLine.isLand
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact -> !info.cardComponent.typeLine.isArtifact
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsPermanent -> info.cardComponent.typeLine.isPermanent
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype -> info.cardComponent.typeLine.hasSubtype(predicate.subtype)
                             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact -> info.cardComponent.typeLine.isArtifact

@@ -19,6 +19,7 @@ import com.wingedsheep.sdk.scripting.effects.AddOneManaOfEachColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import com.wingedsheep.sdk.scripting.effects.ManaSpellRider
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
+import com.wingedsheep.sdk.scripting.effects.CantBeRegeneratedEffect
 import com.wingedsheep.sdk.scripting.effects.OpenLifeBidEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicCountersEffect
@@ -407,9 +408,14 @@ object Effects {
 
     /**
      * Destroy a target.
+     *
+     * @param noRegenerate If true, the target can't be regenerated — composes the
+     *   "can't be regenerated" marker before the destroy (Terror, Smother, Tunnel).
      */
-    fun Destroy(target: EffectTarget): Effect =
-        MoveToZoneEffect(target, Zone.GRAVEYARD, byDestruction = true)
+    fun Destroy(target: EffectTarget, noRegenerate: Boolean = false): Effect {
+        val destroy = MoveToZoneEffect(target, Zone.GRAVEYARD, byDestruction = true)
+        return if (noRegenerate) CantBeRegeneratedEffect(target) then destroy else destroy
+    }
 
     /**
      * Destroy all permanents matching a filter using the pipeline.

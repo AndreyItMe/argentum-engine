@@ -14,8 +14,12 @@ import kotlinx.serialization.json.JsonObject
  * the Argentum target/filter DSL. A filter we can't faithfully render returns null → the card drops
  * to SCAFFOLD rather than emitting a confidently-wrong target.
  */
-internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String {
+internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? {
     val blob = compact(filterNode)
+    // "nonartifact creature" (the Terror template) renders via .nonartifact(); any OTHER non-cardtype
+    // restriction has no faithful filter rendering yet, so drop to SCAFFOLD rather than omit it.
+    val nonCardtypes = Regex(""""IsNonCardtype",\s*"args":\s*"(\w+)"""").findAll(blob).map { it.groupValues[1] }.toList()
+    if (nonCardtypes.any { it != "Artifact" }) return null
     // Whole-creature shapes whose helpers live on GameObjectFilter (not TargetFilter), or are a named
     // TargetFilter constant. ONS targets use these in isolation, so render them as the whole filter.
     if ("IsAttacking" in blob && "IsBlocking" in blob) {
@@ -31,6 +35,7 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String {
         return "TargetFilter(${subs.joinToString(" or ") { "GameObjectFilter.Creature.withSubtype(\"$it\")" }})"
     }
     var suffix = ""
+    if ("Artifact" in nonCardtypes) suffix += ".nonartifact()"
     Regex(""""IsNonColor".*?"_Color":\s*"(\w+)"""").find(blob)?.let {
         suffix += ".notColor(Color.${it.groupValues[1].uppercase()})"
     }
@@ -69,8 +74,13 @@ internal fun EmitCtx.targetDsl(tnode: JsonObject, actionContext: List<JsonObject
     }
     if (ttype in setOf("TargetPermanent", "NumberTargetPermanents", "UptoNumberTargetPermanents", "OneOrTwoTargetPermanents")) {
         val types = targetTypes(args)
-        if (types == setOf("Creature")) {
-            val parts = mutableListOf("filter = ${creatureFilterDsl(args)}")
+        val blob = compact(args)
+        // A creature-subtype restriction ("target Wall") implies a creature target even with no explicit
+        // IsCardtype Creature; route it through the creature filter so the subtype isn't dropped (Tunnel).
+        val creatureTarget = types == setOf("Creature") || (types.isEmpty() && "IsCreatureType" in blob)
+        if (creatureTarget) {
+            val filter = creatureFilterDsl(args) ?: return null
+            val parts = mutableListOf("filter = $filter")
             if (ttype in setOf("NumberTargetPermanents", "UptoNumberTargetPermanents") && countInt is Int) parts.add(0, "count = $countInt")
             if (ttype == "OneOrTwoTargetPermanents") { parts.add(0, "minCount = 1"); parts.add(0, "count = 2") }
             if (ttype == "UptoNumberTargetPermanents") parts.add(0, "optional = true")
@@ -83,7 +93,7 @@ internal fun EmitCtx.targetDsl(tnode: JsonObject, actionContext: List<JsonObject
             if (ttype == "UptoNumberTargetPermanents") parts.add(0, "optional = true")
             return "TargetPermanent(${parts.joinToString(", ")})"
         }
-        if (types.isEmpty() && "IsCardtype" !in compact(args)) {
+        if (types.isEmpty() && "IsCardtype" !in blob && "IsCreatureType" !in blob) {
             return "TargetPermanent()"
         }
         val multiType = mapOf(
@@ -167,7 +177,10 @@ internal fun EmitCtx.gameObjectFilterDsl(filterNode: JsonElement?): String? {
     var filtered = when {
         subs.isNotEmpty() && ("Land" in types || "IsLandType" in blob || "\"Land\"" in blob) ->
             "GameObjectFilter.Land.withSubtype(${subtypeArg(subs[0])})"
-        creatureSubs.isNotEmpty() && ("Creature" in types || "\"Creature\"" in blob) ->
+        // A creature subtype always implies creature, so render Creature.withSubtype even when there's no
+        // explicit IsCardtype Creature (the "other Merfolk"/"other Goblins" lord groups) — otherwise the
+        // ThisPermanent marker below would wrongly widen it to GameObjectFilter.Permanent.
+        creatureSubs.isNotEmpty() ->
             "GameObjectFilter.Creature.withSubtype(${subtypeArg(creatureSubs[0])})"
         subs.isNotEmpty() && ("Creature" in types || "\"Creature\"" in blob) ->
             "GameObjectFilter.Creature.withSubtype(${subtypeArg(subs[0])})"
@@ -195,6 +208,9 @@ internal fun EmitCtx.gameObjectFilterDsl(filterNode: JsonElement?): String? {
     }
     Regex(""""PowerIs".*?"GreaterThanOrEqualTo".*?"Integer","args":(\d+)""").find(blob)?.let {
         filtered += ".powerAtLeast(${it.groupValues[1]})"
+    }
+    Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer","args":(\d+)""").find(blob)?.let {
+        filtered += ".powerAtMost(${it.groupValues[1]})"
     }
     if ("IsTapped" in blob) filtered += ".tapped()"
     if ("IsUntapped" in blob) filtered += ".untapped()"

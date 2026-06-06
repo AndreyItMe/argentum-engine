@@ -62,7 +62,16 @@ internal fun EmitCtx.staticLordBlock(rule: JsonObject): List<String>? {
                 "ModifyStats(powerBonus = ${pt[0].asInt()}, toughnessBonus = ${pt[1].asInt()}, filter = $group)"
             }
             "AddAbility" -> {
-                val kw = keywordOf(le) ?: return scaffoldLord()
+                // "Other Merfolk have islandwalk" (Lord of Atlantis / Goblin King): the granted ability is a
+                // Landwalk rule carrying a land subtype, not a plain keyword — recover the *WALK keyword.
+                val granted = (le["args"] as? JsonArray)?.getOrNull(0) as? JsonObject
+                val kw = if (granted?.strField("_Rule") == "Landwalk") {
+                    val lw = mutableSetOf<String>()
+                    findLandwalkKeywords(granted, keywords, lw)
+                    lw.singleOrNull() ?: return scaffoldLord()
+                } else {
+                    keywordOf(le) ?: return scaffoldLord()
+                }
                 "GrantKeyword(Keyword.$kw, $group)"
             }
             else -> return scaffoldLord()
@@ -168,7 +177,18 @@ private fun EmitCtx.staticAbilityDsl(ruleName: String, ruleNode: JsonObject): St
             val bf = if (kw != null) "GameObjectFilter.Creature.withKeyword(Keyword.$kw)" else "GameObjectFilter.Creature"
             return "CanOnlyBlockCreaturesWith(blockerFilter = $bf)"
         }
-        "CantBeBlockedExceptByDefenders", "CantBeBlockedByDefenders" -> {
+        "CantBeBlockedByDefenders" -> {
+            // mtgish "Defenders" means blockers generally; the rule's args carry the blocker restriction,
+            // so this is "can't be blocked BY [filtered creatures]" (Fleet-Footed Monk: power ≥ 2; Sacred
+            // Knight: black and/or red). Render the blocker filter generically; scaffold if it can't be
+            // expressed faithfully. (Distinct from CantBeBlockedExceptByDefenders, which RESTRICTS blockers.)
+            // gameObjectFilterDsl silently ignores predicates it can't render, so scaffold on any shape it
+            // doesn't cover (e.g. ToughnessIs) rather than emit a blocker filter missing a restriction.
+            if (Regex("\"(ToughnessIs|HasKeyword|ManaValueIs|HasSubtypeFrom)\"").containsMatchIn(compact(ruleNode))) return null
+            val filter = gameObjectFilterDsl(ruleNode["args"]) ?: return null
+            return "CantBeBlockedBy(blockerFilter = $filter)"
+        }
+        "CantBeBlockedExceptByDefenders" -> {
             if (oracleText?.contains("defender", ignoreCase = true) == true) {
                 return "CantBeBlockedExceptBy(blockerFilter = GameObjectFilter.Creature.withKeyword(Keyword.DEFENDER))"
             }

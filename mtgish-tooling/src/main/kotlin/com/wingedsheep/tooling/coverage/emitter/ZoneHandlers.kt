@@ -21,6 +21,10 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         val tgt = refTarget(args, tvar) ?: return@on null
         "Effects.Move($tgt, Zone.GRAVEYARD, byDestruction = true)"
     }
+    on("DestroyPermanentNoRegen") { _, args, tvar ->  // "Destroy …. It can't be regenerated." (Terror, Tunnel)
+        val tgt = refTarget(args, tvar) ?: return@on null
+        "Effects.Destroy($tgt, noRegenerate = true)"
+    }
     on("DestroyEachPermanent", "DestroyEachPermanentNoRegen") { node, args, _ ->
         if (jsonContains(args, "_Permanents", "Ref_TargetPermanents")) {
             val noregen = if (node.strField("_Action") == "DestroyEachPermanentNoRegen") ", noRegenerate = true" else ""

@@ -329,6 +329,7 @@ class ClientStateTransformer(
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland -> !cardComp.typeLine.isLand
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> cardComp.typeLine.isCreature
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact -> cardComp.typeLine.isArtifact
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact -> !cardComp.typeLine.isArtifact
                     else -> true
                 }
             }

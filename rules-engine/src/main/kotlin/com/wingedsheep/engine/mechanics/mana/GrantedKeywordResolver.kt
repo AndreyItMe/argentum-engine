@@ -89,6 +89,7 @@ class GrantedKeywordResolver(
                 CardPredicate.IsNonlegendary -> !cardDef.typeLine.isLegendary
                 CardPredicate.IsPermanent -> cardDef.typeLine.isPermanent
                 CardPredicate.IsNonenchantment -> !cardDef.typeLine.isEnchantment
+                CardPredicate.IsNonartifact -> !cardDef.typeLine.isArtifact
                 CardPredicate.IsToken, CardPredicate.IsNontoken -> true
                 is CardPredicate.HasSubtype -> cardDef.typeLine.subtypes.any { it == predicate.subtype }
                 is CardPredicate.HasAnyOfSubtypes -> cardDef.typeLine.subtypes.any { predicate.subtypes.contains(it) }

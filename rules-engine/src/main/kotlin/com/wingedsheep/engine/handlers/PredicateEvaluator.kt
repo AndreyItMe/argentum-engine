@@ -181,6 +181,7 @@ class PredicateEvaluator {
             CardPredicate.IsNonland -> "LAND" !in types
             CardPredicate.IsNoncreature -> "CREATURE" !in types
             CardPredicate.IsNonenchantment -> "ENCHANTMENT" !in types
+            CardPredicate.IsNonartifact -> "ARTIFACT" !in types
             CardPredicate.IsToken -> container.has<TokenComponent>()
             CardPredicate.IsNontoken -> !container.has<TokenComponent>()
             CardPredicate.IsLegendary -> "LEGENDARY" in types
@@ -856,6 +857,7 @@ class PredicateEvaluator {
             CardPredicate.IsNonland -> !typeLine.isLand
             CardPredicate.IsNoncreature -> !typeLine.isCreature
             CardPredicate.IsNonenchantment -> !typeLine.isEnchantment
+            CardPredicate.IsNonartifact -> !typeLine.isArtifact
             CardPredicate.IsToken -> false // cast spells are never tokens
             CardPredicate.IsNontoken -> true
             CardPredicate.IsLegendary -> typeLine.isLegendary

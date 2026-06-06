@@ -288,7 +288,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 ### Destruction & exile
 
-- `Destroy(target)` — destroy target (respects indestructible).
+- `Destroy(target, noRegenerate?)` — destroy target (respects indestructible). `noRegenerate = true`
+  marks the target so it "can't be regenerated" (composes `CantBeRegeneratedEffect` before the move) —
+  the single-target analogue of `DestroyAll(noRegenerate = …)`, for Terror / Smother / Tunnel.
 - `RegenerateEffect(target)` (raw — no facade) — drop a regeneration shield on `target`, lasting until end
   of turn. The next time `target` would be destroyed this turn, instead tap it, remove all damage marked on
   it, and remove it from combat. Consumed by the first destruction it intercepts.
@@ -916,6 +918,11 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
 - `CardPredicate.IsColored` — one or more colors (the complement of `IsColorless`). Used for "a
   permanent that's one or more colors" (Ugin, Eye of the Storms). Pair with `IsPermanent` for the
   colored-permanent target filter; pair `IsColorless` with `IsNonland` for "colorless nonland card".
+- **Type-negation predicates** `CardPredicate.IsNonland` / `IsNoncreature` / `IsNonenchantment` /
+  `IsNonartifact` — "is not a \<type\>". Named filter constants `GameObjectFilter.Nonland` /
+  `Noncreature` / `Nonenchantment` / `Nonartifact` wrap each. `IsNonartifact` is the "nonartifact
+  creature" leg of the Terror template ("destroy target nonartifact, nonblack creature") — pair with
+  `IsCreature` + `.notColor(...)`. FQL keys: `nonland` / `noncreature` / `nonartifact`.
 
 **Chained predicates**
 
@@ -929,6 +936,8 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
 - `.withSubtype(s)` / `.withKeyword(k)` — type/ability predicate.
 - `.ofColor(c)` / `.ofColors(set)` — color predicate.
 - `.withColor(c)` / `.withAnyColor(c…)` / `.notColor(c)` — fixed-color predicates (`CardPredicate.HasColor`/`NotColor`).
+- `.nonartifact()` — appends `CardPredicate.IsNonartifact` ("nonartifact creature", the Terror template);
+  the type-negation analogue of `.notColor(c)` / `.notSubtype(s)`.
 - `.withChosenColor()` — `CardPredicate.HasChosenColor`: matches the color chosen during the current
   effect's resolution (read from `EffectContext.chosenColor`, set by `Effects.ChooseColorThen`). Use with
   `AggregateBattlefield(Player.Each, …)` for "for each permanent of that color" (Coalition Dragon cycle).

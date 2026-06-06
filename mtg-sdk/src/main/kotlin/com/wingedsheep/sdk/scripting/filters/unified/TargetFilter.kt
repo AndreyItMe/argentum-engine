@@ -225,6 +225,9 @@ data class TargetFilter(
     /** Exclude color */
     fun notColor(color: Color) = copy(baseFilter = baseFilter.notColor(color))
 
+    /** Restrict to nonartifact objects ("nonartifact creature", the Terror template). */
+    fun nonartifact() = copy(baseFilter = baseFilter.nonartifact())
+
     /** Add subtype requirement */
     fun withSubtype(subtype: Subtype) = copy(baseFilter = baseFilter.withSubtype(subtype))
 

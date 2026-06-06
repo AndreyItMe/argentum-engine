@@ -59,6 +59,7 @@ object FilterQueryLanguage {
         "permanent" to "IsPermanent",
         "nonland" to "IsNonland",
         "noncreature" to "IsNoncreature",
+        "nonartifact" to "IsNonartifact",
         "token" to "IsToken",
         "nontoken" to "IsNontoken",
         "basicland" to "IsBasicLand",

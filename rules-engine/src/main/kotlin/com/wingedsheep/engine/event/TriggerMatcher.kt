@@ -632,6 +632,7 @@ class TriggerMatcher(
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland -> !cardComponent.typeLine.isLand
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNoncreature -> !cardComponent.typeLine.isCreature
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonenchantment -> !cardComponent.typeLine.isEnchantment
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact -> !cardComponent.typeLine.isArtifact
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsLegendary -> cardComponent.typeLine.isLegendary
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonlegendary -> !cardComponent.typeLine.isLegendary
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->

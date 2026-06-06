@@ -119,24 +119,33 @@ object Autogen {
         return names to Mtgish.loadMtgishIndex(names.toSet())
     }
 
-    private data class Classified(val missing: List<String>, val cats: Map<String, MutableList<String>>, val blockTax: Counter<String>)
+    private data class Classified(
+        val missing: List<String>,
+        val cats: Map<String, MutableList<String>>,
+        val blockTax: Counter<String>,
+        val scaffoldTax: Counter<String>,
+    )
 
     private fun classifyMissing(setCode: String, effects: Set<String>, keywords: Set<String>): Classified {
         val (missing, idx) = missingWithMtgish(setCode)
         val cats = mapOf("AUTOGEN" to mutableListOf<String>(), "SCAFFOLD" to mutableListOf(), "BLOCKED" to mutableListOf(), "UNMATCHED" to mutableListOf())
         val blockTax = Counter<String>()
+        val scaffoldTax = Counter<String>()
         for (name in missing) {
             val card = idx[name]
             if (card == null) { cats["UNMATCHED"]!!.add(name); continue }
             val cat = classify(card, setCode, effects, keywords)
             cats[cat]!!.add(name)
             if (cat == "BLOCKED") for (b in Probe.analyze(card, effects, keywords).blockers) blockTax.add(b.value)
+            // SCAFFOLD cards are coverable but the emitter declined: the reasons are the emitter-handler
+            // gaps that, once closed, would promote the card to AUTOGEN.
+            if (cat == "SCAFFOLD") for (r in render(card, setCode, effects, keywords, genPackage(setCode)).reasons) scaffoldTax.add(r)
         }
-        return Classified(missing, cats, blockTax)
+        return Classified(missing, cats, blockTax, scaffoldTax)
     }
 
     private fun modeGaps(setCode: String, effects: Set<String>, keywords: Set<String>, listCat: String?): Int {
-        val (missing, cats, blockTax) = classifyMissing(setCode, effects, keywords)
+        val (missing, cats, blockTax, scaffoldTax) = classifyMissing(setCode, effects, keywords)
         val n = missing.size
         println("== ${setCode.uppercase()} auto-generation gap — $n unimplemented cards ==\n")
         println("  AUTOGEN   ${cats["AUTOGEN"]!!.size.toString().padStart(4)}   emitter renders a whole compiling card now")
@@ -144,6 +153,10 @@ object Autogen {
         println("  BLOCKED   ${cats["BLOCKED"]!!.size.toString().padStart(4)}   capability gap (needs mapping or engine work)")
         if (cats["UNMATCHED"]!!.isNotEmpty()) println("  (unmatched in mtgish: ${cats["UNMATCHED"]!!.size} — name join / Un-set / too new)")
         println("\n  -> `just coverage-generate --set ${setCode.uppercase()}` drafts the ${cats["AUTOGEN"]!!.size} AUTOGEN cards into a staging dir.")
+        if (!scaffoldTax.isEmpty) {
+            println("\nSCAFFOLD leaderboard — emitter gap ranked by # coverable cards it would promote to AUTOGEN:")
+            for ((reason, c) in scaffoldTax.mostCommon(15)) println("  x${c.toString().padEnd(4)} $reason")
+        }
         if (!blockTax.isEmpty) {
             println("\nBLOCKED leaderboard — capability ranked by # cards it would unlock:")
             for ((cap, c) in blockTax.mostCommon(15)) println("  x${c.toString().padEnd(4)} $cap")

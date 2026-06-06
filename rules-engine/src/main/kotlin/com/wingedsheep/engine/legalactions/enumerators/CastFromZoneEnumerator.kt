@@ -629,6 +629,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         is CardPredicate.IsNonland -> !exiledCard.typeLine.isLand
                         is CardPredicate.IsCreature -> exiledCard.typeLine.isCreature
                         is CardPredicate.IsArtifact -> exiledCard.typeLine.isArtifact
+                        is CardPredicate.IsNonartifact -> !exiledCard.typeLine.isArtifact
                         else -> true
                     }
                 }
