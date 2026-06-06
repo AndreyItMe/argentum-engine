@@ -1,8 +1,12 @@
 package com.wingedsheep.tooling.coverage.emitter
 
+import com.wingedsheep.tooling.coverage.Dsl
+import com.wingedsheep.tooling.coverage.Lit
+import com.wingedsheep.tooling.coverage.arg
 import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.asInt
 import com.wingedsheep.tooling.coverage.asStr
+import com.wingedsheep.tooling.coverage.call
 import com.wingedsheep.tooling.coverage.compact
 import com.wingedsheep.tooling.coverage.findInteger
 import com.wingedsheep.tooling.coverage.findRef
@@ -10,6 +14,7 @@ import com.wingedsheep.tooling.coverage.findRefIn
 import com.wingedsheep.tooling.coverage.firstArgWordTagged
 import com.wingedsheep.tooling.coverage.jsonContains
 import com.wingedsheep.tooling.coverage.pascalToUpperSnake
+import com.wingedsheep.tooling.coverage.render
 import com.wingedsheep.tooling.coverage.strField
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -88,10 +93,13 @@ internal fun composite(parts: List<String>): String =
 // ---------------------------------------------------------------------------
 
 /** A DSL amount for a plain int / X, or null (-> SCAFFOLD, never a broken emit). */
-internal fun EmitCtx.amount(node: JsonElement?): String? {
+internal fun EmitCtx.amount(node: JsonElement?): String? = amountExpr(node)?.let(::render)
+
+/** The [Dsl] node behind [amount] — a bare int literal or `DynamicAmount.XValue`. */
+internal fun EmitCtx.amountExpr(node: JsonElement?): Dsl? {
     val n = findInteger(node) ?: return null
-    if (n == "X") return "DynamicAmount.XValue"
-    return n.toString()
+    if (n == "X") return Lit("DynamicAmount.XValue")
+    return Lit(n.toString())
 }
 
 /** A "draw/discard N cards" count read from the amount's TOP-LEVEL `_GameNumber` only: a fixed Integer
@@ -119,29 +127,37 @@ internal fun gainForEachAmount(args: JsonElement?): JsonElement? {
 }
 
 /** A DynamicAmount DSL for a dynamic mtgish _GameNumber, or null if unrecognised. */
-internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? {
+internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? = dynamicAmountExpr(node)?.let(::render)
+
+/** The [Dsl] node behind [dynamicAmount]. Filters it embeds are still carried as [Lit] text (they are
+ *  migrated in the filter layer); the structure around them is typed. */
+internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
     if (node !is JsonObject) return null
     val gn = node.strField("_GameNumber")
     when (gn) {
-        "Integer" -> return "DynamicAmount.Fixed(${node["args"].asInt()})"
-        "XValue", "X", "ValueX" -> return "DynamicAmount.XValue"
+        "Integer" -> return call("DynamicAmount.Fixed", arg("${node["args"].asInt()}"))
+        "XValue", "X", "ValueX" -> return Lit("DynamicAmount.XValue")
         // "that much" in a damage trigger — the amount of damage the trigger fired on (Doubtless One's
         // "gain that much life", Thrashing Mudspawn's "lose that much life").
-        "Trigger_AmountOfDamageDealt" -> return "DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT)"
-        "PowerOfTheSacrificedCreature" -> return "DynamicAmounts.sacrificedPower()"
+        "Trigger_AmountOfDamageDealt" ->
+            return call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT"))
+        "PowerOfTheSacrificedCreature" -> return call("DynamicAmounts.sacrificedPower")
         "LifeTotalOfPlayer" -> {
             val player = if (jsonContains(node, "_Player", "Opponent")) "Player.Opponent" else "Player.You"
-            return "DynamicAmount.LifeTotal($player)"
+            return call("DynamicAmount.LifeTotal", arg(player))
         }
         "HalfRoundedUp", "HalfRoundedDown" -> {
-            val inner = dynamicAmount(node["args"]) ?: return null
+            val inner = dynamicAmountExpr(node["args"]) ?: return null
             val roundup = if (gn == "HalfRoundedUp") "true" else "false"
-            return "DynamicAmount.Divide($inner, DynamicAmount.Fixed(2), roundUp = $roundup)"
+            return call(
+                "DynamicAmount.Divide",
+                arg(inner), arg(call("DynamicAmount.Fixed", arg("2"))), arg("roundUp", roundup),
+            )
         }
     }
     if (gn == "TheNumberOfCardsOfTypeRevealedFromHandThisWay") {
         val filter = revealedHandFilterDsl(node["args"]) ?: return null
-        return "DynamicAmount.Count(Player.TargetOpponent, Zone.HAND, $filter)"
+        return call("DynamicAmount.Count", arg("Player.TargetOpponent"), arg("Zone.HAND"), arg(Lit(filter)))
     }
     if (gn == "Multiply" && node["args"].asArr?.size == 2) {
         val arr = node["args"].asArr!!
@@ -149,9 +165,9 @@ internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? {
         val intA = findInteger(a)
         val mult = if (intA is Int) intA else findInteger(b)
         val cnt = if (findInteger(a) == mult) b else a
-        val inner = dynamicAmount(cnt)
+        val inner = dynamicAmountExpr(cnt)
         if (inner != null && mult is Int) {
-            return if (mult == 1) inner else "DynamicAmount.Multiply($inner, $mult)"
+            return if (mult == 1) inner else call("DynamicAmount.Multiply", arg(inner), arg("$mult"))
         }
         return null
     }
@@ -175,7 +191,7 @@ internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? {
         // search filter misses; otherwise fall back to the land/type search filter.
         val subtype = node.firstArgWordTagged("IsCreatureType")
         val filter = if (subtype != null) "GameObjectFilter.Creature.withSubtype(\"$subtype\")" else landSearchFilterDsl(node)
-        return "DynamicAmount.AggregateBattlefield($player, $filter)"
+        return call("DynamicAmount.AggregateBattlefield", arg(player), arg(Lit(filter)))
     }
     return null
 }
