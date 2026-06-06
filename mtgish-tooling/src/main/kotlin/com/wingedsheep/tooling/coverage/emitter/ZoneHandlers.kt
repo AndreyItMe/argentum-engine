@@ -43,6 +43,10 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         "Effects.Move($tgt, Zone.HAND)"
     }
 
+    on("SacrificePermanent") { _, args, _ ->  // "sacrifice ~" (Blistering Firecat's end-step sacrifice)
+        if (jsonContains(args, "_Permanent", "ThisPermanent")) "SacrificeSelfEffect" else null
+    }
+
     on("ShuffleGraveyardCardIntoLibrary") { _, args, tvar ->  // e.g. Alabaster Dragon
         val tgt = refTarget(args, tvar) ?: "EffectTarget.Self"
         "Effects.Move($tgt, Zone.LIBRARY, ZonePlacement.Shuffled)"

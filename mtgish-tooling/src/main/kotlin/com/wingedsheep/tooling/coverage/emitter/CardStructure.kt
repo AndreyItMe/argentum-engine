@@ -171,19 +171,68 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject, oncePerTurn: Boolean = false
 }
 
 /** The triggered-ability trigger spec for a TriggerA / TriggerOnceEachTurn rule, or null (-> SCAFFOLD)
- *  for a trigger shape we can't render exactly. */
+ *  for a trigger shape we can't render exactly. The first arg of a TriggerA rule is the `_Trigger`
+ *  node; scoping checks to it (not the whole rule) keeps an action's `You`/`ThisPermanent` markers from
+ *  being mistaken for trigger scopes. */
 private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
+    val trig = rule["args"].asArr?.firstOrNull() as? JsonObject ?: return null
+
+    // SELF self-triggers (this permanent enters / dies / attacks / deals combat damage to a player).
     for ((mtTrigger, dsl) in TRIGGER_SPEC) {
-        if (jsonContains(rule, "_Trigger", mtTrigger) && jsonContains(rule, "_Permanent", "ThisPermanent")) return dsl
+        if (jsonContains(trig, "_Trigger", mtTrigger) && jsonContains(trig, "_Permanent", "ThisPermanent")) return dsl
     }
-    // "Whenever you cast a historic spell" — WhenAPlayerCastsASpell scoped to {You, IsHistoric}.
-    // Require all three so only the you-cast-historic shape maps (an opponent/any-player or a
-    // non-historic spell filter is a different trigger and must scaffold).
-    if (jsonContains(rule, "_Trigger", "WhenAPlayerCastsASpell") &&
-        jsonContains(rule, "_Player", "You") && jsonContains(rule, "_Spells", "IsHistoric")) {
-        return "Triggers.YouCastHistoric"
+
+    // "Whenever ~ deals damage" / "Whenever ~ is dealt damage" (SELF) — paired with a "that much"
+    // gain/lose-life or token effect.
+    if (jsonContains(trig, "_Trigger", "WhenAPermanentDealsDamage") && jsonContains(trig, "_Permanent", "ThisPermanent"))
+        return "Triggers.DealsDamage"
+    if (jsonContains(trig, "_Trigger", "WhenAPermanentIsDealtDamage") && jsonContains(trig, "_Permanent", "ThisPermanent"))
+        return "Triggers.TakesDamage"
+
+    // Phase/step triggers. "your upkeep" is scoped to You; "each end step" to any player.
+    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersUpkeep") && jsonContains(trig, "_Player", "You"))
+        return "Triggers.YourUpkeep"
+    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersEndStep") && jsonContains(trig, "_Players", "AnyPlayer"))
+        return "Triggers.EachEndStep"
+
+    // "Whenever a player cycles a card" (any player) — Fleeting Aven, Invigorating Boon.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerCyclesACard") && jsonContains(trig, "_Players", "AnyPlayer"))
+        return "Triggers.AnyPlayerCycles"
+
+    // "Whenever a creature attacks" — only the unrestricted any-creature shape (no subtype / controller /
+    // count clause), which maps to a filterless ANY-binding attacks trigger (Righteous Cause).
+    if (jsonContains(trig, "_Trigger", "WhenACreatureAttacks") && isPlainCreatureFilter(trig))
+        return "Triggers.attacks(binding = TriggerBinding.ANY)"
+
+    // "Whenever a [filtered] permanent enters the battlefield" (not this permanent) — a typed/coloured
+    // enters trigger, ANY binding (Wirewood Savage's "Whenever a Beast enters").
+    if (jsonContains(trig, "_Trigger", "WhenAPermanentEntersTheBattlefield") &&
+        !jsonContains(trig, "_Permanent", "ThisPermanent")) {
+        val filter = gameObjectFilterDsl(trig) ?: return null
+        return "Triggers.entersBattlefield(filter = $filter, binding = TriggerBinding.ANY)"
+    }
+
+    // "Whenever you cast a [type] spell" — WhenAPlayerCastsASpell scoped to You + a spell-type filter.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerCastsASpell") && jsonContains(trig, "_Player", "You")) {
+        if (jsonContains(trig, "_Spells", "IsHistoric")) return "Triggers.YouCastHistoric"
+        val types = Regex(""""IsCardtype",\s*"args":\s*"(\w+)"""").findAll(compact(trig)).map { it.groupValues[1] }.toSet()
+        return when (types) {
+            setOf("Creature") -> "Triggers.YouCastCreature"
+            setOf("Enchantment") -> "Triggers.YouCastEnchantment"
+            setOf("Instant", "Sorcery") -> "Triggers.YouCastInstantOrSorcery"
+            else -> null
+        }
     }
     return null
+}
+
+/** True when a trigger's permanent filter is a plain "creature" with no subtype / controller / count
+ *  restriction — the only attacks shape we can render as a filterless ANY-binding trigger. */
+private fun isPlainCreatureFilter(trig: JsonObject): Boolean {
+    val blob = compact(trig)
+    if (""""IsCardtype",\s*"args":\s*"Creature"""".toRegex().containsMatchIn(blob).not()) return false
+    return "IsCreatureType" !in blob && "ControlledByAPlayer" !in blob &&
+        "\"Other\"" !in blob && "_Comparison" !in blob && "_Color" !in blob
 }
 
 /**

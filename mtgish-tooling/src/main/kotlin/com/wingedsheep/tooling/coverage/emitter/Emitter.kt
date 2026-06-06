@@ -46,7 +46,10 @@ object Emitter {
         // engine still derives behaviour from the structured keywords/effects below, never from this string.
         scryfall?.strField("oracle_text")?.takeIf { it.isNotEmpty() }?.let { body.add("    oracleText = \"${ktStr(it)}\"") }
         if (pt != null) { body.add("    power = ${pt["Power"].asInt()}"); body.add("    toughness = ${pt["Toughness"].asInt()}") }
-        if (kw.isNotEmpty()) body.add("    keywords(${kw.sorted().joinToString(", ") { "Keyword.$it" }})")
+        // Emit keywords in printed (rule) order, not alphabetical — `keywordLines` collects them in the
+        // card's rule order, which matches the hand-authored golden's `keywords(...)` order (e.g.
+        // "Trample, haste" stays TRAMPLE, HASTE rather than re-sorting to HASTE, TRAMPLE).
+        if (kw.isNotEmpty()) body.add("    keywords(${kw.joinToString(", ") { "Keyword.$it" }})")
         val cardLevelLines = ctx.cardLevelCastEffectLines(card) ?: return incomplete(ctx, body, scryfall, pkg)
         body.addAll(cardLevelLines)
 

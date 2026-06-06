@@ -122,6 +122,9 @@ internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? {
     when (gn) {
         "Integer" -> return "DynamicAmount.Fixed(${node["args"].asInt()})"
         "XValue", "X", "ValueX" -> return "DynamicAmount.XValue"
+        // "that much" in a damage trigger — the amount of damage the trigger fired on (Doubtless One's
+        // "gain that much life", Thrashing Mudspawn's "lose that much life").
+        "Trigger_AmountOfDamageDealt" -> return "DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT)"
         "PowerOfTheSacrificedCreature" -> return "DynamicAmounts.sacrificedPower()"
         "LifeTotalOfPlayer" -> {
             val player = if (jsonContains(node, "_Player", "Opponent")) "Player.Opponent" else "Player.You"

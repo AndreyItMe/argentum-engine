@@ -64,7 +64,9 @@ internal val damageDrawLifeHandlers: Map<String, ActionHandler> = actionHandlers
     simple("DiscardACardAtRandom", dsl = "Patterns.Hand.discardRandom(1)")
 
     on("GainLife") { _, args, _ ->
-        val amt = amount(args) ?: return@on null
+        // A fixed Integer renders `GainLifeEffect(1)`; a recognised dynamic amount (e.g. a damage
+        // trigger's "gain that much life") renders `GainLifeEffect(DynamicAmount…)`.
+        val amt = amount(args) ?: dynamicAmount(amountNode(args)) ?: return@on null
         "GainLifeEffect($amt)"
     }
     on("LoseLife") { _, args, _ ->
