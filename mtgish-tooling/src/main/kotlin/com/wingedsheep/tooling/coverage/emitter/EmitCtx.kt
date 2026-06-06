@@ -137,6 +137,11 @@ internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? {
         }
         return null
     }
+    // "...ThisWay" game-numbers count objects this resolution touched (e.g. Volcanic Eruption's
+    // "number of Mountains put into a graveyard this way"), not a current battlefield aggregate — a
+    // resolution-scoped count the AggregateBattlefield heuristic below can't express. Scaffold rather
+    // than misrender it as a battlefield tally. (Recognised "...ThisWay" shapes are handled above.)
+    if (gn != null && "ThisWay" in gn) return null
     if ((gn != null && "NumberOf" in gn) || gn == "TheNumberOfPermanentsOnTheBattlefield") {
         val oracle = oracleText?.lowercase() ?: ""
         if (" hand" in oracle || " in it" in oracle) return null
