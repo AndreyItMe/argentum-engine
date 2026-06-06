@@ -5523,6 +5523,89 @@
     ]
 }
 
+// Glóin, Dwarf Emissary
+{
+    "name": "Glóin, Dwarf Emissary",
+    "manaCost": "{2}{R}",
+    "typeLine": "Legendary Creature — Dwarf Advisor",
+    "oracleText": "Whenever you cast a historic spell, create a Treasure token. This ability triggers only once each turn. (Artifacts, legendaries, and Sagas are historic.)\n{T}, Sacrifice a Treasure: Goad target creature. (Until your next turn, that creature attacks each combat if able and attacks a player other than you if able.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsArtifact",
+                                    "IsLegendary",
+                                    {
+                                        "type": "HasSubtype",
+                                        "subtype": "Saga"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                },
+                "oncePerTurn": true
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        "CostTap",
+                        {
+                            "type": "CostSacrifice",
+                            "filter": "artifact Treasure"
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "Goad",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "target creature"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "132",
+        "rarity": "RARE",
+        "artist": "Tomas Duchek",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/6/868a2aa7-bcaf-409b-8802-d00ee1f2ae77.jpg?1686968993"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Goblin Assailant
 {
     "name": "Goblin Assailant",

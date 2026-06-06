@@ -518,7 +518,8 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `Effects.Goad(target = ContextTarget(0))` (`GoadEffect`) — goad target creature (CR 701.15).
   Tags the creature with `GoadedComponent(goaderIds: Set<EntityId>)`; the effect's controller at
   resolution is recorded as the goader. While goaded the creature (a) must attack each combat if able
-  and (b) can't attack any player in `goaderIds` if a non-goader defender is available — both checks
+  and (b) can't attack any player in `goaderIds` if a non-goader player is available to attack (per
+  CR 701.15b the alternative is a *player*, not a planeswalker) — both checks
   live inline in `AttackPhaseManager.declareAttackers` alongside the must-attack-this-turn pass. The
   goader set deduplicates, so the same player re-goading is a no-op (CR 701.15d); multiple distinct
   goaders stack (CR 701.15c). After the untap step of each player's turn,

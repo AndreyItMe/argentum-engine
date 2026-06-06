@@ -502,15 +502,17 @@ internal class AttackPhaseManager(
      *      valid attacker that carries [GoadedComponent] to appear in [attackers]
      *      — same shape as the must-attack-this-turn check, just keyed off the
      *      component instead.
-     *   2. It attacks a player other than each of its goaders if able. CR 701.15c
-     *      stacks this per goader, so the "permitted defender" set is the set of
-     *      defenders whose controlling player is NOT in `goaderIds`. The
-     *      requirement is "if able": if every legal defender for the creature is
-     *      controlled by a goader, the creature is allowed to attack one of them
-     *      (and must, per requirement 1).
+     *   2. It attacks a player other than each of its goaders if able. CR 701.15b
+     *      phrases this requirement in terms of a *player* — not a planeswalker — so
+     *      the "if able" lookup considers only opponent players, not their
+     *      planeswalkers. CR 701.15c stacks the requirement per goader. If every
+     *      opponent player the creature could legally attack is a goader, the
+     *      requirement is unsatisfiable, so the creature may attack a goader (and
+     *      must attack something, per requirement 1).
      *
-     * The defender controller resolves to the player itself if the defender is a
-     * player, and to the projected controller otherwise (planeswalkers).
+     * The chosen defender may itself be a planeswalker; [defenderControllerOf] maps
+     * it to its controller so attacking a goader's planeswalker is still caught as
+     * "attacking the goader" when an unaffected player was available.
      */
     private fun validateGoadedRequirements(
         state: GameState,
@@ -521,14 +523,6 @@ internal class AttackPhaseManager(
     ): String? {
         val validAttackers = getValidAttackers(state, attackingPlayer)
 
-        // Build the legal-defender pool once. A goaded creature's "if able" lookup
-        // for permitted defenders considers any opponent player + any planeswalker
-        // controlled by an opponent that is on the battlefield.
-        val planeswalkerDefenders = state.getBattlefield().filter { entityId ->
-            projected.isPlaneswalker(entityId) && projected.getController(entityId) in opponents
-        }
-        val allDefenderIds = opponents + planeswalkerDefenders
-
         for (attackerId in validAttackers) {
             val goaded = state.getEntity(attackerId)?.get<GoadedComponent>() ?: continue
             val cardName = state.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
@@ -537,20 +531,18 @@ internal class AttackPhaseManager(
                 return "$cardName is goaded and must attack this combat if able"
             }
 
-            // Determine which defenders this creature could legally attack right now,
-            // honoring per-defender restrictions (a goader-controlled planeswalker the
-            // creature is otherwise prevented from attacking doesn't count as a legal
-            // "non-goader" alternative either way).
+            // Is there a non-goader *player* this creature could legally attack right
+            // now (honoring per-defender restrictions)? Per CR 701.15b the "attack a
+            // player other than the goader" requirement only ever points at players,
+            // so planeswalkers are not part of this alternative pool.
             val ctx = com.wingedsheep.engine.mechanics.combat.rules.AttackCheckContext(
                 state, projected, attackerId, attackingPlayer, cardRegistry
             )
-            val legalDefenderIds = allDefenderIds.filter { defenderId ->
-                attackDefenderRules.all { rule -> rule.check(ctx, defenderId) == null }
+            val hasNonGoaderPlayer = opponents.any { playerId ->
+                playerId !in goaded.goaderIds &&
+                    attackDefenderRules.all { rule -> rule.check(ctx, playerId) == null }
             }
-            val hasNonGoaderDefender = legalDefenderIds.any { defenderId ->
-                defenderControllerOf(state, projected, defenderId) !in goaded.goaderIds
-            }
-            if (!hasNonGoaderDefender) continue
+            if (!hasNonGoaderPlayer) continue
 
             val chosenDefenderId = attackers[attackerId] ?: continue
             val chosenDefenderController = defenderControllerOf(state, projected, chosenDefenderId)
