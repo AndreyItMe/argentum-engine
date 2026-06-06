@@ -8,6 +8,7 @@ import com.wingedsheep.tooling.coverage.jsonContains
 import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 /** Tap/untap, continuous P/T & keyword grants (CreatePermanentLayerEffectUntil), and turn-state
@@ -47,15 +48,23 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
 }
 
 /** CreatePermanentLayerEffectUntil / its each-permanent form -> ModifyStats / GrantKeyword,
- *  optionally over a group (ForEachInGroup). */
+ *  optionally over a group (ForEachInGroup). The `_Expiration` is honoured exactly: end-of-turn uses
+ *  the default-duration facade; "for as long as it remains tapped" carries an explicit
+ *  Duration.WhileSourceTapped(); any other expiration scaffolds rather than emit a wrong duration. */
 internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: String?): String? {
     val mass = action == "CreateEachPermanentLayerEffectUntil"
     val target = if (mass) "EffectTarget.Self" else refTarget(node["args"], tvar)
     if (target == null) return null
+    val duration = expirationDsl(node) ?: return null  // unknown expiration -> SCAFFOLD
+    val durArg = if (duration.isEmpty()) "" else ", $duration"
     val inner = mutableListOf<String>()
     val pt = findAdjustPt(node)
     if (pt is JsonArray && pt.size == 2) {
-        inner.add("Effects.ModifyStats(${pt[0].asInt()}, ${pt[1].asInt()}, $target)")
+        // ModifyStats' facade carries no duration param, so a non-default duration uses the raw effect.
+        inner.add(
+            if (duration.isEmpty()) "Effects.ModifyStats(${pt[0].asInt()}, ${pt[1].asInt()}, $target)"
+            else "ModifyStatsEffect(${pt[0].asInt()}, ${pt[1].asInt()}, $target, $duration)"
+        )
     }
     if (jsonContains(node, "_LayerEffect", "AddAbility")) {
         var kw: String? = null
@@ -65,7 +74,7 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
         }
         kw = kw ?: keywordOf(node)
         if (kw != null) {
-            inner.add("Effects.GrantKeyword(Keyword.$kw, $target)")
+            inner.add("Effects.GrantKeyword(Keyword.$kw, $target$durArg)")
         } else return null
     }
     if (inner.isEmpty()) return null
@@ -76,4 +85,27 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
         return "Effects.ForEachInGroup($filter, $effect)"
     }
     return effect
+}
+
+/** The layer effect's `_Expiration` -> "" for the default (end-of-turn) facade, an explicit
+ *  `Duration.*` DSL for a recognised non-default duration, or null (-> SCAFFOLD) for one we can't
+ *  render exactly (so the emitter never silently substitutes the wrong duration). */
+private fun expirationDsl(node: JsonObject): String? =
+    when (firstExpiration(node)) {
+        null, "UntilEndOfTurn" -> ""
+        "ForAsLongAsPermanentRemainsTapped" -> "Duration.WhileSourceTapped()"
+        else -> null
+    }
+
+/** The first `_Expiration` discriminator value anywhere in the subtree. */
+private fun firstExpiration(node: JsonElement?): String? {
+    when (node) {
+        is JsonObject -> {
+            node.strField("_Expiration")?.let { return it }
+            node.values.forEach { firstExpiration(it)?.let { v -> return v } }
+        }
+        is JsonArray -> node.forEach { firstExpiration(it)?.let { v -> return v } }
+        else -> {}
+    }
+    return null
 }

@@ -28,6 +28,9 @@ internal fun EmitCtx.staticBlock(rule: JsonObject): List<String>? {
         if (name == "CantBeBlocked") {
             lines.add("    flags(AbilityFlag.CANT_BE_BLOCKED)"); continue
         }
+        if (name == "MayChooseNotToUntapDuringUntap") {
+            lines.add("    flags(AbilityFlag.MAY_NOT_UNTAP)"); continue
+        }
         val dsl = staticAbilityDsl(name, r) ?: run { reasons.add(name); return null }
         lines.addAll(listOf("    staticAbility {", "        ability = $dsl", "    }"))
     }
