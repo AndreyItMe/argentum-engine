@@ -14,6 +14,41 @@ import kotlinx.serialization.json.JsonObject
  * the Argentum target/filter DSL. A filter we can't faithfully render returns null → the card drops
  * to SCAFFOLD rather than emitting a confidently-wrong target.
  */
+
+/**
+ * Single source of truth for the filter-predicate suffixes recovered from the mtgish filter IR. The
+ * TargetFilter renderer ([creatureFilterDsl]) and the GameObjectFilter renderer ([gameObjectFilterDsl])
+ * read the SAME predicate vocabulary onto two parallel fluent surfaces; defining each predicate's
+ * regex/condition→DSL fragment ONCE here keeps them from drifting (the regexes were duplicated, and a
+ * fix in one renderer had to be mirrored by hand). Each caller still composes these in its own order —
+ * the two surfaces are not identical (TargetFilter has no multi-color form, and the renderers append in
+ * different orders) — but the per-predicate recovery now lives in one place.
+ */
+internal object FilterPredicates {
+    // mtgish encodes power bounds as `PowerIs <op> Integer`; `compact()` emits no whitespace, but the
+    // permissive `,\s*`/`:\s*` matches both spaced and compact encodings identically.
+    private val POWER_AT_LEAST = Regex(""""PowerIs".*?"GreaterThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""")
+    private val POWER_AT_MOST = Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""")
+
+    /** `.powerAtLeast(N)` for a `PowerIs >= N` clause, else null. */
+    fun powerAtLeast(blob: String): String? = POWER_AT_LEAST.find(blob)?.let { ".powerAtLeast(${it.groupValues[1]})" }
+
+    /** `.powerAtMost(N)` for a `PowerIs <= N` clause, else null. */
+    fun powerAtMost(blob: String): String? = POWER_AT_MOST.find(blob)?.let { ".powerAtMost(${it.groupValues[1]})" }
+
+    fun tapped(blob: String): String? = if ("IsTapped" in blob) ".tapped()" else null
+    fun untapped(blob: String): String? = if ("IsUntapped" in blob) ".untapped()" else null
+    fun attacking(blob: String): String? = if ("IsAttacking" in blob) ".attacking()" else null
+
+    /** `.withoutKeyword(Keyword.FLYING)` for a `DoesntHaveAbility Flying` clause, else null. */
+    fun withoutFlying(filterNode: JsonElement?, blob: String): String? =
+        if (jsonContains(filterNode, "_Permanents", "DoesntHaveAbility") && "\"Flying\"" in blob)
+            ".withoutKeyword(Keyword.FLYING)" else null
+
+    /** `.withKeyword(Keyword.FLYING)` for a plain `Flying` clause, else null. */
+    fun withFlying(blob: String): String? = if ("\"Flying\"" in blob) ".withKeyword(Keyword.FLYING)" else null
+}
+
 internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? {
     val blob = compact(filterNode)
     // "nonartifact creature" (the Terror template) renders via .nonartifact(); any OTHER non-cardtype
@@ -51,23 +86,19 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? {
     }
     var suffix = ""
     if ("Artifact" in nonCardtypes) suffix += ".nonartifact()"
+    // Color stays inline: TargetFilter has no multi-color form, so the creature target uses the
+    // IsColor/IsNonColor-scoped single-color recovery rather than gameObjectFilterDsl's collect-all.
     Regex(""""IsNonColor".*?"_Color":\s*"(\w+)"""").find(blob)?.let {
         suffix += ".notColor(Color.${it.groupValues[1].uppercase()})"
     }
     Regex(""""IsColor".*?"_Color":\s*"(\w+)"""").find(blob)?.let {
         suffix += ".withColor(Color.${it.groupValues[1].uppercase()})"
     }
-    if (jsonContains(filterNode, "_Permanents", "DoesntHaveAbility") && "\"Flying\"" in blob) {
-        suffix += ".withoutKeyword(Keyword.FLYING)"
-    }
-    if ("IsTapped" in blob) suffix += ".tapped()"
-    if ("IsAttacking" in blob) suffix += ".attacking()"
-    Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""").find(blob)?.let {
-        suffix += ".powerAtMost(${it.groupValues[1]})"
-    }
-    Regex(""""PowerIs".*?"GreaterThanOrEqualTo".*?"Integer",\s*"args":\s*(\d+)""").find(blob)?.let {
-        suffix += ".powerAtLeast(${it.groupValues[1]})"
-    }
+    FilterPredicates.withoutFlying(filterNode, blob)?.let { suffix += it }
+    FilterPredicates.tapped(blob)?.let { suffix += it }
+    FilterPredicates.attacking(blob)?.let { suffix += it }
+    FilterPredicates.powerAtMost(blob)?.let { suffix += it }
+    FilterPredicates.powerAtLeast(blob)?.let { suffix += it }
     return "TargetFilter.Creature$suffix$controller"
 }
 
@@ -219,20 +250,12 @@ internal fun EmitCtx.gameObjectFilterDsl(filterNode: JsonElement?): String? {
     } else if (colors.size == 1) {
         filtered += if ("IsNonColor" in blob) ".notColor(Color.${colors[0]})" else ".withColor(Color.${colors[0]})"
     }
-    if (jsonContains(filterNode, "_Permanents", "DoesntHaveAbility") && "\"Flying\"" in blob) {
-        filtered += ".withoutKeyword(Keyword.FLYING)"
-    } else if ("\"Flying\"" in blob) {
-        filtered += ".withKeyword(Keyword.FLYING)"
-    }
-    Regex(""""PowerIs".*?"GreaterThanOrEqualTo".*?"Integer","args":(\d+)""").find(blob)?.let {
-        filtered += ".powerAtLeast(${it.groupValues[1]})"
-    }
-    Regex(""""PowerIs".*?"LessThanOrEqualTo".*?"Integer","args":(\d+)""").find(blob)?.let {
-        filtered += ".powerAtMost(${it.groupValues[1]})"
-    }
-    if ("IsTapped" in blob) filtered += ".tapped()"
-    if ("IsUntapped" in blob) filtered += ".untapped()"
-    if ("IsAttacking" in blob) filtered += ".attacking()"
+    filtered += FilterPredicates.withoutFlying(filterNode, blob) ?: FilterPredicates.withFlying(blob) ?: ""
+    FilterPredicates.powerAtLeast(blob)?.let { filtered += it }
+    FilterPredicates.powerAtMost(blob)?.let { filtered += it }
+    FilterPredicates.tapped(blob)?.let { filtered += it }
+    FilterPredicates.untapped(blob)?.let { filtered += it }
+    FilterPredicates.attacking(blob)?.let { filtered += it }
     if ("\"You\"" in blob) filtered += ".youControl()"
     if ("\"Opponent\"" in blob) filtered += ".opponentControls()"
     return filtered

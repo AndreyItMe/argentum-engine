@@ -1,7 +1,6 @@
 package com.wingedsheep.tooling.coverage
 
 import com.wingedsheep.tooling.coverage.bridge.Bridge
-import com.wingedsheep.tooling.coverage.bridge.MappingEntry
 import com.wingedsheep.tooling.coverage.emitter.Emitter
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -70,22 +69,19 @@ object Fidelity {
         return types.filter { it in effects && it !in PLUMBING }.toSet() to keywords
     }
 
-    // Generated side (prediction): what the mtgish->mapping bridge names in Argentum tags.
+    // Generated side (prediction): what the mtgish->mapping bridge names in Argentum tags. Each tag is
+    // resolved through the shared Bridge.resolve so this can't drift from the coverage probe; PLUMBING is
+    // stripped here (the fidelity-scoring filter applied symmetrically to truthCaps).
     private fun genCaps(mtgishCard: JsonObject, effects: Set<String>, keywords: Set<String>): Pair<Set<String>, Set<String>> {
         val tags = Counter<Pair<String, String>>()
         Mtgish.extractTags(mtgishCard["Rules"], tags)
         val eff = mutableSetOf<String>(); val kw = mutableSetOf<String>()
         Emitter.findLandwalkKeywords(mtgishCard["Rules"], keywords, kw)
         for ((disc, value) in tags.keys) {
-            val entry = Bridge.entry(disc, value)
-            if (entry == null) {
-                val auto = pascalToUpperSnake(value)
-                if (auto in keywords) kw.add(auto)
-                continue
-            }
-            if (entry is MappingEntry.Effect && entry.tag in effects) eff.add(entry.tag)
-            else if (entry is MappingEntry.Keyword && entry.tag in keywords) kw.add(entry.tag)
-            entry.composes.forEach { if (it in effects && it !in PLUMBING) eff.add(it) }
+            val r = Bridge.resolve(disc, value, effects, keywords)
+            r.effectTag?.let { eff.add(it) }
+            r.composedEffects.forEach { if (it !in PLUMBING) eff.add(it) }
+            r.keyword?.let { kw.add(it) }
         }
         return eff to kw
     }

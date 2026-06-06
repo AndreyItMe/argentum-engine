@@ -1,7 +1,6 @@
 package com.wingedsheep.tooling.coverage
 
 import com.wingedsheep.tooling.coverage.bridge.Bridge
-import com.wingedsheep.tooling.coverage.bridge.MappingEntry
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import java.util.Locale
@@ -22,32 +21,9 @@ object Probe {
         val reqs = mutableListOf<Req>()
         val blockers = mutableListOf<Blocker>()
         for ((disc, value) in tags.keys) {
-            val entry = Bridge.entry(disc, value)
-            if (entry == null) {
-                // Principled fallback: a tag that IS a Keyword enum member is covered (registry-validated,
-                // so envelopes like Activated / SpellActions stay correctly unmapped).
-                val kw = pascalToUpperSnake(value)
-                if (kw in keywords) {
-                    reqs.add(Req(disc, value, "ok", "$kw (keyword auto)"))
-                    continue
-                }
-                reqs.add(Req(disc, value, "UNMAPPED", ""))
-                blockers.add(Blocker(disc, value, "UNMAPPED"))
-                continue
-            }
-            when (entry) {
-                is MappingEntry.Effect -> {
-                    val ok = entry.tag in effects
-                    reqs.add(Req(disc, value, if (ok) "ok" else "MISSING", entry.tag))
-                    if (!ok) blockers.add(Blocker(disc, value, "MISSING"))
-                }
-                is MappingEntry.Keyword -> {
-                    val ok = entry.tag in keywords
-                    reqs.add(Req(disc, value, if (ok) "ok" else "MISSING", entry.tag))
-                    if (!ok) blockers.add(Blocker(disc, value, "MISSING"))
-                }
-                else -> reqs.add(Req(disc, value, entry.kind, entry.note ?: ""))
-            }
+            val r = Bridge.resolve(disc, value, effects, keywords)
+            reqs.add(Req(r.disc, r.value, r.status, r.detail))
+            if (r.blocking) blockers.add(Blocker(r.disc, r.value, r.status))
         }
         return Analysis(blockers.isEmpty(), reqs, blockers)
     }

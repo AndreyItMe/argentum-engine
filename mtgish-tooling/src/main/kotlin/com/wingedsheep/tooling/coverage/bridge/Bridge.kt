@@ -1,5 +1,7 @@
 package com.wingedsheep.tooling.coverage.bridge
 
+import com.wingedsheep.tooling.coverage.pascalToUpperSnake
+
 /**
  * The hand-authored mtgish→Argentum bridge: a mtgish IR tag mapped to the Argentum capability that
  * realises it. This is the CAPABILITY dictionary — "can Argentum express this tag?" Its sibling, the
@@ -38,6 +40,62 @@ object Bridge {
 
     /** Bare-key lookup (the emitter's rule-name keyword check). */
     operator fun get(value: String): MappingEntry? = entries[value]
+
+    /**
+     * Resolve one mtgish tag against the bridge map + the scanned SDK registries, in ONE place so the
+     * coverage [com.wingedsheep.tooling.coverage.Probe] (which renders [Resolution.status]/[Resolution.detail])
+     * and the [com.wingedsheep.tooling.coverage.Fidelity] scorer (which collects the contributed
+     * [Resolution.effectTag]/[Resolution.composedEffects]/[Resolution.keyword]) can't drift. Mirrors the
+     * per-call logic both used to inline:
+     *  - an unmapped tag whose PascalCase IS a `Keyword` enum member → auto keyword (`ok`),
+     *  - an Effect/Keyword entry → `ok` iff its SerialName is in the registry, else `MISSING`,
+     *  - a composed/envelope/supported entry → its own [MappingEntry.kind] label (never blocking),
+     *  - any other unmapped tag → `UNMAPPED` (blocking).
+     */
+    fun resolve(disc: String, value: String, effects: Set<String>, keywords: Set<String>): Resolution {
+        val entry = entry(disc, value)
+        if (entry == null) {
+            val auto = pascalToUpperSnake(value)
+            return if (auto in keywords) Resolution(disc, value, "ok", "$auto (keyword auto)", keyword = auto)
+            else Resolution(disc, value, "UNMAPPED", "")
+        }
+        return when (entry) {
+            is MappingEntry.Effect -> {
+                val ok = entry.tag in effects
+                Resolution(disc, value, if (ok) "ok" else "MISSING", entry.tag, effectTag = entry.tag.takeIf { ok })
+            }
+            is MappingEntry.Keyword -> {
+                val ok = entry.tag in keywords
+                Resolution(disc, value, if (ok) "ok" else "MISSING", entry.tag, keyword = entry.tag.takeIf { ok })
+            }
+            // Composed / Envelope / Supported: the verdict is the entry's own kind label and never blocks;
+            // its capability (if any) is the registry-present subset of `composes`, read by fidelity.
+            else -> Resolution(disc, value, entry.kind, entry.note ?: "",
+                composedEffects = entry.composes.filter { it in effects }.toSet())
+        }
+    }
+
+    /**
+     * One resolved tag, shared by the coverage probe and the fidelity scorer. [status]/[detail] are what
+     * the probe prints; [effectTag]/[composedEffects]/[keyword] are the capabilities fidelity collects.
+     */
+    data class Resolution(
+        val disc: String,
+        val value: String,
+        /** Probe verdict label: `ok` | `MISSING` | `UNMAPPED` | `composed` | `supported` | `ignore`. */
+        val status: String,
+        /** The probe's `-> detail` text (the resolved tag, the auto-keyword note, or the entry note). */
+        val detail: String,
+        /** Leaf Effect SerialName this tag contributes, present in the registry — else null. */
+        val effectTag: String? = null,
+        /** Composed primitives this tag lowers to (registry-present subset of `composes`). */
+        val composedEffects: Set<String> = emptySet(),
+        /** Keyword (mapped or PascalCase-auto) this tag contributes, present in the registry — else null. */
+        val keyword: String? = null,
+    ) {
+        /** A tag that gates coverage: an absent capability (`MISSING`) or an unrecognised tag (`UNMAPPED`). */
+        val blocking: Boolean get() = status == "MISSING" || status == "UNMAPPED"
+    }
 }
 
 /** A bridge entry. `kind` is the verdict label the probe prints; `composes` are the primitives a
