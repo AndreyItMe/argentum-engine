@@ -34,7 +34,8 @@ val TeemingDragonstorm = card("Teeming Dragonstorm") {
             power = 2,
             toughness = 2,
             colors = setOf(Color.WHITE),
-            creatureTypes = setOf("Soldier")
+            creatureTypes = setOf("Soldier"),
+            imageUri = "https://cards.scryfall.io/normal/front/7/d/7ddd5153-2d16-4a4e-b9bc-f20313d322da.jpg?1743176203"
         )
         description = "When this enchantment enters, create two 2/2 white Soldier creature tokens."
     }
