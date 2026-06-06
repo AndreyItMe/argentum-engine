@@ -79,6 +79,16 @@ _coverage-tool:
 coverage *ARGS: _coverage-tool
     @mtgish-tooling/build/install/mtgish-tooling/bin/mtgish-tooling probe {{ARGS}}
 
+# Interactive coverage dashboard (TUI) — navigate every set's implemented / free-to-add / blocked
+# breakdown + feature leaderboard, drill into the card list and per-card capability verdict, and
+# press `c` for the cross-set "what engine work unlocks the most cards everywhere" ranking.
+#   just coverage-dashboard            # lazy — sets analyze as you visit them
+#   just coverage-dashboard --scan     # analyze every set up front (fills all +N counts + global total)
+#   ↑↓ navigate · → drill in · ← back · tab Kotlin/capabilities · / filter · s sort · f scan-all · q quit
+[group: 'build']
+coverage-dashboard *ARGS: _coverage-tool
+    @mtgish-tooling/build/install/mtgish-tooling/bin/mtgish-tooling dashboard {{ARGS}}
+
 # Generation fidelity — could we AUTO-AUTHOR a card from mtgish? Diffs the bridge's output
 # against each card's compiled golden snapshot, tiering AUTO / SCAFFOLD / MISS.
 # Whole set:  just coverage-fidelity --set POR

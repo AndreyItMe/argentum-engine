@@ -111,9 +111,31 @@ object Fidelity {
         val avgRecall: Double get() = if (recalls.isEmpty()) 0.0 else recalls.sum() / recalls.size * 100
     }
 
-    private fun scoreSet(code: String, effects: Set<String>, keywords: Set<String>): SetScore {
+    /** Capability tiers for one set, vs its committed golden snapshot — null if the set has no snapshot. */
+    data class FidelitySummary(
+        val matched: Int, val auto: Int, val scaffold: Int, val miss: Int, val unmatched: Int, val avgRecall: Double,
+    )
+
+    /**
+     * Safe, dashboard-facing summary: returns null (instead of exiting the process) for sets without a
+     * committed golden snapshot. Pass a preloaded mtgish [idx] to reuse a shared index pass.
+     */
+    fun summarizeOrNull(code: String, effects: Set<String>, keywords: Set<String>, idx: Map<String, JsonObject>? = null): FidelitySummary? {
+        if (!java.io.File(SNAP_DIR, "${code.uppercase()}.json").exists()) return null
+        val s = scoreSet(code, effects, keywords, idx)
+        return FidelitySummary(
+            matched = s.matched,
+            auto = s.tiers["AUTO"]!!.size,
+            scaffold = s.tiers["SCAFFOLD"]!!.size,
+            miss = s.tiers["MISS"]!!.size,
+            unmatched = s.tiers["UNMATCHED"]!!.size,
+            avgRecall = s.avgRecall,
+        )
+    }
+
+    private fun scoreSet(code: String, effects: Set<String>, keywords: Set<String>, idx: Map<String, JsonObject>? = null): SetScore {
         val truth = parseSnapshot(code)
-        val mtgish = Mtgish.loadMtgishIndex(truth.keys)
+        val mtgish = idx ?: Mtgish.loadMtgishIndex(truth.keys)
         val s = SetScore()
         for (name in truth.keys.sorted()) {
             val mt = mtgish[name]

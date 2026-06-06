@@ -41,7 +41,10 @@ object Scryfall {
     /** Strip ` // back` suffix from DFC / adventure names. */
     fun frontFace(name: String): String = name.split(" // ", limit = 2)[0].trim()
 
+    private var discoverSetsCache: List<SetInfo>? = null
+
     fun discoverSets(): List<SetInfo> {
+        discoverSetsCache?.let { return it }
         val out = mutableListOf<SetInfo>()
         val dirs = DEFINITIONS_ROOT.listFiles()?.sortedBy { it.name } ?: emptyList()
         for (dir in dirs) {
@@ -57,21 +60,70 @@ object Scryfall {
             val cardsDir = File(dir, "cards").let { if (it.isDirectory) it else dir }
             out.add(SetInfo(code, name, cardsDir))
         }
-        return out
+        return out.also { discoverSetsCache = it }
     }
 
-    fun scanImplementations(cardsDir: File): Set<String> {
-        if (!cardsDir.isDirectory) return emptySet()
+    private val scanCache = HashMap<String, Set<String>>()
+
+    fun scanImplementations(cardsDir: File): Set<String> = scanCache.getOrPut(cardsDir.path) {
+        if (!cardsDir.isDirectory) return@getOrPut emptySet()
         val names = mutableSetOf<String>()
         cardsDir.listFiles { f -> f.name.endsWith(".kt") }?.forEach { kt ->
             val text = kt.readText()
             CARD_DSL_RE.findAll(text).forEach { names.add(it.groupValues[1]) }
             PRINTING_NAME_RE.findAll(text).forEach { names.add(it.groupValues[1]) }
         }
-        return names
+        names
     }
 
     private fun cachePath(code: String): File = File(CACHE_ROOT, "${code.lowercase()}.json")
+
+    /** Uppercased set codes that already have a cached Scryfall canonical payload on disk. */
+    fun cachedSetCodes(): Set<String> =
+        CACHE_ROOT.listFiles { f -> f.isFile && f.extension == "json" && !f.name.startsWith("_") }
+            ?.map { it.nameWithoutExtension.uppercase() }?.toSet()
+            ?: emptySet()
+
+    /** A set's `released_at` (ISO date) read straight from the cache file — null, never a fetch, if absent. */
+    fun releaseDate(code: String): String? {
+        val path = cachePath(code)
+        if (!path.isFile) return null
+        return runCatching { (J.parseToJsonElement(path.readText()) as JsonObject)["released_at"].asStr() }.getOrNull()
+    }
+
+    private val SETNAMES_FILE: File get() = File(CACHE_ROOT, "_setnames.json")
+    private var setNamesCache: Map<String, String>? = null
+
+    /**
+     * Uppercased set code → human display name for every Scryfall set. Served from a local cache file
+     * (`~/.cache/scryfall/_setnames.json`); populated on first need from the Scryfall `/sets` endpoint
+     * with a bounded timeout. Degrades to an empty map when offline so callers fall back to the code.
+     */
+    fun setDisplayNames(): Map<String, String> {
+        setNamesCache?.let { return it }
+        if (SETNAMES_FILE.isFile) {
+            runCatching { (J.parseToJsonElement(SETNAMES_FILE.readText()) as JsonObject).mapValues { it.value.asStr() ?: "" } }
+                .getOrNull()?.let { setNamesCache = it; return it }
+        }
+        val map = runCatching {
+            val conn = URI("$SCRYFALL_BASE/sets").toURL().openConnection() as HttpURLConnection
+            conn.setRequestProperty("User-Agent", USER_AGENT)
+            conn.connectTimeout = 4000
+            conn.readTimeout = 8000
+            val text = conn.inputStream.readBytes().toString(StandardCharsets.UTF_8)
+            conn.disconnect()
+            ((J.parseToJsonElement(text) as JsonObject)["data"].asArr ?: JsonArray(emptyList()))
+                .filterIsInstance<JsonObject>()
+                .associate { ((it["code"].asStr() ?: "").uppercase()) to (it["name"].asStr() ?: "") }
+                .filterKeys { it.isNotEmpty() }
+        }.getOrDefault(emptyMap())
+        if (map.isNotEmpty()) runCatching {
+            CACHE_ROOT.mkdirs()
+            SETNAMES_FILE.writeText(PRETTY.encodeToString(JsonElement.serializer(), JsonObject(map.mapValues { JsonPrimitive(it.value) })))
+        }
+        setNamesCache = map
+        return map
+    }
 
     private fun isCacheFresh(payload: JsonObject): Boolean {
         if (payload["_v"].asInt() != CACHE_SCHEMA_VERSION) return false
