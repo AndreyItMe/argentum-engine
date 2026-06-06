@@ -25,7 +25,8 @@ class Counter<K> {
 /** mtgish IR access: download, the capability-bearing discriminators, the tag extractor, the index. */
 object Mtgish {
     val CAPABILITY_DISCRIMINATORS = listOf(
-        "_Rule", "_Action", "_Trigger", "_Cost", "_LayerEffect", "_ReplacementActionWouldEnter",
+        "_Rule", "_Action", "_Trigger", "_Cost", "_LayerEffect", "_StaticLayerEffect",
+        "_ReplacementActionWouldEnter",
     )
 
     fun ensureData() {

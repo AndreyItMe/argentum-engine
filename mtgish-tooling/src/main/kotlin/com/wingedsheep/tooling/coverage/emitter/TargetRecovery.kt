@@ -151,7 +151,10 @@ internal fun EmitCtx.groupFilterDsl(filterNode: JsonElement?): String? {
     val filtered = gameObjectFilterDsl(filterNode) ?: return null
     val oracle = oracleText?.lowercase() ?: ""
     val args = mutableListOf(filtered)
-    if ("all other" in oracle || "each other" in oracle) args.add("excludeSelf = true")
+    // The IR's `Other(ThisPermanent)` is the authoritative "excludeSelf" signal; the oracle phrasing
+    // ("all other" / "each other" / "other ... creatures") is the fallback for shapes without it.
+    if (jsonContains(filterNode, "_Permanents", "Other") ||
+        "all other" in oracle || "each other" in oracle) args.add("excludeSelf = true")
     return "GroupFilter(${args.joinToString(", ")})"
 }
 
@@ -159,9 +162,13 @@ internal fun EmitCtx.gameObjectFilterDsl(filterNode: JsonElement?): String? {
     val blob = compact(filterNode)
     val types = targetTypes(filterNode)
     val subs = subtypes(filterNode)
+    // Creature subtypes come from IsCreatureType (subtypes() only collects land/card subtypes).
+    val creatureSubs = Regex(""""IsCreatureType",\s*"args":\s*"(\w+)"""").findAll(blob).map { it.groupValues[1] }.toList()
     var filtered = when {
         subs.isNotEmpty() && ("Land" in types || "IsLandType" in blob || "\"Land\"" in blob) ->
             "GameObjectFilter.Land.withSubtype(${subtypeArg(subs[0])})"
+        creatureSubs.isNotEmpty() && ("Creature" in types || "\"Creature\"" in blob) ->
+            "GameObjectFilter.Creature.withSubtype(${subtypeArg(creatureSubs[0])})"
         subs.isNotEmpty() && ("Creature" in types || "\"Creature\"" in blob) ->
             "GameObjectFilter.Creature.withSubtype(${subtypeArg(subs[0])})"
         types == setOf("Creature", "Land") -> "GameObjectFilter.CreatureOrLand"

@@ -17,8 +17,13 @@ import kotlinx.serialization.json.JsonObject
  * track them. Return `null` whenever exact rendering isn't possible: the card downgrades to SCAFFOLD
  * rather than emit something confidently wrong.
  */
-internal val ACTION_HANDLERS: Map<String, ActionHandler> =
-    damageDrawLifeHandlers + zoneHandlers + tapLayerStateHandlers + playerContinuousHandlers
+// Lazy so it's assembled on first use (renderAction), by which point every themed handler file's
+// top-level `val` is initialised. Eager init can cycle: a handler file's val calls `actionHandlers`
+// (defined here), which forces this sum to read that same val before it finishes initialising.
+internal val ACTION_HANDLERS: Map<String, ActionHandler> by lazy {
+    damageDrawLifeHandlers + zoneHandlers + tapLayerStateHandlers + playerContinuousHandlers +
+        manaHandlers + tokenHandlers
+}
 
 /** A per-`_Action` rendering rule. Returns the Effect DSL string, or null → SCAFFOLD. */
 internal typealias ActionHandler = EmitCtx.(node: JsonObject, args: JsonElement?, tvar: String?) -> String?

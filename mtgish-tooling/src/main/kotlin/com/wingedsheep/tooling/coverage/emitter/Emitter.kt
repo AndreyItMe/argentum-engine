@@ -64,6 +64,13 @@ object Emitter {
                 rname == "SpellActions" -> block = ctx.spellBlock(card)
                 rname == "TriggerA" -> block = ctx.triggerBlock(rule)
                 rname == "PermanentRuleEffect" -> block = ctx.staticBlock(rule)
+                rname == "AsPermanentEnters" -> block = ctx.asEntersBlock(rule)
+                rname == "EachPermanentLayerEffect" -> block = ctx.staticLordBlock(rule)
+                rname == "FromAnyZone" -> block = ctx.fromAnyZoneBlock(rule)
+                rname == "CDA_Power" -> block = ctx.cdaStatsBlock(card, rule)
+                rname == "CDA_Toughness" ->
+                    if (jsonContains(card["Rules"], "_Rule", "CDA_Power")) continue  // emitted with CDA_Power
+                    else { ctx.reasons.add("CDA_Toughness"); return incomplete(ctx, body, scryfall, pkg) }
                 rname == "Activated" || rname == "ActivatedWithModifiers" -> block = ctx.activatedBlock(rule)
                 rname == "Cycling" -> block = manaKeywordCost(rule)?.let { listOf("    keywordAbility(KeywordAbility.cycling(\"$it\"))") }
                 rname == "Morph" -> block = manaKeywordCost(rule)?.let { listOf("    morph = \"$it\"") }

@@ -167,6 +167,65 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject): List<String>? {
     return lines
 }
 
+/**
+ * A characteristic-defining `CDA_Power` rule (with its matching `CDA_Toughness`) -> a single
+ * `dynamicStats(...)` line, when both power and toughness are the same dynamic count (the
+ * power-and-toughness-equal-to-the-number-of-X cycle). Differing power/toughness amounts scaffold.
+ */
+internal fun EmitCtx.cdaStatsBlock(card: JsonObject, rule: JsonObject): List<String>? {
+    val toughnessRule = (card["Rules"].asArr ?: JsonArray(emptyList()))
+        .filterIsInstance<JsonObject>().firstOrNull { it.strField("_Rule") == "CDA_Toughness" }
+    if (toughnessRule == null || compact(rule["args"]) != compact(toughnessRule["args"])) {
+        reasons.add("CDA_Power"); return null
+    }
+    val amount = dynamicAmount(rule["args"]) ?: run { reasons.add("CDA_Power"); return null }
+    return listOf("    dynamicStats($amount)")
+}
+
+/**
+ * An `AsPermanentEnters` rule -> `replacementEffect(...)` line(s). The rule's second arg is a list of
+ * `_ReplacementActionWouldEnter` nodes (enters tapped, choose a creature type as it enters, ...).
+ * Any replacement we can't render exactly downgrades the card to SCAFFOLD rather than guess.
+ */
+internal fun EmitCtx.asEntersBlock(rule: JsonObject): List<String>? {
+    val replacements = (rule["args"].asArr?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
+    if (replacements.isNullOrEmpty()) { reasons.add("AsPermanentEnters"); return null }
+    val lines = mutableListOf<String>()
+    for (rep in replacements) {
+        val dsl = when (rep.strField("_ReplacementActionWouldEnter")) {
+            "EntersTapped" -> "EntersTapped()"
+            "ChooseACreatureType" -> "EntersWithChoice(ChoiceType.CREATURE_TYPE)"
+            else -> { reasons.add("AsPermanentEnters"); return null }
+        }
+        lines.add("    replacementEffect($dsl)")
+    }
+    return lines
+}
+
+/**
+ * A `FromAnyZone { TriggerA { WhenAPlayerCyclesACard(You, this) ... } }` rule -> a triggered ability
+ * with `trigger = Triggers.YouCycleThis` ("When you cycle this card, [bonus]"). A lone `you may` bonus
+ * becomes `optional = true`, mirroring [triggerBlock].
+ */
+internal fun EmitCtx.fromAnyZoneBlock(rule: JsonObject): List<String>? {
+    val inner = rule["args"] as? JsonObject
+    if (inner?.strField("_Rule") != "TriggerA" ||
+        !jsonContains(inner, "_Trigger", "WhenAPlayerCyclesACard") ||
+        !jsonContains(inner, "_CardInHand", "ThisCardInHand")) { reasons.add("FromAnyZone"); return null }
+    val (targets, actions) = extractEnvelope(inner)
+    if (actions == null) { reasons.add("FromAnyZone"); return null }
+    val (tdsl, tvar) = spellTarget(targets, actions)
+    if (tdsl == null) return null
+    val mayWrapped = actions.singleOrNull()?.strField("_Action") == "MayAction"
+    val effectActions = if (mayWrapped) listOf(innerAction(actions.single()) ?: return null) else actions
+    val edsl = renderEffectList(effectActions, tvar) ?: return null
+    val lines = mutableListOf("    triggeredAbility {", "        trigger = Triggers.YouCycleThis")
+    if (mayWrapped) lines.add("        optional = true")
+    if (tvar != null) lines.add("        val t = target(\"target\", $tdsl)")
+    lines.addAll(listOf("        effect = $edsl", "    }"))
+    return lines
+}
+
 /** An Activated / ActivatedWithModifiers rule -> activatedAbility { cost; [target]; effect }. */
 internal fun EmitCtx.activatedBlock(rule: JsonObject): List<String>? {
     val args = rule["args"].asArr
@@ -182,7 +241,12 @@ internal fun EmitCtx.activatedBlock(rule: JsonObject): List<String>? {
     val lines = mutableListOf("    activatedAbility {", "        cost = $cost")
     activationRestrictionLines(rule)?.let { lines.addAll(it) } ?: return null
     if (tvar != null) lines.add("        val t = target(\"target\", $tdsl)")
-    lines.addAll(listOf("        effect = $edsl", "    }"))
+    lines.add("        effect = $edsl")
+    if (isManaAbility(tvar, actions)) {
+        lines.add("        manaAbility = true")
+        lines.add("        timing = TimingRule.ManaAbility")
+    }
+    lines.add("    }")
     return lines
 }
 

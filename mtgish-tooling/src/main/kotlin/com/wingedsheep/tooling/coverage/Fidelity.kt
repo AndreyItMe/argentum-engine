@@ -107,6 +107,8 @@ object Fidelity {
     private class SetScore {
         val tiers = mapOf("AUTO" to mutableListOf<String>(), "SCAFFOLD" to mutableListOf(), "MISS" to mutableListOf(), "UNMATCHED" to mutableListOf())
         val missTax = Counter<String>(); val scaffoldReasons = Counter<String>(); val recalls = mutableListOf<Double>()
+        // Per-card detail for `--list`: a MISS card's unmapped caps, a SCAFFOLD card's reasons.
+        val cardDetail = LinkedHashMap<String, List<String>>()
         var code = ""; var total = 0; var matched = 0
         val avgRecall: Double get() = if (recalls.isEmpty()) 0.0 else recalls.sum() / recalls.size * 100
     }
@@ -148,6 +150,8 @@ object Fidelity {
             s.recalls.add(recall)
             missing.forEach { s.missTax.add(it) }
             if (tier == "SCAFFOLD") res.reasons.forEach { s.scaffoldReasons.add(it) }
+            if (tier == "MISS") s.cardDetail[name] = missing.sorted()
+            else if (tier == "SCAFFOLD") s.cardDetail[name] = res.reasons.sorted()
         }
         s.code = code.uppercase()
         s.total = s.tiers.values.sumOf { it.size }
@@ -196,7 +200,11 @@ object Fidelity {
         if (listTier != null) {
             val names = s.tiers[listTier.uppercase()] ?: emptyList()
             println("\n${listTier.uppercase()} (${names.size}):")
-            names.forEach { println("  - $it") }
+            names.forEach { name ->
+                val detail = s.cardDetail[name]
+                if (detail.isNullOrEmpty()) println("  - $name")
+                else println("  - ${name.padEnd(28)} ${detail.joinToString(", ", "[", "]")}")
+            }
         }
         return 0
     }
