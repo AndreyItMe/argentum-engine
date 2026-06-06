@@ -60,6 +60,9 @@ whose scenario test passes. The mtgish→Argentum mapping is typed Kotlin in two
 First run auto-downloads the 29 MB mtgish IR into `mtgish-tooling/data/` (gitignored).
 
 ```bash
+# DASHBOARD — interactive TUI over all the analysis below (no flags; q to quit).
+just coverage-dashboard                 # navigate sets, drill into cards, c = cross-set capability index
+
 # COVERAGE — which missing cards need no engine work, and which feature unlocks the most.
 just coverage --set TMP                 # implemented / FREE-to-implement / blocked + feature leaderboard
 just coverage --set TMP --free          # also list the implementable-today cards
