@@ -16528,7 +16528,8 @@
                     ],
                     "creatureTypes": [
                         "Soldier"
-                    ]
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/7/d/7ddd5153-2d16-4a4e-b9bc-f20313d322da.jpg?1743176203"
                 },
                 "descriptionOverride": "When this enchantment enters, create two 2/2 white Soldier creature tokens."
             },
@@ -17397,8 +17398,7 @@
                                 "type": "MatchesFilter",
                                 "filter": "land"
                             },
-                            "storeMatching": "landCard",
-                            "storeNonMatching": "nonLand"
+                            "storeMatching": "landCard"
                         },
                         {
                             "type": "SelectFromCollection",
@@ -17411,7 +17411,6 @@
                                 }
                             },
                             "storeSelected": "toHand",
-                            "storeRemainder": "landNotTaken",
                             "selectedLabel": "Reveal and put into your hand",
                             "remainderLabel": "Leave on top of your library"
                         },
@@ -17426,8 +17425,17 @@
                             "revealToSelf": false
                         },
                         {
+                            "type": "FilterCollection",
+                            "from": "looked",
+                            "filter": {
+                                "type": "ExcludeOtherCollection",
+                                "otherCollectionName": "toHand"
+                            },
+                            "storeMatching": "notInHand"
+                        },
+                        {
                             "type": "SelectFromCollection",
-                            "from": "landNotTaken",
+                            "from": "notInHand",
                             "selection": {
                                 "type": "ChooseUpTo",
                                 "count": {
