@@ -288,18 +288,79 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
             "TriggerBinding.ANY)"
     }
 
-    // "Whenever you cast a [type] spell" — WhenAPlayerCastsASpell scoped to You + a spell-type filter.
-    if (jsonContains(trig, "_Trigger", "WhenAPlayerCastsASpell") && jsonContains(trig, "_Player", "You")) {
-        if (jsonContains(trig, "_Spells", "IsHistoric")) return "Triggers.YouCastHistoric"
-        val types = trig.argWordsTagged("IsCardtype").toSet()
-        return when (types) {
-            setOf("Creature") -> "Triggers.YouCastCreature"
-            setOf("Enchantment") -> "Triggers.YouCastEnchantment"
-            setOf("Instant", "Sorcery") -> "Triggers.YouCastInstantOrSorcery"
-            else -> null
-        }
+    // "Whenever {you / a player / an opponent} casts a [type] spell" — WhenAPlayerCastsASpell. The
+    // first arg is the caster scope (You / AnyPlayer / Opponent — anything else, e.g. HostPlayer,
+    // declines); the second is the spell filter, classified to an EXACT category. A filter carrying
+    // any extra constraint (mana value, colour, targets, kicked, name, a mixed And/Or) yields a null
+    // category and declines -> SCAFFOLD, rather than silently dropping the clause.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerCastsASpell")) {
+        val argv = trig["args"].asArr
+        val scope = castScope(argv?.getOrNull(0) as? JsonObject) ?: return null
+        val category = spellCastCategory(argv?.getOrNull(1) as? JsonObject) ?: return null
+        return castTriggerDsl(scope, category)
     }
     return null
+}
+
+/** The caster scope of a WhenAPlayerCastsASpell trigger, or null for a scope we don't render
+ *  (HostPlayer, EnchantedPlayer, …). Read from the trigger's own first arg, NOT a whole-trigger
+ *  search — a `_Player: You` buried in the spell filter (e.g. WasCastFromAPlayersGraveyard(You))
+ *  must not be mistaken for the caster. */
+private enum class CastScope { YOU, ANY, OPPONENT }
+
+private fun castScope(players: JsonObject?): CastScope? = when (players?.strField("_Players")) {
+    "AnyPlayer" -> CastScope.ANY
+    "Opponent" -> CastScope.OPPONENT
+    "SinglePlayer" -> if (players.field("args").strField("_Player") == "You") CastScope.YOU else null
+    else -> null
+}
+
+/** Canonical category for a WhenAPlayerCastsASpell spell-filter node, or null when the filter carries
+ *  any constraint we can't render exactly. Strict by design: decline -> SCAFFOLD beats dropping a clause. */
+private fun spellCastCategory(spells: JsonObject?): String? = when (spells?.strField("_Spells")) {
+    "AnySpell" -> "any"
+    "IsHistoric" -> "historic"
+    "IsCardtype" -> when (spells.field("args").asStr()) {
+        "Creature" -> "creature"
+        "Enchantment" -> "enchantment"
+        else -> null
+    }
+    "IsNonCardtype" -> if (spells.field("args").asStr() == "Creature") "noncreature" else null
+    // "an instant or sorcery spell" — an Or of exactly the two cardtype clauses, nothing else.
+    "Or" -> {
+        val parts = spells["args"].asArr.orEmpty().map { it as? JsonObject }
+        val types = parts.map { if (it?.strField("_Spells") == "IsCardtype") it.field("args").asStr() else null }
+        if (types.none { it == null } && types.filterNotNull().toSet() == setOf("Instant", "Sorcery")) "instantOrSorcery" else null
+    }
+    else -> null
+}
+
+/** (scope, category) -> the exact `Triggers.*` constant/factory. You has named constants; the
+ *  any-player / opponent scopes use the `anyPlayerCasts` / `opponentCasts` factories with a
+ *  [GameObjectFilter]. */
+private fun castTriggerDsl(scope: CastScope, category: String): String? {
+    val filter = when (category) {
+        "any" -> null
+        "creature" -> "GameObjectFilter.Creature"
+        "noncreature" -> "GameObjectFilter.Noncreature"
+        "enchantment" -> "GameObjectFilter.Enchantment"
+        "instantOrSorcery" -> "GameObjectFilter.InstantOrSorcery"
+        "historic" -> "GameObjectFilter.Historic"
+        else -> return null
+    }
+    return when (scope) {
+        CastScope.YOU -> when (category) {
+            "any" -> "Triggers.YouCastSpell"
+            "creature" -> "Triggers.YouCastCreature"
+            "noncreature" -> "Triggers.YouCastNoncreature"
+            "enchantment" -> "Triggers.YouCastEnchantment"
+            "instantOrSorcery" -> "Triggers.YouCastInstantOrSorcery"
+            "historic" -> "Triggers.YouCastHistoric"
+            else -> null
+        }
+        CastScope.ANY -> if (filter == null) "Triggers.AnyPlayerCastsSpell" else "Triggers.anyPlayerCasts($filter)"
+        CastScope.OPPONENT -> if (filter == null) "Triggers.OpponentCastsSpell" else "Triggers.opponentCasts($filter)"
+    }
 }
 
 /** True when a trigger's subject IS this permanent — ThisPermanent present, but NOT merely as the

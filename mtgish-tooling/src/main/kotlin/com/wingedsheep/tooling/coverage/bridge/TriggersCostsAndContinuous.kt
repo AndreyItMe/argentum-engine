@@ -9,6 +9,7 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     supported("WhenACreatureAttacks", "trigger: attacks")
     supported("WhenACreatureBlocks", "trigger: blocks (Ydwen Efreet)")
     supported("WhenACreatureDealsCombatDamageToAPlayer", "trigger: combat damage to player")
+    supported("WhenAPlayerCastsASpell", "trigger: a player casts a spell (Triggers.YouCastSpell / AnyPlayerCastsSpell / OpponentCastsSpell + type filters)")
 
     // Costs.
     supported("PayMana", "cost: pay mana (universal)")

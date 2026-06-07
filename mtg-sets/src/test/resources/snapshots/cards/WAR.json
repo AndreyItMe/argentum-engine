@@ -134,3 +134,46 @@
         "GREEN"
     ]
 }
+
+// Spellgorger Weird
+{
+    "name": "Spellgorger Weird",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Weird",
+    "oracleText": "Whenever you cast a noncreature spell, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "145",
+        "artist": "James Paick",
+        "flavorText": "Freed from their respective labs, the two weirds formed a partnership, feeding on the arcane energies of war.",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/1/91551f85-4630-43a0-af72-8332d2ff0752.jpg?1557576817"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
