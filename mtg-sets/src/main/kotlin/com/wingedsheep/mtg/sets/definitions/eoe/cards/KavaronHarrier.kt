@@ -38,7 +38,7 @@ val KavaronHarrier = card("Kavaron Harrier") {
                 tapped = true,
                 attacking = true,
                 artifactToken = true,
-                exileAtStep = Step.END_COMBAT
+                sacrificeAtStep = Step.END_COMBAT
             )
         )
     }

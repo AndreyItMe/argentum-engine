@@ -1,4 +1,3 @@
-- Kavaron Harrier (exile, not sacrifice)
 - Diplomatic Relations gives +1/+0 to TO creature if FROM creature is dead
 - Secluded Starforge: 2,T: can not tap artifacts.
 - Rust Harvester, cannot choose from graveyard, card gets picked automatically
