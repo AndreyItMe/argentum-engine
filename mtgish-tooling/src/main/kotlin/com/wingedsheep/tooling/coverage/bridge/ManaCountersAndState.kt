@@ -22,6 +22,12 @@ internal fun BridgeBuilder.manaCountersAndState() {
     effect("RegeneratePermanent", "Regenerate", UNIVERSAL)
     effects("GainControlOfPermanent", "GainControlOfPermanentUntil", tag = "GainControl", note = UNIVERSAL)
     effect("RemoveCreatureFromCombat", "RemoveFromCombat", UNIVERSAL)
+    // Ydwen Efreet's "remove from combat and creatures it solely blocked become unblocked" — the same
+    // RemoveFromCombat effect (the emitter sets its unblockSoleBlockedAttackers flag).
+    effect("RemoveCreatureFromCombatAndUnblockBlockers", "RemoveFromCombat", UNIVERSAL)
+    // "Flip a coin. If you lose the flip, …" — a generic control-flow effect (Ydwen Efreet); its nested
+    // on-lose actions are resolved by the recursive tree walk.
+    effect("FlipACoin_OnLose", "FlipCoin", "flip a coin, on-lose actions nested")
     // Goad (CR 701.15): targeted GoadCreature renders; mass GoadEachCreature carries the same
     // capability but its group filter often scaffolds in the emitter.
     effects("GoadCreature", "GoadEachCreature", tag = "Goad", note = UNIVERSAL)

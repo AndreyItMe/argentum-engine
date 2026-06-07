@@ -30,6 +30,15 @@ internal val playerContinuousHandlers: Map<String, ActionHandler> = actionHandle
         call("MayEffect", arg(edsl))
     }
 
+    on("FlipACoin_OnLose") { _, args, tvar ->
+        // "Flip a coin. If you lose the flip, [actions]." (Ydwen Efreet). `args` is the on-lose action
+        // list, rendered as the FlipCoinEffect's lostEffect; if any on-lose action can't render the
+        // whole flip scaffolds rather than emit a partial coin flip.
+        val lost = args.asArr?.filterIsInstance<JsonObject>() ?: return@on null
+        val edsl = renderEffectList(lost, tvar) ?: return@on null
+        call("FlipCoinEffect", arg("lostEffect", edsl))
+    }
+
     on("EachPlayerAction") { node, _, _ -> renderEachPlayer(node) }
     on("PlayerAction", "HavePlayerTakeAction") { node, _, tvar -> renderPlayerAction(node, tvar) }
 

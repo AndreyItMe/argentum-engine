@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 59 / 78
+**Implemented:** 60 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -58,7 +58,7 @@
 - [ ] Magnetic Mountain
 - [x] Mijae Djinn
 - [x] Rukh Egg
-- [ ] Ydwen Efreet
+- [x] Ydwen Efreet
 - [ ] Cyclone
 - [x] Desert Twister
 - [ ] Drop of Honey

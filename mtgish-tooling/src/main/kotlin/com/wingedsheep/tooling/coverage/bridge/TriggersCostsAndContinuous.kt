@@ -7,6 +7,7 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     supported("WhenAPermanentEntersTheBattlefield", "trigger: ETB (Triggers.* scan validates in P1)")
     supported("WhenACreatureOrPlaneswalkerDies", "trigger: dies")
     supported("WhenACreatureAttacks", "trigger: attacks")
+    supported("WhenACreatureBlocks", "trigger: blocks (Ydwen Efreet)")
     supported("WhenACreatureDealsCombatDamageToAPlayer", "trigger: combat damage to player")
 
     // Costs.

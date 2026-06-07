@@ -22,8 +22,19 @@ object CombatRemovalHelper {
     /**
      * Remove [targetId] from combat in [state]. Returns the new state, or [state] unchanged
      * if the entity wasn't in combat. Idempotent.
+     *
+     * @param unblockSoleBlockedAttackers When true and [targetId] was a blocker, attackers
+     *   whose blocker list becomes empty after this removal have their [BlockedComponent]
+     *   and damage-assignment components stripped — they become unblocked. Defaults to
+     *   false (CR 509.1h: a blocked creature stays blocked even if all blockers leave
+     *   combat). Ydwen Efreet's oracle text explicitly overrides 509.1h and is the only
+     *   current use site.
      */
-    fun removeFromCombat(state: GameState, targetId: EntityId): GameState {
+    fun removeFromCombat(
+        state: GameState,
+        targetId: EntityId,
+        unblockSoleBlockedAttackers: Boolean = false,
+    ): GameState {
         val entity = state.getEntity(targetId) ?: return state
         val isAttacking = entity.has<AttackingComponent>()
         val isBlocking = entity.has<BlockingComponent>()
@@ -71,8 +82,22 @@ object CombatRemovalHelper {
                 val attackerEntity = newState.getEntity(attackerId) ?: continue
                 val blockedComponent = attackerEntity.get<BlockedComponent>() ?: continue
                 val updatedBlockerIds = blockedComponent.blockerIds - targetId
-                newState = newState.updateEntity(attackerId) { container ->
-                    container.with(BlockedComponent(updatedBlockerIds))
+                // "Sole blocker" is judged from the CURRENT blocker set (empty after removing this
+                // creature), not from who blocked it when combat began. Ydwen's oracle says "blocked by
+                // only this creature this combat"; we have no per-combat became-blocked-by history, so a
+                // contrived case (another blocker left earlier in the same combat) is treated as sole.
+                newState = if (unblockSoleBlockedAttackers && updatedBlockerIds.isEmpty()) {
+                    newState.updateEntity(attackerId) { container ->
+                        container
+                            .without<BlockedComponent>()
+                            .without<DamageAssignmentComponent>()
+                            .without<DamageAssignmentOrderComponent>()
+                            .without<RequiresManualDamageAssignmentComponent>()
+                    }
+                } else {
+                    newState.updateEntity(attackerId) { container ->
+                        container.with(BlockedComponent(updatedBlockerIds))
+                    }
                 }
             }
         }

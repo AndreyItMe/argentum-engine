@@ -2759,3 +2759,55 @@
         "GREEN"
     ]
 }
+
+// Ydwen Efreet
+{
+    "name": "Ydwen Efreet",
+    "manaCost": "{R}{R}{R}",
+    "typeLine": "Creature — Efreet",
+    "oracleText": "Whenever this creature blocks, flip a coin. If you lose the flip, remove this creature from combat and it can't block this turn. Creatures it was blocking that had become blocked by only this creature this combat become unblocked.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 6
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "BlockEvent",
+                "effect": {
+                    "type": "FlipCoin",
+                    "lostEffect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "RemoveFromCombat",
+                                "target": "Self",
+                                "unblockSoleBlockedAttackers": true
+                            },
+                            {
+                                "type": "CantBlockTargetCreatures",
+                                "target": "Self"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "44",
+        "rarity": "RARE",
+        "artist": "Drew Tucker",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/f/efdba2a9-d171-45ed-8dd4-9d0046128f68.jpg?1562940066",
+        "rulings": [
+            {
+                "date": "2009-10-01",
+                "text": "The ability triggers any time Ydwen Efreet blocks."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
