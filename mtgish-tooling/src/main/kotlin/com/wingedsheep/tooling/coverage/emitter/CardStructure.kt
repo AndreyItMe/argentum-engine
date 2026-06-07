@@ -163,6 +163,7 @@ private val TRIGGER_SPEC = mapOf(
     "WhenAPermanentEntersTheBattlefield" to "Triggers.EntersBattlefield",
     "WhenACreatureOrPlaneswalkerDies" to "Triggers.Dies",
     "WhenACreatureAttacks" to "Triggers.Attacks",
+    "WhenACreatureBlocks" to "Triggers.Blocks",
     "WhenACreatureDealsCombatDamageToAPlayer" to "Triggers.DealsCombatDamageToPlayer",
     "WhenACreatureBecomesBlocked" to "Triggers.BecomesBlocked",
 )

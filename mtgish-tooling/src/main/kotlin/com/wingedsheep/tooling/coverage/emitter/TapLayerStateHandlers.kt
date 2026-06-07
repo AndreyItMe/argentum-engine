@@ -35,6 +35,25 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         val tgt = refTarget(args, tvar) ?: return@on null
         call("Effects.RemoveFromCombat", arg(Lit(tgt)))
     }
+    on("RemoveCreatureFromCombatAndUnblockBlockers") { _, args, tvar ->
+        // Ydwen Efreet: "remove this creature from combat … creatures it was blocking that had become
+        // blocked by only this creature become unblocked" — the pre-modern override of CR 509.1h,
+        // carried by RemoveFromCombat's unblockSoleBlockedAttackers flag.
+        val tgt = refTarget(args, tvar) ?: return@on null
+        call("Effects.RemoveFromCombat", arg(Lit(tgt)), arg("unblockSoleBlockedAttackers", "true"))
+    }
+    on("CreatePermanentRuleEffectUntil") { node, args, tvar ->
+        // "[permanent] can't block / can't attack this turn" (Ydwen Efreet's "it can't block this
+        // turn"). Only the bare CantBlock/CantAttack rule until end of turn maps to the matching
+        // Effects facade; any other rule or a non-EOT duration scaffolds rather than guess.
+        if (firstExpiration(node) !in setOf(null, "UntilEndOfTurn")) return@on null
+        val tgt = refTarget(args, tvar) ?: return@on null
+        when {
+            jsonContains(node, "_PermanentRule", "CantBlock") -> call("Effects.CantBlock", arg(Lit(tgt)))
+            jsonContains(node, "_PermanentRule", "CantAttack") -> call("Effects.CantAttack", arg(Lit(tgt)))
+            else -> null
+        }
+    }
     on("RegeneratePermanent") { _, args, _ ->
         // Self-regeneration ("{cost}: Regenerate this") renders faithfully. A chosen target's
         // requirement isn't always recovered exactly (e.g. "Regenerate target Zombie" flattens the
