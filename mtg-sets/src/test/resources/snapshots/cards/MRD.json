@@ -98,6 +98,74 @@
     "colorIdentityOverride": []
 }
 
+// Necrogen Mists
+{
+    "name": "Necrogen Mists",
+    "manaCost": "{2}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "At the beginning of each player's upkeep, that player discards a card.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Hand",
+                                "player": "TriggeringPlayer"
+                            },
+                            "storeAs": "hand"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "hand",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "chooser": "TriggeringPlayer",
+                            "storeSelected": "discarded",
+                            "prompt": "Choose 1 card to discard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "discarded",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard",
+                                "player": "TriggeringPlayer"
+                            },
+                            "moveType": "Discard"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "69",
+        "rarity": "RARE",
+        "artist": "Alex Horley-Orlandelli",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/8/18291514-9ffb-4032-9c77-cec0200bf1b6.jpg?1562137104"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Raise the Alarm
 {
     "name": "Raise the Alarm",

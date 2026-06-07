@@ -228,9 +228,15 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenAPermanentIsDealtDamage") && isSelf(trig))
         return "Triggers.TakesDamage"
 
-    // Phase/step triggers. "your upkeep" is scoped to You; "each end step" to any player.
-    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersUpkeep") && jsonContains(trig, "_Player", "You"))
-        return "Triggers.YourUpkeep"
+    // Phase/step triggers. "your upkeep" is scoped to You; "each upkeep" to any player; "each
+    // opponent's upkeep" to Opponent. The host-relative scopes (HostController / HostPlayer, an Aura
+    // granting an upkeep trigger to the enchanted permanent's controller) decline -> SCAFFOLD, as do
+    // the niche dynamic scopes (TheChosenPlayer, ControllerOfSpell, ...).
+    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersUpkeep")) {
+        if (jsonContains(trig, "_Player", "You")) return "Triggers.YourUpkeep"
+        if (jsonContains(trig, "_Players", "AnyPlayer")) return "Triggers.EachUpkeep"
+        if (jsonContains(trig, "_Players", "Opponent")) return "Triggers.EachOpponentUpkeep"
+    }
     if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersEndStep") && jsonContains(trig, "_Players", "AnyPlayer"))
         return "Triggers.EachEndStep"
 
