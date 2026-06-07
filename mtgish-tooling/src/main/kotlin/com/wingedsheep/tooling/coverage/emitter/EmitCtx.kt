@@ -187,6 +187,10 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
     // than misrender it as a battlefield tally. (Recognised "...ThisWay" shapes are handled above.)
     if (gn != null && "ThisWay" in gn) return null
     if ((gn != null && "NumberOf" in gn) || gn == "TheNumberOfPermanentsOnTheBattlefield") {
+        // A "shares a creature type with <it>" relational predicate (Mana Echoes) can't be expressed by
+        // the flat type/subtype/controller filter below — emitting the aggregate without it would silently
+        // over-count, so decline (-> SCAFFOLD) rather than misrender.
+        if ("SharesACreatureTypeWithPermanent" in compact(node)) return null
         val oracle = oracleText?.lowercase() ?: ""
         // The hand/"in it" guard catches a generic "NumberOf" count that's really about hand cards. It must
         // NOT fire for an explicit battlefield count (TheNumberOfPermanentsOnTheBattlefield) — a card may

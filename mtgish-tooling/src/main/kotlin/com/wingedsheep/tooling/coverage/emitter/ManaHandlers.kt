@@ -3,6 +3,7 @@ package com.wingedsheep.tooling.coverage.emitter
 import com.wingedsheep.tooling.coverage.Call
 import com.wingedsheep.tooling.coverage.Dsl
 import com.wingedsheep.tooling.coverage.arg
+import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.call
 import com.wingedsheep.tooling.coverage.strField
 import kotlinx.serialization.json.JsonArray
@@ -17,6 +18,17 @@ import kotlinx.serialization.json.JsonObject
  */
 internal val manaHandlers: Map<String, ActionHandler> = actionHandlers {
     on("AddMana") { _, args, _ -> manaProduceDsl(args) }
+    on("AddManaRepeated") { _, args, _ ->
+        // "Add {R} for each Goblin on the battlefield" (Brightstone Ritual): a single mana symbol produced
+        // a dynamic number of times -> Effects.AddMana(color, <count>). Only one colour/colourless symbol
+        // with a recoverable dynamic count renders; anything else scaffolds.
+        val arr = args.asArr ?: return@on null
+        val amt = dynamicAmount(arr.getOrNull(1)) ?: return@on null
+        when (val produce = (arr.getOrNull(0) as? JsonObject)?.strField("_ManaProduce")) {
+            "ManaProduceC" -> call("Effects.AddColorlessMana", arg(amt))
+            else -> MANA_PRODUCE_COLOR[produce]?.let { call("Effects.AddMana", arg(it), arg(amt)) }
+        }
+    }
 }
 
 private val MANA_PRODUCE_COLOR = mapOf(

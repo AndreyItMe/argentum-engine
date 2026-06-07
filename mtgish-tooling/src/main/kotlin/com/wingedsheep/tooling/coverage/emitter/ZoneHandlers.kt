@@ -55,6 +55,14 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         call("Effects.Move", arg(Lit(tgt)), arg("Zone.HAND"))
     }
 
+    on("GainControlOfPermanentUntil") { _, args, tvar ->
+        // "gain control of <permanent> until end of turn" (Threaten). Only the end-of-turn duration renders;
+        // a permanent gain-control uses a different action, and any other expiration scaffolds.
+        val tgt = refTarget(args, tvar) ?: return@on null
+        if (!jsonContains(args, "_Expiration", "UntilEndOfTurn")) return@on null
+        call("Effects.GainControl", arg(Lit(tgt)), arg("Duration.EndOfTurn"))
+    }
+
     on("SacrificePermanent") { _, args, _ ->  // "sacrifice ~" (Blistering Firecat's end-step sacrifice)
         if (jsonContains(args, "_Permanent", "ThisPermanent")) Lit("SacrificeSelfEffect") else null
     }

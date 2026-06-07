@@ -153,6 +153,11 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
                 if (!jsonContains(le["args"], "_Player", "You")) { reasons.add("PermanentLayerEffect"); return null }
                 listOf(Lit("ControlEnchantedPermanent"))
             }
+            "SetLandType" -> {
+                // "Enchanted land is an Island" (Sea's Claim) — replace the host land's subtypes.
+                val landType = le["args"].asStr() ?: run { reasons.add("PermanentLayerEffect"); return null }
+                listOf(call("SetEnchantedLandType", arg("\"${ktStr(landType)}\"")))
+            }
             else -> { reasons.add("PermanentLayerEffect"); return null }
         }
         abilities.forEach { stmts.add(staticAbilityStmt(it)) }
