@@ -20,6 +20,7 @@ import com.wingedsheep.tooling.coverage.hasStringValue
 import com.wingedsheep.tooling.coverage.hasTag
 import com.wingedsheep.tooling.coverage.jsonContains
 import com.wingedsheep.tooling.coverage.nodesTagged
+import com.wingedsheep.tooling.coverage.pascalToUpperSnake
 import com.wingedsheep.tooling.coverage.render
 import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
@@ -201,8 +202,35 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     }
     FilterPredicates.manaValueAtMost(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.manaValueAtLeast(filterNode)?.let { node = node.dot(it) }
+    // Keyword-ability restrictions ("attacking creature with shadow", Maze of Shadows): a
+    // HasAbility / DoesntHaveAbility clause carrying a `_CheckHasable` keyword -> .withKeyword /
+    // .withoutKeyword. Flying is already composed above (string match), so skip it here. If any
+    // HasAbility clause names an ability we can't map to a known SDK Keyword, decline (-> SCAFFOLD)
+    // rather than silently dropping the restriction and widening the target.
+    val keywordLinks = abilityKeywordLinks(filterNode) ?: return null
+    keywordLinks.forEach { node = node.dot(it) }
     controller?.let { node = node.dot(it) }
     return node
+}
+
+/**
+ * `.withKeyword(Keyword.X)` / `.withoutKeyword(Keyword.X)` links for every HasAbility / DoesntHaveAbility
+ * clause in [filterNode], or null if any such clause names an ability the SDK has no Keyword for (so the
+ * caller declines rather than dropping it). Flying is handled by the caller's string-based path, so it is
+ * skipped here to avoid a duplicate link.
+ */
+private fun EmitCtx.abilityKeywordLinks(filterNode: JsonElement?): List<Link>? {
+    val links = mutableListOf<Link>()
+    for ((tag, method) in listOf("HasAbility" to "withKeyword", "DoesntHaveAbility" to "withoutKeyword")) {
+        for (node in filterNode.nodesTagged(tag)) {
+            val kwName = node.firstWordAtKey("_CheckHasable") ?: return null  // non-keyword hasable -> decline
+            if (kwName == "Flying") continue  // composed by the caller's "Flying" string match
+            val kw = pascalToUpperSnake(kwName)
+            if (kw !in keywords) return null  // unknown ability -> decline (don't widen the filter)
+            links.add(Link(method, listOf(arg("Keyword.$kw"))))
+        }
+    }
+    return links
 }
 
 private fun targetTypes(args: JsonElement?): Set<String> = args.argWordsTagged("IsCardtype").toSet()

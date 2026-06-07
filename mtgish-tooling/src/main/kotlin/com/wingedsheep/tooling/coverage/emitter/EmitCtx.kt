@@ -239,6 +239,11 @@ private fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
     if (ref in SELF_REFS) return "EffectTarget.Self"
     // "that player" in a trigger ("the player ~ dealt combat damage to") -> the triggering player.
     if (ref == "Trigger_ThatPlayer") return "EffectTarget.PlayerRef(Player.TriggeringPlayer)"
+    // A plain player reference (no target) — the controller / "you" or an opponent. The pain-land idiom
+    // "{T}: Add {C}. This land deals N damage to you" carries a `_DamageRecipient: Player{You}` recipient
+    // that is the controller, not a chosen target (Adarkar Wastes, Caldera Lake, Ancient Tomb).
+    if (ref == "You") return "EffectTarget.PlayerRef(Player.You)"
+    if (ref == "Opponent") return "EffectTarget.PlayerRef(Player.Opponent)"
     return tvar
 }
 
