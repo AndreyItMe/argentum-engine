@@ -132,6 +132,14 @@ internal fun EmitCtx.renderPlayerAction(node: JsonObject, tvar: String?): Dsl? {
             // bound-target-player form renders; an untargeted/you form scaffolds rather than guess.
             return if (ptv != null) call("Patterns.Library.shuffleGraveyardIntoLibrary", arg(Lit(ptv))) else null
         }
+        "SacrificeAPermanent" -> {
+            // "target player sacrifices a <filter> of their choice" — the edict (Diabolic Edict,
+            // Gatekeeper of Malakir). The sacrificing player (who chooses) is the bound target player;
+            // render ForceSacrificeEffect(filter, 1, targetPlayer). Only the bound-target-player form
+            // renders — an untargeted/each-player form scaffolds rather than guess the actor.
+            val filter = gameObjectFilterExpr(inner["args"]) ?: return null
+            return if (ptv != null) call("ForceSacrificeEffect", arg(filter), arg("1"), arg(Lit(ptv))) else null
+        }
         "TakeAnExtraTurn" -> {
             // "Target player takes an extra turn after this one" (Time Warp). Only the
             // bound-target-player form renders here — the untargeted "take an extra turn"

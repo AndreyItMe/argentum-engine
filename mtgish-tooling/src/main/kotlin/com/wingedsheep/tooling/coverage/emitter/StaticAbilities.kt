@@ -249,6 +249,9 @@ private fun EmitCtx.staticAbilityExpr(ruleName: String, ruleNode: JsonObject): D
         }
         "MustBlockAttacker" -> return call("MustBlock")
         "MustAttackPlayer" -> return call("MustAttack")
+        // "This creature attacks each combat if able" (Dauthi Slayer, Juggernaut) — the unfiltered
+        // self MustAttack, distinct from MustAttackPlayer which carries a forced defender.
+        "MustAttack" -> return call("MustAttack")
         "CanBlockAnyNumberOfCreatures" -> return call("CanBlockAnyNumber")
     }
     return null
