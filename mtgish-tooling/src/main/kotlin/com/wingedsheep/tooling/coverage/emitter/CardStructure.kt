@@ -23,6 +23,9 @@ import com.wingedsheep.tooling.coverage.strField
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** (targets|null, actions|null) from the first Targeted / ActionList envelope in a subtree.
  *  Shared by spells (SpellActions) and triggered abilities (TriggerA). */
@@ -500,6 +503,26 @@ internal fun EmitCtx.activatedBlock(rule: JsonObject, activateFromZone: String? 
     if (cost == null) { reasons.add("activated-cost"); return null }
     val (targets, actions) = extractEnvelope(rule)
     if (actions == null) { reasons.add("activated-actions"); return null }
+
+    // "Add {U} or {R}." (Caldera Lake, Pine Barrens) is a single mtgish ability whose AddMana produces a
+    // *choice* of color. Argentum (and Adarkar Wastes / Brushland) model this as one activatedAbility per
+    // color, each carrying the same trailing actions (e.g. "This land deals 1 damage to you"). Expand the
+    // Or into N abilities, each with that color's single-produce AddMana spliced in for the Or node. Only a
+    // targetless mana ability whose Or is a flat list of single-color produces expands; anything else falls
+    // through to the single-ability path (and scaffolds there if the Or can't render).
+    manaChoiceExpansion(rule, cost, targets, actions, activateFromZone)?.let { return it }
+
+    return activatedAbilityStmts(rule, cost, targets, actions, activateFromZone)
+}
+
+/** Build one `activatedAbility { … }` block from already-recovered cost / target / action pieces. */
+private fun EmitCtx.activatedAbilityStmts(
+    rule: JsonObject,
+    cost: String,
+    targets: List<JsonObject>?,
+    actions: List<JsonObject>,
+    activateFromZone: String?,
+): List<Stmt>? {
     val (tnode, tvar) = spellTargetExpr(targets, actions) ?: return null
     val edsl = renderEffectList(actions, tvar) ?: return null
     val stmts = mutableListOf<Stmt>(Assign("cost", Lit(cost)))
@@ -515,6 +538,48 @@ internal fun EmitCtx.activatedBlock(rule: JsonObject, activateFromZone: String? 
         stmts.add(Assign("timing", Lit("TimingRule.ManaAbility")))
     }
     return listOf(Sub(Block("activatedAbility", stmts)))
+}
+
+/**
+ * `{T}: Add {U} or {R}. …` -> one `activatedAbility { }` per color. Returns null (fall through to the
+ * single-ability path) unless the actions contain exactly one `AddMana` whose produce is an `Or` of
+ * flat single-color/colorless symbols, the ability is targetless, and it carries no modifiers/zone — the
+ * conservative shape the pain-/filter-land idiom uses. Each emitted ability reuses the same trailing
+ * actions verbatim, so a damage rider ("This land deals 1 damage to you") is preserved per color.
+ */
+private fun EmitCtx.manaChoiceExpansion(
+    rule: JsonObject,
+    cost: String,
+    targets: List<JsonObject>?,
+    actions: List<JsonObject>,
+    activateFromZone: String?,
+): List<Stmt>? {
+    if (targets != null) return null
+    if (rule.strField("_Rule") == "ActivatedWithModifiers") return null
+    val orAction = actions.singleOrNull { act ->
+        act.strField("_Action") == "AddMana" &&
+            (act["args"] as? JsonObject)?.strField("_ManaProduce") == "Or"
+    } ?: return null
+    val orProduce = orAction["args"] as? JsonObject ?: return null
+    val choices = orProduce["args"].asArr ?: return null
+    if (choices.size < 2) return null
+    // Every Or child must itself be a single-color / colorless produce (no nested And/Or/choice).
+    val singles = choices.map { it as? JsonObject ?: return null }
+    if (singles.any { manaProduceDsl(it) == null }) return null
+
+    val blocks = mutableListOf<Stmt>()
+    for (single in singles) {
+        // Rewrite the actions list: replace the Or AddMana with one whose produce is this single color.
+        val rewritten = actions.map { act ->
+            if (act === orAction) buildJsonObject {
+                put("_Action", JsonPrimitive("AddMana"))
+                put("args", single)
+            } else act
+        }
+        val one = activatedAbilityStmts(rule, cost, null, rewritten, activateFromZone) ?: return null
+        blocks.addAll(one)
+    }
+    return blocks
 }
 
 /**
@@ -598,6 +663,22 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
             "            ActivationRestriction.BeforeStep(Step.DECLARE_ATTACKERS)",
             "        )",
         )
+    }
+    // "Activate only if it's not your turn" (Ghost Town): the sole modifier is an ActivateOnlyIf whose
+    // condition is IsAPlayersTurn over a player Other than you -> ActivationRestriction.OnlyIfCondition(
+    // IsNotYourTurn). Match the exact shape so any other ActivateOnlyIf condition still scaffolds.
+    run {
+        val mods = (rule["args"].asArr ?: emptyList()).filterIsInstance<JsonObject>()
+            .filter { it.strField("_ActivateModifier") != null }
+        val only = mods.singleOrNull()
+        if (only != null && only.strField("_ActivateModifier") == "ActivateOnlyIf") {
+            val cond = only["args"] as? JsonObject
+            if (cond?.strField("_Condition") == "IsAPlayersTurn" &&
+                jsonContains(cond, "_Players", "Other") && jsonContains(cond, "_Player", "You")
+            ) {
+                return listOf("        restrictions = listOf(ActivationRestriction.OnlyIfCondition(IsNotYourTurn))")
+            }
+        }
     }
     // "Activate no more than N times each turn" (Pit Imp / Phyrexian Battleflies) -> MaxPerTurn(N).
     // The modifier list is the rule's args after the cost + action list; render only when EVERY

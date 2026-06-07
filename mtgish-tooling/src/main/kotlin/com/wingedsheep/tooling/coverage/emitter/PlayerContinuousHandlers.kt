@@ -42,9 +42,19 @@ internal val playerContinuousHandlers: Map<String, ActionHandler> = actionHandle
     on("EachPlayerAction") { node, _, _ -> renderEachPlayer(node) }
     on("PlayerAction", "HavePlayerTakeAction") { node, _, tvar -> renderPlayerAction(node, tvar) }
 
-    on("CreateReplaceWouldDealDamageUntil") { node, _, _ ->
+    on("CreateReplaceWouldDealDamageUntil") { node, _, tvar ->
         val blob = compact(node)
         when {
+            // "Prevent all combat damage that would be dealt to and dealt by that creature this turn"
+            // (Maze of Shadows): an Or of the to-recipient + by-creature combat-damage events, both over
+            // the bound target permanent, + PreventThatDamage until EOT -> PreventCombatDamageToAndBy.
+            // Require the bound target so a self/untargeted variant doesn't slip through.
+            tvar != null &&
+                "CombatDamageWouldBeDealtToRecipient" in blob &&
+                "CombatDamageWouldBeDealtByCreature" in blob &&
+                jsonContains(node, "_Permanent", "Ref_TargetPermanent") &&
+                "PreventThatDamage" in blob && jsonContains(node, "_Expiration", "UntilEndOfTurn") ->
+                call("Effects.PreventCombatDamageToAndBy", arg(Lit(tvar)))
             // "prevent all damage attacking creatures would deal to you this turn" (Deep Wood)
             "IsAttacking" in blob && "PreventThatDamage" in blob && jsonContains(node, "_Player", "You") ->
                 call("Effects.PreventDamageFromAttackingCreatures")
