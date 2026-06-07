@@ -90,4 +90,39 @@ class TargetRecoveryTest : StringSpec({
         ctx.targetDsl(obj("""{"_Target":"TargetGraveyardCard","args":{}}""")) shouldBe
             "TargetObject(filter = TargetFilter.CardInGraveyard)"
     }
+
+    "creatureFilterDsl recovers a multi-colour Or as withAnyColor (Escape Routes, Hunting Drake)" {
+        val whiteOrBlack = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"Or","args":[""" +
+                    """{"_Permanents":"IsColor","args":{"_Color":"White"}},""" +
+                    """{"_Permanents":"IsColor","args":{"_Color":"Black"}}]},""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"}]}""",
+        )
+        ctx.creatureFilterDsl(whiteOrBlack) shouldBe "TargetFilter.Creature.withAnyColor(Color.WHITE, Color.BLACK)"
+    }
+
+    "creatureFilterDsl declines a source-relative blocking relation (Cromat)" {
+        // "creature blocking or blocked by <source>" — IsBlockingAttacker / IsBlockedByDefender bound to
+        // ThisPermanent isn't a static filter, and must not be mis-caught as the BlockingCreature constant.
+        val blockingSource = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"Or","args":[""" +
+                    """{"_Permanents":"IsBlockingAttacker","args":{"_Permanent":"ThisPermanent"}},""" +
+                    """{"_Permanents":"IsBlockedByDefender","args":{"_Permanent":"ThisPermanent"}}]}]}""",
+        )
+        ctx.creatureFilterDsl(blockingSource).shouldBeNull()
+    }
+
+    "targetExpr restricts a counter to a colour-bound spell (Gainsay)" {
+        ctx.targetDsl(obj("""{"_Target":"TargetSpell","args":{"_Spells":"IsColor","args":{"_Color":"Blue"}}}""")) shouldBe
+            "TargetSpell(filter = TargetFilter.SpellOnStack.withColor(Color.BLUE))"
+    }
+
+    "targetExpr declines a spell whose filter is about what it targets, not its type (Confound)" {
+        // "counter target spell that targets a creature": the nested IsCardtype describes the spell's
+        // target, so it must not collapse to CreatureSpellOnStack ("a creature spell"). Decline -> SCAFFOLD.
+        ctx.targetDsl(obj("""{"_Target":"TargetSpell","args":{"_Spells":"TargetsAPermanent","args":{"_Permanents":"IsCardtype","args":"Creature"}}}""")).shouldBeNull()
+    }
 })

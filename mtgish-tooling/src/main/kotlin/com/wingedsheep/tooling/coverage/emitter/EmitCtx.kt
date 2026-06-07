@@ -207,7 +207,10 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
             "on the battlefield" in oracle -> "Player.Each"
             "target opponent controls" in oracle || jsonContains(node, "_Player", "Ref_TargetOpponent") -> "Player.TargetOpponent"
             "target player controls" in oracle || jsonContains(node, "_Player", "Ref_TargetPlayer") -> "Player.TargetPlayer"
-            jsonContains(node, "_Player", "Opponent") -> "Player.Opponent"
+            // A plain "an opponent controls" controller clause is `ControlledByAPlayer{_Players: Opponent}`
+            // — the key is plural `_Players`, so the singular `_Player` probe above misses it and the count
+            // would wrongly default to Player.You (Pygmy Kavu's "each black creature your opponents control").
+            jsonContains(node, "_Player", "Opponent") || jsonContains(node, "_Players", "Opponent") -> "Player.Opponent"
             else -> "Player.You"
         }
         // "for each Goblin/Bird/Elf on the battlefield": a creature subtype, which the land-oriented

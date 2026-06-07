@@ -9,12 +9,12 @@ import com.wingedsheep.tooling.coverage.arg
 import com.wingedsheep.tooling.coverage.argWordsTagged
 import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.asStr
+import com.wingedsheep.tooling.coverage.colorsOf
 import com.wingedsheep.tooling.coverage.compact
 import com.wingedsheep.tooling.coverage.dot
 import com.wingedsheep.tooling.coverage.field
 import com.wingedsheep.tooling.coverage.findInteger
 import com.wingedsheep.tooling.coverage.firstArgStringTagged
-import com.wingedsheep.tooling.coverage.firstColorOf
 import com.wingedsheep.tooling.coverage.firstWordAtKey
 import com.wingedsheep.tooling.coverage.hasStringValue
 import com.wingedsheep.tooling.coverage.hasTag
@@ -124,6 +124,12 @@ internal fun EmitCtx.creatureFilterDsl(filterNode: JsonElement?): String? = crea
 
 internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     val blob = compact(filterNode)
+    // "creature blocking <source>" / "blocked by <source>" (IsBlockingAttacker / IsBlockedByDefender,
+    // bound to ThisPermanent) is relative to the source creature — no static GroupFilter expresses it,
+    // and the bare "IsBlocking" substring check below would otherwise mis-catch IsBlockingAttacker as
+    // the generic "blocking creature" constant, silently dropping the source relation. Decline so it
+    // scaffolds (Cromat's {W}{B} ability).
+    if ("IsBlockingAttacker" in blob || "IsBlockedByDefender" in blob) return null
     // "nonartifact creature" (the Terror template) renders via .nonartifact(); any OTHER non-cardtype
     // restriction has no faithful filter rendering yet, so drop to SCAFFOLD rather than omit it.
     val nonCardtypes = filterNode.argWordsTagged("IsNonCardtype")
@@ -171,10 +177,15 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     }
     var node: Dsl = Lit("TargetFilter.Creature")
     if ("Artifact" in nonCardtypes) node = node.dot("nonartifact")
-    // Color stays inline: TargetFilter has no multi-color form, so the creature target uses the
-    // IsColor/IsNonColor-scoped single-color recovery rather than gameObjectFilterDsl's collect-all.
-    filterNode.firstColorOf("IsNonColor")?.let { node = node.dot("notColor", arg("Color.${it.uppercase()}")) }
-    filterNode.firstColorOf("IsColor")?.let { node = node.dot("withColor", arg("Color.${it.uppercase()}")) }
+    // Color recovery, IsColor/IsNonColor-scoped: a single colour -> .withColor / .notColor; several
+    // colours under an Or ("white or black creature") -> .withAnyColor so the extra colours aren't
+    // dropped. Multiple excluded colours chain as .notColor (AND-of-not = "neither X nor Y").
+    filterNode.colorsOf("IsNonColor").forEach { node = node.dot("notColor", arg("Color.${it.uppercase()}")) }
+    val colors = filterNode.colorsOf("IsColor")
+    when {
+        colors.size == 1 -> node = node.dot("withColor", arg("Color.${colors[0].uppercase()}"))
+        colors.size > 1 -> node = node.dot("withAnyColor", *colors.map { arg("Color.${it.uppercase()}") }.toTypedArray())
+    }
     // "...with flying" / "...without flying" — withoutFlying first, since a DoesntHaveAbility Flying
     // clause also satisfies the plain-Flying string check (mirrors gameObjectFilterExpr).
     (FilterPredicates.withoutFlying(filterNode) ?: FilterPredicates.withFlying(filterNode))?.let { node = node.dot(it) }
@@ -259,7 +270,22 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
         return null  // unusual filters: not rendered yet -> SCAFFOLD
     }
     if (ttype == "TargetSpell") {
+        val blob = compact(args)
+        // "counter target spell that targets a creature/player" (TargetsAPermanent / TargetsAPlayer):
+        // the nested IsCardtype describes the spell's *target*, not the spell's own type, so targetTypes
+        // would mis-read it as a "creature spell". No SDK filter expresses the relation — decline so it
+        // scaffolds rather than counter the wrong spells (Confound).
+        if ("TargetsA" in blob) return null
         val types = targetTypes(args)
+        val colors = args.colorsOf("IsColor")
+        // "counter target blue spell" — a colour-restricted spell on the stack.
+        if (types.isEmpty() && colors.isNotEmpty()) {
+            var f: Dsl = Lit("TargetFilter.SpellOnStack")
+            f = if (colors.size == 1) f.dot("withColor", arg("Color.${colors[0].uppercase()}"))
+                else f.dot("withAnyColor", *colors.map { arg("Color.${it.uppercase()}") }.toTypedArray())
+            return Call("TargetSpell", listOf(arg("filter", f)))
+        }
+        if (colors.isNotEmpty()) return null  // colour + type combo not rendered yet -> SCAFFOLD
         if (types == setOf("Creature", "Sorcery")) return Call("TargetSpell", listOf(arg("filter", "TargetFilter.CreatureOrSorcerySpellOnStack")))
         if (types == setOf("Instant", "Sorcery")) return Call("TargetSpell", listOf(arg("filter", "TargetFilter.InstantOrSorcerySpellOnStack")))
         if (types == setOf("Creature")) return Call("TargetSpell", listOf(arg("filter", "TargetFilter.CreatureSpellOnStack")))
@@ -425,8 +451,14 @@ internal fun EmitCtx.landSearchFilterExpr(filterNode: JsonElement?): Dsl {
         "\"Land\"" in blob -> Lit("GameObjectFilter.Land")
         "\"Creature\"" in blob || "creature" in oracle -> {
             var out: Dsl = Lit("GameObjectFilter.Creature")
-            if ("black creature" in oracle) out = out.dot("withColor", arg("Color.BLACK"))
-            else filterNode.firstWordAtKey("_Color")?.let { out = out.dot("withColor", arg("Color.${it.uppercase()}")) }
+            // "black and/or red creature" -> withAnyColor; a single colour -> withColor; fall back to the
+            // oracle's "black creature" wording only when the filter node carries no structured colour.
+            val colors = filterNode.colorsOf("IsColor")
+            when {
+                colors.size > 1 -> out = out.dot("withAnyColor", *colors.map { arg("Color.${it.uppercase()}") }.toTypedArray())
+                colors.size == 1 -> out = out.dot("withColor", arg("Color.${colors[0].uppercase()}"))
+                "black creature" in oracle -> out = out.dot("withColor", arg("Color.BLACK"))
+            }
             if ("tapped creature" in oracle) out = out.dot("tapped")
             if ("attacking" in oracle) out = out.dot("attacking")
             out

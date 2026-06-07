@@ -79,6 +79,12 @@ fun JsonElement?.firstWordAtKey(key: String): String? = wordsAtKey(key).firstOrN
 fun JsonElement?.firstColorOf(tag: String): String? =
     nodesTagged(tag).firstOrNull()?.firstWordAtKey("_Color")
 
+/** Every distinct colour carried by a [tag] clause (e.g. all `IsColor` colours of a "white or black"
+ *  filter's `Or[IsColor White, IsColor Black]`), document order — the multi-colour form of
+ *  [firstColorOf]. Empty when the filter carries no [tag] clause. */
+fun JsonElement?.colorsOf(tag: String): List<String> =
+    nodesTagged(tag).mapNotNull { it.firstWordAtKey("_Color") }.distinct()
+
 /** True iff any string-primitive *value* in the subtree equals [value] — the typed form of
  *  `"\"value\"" in compact(node)` (keys are `_`-prefixed / `args`, so only values can match). */
 fun JsonElement?.hasStringValue(value: String): Boolean = anyStringValue { it == value }

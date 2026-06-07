@@ -222,6 +222,9 @@ data class TargetFilter(
     /** Add color requirement */
     fun withColor(color: Color) = copy(baseFilter = baseFilter.withColor(color))
 
+    /** Match any of the specified colors (OR logic), e.g. "target white or black creature". */
+    fun withAnyColor(vararg colors: Color) = copy(baseFilter = baseFilter.withAnyColor(*colors))
+
     /** Exclude color */
     fun notColor(color: Color) = copy(baseFilter = baseFilter.notColor(color))
 
