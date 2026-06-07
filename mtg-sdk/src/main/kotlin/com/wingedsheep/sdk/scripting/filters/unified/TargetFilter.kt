@@ -252,6 +252,9 @@ data class TargetFilter(
     /** Mana value at most the X chosen for the source spell/ability */
     fun manaValueAtMostX() = copy(baseFilter = baseFilter.manaValueAtMostX())
 
+    /** Mana value exactly equal to the X chosen for the source spell/ability (Repeal, Spell Blast). */
+    fun manaValueEqualsX() = copy(baseFilter = baseFilter.manaValueEqualsX())
+
     /** Mana value at least */
     fun manaValueAtLeast(min: Int) = copy(baseFilter = baseFilter.manaValueAtLeast(min))
 

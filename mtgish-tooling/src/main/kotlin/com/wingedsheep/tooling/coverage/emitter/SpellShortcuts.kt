@@ -3,6 +3,7 @@ package com.wingedsheep.tooling.coverage.emitter
 import com.wingedsheep.tooling.coverage.Assign
 import com.wingedsheep.tooling.coverage.Block
 import com.wingedsheep.tooling.coverage.Call
+import com.wingedsheep.tooling.coverage.Composite
 import com.wingedsheep.tooling.coverage.Dsl
 import com.wingedsheep.tooling.coverage.Stmt
 import com.wingedsheep.tooling.coverage.Sub
@@ -58,17 +59,42 @@ internal fun EmitCtx.extraTurnEffect(card: JsonObject): Dsl? {
     return null
 }
 
-/** Forked-Lightning shape: TargetedDistributed -> TargetCreature(count) + DividedDamageEffect. */
+/**
+ * Distributed-damage spells (TargetedDistributed): `N damage divided as you choose among one or
+ * <max> targets`, optionally followed by more actions ("Draw a card." — Electrolyze).
+ *
+ * Recovers the total and the target-count cap, picks the target requirement by the distributed-target
+ * shape (`…AnyTargets` -> AnyTarget; `…TargetPermanents` -> TargetCreature, the Forked-Lightning form),
+ * renders the leading `DividedDamageEffect(total, 1, max)`, and composes any trailing actions through
+ * the generic renderer. If a trailing action can't be rendered exactly, decline so the card scaffolds
+ * rather than dropping it.
+ */
 internal fun EmitCtx.distributedSpell(card: JsonObject): List<Stmt>? {
     val blob = compact(card["Rules"])
     if ("\"TargetedDistributed\"" !in blob) return null
-    val total = Regex(""""DistributeNumberAmongTargets","args":\{"_GameNumber":"Integer","args":(\d+)""").find(blob)
-    val mx = Regex(""""BetweenOneAndNumberTargetPermanents","args":\[\{"_GameNumber":"Integer","args":(\d+)""").find(blob)
-    if (total == null || mx == null) return null
-    val m = mx.groupValues[1]
+    val total = Regex(""""DistributeNumberAmongTargets","args":\{"_GameNumber":"Integer","args":(\d+)""").find(blob) ?: return null
+    val anyMax = Regex(""""BetweenOneAndNumberAnyTargets","args":\{"_GameNumber":"Integer","args":(\d+)""").find(blob)
+    val permMax = Regex(""""BetweenOneAndNumberTargetPermanents","args":\[\{"_GameNumber":"Integer","args":(\d+)""").find(blob)
+    val (target, m) = when {
+        anyMax != null -> call("AnyTarget", arg("count", anyMax.groupValues[1]), arg("minCount", "1")) to anyMax.groupValues[1]
+        permMax != null -> call("TargetCreature", arg("count", permMax.groupValues[1]), arg("minCount", "1")) to permMax.groupValues[1]
+        else -> return null
+    }
+    val divided = call("DividedDamageEffect", arg("totalDamage", total.groupValues[1]), arg("minTargets", "1"), arg("maxTargets", m))
+    // Compose any actions after the distributed-damage one (e.g. Electrolyze's trailing "Draw a card").
+    val (_, actions) = extractEnvelope(card["Rules"])
+    val trailing = actions?.dropWhile { it.strField("_Action") != "SpellDealsDistributedDamage" }?.drop(1).orEmpty()
+    val effect: Dsl = if (trailing.isEmpty()) {
+        divided
+    } else {
+        val rest = renderEffectList(trailing, null) ?: return null
+        val parts = mutableListOf<Dsl>(divided)
+        if (rest is Composite) parts.addAll(rest.parts) else parts.add(rest)
+        Composite(parts)
+    }
     return listOf(Sub(Block("spell", listOf(
-        Assign("target", call("TargetCreature", arg("count", m), arg("minCount", "1"))),
-        Assign("effect", call("DividedDamageEffect", arg("totalDamage", total.groupValues[1]), arg("minTargets", "1"), arg("maxTargets", m))),
+        Assign("target", target),
+        Assign("effect", effect),
     ))))
 }
 

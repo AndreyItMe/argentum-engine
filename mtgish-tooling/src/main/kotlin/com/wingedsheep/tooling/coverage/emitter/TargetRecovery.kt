@@ -207,6 +207,18 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
 
 private fun targetTypes(args: JsonElement?): Set<String> = args.argWordsTagged("IsCardtype").toSet()
 
+/**
+ * True for a `ManaValueIs { _Comparison: EqualTo, args: { _GameNumber: ValueX } }` clause — "mana value
+ * X", where X is the value chosen for the source spell's `{X}…` cost (Repeal). Renders as
+ * `.manaValueEqualsX()`. Any other ManaValueIs shape (a fixed integer, a different comparison) is NOT
+ * matched here, so the caller declines rather than mis-rendering.
+ */
+private fun manaValueEqualsXClause(args: JsonElement?): Boolean =
+    args.nodesTagged("ManaValueIs").any { mv ->
+        val cmp = mv["args"]
+        cmp.strField("_Comparison") == "EqualTo" && "ValueX" in compact(cmp)
+    }
+
 internal fun EmitCtx.targetDsl(tnode: JsonObject, actionContext: List<JsonObject>? = null): String? =
     targetExpr(tnode, actionContext)?.let(::render)
 
@@ -248,9 +260,16 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
             return Call("TargetPermanent", parts)
         }
         // "target nonland permanent" — an IsNonCardtype "Land" with no positive cardtype restriction
-        // (Thistledown Players' "untap target nonland permanent").
+        // (Thistledown Players' "untap target nonland permanent"). An optional "with mana value X"
+        // clause (ManaValueIs EqualTo ValueX, from an {X}… cast cost) renders as .manaValueEqualsX()
+        // (Repeal). A ManaValueIs clause we DON'T render (any other shape) must decline rather than
+        // silently drop the restriction — an unrestricted bounce would hit any permanent.
         if (types.isEmpty() && args.argWordsTagged("IsNonCardtype") == listOf("Land") && "IsCreatureType" !in blob) {
-            val parts = mutableListOf(arg("filter", "TargetFilter.NonlandPermanent"))
+            val manaValueX = manaValueEqualsXClause(args)
+            if ("ManaValueIs" in blob && !manaValueX) return null  // unrendered MV restriction -> SCAFFOLD
+            var f: Dsl = Lit("TargetFilter.NonlandPermanent")
+            if (manaValueX) f = f.dot("manaValueEqualsX")
+            val parts = mutableListOf(arg("filter", f))
             if (ttype in setOf("NumberTargetPermanents", "UptoNumberTargetPermanents") && countInt is Int) parts.add(0, arg("count", "$countInt"))
             if (ttype == "UptoNumberTargetPermanents") parts.add(0, arg("optional", "true"))
             return Call("TargetPermanent", parts)
@@ -278,6 +297,15 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
         if ("TargetsA" in blob) return null
         val types = targetTypes(args)
         val colors = args.colorsOf("IsColor")
+        val nonColors = args.colorsOf("IsNonColor")
+        // "counter target nonblue spell" (Frazzle) — an IsNonColor clause on a stack spell. AND-of-not =
+        // "neither X nor Y"; each excluded colour chains as .notColor. SDK supports it on SpellOnStack.
+        if (types.isEmpty() && colors.isEmpty() && nonColors.isNotEmpty()) {
+            var f: Dsl = Lit("TargetFilter.SpellOnStack")
+            nonColors.forEach { f = f.dot("notColor", arg("Color.${it.uppercase()}")) }
+            return Call("TargetSpell", listOf(arg("filter", f)))
+        }
+        if (nonColors.isNotEmpty()) return null  // nonColor + (type | positive colour) combo not rendered -> SCAFFOLD
         // "counter target blue spell" — a colour-restricted spell on the stack.
         if (types.isEmpty() && colors.isNotEmpty()) {
             var f: Dsl = Lit("TargetFilter.SpellOnStack")

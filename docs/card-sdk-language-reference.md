@@ -983,8 +983,10 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
 - `.power(n)` / `.minPower(n)` / `.maxPower(n)` — P/T comparator.
 - `.manaValue(n)` / `.manaValueAtMost(n)` / `.manaValueAtLeast(n)` — mana-value comparator.
 - `.manaValueAtMostX()` — mana value ≤ the X chosen for the source spell/ability.
-- `.manaValueEqualsX()` — mana value **exactly equal** to the number chosen for the source spell/ability
-  (set by `Effects.ChooseNumberThen`; resolution-time only — matches nothing without a chosen number). Used by Void.
+- `.manaValueEqualsX()` — mana value **exactly equal** to the X chosen for the source spell/ability (the chosen
+  number, or the X paid in an `{X}…` mana cost; resolution-time only — matches nothing without a chosen number).
+  Available on both the object-filter builders and on `TargetFilter` (mirrors `.manaValueAtMostX()`). Used by Void
+  (`Effects.ChooseNumberThen`) and Repeal (`{X}{U}` — return target nonland permanent with mana value X).
 - `.manaValueAtMostEntity(ref)` — mana value ≤ a referenced entity's mana value (e.g. Kodama of the East Tree).
 - `.powerGreaterThanEntity(ref)` — power strictly greater than a referenced entity's projected power. Used by
   Éowyn, Fearless Knight ("exile target creature an opponent controls with greater power") — combine

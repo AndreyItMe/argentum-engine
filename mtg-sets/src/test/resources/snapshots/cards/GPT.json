@@ -1,3 +1,83 @@
+// Electrolyze
+{
+    "name": "Electrolyze",
+    "manaCost": "{1}{U}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Electrolyze deals 2 damage divided as you choose among one or two targets.\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DividedDamage",
+                    "totalDamage": 2,
+                    "maxTargets": 2
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "AnyTarget",
+                "count": 2,
+                "minCount": 1
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "111",
+        "rarity": "UNCOMMON",
+        "artist": "Zoltan Boros & Gabor Szikszai",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/f/ef42b5b2-6504-486c-aaa0-9d5e4769ba1d.jpg?1593272648"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
+// Frazzle
+{
+    "name": "Frazzle",
+    "manaCost": "{3}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Counter target nonblue spell.",
+    "script": {
+        "spellEffect": "Counter",
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "NotColor",
+                                "color": "BLUE"
+                            }
+                        ]
+                    },
+                    "zone": "Stack"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "25",
+        "rarity": "UNCOMMON",
+        "artist": "Pete Venters",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/8/68b7f705-4d64-4551-8d76-826d91324e9e.jpg?1593271993"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Gruul Turf
 {
     "name": "Gruul Turf",
@@ -62,5 +142,156 @@
     "colorIdentityOverride": [
         "RED",
         "GREEN"
+    ]
+}
+
+// Izzet Chronarch
+{
+    "name": "Izzet Chronarch",
+    "manaCost": "{3}{U}{R}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "When this creature enters, return target instant or sorcery card from your graveyard to your hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "instant|sorcery own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "119",
+        "artist": "Nick Percival",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/c/6c82dc47-38db-4ee1-9031-f8ea68d05389.jpg?1593272708"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
+// Izzet Signet
+{
+    "name": "Izzet Signet",
+    "manaCost": "{2}",
+    "typeLine": "Artifact",
+    "oracleText": "{1}, {T}: Add {U}{R}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostMana",
+                            "cost": "{1}"
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddMana",
+                            "color": "BLUE"
+                        },
+                        {
+                            "type": "AddMana",
+                            "color": "RED"
+                        }
+                    ]
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "152",
+        "artist": "Greg Hildebrandt",
+        "flavorText": "The Izzet signet is redesigned often, each time becoming closer to a vanity portrait of Niv-Mizzet.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/8/f823be95-bef4-4e86-a924-239be62394bf.jpg?1593272937"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
+// Repeal
+{
+    "name": "Repeal",
+    "manaCost": "{X}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Return target nonland permanent with mana value X to its owner's hand.\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "nonland permanent"
+                    },
+                    "destination": "Hand"
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsNonland",
+                            "IsPermanent",
+                            "ManaValueEqualsX"
+                        ]
+                    }
+                },
+                "id": "nonland permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "32",
+        "artist": "Dan Murayama Scott",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/e/9e7dd929-4bba-46a6-86c9-b8ed853eb721.jpg?1593272056"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
