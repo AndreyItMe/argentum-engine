@@ -234,10 +234,20 @@ data class EffectContext(
          * - If count > 1: maps `id[0]` -> target0, `id[1]` -> target1, etc.
          *
          * Requirements with `id == null` are skipped (backward compat with ContextTarget).
+         *
+         * `targets` is accepted as `List<ChosenTarget?>` so callers can pass a
+         * **positionally-aligned** list where slots whose target was dropped by
+         * resolution-time legality validation (CR 608.2b) are `null`. Such slots
+         * leave the corresponding `id` unmapped so any sub-effect that references
+         * the now-illegal target via [EffectTarget.BoundVariable] resolves to
+         * `null` and fizzles instead of silently consuming a later target whose
+         * position shifted forward in the compacted list. The non-null
+         * `List<ChosenTarget>` form is still accepted (Kotlin covariance) for
+         * callers that already filter targets up-front.
          */
         fun buildNamedTargets(
             requirements: List<TargetRequirement>,
-            targets: List<ChosenTarget>
+            targets: List<ChosenTarget?>
         ): Map<String, ChosenTarget> {
             val result = mutableMapOf<String, ChosenTarget>()
             var targetIndex = 0

@@ -35,7 +35,13 @@ class DealDamageExecutor(
         // Use damageSource override if specified (e.g., EnchantedCreature for Lavamancer's Skill)
         val damageSourceTarget = effect.damageSource
         val sourceId = if (damageSourceTarget != null) {
+            // The spell text named a specific source ("it deals damage" — Diplomatic Relations,
+            // "enchanted creature deals damage" — Lavamancer's Skill). If that source can no
+            // longer be resolved at resolution time (e.g. the FROM target died to a response
+            // and was dropped by 608.2b validation), the whole damage instruction is skipped
+            // per CR 608.2b — we don't fall back to the ability's source permanent.
             context.resolveTarget(damageSourceTarget, state)
+                ?: return EffectResult.error(state, "Damage source is no longer a legal target")
         } else {
             context.sourceId
         }

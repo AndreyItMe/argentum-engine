@@ -620,7 +620,18 @@ class StackResolver(
         // Validate targets if spell has any (including protection check - Rule 702.16)
         val sourceColors = cardComponent?.colors ?: emptySet()
         val sourceSubtypes = cardComponent?.typeLine?.subtypes?.map { it.value }?.toSet() ?: emptySet()
-        val resolvedTargets = if (targetsComponent != null && targetsComponent.targets.isNotEmpty()) {
+        // `resolvedTargets` is the compacted (drop-illegal) list used as `context.targets`
+        // — same shape every executor has always seen. `alignedResolvedTargets` is a parallel
+        // list the same length as the originally-chosen targets, with `null` in slots whose
+        // target was dropped by 608.2b validation. It is forwarded to `buildNamedTargets`
+        // so a sub-effect that references a now-illegal target through its declared
+        // [EffectTarget.BoundVariable] (e.g. Diplomatic Relations' `myCreature` after its
+        // FROM creature dies in response) resolves to `null` and fizzles, instead of
+        // silently consuming the NEXT still-valid target whose position shifted forward
+        // in the compacted list.
+        val resolvedTargets: List<ChosenTarget>
+        val alignedResolvedTargets: List<ChosenTarget?>
+        if (targetsComponent != null && targetsComponent.targets.isNotEmpty()) {
             val validTargets = validateTargets(
                 state, targetsComponent.targets, sourceColors, sourceSubtypes,
                 spellComponent.casterId, targetsComponent.targetRequirements,
@@ -632,9 +643,11 @@ class StackResolver(
                 // All targets invalid - spell fizzles
                 return fizzleSpell(state, spellId, cardComponent, spellComponent)
             }
-            validTargets
+            resolvedTargets = validTargets
+            alignedResolvedTargets = buildAlignedValidated(targetsComponent.targets, validTargets)
         } else {
-            targetsComponent?.targets ?: emptyList()
+            resolvedTargets = targetsComponent?.targets ?: emptyList()
+            alignedResolvedTargets = resolvedTargets
         }
 
         var newState = state
@@ -680,7 +693,8 @@ class StackResolver(
             // Execute effects and put in graveyard
             val effectResult = resolveNonPermanentSpell(
                 newState, spellId, spellComponent, cardComponent,
-                resolvedTargets
+                resolvedTargets,
+                alignedResolvedTargets
             )
             if (effectResult.isPaused) {
                 // Effect paused for a decision (e.g., draw replacement prompt).
@@ -1274,7 +1288,12 @@ class StackResolver(
         spellId: EntityId,
         spellComponent: SpellOnStackComponent,
         cardComponent: CardComponent?,
-        targets: List<ChosenTarget>
+        targets: List<ChosenTarget>,
+        // Parallel to the originally-chosen targets, with `null` in slots whose target
+        // was dropped by 608.2b validation. Used for [EffectContext.buildNamedTargets]
+        // so BoundVariable lookups for now-illegal targets resolve to null and fizzle,
+        // rather than shifting onto a later still-valid target.
+        alignedTargets: List<ChosenTarget?> = targets,
     ): ExecutionResult {
         var newState = state
         val events = mutableListOf<GameEvent>()
@@ -1326,7 +1345,10 @@ class StackResolver(
                 additionalCostBlightAmount = spellComponent.additionalCostBlightAmount,
                 castFromZone = spellComponent.castFromZone,
                 pipeline = PipelineState(
-                    namedTargets = EffectContext.buildNamedTargets(targetRequirements, targets),
+                    // Use the positionally-aligned validated list so a sub-effect that
+                    // references a target dropped by 608.2b through its BoundVariable id
+                    // resolves to null and fizzles (CR 608.2b).
+                    namedTargets = EffectContext.buildNamedTargets(targetRequirements, alignedTargets),
                     storedCollections = buildBeheldStoredCollections(spellComponent.beheldCards, resolvedCardDef)
                 )
             )
@@ -2196,6 +2218,28 @@ class StackResolver(
                     // Spell is valid if still on stack
                     target.spellEntityId in state.stack
                 }
+            }
+        }
+    }
+
+    /**
+     * Project [validTargets] (the compacted output of [validateTargets]) back onto
+     * [originalTargets] positions, returning a list parallel to [originalTargets] with
+     * `null` in slots whose target was dropped by 608.2b validation. Walks both lists
+     * in order — [validateTargets] preserves the relative ordering of survivors — so the
+     * mapping is unambiguous even when two original targets compare structurally equal.
+     */
+    private fun buildAlignedValidated(
+        originalTargets: List<ChosenTarget>,
+        validTargets: List<ChosenTarget>
+    ): List<ChosenTarget?> {
+        var v = 0
+        return originalTargets.map { orig ->
+            if (v < validTargets.size && validTargets[v] === orig) {
+                v++
+                orig
+            } else {
+                null
             }
         }
     }
