@@ -107,6 +107,98 @@
     ]
 }
 
+// Dauthi Slayer
+{
+    "name": "Dauthi Slayer",
+    "manaCost": "{B}{B}",
+    "typeLine": "Creature — Dauthi Soldier",
+    "oracleText": "Shadow (This creature can block or be blocked by only creatures with shadow.)\nThis creature attacks each combat if able.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "SHADOW"
+    ],
+    "script": {
+        "staticAbilities": [
+            "MustAttack"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "126",
+        "artist": "Dermot Power",
+        "flavorText": "\"They have knives for every soul.\"\n—Lyna, Soltari emissary",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/5/652ccd79-aefd-4b45-b747-75190da0cfc6.jpg?1562054258"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Diabolic Edict
+{
+    "name": "Diabolic Edict",
+    "manaCost": "{1}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Target player sacrifices a creature of their choice.",
+    "script": {
+        "spellEffect": {
+            "type": "ForceSacrifice",
+            "filter": "creature",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target player"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetPlayer",
+                "id": "target player"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "128",
+        "artist": "Ron Spencer",
+        "flavorText": "Greven il-Vec lifted Vhati off his feet. \"The fall will give you time to think on your failure.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a2ecf2ee-1e2d-4ab2-8b2c-717c794b09b2.jpg?1562055897"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Dread of Night
+{
+    "name": "Dread of Night",
+    "manaCost": "{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "White creatures get -1/-1.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": -1,
+                "toughnessBonus": -1,
+                "filter": {
+                    "baseFilter": "creature white"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "130",
+        "rarity": "UNCOMMON",
+        "artist": "Richard Thomas",
+        "flavorText": "\"These moonless, foreign skies keep me in thrall. Dark whispers echo in the night, and I cannot resist.\"\n—Selenia, dark angel",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/0/d08586d4-8163-454c-b8d8-c5034c4aee6c.jpg?1562056862"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Fighting Drake
 {
     "name": "Fighting Drake",
@@ -487,6 +579,59 @@
         "imageUri": "https://cards.scryfall.io/normal/front/3/0/307f5d5e-3a4b-430e-8769-fb553216befa.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Pit Imp
+{
+    "name": "Pit Imp",
+    "manaCost": "{B}",
+    "typeLine": "Creature — Imp",
+    "oracleText": "Flying\n{B}: This creature gets +1/+0 until end of turn. Activate no more than twice each turn.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostMana",
+                    "cost": "{B}"
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": "Self"
+                },
+                "restrictions": [
+                    {
+                        "type": "MaxPerTurn",
+                        "count": 2
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "148",
+        "artist": "Phil Foglio",
+        "flavorText": "The moans of the Death Pits were underscored by the chattering of imps, for whom the ship was cause for much discussion.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/4/24c7acfe-b5b2-426f-a5a1-1ff8ef7ebf72.jpg?1562052816"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
 }
 
 // Reckless Spite

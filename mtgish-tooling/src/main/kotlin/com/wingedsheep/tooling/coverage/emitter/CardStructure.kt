@@ -507,6 +507,18 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
             "        )",
         )
     }
+    // "Activate no more than N times each turn" (Pit Imp / Phyrexian Battleflies) -> MaxPerTurn(N).
+    // The modifier list is the rule's args after the cost + action list; render only when EVERY
+    // modifier present is this exact shape, so an unrecognised modifier still scaffolds.
+    val modifiers = (rule["args"].asArr ?: emptyList()).filterIsInstance<JsonObject>()
+        .filter { it.strField("_ActivateModifier") != null }
+    if (modifiers.isNotEmpty() && modifiers.all { it.strField("_ActivateModifier") == "ActivateNoMoreThanNumberTimesEachTurn" }) {
+        val lines = modifiers.map { mod ->
+            val n = findInteger(mod.field("args")) as? Int ?: return run { reasons.add("activated-modifiers"); null }
+            "ActivationRestriction.MaxPerTurn($n)"
+        }
+        return listOf("        restrictions = listOf(${lines.joinToString(", ")})")
+    }
     reasons.add("activated-modifiers")
     return null
 }
