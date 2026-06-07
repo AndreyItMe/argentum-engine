@@ -49,6 +49,55 @@
     ]
 }
 
+// Gruul Signet
+{
+    "name": "Gruul Signet",
+    "manaCost": "{2}",
+    "typeLine": "Artifact",
+    "oracleText": "{1}, {T}: Add {R}{G}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostMana",
+                            "cost": "{1}"
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddMana",
+                            "color": "RED"
+                        },
+                        {
+                            "type": "AddMana",
+                            "color": "GREEN"
+                        }
+                    ]
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "150",
+        "artist": "Greg Hildebrandt",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/b/1bb30340-96a4-49d8-838b-8788900401a0.jpg?1593272924"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
 // Gruul Turf
 {
     "name": "Gruul Turf",
@@ -257,5 +306,119 @@
     "colorIdentityOverride": [
         "WHITE",
         "BLACK"
+    ]
+}
+
+// Streetbreaker Wurm
+{
+    "name": "Streetbreaker Wurm",
+    "manaCost": "{3}{R}{G}",
+    "typeLine": "Creature — Wurm",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 4
+    },
+    "metadata": {
+        "collectorNumber": "133",
+        "artist": "Greg Hildebrandt",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d5313054-91a5-401c-84d1-03a2cd265060.jpg?1593272809"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
+// Wild Cantor
+{
+    "name": "Wild Cantor",
+    "manaCost": "{R/G}",
+    "typeLine": "Creature — Human Druid",
+    "oracleText": "({R/G} can be paid with either {R} or {G}.)\nSacrifice this creature: Add one mana of any color.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostSacrificeSelf",
+                "effect": "AddManaOfChoice",
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "149",
+        "artist": "Glenn Fabry",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/4/242dc29e-d8f5-4207-abbf-cf5425f08551.jpg?1593272918"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
+// Wildsize
+{
+    "name": "Wildsize",
+    "manaCost": "{2}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +2/+2 and gains trample until end of turn.\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "TRAMPLE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "98",
+        "artist": "Jim Murray",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/e/eef061ed-736c-41ba-b692-d1fbfaca242e.jpg?1593272542"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
