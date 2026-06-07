@@ -152,6 +152,7 @@ object Emitter {
                 rname == "Morph" -> block = manaKeywordCost(rule)?.let { listOf(Assign("morph", Lit("\"$it\""))) }
                 rname == "Flashback" -> block = manaKeywordCost(rule)?.let { listOf(Eval(call("keywordAbility", arg(call("KeywordAbility.flashback", arg("\"$it\"")))))) }
                 rname == "Crew" -> block = rule["args"].asInt()?.let { listOf(Eval(call("keywordAbility", arg(call("KeywordAbility.crew", arg("$it")))))) }
+                rname == "Equip" -> block = equipAbilityLine(rule)
                 rname == "Protection" -> block = protectionScopeDsl(rule)?.let { listOf(Eval(call("keywordAbility", arg(call("KeywordAbility.Protection", arg(Lit(it))))))) }
                 rname != null && (rname in handledRules || Bridge[rname]?.kind == "keyword") -> continue
                 // A bare auto-keyword rule (Flying, Menace, …) carries no args. A keyword rule that DOES
@@ -178,6 +179,25 @@ object Emitter {
             assemble(pre + renderBlock(Block(header, body)), pkg, complete = complete),
             complete, ctx.reasons, holes = holes, parts = parts,
         )
+    }
+
+    /** Standard equip — `Equip {cost}: attach to target creature you control` (CR 702.6). mtgish models
+     *  the keyword as `[equip-filter, cost]`. We render the bare `equipAbility("{cost}")` (which
+     *  synthesises the canonical sorcery-speed attach ability) ONLY for the unrestricted "any creature"
+     *  filter with a pure-mana cost. Equip-quality variants ("equip legendary creature", a creature-type
+     *  restriction) and non-mana costs aren't expressible by `equipAbility`, so they return null ->
+     *  scaffold rather than silently drop the restriction. */
+    private fun equipAbilityLine(rule: JsonObject): List<Stmt>? {
+        val args = rule["args"].asArr ?: return null
+        if (args.size != 2) return null
+        // Only the unrestricted IsCardtype=Creature filter renders; anything narrower must scaffold.
+        val filter = args[0]
+        if (filter.strField("_Permanents") != "IsCardtype" || filter.field("args").asStr() != "Creature") return null
+        val cost = args[1]
+        if (cost.strField("_Cost") != "PayMana") return null
+        val mana = renderMana(cost.field("args"))
+        if (mana.isEmpty()) return null
+        return listOf(Eval(call("equipAbility", arg("\"$mana\""))))
     }
 
     /** A keyword-ability whose cost is pure mana (`Cycling {2}`, `Morph {4}{W}`). Returns the rendered

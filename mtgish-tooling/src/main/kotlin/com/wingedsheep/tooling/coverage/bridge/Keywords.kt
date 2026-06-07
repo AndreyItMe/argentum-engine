@@ -10,4 +10,9 @@ internal fun BridgeBuilder.keywords() {
     keyword("Defender", "DEFENDER")
 
     composed("Landwalk", "specific *WALK keywords (SWAMPWALK, FORESTWALK, ...)")
+    // Equip is a keyword ability, but the engine has no `Keyword.EQUIP` enum member: `equipAbility(cost)`
+    // synthesises the sorcery-speed "attach to target creature you control" activated ability whose
+    // resolution is `AttachEquipment`. So it's composed, not a bare keyword (which would emit a
+    // non-existent enum). The emitter renders only the canonical unrestricted shape (see Emitter.equipAbilityLine).
+    composed("Equip", "equip: equipAbility(cost) -> sorcery-speed AttachEquipment activated ability", composes = listOf("AttachEquipment"))
 }
