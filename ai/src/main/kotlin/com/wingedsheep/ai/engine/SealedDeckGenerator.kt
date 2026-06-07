@@ -13,9 +13,19 @@ class SealedDeckGenerator(
     private val boosterGenerator: BoosterGenerator
 ) {
     /**
-     * Picks a random available set code.
+     * Picks a random set code that can actually produce a sealed deck.
+     *
+     * Only [BoosterGenerator.SetConfig.fullyImplemented] sets are eligible: a partial set
+     * (incomplete, or not curated for sealed) can have a card pool too thin for the single-set
+     * booster strategy, which then throws `No cards available for booster generation`. Random
+     * quick/AI games have no host to opt into a partial set, so they must draw from a playable one.
+     * Falls back to all available sets only if — unexpectedly — none are fully implemented.
      */
-    fun randomSetCode(): String = boosterGenerator.availableSets.keys.random()
+    fun randomSetCode(): String {
+        val playable = boosterGenerator.availableSets.values.filter { it.fullyImplemented }
+        val pool = playable.ifEmpty { boosterGenerator.availableSets.values.toList() }
+        return pool.random().setCode
+    }
 
     /**
      * Generates a sealed deck from 8 boosters of a random available set.

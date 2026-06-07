@@ -49,10 +49,12 @@ class GameConnectionTest : GameServerTestBase() {
                 client.connectAs("Alice")
                 client.send(ClientMessage.CreateGame(emptyMap()))
 
-                // Empty deck => the server generates and shuffles a random deck before
-                // replying, which is the slowest CreateGame path. Allow a generous budget
-                // so this stays green under CI load (it was an intermittent 5s timeout).
-                eventually(15.seconds) {
+                // Empty deck => the server picks a random set and opens a sealed pool before
+                // replying. The earlier intermittent failure here was NOT slowness: randomSetCode()
+                // could land on a partial set whose pool can't open a booster, so the server threw
+                // and never sent GameCreated (see SealedDeckGeneratorTest). That's fixed at the
+                // source; this budget only needs to cover the real generation cost under CI load.
+                eventually(10.seconds) {
                     client.messages.any { it is ServerMessage.GameCreated } shouldBe true
                 }
                 val gameCreated = client.messages.filterIsInstance<ServerMessage.GameCreated>().first()
