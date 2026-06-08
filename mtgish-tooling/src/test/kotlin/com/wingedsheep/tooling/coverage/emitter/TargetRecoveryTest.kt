@@ -201,4 +201,45 @@ class TargetRecoveryTest : StringSpec({
         ctx.landSearchFilterDsl(obj("""{"_SearchLibraryAction":"FindACardOfType","args":{"_CardsInLibrary":"IsCardtype","args":"Artifact"}}""")) shouldBe
             "GameObjectFilter.Artifact"
     }
+
+    "creatureFilterDsl renders a negated creature subtype via notSubtype (Sterling Keykeeper)" {
+        // "target non-Mount creature" — IsNonCreatureType has no TargetFilter passthrough, so it must
+        // render the GameObjectFilter form wrapped in TargetFilter rather than dropping "non-Mount".
+        val nonMount = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsNonCreatureType","args":"Mount"},""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"}]}""",
+        )
+        ctx.creatureFilterDsl(nonMount) shouldBe "TargetFilter(GameObjectFilter.Creature.notSubtype(Subtype(\"Mount\")))"
+    }
+
+    "creatureFilterDsl declines a 'dealt damage this turn' restriction (Rooftop Assassin)" {
+        // "...that was dealt damage this turn" has no filter helper; dropping it would widen the kill.
+        val dealtDamage = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"},{"_Permanents":"WasDealtDamageThisTurn"}]}""",
+        )
+        ctx.creatureFilterDsl(dealtDamage).shouldBeNull()
+    }
+
+    "gameObjectFilterDsl renders an outlaw filter via withAnyOfSubtypes (Vial Smasher)" {
+        // "another outlaw you control" — IsAnOutlaw must render the outlaw creature group, not widen to
+        // any permanent.
+        val outlaw = obj(
+            """{"_Permanents":"And","args":[{"_Permanents":"IsAnOutlaw"},""" +
+                """{"_Permanents":"ControlledByAPlayer","args":{"_Players":"SinglePlayer","args":{"_Player":"You"}}}]}""",
+        )
+        ctx.gameObjectFilterDsl(outlaw) shouldBe
+            "GameObjectFilter.Creature.withAnyOfSubtypes(Subtype.OUTLAW_TYPES).youControl()"
+    }
+
+    "gameObjectFilterDsl declines a group controlled by a target player (Neutralize the Guards)" {
+        // "creatures target opponent controls get -1/-1" — the controller is the chosen Ref_TargetPlayer,
+        // which no static GroupFilter expresses; dropping it would debuff every creature on the battlefield.
+        val targetPlayersCreatures = obj(
+            """{"_Permanents":"And","args":[{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"ControlledByAPlayer","args":{"_Players":"SinglePlayer","args":{"_Player":"Ref_TargetPlayer"}}}]}""",
+        )
+        ctx.gameObjectFilterDsl(targetPlayersCreatures).shouldBeNull()
+    }
 })

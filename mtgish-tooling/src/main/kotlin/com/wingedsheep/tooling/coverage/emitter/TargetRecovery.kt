@@ -141,6 +141,32 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
         if ("ControlledByAPlayer" in blob) return null
         return Call("TargetFilter", listOf(arg(Lit("GameObjectFilter.Creature").dot("crewedOrSaddledSourceThisTurn"))))
     }
+    // "...that was dealt damage this turn" (Rooftop Assassin): the WasDealtDamageThisTurn state predicate
+    // has no TargetFilter/GameObjectFilter helper, so decline rather than drop it (which would widen the
+    // kill to any opponent's creature).
+    if ("WasDealtDamageThisTurn" in blob) return null
+    // "non-Mount creature" / "non-<creature-type> creature" (Sterling Keykeeper): a negated creature
+    // subtype (IsNonCreatureType). TargetFilter has no `.notSubtype` passthrough, so render the
+    // GameObjectFilter form wrapped in TargetFilter. Only the bare negated subtype (optionally a
+    // You/Opponent controller) is modeled; any other predicate alongside it would be silently dropped, so
+    // decline rather than widen.
+    val nonCreatureSubs = filterNode.argWordsTagged("IsNonCreatureType")
+    if (nonCreatureSubs.isNotEmpty()) {
+        val otherPredicates = listOf(
+            "IsTapped", "IsUntapped", "IsAttacking", "IsBlocking", "PowerIs", "ToughnessIs", "ManaValueIs",
+            "IsColor", "IsNonColor", "HasAbility", "DoesntHaveAbility", "IsNonToken", "IsCreatureType",
+            "IsNonCardtype", "Other",
+        )
+        if (otherPredicates.any { it in blob }) return null
+        var g: Dsl = Lit("GameObjectFilter.Creature")
+        nonCreatureSubs.forEach { g = g.dot("notSubtype", arg("Subtype(\"$it\")")) }
+        when {
+            "\"You\"" in blob -> g = g.dot("youControl")
+            "\"Opponent\"" in blob -> g = g.dot("opponentControls")
+            "ControlledByAPlayer" in blob -> return null  // an unrenderable controller ref -> SCAFFOLD
+        }
+        return Call("TargetFilter", listOf(arg(g)))
+    }
     // "nonartifact creature" (the Terror template) renders via .nonartifact(); any OTHER non-cardtype
     // restriction has no faithful filter rendering yet, so drop to SCAFFOLD rather than omit it.
     val nonCardtypes = filterNode.argWordsTagged("IsNonCardtype")
@@ -476,6 +502,8 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // effect to every creature on the battlefield. Decline so radiance scaffolds rather than emitting a
     // confidently-wrong mass effect (Cleansing Beam, Surge of Zeal, the Wojek pingers).
     if ("SharesAColorWithPermanent" in blob) return null
+    // "...that was dealt damage this turn" has no GroupFilter helper — decline rather than widen the group.
+    if ("WasDealtDamageThisTurn" in blob) return null
     // "creatures you control WITH +1/+1 counters on them" (Badgermole's trample lord): a
     // `HasACounterOfType` predicate this flat GroupFilter can't express. Dropping it would widen the
     // grant to every creature you control, so decline (-> SCAFFOLD) rather than misrender.
@@ -494,6 +522,9 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // (Great Divide Guide).
     if (creatureSubs.isNotEmpty() && (types - "Creature").any { it in setOf("Land", "Artifact", "Enchantment", "Planeswalker") }) return null
     var node: Dsl = when {
+        // "outlaw" (IsAnOutlaw): Assassin/Mercenary/Pirate/Rogue/Warlock. Render the outlaw creature group
+        // (matches Filters.OutlawCreature) rather than widening to any permanent (Vial Smasher).
+        "IsAnOutlaw" in blob -> Lit("GameObjectFilter.Creature").dot("withAnyOfSubtypes", arg("Subtype.OUTLAW_TYPES"))
         subs.isNotEmpty() && ("Land" in types || "IsLandType" in blob || "\"Land\"" in blob) ->
             Lit("GameObjectFilter.Land").dot("withSubtype", arg(subtypeArg(subs[0])))
         // A creature subtype always implies creature, so render Creature.withSubtype even when there's no
@@ -540,6 +571,10 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     FilterPredicates.nontoken(filterNode)?.let { node = node.dot(it) }
     if ("\"You\"" in blob) node = node.dot("youControl")
     if ("\"Opponent\"" in blob) node = node.dot("opponentControls")
+    // A ControlledByAPlayer clause naming a player we can't render (e.g. Ref_TargetPlayer — "creatures
+    // target opponent controls") must decline rather than silently widen to every creature on the
+    // battlefield (Neutralize the Guards).
+    if ("ControlledByAPlayer" in blob && "\"You\"" !in blob && "\"Opponent\"" !in blob) return null
     return node
 }
 
