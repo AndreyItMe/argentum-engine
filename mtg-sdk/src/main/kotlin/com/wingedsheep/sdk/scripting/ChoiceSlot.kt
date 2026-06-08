@@ -39,4 +39,12 @@ enum class ChoiceSlot {
 
     /** The X declared for a `blight X` additional cost when cast (e.g. Soul Immolation). */
     BLIGHT_AMOUNT,
+
+    /**
+     * An opponent chosen as the object entered, stored as a [ChoiceValue.EntityChoice]
+     * carrying the player entity id (e.g. Jihad "as this enchantment enters, choose
+     * a color and an opponent"). Read back through the
+     * [com.wingedsheep.sdk.scripting.references.Player.ChosenOpponent] reference.
+     */
+    OPPONENT,
 }

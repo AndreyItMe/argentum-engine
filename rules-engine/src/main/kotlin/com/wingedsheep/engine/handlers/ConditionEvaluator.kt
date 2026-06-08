@@ -12,6 +12,7 @@ import com.wingedsheep.engine.state.components.battlefield.CastFromHandComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.EnteredThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.EnteredViaAbilityComponent
+import com.wingedsheep.engine.state.components.battlefield.chosenOpponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtCombatDamageToPlayerComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtDamageComponent
 import com.wingedsheep.engine.state.components.battlefield.CastRecordComponent
@@ -393,7 +394,12 @@ class ConditionEvaluator(
         val projected = ctx.projectedStateFor(state)
         val predicateContext = when (ctx) {
             is Resolution -> PredicateContext.fromEffectContext(ctx.effectContext)
-            is Projection -> controllerId?.let { PredicateContext(controllerId = it) } ?: return condition.negate
+            is Projection -> controllerId?.let {
+                // Pass `sourceId` through so source-reading predicates (e.g.
+                // `sharingChosenColorWithSource`) can find the source's
+                // `CastChoicesComponent` during static-ability gating.
+                PredicateContext(controllerId = it, sourceId = ctx.sourceId)
+            } ?: return condition.negate
         }
 
         val playerIds: List<EntityId> = when (condition.player) {
@@ -403,6 +409,9 @@ class ConditionEvaluator(
             is Player.Each -> state.turnOrder
             is Player.Any -> state.turnOrder
             is Player.Candidate -> listOfNotNull((ctx as? Resolution)?.effectContext?.candidatePlayerId)
+            is Player.ChosenOpponent -> listOfNotNull(
+                ctx.sourceId?.let { state.getEntity(it)?.chosenOpponent() }
+            )
             else -> controllerId?.let { listOf(it) } ?: emptyList()
         }
 
@@ -529,6 +538,9 @@ class ConditionEvaluator(
             }
             is Player.TriggeringPlayer -> (ctx as? Resolution)?.effectContext?.triggeringPlayerId
             is Player.Candidate -> (ctx as? Resolution)?.effectContext?.candidatePlayerId
+            is Player.ChosenOpponent -> ctx.sourceId?.let { sourceId ->
+                state.getEntity(sourceId)?.chosenOpponent()
+            }
             else -> null
         }
     }

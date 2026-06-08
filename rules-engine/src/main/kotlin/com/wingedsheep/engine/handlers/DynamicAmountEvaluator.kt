@@ -7,6 +7,7 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent
 import com.wingedsheep.engine.state.components.battlefield.blightAmountChoice
+import com.wingedsheep.engine.state.components.battlefield.chosenOpponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsStationUsingToughnessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -696,6 +697,9 @@ class DynamicAmountEvaluator(
                 listOf(activePlayer) + state.turnOrder.filter { it != activePlayer }
             }
             is Player.Candidate -> listOfNotNull(context.candidatePlayerId)
+            is Player.ChosenOpponent -> listOfNotNull(
+                context.sourceId?.let { state.getEntity(it)?.chosenOpponent() }
+            )
         }
     }
 

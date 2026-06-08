@@ -2572,6 +2572,44 @@ class StackResolver(
                     .withPendingDecision(decision)
                 ExecutionResult.paused(pausedState, decision)
             }
+
+            ChoiceType.OPPONENT -> {
+                // CR 614.12a — replacement-effect choices that modify how a permanent enters
+                // are made before the permanent enters. We surface the opponent prompt now so
+                // the chosen opponent is durably recorded in [CastChoicesComponent]. In a 1v1
+                // game this collapses to a forced choice but the prompt is still surfaced.
+                val opponentIds = state.turnOrder.filter { it != chooserId }
+                if (opponentIds.isEmpty()) return null
+                val opponentNames = opponentIds.map { pid ->
+                    state.getEntity(pid)
+                        ?.get<com.wingedsheep.engine.state.components.identity.PlayerComponent>()?.name
+                        ?: "Player ${pid.value}"
+                }
+                val decisionId = "choose-opponent-enters-${spellId.value}"
+                val decision = ChooseOptionDecision(
+                    id = decisionId,
+                    playerId = chooserId,
+                    prompt = "Choose an opponent",
+                    context = DecisionContext(
+                        sourceId = spellId,
+                        sourceName = cardComponent.name,
+                        phase = DecisionPhase.RESOLUTION
+                    ),
+                    options = opponentNames
+                )
+                val continuation = EntersWithChoiceSpellContinuation(
+                    decisionId = decisionId,
+                    spellId = spellId,
+                    controllerId = controllerId,
+                    ownerId = ownerId,
+                    choiceType = ChoiceType.OPPONENT,
+                    opponentIds = opponentIds
+                )
+                val pausedState = state
+                    .pushContinuation(continuation)
+                    .withPendingDecision(decision)
+                ExecutionResult.paused(pausedState, decision)
+            }
         }
     }
 

@@ -106,6 +106,10 @@ fun ComponentContainer.chosenModeId(): String? =
 fun ComponentContainer.chosenCreatureRef(): EntityId? =
     (get<CastChoicesComponent>()?.chosen?.get(ChoiceSlot.CREATURE) as? ChoiceValue.EntityChoice)?.entityId
 
+/** The opponent chosen as this object entered (a player entity id), or null. */
+fun ComponentContainer.chosenOpponent(): EntityId? =
+    (get<CastChoicesComponent>()?.chosen?.get(ChoiceSlot.OPPONENT) as? ChoiceValue.EntityChoice)?.entityId
+
 /** Whether this object was cast kicked. */
 fun ComponentContainer.wasKickedChoice(): Boolean =
     get<CastChoicesComponent>()?.chosen?.containsKey(ChoiceSlot.KICKED) == true

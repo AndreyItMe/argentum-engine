@@ -2620,9 +2620,12 @@ EntersWithChoice(
 
 **Other `ChoiceType`s** — `ChoiceType.COLOR` writes `ChosenColorComponent` (read by
 `GrantChosenColor`), `ChoiceType.CREATURE_TYPE` writes `ChosenCreatureTypeComponent`,
-`ChoiceType.CREATURE_ON_BATTLEFIELD` writes `ChosenCreatureComponent`, and
+`ChoiceType.CREATURE_ON_BATTLEFIELD` writes `ChosenCreatureComponent`,
 `ChoiceType.BASIC_LAND_TYPE` writes `ChosenLandTypeComponent` (read by
-`SetEnchantedLandTypeFromChosen` and `GrantLandwalkOfChosenType`). Example — Phantasmal Terrain
+`SetEnchantedLandTypeFromChosen` and `GrantLandwalkOfChosenType`), and
+`ChoiceType.OPPONENT` writes an entity-id choice into the `CastChoicesComponent` under
+`ChoiceSlot.OPPONENT` — read back via the `Player.ChosenOpponent` reference (e.g. Jihad's
+anthem + state-trigger condition: `Exists(Player.ChosenOpponent, Zone.BATTLEFIELD, …)`). Example — Phantasmal Terrain
 ("As this Aura enters, choose a basic land type. Enchanted land is the chosen type."):
 
 ```kotlin

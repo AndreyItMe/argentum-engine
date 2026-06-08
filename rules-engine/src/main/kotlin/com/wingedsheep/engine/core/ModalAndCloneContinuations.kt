@@ -205,7 +205,15 @@ data class EntersWithChoiceSpellContinuation(
      * positionally aligned list of basic land type options presented. The response's
      * chosen index indexes into this list.
      */
-    val landTypes: List<String> = emptyList()
+    val landTypes: List<String> = emptyList(),
+    /**
+     * For [com.wingedsheep.sdk.scripting.ChoiceType.OPPONENT] choices, the positionally
+     * aligned list of candidate opponent player entity ids presented in the decision.
+     * The response's chosen index indexes into this list to recover the player id
+     * stored on the resulting `CastChoicesComponent` under
+     * [com.wingedsheep.sdk.scripting.ChoiceSlot.OPPONENT].
+     */
+    val opponentIds: List<EntityId> = emptyList()
 ) : ContinuationFrame
 
 /**

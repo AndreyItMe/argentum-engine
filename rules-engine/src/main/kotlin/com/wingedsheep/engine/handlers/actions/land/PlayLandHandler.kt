@@ -455,6 +455,14 @@ class PlayLandHandler(
                             ExecutionResult.paused(pausedState, decision, events)
                         }
                     }
+
+                    ChoiceType.OPPONENT -> {
+                        // Lands don't currently use the OPPONENT choice type, but the branch is
+                        // present so [ChoiceType]'s exhaustive `when` compiles. If a future
+                        // land needs "choose an opponent" on entry, wire the prompt + opponent-id
+                        // continuation here, matching the spell path in [StackResolver].
+                        null
+                    }
                 }
                 if (result != null) return result
             }

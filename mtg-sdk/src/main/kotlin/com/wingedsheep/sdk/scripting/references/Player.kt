@@ -112,6 +112,23 @@ sealed interface Player {
     // Relational Player References
     // =============================================================================
 
+    /**
+     * The opponent locked into the source's [com.wingedsheep.sdk.scripting.ChoiceSlot.OPPONENT]
+     * slot (set by an `EntersWithChoice(ChoiceType.OPPONENT, …)` replacement effect).
+     * Resolves to that stored player entity id; null if no opponent has been chosen on
+     * the source.
+     *
+     * Used by cards like Jihad ("White creatures get +2/+1 as long as the chosen player
+     * controls a nontoken permanent of the chosen color") — `Exists(Player.ChosenOpponent,
+     * Zone.BATTLEFIELD, …)` reads the chosen opponent from the source's
+     * [com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent].
+     */
+    @SerialName("ChosenOpponent")
+    @Serializable
+    data object ChosenOpponent : Player {
+        override val description: String = "the chosen player"
+    }
+
     /** Controller of a permanent (used with EffectTarget) */
     @SerialName("ControllerOf")
     @Serializable
@@ -144,6 +161,7 @@ sealed interface Player {
             is ContextPlayer -> "that player's"
             Candidate -> "that player's"
             TriggeringPlayer -> "that player's"
+            ChosenOpponent -> "the chosen player's"
             is ControllerOf -> "its controller's"
             is OwnerOf -> "its owner's"
         }

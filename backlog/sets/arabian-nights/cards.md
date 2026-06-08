@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 61 / 78
+**Implemented:** 62 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -19,7 +19,7 @@
 - [x] Army of Allah
 - [x] Camel
 - [ ] Eye for an Eye
-- [ ] Jihad
+- [x] Jihad
 - [x] King Suleiman
 - [x] Moorish Cavalry
 - [x] Piety

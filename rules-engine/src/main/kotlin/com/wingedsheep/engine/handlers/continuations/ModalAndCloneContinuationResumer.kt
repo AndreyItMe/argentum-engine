@@ -571,6 +571,16 @@ class ModalAndCloneContinuationResumer(
                     c.withCastChoice(ChoiceSlot.LAND_TYPE, ChoiceValue.TextChoice(chosenType))
                 }
             }
+            com.wingedsheep.sdk.scripting.ChoiceType.OPPONENT -> {
+                if (response !is OptionChosenResponse) {
+                    return ExecutionResult.error(state, "Expected option chosen response for opponent choice")
+                }
+                val chosenOpponent = continuation.opponentIds.getOrNull(response.optionIndex)
+                    ?: return ExecutionResult.error(state, "Invalid opponent index: ${response.optionIndex}")
+                state.updateEntity(spellId) { c ->
+                    c.withCastChoice(ChoiceSlot.OPPONENT, ChoiceValue.EntityChoice(chosenOpponent))
+                }
+            }
         }
 
         // Check if the card has remaining choices to chain to
@@ -670,6 +680,11 @@ class ModalAndCloneContinuationResumer(
                 state.updateEntity(continuation.landId) { c ->
                     c.withCastChoice(ChoiceSlot.LAND_TYPE, ChoiceValue.TextChoice(chosenType))
                 }
+            }
+            com.wingedsheep.sdk.scripting.ChoiceType.OPPONENT -> {
+                // Lands don't currently surface an opponent choice (no land card uses it),
+                // but the branch is here for exhaustiveness over [ChoiceType].
+                return checkForMore(state, emptyList())
             }
         }
 

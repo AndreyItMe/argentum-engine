@@ -979,7 +979,17 @@ enum class ChoiceType {
      * [com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent]
      * and read by [com.wingedsheep.sdk.scripting.SetEnchantedLandTypeFromChosen].
      */
-    BASIC_LAND_TYPE
+    BASIC_LAND_TYPE,
+    /**
+     * Choose an opponent (e.g., Jihad: "As this enchantment enters, choose a color
+     * and an opponent"). Stored on the permanent in a
+     * [com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent]
+     * under [com.wingedsheep.sdk.scripting.ChoiceSlot.OPPONENT] as a
+     * [com.wingedsheep.engine.state.components.battlefield.ChoiceValue.EntityChoice]
+     * holding the chosen player's entity id, and read back through
+     * [com.wingedsheep.sdk.scripting.references.Player.ChosenOpponent].
+     */
+    OPPONENT
 }
 
 /**
@@ -1064,6 +1074,11 @@ data class EntersWithChoice(
             "As this permanent enters, an opponent chooses a basic land type"
         } else {
             "As this permanent enters, choose a basic land type"
+        }
+        ChoiceType.OPPONENT -> if (chooser == Player.Opponent) {
+            "As this permanent enters, an opponent chooses an opponent"
+        } else {
+            "As this permanent enters, choose an opponent"
         }
     }
 
