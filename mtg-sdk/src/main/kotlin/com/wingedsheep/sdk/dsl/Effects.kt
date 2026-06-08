@@ -2058,6 +2058,16 @@ object Effects {
         )
 
     /**
+     * Untap every permanent chosen as a target ("untap each of those creatures"). The untap twin of
+     * [TapEachTarget]: composes [ForEachTargetEffect] over [Effects.Untap], so the number of targets is
+     * owned entirely by the spell's `TargetCreature`/`TargetPermanent`, not duplicated on the effect.
+     */
+    fun UntapEachTarget(): Effect =
+        com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect(
+            listOf(TapUntapEffect(EffectTarget.ContextTarget(0), tap = false))
+        )
+
+    /**
      * Phase out a target permanent (Rule 702.26). It's treated as though it
      * doesn't exist until it phases back in before its controller's next untap step.
      */

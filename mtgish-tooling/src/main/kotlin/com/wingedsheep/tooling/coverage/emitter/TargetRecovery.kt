@@ -291,7 +291,19 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
         }
         val singleType = mapOf("Land" to "TargetFilter.Land", "Artifact" to "TargetFilter.Artifact", "Enchantment" to "TargetFilter.Enchantment")
         if (types.size == 1 && types.first() in singleType) {
-            val parts = mutableListOf(arg("filter", singleType.getValue(types.first())))
+            // "target land you control" / "...an opponent controls" — the controller restriction is a
+            // ControlledByAPlayer clause. Preserve it as a `.youControl()` / `.opponentControls()` suffix
+            // (mirrors the creature path); a controller clause we can't render exactly declines (-> SCAFFOLD)
+            // rather than silently widening to any land/artifact/enchantment.
+            val controller: Link? = when {
+                "ControlledByAPlayer" !in blob -> null
+                "\"You\"" in blob -> Link("youControl")
+                "\"Opponent\"" in blob -> Link("opponentControls")
+                else -> return null
+            }
+            var f: Dsl = Lit(singleType.getValue(types.first()))
+            controller?.let { f = f.dot(it) }
+            val parts = mutableListOf(arg("filter", f))
             if (ttype in setOf("NumberTargetPermanents", "UptoNumberTargetPermanents") && countInt is Int) parts.add(0, arg("count", "$countInt"))
             if (ttype == "UptoNumberTargetPermanents") parts.add(0, arg("optional", "true"))
             return Call("TargetPermanent", parts)

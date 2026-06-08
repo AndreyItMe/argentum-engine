@@ -19,6 +19,13 @@ internal fun BridgeBuilder.manaCountersAndState() {
     effect("AddCreatureTypeVariable", "BecomeCreatureType", UNIVERSAL)
     effects("PutACounterOfTypeOnPermanent", "PutNumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
 
+    // Earthbend N (TLA keyword action): target land becomes a 0/0 creature-land with haste, gets N
+    // +1/+1 counters, and gains "when it dies or is exiled, return it to the battlefield tapped".
+    // Composed wholesale by Effects.Earthbend (no Keyword.EARTHBEND) — animate + grant haste + add
+    // counters + grant the return self-trigger (whose body is two zone-gated MoveToZone moves).
+    composed("Earthbend", "Effects.Earthbend: AnimateLand + GrantKeyword(haste) + AddCounters + GrantTriggeredAbility(return)",
+        composes = listOf("AnimateLand", "GrantKeyword", "AddCounters", "GrantTriggeredAbility", "MoveToZone"))
+
     effect("RegeneratePermanent", "Regenerate", UNIVERSAL)
     effects("GainControlOfPermanent", "GainControlOfPermanentUntil", tag = "GainControl", note = UNIVERSAL)
     effect("RemoveCreatureFromCombat", "RemoveFromCombat", UNIVERSAL)

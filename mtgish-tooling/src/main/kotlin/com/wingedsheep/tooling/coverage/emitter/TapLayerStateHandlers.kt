@@ -88,6 +88,17 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", tgt))
     }
 
+    on("Earthbend") { _, args, tvar ->
+        // Earthbend N (TLA keyword action): "target land becomes a 0/0 creature with haste that's still
+        // a land. Put N +1/+1 counters on it. When it dies or is exiled, return it to the battlefield
+        // tapped." The whole keyword action lowers to Effects.Earthbend(N, target). The IR args are
+        // [<target land ref>, <N>]. Only a fixed integer N renders — an "Earthbend X" carries a
+        // cast-time X the Int-typed facade can't take, so it scaffolds.
+        val n = findInteger(args) as? Int ?: return@on null
+        val tgt = refTarget(args, tvar) ?: return@on null
+        call("Effects.Earthbend", arg("$n"), arg(Lit(tgt)))
+    }
+
     on("CreatePermanentLayerEffectUntil", "CreateEachPermanentLayerEffectUntil") { node, _, tvar ->
         // "Enchanted creature and other creatures that share a creature type with it get …" (Onslaught
         // Crowns) — a group keyed to the host permanent, which the generic ForEachInGroup can't express.

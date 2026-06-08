@@ -599,6 +599,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   duplicated on the effect. For "tap X target creatures" use `dynamicMaxCount = DynamicAmount.XValue`
   on the target (Icy Blast); for a fixed cap use `count = N` (Tidal Surge, Choking Tethers, Eddymurk
   Crab). Do **not** pass a magic `count = 20` to mean "any number" — use `unlimited`/`dynamicMaxCount`.
+- `Effects.UntapEachTarget()` — the untap twin of `TapEachTarget`: untaps every object chosen as a
+  target ("untap each of those creatures"). Composes `ForEachTargetEffect` over
+  `Effects.Untap(ContextTarget(0))`, with the count owned by the spell's target requirement.
 - `PhaseOutEffect(target = Self)` — phase the target permanent out (Rule 702.26); facade `Effects.PhaseOut(target)`. While phased out it's treated as though it doesn't exist (excluded from `getBattlefield`, so from projection, triggers, combat, targeting, and SBAs) and phases back in before its controller's next untap step. Indirect phasing (attached Auras/Equipment) is handled automatically. Used as the `suffer` branch of a pay-or-phase trigger (Vaporous Djinn: "phases out unless you pay {U}{U}" = `PayOrSufferEffect(Costs.pay.Mana(...), Effects.PhaseOut())`).
 - `MarkExileOnDeathEffect(target)` — replace next "to graveyard" with "to exile".
 - `GatedEffect(gate, then, otherwise?, decisionMaker?)` — **the unified resolution frame for the
