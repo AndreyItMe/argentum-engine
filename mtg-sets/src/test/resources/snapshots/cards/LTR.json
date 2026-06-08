@@ -11303,6 +11303,60 @@
     }
 }
 
+// Shortcut to Mushrooms
+{
+    "name": "Shortcut to Mushrooms",
+    "manaCost": "{1}{G}",
+    "typeLine": "Enchantment",
+    "oracleText": "When this enchantment enters, the Ring tempts you.\nAt the beginning of your end step, if a permanent you controlled left the battlefield this turn, put a +1/+1 counter on target creature you control.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": "TheRingTemptsYou"
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "creature you control"
+                },
+                "triggerCondition": "PermanentLeftBattlefieldThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "187",
+        "rarity": "UNCOMMON",
+        "artist": "Jonas De Ro",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/3/13bc14f9-c90c-499d-9024-3182d78e0a88.jpg?1686969589"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Shower of Arrows
 {
     "name": "Shower of Arrows",

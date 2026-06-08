@@ -10,7 +10,7 @@ Verify status anytime with: `scripts/card-status --set LTR` (and `--list --set L
 
 ## Status
 
-Draft cards at **178/261**. Every remaining unchecked card in `cards.md` (excluding the five
+Draft cards at **179/261**. Every remaining unchecked card in `cards.md` (excluding the five
 basic lands, which `basicLandsFallback` covers) needs at least one new engine primitive — see
 the "Engine gaps blocking the remaining cards" section below. Each card is listed under the
 primitive it is waiting on, with the exact blocking clause. Stop and open a dedicated PR per
@@ -250,8 +250,7 @@ keyed to the last-known controller (so a Threaten-style steal-and-sacrifice coun
 thief), and cleared at end of turn by `CleanupPhaseManager`. Broader than the existing
 `ControlledCreatureDiedThisTurn` — counts every permanent type (lands included) and every
 destination zone.
-- **Shortcut to Mushrooms** — "…if a permanent you controlled left the battlefield this turn…"
-  (ETB Ring tempts half composable).
+- **Shortcut to Mushrooms** — ✅ implemented.
 
 ### Gap 20 — "a card put into a graveyard from the battlefield this turn" filter
 **Status:** LANDED as `StatePredicate.PutIntoGraveyardFromBattlefieldThisTurn` (with the
