@@ -774,6 +774,35 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     // =========================================================================
+    // Station (CR 702.184)
+    // =========================================================================
+
+    /**
+     * The number of charge counters a Station ability puts on its permanent: the power of the
+     * creature tapped to pay the station cost (CR 702.184a — "equal to the tapped creature's
+     * power").
+     *
+     * This is *not* a plain `EntityProperty(TappedAsCost(0), Power)` because Station carries a
+     * rules twist that read does not: CR 702.184c lets a static ability change *which*
+     * characteristic is counted. Tapestry Warden ("Each creature you control with toughness
+     * greater than its power stations permanents using its toughness rather than its power")
+     * substitutes toughness for power. Modelling the station amount as its own node keeps that
+     * substitution scoped to station abilities — an unrelated "tap a creature: do X equal to its
+     * power" ability that uses `EntityProperty(TappedAsCost(0), Power)` is left untouched.
+     *
+     * Like the generic tapped-as-cost read, it resolves with last-known information: if the tapped
+     * creature has left the battlefield between cost payment and resolution it uses the snapshot
+     * captured at cost-pay time (CR 112.7a). Reads the first creature tapped for the cost.
+     *
+     * Emitted by the `station()` card-DSL helper; do not hand-author.
+     */
+    @SerialName("StationCharge")
+    @Serializable
+    data object StationCharge : DynamicAmount {
+        override val description: String = "the tapped creature's power"
+    }
+
+    // =========================================================================
     // Division
     // =========================================================================
 

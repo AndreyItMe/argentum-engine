@@ -14,6 +14,7 @@ import com.wingedsheep.tooling.coverage.asStr
 import com.wingedsheep.tooling.coverage.call
 import com.wingedsheep.tooling.coverage.compact
 import com.wingedsheep.tooling.coverage.jsonContains
+import com.wingedsheep.tooling.coverage.pascalToUpperSnake
 import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
 import kotlinx.serialization.json.JsonArray
@@ -22,6 +23,45 @@ import kotlinx.serialization.json.JsonObject
 
 /** `staticAbility { ability = <ability> }` as one card-body statement. */
 internal fun staticAbilityStmt(ability: Dsl): Stmt = Sub(Block("staticAbility", listOf(Assign("ability", ability))))
+
+/** `staticAbility { condition = <cond>; ability = <ability> }` — a threshold-gated static ability row. */
+private fun gatedStaticAbilityStmt(cond: String, ability: Dsl): Stmt =
+    Sub(Block("staticAbility", listOf(Assign("condition", Lit(cond)), Assign("ability", ability))))
+
+/**
+ * Station `{N+}[abilities][P/T]` symbol that animates the permanent into a creature (CR 721.2b,
+ * mtgish `StationChargedAnimate`): "As long as this permanent has N or more charge counters, it has
+ * [abilities] and is a creature with base power/toughness [P/T]." Renders one threshold-gated
+ * `staticAbility { }` row per granted ability — `GrantCardType("CREATURE", …)` for the animate, plus a
+ * `GrantKeyword(...)` per listed keyword — each gated on
+ * `Conditions.SourceCounterCountAtLeast(Counters.CHARGE, N)`. The base P/T (args[2]) is the card's
+ * printed power/toughness, already emitted on the card, so it needs no separate row.
+ *
+ * Only *bare keyword* abilities render. A threshold that grants a triggered or activated ability (or any
+ * parameterized ability) declines to a scaffold — "decline→SCAFFOLD, don't widen". The sibling
+ * `StationCharged` symbol (a non-animating threshold gating an activated/triggered ability) is likewise
+ * left to scaffold via the dispatcher's default branch.
+ */
+internal fun EmitCtx.stationAnimateBlock(rule: JsonObject): List<Stmt>? {
+    val args = rule["args"] as? JsonArray ?: return scaffoldStation()
+    // The threshold N rides as a raw integer in the `ValueOrBigger` range node's args (`{N+}` symbol).
+    val n = (args.getOrNull(0) as? JsonObject)
+        ?.takeIf { it.strField("_GameRange") == "ValueOrBigger" }
+        ?.get("args").asInt() ?: return scaffoldStation()
+    val abilityRules = (args.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: emptyList()
+    val cond = "Conditions.SourceCounterCountAtLeast(Counters.CHARGE, $n)"
+    val stmts = mutableListOf<Stmt>()
+    stmts.add(gatedStaticAbilityStmt(cond, call("GrantCardType", arg("\"CREATURE\""), arg("GroupFilter.source()"))))
+    for (ar in abilityRules) {
+        val rn = ar.strField("_Rule") ?: return scaffoldStation()
+        if (ar["args"] != null) return scaffoldStation() // parameterized / non-keyword ability
+        val kw = pascalToUpperSnake(rn).takeIf { it in keywords } ?: return scaffoldStation()
+        stmts.add(gatedStaticAbilityStmt(cond, call("GrantKeyword", arg("Keyword.$kw.name"), arg("GroupFilter.source()"))))
+    }
+    return stmts
+}
+
+private fun EmitCtx.scaffoldStation(): List<Stmt>? { reasons.add("StationChargedAnimate"); return null }
 
 /**
  * PermanentRuleEffect → `flags()` / `staticAbility { ability = ... }`. These classes live outside the

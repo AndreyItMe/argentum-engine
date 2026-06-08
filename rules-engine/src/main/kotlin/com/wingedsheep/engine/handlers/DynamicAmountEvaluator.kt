@@ -258,27 +258,41 @@ class DynamicAmountEvaluator(
                 }
                 // Tap-as-cost reads of Power/Toughness mirror the Sacrificed path — the tapped
                 // permanent may have left the battlefield between cost payment and resolution
-                // (Rule 112.7a). Power reads additionally get the Station-using-toughness
-                // substitution: under Tapestry Warden, tapped creatures with toughness > power
-                // contribute toughness to the cost-input formula instead of power.
-                if (amount.entity is EntityReference.TappedAsCost) {
+                // (Rule 112.7a), so consult the snapshot captured at cost-pay time before falling
+                // back to live stats. (The Station-using-toughness substitution of CR 702.184c is
+                // NOT applied here — it is scoped to the station amount node, [DynamicAmount.
+                // StationCharge], so an unrelated "tap a creature: do X equal to its power" ability
+                // reads plain power.)
+                if (amount.entity is EntityReference.TappedAsCost &&
+                    entityId !in state.getBattlefield()
+                ) {
                     val snapshot = context.tappedPermanentSnapshots.firstOrNull { it.entityId == entityId }
-                    val useSnapshot = snapshot != null && !state.getBattlefield().contains(entityId)
                     when (amount.numericProperty) {
-                        is EntityNumericProperty.Power -> {
-                            val power = if (useSnapshot) snapshot.power ?: 0
-                                else resolveNumericProperty(state, entityId, EntityNumericProperty.Power, context, useProjected = true, explicitProjected = projectedState)
-                            val toughness = if (useSnapshot) snapshot.toughness ?: 0
-                                else resolveNumericProperty(state, entityId, EntityNumericProperty.Toughness, context, useProjected = true, explicitProjected = projectedState)
-                            return if (toughness > power &&
-                                controllerHasStationUsingToughness(state, entityId, snapshot?.controllerId)) toughness else power
-                        }
-                        is EntityNumericProperty.Toughness ->
-                            if (useSnapshot) snapshot.toughness?.let { return it }
+                        is EntityNumericProperty.Power -> snapshot?.power?.let { return it }
+                        is EntityNumericProperty.Toughness -> snapshot?.toughness?.let { return it }
                         else -> { /* fall through */ }
                     }
                 }
                 resolveNumericProperty(state, entityId, amount.numericProperty, context, useProjected = true, explicitProjected = projectedState)
+            }
+
+            // Station charge amount (CR 702.184a): charge counters equal to the power of the
+            // creature tapped to pay the station cost. CR 702.184c lets a static ability change
+            // which characteristic is counted; Tapestry Warden's [GrantsStationUsingToughnessComponent]
+            // substitutes toughness when toughness > power. Reads with last-known information if the
+            // tapped creature has left the battlefield (CR 112.7a). Keeping this on its own node
+            // confines the substitution to station abilities.
+            is DynamicAmount.StationCharge -> {
+                val entityId = context.tappedPermanents.firstOrNull() ?: return 0
+                val snapshot = context.tappedPermanentSnapshots.firstOrNull { it.entityId == entityId }
+                val useSnapshot = snapshot != null && entityId !in state.getBattlefield()
+                val power = if (useSnapshot) snapshot.power ?: 0
+                    else resolveNumericProperty(state, entityId, EntityNumericProperty.Power, context, useProjected = true, explicitProjected = projectedState)
+                val toughness = if (useSnapshot) snapshot.toughness ?: 0
+                    else resolveNumericProperty(state, entityId, EntityNumericProperty.Toughness, context, useProjected = true, explicitProjected = projectedState)
+                if (toughness > power &&
+                    controllerHasStationUsingToughness(state, entityId, snapshot?.controllerId)
+                ) toughness else power
             }
 
             is DynamicAmount.Divide -> {

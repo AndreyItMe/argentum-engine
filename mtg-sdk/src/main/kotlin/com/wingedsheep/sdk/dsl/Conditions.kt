@@ -610,6 +610,27 @@ object Conditions {
     }
 
     /**
+     * While this permanent has [count] or more counters of [counterType] on it.
+     *
+     * The threshold form of [SourceHasCounter] (which only checks for one). This is the gate
+     * behind a Station card's `{N+}` symbol (CR 721.2a — "As long as this permanent has N or more
+     * charge counters on it, it has [abilities]"): use it as the `condition` of a
+     * `staticAbility { }` row, or wrapped in `ActivationRestriction.OnlyIfCondition(...)` for a
+     * threshold-gated activated ability. Generic over counter type, so it also serves any other
+     * "N+ counters of a kind" gate. Reads the source's counters live, so it tracks counters added
+     * or removed after the permanent entered.
+     */
+    fun SourceCounterCountAtLeast(counterType: String, count: Int): ConditionInterface =
+        Compare(
+            DynamicAmount.EntityProperty(
+                EntityReference.Source,
+                EntityNumericProperty.CounterCount(CounterTypeFilter.Named(counterType))
+            ),
+            ComparisonOperator.GTE,
+            DynamicAmount.Fixed(count)
+        )
+
+    /**
      * If a permanent with the given subtype was sacrificed as part of the cost.
      * Used for cards like Thallid Omnivore: "If a Saproling was sacrificed this way, you gain 2 life."
      */

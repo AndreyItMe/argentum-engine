@@ -7,19 +7,13 @@ import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
-import com.wingedsheep.sdk.scripting.conditions.Compare
-import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
-import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.TargetPermanent
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
-import com.wingedsheep.sdk.scripting.values.EntityReference
+import com.wingedsheep.sdk.dsl.Conditions
 
 /**
  * Adagia, Windswept Bastion
@@ -48,32 +42,10 @@ val AdagiaWindsweptBastion = card("Adagia, Windswept Bastion") {
     }
 
     // Station: tap another creature → add charge counters equal to its power
-    activatedAbility {
-        cost = AbilityCost.TapPermanents(
-            count = 1,
-            filter = GameObjectFilter.Creature,
-            excludeSelf = true
-        )
-        effect = Effects.AddDynamicCounters(
-            counterType = Counters.CHARGE,
-            amount = DynamicAmount.EntityProperty(
-                entity = EntityReference.TappedAsCost(),
-                numericProperty = EntityNumericProperty.Power
-            ),
-            target = com.wingedsheep.sdk.scripting.targets.EffectTarget.Self
-        )
-        timing = TimingRule.SorcerySpeed
-    }
+    station()
 
     // 12+ charge counters: {3}{W}, {T}: Create a legendary token copy of target artifact or enchantment you control
-    val charge12 = Compare(
-        left = DynamicAmount.EntityProperty(
-            entity = EntityReference.Source,
-            numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-        ),
-        operator = ComparisonOperator.GTE,
-        right = DynamicAmount.Fixed(12)
-    )
+    val charge12 = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 12)
 
     activatedAbility {
         cost = Costs.Composite(
