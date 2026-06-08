@@ -25,11 +25,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -812,11 +808,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -2926,11 +2918,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -3119,11 +3107,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -4580,11 +4564,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -4807,11 +4787,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -5034,11 +5010,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -5455,11 +5427,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -6010,11 +5978,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -7744,11 +7708,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -8291,11 +8251,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -8552,11 +8508,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -9061,11 +9013,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -11279,11 +11227,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -12467,11 +12411,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -14183,11 +14123,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -14547,11 +14483,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -15763,11 +15695,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -15895,11 +15823,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -16190,11 +16114,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -17927,11 +17847,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -18063,11 +17979,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -18666,11 +18578,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -18773,11 +18681,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -19201,11 +19105,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -19387,11 +19287,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"
@@ -19763,11 +19659,7 @@
                 "effect": {
                     "type": "AddDynamicCounters",
                     "counterType": "charge",
-                    "amount": {
-                        "type": "EntityProperty",
-                        "entity": "TappedAsCost",
-                        "numericProperty": "Power"
-                    },
+                    "amount": "StationCharge",
                     "target": "Self"
                 },
                 "timing": "SorcerySpeed"

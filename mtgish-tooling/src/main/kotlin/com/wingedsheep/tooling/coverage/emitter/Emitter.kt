@@ -177,6 +177,12 @@ object Emitter {
                 rname == "Plot" -> block = manaKeywordCost(rule)?.let {
                     listOf(Eval(call("keywordAbility", arg(call("KeywordAbility.plot", arg("\"$it\""))))))
                 }
+                // Station keyword ability (CR 702.184a) — fully fixed, renders the no-arg builder.
+                rname == "Station" -> block = listOf(Eval(call("station")))
+                // {N+} station symbol that animates into a creature (CR 721.2b). Non-animating
+                // `StationCharged` (gating an activated/triggered ability) is left to the default
+                // branch → scaffold, since its payload is arbitrary.
+                rname == "StationChargedAnimate" -> block = ctx.stationAnimateBlock(rule)
                 rname == "Equip" -> block = equipAbilityLine(rule)
                 rname == "Protection" -> block = protectionScopeDsl(rule)?.let { listOf(Eval(call("keywordAbility", arg(call("KeywordAbility.Protection", arg(Lit(it))))))) }
                 rname != null && (rname in handledRules || Bridge[rname]?.kind == "keyword") -> continue

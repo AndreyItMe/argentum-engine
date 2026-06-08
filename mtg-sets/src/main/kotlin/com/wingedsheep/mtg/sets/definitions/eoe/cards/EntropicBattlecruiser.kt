@@ -3,29 +3,21 @@ package com.wingedsheep.mtg.sets.definitions.eoe.cards
 import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.Conditions
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.dsl.Patterns
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
-import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantCardType
 import com.wingedsheep.sdk.scripting.GrantKeyword
-import com.wingedsheep.sdk.scripting.TimingRule
-import com.wingedsheep.sdk.scripting.conditions.Compare
-import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
 import com.wingedsheep.sdk.scripting.conditions.Exists
 import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.LoseLifeEffect
-import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
-import com.wingedsheep.sdk.scripting.values.EntityReference
 
 /**
  * Entropic Battlecruiser
@@ -50,29 +42,10 @@ val EntropicBattlecruiser = card("Entropic Battlecruiser") {
         "8+ | Flying, deathtouch\n" +
         "Whenever this Spacecraft attacks, each opponent discards a card. Each opponent who can't loses 3 life."
 
-    activatedAbility {
-        cost = AbilityCost.TapPermanents(
-            count = 1,
-            filter = GameObjectFilter.Creature,
-            excludeSelf = true
-        )
-        effect = Effects.AddDynamicCounters(
-            counterType = Counters.CHARGE,
-            amount = DynamicAmount.EntityProperty(
-                entity = EntityReference.TappedAsCost(),
-                numericProperty = EntityNumericProperty.Power
-            ),
-            target = EffectTarget.Self
-        )
-        timing = TimingRule.SorcerySpeed
-    }
+    station()
 
-    val chargeCount = DynamicAmount.EntityProperty(
-        entity = EntityReference.Source,
-        numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-    )
-    val atLeast1Charge = Compare(chargeCount, ComparisonOperator.GTE, DynamicAmount.Fixed(1))
-    val atLeast8Charge = Compare(chargeCount, ComparisonOperator.GTE, DynamicAmount.Fixed(8))
+    val atLeast1Charge = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 1)
+    val atLeast8Charge = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 8)
 
     triggeredAbility {
         trigger = Triggers.AnyOpponentDiscards

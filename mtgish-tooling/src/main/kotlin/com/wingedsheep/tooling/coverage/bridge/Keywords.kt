@@ -28,4 +28,17 @@ internal fun BridgeBuilder.keywords() {
     // keyword (PascalCase auto-resolve would look for a non-existent CYCLING enum and block it). The emitter renders
     // the canonical pure-mana shape (see Emitter.kt `rname == "Cycling"`).
     composed("Cycling", "cycling: KeywordAbility.cycling(cost) -> 'Discard this card: Draw a card' activated ability", composes = listOf("DrawCards"))
+
+    // Station (CR 702.184, Edge of Eternities). Three IR rules. Like Saddle, these are activated/static
+    // abilities the engine fully supports but that aren't bare card keywords, so they're `supported`
+    // (never blocking) rather than `keyword` (which would stamp a non-existent Keyword.STATION enum).
+    //  - `Station` itself: the keyword ability -> the `station()` builder (Emitter `rname == "Station"`).
+    //  - `StationChargedAnimate`: the {N+} symbol that turns the permanent into a creature -> threshold-gated
+    //    GrantCardType + GrantKeyword rows (Emitter `rname == "StationChargedAnimate"`).
+    //  - `StationCharged`: the non-animating {N+} symbol that gates an activated/triggered ability. The engine
+    //    expresses it (ActivationRestriction.OnlyIfCondition + Conditions.SourceCounterCountAtLeast), so it's
+    //    covered; the emitter declines to auto-render its arbitrary payload and scaffolds (default branch).
+    supported("Station", "keyword ability: Station (CR 702.184a) -> station() builder; adds charge counters = tapped creature's power")
+    supported("StationChargedAnimate", "{N+} station symbol -> animate into a creature: gated GrantCardType + GrantKeyword rows (CR 721.2b)")
+    supported("StationCharged", "{N+} station symbol gating an ability (CR 721.2a) -> OnlyIfCondition(SourceCounterCountAtLeast(CHARGE, N)); emitter scaffolds the payload")
 }

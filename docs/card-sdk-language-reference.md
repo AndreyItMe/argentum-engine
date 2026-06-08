@@ -2016,6 +2016,19 @@ composite abilities).
   `activatedAbility { }`; its `cost`/`timing`/`activateFromZone` fields are ignored (fixed by Renew). The
   `GraveyardAbilityEnumerator` surfaces the ability while the card is in the graveyard and only at sorcery speed; the
   `ActivateAbilityHandler` pays the mana and exiles the card from the graveyard. Declares `Keyword.RENEW` for display.
+- `station()` — `card { station() }` builder helper (CR 702.184, Edge of Eternities; Spacecraft and Planet cards).
+  Emits the fixed station keyword ability (CR 702.184a): "Tap another untapped creature you control: Put a number of
+  charge counters on this permanent equal to the tapped creature's power. Activate only as a sorcery." The ability is
+  fully fixed by the rules, so the helper takes no arguments — it builds
+  `AbilityCost.TapPermanents(count = 1, filter = Creature, excludeSelf = true)` →
+  `Effects.AddDynamicCounters(Counters.CHARGE, DynamicAmount.StationCharge, Self)` at `TimingRule.SorcerySpeed`. The
+  charge amount is the dedicated `DynamicAmount.StationCharge` node (see §13), *not* a plain
+  `EntityProperty(TappedAsCost, Power)` read, so the CR 702.184c "station using toughness" substitution
+  (`StationUsingToughness`, Tapestry Warden) stays scoped to station abilities. What the card gains at each charge
+  threshold (the `{N+}` station symbols, CR 721.2a) is authored separately per card — `staticAbility { }` rows for
+  Spacecraft that grant `GrantKeyword(...)` / `GrantCardType("CREATURE", …)`, or threshold-gated activated abilities
+  for Planets — each gated on `Conditions.SourceCounterCountAtLeast(Counters.CHARGE, N)` (see §12). No dedicated
+  `Keyword.STATION`: the layout/symbols are display-only and the ability is the whole mechanic.
 - `Morph(cost)` — cast face-down for `{3}`, flip for cost.
 - `Unmorph(cost, effect)` — turn-face-up cost + bonus effect.
 - `Equip(cost)` — Equipment attach cost. The `equipAbility(cost, genericCostReduction = …)` DSL
@@ -2179,6 +2192,11 @@ contexts.
 - `SourceHasKeyword(keyword)` — `SourceMatches(GameObjectFilter.Any.withKeyword(...))`.
 - `SourceHasCounter(counterType)` — `SourceMatches(GameObjectFilter.Any` with the
   corresponding `StatePredicate.HasCounter` / `HasAnyCounter`).
+- `SourceCounterCountAtLeast(counterType, count)` — the threshold form of `SourceHasCounter`: the source has `count`+
+  counters of `counterType` (a `Compare` on `EntityProperty(Source, CounterCount(Named(type)))`). This is the gate
+  behind a Station card's `{N+}` symbol (CR 721.2a — "As long as this permanent has N or more charge counters on it,
+  it has [abilities]"): use it as the `condition` of a `staticAbility { }` or inside
+  `ActivationRestriction.OnlyIfCondition(...)`, with `Counters.CHARGE`. Generic over counter type, reads counters live.
 
 ### Turn / phase
 
@@ -2393,6 +2411,15 @@ Numbers computed at resolution time.
 - `LastKnownCountersOnSource(type)` — counters when source last existed (for dies-triggers).
 - `CountersOnTarget(target, type)` — counters on a target permanent.
 - `CountersOnContext(path, type)` — counters stored in an `EffectContext` path.
+
+### Station
+
+- `StationCharge` — the number of charge counters a Station ability puts on its permanent: the power of the creature
+  tapped to pay the station cost (CR 702.184a). Emitted by the `station()` builder (§11); do not hand-author. It is a
+  dedicated node rather than `EntityProperty(TappedAsCost(0), Power)` so the CR 702.184c characteristic substitution
+  (Tapestry Warden's `StationUsingToughness` → use toughness when toughness > power) is confined to station abilities
+  and never rewrites an unrelated "tap a creature: do X equal to its power" read. Resolves with last-known information
+  (CR 112.7a) if the tapped creature has left the battlefield before the station ability resolves.
 
 ### Card properties
 

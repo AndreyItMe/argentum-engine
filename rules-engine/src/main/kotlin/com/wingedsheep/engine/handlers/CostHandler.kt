@@ -523,6 +523,30 @@ class CostHandler(
                     return CostPaymentResult.failure("Cannot tap self for this cost")
                 }
 
+                // Defense in depth: the enumerator only offers untapped, controlled, matching
+                // permanents (CostEnumerationUtils.findAbilityTapTargets), but the chosen ids
+                // arrive on the action from the client — re-validate here so a malformed action
+                // can't "pay" a tap cost by re-tapping an already-tapped or ineligible permanent
+                // (Station, Cryptic Gateway). Filter matching uses projected state (CR 613).
+                val projected = state.projectedState
+                val context = PredicateContext(controllerId = controllerId)
+                for (permanentId in toTap) {
+                    val entity = state.getEntity(permanentId)
+                        ?: return CostPaymentResult.failure("Permanent to tap no longer exists")
+                    if (permanentId !in state.getBattlefield()) {
+                        return CostPaymentResult.failure("Permanent to tap is not on the battlefield")
+                    }
+                    if (projected.getController(permanentId) != controllerId) {
+                        return CostPaymentResult.failure("Can only tap permanents you control")
+                    }
+                    if (entity.has<TappedComponent>()) {
+                        return CostPaymentResult.failure("Permanent to tap is already tapped")
+                    }
+                    if (!predicateEvaluator.matches(state, projected, permanentId, cost.filter, context)) {
+                        return CostPaymentResult.failure("Permanent to tap does not match ${cost.filter.description}")
+                    }
+                }
+
                 var newState = state
                 for (permanentId in toTap) {
                     newState = newState.updateEntity(permanentId) { it.with(TappedComponent) }

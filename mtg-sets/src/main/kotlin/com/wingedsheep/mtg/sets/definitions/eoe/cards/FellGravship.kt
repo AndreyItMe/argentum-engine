@@ -8,26 +8,19 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.dsl.Patterns
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantCardType
 import com.wingedsheep.sdk.scripting.GrantKeyword
-import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
-import com.wingedsheep.sdk.scripting.conditions.Compare
-import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
 import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
-import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
-import com.wingedsheep.sdk.scripting.values.EntityReference
+import com.wingedsheep.sdk.dsl.Conditions
 
 /**
  * Fell Gravship
@@ -89,32 +82,10 @@ val FellGravship = card("Fell Gravship") {
     }
 
     // Station activated ability: tap another creature → add charge counters equal to its power
-    activatedAbility {
-        cost = AbilityCost.TapPermanents(
-            count = 1,
-            filter = GameObjectFilter.Creature,
-            excludeSelf = true
-        )
-        effect = Effects.AddDynamicCounters(
-            counterType = Counters.CHARGE,
-            amount = DynamicAmount.EntityProperty(
-                entity = EntityReference.TappedAsCost(),
-                numericProperty = EntityNumericProperty.Power
-            ),
-            target = EffectTarget.Self
-        )
-        timing = TimingRule.SorcerySpeed
-    }
+    station()
 
     // 8+ charge counters: Flying and lifelink
-    val charge8 = Compare(
-        left = DynamicAmount.EntityProperty(
-            entity = EntityReference.Source,
-            numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-        ),
-        operator = ComparisonOperator.GTE,
-        right = DynamicAmount.Fixed(8)
-    )
+    val charge8 = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 8)
 
     staticAbility {
         condition = charge8

@@ -2,25 +2,17 @@ package com.wingedsheep.mtg.sets.definitions.eoe.cards
 
 import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Conditions
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantCardType
 import com.wingedsheep.sdk.scripting.GrantKeyword
-import com.wingedsheep.sdk.scripting.TimingRule
-import com.wingedsheep.sdk.scripting.conditions.Compare
-import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
-import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetObject
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
-import com.wingedsheep.sdk.scripting.values.EntityReference
 
 /**
  * Synthesizer Labship
@@ -45,30 +37,11 @@ val SynthesizerLabship = card("Synthesizer Labship") {
         "9+ | Flying, vigilance"
 
     // Station activated ability: tap another creature → add charge counters equal to its power
-    activatedAbility {
-        cost = AbilityCost.TapPermanents(
-            count = 1,
-            filter = GameObjectFilter.Creature,
-            excludeSelf = true
-        )
-        effect = Effects.AddDynamicCounters(
-            counterType = Counters.CHARGE,
-            amount = DynamicAmount.EntityProperty(
-                entity = EntityReference.TappedAsCost(),
-                numericProperty = EntityNumericProperty.Power
-            ),
-            target = EffectTarget.Self
-        )
-        timing = TimingRule.SorcerySpeed
-    }
+    station()
 
-    // Charge-counter threshold predicates
-    val chargeCount = DynamicAmount.EntityProperty(
-        entity = EntityReference.Source,
-        numericProperty = EntityNumericProperty.CounterCount(CounterTypeFilter.Named(Counters.CHARGE))
-    )
-    val charge2 = Compare(chargeCount, ComparisonOperator.GTE, DynamicAmount.Fixed(2))
-    val charge9 = Compare(chargeCount, ComparisonOperator.GTE, DynamicAmount.Fixed(9))
+    // Charge-counter threshold predicates ({N+} station symbols, CR 721.2a)
+    val charge2 = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 2)
+    val charge9 = Conditions.SourceCounterCountAtLeast(Counters.CHARGE, 9)
 
     // 2+ | At the beginning of combat on your turn, up to one other target artifact you control
     // becomes an artifact creature with base P/T 2/2 and gains flying until end of turn.
