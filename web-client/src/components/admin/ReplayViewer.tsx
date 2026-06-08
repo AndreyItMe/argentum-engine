@@ -447,9 +447,9 @@ function ReplayView({
           <button
             onClick={() => void handleDownloadSnapshot()}
             style={styles.scenarioButton}
-            title="Download this exact position as a snapshot file you can reload later from the Scenario Builder ('Load snapshot')."
+            title="Download this exact position as a snapshot file you can reload later from the Scenario Builder ('Load file')."
           >
-            {downloaded ? 'Saved!' : 'Download'}
+            {downloaded ? 'Saved!' : 'Save snapshot'}
           </button>
         </div>
         <div style={styles.gameBoardContainer}>

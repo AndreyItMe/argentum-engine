@@ -253,9 +253,9 @@ export function ReplayPage() {
           <button
             onClick={() => void handleDownloadSnapshot(currentStep)}
             style={styles.scenarioButton}
-            title="Download this exact position as a snapshot file you can reload later from the Scenario Builder ('Load snapshot')."
+            title="Download this exact position as a snapshot file you can reload later from the Scenario Builder ('Load file')."
           >
-            {downloaded ? 'Saved!' : 'Download'}
+            {downloaded ? 'Saved!' : 'Save snapshot'}
           </button>
           <button onClick={handleShare} style={styles.shareButton} title="Copy link to clipboard">
             {copied ? 'Copied!' : 'Share'}

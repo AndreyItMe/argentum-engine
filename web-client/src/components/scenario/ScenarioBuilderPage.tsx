@@ -52,6 +52,12 @@ const ZONE_LABEL: Record<ScenarioZone, string> = {
   library: 'Library',
 }
 
+const MODE_HINT: Record<ScenarioMode, string> = {
+  SELF: 'You play both sides yourself in one window.',
+  AI: 'You play; the computer controls the opponent.',
+  TWO_PLAYER: 'Two people — each gets their own link to join.',
+}
+
 // --- spec <-> builder conversions ----------------------------------------------------------
 
 function toSpec(p1: BuilderPlayer, p2: BuilderPlayer, opts: {
@@ -381,12 +387,28 @@ export function ScenarioBuilderPage() {
             e.target.value = ''
           }}
         />
-        <button style={S.ghostBtn} onClick={() => fileInputRef.current?.click()}>Load file</button>
-        <button style={S.ghostBtn} onClick={handleShowJson}>View JSON</button>
-        <button style={S.ghostBtn} onClick={() => void handleShare()}>Share</button>
-        <button style={S.primaryBtn} disabled={starting} onClick={() => void handleStart()}>
-          {starting ? 'Starting…' : 'Start'}
-        </button>
+        <ActionButton
+          label="Load file"
+          hint="open a saved snapshot or scenario"
+          onClick={() => fileInputRef.current?.click()}
+        />
+        <ActionButton
+          label="View JSON"
+          hint="copy this scenario as text"
+          onClick={handleShowJson}
+        />
+        <ActionButton
+          label="Share"
+          hint="copy an editable link"
+          onClick={() => void handleShare()}
+        />
+        <ActionButton
+          label={starting ? 'Starting…' : 'Start'}
+          hint="play this scenario now"
+          primary
+          disabled={starting}
+          onClick={() => void handleStart()}
+        />
       </div>
 
       {(status || errors.length > 0) && (
@@ -424,6 +446,9 @@ export function ScenarioBuilderPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          <span style={S.hint}>
+            Click a card below to add it to {targetSeat === 'player1' ? p1.name : p2.name}’s {ZONE_LABEL[targetZone].toLowerCase()}.
+          </span>
           {catalogError && <div style={{ color: '#fca5a5', padding: 8 }}>{catalogError}</div>}
           <div style={S.resultList}>
             {results.map((c) => (
@@ -473,6 +498,7 @@ export function ScenarioBuilderPage() {
               <option value="AI">AI</option>
               <option value="TWO_PLAYER">Two players</option>
             </select>
+            <span style={S.hint}>{MODE_HINT[mode]}</span>
           </label>
           <label style={S.field}>
             <span style={S.smallLabel}>Phase</span>
@@ -491,22 +517,46 @@ export function ScenarioBuilderPage() {
           </label>
 
           <button style={S.ghostBtn} onClick={() => setJsonOpen((o) => !o)}>
-            {jsonOpen ? 'Hide' : 'Paste / view'} JSON
+            {jsonOpen ? 'Hide JSON editor' : 'Edit as JSON'}
           </button>
           {jsonOpen && (
             <div style={{ marginTop: 8 }}>
+              <span style={S.hint}>
+                Paste a scenario JSON and press “Apply JSON”, or copy the text below to save it.
+              </span>
               <textarea
                 style={S.json}
                 value={jsonText}
                 placeholder="Paste a scenario JSON here…"
                 onChange={(e) => setJsonText(e.target.value)}
               />
-              <button style={S.ghostBtn} onClick={handleLoadJson}>Load JSON</button>
+              <button style={S.ghostBtn} onClick={handleLoadJson}>Apply JSON to builder</button>
             </div>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+// --- action button (label + visible one-line description) ----------------------------------
+
+function ActionButton(props: {
+  label: string
+  hint: string
+  onClick: () => void
+  primary?: boolean
+  disabled?: boolean
+}) {
+  return (
+    <button
+      style={{ ...(props.primary ? S.actionBtnPrimary : S.actionBtn), opacity: props.disabled ? 0.5 : 1 }}
+      disabled={props.disabled}
+      onClick={props.onClick}
+    >
+      <span style={S.actionLabel}>{props.label}</span>
+      <span style={props.primary ? S.actionHintPrimary : S.actionHint}>{props.hint}</span>
+    </button>
   )
 }
 
@@ -600,6 +650,12 @@ const S: Record<string, CSSProperties> = {
   linkBtn: { background: 'transparent', color: '#93c5fd', border: 'none', cursor: 'pointer', fontSize: 14 },
   ghostBtn: { background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 13 },
   primaryBtn: { background: '#7c3aed', color: 'white', border: 'none', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
+  actionBtn: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', lineHeight: 1.2 },
+  actionBtnPrimary: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1, background: '#7c3aed', color: 'white', border: 'none', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', lineHeight: 1.2 },
+  actionLabel: { fontSize: 13, fontWeight: 600 },
+  actionHint: { fontSize: 10, color: '#94a3b8', fontWeight: 400 },
+  actionHintPrimary: { fontSize: 10, color: '#e9d5ff', fontWeight: 400 },
+  hint: { fontSize: 11, color: '#94a3b8', lineHeight: 1.35 },
   statusBar: { padding: '6px 16px', borderBottom: '1px solid #1e293b', fontSize: 13 },
   errorList: { margin: 0, paddingLeft: 18 },
   body: { flex: 1, display: 'flex', minHeight: 0 },
