@@ -177,6 +177,10 @@ internal fun EmitCtx.renderSearch(args: JsonElement?): Dsl? {
     // count isn't a fixed amount, and the CreateTokens payoff would be dropped. Decline -> SCAFFOLD rather
     // than emit a wrong hand-search that silently loses the token clause.
     if ("ExileFoundCards" in blob || "CreateTokens" in blob || "FindAnyNumberOfCardsOfType" in blob) return null
+    // "basic land card and/or Desert card" (Map the Frontier): an Or unioning the basic-land supertype with
+    // a land subtype. landSearchFilter renders only the subtype arm, silently dropping "basic land" — so
+    // decline rather than narrow the search to Deserts only.
+    if ("\"Basic\"" in blob && "IsLandType" in blob) return null
     val dest = when {
         "PutFoundCardsOntoBattlefield" in blob -> "BATTLEFIELD"
         "PutFoundCardsIntoHand" in blob -> "HAND"

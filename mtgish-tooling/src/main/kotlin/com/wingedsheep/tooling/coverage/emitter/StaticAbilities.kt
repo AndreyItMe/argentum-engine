@@ -266,6 +266,13 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
                 if (granted?.strField("_Rule") in setOf("Protection", "ProtectionAndDoesntRemovePermanents")) {
                     val colors = protectionGrantColors(granted!!) ?: run { reasons.add("PermanentLayerEffect"); return null }
                     colors.map { call("GrantProtection", arg("Color.$it")) }
+                } else if (granted?.strField("_Rule") == "Ward") {
+                    // "Equipped/enchanted creature has ward {N}" (Lavaspur Boots) — render GrantWard carrying
+                    // the cost, never a bare GrantKeyword(WARD) which would drop it. Only a mana ward cost
+                    // renders; life/discard/sacrifice ward costs aren't modeled here, so scaffold.
+                    val costNode = granted["args"] as? JsonObject
+                    if (costNode?.strField("_Cost") != "PayMana") { reasons.add("PermanentLayerEffect"); return null }
+                    listOf(call("GrantWard", arg("WardCost.Mana(\"${renderMana(costNode["args"])}\")")))
                 } else {
                     val kw = keywordOf(le) ?: run { reasons.add("PermanentLayerEffect"); return null }
                     // Prowess grants need the +1/+1 trigger, not just the keyword tag (see staticLordBlock) —
