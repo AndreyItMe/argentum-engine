@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGameStore } from '@/store/gameStore.ts'
 import { SpectatorContext } from '../../contexts/SpectatorContext'
@@ -23,6 +23,20 @@ export function ReplayPage() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const setSpectatingState = useGameStore((s) => s.setSpectatingState)
+
+  // Measure the header so the board sits below it even when the controls wrap to a 2nd row
+  // on narrow windows (otherwise the rightmost buttons overflow off-screen).
+  const headerRef = useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(HEADER_HEIGHT)
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const update = () => setHeaderHeight(el.offsetHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const writeSnapshotToStore = useCallback(
     (snapshot: SpectatorStateUpdate) => {
@@ -206,7 +220,7 @@ export function ReplayPage() {
       }}
     >
       <div style={styles.replayContainer}>
-        <div style={styles.replayHeader}>
+        <div ref={headerRef} style={styles.replayHeader}>
           <button onClick={() => navigate('/')} style={styles.backButton}>
             Back
           </button>
@@ -262,7 +276,7 @@ export function ReplayPage() {
           </button>
         </div>
         <div style={styles.gameBoardContainer}>
-          <GameBoard spectatorMode topOffset={HEADER_HEIGHT} />
+          <GameBoard spectatorMode topOffset={headerHeight} />
         </div>
       </div>
       <CombatArrows />
@@ -310,6 +324,8 @@ const styles: Record<string, React.CSSProperties> = {
   replayHeader: {
     display: 'flex',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: 8,
     padding: '10px 16px',
     borderBottom: '1px solid #1a1a25',
     backgroundColor: '#0d0d15',
