@@ -259,6 +259,10 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // "for each Goblin/Bird/Elf on the battlefield": a creature subtype, which the land-oriented
         // search filter misses; otherwise fall back to the land/type search filter.
         val subtype = node.firstArgWordTagged("IsCreatureType")
+        // "for each Shrine you control" — an enchantment subtype the land/type search filter can't express;
+        // it would silently widen the count's filter to GameObjectFilter.Any and over-count every permanent.
+        // Decline (-> SCAFFOLD) rather than misrender (The Spirit Oasis's "draw a card for each Shrine").
+        if (subtype == null && node.firstArgWordTagged("IsEnchantmentType") != null) return null
         val filter = if (subtype != null) Lit("GameObjectFilter.Creature").dot("withSubtype", arg("\"$subtype\""))
                      else landSearchFilterExpr(node)
         return call("DynamicAmount.AggregateBattlefield", arg(player), arg(filter))

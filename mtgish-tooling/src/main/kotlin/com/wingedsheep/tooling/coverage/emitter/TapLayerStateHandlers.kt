@@ -93,7 +93,11 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         // a land. Put N +1/+1 counters on it. When it dies or is exiled, return it to the battlefield
         // tapped." The whole keyword action lowers to Effects.Earthbend(N, target). The IR args are
         // [<target land ref>, <N>]. Only a fixed integer N renders — an "Earthbend X" carries a
-        // cast-time X the Int-typed facade can't take, so it scaffolds.
+        // cast-time/dynamic X the Int-typed facade can't take, so it scaffolds. Guard the dynamic shape
+        // explicitly: "Earthbend X, where X is the number of …" carries a `TheNumberOf…` game number, and
+        // findInteger would otherwise latch onto an unrelated integer in the X definition (e.g. the
+        // "power 4 or greater" bound) and emit a wrong fixed N (The Boulder, Ready to Rumble).
+        if ("TheNumberOf" in compact(args)) return@on null
         val n = findInteger(args) as? Int ?: return@on null
         val tgt = refTarget(args, tvar) ?: return@on null
         call("Effects.Earthbend", arg("$n"), arg(Lit(tgt)))
@@ -203,6 +207,11 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
     val effect = if (inner.size == 1) inner[0] else Composite(inner)
     if (mass) {
         val gfArg = (node["args"].asArr)?.getOrNull(0) ?: JsonObject(emptyMap())
+        // "they each get +X/+X" — the group is the spell's CHOSEN TARGETS (Ref_TargetPermanents), not a
+        // battlefield filter. A static GroupFilter can't express "the creatures this spell targeted"; the
+        // generic recovery would widen it to GameObjectFilter.Permanent (every permanent on the
+        // battlefield). Decline so it scaffolds rather than buff the whole board (Fancy Footwork).
+        if (jsonContains(gfArg, "_Permanents", "Ref_TargetPermanents")) return null
         val filter = groupFilterExpr(gfArg) ?: return null
         return call("Effects.ForEachInGroup", arg(filter), arg(effect))
     }

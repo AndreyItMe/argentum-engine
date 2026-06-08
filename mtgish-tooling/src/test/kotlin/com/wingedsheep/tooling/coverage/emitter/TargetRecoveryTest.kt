@@ -125,4 +125,54 @@ class TargetRecoveryTest : StringSpec({
         // target, so it must not collapse to CreatureSpellOnStack ("a creature spell"). Decline -> SCAFFOLD.
         ctx.targetDsl(obj("""{"_Target":"TargetSpell","args":{"_Spells":"TargetsAPermanent","args":{"_Permanents":"IsCardtype","args":"Creature"}}}""")).shouldBeNull()
     }
+
+    "creatureFilterDsl declines an 'another' creature target (excludeSelf not composed, Deserter's Disciple)" {
+        // "Another target creature you control" — an Other(ThisPermanent) self-exclusion the TargetFilter
+        // surface can't compose; dropping it would let the source target itself. Decline -> SCAFFOLD.
+        val anotherCreature = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"Other","args":{"_Permanent":"ThisPermanent"}}]}""",
+        )
+        ctx.creatureFilterDsl(anotherCreature).shouldBeNull()
+    }
+
+    "gameObjectFilterDsl declines a '+1/+1 counters on them' group (Badgermole's trample lord)" {
+        // "creatures you control with +1/+1 counters on them" — a HasACounterOfType predicate the flat
+        // GroupFilter can't express; dropping it would widen the grant to every creature. Decline.
+        val withCounters = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"HasACounterOfType","_CounterType":"PTCounter","args":[1,1]}]}""",
+        )
+        ctx.gameObjectFilterDsl(withCounters).shouldBeNull()
+    }
+
+    "gameObjectFilterDsl declines an enchantment subtype (Shrine triggers, The Spirit Oasis)" {
+        // "another Shrine you control" — an IsEnchantmentType subtype this surface can't render; widening
+        // it to GameObjectFilter.Permanent/Enchantment would drop the subtype. Decline -> SCAFFOLD.
+        val shrine = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsEnchantmentType","args":"Shrine"},""" +
+                """{"_Permanents":"Other","args":{"_Permanent":"ThisPermanent"}}]}""",
+        )
+        ctx.gameObjectFilterDsl(shrine).shouldBeNull()
+    }
+
+    "gameObjectFilterDsl declines a creature-subtype + non-creature-type union (Great Divide Guide)" {
+        // "Each land and Ally you control" — a creature subtype unioned with the Land cardtype. The
+        // single-subtype branch would render only the Ally half and drop the land half. Decline.
+        val landAndAlly = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Land"},""" +
+                """{"_Permanents":"IsCreatureType","args":"Ally"}]}""",
+        )
+        ctx.gameObjectFilterDsl(landAndAlly).shouldBeNull()
+    }
+
+    "targetExpr declines a bare permanent target carrying a dropped controller restriction (North Pole Patrol)" {
+        // "untap another target permanent you control" — a bare TargetPermanent would drop the
+        // ControlledByAPlayer (and Other) restriction, widening to any permanent. Decline -> SCAFFOLD.
+        ctx.targetDsl(obj("""{"_Target":"TargetPermanent","args":{"_Permanents":"ControlledByAPlayer","args":{"_Players":"You"}}}""")).shouldBeNull()
+    }
 })
