@@ -115,6 +115,7 @@ import com.wingedsheep.sdk.scripting.effects.RepeatCondition
 import com.wingedsheep.sdk.scripting.effects.RepeatWhileEffect
 import com.wingedsheep.sdk.scripting.effects.ReplaceNextDrawWithEffect
 import com.wingedsheep.sdk.scripting.effects.ChooseOptionEffect
+import com.wingedsheep.sdk.scripting.effects.NoteCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.effects.ChangeColorToChosenEffect
 import com.wingedsheep.sdk.scripting.effects.ChooseColorForTargetEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeChosenManaColorEffect
@@ -2593,6 +2594,18 @@ object Effects {
         prompt: String? = null,
         excludedOptions: List<String> = emptyList()
     ): Effect = ChooseOptionEffect(optionType, storeAs, prompt, excludedOptions)
+
+    /**
+     * "Note a creature type that hasn't been noted for this <source>."
+     *
+     * Pairs the choice (creature type, source's already-noted types excluded) with persistence
+     * on the source permanent. After resolution: chosen type is in `chosenValues[storeAs]` for
+     * downstream pipeline steps AND appended to the source's `NotedCreatureTypesComponent`.
+     */
+    fun NoteCreatureType(
+        storeAs: String = "notedType",
+        prompt: String? = null
+    ): Effect = NoteCreatureTypeEffect(storeAs, prompt)
 
     /** The five basic land card names, excluded by "name a card other than a basic land card name" effects. */
     private val BASIC_LAND_CARD_NAMES = listOf("Plains", "Island", "Swamp", "Mountain", "Forest")

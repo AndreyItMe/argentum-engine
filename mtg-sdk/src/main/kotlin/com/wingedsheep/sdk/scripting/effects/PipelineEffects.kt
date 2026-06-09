@@ -900,6 +900,38 @@ data class ChooseOptionEffect(
 }
 
 /**
+ * "Note a creature type that hasn't been noted for this <source>." (LTR — Long List of the Ents)
+ *
+ * Prompts the controller to pick a creature type, with the source's *current* set of already-noted
+ * types automatically excluded from the options. On resolution:
+ *  - the chosen type is appended to the source's `NotedCreatureTypesComponent` (created on demand),
+ *    so subsequent activations on the same source can't re-pick it; and
+ *  - the chosen type is stored under `EffectContext.chosenValues[storeAs]` for any downstream
+ *    pipeline step (e.g., the delayed trigger that fires "when you next cast a creature spell of
+ *    that type this turn").
+ *
+ * Sibling of [ChooseOptionEffect] — the difference is the dynamic, source-state-driven exclusion
+ * list and the side-effect of writing the choice back to the source. Use `ChooseOptionEffect`
+ * directly for "choose a creature type" with no persistence / dedup; use `NoteCreatureTypeEffect`
+ * when the choice must accumulate on the permanent.
+ *
+ * The source permanent's `NotedCreatureTypesComponent` is permanent-scoped state, so it disappears
+ * with the permanent when it leaves play — no explicit cleanup needed.
+ *
+ * @property storeAs Key under which the chosen type is stored in `EffectContext.chosenValues`.
+ *   Default `"notedType"`.
+ * @property prompt Custom prompt text. Defaults to `"Note a creature type"`.
+ */
+@SerialName("NoteCreatureType")
+@Serializable
+data class NoteCreatureTypeEffect(
+    val storeAs: String = "notedType",
+    val prompt: String? = null
+) : Effect {
+    override val description: String = "Note a creature type"
+}
+
+/**
  * Each player (in APNAP order) chooses a creature type.
  * All chosen types are accumulated and stored as a List<String> under [storeAs]
  * in the effect context's storedStringLists.

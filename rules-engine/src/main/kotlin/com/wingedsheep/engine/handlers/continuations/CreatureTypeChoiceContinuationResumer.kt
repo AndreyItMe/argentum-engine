@@ -6,6 +6,7 @@ import com.wingedsheep.engine.mechanics.layers.Layer
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.addFloatingEffect
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.NotedCreatureTypesComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.handlers.effects.library.ChooseCreatureTypePipelineExecutor
 
@@ -15,6 +16,7 @@ class CreatureTypeChoiceContinuationResumer(
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
         resumer(ChooseOptionPipelineContinuation::class, ::resumeChooseOptionPipeline),
+        resumer(NoteCreatureTypePipelineContinuation::class, ::resumeNoteCreatureType),
         resumer(BecomeCreatureTypeContinuation::class, ::resumeBecomeCreatureType),
         resumer(EachPlayerChoosesCreatureTypeContinuation::class, ::resumeEachPlayerChoosesCreatureType)
     )
@@ -74,6 +76,58 @@ class CreatureTypeChoiceContinuationResumer(
         }
 
         val newState = state.copy(continuationStack = updatedStack)
+
+        return checkForMore(newState, emptyList())
+    }
+
+    /**
+     * Resume after the player picked a creature type for a [com.wingedsheep.sdk.scripting.effects.NoteCreatureTypeEffect].
+     * Appends the chosen type to the source's [NotedCreatureTypesComponent] (creating the
+     * component on demand) AND injects the chosen value into every `EffectContinuation` on the
+     * stack via `chosenValues[storeAs]` — same pattern as [resumeChooseOptionPipeline] so a
+     * downstream pipeline step (e.g., the delayed-trigger spawn that fires "when you next cast
+     * a creature spell of that type this turn") reads it the same way it would read any
+     * `ChooseOption` result.
+     */
+    fun resumeNoteCreatureType(
+        state: GameState,
+        continuation: NoteCreatureTypePipelineContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is OptionChosenResponse) {
+            return ExecutionResult.error(state, "Expected option choice response for note-creature-type selection")
+        }
+
+        val chosenValue = continuation.options.getOrNull(response.optionIndex)
+            ?: return ExecutionResult.error(state, "Invalid option index: ${response.optionIndex}")
+
+        // Source may have left play between pause and resume — guard before updating.
+        val stateWithComponent = if (state.getEntity(continuation.sourceId) != null) {
+            state.updateEntity(continuation.sourceId) { container ->
+                val existing = container.get<NotedCreatureTypesComponent>() ?: NotedCreatureTypesComponent()
+                container.with(existing.withAdded(chosenValue))
+            }
+        } else {
+            state
+        }
+
+        // Inject chosen value into every EffectContinuation on the stack — exact mirror of
+        // resumeChooseOptionPipeline so downstream effects read it the same way.
+        val updatedStack = stateWithComponent.continuationStack.map { frame ->
+            if (frame is EffectContinuation) {
+                frame.copy(effectContext = frame.effectContext.copy(
+                    pipeline = frame.effectContext.pipeline.copy(
+                        chosenValues = frame.effectContext.pipeline.chosenValues +
+                            (continuation.storeAs to chosenValue)
+                    )
+                ))
+            } else {
+                frame
+            }
+        }
+
+        val newState = stateWithComponent.copy(continuationStack = updatedStack)
 
         return checkForMore(newState, emptyList())
     }

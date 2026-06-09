@@ -112,6 +112,30 @@ data class ChooseOptionPipelineContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after the player picks a creature type for a [com.wingedsheep.sdk.scripting.effects.NoteCreatureTypeEffect].
+ * Identical decision shape to [ChooseOptionPipelineContinuation] (the client sees the same
+ * `ChooseOptionDecision`), but on resume the chosen type is written to BOTH:
+ *  - the source's `NotedCreatureTypesComponent` (creating it if absent), so future activations
+ *    on the same source exclude the now-noted type from their option list; AND
+ *  - `EffectContext.chosenValues[storeAs]` so a downstream pipeline step can read it.
+ *
+ * The `sourceId` is mandatory — there is no meaningful "note this on the source" if there is no
+ * source. `NoteCreatureTypePipelineExecutor` rejects activations with a null source up front.
+ *
+ * @property storeAs Key under which the chosen value is stored in `chosenValues`.
+ * @property options The option strings, indexed by `OptionChosenResponse.optionIndex`.
+ */
+@Serializable
+data class NoteCreatureTypePipelineContinuation(
+    override val decisionId: String,
+    val controllerId: EntityId,
+    val sourceId: EntityId,
+    val sourceName: String?,
+    val storeAs: String,
+    val options: List<String>
+) : ContinuationFrame
+
+/**
  * Resume after the chooser picks one of two pre-existing pipeline collections
  * (a "pile"). Index 0 = pile A, index 1 = pile B. Used by [ChoosePileEffect]
  * (Fact or Fiction's "you choose which pile is which" step).

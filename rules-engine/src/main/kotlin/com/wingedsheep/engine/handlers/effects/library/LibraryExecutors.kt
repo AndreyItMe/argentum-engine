@@ -54,6 +54,7 @@ class LibraryExecutors(
         CaptureControllersExecutor(),
         ChooseCreatureTypePipelineExecutor(),
         ChooseOptionPipelineExecutor(cardRegistry = cardRegistry),
+        NoteCreatureTypePipelineExecutor(),
         GatherCardsExecutor(),
         CopyCardIntoCollectionExecutor(),
         GrantSuspendExecutor(),

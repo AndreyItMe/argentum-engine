@@ -202,6 +202,28 @@ data class SagaComponent(
 }
 
 /**
+ * Tracks creature types "noted" by a permanent — the set of types this permanent's effects
+ * have recorded so far. Generic enough to serve any "note a creature type for this <permanent>"
+ * card: Long List of the Ents (LTR Saga that notes a different type each chapter), conspiracy-
+ * like remembered-type cards, and any future "remembered name / type" tracking.
+ *
+ * Lives on the source permanent's container, so multiple noting permanents on the same battlefield
+ * keep independent sets. The component is implicitly cleared when the permanent leaves play (the
+ * container goes with it — CR 122.2-style cleanup falls out for free).
+ *
+ * Created on demand by the [com.wingedsheep.engine.handlers.continuations] resumer for
+ * `NoteCreatureTypeEffect`; consumers read it via `state.getEntity(sourceId)?.get<NotedCreatureTypesComponent>()`
+ * to enumerate which types are already noted (for dedup in the choice UI).
+ */
+@Serializable
+data class NotedCreatureTypesComponent(
+    val types: Set<String> = emptySet()
+) : Component {
+    fun withAdded(type: String): NotedCreatureTypesComponent =
+        copy(types = types + type)
+}
+
+/**
  * Counters on a permanent.
  */
 @Serializable
