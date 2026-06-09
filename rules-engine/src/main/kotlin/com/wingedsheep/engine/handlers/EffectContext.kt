@@ -34,6 +34,21 @@ data class EffectContext(
     val candidatePlayerId: EntityId? = null,
     val targets: List<ChosenTarget> = emptyList(),
     /**
+     * Positionally-aligned view of [targets]: the same length as the originally-chosen target
+     * list, with `null` in any slot whose target was dropped by resolution-time legality
+     * validation (CR 608.2b). Populated on the spell-resolution path (and copied through
+     * composite/iteration sub-effects); empty elsewhere, where it coincides with [targets].
+     *
+     * Positional target references — [EffectTarget.ContextTarget], [EntityReference.Target],
+     * [com.wingedsheep.sdk.scripting.references.Player.ContextPlayer], and indexed conditions —
+     * MUST resolve through [positionalTarget] so a now-illegal slot reads `null` (and the
+     * sub-effect fizzles, CR 608.2b) instead of silently consuming the next still-legal target
+     * whose position shifted forward in the compacted [targets] list. Diplomatic Relations is
+     * the canonical case: "creature you control" dies in response, and without this the damage
+     * amount's `Target(0)` power read would land on the surviving opponent's creature.
+     */
+    val alignedTargets: List<ChosenTarget?> = emptyList(),
+    /**
      * The X chosen for an X-cost spell/ability. Also reused by `ChooseNumberThenEffect` to
      * carry a "choose a number" value into the inner effect (read via `CardPredicate.ManaValueEqualsX`,
      * Void). These two uses share one slot, so a future card that both pays `{X}` *and* chooses a
@@ -179,6 +194,29 @@ data class EffectContext(
      * up components (e.g., [EffectTarget.EnchantedCreature], [EffectTarget.TargetController]),
      * use the overload that also takes [GameState].
      */
+    /**
+     * Resolve a chosen target by its ORIGINAL declared position, stable even when CR 608.2b
+     * validation dropped an earlier target before resolution. Every positional
+     * `targets[index]` read that uses a card-definition-supplied index goes through here so a
+     * dropped target doesn't shift later targets forward in the compacted [targets] list.
+     *
+     * [alignedTargets] is only consulted when it is genuinely the position-preserving partner
+     * of the CURRENT [targets] — i.e. dropping its `null` slots reproduces [targets] exactly.
+     * That guard matters because executors re-scope [targets] to a different list (e.g.
+     * [com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect] iterates one target at a time,
+     * continuation resumers narrow to the remaining/selected targets) via `copy()`, which
+     * carries the now-stale parent [alignedTargets]. In that case we fall back to [targets] so
+     * `ContextTarget(0)` reads the re-scoped target, not the stale slot 0. When the lists do
+     * coincide (top-level spell resolution), [alignedTargets] supplies the `null` for any
+     * dropped slot.
+     */
+    fun positionalTarget(index: Int): ChosenTarget? =
+        if (alignedTargets.isNotEmpty() && alignedTargets.filterNotNull() == targets) {
+            alignedTargets.getOrNull(index)
+        } else {
+            targets.getOrNull(index)
+        }
+
     fun resolveTarget(target: EffectTarget): EntityId? =
         TargetResolutionUtils.resolveTarget(target, this)
 

@@ -689,7 +689,7 @@ class DynamicAmountEvaluator(
             is Player.Each -> state.turnOrder
             is Player.Any -> state.turnOrder
             is Player.ContextPlayer -> {
-                val target = context.targets.getOrNull(player.index) ?: return emptyList()
+                val target = context.positionalTarget(player.index) ?: return emptyList()
                 when (target) {
                     is com.wingedsheep.engine.state.components.stack.ChosenTarget.Player -> listOf(target.playerId)
                     else -> emptyList()

@@ -106,7 +106,7 @@ class ExileLibraryUntilManaValueExecutor : EffectExecutor<ExileLibraryUntilManaV
             Player.TargetPlayer -> context.targets.firstOrNull()?.let {
                 listOf(TargetResolutionUtils.run { it.toEntityId() })
             } ?: emptyList()
-            is Player.ContextPlayer -> context.targets.getOrNull(player.index)?.let {
+            is Player.ContextPlayer -> context.positionalTarget(player.index)?.let {
                 listOf(TargetResolutionUtils.run { it.toEntityId() })
             } ?: emptyList()
             Player.TriggeringPlayer -> listOfNotNull(context.triggeringEntityId)

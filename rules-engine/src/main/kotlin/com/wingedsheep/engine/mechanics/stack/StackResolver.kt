@@ -1339,6 +1339,10 @@ class StackResolver(
                 controllerId = spellComponent.casterId,
                 opponentId = newState.getOpponent(spellComponent.casterId),
                 targets = targets,
+                // Position-preserving view (null in slots dropped by 608.2b) so positional
+                // references — ContextTarget(n), EntityReference.Target(n), ContextPlayer(n) —
+                // resolve by ORIGINAL slot and don't shift onto a later still-valid target.
+                alignedTargets = alignedTargets,
                 xValue = spellComponent.xValue,
                 totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
                     spellComponent.manaSpentBlack + spellComponent.manaSpentRed +

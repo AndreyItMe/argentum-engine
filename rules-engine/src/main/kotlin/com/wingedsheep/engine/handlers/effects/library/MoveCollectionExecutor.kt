@@ -758,7 +758,7 @@ class MoveCollectionExecutor(
             is Player.Opponent -> context.opponentId
             is Player.TargetOpponent -> context.opponentId
             is Player.TargetPlayer -> context.targets.firstOrNull()?.let { TargetResolutionUtils.run { it.toEntityId() } }
-            is Player.ContextPlayer -> context.targets.getOrNull(player.index)?.let { TargetResolutionUtils.run { it.toEntityId() } }
+            is Player.ContextPlayer -> context.positionalTarget(player.index)?.let { TargetResolutionUtils.run { it.toEntityId() } }
             is Player.TriggeringPlayer -> context.triggeringEntityId
             is Player.OwnerOf -> context.targets.firstOrNull()?.let {
                 val eid = TargetResolutionUtils.run { it.toEntityId() }

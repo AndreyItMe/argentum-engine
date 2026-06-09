@@ -29,7 +29,7 @@ object TargetResolutionUtils {
         return when (effectTarget) {
             is EffectTarget.Self -> context.pipeline.iterationTarget ?: context.sourceId
             is EffectTarget.Controller -> context.controllerId
-            is EffectTarget.ContextTarget -> context.targets.getOrNull(effectTarget.index)?.toEntityId()
+            is EffectTarget.ContextTarget -> context.positionalTarget(effectTarget.index)?.toEntityId()
             is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()
             is EffectTarget.SpecificEntity -> effectTarget.entityId
             is EffectTarget.TriggeringEntity -> context.triggeringEntityId
@@ -84,7 +84,7 @@ object TargetResolutionUtils {
     fun resolvePlayerTarget(effectTarget: EffectTarget, context: EffectContext): EntityId? {
         return when (effectTarget) {
             is EffectTarget.Controller -> context.controllerId
-            is EffectTarget.ContextTarget -> context.targets.getOrNull(effectTarget.index)?.toEntityId()
+            is EffectTarget.ContextTarget -> context.positionalTarget(effectTarget.index)?.toEntityId()
             is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()
             is EffectTarget.PipelineTarget ->
                 context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
@@ -206,7 +206,7 @@ object TargetResolutionUtils {
             is EntityReference.Source -> context.sourceId
             is EntityReference.EnchantedCreature ->
                 context.sourceId?.let { state.getEntity(it)?.get<AttachedToComponent>()?.targetId }
-            is EntityReference.Target -> context.targets.getOrNull(ref.index)?.toEntityId()
+            is EntityReference.Target -> context.positionalTarget(ref.index)?.toEntityId()
             is EntityReference.Sacrificed -> context.sacrificedPermanents.getOrNull(ref.index)?.entityId
             is EntityReference.TappedAsCost -> context.tappedPermanents.getOrNull(ref.index)
             is EntityReference.Triggering -> context.triggeringEntityId

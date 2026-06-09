@@ -872,7 +872,7 @@ class ConditionEvaluator(
         condition: TargetMatchesFilter,
         context: EffectContext
     ): Boolean {
-        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val target = context.positionalTarget(condition.targetIndex) ?: return false
         val entityId = when (target) {
             is com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent -> target.entityId
             is com.wingedsheep.engine.state.components.stack.ChosenTarget.Player -> return false
@@ -894,7 +894,7 @@ class ConditionEvaluator(
         condition: TargetIsPlayer,
         context: EffectContext
     ): Boolean {
-        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val target = context.positionalTarget(condition.targetIndex) ?: return false
         return target is com.wingedsheep.engine.state.components.stack.ChosenTarget.Player
     }
 
@@ -915,7 +915,7 @@ class ConditionEvaluator(
         condition: TargetMarkedDamageExceedsToughness,
         context: EffectContext
     ): Boolean {
-        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val target = context.positionalTarget(condition.targetIndex) ?: return false
         val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
             ?.entityId ?: return false
         if (entityId !in state.getBattlefield()) return false
@@ -939,7 +939,7 @@ class ConditionEvaluator(
         condition: TargetSharesMostCommonColor,
         context: EffectContext
     ): Boolean {
-        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val target = context.positionalTarget(condition.targetIndex) ?: return false
         val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
             ?.entityId ?: return false
         val projected = state.projectedState
@@ -961,7 +961,7 @@ class ConditionEvaluator(
         condition: AnotherPermanentWithSameNameAsTarget,
         context: EffectContext
     ): Boolean {
-        val target = context.targets.getOrNull(condition.targetIndex) ?: return false
+        val target = context.positionalTarget(condition.targetIndex) ?: return false
         val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
             ?.entityId ?: return false
         val targetEntity = state.getEntity(entityId) ?: return false
