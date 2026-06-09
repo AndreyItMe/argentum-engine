@@ -85,6 +85,8 @@ class EffectAndTriggerContinuationResumer(
                 triggerTotalCounterCount = continuation.triggerTotalCounterCount,
                 triggerLastKnownCounters = continuation.triggerLastKnownCounters,
                 triggerLastKnownDamageDealtByPlayers = continuation.triggerLastKnownDamageDealtByPlayers,
+                lastKnownPower = continuation.lastKnownPower,
+                lastKnownToughness = continuation.lastKnownToughness,
                 triggerScryCount = continuation.triggerScryCount,
                 triggerExcessDamageAmount = continuation.triggerExcessDamageAmount
             )
@@ -127,6 +129,8 @@ class EffectAndTriggerContinuationResumer(
             triggerTotalCounterCount = continuation.triggerTotalCounterCount,
             triggerLastKnownCounters = continuation.triggerLastKnownCounters,
             triggerLastKnownDamageDealtByPlayers = continuation.triggerLastKnownDamageDealtByPlayers,
+            lastKnownPower = continuation.lastKnownPower,
+            lastKnownToughness = continuation.lastKnownToughness,
             triggerModesChosenCount = continuation.triggerModesChosenCount,
             enchantedCreatureLastKnownPower = continuation.enchantedCreatureLastKnownPower,
             triggerScryCount = continuation.triggerScryCount,
@@ -244,6 +248,8 @@ class EffectAndTriggerContinuationResumer(
             triggerTotalCounterCount = continuation.triggerTotalCounterCount,
             triggerLastKnownCounters = continuation.triggerLastKnownCounters,
             triggerLastKnownDamageDealtByPlayers = continuation.triggerLastKnownDamageDealtByPlayers,
+            lastKnownPower = continuation.lastKnownPower,
+            lastKnownToughness = continuation.lastKnownToughness,
             damageDistribution = response.distribution
         )
 
