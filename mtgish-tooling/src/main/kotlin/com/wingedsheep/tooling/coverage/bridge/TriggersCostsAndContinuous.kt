@@ -56,6 +56,10 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
 
     // Duration-scoped continuous trigger / replacement creators.
     composed("CreateReplaceWouldDealDamageUntil", "PreventDamageShield / RedirectNextDamage", composes = listOf("PreventDamageShield"))
+    // Duration-scoped PREVENTION twin of CreateReplaceWouldDealDamageUntil (mtgish prevention/replacement
+    // split). "Prevent all (combat) damage that would be dealt … this turn" — Deep Wood, Leery Fogbeast,
+    // Maze of Shadows. Same PreventDamageShield capability, minus the `PreventThatDamage` replacement payload.
+    composed("CreatePreventDamageUntil", "PreventDamageShield (duration-scoped prevention)", composes = listOf("PreventDamageShield"))
     composed("CreateTriggerUntil", "CreateGlobalTriggeredAbility (duration)", composes = listOf("CreateGlobalTriggeredAbility"))
     composed("CreateFutureTrigger", "CreateDelayedTrigger", composes = listOf("CreateDelayedTrigger"))
 }

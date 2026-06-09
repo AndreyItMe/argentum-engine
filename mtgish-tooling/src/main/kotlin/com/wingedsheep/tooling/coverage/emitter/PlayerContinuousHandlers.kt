@@ -66,6 +66,36 @@ internal val playerContinuousHandlers: Map<String, ActionHandler> = actionHandle
             else -> null
         }
     }
+
+    // PREVENTION twin of CreateReplaceWouldDealDamageUntil (mtgish prevention/replacement split). Verified
+    // against the post-split IR for all three shapes: Cephalid Illusionist (to-and-by `Or`, `_Permanent`
+    // = Ref_TargetPermanent), Deep Wood (attacking-creatures-to-you), Angelsong (all combat damage). The
+    // split renamed the event field `_ReplacableEventWouldDealDamage` -> `_EventPreventDamage` and the action
+    // field `_ReplacementActionWouldDealDamage` -> `_ActionPreventDamage`, but preserved every value string
+    // and the `_Expiration` / `_Permanent` / `_Player` discriminators — so the original matching still holds.
+    // The `_ActionPreventDamage` = PreventThatDamage payload survived, so we keep the `"PreventThatDamage"`
+    // guard (a prevention-with-rider scaffolds). The unrestricted (Angelsong) case is matched key-agnostically
+    // — `CombatDamageWouldBeDealt` present with neither narrower variant — instead of keying off the renamed
+    // event field. Anything that doesn't match an exact shape declines (→ SCAFFOLD).
+    on("CreatePreventDamageUntil") { node, _, tvar ->
+        val blob = compact(node)
+        when {
+            tvar != null &&
+                "CombatDamageWouldBeDealtToRecipient" in blob &&
+                "CombatDamageWouldBeDealtByCreature" in blob &&
+                jsonContains(node, "_Permanent", "Ref_TargetPermanent") &&
+                "PreventThatDamage" in blob && jsonContains(node, "_Expiration", "UntilEndOfTurn") ->
+                call("Effects.PreventCombatDamageToAndBy", arg(Lit(tvar)))
+            "IsAttacking" in blob && "PreventThatDamage" in blob && jsonContains(node, "_Player", "You") ->
+                call("Effects.PreventDamageFromAttackingCreatures")
+            "CombatDamageWouldBeDealt" in blob &&
+                "CombatDamageWouldBeDealtToRecipient" !in blob &&
+                "CombatDamageWouldBeDealtByCreature" !in blob &&
+                "PreventThatDamage" in blob && jsonContains(node, "_Expiration", "UntilEndOfTurn") ->
+                call("Effects.PreventAllCombatDamage")
+            else -> null
+        }
+    }
     on("CreateTriggerUntil") { node, _, _ ->
         // Harsh Justice: reflect attackers' combat damage back to their controller.
         val blob = compact(node)

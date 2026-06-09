@@ -2927,10 +2927,10 @@
               "_Actions": "ActionList",
               "args": [
                 {
-                  "_Action": "CreateReplaceWouldDealDamageUntil",
+                  "_Action": "CreatePreventDamageUntil",
                   "args": [
                     {
-                      "_ReplacableEventWouldDealDamage": "DamageWouldBeDealtByAPermanentToRecipient",
+                      "_EventPreventDamage": "DamageWouldBeDealtByAPermanentToRecipient",
                       "args": [
                         {
                           "_Permanents": "And",
@@ -2954,7 +2954,7 @@
                     },
                     [
                       {
-                        "_ReplacementActionWouldDealDamage": "PreventThatDamage"
+                        "_ActionPreventDamage": "PreventThatDamage"
                       }
                     ],
                     {

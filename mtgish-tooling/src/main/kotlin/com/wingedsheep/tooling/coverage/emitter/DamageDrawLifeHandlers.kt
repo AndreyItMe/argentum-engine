@@ -171,6 +171,29 @@ internal val damageDrawLifeHandlers: Map<String, ActionHandler> = actionHandlers
         val target = damagePreventionRecipient(event, tvar) ?: return@on null
         call("Effects.PreventNextDamage", arg("$amount"), arg(Lit(target)))
     }
+
+    // PREVENTION twin of CreateFutureReplaceWouldDealDamage (mtgish prevention/replacement split). Same
+    // "Prevent the next N damage that would be dealt to <recipient> this turn" render as above. Verified
+    // against the post-split IR: the split renamed the discriminators but preserved the structure —
+    //   event field `_FutureReplacableEventWouldDealDamage` -> `_FutureEventPreventDamage` (value unchanged),
+    //   action field `_ReplacementActionWouldDealDamage`    -> `_ActionPreventDamage`        (value unchanged).
+    // The args[1] action payload was NOT dropped, so we keep the single-`PreventThatDamage` guard: a
+    // prevention-with-rider (redirect / gain-life / "if you do …") has a different/extra action and must
+    // SCAFFOLD rather than mis-render as a plain shield. Literal-amount + exactly-resolvable-recipient
+    // constraints unchanged (X / "all" / distributed / by-source events decline).
+    on("CreateFuturePreventDamage") { _, args, tvar ->
+        val a = args.asArr ?: return@on null
+        val event = a.getOrNull(0) as? JsonObject ?: return@on null
+        if (!jsonContains(event, "_FutureEventPreventDamage",
+                "NextAmountOfDamageThatWouldBeDealtThisTurnToRecipient")) return@on null
+        val repl = a.getOrNull(1) as? JsonArray ?: return@on null
+        if (repl.size != 1 ||
+            (repl[0] as? JsonObject)?.strField("_ActionPreventDamage") != "PreventThatDamage")
+            return@on null
+        val amount = findInteger(event) as? Int ?: return@on null  // X / "all" -> SCAFFOLD
+        val target = damagePreventionRecipient(event, tvar) ?: return@on null
+        call("Effects.PreventNextDamage", arg("$amount"), arg(Lit(target)))
+    }
 }
 
 /** Resolve a `_DamageRecipient` node to an EffectTarget DSL for a direct deal-damage action.

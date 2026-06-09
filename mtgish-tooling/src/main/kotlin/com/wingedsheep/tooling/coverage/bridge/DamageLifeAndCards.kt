@@ -23,6 +23,19 @@ internal fun BridgeBuilder.damageLifeAndCards() {
     // variants compose further primitives, so this is `composed` (mirrors `CreateReplaceWouldDealDamageUntil`).
     composed("CreateFutureReplaceWouldDealDamage", "PreventDamageShield (prevent next N damage to recipient)",
         composes = listOf("PreventDamageShield"))
+    // Damage PREVENTION, split out of the would-deal-damage REPLACEMENT family by the mtgish creator:
+    // CreateFuturePreventDamage / CreatePreventDamageUntil / PreventDamage are the first-class prevention
+    // twins of CreateFutureReplaceWouldDealDamage / CreateReplaceWouldDealDamageUntil / ReplaceWouldDealDamage.
+    // Prevention no longer carries a `PreventThatDamage` replacement-action payload (the node IS the
+    // prevention), but it maps to the same PreventDamageShield engine capability, so the *verdict* is
+    // identical to the pre-split replacement entries — only the discriminator changes.
+    //   - CreateFuturePreventDamage → "Prevent the next N damage that would be dealt to <recipient> this turn"
+    //   - PreventDamage             → immediate/static "prevent [all] damage that would be dealt to <recipient>"
+    // (CreatePreventDamageUntil is registered with the other duration-scoped creators in TriggersCostsAndContinuous.)
+    composed("CreateFuturePreventDamage", "PreventDamageShield (prevent next N damage to recipient)",
+        composes = listOf("PreventDamageShield"))
+    composed("PreventDamage", "PreventDamageShield (prevent damage to recipient)",
+        composes = listOf("PreventDamageShield"))
     composed("GainLifeForEach", "GainLife + DynamicAmount", composes = listOf("GainLife"))
     effect("GainLife", "GainLife")
     effect("LoseLife", "LoseLife")
