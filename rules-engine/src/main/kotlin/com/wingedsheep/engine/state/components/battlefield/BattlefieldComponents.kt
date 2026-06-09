@@ -208,8 +208,9 @@ data class SagaComponent(
  * like remembered-type cards, and any future "remembered name / type" tracking.
  *
  * Lives on the source permanent's container, so multiple noting permanents on the same battlefield
- * keep independent sets. The component is implicitly cleared when the permanent leaves play (the
- * container goes with it — CR 122.2-style cleanup falls out for free).
+ * keep independent sets. The component is implicitly cleared when the permanent leaves play: per
+ * CR 400.7, a permanent that moves zones becomes a new object with no memory of its previous
+ * existence, so the component vanishes with the old entity and no LTB handler is needed.
  *
  * Created on demand by the [com.wingedsheep.engine.handlers.continuations] resumer for
  * `NoteCreatureTypeEffect`; consumers read it via `state.getEntity(sourceId)?.get<NotedCreatureTypesComponent>()`
