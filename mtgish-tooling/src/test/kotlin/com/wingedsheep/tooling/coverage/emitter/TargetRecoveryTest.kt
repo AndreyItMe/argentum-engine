@@ -213,13 +213,28 @@ class TargetRecoveryTest : StringSpec({
         ctx.creatureFilterDsl(nonMount) shouldBe "TargetFilter(GameObjectFilter.Creature.notSubtype(Subtype(\"Mount\")))"
     }
 
-    "creatureFilterDsl declines a 'dealt damage this turn' restriction (Rooftop Assassin)" {
-        // "...that was dealt damage this turn" has no filter helper; dropping it would widen the kill.
+    "creatureFilterDsl renders a 'dealt damage this turn' restriction (Rooftop Assassin)" {
+        // "target creature an opponent controls that was dealt damage this turn" -> the
+        // .dealtDamageThisTurn() state-predicate suffix composed with the controller suffix.
         val dealtDamage = obj(
             """{"_Permanents":"And","args":[""" +
-                """{"_Permanents":"IsCardtype","args":"Creature"},{"_Permanents":"WasDealtDamageThisTurn"}]}""",
+                """{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"ControlledByAPlayer","args":{"_Players":"Opponent"}},""" +
+                """{"_Permanents":"WasDealtDamageThisTurn"}]}""",
         )
-        ctx.creatureFilterDsl(dealtDamage).shouldBeNull()
+        ctx.creatureFilterDsl(dealtDamage) shouldBe
+            "TargetFilter.Creature.dealtDamageThisTurn().opponentControls()"
+    }
+
+    "creatureFilterDsl declines 'dealt damage this turn' combined with an unrenderable shape" {
+        // The .dealtDamageThisTurn() suffix only composes on the plain-creature path; combined with a
+        // creature-subtype clause (a branch that returns before the suffix) it would be silently dropped,
+        // so the recovery declines (-> SCAFFOLD) rather than widen the kill.
+        val dealtDamageGoblin = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCreatureType","args":"Goblin"},{"_Permanents":"WasDealtDamageThisTurn"}]}""",
+        )
+        ctx.creatureFilterDsl(dealtDamageGoblin).shouldBeNull()
     }
 
     "gameObjectFilterDsl renders an outlaw filter via withAnyOfSubtypes (Vial Smasher)" {

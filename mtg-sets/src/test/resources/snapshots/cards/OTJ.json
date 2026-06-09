@@ -2267,6 +2267,79 @@
     "colorIdentityOverride": []
 }
 
+// Gold Rush
+{
+    "name": "Gold Rush",
+    "manaCost": "{1}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Create a Treasure token. Until end of turn, up to one target creature gets +2/+2 for each Treasure you control.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                },
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Multiply",
+                        "amount": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "artifact Treasure"
+                        },
+                        "multiplier": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Multiply",
+                        "amount": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "artifact Treasure"
+                        },
+                        "multiplier": 2
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "optional": true,
+                "filter": {
+                    "baseFilter": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "166",
+        "rarity": "UNCOMMON",
+        "artist": "Eric Wilkerson",
+        "flavorText": "\"Don't believe anyone who tells you to bite it. If it's the real thing, you'll know.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/5/15845be1-919d-4450-9de6-3552c52e8623.jpg?1712355933",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "You don't have to choose a target for Gold Rush. However, if you do, and that creature is an illegal target at the time Gold Rush tries to resolve, it won't resolve and none of its effects will happen. You won't create a Treasure token."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Count the number of Treasures you control as Gold Rush resolves to determine how big a bonus the target creature receives. That bonus won't change even if the number of Treasures you control does during the turn."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Harrier Strix
 {
     "name": "Harrier Strix",
@@ -3507,6 +3580,67 @@
     ]
 }
 
+// Rooftop Assassin
+{
+    "name": "Rooftop Assassin",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Vampire Assassin",
+    "oracleText": "Flash\nFlying, lifelink\nWhen this creature enters, destroy target creature an opponent controls that was dealt damage this turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING",
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature"
+                            ],
+                            "statePredicates": [
+                                "WasDealtDamageThisTurn"
+                            ],
+                            "controllerPredicate": "ControlledByOpponent"
+                        }
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "103",
+        "artist": "Josu Hernaiz",
+        "flavorText": "\"Sneaking behind people? Pedestrian.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/4/e4e4311a-8583-4cf0-8126-508dbfbcddb6.jpg?1712355656"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Scorching Shot
 {
     "name": "Scorching Shot",
@@ -3662,6 +3796,94 @@
     "colorIdentityOverride": [
         "WHITE",
         "GREEN"
+    ]
+}
+
+// Servant of the Stinger
+{
+    "name": "Servant of the Stinger",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Human Warlock",
+    "oracleText": "Deathtouch\nWhenever this creature deals combat damage to a player, if you've committed a crime this turn, you may sacrifice this creature. If you do, search your library for a card, put it into your hand, then shuffle.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "DEATHTOUCH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": "SacrificeSelf"
+                    },
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Library"
+                                },
+                                "storeAs": "searchable"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "searchable",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "found"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "found",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Hand"
+                                }
+                            },
+                            "ShuffleLibrary"
+                        ]
+                    }
+                },
+                "triggerCondition": "PlayerCommittedCrimeThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "105",
+        "rarity": "UNCOMMON",
+        "artist": "Steven Russell Black",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/5/b5c98650-b195-4071-8e02-4df35fddddc7.jpg?1712355666",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "A player commits a crime as they cast a spell, activate an ability, or put a triggered ability on the stack that targets at least one opponent, at least one permanent, spell, or ability an opponent controls, and/or at least one card in an opponent's graveyard."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Whether you've committed a crime this turn is checked as Servant of the Stinger's triggered ability would trigger and again as it resolves. If you haven't committed a crime by the time it resolves, the ability does nothing."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 

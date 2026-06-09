@@ -141,10 +141,17 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
         if ("ControlledByAPlayer" in blob) return null
         return Call("TargetFilter", listOf(arg(Lit("GameObjectFilter.Creature").dot("crewedOrSaddledSourceThisTurn"))))
     }
-    // "...that was dealt damage this turn" (Rooftop Assassin): the WasDealtDamageThisTurn state predicate
-    // has no TargetFilter/GameObjectFilter helper, so decline rather than drop it (which would widen the
-    // kill to any opponent's creature).
-    if ("WasDealtDamageThisTurn" in blob) return null
+    // "...that was dealt damage this turn" (Rooftop Assassin) renders via `.dealtDamageThisTurn()` on the
+    // plain-creature path below (composed alongside the controller suffix). The special-shape branches
+    // (attacking/blocking/subtype/face-down/non-cardtype) can't compose it, so if such a predicate is also
+    // present, decline rather than silently drop the dealt-damage restriction (which would widen the kill).
+    if ("WasDealtDamageThisTurn" in blob) {
+        val unrenderableAlongside = listOf(
+            "IsAttacking", "IsBlocking", "IsFaceDown", "IsCreatureType", "IsNonCreatureType",
+            "IsNonCardtype", "Other", "HasACounterOfType",
+        )
+        if (unrenderableAlongside.any { it in blob }) return null
+    }
     // "non-Mount creature" / "non-<creature-type> creature" (Sterling Keykeeper): a negated creature
     // subtype (IsNonCreatureType). TargetFilter has no `.notSubtype` passthrough, so render the
     // GameObjectFilter form wrapped in TargetFilter. Only the bare negated subtype (optionally a
@@ -243,6 +250,9 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     }
     FilterPredicates.manaValueAtMost(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.manaValueAtLeast(filterNode)?.let { node = node.dot(it) }
+    // "...that was dealt damage this turn" (Rooftop Assassin) — composes onto the plain-creature filter
+    // via .dealtDamageThisTurn(). Special shapes that carry this predicate already declined above.
+    if ("WasDealtDamageThisTurn" in blob) node = node.dot("dealtDamageThisTurn")
     // Keyword-ability restrictions ("attacking creature with shadow", Maze of Shadows): a
     // HasAbility / DoesntHaveAbility clause carrying a `_CheckHasable` keyword -> .withKeyword /
     // .withoutKeyword. Flying is already composed above (string match), so skip it here. If any

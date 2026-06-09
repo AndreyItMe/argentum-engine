@@ -1022,6 +1022,10 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   filter pass (e.g. Zero Point Ballad's mass destruction). Layer projection / trigger matching
   / cost calculation report `false` (no X context).
 - `.tapped()` / `.untapped()` — tap state.
+- `.dealtDamageThisTurn()` — was dealt damage this turn (marked-damage *history*, not current marked
+  damage); backed by `StatePredicate.WasDealtDamageThisTurn`. Survives damage removal / leaving combat;
+  cleared at end-of-turn cleanup. For "...that was dealt damage this turn" (Rooftop Assassin, Unsparing
+  Boltcaster). Also available on `TargetFilter` (`TargetFilter.Creature.dealtDamageThisTurn()`).
 - `.saddled()` — permanent is saddled (CR 702.171b); backed by `StatePredicate.IsSaddled`.
 - `.crewedOrSaddledSourceThisTurn()` — source-relative: creature crewed (CR 702.122) or saddled
   (CR 702.171) the effect's source permanent this turn; backed by

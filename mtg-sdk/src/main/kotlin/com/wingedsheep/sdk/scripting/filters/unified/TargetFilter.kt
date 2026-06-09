@@ -290,6 +290,9 @@ data class TargetFilter(
     /** Must be attacking */
     fun attacking() = copy(baseFilter = baseFilter.attacking())
 
+    /** Must have been dealt damage this turn ("...that was dealt damage this turn"). */
+    fun dealtDamageThisTurn() = copy(baseFilter = baseFilter.dealtDamageThisTurn())
+
     /** Must be controlled by you */
     fun youControl() = copy(baseFilter = baseFilter.youControl())
 

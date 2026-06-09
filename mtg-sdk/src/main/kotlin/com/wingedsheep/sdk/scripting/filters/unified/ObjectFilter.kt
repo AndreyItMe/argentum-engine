@@ -439,6 +439,15 @@ data class GameObjectFilter(
     )
 
     /**
+     * Must have been dealt damage this turn (marked-damage *history*, not current marked damage).
+     * Survives damage removal / leaving combat; cleared at end-of-turn cleanup. Used by
+     * "...that was dealt damage this turn" (Rooftop Assassin, Unsparing Boltcaster).
+     */
+    fun dealtDamageThisTurn() = copy(
+        statePredicates = statePredicates + StatePredicate.WasDealtDamageThisTurn
+    )
+
+    /**
      * Must be in the same combat band as the effect's source (the source itself, or a band-mate
      * sharing its band id — CR 702.22). Source-relative; only matches while the source attacks.
      */
