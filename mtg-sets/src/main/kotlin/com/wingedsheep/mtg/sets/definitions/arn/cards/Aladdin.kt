@@ -25,7 +25,7 @@ val Aladdin = card("Aladdin") {
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{1}{R}{R}"), Costs.Tap)
         val artifact = target("target artifact", Targets.Artifact)
-        effect = Effects.GainControl(artifact, Duration.WhileSourceOnBattlefield())
+        effect = Effects.GainControl(artifact, Duration.WhileYouControlSource("Aladdin"))
     }
 
     metadata {

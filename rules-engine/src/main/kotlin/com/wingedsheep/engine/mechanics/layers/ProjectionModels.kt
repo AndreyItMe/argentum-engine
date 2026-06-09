@@ -176,7 +176,15 @@ data class ContinuousEffect(
      * is this player (a "for as long as you control it" gate, e.g. suspend haste — CR 702.62g).
      * Evaluated after Layer 2 control is established, so it tracks control-changing effects.
      */
-    val controllerGate: EntityId? = null
+    val controllerGate: EntityId? = null,
+    /**
+     * When non-null, the entire effect drops the moment the *source's* projected controller
+     * is no longer this player (a "for as long as you control this [source]" gate — Aladdin,
+     * Scroll of Isildur Chapter I, etc.). Sibling of [controllerGate] but gated on the source
+     * rather than per-affected-entity. Evaluated after Layer 2 control is established, so it
+     * tracks every flavor of control-changing effect.
+     */
+    val sourceControllerGate: EntityId? = null
 ) {
     val layer: Layer get() = modification.layer
     val sublayer: Sublayer? get() = modification.sublayer

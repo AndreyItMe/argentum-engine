@@ -180,6 +180,36 @@ sealed interface Duration {
     data object WhileControlledByController : Duration {
         override val description = "for as long as you control it"
     }
+
+    /**
+     * Effect lasts for as long as the effect's controller controls the *source* permanent —
+     * mirror of [WhileControlledByController], but the gate watches the source's controller
+     * rather than the affected object's controller. Used by abilities phrased "for as long
+     * as you control this [permanent]" where "this" refers to the source itself.
+     *
+     * Distinct from [WhileSourceOnBattlefield]: that one ends only when the source leaves
+     * the battlefield, so a Threaten-style steal of the source would let the effect linger
+     * under the wrong player until the source dies. `WhileYouControlSource` ends the
+     * moment the source's controller changes, which is what "as long as you control this"
+     * actually means.
+     *
+     * Evaluated against the source's *projected* controller, so it responds to every kind
+     * of control-changing effect (one-shot steals, Threaten, static control Auras). One-way
+     * (CR 611.2b): once the source's controller changes (or the source leaves the battlefield)
+     * the effect ends for good — `EndedDurationExpiryCheck` physically removes it, so
+     * regaining control does not restart it.
+     *
+     * Examples: Aladdin (ARN) — "Gain control of target artifact for as long as you control
+     * this creature."  Scroll of Isildur (LTR) — "Gain control of up to one target artifact
+     * for as long as you control this Saga."
+     */
+    @SerialName("WhileYouControlSource")
+    @Serializable
+    data class WhileYouControlSource(
+        val sourceDescription: String = "this permanent"
+    ) : Duration {
+        override val description = "for as long as you control $sourceDescription"
+    }
 }
 
 /**
@@ -196,6 +226,9 @@ object Durations {
 
     fun whileSourceTapped(source: String = "this creature") =
         Duration.WhileSourceTapped(source)
+
+    fun whileYouControlSource(source: String = "this permanent") =
+        Duration.WhileYouControlSource(source)
 
     fun untilPhase(phase: String) = Duration.UntilPhase(phase)
     fun until(condition: String) = Duration.UntilCondition(condition)

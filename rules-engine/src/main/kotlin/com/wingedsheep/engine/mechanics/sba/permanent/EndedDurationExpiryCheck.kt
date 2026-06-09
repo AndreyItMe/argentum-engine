@@ -37,6 +37,9 @@ import com.wingedsheep.sdk.scripting.Duration
  * - [Duration.WhileSourceOnBattlefield]: ends when the source leaves the battlefield.
  * - [Duration.WhileControlledByController]: drops any affected object the effect's controller no
  *   longer controls.
+ * - [Duration.WhileYouControlSource]: ends when the source leaves the battlefield OR its
+ *   projected controller is no longer the effect's controller. Drops the entire effect (not
+ *   per-affected) — the source-controller half is binary, the source either is or isn't yours.
  *
  * Affected entities no longer on the battlefield are left untouched: the effect as a whole is
  * reaped by the untap-step cleanup / zone-change handling, and we must not emit spurious
@@ -121,6 +124,13 @@ class EndedDurationExpiryCheck : StateBasedActionCheck {
                 all.filterTo(LinkedHashSet()) { id ->
                     !state.getBattlefield().contains(id) || projected.getController(id) == floating.controllerId
                 }
+
+            is Duration.WhileYouControlSource -> {
+                val sourceId = floating.sourceId
+                if (sourceId == null || !state.getBattlefield().contains(sourceId)) emptySet()
+                else if (projected.getController(sourceId) != floating.controllerId) emptySet()
+                else all
+            }
 
             else -> all
         }

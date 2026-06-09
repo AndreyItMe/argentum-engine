@@ -402,15 +402,29 @@ class StateProjector(
     }
 
     /**
-     * Enforce a [ContinuousEffect.controllerGate] ("for as long as you control it"): drop any
-     * affected entity whose projected controller is no longer the gating player. Called after
-     * Layer 2 control is resolved, so it reflects every control-changing effect (steals,
-     * Threaten, static control Auras). A no-op for effects without a gate.
+     * Enforce [ContinuousEffect.controllerGate] ("for as long as you control it") and
+     * [ContinuousEffect.sourceControllerGate] ("for as long as you control this [source]").
+     * Called after Layer 2 control is resolved, so it reflects every control-changing effect
+     * (steals, Threaten, static control Auras). A no-op for effects without either gate.
+     *
+     * The two gates differ in *what* they watch: [controllerGate] drops the affected entities
+     * whose own controller drifted; [sourceControllerGate] drops the entire effect if the
+     * source's controller drifted.
      */
     private fun applyControllerGate(
         effect: ContinuousEffect,
         projectedValues: Map<EntityId, MutableProjectedValues>
     ): ContinuousEffect {
+        // Source-controller gate first — failure wipes the whole effect, so the per-affected gate
+        // below has nothing left to do.
+        val sourceGate = effect.sourceControllerGate
+        if (sourceGate != null) {
+            val sourceController = projectedValues[effect.sourceId]?.controllerId
+            if (sourceController != sourceGate) {
+                return if (effect.affectedEntities.isEmpty()) effect
+                else effect.copy(affectedEntities = emptySet())
+            }
+        }
         val gate = effect.controllerGate ?: return effect
         val stillControlled = effect.affectedEntities.filterTo(mutableSetOf()) { entityId ->
             projectedValues[entityId]?.controllerId == gate
@@ -475,6 +489,15 @@ class StateProjector(
                     continue
                 }
             }
+            if (floating.duration is Duration.WhileYouControlSource) {
+                // Battlefield half of the gate; the source-controller half is deferred to a
+                // post-Layer-2 sweep ([sourceControllerGate]) because Layer 2 hasn't run yet
+                // at collection time.
+                val sourceId = floating.sourceId
+                if (sourceId == null || !state.getBattlefield().contains(sourceId)) {
+                    continue
+                }
+            }
 
             var validAffectedEntities = if (floating.effect.dynamicGroupFilter != null) {
                 // Rule 611.2c: re-evaluate filter dynamically to include entities that entered later
@@ -512,6 +535,16 @@ class StateProjector(
                         // the gate is applied after Layer 2, against the projected controller,
                         // so the effect drops the instant another player gains control.
                         controllerGate = if (floating.duration is Duration.WhileControlledByController) {
+                            floating.controllerId
+                        } else {
+                            null
+                        },
+                        // "for as long as you control this [source]" (Aladdin, Scroll of Isildur I).
+                        // Source-side mirror of [controllerGate]: drops the entire effect after Layer 2
+                        // if the source's projected controller drifts (Threaten-style steal of the
+                        // source, static control Aura, etc.). One-way: EndedDurationExpiryCheck removes
+                        // the floating effect itself so regaining control does not re-apply.
+                        sourceControllerGate = if (floating.duration is Duration.WhileYouControlSource) {
                             floating.controllerId
                         } else {
                             null

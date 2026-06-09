@@ -322,6 +322,13 @@ class CleanupPhaseManager(
                     val sourceId = floatingEffect.sourceId
                     sourceId != null && newState.getBattlefield().contains(sourceId)
                 }
+                is Duration.WhileYouControlSource -> {
+                    // Keep if source is still on battlefield. The source-controller half is gated
+                    // per-frame by StateProjector and physically latched by EndedDurationExpiryCheck,
+                    // so end-of-turn cleanup only enforces the battlefield half here.
+                    val sourceId = floatingEffect.sourceId
+                    sourceId != null && newState.getBattlefield().contains(sourceId)
+                }
                 is Duration.WhileSourceTapped,
                 is Duration.WhileSourceTappedAndAffectedPowerAtMostSource -> {
                     // Keep if source is still on battlefield AND tapped. The power-comparison

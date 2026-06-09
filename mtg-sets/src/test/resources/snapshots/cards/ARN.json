@@ -28,7 +28,10 @@
                         "type": "BoundVariable",
                         "name": "target artifact"
                     },
-                    "duration": "WhileSourceOnBattlefield"
+                    "duration": {
+                        "type": "WhileYouControlSource",
+                        "sourceDescription": "Aladdin"
+                    }
                 },
                 "targetRequirements": [
                     {

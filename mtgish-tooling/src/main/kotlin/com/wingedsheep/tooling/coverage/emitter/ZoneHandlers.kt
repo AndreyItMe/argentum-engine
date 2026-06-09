@@ -59,11 +59,18 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
     }
 
     on("GainControlOfPermanentUntil") { _, args, tvar ->
-        // "gain control of <permanent> until end of turn" (Threaten). Only the end-of-turn duration renders;
-        // a permanent gain-control uses a different action, and any other expiration scaffolds.
+        // "gain control of <permanent> until …" — renders the two durations we can pin exactly to an
+        // Argentum `Duration` variant: end-of-turn (Threaten) and "for as long as you control this
+        // creature" (Aladdin — IR `UntilPermanentChangesControl` always refers to the source). Any
+        // other expiration scaffolds rather than risk a wrong duration.
         val tgt = refTarget(args, tvar) ?: return@on null
-        if (!jsonContains(args, "_Expiration", "UntilEndOfTurn")) return@on null
-        call("Effects.GainControl", arg(Lit(tgt)), arg("Duration.EndOfTurn"))
+        when {
+            jsonContains(args, "_Expiration", "UntilEndOfTurn") ->
+                call("Effects.GainControl", arg(Lit(tgt)), arg("Duration.EndOfTurn"))
+            jsonContains(args, "_Expiration", "UntilPermanentChangesControl") ->
+                call("Effects.GainControl", arg(Lit(tgt)), arg("Duration.WhileYouControlSource()"))
+            else -> null
+        }
     }
 
     on("SacrificePermanent") { _, args, _ ->  // "sacrifice ~" (Blistering Firecat's end-step sacrifice)
