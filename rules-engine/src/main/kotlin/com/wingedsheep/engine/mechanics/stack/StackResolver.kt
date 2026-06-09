@@ -1190,7 +1190,12 @@ class StackResolver(
         // Handle "enters with counters" replacement effects (before adding to battlefield)
         val counterEvents = mutableListOf<GameEvent>()
         if (cardDef != null && !spellComponent.castFaceDown) {
-            val (counterState, events) = applyEntersWithCounters(newState, spellId, cardDef, controllerId, spellComponent.xValue)
+            val totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
+                spellComponent.manaSpentBlack + spellComponent.manaSpentRed +
+                spellComponent.manaSpentGreen + spellComponent.manaSpentColorless
+            val (counterState, events) = applyEntersWithCounters(
+                newState, spellId, cardDef, controllerId, spellComponent.xValue, totalManaSpent
+            )
             newState = counterState
             counterEvents.addAll(events)
         }
@@ -1880,7 +1885,8 @@ class StackResolver(
         entityId: EntityId,
         cardDef: com.wingedsheep.sdk.model.CardDefinition,
         controllerId: EntityId,
-        xValue: Int? = null
+        xValue: Int? = null,
+        totalManaSpent: Int = 0
     ): Pair<GameState, List<GameEvent>> {
         var newState = state
         val events = mutableListOf<GameEvent>()
@@ -1917,7 +1923,8 @@ class StackResolver(
                         sourceId = entityId,
                         controllerId = controllerId,
                         opponentId = newState.turnOrder.firstOrNull { it != controllerId },
-                        xValue = xValue
+                        xValue = xValue,
+                        totalManaSpent = totalManaSpent
                     )
                     val count = dynamicAmountEvaluator.evaluate(newState, effect.count, context)
                     if (count > 0) {
