@@ -2,7 +2,7 @@
 
 **Set Size:** 291 cards (261 Draft / 30 Extra)
 **Release Date:** June 23, 2023
-**Implemented:** 206 / 291
+**Implemented:** 207 / 291
 Run `scripts/card-status --set LTR` (and `--list --set LTR`) to verify status at any time.
 The split below mirrors that script: **Draft** = Scryfall `booster: true`; **Extra** =
 starter-deck/special cards and basic lands.
@@ -210,7 +210,7 @@ starter-deck/special cards and basic lands.
 - [ ] Glorfindel, Dauntless Rescuer
 - [x] Last March of the Ents
 - [ ] Legolas, Master Archer
-- [ ] Long List of the Ents
+- [x] Long List of the Ents
 - [x] Lothlórien Lookout
 - [x] Many Partings
 - [x] Meriadoc Brandybuck

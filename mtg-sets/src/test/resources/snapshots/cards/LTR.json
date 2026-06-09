@@ -7443,6 +7443,225 @@
     ]
 }
 
+// Long List of the Ents
+{
+    "name": "Long List of the Ents",
+    "manaCost": "{G}",
+    "typeLine": "Enchantment — Saga",
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after VI.)\nI, II, III, IV, V, VI — Note a creature type that hasn't been noted for this Saga. When you next cast a creature spell of that type this turn, that creature enters with an additional +1/+1 counter on it.",
+    "script": {
+        "sagaChapters": [
+            {
+                "chapter": 1,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 2,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 3,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 4,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 5,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 6,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        "NoteCreatureType",
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "TriggeringEntity"
+                            },
+                            "trigger": {
+                                "event": {
+                                    "type": "SpellCastEvent",
+                                    "spellFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "notedType"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "fireOnce": true
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "174",
+        "rarity": "UNCOMMON",
+        "artist": "Logan Feliciano",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/7/27347256-2ac4-4b12-b288-0a8d578a1ff2.jpg?1715045040"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Lost to Legend
 {
     "name": "Lost to Legend",
