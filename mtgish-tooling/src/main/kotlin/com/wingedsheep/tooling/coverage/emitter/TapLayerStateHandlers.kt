@@ -119,8 +119,10 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
     }
 
     on("CreatePermanentRuleEffectUntil") { node, _, tvar ->
-        // "target <permanent> can't be blocked this turn" (Crafty Pathmage). Only the single CantBeBlocked
-        // rule at end-of-turn renders, as a CANT_BE_BLOCKED ability-flag grant; anything else scaffolds.
+        // "target <permanent> can't be blocked this turn" (Crafty Pathmage) renders as a CANT_BE_BLOCKED
+        // ability-flag grant; "<permanent> can't be blocked except by creatures with <X> this turn"
+        // (Resilient Roadrunner) renders as a floating GrantCantBeBlockedExceptBy. Only the single rule at
+        // end-of-turn renders; anything else scaffolds.
         val args = node["args"].asArr ?: return@on null
         val tgt = refTarget(args, tvar) ?: return@on null
         if (!jsonContains(node, "_Expiration", "UntilEndOfTurn")) return@on null
@@ -128,6 +130,10 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         if (rules.size != 1) return@on null
         when (rules[0].strField("_PermanentRule")) {
             "CantBeBlocked" -> call("GrantKeywordEffect", arg("AbilityFlag.CANT_BE_BLOCKED.name"), arg(Lit(tgt)))
+            "CantBeBlockedExceptByDefenders" -> {
+                val bf = cantBeBlockedExceptByFilter(rules[0]) ?: return@on null
+                call("Effects.GrantCantBeBlockedExceptBy", arg(Lit(tgt)), arg(Lit(bf)))
+            }
             else -> null
         }
     }

@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.scripting.Duration
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
@@ -336,6 +337,37 @@ data class CantBlockGroupEffect(
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newFilter = filter.applyTextReplacement(replacer)
         return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
+ * Grant a creature an evasion restriction until end of turn: it "can't be blocked except by
+ * creatures matching [blockerFilter]." The one-shot, floating-effect counterpart to the static
+ * [com.wingedsheep.sdk.scripting.CantBeBlockedExceptBy] ability (and the filter-based sibling of
+ * [GrantCantBeBlockedExceptByColorEffect], which is restricted to a single color).
+ *
+ * Resolves through the same projected `cantBeBlockedExceptByFilters` channel the static ability
+ * uses, so the existing block-evasion rule enforces it for free. Used by Resilient Roadrunner
+ * ("{3}: This creature can't be blocked this turn except by creatures with haste.") and any
+ * future activated/triggered grant that names a blocker filter.
+ *
+ * For multi-target spells, wrap in ForEachTargetEffect with EffectTarget.ContextTarget(0).
+ *
+ * @property target The creature that gains the restriction
+ * @property blockerFilter Only creatures matching this filter may block the target
+ * @property duration How long the restriction lasts
+ */
+@SerialName("GrantCantBeBlockedExceptBy")
+@Serializable
+data class GrantCantBeBlockedExceptByEffect(
+    val target: EffectTarget,
+    val blockerFilter: GameObjectFilter,
+    val duration: Duration = Duration.EndOfTurn
+) : Effect {
+    override val description: String = buildString {
+        append("${target.description} can't be blocked")
+        if (duration.description.isNotEmpty()) append(" ${duration.description}")
+        append(" except by ${blockerFilter.description}")
     }
 }
 

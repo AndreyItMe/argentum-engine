@@ -13,7 +13,11 @@ import com.wingedsheep.tooling.coverage.asInt
 import com.wingedsheep.tooling.coverage.asStr
 import com.wingedsheep.tooling.coverage.call
 import com.wingedsheep.tooling.coverage.compact
+import com.wingedsheep.tooling.coverage.firstArgWordTagged
+import com.wingedsheep.tooling.coverage.firstWordAtKey
+import com.wingedsheep.tooling.coverage.hasTag
 import com.wingedsheep.tooling.coverage.jsonContains
+import com.wingedsheep.tooling.coverage.nodesTagged
 import com.wingedsheep.tooling.coverage.pascalToUpperSnake
 import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
@@ -340,16 +344,8 @@ private fun EmitCtx.staticAbilityExpr(ruleName: String, ruleNode: JsonObject): D
             return call("CantBeBlockedBy", arg("blockerFilter", filter))
         }
         "CantBeBlockedExceptByDefenders" -> {
-            if (oracleText?.contains("defender", ignoreCase = true) == true) {
-                return call("CantBeBlockedExceptBy", arg("blockerFilter", "GameObjectFilter.Creature.withKeyword(Keyword.DEFENDER)"))
-            }
-            // "can't be blocked except by [creature subtype]" (Invisibility: except by Walls). The rule
-            // names the *only* legal blockers, so it must render CantBeBlockedExceptBy with that subtype.
-            // Scaffold if we can't recover a single creature subtype — a bare CantBeBlockedBy would
-            // invert the meaning (it removes those blockers rather than restricting to them).
-            val sub = Regex(""""IsCreatureType",\s*"args":\s*"(\w+)"""").find(compact(ruleNode))?.groupValues?.get(1)
-                ?: return null
-            return call("CantBeBlockedExceptBy", arg("blockerFilter", "GameObjectFilter.Creature.withSubtype(${subtypeArg(sub)})"))
+            val bf = cantBeBlockedExceptByFilter(ruleNode) ?: return null
+            return call("CantBeBlockedExceptBy", arg("blockerFilter", bf))
         }
         "CantAttackUnlessDefendingPlayer" -> {  // Deep-Sea Serpent: defender must control an Island
             val subs = subtypes(ruleNode)
@@ -362,6 +358,40 @@ private fun EmitCtx.staticAbilityExpr(ruleName: String, ruleNode: JsonObject): D
         // self MustAttack, distinct from MustAttackPlayer which carries a forced defender.
         "MustAttack" -> return call("MustAttack")
         "CanBlockAnyNumberOfCreatures" -> return call("CanBlockAnyNumber")
+    }
+    return null
+}
+
+/**
+ * The blocker filter for a `CantBeBlockedExceptByDefenders` rule — the creatures that may STILL block
+ * (the rule restricts blockers down to these). Renders the "defender" oracle idiom, a single creature
+ * subtype, or a single keyword restriction ("except by creatures with haste"); declines (null) on any
+ * compound / unrecognised shape so the card scaffolds rather than emitting a too-broad "except by any
+ * creature". Shared by the static [com.wingedsheep.sdk.scripting.CantBeBlockedExceptBy] ability and the
+ * floating one-shot `Effects.GrantCantBeBlockedExceptBy` grant (`CreatePermanentRuleEffectUntil`).
+ */
+internal fun EmitCtx.cantBeBlockedExceptByFilter(ruleNode: JsonObject): String? {
+    if (oracleText?.contains("defender", ignoreCase = true) == true)
+        return "GameObjectFilter.Creature.withKeyword(Keyword.DEFENDER)"
+    // "except by [creature subtype]" (Invisibility: except by Walls). The rule names the *only* legal
+    // blockers, so it must render CantBeBlockedExceptBy with that subtype — a bare CantBeBlockedBy would
+    // invert the meaning (removing those blockers rather than restricting to them).
+    ruleNode.firstArgWordTagged("IsCreatureType")?.let {
+        return "GameObjectFilter.Creature.withSubtype(${subtypeArg(it)})"
+    }
+    // "except by creatures with <keyword>" (Resilient Roadrunner: haste). Render only the clean
+    // "Creature + one known keyword" shape; any extra predicate (color / power / mana value / subtype /
+    // a second or negated ability) declines so we never silently drop a restriction.
+    val hasAbilities = ruleNode.nodesTagged("HasAbility")
+    if (hasAbilities.size == 1 && ruleNode.nodesTagged("DoesntHaveAbility").isEmpty()) {
+        val foreign = listOf(
+            "IsColor", "IsNonColor", "PowerIs", "ToughnessIs", "ManaValueIs",
+            "IsTapped", "IsUntapped", "IsAttacking", "IsBlocking", "HasACounterOfType"
+        )
+        if (foreign.any { ruleNode.hasTag(it) }) return null
+        val kw = pascalToUpperSnake(hasAbilities[0].firstWordAtKey("_CheckHasable") ?: return null)
+        if (kw !in keywords) return null  // unknown ability -> decline, don't widen the filter
+        return "GameObjectFilter.Creature.withKeyword(Keyword.$kw)"
     }
     return null
 }

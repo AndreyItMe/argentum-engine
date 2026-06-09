@@ -16,6 +16,7 @@ class CombatExecutors(
         ForceBlockExecutor(),
         PreventDamageExecutor(amountEvaluator),
         GrantCantBeBlockedExceptByColorExecutor(),
+        GrantCantBeBlockedExceptByExecutor(),
         ReflectCombatDamageExecutor(),
         TauntExecutor(),
         CantAttackGroupExecutor(),

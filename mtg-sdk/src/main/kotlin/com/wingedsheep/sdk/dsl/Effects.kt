@@ -41,6 +41,7 @@ import com.wingedsheep.sdk.scripting.effects.GrantHexproofFromChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.GrantProtectionFromChosenColorEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachColorOfEffect
 import com.wingedsheep.sdk.scripting.effects.GrantCantBeBlockedByChosenColorEffect
+import com.wingedsheep.sdk.scripting.effects.GrantCantBeBlockedExceptByEffect
 import com.wingedsheep.sdk.scripting.effects.GrantHarmonizeEffect
 import com.wingedsheep.sdk.scripting.effects.GrantToxicEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackGroupEffect
@@ -1600,6 +1601,22 @@ object Effects {
         target: EffectTarget = EffectTarget.ContextTarget(0),
         duration: Duration = Duration.EndOfTurn
     ): Effect = GrantCantBeBlockedByChosenColorEffect(target, duration)
+
+    /**
+     * Grant a creature "can't be blocked except by creatures matching [blockerFilter]" for
+     * [duration]. The one-shot, floating-effect counterpart to the static
+     * [com.wingedsheep.sdk.scripting.CantBeBlockedExceptBy] ability; for the color-only sibling use
+     * [GrantCantBeBlockedExceptByColor]. Routes through the same projected evasion channel the
+     * static ability uses, so the existing block rules enforce it.
+     *
+     * Used by Resilient Roadrunner: "{3}: This creature can't be blocked this turn except by
+     * creatures with haste."
+     */
+    fun GrantCantBeBlockedExceptBy(
+        target: EffectTarget,
+        blockerFilter: GameObjectFilter,
+        duration: Duration = Duration.EndOfTurn
+    ): Effect = GrantCantBeBlockedExceptByEffect(target, blockerFilter, duration)
 
     // =========================================================================
     // Control Effects

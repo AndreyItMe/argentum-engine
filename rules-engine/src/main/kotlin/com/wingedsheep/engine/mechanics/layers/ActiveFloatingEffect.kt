@@ -160,6 +160,17 @@ sealed interface SerializableModification {
     data object PreventAllCombatDamage : SerializableModification
 
     /**
+     * Blocking restriction: creature can only be blocked by creatures matching [blockerFilter]
+     * (floating, one-shot variant). The dynamic counterpart to the static
+     * [com.wingedsheep.sdk.scripting.CantBeBlockedExceptBy] ability — unlike
+     * [CantBeBlockedExceptByColor] it maps to a real Layer.ABILITY [Modification.CantBeBlockedExceptBy]
+     * so the existing `CantBeBlockedExceptByRule` enforces it through projected state.
+     * Used by Resilient Roadrunner's "{3}: can't be blocked except by creatures with haste".
+     */
+    @Serializable
+    data class CantBeBlockedExceptBy(val blockerFilter: GameObjectFilter) : SerializableModification
+
+    /**
      * Blocking restriction: creature can only be blocked by creatures of a specific color.
      * Used by Dread Charge and similar effects.
      */
@@ -453,6 +464,9 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.MustBlockSpecificAttacker -> Modification.NoOp
     // PreventDamageFromAttackingCreatures doesn't map to a layer modification - it's checked by CombatManager directly
     is SerializableModification.PreventDamageFromAttackingCreatures -> Modification.NoOp
+    // CantBeBlockedExceptBy maps to the real Layer.ABILITY modification, so it flows through the
+    // projector into `cantBeBlockedExceptByFilters` and is enforced by CantBeBlockedExceptByRule.
+    is SerializableModification.CantBeBlockedExceptBy -> Modification.CantBeBlockedExceptBy(blockerFilter)
     // CantBeBlockedExceptByColor doesn't map to a layer modification - it's checked by CombatManager directly
     is SerializableModification.CantBeBlockedExceptByColor -> Modification.NoOp
     // CantBeBlockedByColor doesn't map to a layer modification - it's checked by CombatManager directly

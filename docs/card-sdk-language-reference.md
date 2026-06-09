@@ -554,6 +554,13 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `Effects.SkipNextDrawStep(target = Controller)` (`SkipNextDrawStepEffect`) — target skips their next draw step. Adds a one-shot `SkipDrawStepComponent` marker consumed by `DrawPhaseManager.performDrawStep` (Elfhame Sanctuary's "you skip your draw step this turn").
 - `HijackNextTurnEffect(target)` — you control target's next turn.
 - `GrantCantBeBlockedByChosenColorEffect(target, duration)` — unblockable except by chosen color.
+- `Effects.GrantCantBeBlockedExceptBy(target, blockerFilter, duration = EndOfTurn)` (`GrantCantBeBlockedExceptByEffect`) —
+  the floating, one-shot grant of "can't be blocked except by creatures matching `blockerFilter`". The dynamic
+  counterpart to the static `CantBeBlockedExceptBy` ability (and the filter-based sibling of the color-only
+  `GrantCantBeBlockedExceptByColorEffect`). Routes through the same projected `cantBeBlockedExceptByFilters` channel
+  the static ability uses, so the existing `CantBeBlockedExceptByRule` enforces it. Used by **Resilient Roadrunner**:
+  `{3}: This creature can't be blocked this turn except by creatures with haste` —
+  `Effects.GrantCantBeBlockedExceptBy(EffectTarget.Self, GameObjectFilter.Creature.withKeyword(Keyword.HASTE))`.
 - `CantCastSpellsEffect(target, until?)` — target can't cast spells. Facade: `Effects.CantCastSpells(target, duration)`.
 - `Effects.CantPlayLandsThisTurn(target = Controller)` (`PreventLandPlaysThisTurnEffect`) — the target player can't
   play lands for the rest of this turn (sets remaining land drops to 0). Defaults to the controller (Rock Jockey);

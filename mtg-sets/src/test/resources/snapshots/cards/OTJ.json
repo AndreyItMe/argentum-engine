@@ -3885,6 +3885,65 @@
     "colorIdentityOverride": []
 }
 
+// Resilient Roadrunner
+{
+    "name": "Resilient Roadrunner",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Bird",
+    "oracleText": "Haste, protection from Coyotes\n{3}: This creature can't be blocked this turn except by creatures with haste.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Protection",
+            "scope": {
+                "type": "ProtectionScope.Subtype",
+                "subtype": "Coyote"
+            }
+        }
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostMana",
+                    "cost": "{3}"
+                },
+                "effect": {
+                    "type": "GrantCantBeBlockedExceptBy",
+                    "target": "Self",
+                    "blockerFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "HasKeyword",
+                                "keyword": "HASTE"
+                            }
+                        ]
+                    }
+                },
+                "descriptionOverride": "This creature can't be blocked this turn except by creatures with haste."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "141",
+        "rarity": "UNCOMMON",
+        "artist": "David Auden Nash",
+        "flavorText": "\"Chasing the roadrunner\"\n—Omenport slang for wasting energy on impossible pursuits",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/0/e07d3ee9-d3c4-4f07-839e-ec81c2587ae0.jpg?1712355827"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Riku of Many Paths
 {
     "name": "Riku of Many Paths",
