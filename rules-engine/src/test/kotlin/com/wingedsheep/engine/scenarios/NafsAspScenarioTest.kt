@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.scenarios
 
+import com.wingedsheep.engine.core.DeclareAttackers
 import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
@@ -150,6 +151,58 @@ class NafsAspScenarioTest : ScenarioTestBase() {
                     game.getLifeTotal(2) shouldBe lifeAfterCombat - 1
                 }
                 withClue("Trigger fully consumed; no further bite scheduled") {
+                    game.state.delayedTriggers.size shouldBe 0
+                }
+            }
+
+            test("damaging a player twice schedules two bites that both resolve on their next draw step (ruling: pay or suffer twice)") {
+                val builder = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Nafs Asp")
+                    .withCardOnBattlefield(1, "Nafs Asp")
+                    .withActivePlayer(1)
+                repeat(5) {
+                    builder.withCardInLibrary(1, "Mountain")
+                    builder.withCardInLibrary(2, "Forest")
+                }
+                val game = builder.build()
+
+                val startLife = game.getLifeTotal(2)
+
+                // Two Nafs Asps swing unblocked into Player2: two independent combat-damage
+                // events, each triggering its own deferred bite. declareAttackers() keys by
+                // card name and so can't declare two same-named attackers — build the action
+                // directly from both entity ids.
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+                val asps = game.findAllPermanents("Nafs Asp")
+                asps.size shouldBe 2
+                game.execute(
+                    DeclareAttackers(game.player1Id, asps.associateWith { game.player2Id })
+                ).error shouldBe null
+                game.passUntilPhase(Phase.COMBAT, Step.END_COMBAT)
+                game.resolveStack()
+
+                val lifeAfterCombat = game.getLifeTotal(2)
+
+                withClue("Both attackers connect: combat itself drops P2 by 2") {
+                    game.getLifeTotal(2) shouldBe startLife - 2
+                }
+                withClue("Each damage event schedules its own deferred bite on P2's draw step") {
+                    game.state.delayedTriggers.size shouldBe 2
+                    game.state.delayedTriggers.all {
+                        it.fireAtStep == Step.DRAW && it.fireOnPlayerId == game.player2Id
+                    } shouldBe true
+                }
+
+                // Advance to P2's draw step: both bites fire and, with no mana to pay {1},
+                // both auto-suffer — P2 loses 1 life per bite.
+                game.passUntilPhase(Phase.BEGINNING, Step.DRAW)
+                game.resolveStack()
+
+                withClue("Both deferred bites resolve at the draw step → P2 loses 2 more life") {
+                    game.getLifeTotal(2) shouldBe lifeAfterCombat - 2
+                }
+                withClue("Both delayed triggers are consumed") {
                     game.state.delayedTriggers.size shouldBe 0
                 }
             }

@@ -19,7 +19,6 @@ import kotlinx.serialization.Serializable
  * @property sourceId The entity that created this delayed trigger
  * @property sourceName Human-readable name of the source
  * @property controllerId The player who controls this delayed trigger
- * @property fireOnlyOnControllersTurn If true, only fires when the active player is the controller
  */
 @Serializable
 data class DelayedTriggeredAbility(
@@ -30,7 +29,6 @@ data class DelayedTriggeredAbility(
     val sourceId: EntityId,
     val sourceName: String,
     val controllerId: EntityId,
-    val fireOnlyOnControllersTurn: Boolean = false,
     /**
      * For event-based delayed triggers: the TriggerSpec describing what event fires this.
      * When non-null, this ability is event-based and [fireAtStep] is unused.
@@ -60,9 +58,14 @@ data class DelayedTriggeredAbility(
      */
     val targetRequirement: com.wingedsheep.sdk.scripting.targets.TargetRequirement? = null,
     /**
-     * For step-based delayed triggers: if non-null, only fires when this player is the
-     * active player. Also exposed as `triggeringPlayerId` / `triggeringEntityId` on the
-     * synthesised [com.wingedsheep.sdk.scripting.TriggeredAbility]'s trigger context, so
+     * For step-based delayed triggers: the single "whose turn" gate. If non-null, only fires
+     * when this player is the active player; null means it fires on the next matching step of
+     * any turn. Setting it to the source's [controllerId] expresses the common "only on the
+     * controller's turn" case (e.g. "at the beginning of *your* next end step"); setting it to
+     * the triggering player expresses "at the beginning of *their* next [step]" (Nafs Asp).
+     *
+     * Also exposed as `triggeringPlayerId` / `triggeringEntityId` on the synthesised
+     * [com.wingedsheep.sdk.scripting.TriggeredAbility]'s trigger context, so
      * `Player.TriggeringPlayer` inside [effect] resolves back to this same player. Set by
      * [com.wingedsheep.engine.handlers.effects.composite.CreateDelayedTriggerExecutor] from
      * [com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect.fireOnPlayer].

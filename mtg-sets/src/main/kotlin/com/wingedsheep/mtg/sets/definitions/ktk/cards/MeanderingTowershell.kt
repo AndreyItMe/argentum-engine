@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
+import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -46,7 +47,7 @@ val MeanderingTowershell = card("Meandering Towershell") {
                         placement = ZonePlacement.TappedAndAttacking,
                         controllerOverride = EffectTarget.Controller
                     ),
-                    fireOnlyOnControllersTurn = true
+                    fireOnPlayer = EffectTarget.PlayerRef(Player.You)
                 )
             )
         )

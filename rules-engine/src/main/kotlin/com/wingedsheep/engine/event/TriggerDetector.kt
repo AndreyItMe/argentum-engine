@@ -297,7 +297,6 @@ class TriggerDetector(
         val matching = state.delayedTriggers.filter { delayed ->
             delayed.trigger == null &&
                 delayed.fireAtStep == step &&
-                (!delayed.fireOnlyOnControllersTurn || delayed.controllerId == activePlayer) &&
                 (delayed.fireOnPlayerId == null || delayed.fireOnPlayerId == activePlayer) &&
                 (delayed.notBeforeTurn == null || state.turnNumber >= delayed.notBeforeTurn)
         }

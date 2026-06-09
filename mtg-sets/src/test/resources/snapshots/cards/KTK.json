@@ -7365,7 +7365,10 @@
                                 "placement": "TappedAndAttacking",
                                 "controllerOverride": "Controller"
                             },
-                            "fireOnlyOnControllersTurn": true
+                            "fireOnPlayer": {
+                                "type": "PlayerRef",
+                                "player": "You"
+                            }
                         }
                     ]
                 }

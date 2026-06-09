@@ -83,7 +83,7 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
         //    following turn. Only bump notBeforeTurn when the current turn's end step has
         //    already begun (or passed), i.e. we're in END or CLEANUP on the controller's turn.
         //  - NEXT_TURN ("on your next turn") is stricter: the current turn never qualifies,
-        //    regardless of step. Combine with fireOnlyOnControllersTurn = true to land on the
+        //    regardless of step. Combine with fireOnPlayer = PlayerRef(You) to land on the
         //    controller's upcoming turn.
         //  - CURRENT_TURN_OR_LATER: no turn floor.
         val notBeforeTurn = when (effect.timing) {
@@ -103,7 +103,6 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
             sourceId = sourceId,
             sourceName = sourceName,
             controllerId = context.controllerId,
-            fireOnlyOnControllersTurn = effect.fireOnlyOnControllersTurn,
             trigger = effect.trigger,
             watchedEntityId = watchedEntityId,
             expiry = if (effect.trigger != null) effect.expiry else null,

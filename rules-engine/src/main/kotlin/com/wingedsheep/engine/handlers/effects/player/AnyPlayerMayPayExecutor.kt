@@ -84,7 +84,15 @@ class AnyPlayerMayPayExecutor(
 
         // No more players can pay - run the "none paid" branch (e.g., reanimate the card).
         if (index >= playerOrder.size) {
-            return runConsequence(state, effect.consequenceIfNonePaid, context.controllerId, sourceId, context.pipeline.storedCollections)
+            return runConsequence(
+                state,
+                effect.consequenceIfNonePaid,
+                context.controllerId,
+                sourceId,
+                context.pipeline.storedCollections,
+                context.triggeringEntityId,
+                context.triggeringPlayerId
+            )
         }
 
         val playerId = playerOrder[index]
@@ -247,7 +255,9 @@ class AnyPlayerMayPayExecutor(
         consequenceIfNonePaid = effect.consequenceIfNonePaid,
         requiredCount = requiredCount,
         filter = filter,
-        storedCollections = context.pipeline.storedCollections
+        storedCollections = context.pipeline.storedCollections,
+        triggeringEntityId = context.triggeringEntityId,
+        triggeringPlayerId = context.triggeringPlayerId
     )
 
     /**
@@ -259,7 +269,9 @@ class AnyPlayerMayPayExecutor(
         consequence: Effect?,
         controllerId: EntityId,
         sourceId: EntityId,
-        storedCollections: Map<String, List<EntityId>>
+        storedCollections: Map<String, List<EntityId>>,
+        triggeringEntityId: EntityId? = null,
+        triggeringPlayerId: EntityId? = null
     ): EffectResult {
         if (consequence == null) return EffectResult.success(state)
         val executor = executeEffect ?: return EffectResult.success(state)
@@ -267,7 +279,9 @@ class AnyPlayerMayPayExecutor(
             sourceId = sourceId,
             controllerId = controllerId,
             opponentId = null,
-            pipeline = PipelineState(storedCollections = storedCollections)
+            pipeline = PipelineState(storedCollections = storedCollections),
+            triggeringEntityId = triggeringEntityId,
+            triggeringPlayerId = triggeringPlayerId
         )
         return executor(state, consequence, context)
     }

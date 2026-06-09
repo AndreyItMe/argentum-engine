@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.CreatePredefinedTokenEffect
 import com.wingedsheep.sdk.scripting.effects.GrantKeywordEffect
+import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -72,7 +73,7 @@ val SekshaasEarlySleeper = card("Sekshaas, Early Sleeper") {
                         Effects.Move(EffectTarget.Self, Zone.BATTLEFIELD),
                         GrantKeywordEffect(Keyword.HASTE, EffectTarget.Self)
                     )),
-                    fireOnlyOnControllersTurn = true
+                    fireOnPlayer = EffectTarget.PlayerRef(Player.You)
                 )
             )
         )

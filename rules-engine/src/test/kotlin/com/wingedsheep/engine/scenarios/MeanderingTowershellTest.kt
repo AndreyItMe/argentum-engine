@@ -78,7 +78,8 @@ class MeanderingTowershellTest : FunSpec({
         // A delayed trigger should have been created
         driver.state.delayedTriggers.size shouldBe 1
         driver.state.delayedTriggers.first().fireAtStep shouldBe Step.BEGIN_COMBAT
-        driver.state.delayedTriggers.first().fireOnlyOnControllersTurn shouldBe true
+        // Gated to the controller's turn via fireOnPlayer = PlayerRef(You).
+        driver.state.delayedTriggers.first().fireOnPlayerId shouldBe attacker
     }
 
     test("Meandering Towershell does not return on opponent's turn") {

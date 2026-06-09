@@ -157,6 +157,10 @@ data class PayOrSufferChoiceContinuation(
  * @property filter The filter for valid selections (for sacrifice costs)
  * @property storedCollections Pipeline collections carried into whichever consequence fires, so a
  *   consequence can reference cards gathered earlier in the same resolution ("…this way").
+ * @property triggeringEntityId Trigger context from the original effect, preserved so a consequence
+ *   referencing [com.wingedsheep.sdk.scripting.references.Player.TriggeringPlayer] still resolves
+ *   after the async pay-or-decline round-trip (mirrors [PayOrSufferContinuation]).
+ * @property triggeringPlayerId See [triggeringEntityId].
  */
 @Serializable
 data class AnyPlayerMayPayContinuation(
@@ -171,7 +175,9 @@ data class AnyPlayerMayPayContinuation(
     val consequenceIfNonePaid: Effect? = null,
     val requiredCount: Int,
     val filter: GameObjectFilter,
-    val storedCollections: Map<String, List<EntityId>> = emptyMap()
+    val storedCollections: Map<String, List<EntityId>> = emptyMap(),
+    val triggeringEntityId: EntityId? = null,
+    val triggeringPlayerId: EntityId? = null
 ) : ContinuationFrame
 
 /**

@@ -690,7 +690,9 @@ class SacrificeAndPayContinuationResumer(
             sourceId = continuation.sourceId,
             controllerId = continuation.controllerId,
             opponentId = null,
-            pipeline = PipelineState(storedCollections = continuation.storedCollections)
+            pipeline = PipelineState(storedCollections = continuation.storedCollections),
+            triggeringEntityId = continuation.triggeringEntityId,
+            triggeringPlayerId = continuation.triggeringPlayerId
         )
         val result = services.effectExecutorRegistry.execute(state, consequence, context).toExecutionResult()
         val allEvents = priorEvents + result.events

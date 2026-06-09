@@ -8040,8 +8040,11 @@
                                     "collectionName": "createdTokens"
                                 }
                             },
-                            "fireOnlyOnControllersTurn": true,
-                            "timing": "NextTurn"
+                            "timing": "NextTurn",
+                            "fireOnPlayer": {
+                                "type": "PlayerRef",
+                                "player": "You"
+                            }
                         }
                     ]
                 }

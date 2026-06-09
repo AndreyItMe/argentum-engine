@@ -453,8 +453,8 @@ data class PayOrSufferEffect(
  * mutually-exclusive axis (replaces the former onControllerNextTurn / skipCurrentTurn
  * booleans, whose presence/absence encoded these three states).
  *
- * Orthogonal to [CreateDelayedTriggerEffect.fireOnlyOnControllersTurn], which gates
- * *whose* turn the trigger may fire on, not *which* turn is the earliest eligible one.
+ * Orthogonal to [CreateDelayedTriggerEffect.fireOnPlayer], which gates *whose* turn the
+ * trigger may fire on, not *which* turn is the earliest eligible one.
  */
 @Serializable
 enum class DelayedTriggerTiming {
@@ -469,8 +469,8 @@ enum class DelayedTriggerTiming {
      * "At the beginning of your next end step" timing: the current turn's end step
      * still qualifies if it hasn't begun yet; only once it has started (END or CLEANUP
      * on the controller's turn) does the trigger defer to the controller's following
-     * turn. Typically paired with [CreateDelayedTriggerEffect.fireOnlyOnControllersTurn]
-     * = true. (Dragonhawk, Fate's Tempest.)
+     * turn. Typically paired with `fireOnPlayer = PlayerRef(Player.You)`. (Dragonhawk,
+     * Fate's Tempest.)
      */
     @SerialName("NextEndStep")
     NEXT_END_STEP,
@@ -478,9 +478,8 @@ enum class DelayedTriggerTiming {
     /**
      * "On your next turn" timing: the current turn never qualifies, regardless of step;
      * the trigger fires no earlier than the next turn. Pair with
-     * [CreateDelayedTriggerEffect.fireOnlyOnControllersTurn] = true to land on the
-     * controller's upcoming own turn rather than an intervening opponent turn.
-     * (Kav Landseeker.)
+     * `fireOnPlayer = PlayerRef(Player.You)` to land on the controller's upcoming own turn
+     * rather than an intervening opponent turn. (Kav Landseeker.)
      */
     @SerialName("NextTurn")
     NEXT_TURN
@@ -506,14 +505,12 @@ enum class DelayedTriggerTiming {
  *
  * @param step The step at which the delayed trigger fires
  * @param effect The effect to execute when the trigger fires
- * @param fireOnlyOnControllersTurn If true, the delayed trigger only fires when the active player is the controller
  */
 @SerialName("CreateDelayedTrigger")
 @Serializable
 data class CreateDelayedTriggerEffect(
     val step: Step? = null,
     val effect: Effect,
-    val fireOnlyOnControllersTurn: Boolean = false,
     /**
      * Event-based trigger. When non-null, the delayed trigger fires whenever
      * an event matching this TriggerSpec occurs (scoped to [watchedTarget] if set),
@@ -542,8 +539,8 @@ data class CreateDelayedTriggerEffect(
     val fireOnce: Boolean = false,
     /**
      * The earliest turn this step-based delayed trigger may fire. See
-     * [DelayedTriggerTiming]. Orthogonal to [fireOnlyOnControllersTurn], which gates
-     * whose turn the trigger fires on.
+     * [DelayedTriggerTiming]. Orthogonal to [fireOnPlayer], which gates *whose* turn the
+     * trigger fires on (not *which* turn is the earliest eligible one).
      */
     val timing: DelayedTriggerTiming = DelayedTriggerTiming.CURRENT_TURN_OR_LATER,
     /**
@@ -555,13 +552,19 @@ data class CreateDelayedTriggerEffect(
      */
     val targetRequirement: TargetRequirement? = null,
     /**
-     * For step-based delayed triggers: restrict firing to a specific player's matching step
-     * (rather than the controller's, or every player's, turn). Resolved to a concrete player
-     * entity id at scheduling time by [com.wingedsheep.engine.handlers.effects.composite.CreateDelayedTriggerExecutor]
-     * and also exposed as `triggeringPlayerId` / `triggeringEntityId` to [effect] when it
-     * fires, so `EffectTarget.PlayerRef(Player.TriggeringPlayer)` inside [effect] resolves
-     * back to the same player. Used for "at the beginning of their next draw step" effects
-     * (Nafs Asp). Orthogonal to [fireOnlyOnControllersTurn]: if both are set, both gates apply.
+     * For step-based delayed triggers: restrict firing to a specific player's matching step,
+     * rather than every player's. Resolved to a concrete player entity id at scheduling time
+     * by [com.wingedsheep.engine.handlers.effects.composite.CreateDelayedTriggerExecutor] and
+     * also exposed as `triggeringPlayerId` / `triggeringEntityId` to [effect] when it fires,
+     * so `EffectTarget.PlayerRef(Player.TriggeringPlayer)` inside [effect] resolves back to
+     * the same player. Defaults to `null` (no player gate — fires on the next matching step of
+     * any turn).
+     *
+     * This is the single "whose turn" gate. Common shapes:
+     *  - `PlayerRef(Player.You)` — only on the controller's turn ("at the beginning of *your*
+     *    next end step"; Dragonhawk, Kav Landseeker, Meandering Towershell).
+     *  - `PlayerRef(Player.TriggeringPlayer)` — on the triggering/damaged player's turn ("at
+     *    the beginning of *their* next draw step"; Nafs Asp).
      */
     val fireOnPlayer: EffectTarget? = null
 ) : Effect {

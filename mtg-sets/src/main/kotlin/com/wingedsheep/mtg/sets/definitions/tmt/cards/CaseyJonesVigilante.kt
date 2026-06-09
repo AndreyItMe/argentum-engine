@@ -7,6 +7,8 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.dsl.Patterns
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
+import com.wingedsheep.sdk.scripting.references.Player
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
  * Casey Jones, Vigilante
@@ -32,7 +34,7 @@ val CaseyJonesVigilante = card("Casey Jones, Vigilante") {
                 Effects.DrawCards(3),
                 CreateDelayedTriggerEffect(
                     step = Step.UPKEEP,
-                    fireOnlyOnControllersTurn = true,
+                    fireOnPlayer = EffectTarget.PlayerRef(Player.You),
                     effect = Patterns.Hand.discardRandom(3),
                 ),
             )

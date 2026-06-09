@@ -177,7 +177,9 @@ class CreateTokenCopyOfTargetExecutor(
                     sourceId = sourceId,
                     sourceName = sourceName,
                     controllerId = controllerId,
-                    fireOnlyOnControllersTurn = effect.sacrificeOnlyOnControllersTurn
+                    // "sacrifice at the beginning of your next end step" → gate the firing step
+                    // to the token controller's turn (the single fireOnPlayerId gate).
+                    fireOnPlayerId = if (effect.sacrificeOnlyOnControllersTurn) controllerId else null
                 )
                 newState = newState.addDelayedTrigger(delayedTrigger)
             }
