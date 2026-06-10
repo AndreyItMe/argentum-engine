@@ -67,4 +67,20 @@ class DraftsimAdvisorTest : FunSpec({
         (result.archetype != null) shouldBe true
         (result.score != null) shouldBe true
     }
+
+    test("deckbuild advisor completes a partial deck without dropping the locked cards") {
+        val pool = ltr.cards.filter { it.metadata.let { m -> m.rarity != null } && !it.typeLine.isBasicLand }
+        // Lock a handful of real nonland spells from the pool; "Complete Deck" must keep every one.
+        val locked = pool.filterNot { it.typeLine.isLand }.take(6).associate { it.name to 1 }
+
+        val result = DraftsimDeckBuildAdvisor.buildDeck(
+            DeckBuildRequest(pool = pool, locked = locked, targetSize = 40, setCodes = listOf("LTR")),
+        )
+
+        result.advisorId shouldBe "draftsim"
+        for ((name, count) in locked) {
+            (result.deckList[name] ?: 0) shouldBe count
+        }
+        result.deckList.values.sum() shouldBeGreaterThan 30
+    }
 })

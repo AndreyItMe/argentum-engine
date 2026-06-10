@@ -66,8 +66,16 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
     // dW — orchestrator (the entry point)
     // =========================================================================
 
-    /** `dW(pool, mode)` → builds best-first. `mode` ∈ "draft" (top 2) / "sealed" (top 3 + good stuff). */
-    fun buildDecks(pool: List<DraftsimPoolCard>, mode: String): List<DraftsimBuild> {
+    /**
+     * `dW(pool, mode)` → builds best-first. `mode` ∈ "draft" (top 2) / "sealed" (top 3 + good stuff).
+     *
+     * When [forced] is non-empty the builder switches to **completion mode** (the deckbuild
+     * "Complete Deck" button): every forced pool instance is kept and protected from removal/swap,
+     * the build colors are taken from those locked cards, and the rest is filled with the normal
+     * greedy + refine machinery so the completed deck is scored and mana-based identically.
+     */
+    fun buildDecks(pool: List<DraftsimPoolCard>, mode: String, forced: Set<String> = emptySet()): List<DraftsimBuild> {
+        if (forced.isNotEmpty()) return listOf(completeBuild(pool, forced))
         val nonlandCards = pool.filter { !ops.isLand(it.card) }.map { it.card }
         val archColors = scorer.archColorMap(nonlandCards)
         val ranked = deckScorer.rankArchetypes(pool.map { it.card }, archColors)
@@ -77,6 +85,42 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
             .toMutableList()
         if (mode == "sealed") goodStuffBuild(pool)?.let { builds += refine(it, pool) }
         return builds.sortedByDescending { it.score }
+    }
+
+    // =========================================================================
+    // Completion mode — keep the player's locked cards, fill the rest
+    // =========================================================================
+
+    /** Build a single deck that keeps every [forced] pool instance, in the locked cards' colors. */
+    private fun completeBuild(pool: List<DraftsimPoolCard>, forced: Set<String>): DraftsimBuild {
+        val forcedNonland = pool.filter { it.instanceId in forced && !ops.isLand(it.card) }.map { it.card }
+        val colors = completionColors(forcedNonland, pool)
+        return refine(greedyBuild(pool, "Completion", colors, forced), pool, forced = forced)
+    }
+
+    /**
+     * The ≤2 build colors for a completion: the heaviest colors by mana-pip weight among the locked
+     * cards, topped up from the pool's overall pip weight when the locked cards don't pin two colors.
+     */
+    private fun completionColors(forcedNonland: List<ScorerCard>, pool: List<DraftsimPoolCard>): List<String> {
+        fun weigh(cards: List<ScorerCard>): Map<String, Double> {
+            val pips = HashMap<String, Double>()
+            for (card in cards) {
+                val counts = DraftsimMana.pipCounts(card.manaCost)
+                if (counts.isEmpty()) ops.colorsOf(card).forEach { pips[it] = (pips[it] ?: 0.0) + 1.0 }
+                else counts.forEach { (c, v) -> pips[c] = (pips[c] ?: 0.0) + v }
+            }
+            return pips
+        }
+        val ordered = weigh(forcedNonland).entries.sortedByDescending { it.value }.map { it.key }.toMutableList()
+        if (ordered.size < 2) {
+            val poolWeights = weigh(pool.filter { !ops.isLand(it.card) }.map { it.card })
+            for (color in poolWeights.entries.sortedByDescending { it.value }.map { it.key }) {
+                if (ordered.size >= 2) break
+                if (color !in ordered) ordered += color
+            }
+        }
+        return ordered.take(2)
     }
 
     // =========================================================================
@@ -95,6 +139,11 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
         val copies = HashMap<String, Int>()
         val buckets = HashMap<Int, Int>()
         var creatures = 0
+        /** Locked (completion) picks — kept unconditionally and never removed/swapped. */
+        val forced = HashSet<String>()
+
+        /** Force-include a locked card, bypassing the copy/bucket caps and marking it protected. */
+        fun seed(item: Scored) { add(item); forced += item.pc.instanceId }
 
         fun canAdd(item: Scored): Boolean {
             val card = item.pc.card
@@ -120,7 +169,7 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
     }
 
     private fun greedyBuild(
-        pool: List<DraftsimPoolCard>, archName: String, archColors: List<String>,
+        pool: List<DraftsimPoolCard>, archName: String, archColors: List<String>, forced: Set<String> = emptySet(),
     ): DraftsimBuild {
         val nonlandPC = pool.filter { !ops.isLand(it.card) }
         val poolLands = pool.filter { ops.isLand(it.card) && !ops.isBasic(it.card) }
@@ -135,6 +184,9 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
         val otherCards = scored.filter { !isRemoval(it.pc.card) && castable(it.pc.card, archColors) }
 
         val st = BuildState()
+
+        // Completion: seed the locked cards first so the phases fill around them (and never drop them).
+        if (forced.isNotEmpty()) for (item in scored) if (item.pc.instanceId in forced) st.seed(item)
 
         // Phase 1 — removal first (cap 6).
         var removalTaken = 0
@@ -193,7 +245,7 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
             ops.isCreature(it.pc.card) && it.pc.instanceId !in st.chosen &&
                 (st.copies[it.pc.card.name] ?: 0) < copyCap(it.pc.card)
         }
-        val victims = st.deck.filter { !ops.isCreature(it.pc.card) && !isRemoval(it.pc.card) }.sortedBy { it.total }
+        val victims = st.deck.filter { !ops.isCreature(it.pc.card) && !isRemoval(it.pc.card) && it.pc.instanceId !in st.forced }.sortedBy { it.total }
         val k = minOf(CREATURE_FLOOR - st.creatures, victims.size, candidates.size)
         for (x in 0 until k) { st.remove(victims[x]); st.add(candidates[x]) }
     }
@@ -219,7 +271,7 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
             val k = ops.colorsOf(item.pc.card).first { it !in d }
             if (splashColor != null && k != splashColor) continue
             if (st.deck.size < DECK_NONLAND) { st.add(item); splashColor = k } else {
-                val weakest = st.deck.filter { !isRemoval(it.pc.card) }.minByOrNull { it.total } ?: break
+                val weakest = st.deck.filter { !isRemoval(it.pc.card) && it.pc.instanceId !in st.forced }.minByOrNull { it.total } ?: break
                 if (item.rawRating > weakest.rawRating) { st.remove(weakest); st.add(item); splashColor = k } else break
             }
         }
@@ -322,7 +374,7 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
     // ek — post-build refinement (hill climbing)
     // =========================================================================
 
-    private fun refine(build: DraftsimBuild, pool: List<DraftsimPoolCard>, iterations: Int = 3): DraftsimBuild {
+    private fun refine(build: DraftsimBuild, pool: List<DraftsimPoolCard>, iterations: Int = 3, forced: Set<String> = emptySet()): DraftsimBuild {
         val chosen = build.deckInstanceIds.toHashSet()
         val deckNonland = pool.filter { it.instanceId in chosen && !ops.isLand(it.card) }.toMutableList()
         var best = deckScorer.scoreNonlandSet(deckNonland.map { it.card })
@@ -333,7 +385,7 @@ class DraftsimDeckBuilder(private val tables: DraftsimSetTables) {
                     (ops.colorsOf(it.card).isEmpty() || DraftsimMana.fitsColors(it.card.manaCost, build.colors))
             }
             if (candidates.isEmpty()) return@repeat
-            val worstFirst = deckNonland.sortedBy { ops.ratingOrDefault(it.card) }
+            val worstFirst = deckNonland.filter { it.instanceId !in forced }.sortedBy { ops.ratingOrDefault(it.card) }
             val bestFirst = candidates.sortedByDescending { ops.ratingOrDefault(it.card) }
             var improved = false
             outer@ for (out in worstFirst) {
