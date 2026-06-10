@@ -67,7 +67,7 @@
 - [ ] Insectoid Exterminator
 - [x] Jennika's Technique
 - [x] Jennika, Bad Apple Big Sister
-- [ ] Karai's Technique
+- [x] Karai's Technique
 - [ ] Karai, Future of the Foot
 - [ ] Kitsune's Technique
 - [ ] Kitsune, Dragon's Daughter
