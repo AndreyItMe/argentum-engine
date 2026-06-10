@@ -79,7 +79,7 @@
 - [ ] Leatherhead, Swamp Stalker
 - [ ] Leonardo's Technique
 - [x] Leonardo, Big Brother
-- [ ] Leonardo, Cutting Edge
+- [x] Leonardo, Cutting Edge
 - [ ] Leonardo, Leader in Blue
 - [ ] Leonardo, Sewer Samurai
 - [x] Lessons from Life
