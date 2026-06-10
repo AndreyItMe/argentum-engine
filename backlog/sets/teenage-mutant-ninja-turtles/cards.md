@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 97 / 190
+**Implemented:** 113 / 190
 ---
 
 - [x] Action News Crew
