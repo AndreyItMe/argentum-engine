@@ -107,7 +107,11 @@ class EffectExecutorRegistry(
     @Suppress("UNCHECKED_CAST")
     fun execute(state: GameState, effect: Effect, context: EffectContext): EffectResult {
         val executor = executors[effect::class] as? EffectExecutor<Effect>
-            ?: return EffectResult.success(state) // Unhandled effect type
+            ?: error(
+                "No executor registered for effect type ${effect::class.simpleName}. " +
+                    "Register one in the matching *Executors module " +
+                    "(EffectExecutorCoverageTest guards this at build time)."
+            )
         return executor.execute(state, effect, context)
     }
 
@@ -116,4 +120,11 @@ class EffectExecutorRegistry(
      * Useful for testing and diagnostics.
      */
     fun executorCount(): Int = executors.size
+
+    /**
+     * Returns the effect types that have a registered executor.
+     * Used by the executor-coverage hygiene test to verify every concrete [Effect]
+     * subtype is either executable or declared as a non-executable marker.
+     */
+    fun registeredEffectTypes(): Set<KClass<out Effect>> = executors.keys.toSet()
 }

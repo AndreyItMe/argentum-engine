@@ -124,7 +124,6 @@ import com.wingedsheep.sdk.scripting.effects.ChangeColorEffect
 import com.wingedsheep.sdk.scripting.effects.ChangeWordInTextEffect
 import com.wingedsheep.sdk.scripting.effects.OptionType
 import com.wingedsheep.sdk.scripting.effects.SelectTargetEffect
-import com.wingedsheep.sdk.scripting.effects.SeparatePermanentsIntoPilesEffect
 import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import com.wingedsheep.sdk.scripting.effects.CreateTokenCopyOfEquippedCreatureEffect
@@ -2158,12 +2157,6 @@ object Effects {
     // =========================================================================
     // Special Effects
     // =========================================================================
-
-    /**
-     * Separate permanents into piles (Liliana ultimate style).
-     */
-    fun SeparatePermanentsIntoPiles(target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer)): Effect =
-        SeparatePermanentsIntoPilesEffect(target)
 
     // =========================================================================
     // Player Restriction Effects

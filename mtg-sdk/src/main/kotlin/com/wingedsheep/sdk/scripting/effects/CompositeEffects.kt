@@ -12,7 +12,6 @@ import com.wingedsheep.sdk.scripting.costs.PayCost
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EffectVariable
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
@@ -589,53 +588,6 @@ sealed interface DelayedTriggerExpiry {
     @SerialName("DelayedTriggerExpiry.EndOfTurn")
     @Serializable
     data object EndOfTurn : DelayedTriggerExpiry
-}
-
-/**
- * Effect that stores the result of executing an inner effect.
- *
- * This enables Oblivion Ring-style effects where the first trigger
- * needs to remember which card it exiled so the second trigger
- * can return it.
- *
- * @param effect The effect to execute
- * @param storeAs The variable to store the result in
- */
-@SerialName("StoreResult")
-@Serializable
-data class StoreResultEffect(
-    val effect: Effect,
-    val storeAs: EffectVariable
-) : Effect {
-    override val description: String = "${effect.description} (stored as ${storeAs.name})"
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val newEffect = effect.applyTextReplacement(replacer)
-        return if (newEffect !== effect) copy(effect = newEffect) else this
-    }
-}
-
-/**
- * Effect that stores a count from the result of executing an effect.
- *
- * Used for variable-count effects like Scapeshift:
- * "Sacrifice any number of lands. Search for that many land cards."
- *
- * @param effect The effect to execute (typically a sacrifice or similar)
- * @param storeAs The count variable to store the number in
- */
-@SerialName("StoreCount")
-@Serializable
-data class StoreCountEffect(
-    val effect: Effect,
-    val storeAs: EffectVariable.Count
-) : Effect {
-    override val description: String = "${effect.description} (count stored as ${storeAs.name})"
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val newEffect = effect.applyTextReplacement(replacer)
-        return if (newEffect !== effect) copy(effect = newEffect) else this
-    }
 }
 
 /**

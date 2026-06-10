@@ -16,25 +16,15 @@ import com.wingedsheep.sdk.scripting.effects.GrantPlayWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
 import com.wingedsheep.sdk.scripting.effects.ShuffleLibraryEffect
-import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EffectVariable
 
 /**
  * Effect patterns for exile operations: exile-and-return, linked exile,
  * exile-as-replacement, and token replacement after removal.
  */
 object ExilePatterns {
-
-    fun exileUntilLeaves(
-        exileTarget: EffectTarget,
-        variableName: String = "exiledCard"
-    ): StoreResultEffect = StoreResultEffect(
-        effect = MoveToZoneEffect(exileTarget, Zone.EXILE),
-        storeAs = EffectVariable.EntityRef(variableName)
-    )
 
     fun exileUntilEndStep(target: EffectTarget): Effect = CompositeEffect(
         listOf(

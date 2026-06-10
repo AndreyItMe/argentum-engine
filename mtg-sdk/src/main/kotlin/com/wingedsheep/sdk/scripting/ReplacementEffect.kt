@@ -332,48 +332,6 @@ data class EntersWithDynamicCounters(
     }
 }
 
-/**
- * Undying - if creature dies without +1/+1 counters, return it with one.
- */
-@SerialName("Undying")
-@Serializable
-data class UndyingEffect(
-    override val appliesTo: EventPattern = EventPattern.ZoneChangeEvent(
-        filter = GameObjectFilter.Creature.youControl(),
-        from = Zone.BATTLEFIELD,
-        to = Zone.GRAVEYARD
-    )
-) : ReplacementEffect {
-    override val description: String =
-        "When this creature dies, if it had no +1/+1 counters on it, return it to the battlefield with a +1/+1 counter"
-
-    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
-        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
-        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
-    }
-}
-
-/**
- * Persist - if creature dies without -1/-1 counters, return it with one.
- */
-@SerialName("Persist")
-@Serializable
-data class PersistEffect(
-    override val appliesTo: EventPattern = EventPattern.ZoneChangeEvent(
-        filter = GameObjectFilter.Creature.youControl(),
-        from = Zone.BATTLEFIELD,
-        to = Zone.GRAVEYARD
-    )
-) : ReplacementEffect {
-    override val description: String =
-        "When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield with a -1/-1 counter"
-
-    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
-        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
-        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
-    }
-}
-
 // =============================================================================
 // Damage Replacement Effects
 // =============================================================================
@@ -651,28 +609,6 @@ data class DamageCantBePrevented(
     override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
         val newAppliesTo = appliesTo.applyTextReplacement(replacer)
         return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
-    }
-}
-
-/**
- * Replace life gain with another effect.
- * Example: Tainted Remedy (life gain becomes life loss)
- */
-@SerialName("ReplaceLifeGain")
-@Serializable
-data class ReplaceLifeGain(
-    val replacementEffect: Effect,
-    override val appliesTo: EventPattern = EventPattern.LifeGainEvent()
-) : ReplacementEffect {
-    override val description: String =
-        "If ${appliesTo.description}, instead ${replacementEffect.description}"
-
-    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
-        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
-        val newReplacementEffect = replacementEffect.applyTextReplacement(replacer)
-        return if (newAppliesTo !== appliesTo || newReplacementEffect !== replacementEffect)
-            copy(appliesTo = newAppliesTo, replacementEffect = newReplacementEffect)
-        else this
     }
 }
 
@@ -1352,23 +1288,3 @@ data class ReplaceTokenCreationWithAttachedCopy(
 // =============================================================================
 // Generic Replacement Effect
 // =============================================================================
-
-/**
- * Generic replacement effect for complex scenarios.
- * Use when no specific replacement effect type fits.
- */
-@SerialName("GenericReplacement")
-@Serializable
-data class GenericReplacementEffect(
-    val replacement: Effect?,  // null = prevent entirely
-    override val appliesTo: EventPattern,
-    override val description: String
-) : ReplacementEffect {
-    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
-        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
-        val newReplacement = replacement?.applyTextReplacement(replacer)
-        return if (newAppliesTo !== appliesTo || newReplacement !== replacement)
-            copy(appliesTo = newAppliesTo, replacement = newReplacement)
-        else this
-    }
-}

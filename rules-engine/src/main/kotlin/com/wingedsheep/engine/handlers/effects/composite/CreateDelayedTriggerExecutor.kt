@@ -16,7 +16,6 @@ import com.wingedsheep.sdk.scripting.effects.DestroyAllEquipmentOnTargetEffect
 import com.wingedsheep.sdk.scripting.effects.Gate
 import com.wingedsheep.sdk.scripting.effects.GatedEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
-import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
 import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
@@ -220,10 +219,6 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
                 } else {
                     effect
                 }
-            }
-            is StoreResultEffect -> {
-                val inner = resolveContextTargets(effect.effect, context)
-                if (inner !== effect.effect) effect.copy(effect = inner) else effect
             }
             else -> effect
         }

@@ -31,7 +31,7 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * - TransformEffects.kt - Transform effects
  *
  * Supporting types are organized in subdirectories:
- * - values/ - DynamicAmount, PlayerReference, ZoneReference, EffectVariable
+ * - values/ - DynamicAmount, PlayerReference, ZoneReference
  * - filters/unified/ - GameObjectFilter, GroupFilter, TargetFilter
  * - targets/ - EffectTarget
  * - costs/ - PayCost

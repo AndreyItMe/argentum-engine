@@ -22,8 +22,6 @@ import com.wingedsheep.sdk.scripting.effects.PayLifeEffect
 import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeEffect
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
-import com.wingedsheep.sdk.scripting.effects.StoreCountEffect
-import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
 import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
 import com.wingedsheep.sdk.scripting.effects.WardCost
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
@@ -37,7 +35,6 @@ import com.wingedsheep.sdk.scripting.EventPattern
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.values.Aggregation
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
-import com.wingedsheep.sdk.scripting.values.EffectVariable
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -504,7 +501,7 @@ class CardDslTest : DescribeSpec({
                 }
 
                 loyaltyAbility(-6) {
-                    effect = Effects.SeparatePermanentsIntoPiles()
+                    effect = Effects.Sacrifice(Filters.Creature, count = 2)
                     target = Targets.Player
                 }
             }
@@ -724,74 +721,6 @@ class CardDslTest : DescribeSpec({
             lhurgoyf.creatureStats shouldNotBe null
             lhurgoyf.creatureStats!!.isDynamic shouldBe true
             lhurgoyf.creatureStats.basePower shouldBe null  // No fixed base power
-        }
-    }
-
-    describe("Variable Binding (Object Memory)") {
-
-        it("should define Oblivion Ring with exile-and-return pattern") {
-            val oRing = card("Oblivion Ring") {
-                manaCost = "{2}{W}"
-                typeLine = "Enchantment"
-
-                // ETB: Exile target nonland permanent until this leaves
-                triggeredAbility {
-                    trigger = Triggers.EntersBattlefield
-                    target = Targets.NonlandPermanent
-                    effect = StoreResultEffect(
-                        effect = MoveToZoneEffect(EffectTarget.ContextTarget(0), Zone.EXILE),
-                        storeAs = EffectVariable.EntityRef("exiledCard")
-                    )
-                }
-
-                // LTB: Return the exiled card
-                triggeredAbility {
-                    trigger = Triggers.LeavesBattlefield
-                    effect = MoveToZoneEffect(EffectTarget.ContextTarget(0), Zone.BATTLEFIELD)
-                }
-            }
-
-            oRing.name shouldBe "Oblivion Ring"
-            oRing.triggeredAbilities shouldHaveSize 2
-
-            // First trigger stores the exiled card
-            val etbEffect = oRing.triggeredAbilities[0].effect
-            val storeEffect = etbEffect.shouldBeInstanceOf<StoreResultEffect>()
-            storeEffect.storeAs shouldBe EffectVariable.EntityRef("exiledCard")
-        }
-
-        it("should define Scapeshift with count-passing pattern") {
-            val scapeshift = card("Scapeshift") {
-                manaCost = "{2}{G}{G}"
-                typeLine = "Sorcery"
-
-                spell {
-                    // Sacrifice any number of lands, then search for that many
-                    effect = Effects.Composite(
-                        StoreCountEffect(
-                            SacrificeEffect(GameObjectFilter.Land, any = true),
-                            EffectVariable.Count("sacrificedLands")
-                        ),
-                        Patterns.Library.searchLibrary(
-                            filter = GameObjectFilter.Land,
-                            count = 0, // Engine will read from VariableReference
-                            destination = SearchDestination.BATTLEFIELD,
-                            entersTapped = false
-                        )
-                    )
-                }
-            }
-
-            scapeshift.spellEffect shouldNotBe null
-            scapeshift.spellEffect.shouldBeInstanceOf<CompositeEffect>()
-
-            val composite = scapeshift.spellEffect as CompositeEffect
-            composite.effects shouldHaveSize 2
-
-            // First effect stores the count
-            composite.effects[0].shouldBeInstanceOf<StoreCountEffect>()
-            val storeCount = composite.effects[0] as StoreCountEffect
-            storeCount.storeAs shouldBe EffectVariable.Count("sacrificedLands")
         }
     }
 

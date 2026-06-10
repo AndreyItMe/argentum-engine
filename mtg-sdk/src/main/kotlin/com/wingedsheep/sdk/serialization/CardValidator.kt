@@ -2,7 +2,6 @@ package com.wingedsheep.sdk.serialization
 
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
-import com.wingedsheep.sdk.scripting.effects.AddMinusCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AnyPlayerMayPayEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.effects.CantBeRegeneratedEffect
@@ -36,10 +35,7 @@ import com.wingedsheep.sdk.scripting.effects.RegenerateEffect
 import com.wingedsheep.sdk.scripting.effects.RemoveCountersEffect
 import com.wingedsheep.sdk.scripting.effects.RemoveDamageShieldEffect
 import com.wingedsheep.sdk.scripting.effects.RemoveFromCombatEffect
-import com.wingedsheep.sdk.scripting.effects.StoreCountEffect
-import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
 import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
-import com.wingedsheep.sdk.scripting.effects.TransformAllCreaturesEffect
 import com.wingedsheep.sdk.scripting.effects.TransformEffect
 import com.wingedsheep.sdk.scripting.effects.TurnFaceDownEffect
 import com.wingedsheep.sdk.scripting.effects.TurnFaceUpEffect
@@ -185,8 +181,6 @@ object CardValidator {
                 collectIndicesRecursive(effect.action, indices)
                 collectIndicesRecursive(effect.reflexiveEffect, indices)
             }
-            is StoreResultEffect -> collectIndicesRecursive(effect.effect, indices)
-            is StoreCountEffect -> collectIndicesRecursive(effect.effect, indices)
             is ModalEffect -> effect.modes.forEach { collectIndicesRecursive(it.effect, indices) }
             is PayOrSufferEffect -> collectIndicesRecursive(effect.suffer, indices)
             is AnyPlayerMayPayEffect -> {
@@ -233,8 +227,6 @@ object CardValidator {
             is BecomeCreatureTypeEffect -> effect.target
             is ChangeCreatureTypeTextEffect -> effect.target
             is GrantTriggeredAbilityEffect -> effect.target
-            is TransformAllCreaturesEffect -> effect.target
-            is AddMinusCountersEffect -> effect.target
             is LoseAllCreatureTypesEffect -> effect.target
             is LookAtFaceDownEffect -> effect.target
             is TransformEffect -> effect.target

@@ -133,23 +133,6 @@ data class RemoveAllCountersEffect(
 }
 
 /**
- * Put -1/-1 counters on a creature.
- * Used for blight effects and wither-style damage.
- *
- * @property count Number of -1/-1 counters to place
- * @property target The creature to receive the counters
- */
-@SerialName("AddMinusCounters")
-@Serializable
-data class AddMinusCountersEffect(
-    val count: Int,
-    val target: EffectTarget
-) : Effect {
-    override val description: String =
-        "Put $count -1/-1 counter${if (count != 1) "s" else ""} on ${target.description}"
-}
-
-/**
  * Add counters to all entities in a named collection.
  * Used for non-targeting "choose" effects that place counters on multiple permanents.
  * "Put an aim counter on each of them"

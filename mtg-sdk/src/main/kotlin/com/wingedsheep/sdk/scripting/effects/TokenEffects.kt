@@ -292,33 +292,6 @@ data class CreateTokenCopyOfEquippedCreatureEffect(
 }
 
 /**
- * Effect that can be activated from the graveyard.
- * Used for cards like Goldmeadow Nomad with graveyard abilities.
- * Note: This is typically handled as an activated ability, not a spell effect.
- */
-@SerialName("CreateTokenFromGraveyard")
-@Serializable
-data class CreateTokenFromGraveyardEffect(
-    val power: Int,
-    val toughness: Int,
-    val colors: Set<Color>,
-    val creatureTypes: Set<String>
-) : Effect {
-    override val description: String = buildString {
-        append("Create a $power/$toughness ")
-        append(colors.joinToString(" and ") { it.displayName.lowercase() })
-        append(" ")
-        append(creatureTypes.joinToString(" "))
-        append(" creature token")
-    }
-
-    override fun applyTextReplacement(replacer: TextReplacer): Effect {
-        val newTypes = creatureTypes.map { replacer.replaceCreatureType(it) }.toSet()
-        return if (newTypes != creatureTypes) copy(creatureTypes = newTypes) else this
-    }
-}
-
-/**
  * Choose a permanent you control matching [filter], then create a token that's a copy of it.
  * "Choose an artifact or creature you control. Create a token that's a copy of it."
  *

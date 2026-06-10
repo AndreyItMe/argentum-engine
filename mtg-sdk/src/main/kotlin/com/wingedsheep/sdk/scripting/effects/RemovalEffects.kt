@@ -230,22 +230,6 @@ data class ForceReturnOwnPermanentEffect(
 }
 
 /**
- * Separate permanents into piles effect.
- * "Separate all permanents target player controls into two piles.
- *  That player sacrifices all permanents in the pile of their choice."
- * Used for Liliana of the Veil's ultimate.
- */
-@SerialName("SeparatePermanentsIntoPiles")
-@Serializable
-data class SeparatePermanentsIntoPilesEffect(
-    val target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer)
-) : Effect {
-    override val description: String =
-        "Separate all permanents ${target.description} controls into two piles. " +
-                "That player sacrifices all permanents in the pile of their choice"
-}
-
-/**
  * Exile a permanent until this permanent leaves the battlefield.
  * Used for O-Ring style effects like Liminal Hold.
  */

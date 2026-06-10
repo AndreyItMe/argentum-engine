@@ -58,6 +58,69 @@ import com.wingedsheep.sdk.scripting.CantReceiveCounters
 import com.wingedsheep.sdk.scripting.GrantHexproofToController
 import com.wingedsheep.sdk.scripting.GrantShroudToController
 import com.wingedsheep.sdk.scripting.StationUsingToughness
+import com.wingedsheep.sdk.scripting.AdditionalAttackTriggers
+import com.wingedsheep.sdk.scripting.AdditionalETBOrLTBTriggers
+import com.wingedsheep.sdk.scripting.AdditionalManaOnSourceTap
+import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
+import com.wingedsheep.sdk.scripting.AdditionalSourceTriggers
+import com.wingedsheep.sdk.scripting.AssignCombatDamageAsUnblocked
+import com.wingedsheep.sdk.scripting.AssignDamageEqualToToughness
+import com.wingedsheep.sdk.scripting.AttackTax
+import com.wingedsheep.sdk.scripting.AttackerCountLimit
+import com.wingedsheep.sdk.scripting.BlockerCountLimit
+import com.wingedsheep.sdk.scripting.CanAttackDespiteDefender
+import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
+import com.wingedsheep.sdk.scripting.CantAttackUnless
+import com.wingedsheep.sdk.scripting.CantAttackUnlessCoAttacker
+import com.wingedsheep.sdk.scripting.CantBeAttackedWithout
+import com.wingedsheep.sdk.scripting.CantBeBlockedBy
+import com.wingedsheep.sdk.scripting.CantBeBlockedByCreaturesWithLessPower
+import com.wingedsheep.sdk.scripting.CantBeBlockedByMoreThan
+import com.wingedsheep.sdk.scripting.CantBeBlockedIfCastSpellType
+import com.wingedsheep.sdk.scripting.CantBeBlockedUnlessDefenderSharesCreatureType
+import com.wingedsheep.sdk.scripting.CantBlockCreaturesWithGreaterPower
+import com.wingedsheep.sdk.scripting.CantBlockUnless
+import com.wingedsheep.sdk.scripting.CantCastSpellsSharingColorWithLastCast
+import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.DampLandManaProduction
+import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
+import com.wingedsheep.sdk.scripting.ExtraLoyaltyActivation
+import com.wingedsheep.sdk.scripting.GrantActivatedAbility
+import com.wingedsheep.sdk.scripting.GrantAdditionalLandDrop
+import com.wingedsheep.sdk.scripting.GrantAlternativeCastingCost
+import com.wingedsheep.sdk.scripting.GrantCantBeCountered
+import com.wingedsheep.sdk.scripting.GrantCantLoseGame
+import com.wingedsheep.sdk.scripting.GrantFlashToSpellType
+import com.wingedsheep.sdk.scripting.GrantKeywordToOwnSpells
+import com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile
+import com.wingedsheep.sdk.scripting.GrantTriggeredAbility
+import com.wingedsheep.sdk.scripting.GrantWarpToCardsInHand
+import com.wingedsheep.sdk.scripting.LookAtFaceDownCreatures
+import com.wingedsheep.sdk.scripting.LookAtTopOfLibrary
+import com.wingedsheep.sdk.scripting.MayCastFromGraveyard
+import com.wingedsheep.sdk.scripting.MayCastSelfFromZones
+import com.wingedsheep.sdk.scripting.MayCastWithoutPayingManaCost
+import com.wingedsheep.sdk.scripting.MayPlayLandsFromGraveyard
+import com.wingedsheep.sdk.scripting.MayPlayPermanentsFromGraveyard
+import com.wingedsheep.sdk.scripting.ModifySpellCost
+import com.wingedsheep.sdk.scripting.NoMaximumHandSize
+import com.wingedsheep.sdk.scripting.NoncombatDamageBonus
+import com.wingedsheep.sdk.scripting.OpponentsPlayWithHandsRevealed
+import com.wingedsheep.sdk.scripting.OverrideEnchantedLandManaColor
+import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.PlayLandsAndCastFilteredFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.PlayersCantCastSpells
+import com.wingedsheep.sdk.scripting.PreventActivatedAbilities
+import com.wingedsheep.sdk.scripting.PreventCycling
+import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
+import com.wingedsheep.sdk.scripting.ReplaceLandManaColor
+import com.wingedsheep.sdk.scripting.RestrictSpellsCastPerTurn
+import com.wingedsheep.sdk.scripting.RevealFirstDrawEachTurn
+import com.wingedsheep.sdk.scripting.RevealTopOfLibrary
+import com.wingedsheep.sdk.scripting.SuppressHexproofForGroup
+import com.wingedsheep.sdk.scripting.SuppressWardForGroup
+import com.wingedsheep.sdk.scripting.UntapDuringOtherUntapSteps
+import com.wingedsheep.sdk.scripting.UntapFilteredDuringOtherUntapSteps
 import com.wingedsheep.sdk.scripting.conditions.EnchantedCreatureHasSubtype
 import com.wingedsheep.sdk.scripting.conditions.EnchantedCreatureIsLegendary
 import com.wingedsheep.sdk.scripting.conditions.Exists
@@ -557,7 +620,115 @@ class StaticAbilityHandler(
                 )
             }
             is ConditionalStaticAbility -> convertConditionalStaticAbility(ability)
-            else -> null
+
+            // ------------------------------------------------------------------
+            // Everything below is NOT projected through the layer system — each
+            // type is consulted by the dedicated subsystem named in its group
+            // comment. They are listed explicitly (no `else`) so this `when` is
+            // exhaustiveness-checked: a new StaticAbility subtype fails
+            // compilation here until a deliberate decision is made about its
+            // engine half (sdk-analysis-2026-06 §1.1).
+            // ------------------------------------------------------------------
+
+            // Multi-effect conversions handled by convertStaticAbilities before
+            // this function is reached:
+            is AnimateLandGroup,
+            is GrantAdditionalTypesToGroup,
+            is TransformPermanent,
+
+            // Trigger system (TriggerDetector / TriggerAbilityResolver / TriggerIndex):
+            is AdditionalAttackTriggers,
+            is AdditionalETBOrLTBTriggers,
+            is AdditionalSourceTriggers,
+            is GrantTriggeredAbility,
+
+            // Mana production (ManaSolver / ActivateAbilityHandler / ManaAbilityEnumerator):
+            is AdditionalManaOnSourceTap,
+            is AdditionalManaOnTap,
+            is DampLandManaProduction,
+            is OverrideEnchantedLandManaColor,
+            is ReplaceLandManaColor,
+
+            // Combat: attack/block legality (AttackPhaseManager / BlockPhaseManager /
+            // AttackRestrictionRules / BlockEvasionRules / CombatEnumerator):
+            is AttackTax,
+            is AttackerCountLimit,
+            is BlockerCountLimit,
+            is CanAttackDespiteDefender,
+            is CanBlockAnyNumber,
+            is CantAttackUnless,
+            is CantAttackUnlessCoAttacker,
+            is CantBeAttackedWithout,
+            is CantBeBlockedBy,
+            is CantBeBlockedByCreaturesWithLessPower,
+            is CantBeBlockedByMoreThan,
+            is CantBeBlockedIfCastSpellType,
+            is CantBeBlockedUnlessDefenderSharesCreatureType,
+            is CantBlockCreaturesWithGreaterPower,
+            is CantBlockUnless,
+
+            // Combat: damage assignment (CombatDamageManager / CombatDamageUtils / DamageUtils):
+            is AssignCombatDamageAsUnblocked,
+            is AssignDamageEqualToToughness,
+            is DivideCombatDamageFreely,
+            is NoncombatDamageBonus,
+
+            // Casting permissions, zones and land drops (CastPermissionUtils /
+            // CastZoneResolver / CastFromZoneEnumerator / CastSpellHandler /
+            // CastSpellEnumerator / PlayLandHandler):
+            is CantCastSpellsSharingColorWithLastCast,
+            is CastSpellTypesFromTopOfLibrary,
+            is GrantAdditionalLandDrop,
+            is GrantFlashToSpellType,
+            is GrantMayCastFromLinkedExile,
+            is GrantWarpToCardsInHand,
+            is MayCastFromGraveyard,
+            is MayCastSelfFromZones,
+            is MayCastWithoutPayingManaCost,
+            is MayPlayLandsFromGraveyard,
+            is MayPlayPermanentsFromGraveyard,
+            is PlayFromTopOfLibrary,
+            is PlayLandsAndCastFilteredFromTopOfLibrary,
+            is PlayersCantCastSpells,
+            is RestrictSpellsCastPerTurn,
+
+            // Spell costs (CostCalculator):
+            is GrantAlternativeCastingCost,
+            is ModifySpellCost,
+
+            // Spells on the stack (StackResolver / GrantedKeywordResolver):
+            is GrantCantBeCountered,
+            is GrantKeywordToOwnSpells,
+
+            // Activated abilities (ActivateAbilityHandler / ActivatedAbilityEnumerator):
+            is ExtraLoyaltyActivation,
+            is GrantActivatedAbility,
+            is PreventActivatedAbilities,
+            is PreventCycling,
+
+            // Turn-based actions (BeginningPhaseManager / CleanupPhaseManager):
+            is NoMaximumHandSize,
+            is PreventManaPoolEmptying,
+            is UntapDuringOtherUntapSteps,
+            is UntapFilteredDuringOtherUntapSteps,
+
+            // Visibility / information (ClientStateTransformer / DrawCardPrimitive):
+            is LookAtFaceDownCreatures,
+            is LookAtTopOfLibrary,
+            is OpponentsPlayWithHandsRevealed,
+            is RevealFirstDrawEachTurn,
+            is RevealTopOfLibrary,
+
+            // Stamped as marker components by addContinuousEffectComponent in this
+            // handler and read from those components by their subsystems:
+            is CantBeTargetedByOpponentAbilities,
+            is GrantCantBeBlockedToSmallCreatures,
+            is GrantCantLoseGame,
+            is GrantHexproofToController,
+            is GrantShroudToController,
+            is StationUsingToughness,
+            is SuppressHexproofForGroup,
+            is SuppressWardForGroup -> null
         }
     }
 
@@ -610,21 +781,57 @@ class StaticAbilityHandler(
         return effects
     }
 
+    /**
+     * Classifies every [com.wingedsheep.sdk.scripting.ReplacementEffect] as either
+     * runtime-relevant (stamped into [ReplacementEffectSourceComponent] and consulted while
+     * the permanent is on the battlefield) or entry-time (consumed once by the ETB paths in
+     * StackResolver / PlayLandHandler / the clone continuations).
+     *
+     * Exhaustive `when` with no `else` on purpose: a new ReplacementEffect subtype fails
+     * compilation here until it's deliberately classified (sdk-analysis-2026-06 §1.1).
+     */
     private fun isRuntimeReplacementEffect(it: com.wingedsheep.sdk.scripting.ReplacementEffect): Boolean =
-        it is PreventDamage || it is DoubleDamage || it is ModifyDamageAmount || it is PreventLifeGain ||
-        it is com.wingedsheep.sdk.scripting.CapDamage || it is com.wingedsheep.sdk.scripting.RedirectDamage ||
-        it is com.wingedsheep.sdk.scripting.ModifyLifeLoss ||
-        it is com.wingedsheep.sdk.scripting.LifeLossFloor ||
-        it is com.wingedsheep.sdk.scripting.ModifyLifeGain ||
-        it is com.wingedsheep.sdk.scripting.PreventDraw ||
-        it is com.wingedsheep.sdk.scripting.DamageCantBePrevented || it is ReplaceDamageWithCounters ||
-        it is com.wingedsheep.sdk.scripting.ReplaceDrawWithEffect || it is com.wingedsheep.sdk.scripting.ModifyDrawAmount ||
-        it is com.wingedsheep.sdk.scripting.ModifyCounterPlacement ||
-        it is com.wingedsheep.sdk.scripting.RedirectZoneChange || it is com.wingedsheep.sdk.scripting.PreventExtraTurns ||
-        it is com.wingedsheep.sdk.scripting.RedirectZoneChangeWithEffect || it is com.wingedsheep.sdk.scripting.EntersWithCounters ||
-        it is com.wingedsheep.sdk.scripting.EntersWithDynamicCounters || it is com.wingedsheep.sdk.scripting.DoubleCounterPlacement ||
-        it is com.wingedsheep.sdk.scripting.ReplaceTokenCreationWithAttachedCopy ||
-        it is com.wingedsheep.sdk.scripting.DoubleTokenCreation || it is com.wingedsheep.sdk.scripting.ModifyTokenCount
+        when (it) {
+            // Damage replacement/modification:
+            is PreventDamage,
+            is DoubleDamage,
+            is ModifyDamageAmount,
+            is com.wingedsheep.sdk.scripting.CapDamage,
+            is com.wingedsheep.sdk.scripting.RedirectDamage,
+            is com.wingedsheep.sdk.scripting.DamageCantBePrevented,
+            is ReplaceDamageWithCounters,
+            // Life gain/loss:
+            is PreventLifeGain,
+            is com.wingedsheep.sdk.scripting.ModifyLifeGain,
+            is com.wingedsheep.sdk.scripting.ModifyLifeLoss,
+            is com.wingedsheep.sdk.scripting.LifeLossFloor,
+            // Draws:
+            is com.wingedsheep.sdk.scripting.PreventDraw,
+            is com.wingedsheep.sdk.scripting.ReplaceDrawWithEffect,
+            is com.wingedsheep.sdk.scripting.ModifyDrawAmount,
+            // Counter placement:
+            is com.wingedsheep.sdk.scripting.ModifyCounterPlacement,
+            is com.wingedsheep.sdk.scripting.DoubleCounterPlacement,
+            is com.wingedsheep.sdk.scripting.EntersWithCounters,
+            is com.wingedsheep.sdk.scripting.EntersWithDynamicCounters,
+            // Zone changes and turns:
+            is com.wingedsheep.sdk.scripting.RedirectZoneChange,
+            is com.wingedsheep.sdk.scripting.RedirectZoneChangeWithEffect,
+            is com.wingedsheep.sdk.scripting.PreventExtraTurns,
+            // Token creation:
+            is com.wingedsheep.sdk.scripting.ReplaceTokenCreationWithAttachedCopy,
+            is com.wingedsheep.sdk.scripting.DoubleTokenCreation,
+            is com.wingedsheep.sdk.scripting.ModifyTokenCount -> true
+
+            // Entry-time replacements, consumed once as the permanent enters
+            // (StackResolver / PlayLandHandler / ModalAndCloneContinuations):
+            is com.wingedsheep.sdk.scripting.EntersAsCopy,
+            is com.wingedsheep.sdk.scripting.EntersTapped,
+            is com.wingedsheep.sdk.scripting.EntersWithChoice,
+            is com.wingedsheep.sdk.scripting.EntersWithDevour,
+            is com.wingedsheep.sdk.scripting.EntersWithRevealCounters,
+            is com.wingedsheep.sdk.scripting.OnEnterRunEffect -> false
+        }
 
     /**
      * Convert a GroupFilter to an AffectsFilter.

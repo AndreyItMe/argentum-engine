@@ -705,8 +705,6 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   surrounding pipeline's stored collections are carried into whichever consequence fires, so the
   consequence can reference cards gathered earlier in the same resolution (e.g. the discarded card,
   via `MoveCollection(from = "discarded", …)`).
-- `StoreResultEffect(effect, as)` — stash an effect's result for later reference.
-- `StoreCountEffect(effect, as)` — stash a count for later reference.
 - `RepeatWhileEffect(condition, effect, maxIterations?)` — run effect repeatedly while condition holds.
 
 ### Sequencing & conditional
@@ -748,7 +746,6 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `GrantProtectionFromChosenColorEffect(target)` — protection from chosen color. Must run inside `ChooseColorThen`; wrap in `ForEachInGroup` for the group case (Akroma's Blessing: "Creatures you control gain protection from the chosen color").
 - `ChooseCreatureTypeEffect(...)` — pause for creature-type pick.
 - `SelectTargetEffect(...)` — have a player pick from a valid set.
-- `SeparatePermanentsIntoPilesEffect(filter, piles)` — divvy into piles (Fact-or-Fiction shape).
 
 > **Authoring rule:** prefer composing primitives over adding parameters to an existing effect. Use `CompositeEffect`
 > and the gather/select/move pipeline before writing a new executor.
@@ -2627,7 +2624,7 @@ sibling effect that reads `DynamicAmount.EntityProperty(EntityReference.AmassedA
     triggers — Fall of Cair Andros' "amass Orcs X, where X is the excess damage."
 - `AdditionalCostBlightAmount` — X paid via the Blight additional cost.
 - `ChosenNumber` — number a player chose via a Choose action.
-- `VariableReference(name)` — named variable stored earlier by `StoreResult`/`StoreCount`.
+- `VariableReference(name)` — named count variable stored earlier in the same resolution (e.g. a pipeline `storeCountAs`).
 - `ColorsAmongPermanents(player)` — count of distinct colors among player's permanents.
 - `DistinctEntitiesInCollections(collections)` — number of *distinct* entities across the named
   pipeline collections (union, de-duplicated by entity id). Facade: `DynamicAmounts.distinctEntitiesIn(vararg)`.
@@ -2826,7 +2823,6 @@ staticAbility { ability = GrantLandwalkOfChosenType() }
 - `Effects.ChooseCardName(storeAs, prompt?, excludeBasicLandNames?)` — name a card (`ChooseOptionEffect(OptionType.CARD_NAME)`); the chosen name is stored in `chosenValues[storeAs]`. Options are every registry card name (searchable list, not free text); `excludeBasicLandNames` drops the five basics. Match cards by it with `GameObjectFilter.namedFromVariable(storeAs)`. (Desperate Research)
 - `Effects.StoreCardName(from, storeAs)` — capture the name of the first card in collection `from` into `chosenValues[storeAs]`. The "choose a card, then act on cards of that name" counterpart to `ChooseCardName`. (Lobotomy)
 - `SelectTargetEffect(...)` — pick from a valid target set.
-- `SeparatePermanentsIntoPilesEffect(filter, piles)` — divvy permanents into piles (Fact-or-Fiction shape).
 
 ---
 

@@ -88,21 +88,6 @@ sealed interface EffectTarget {
     }
 
     /**
-     * VARIABLE BINDING: Refers to an entity stored in a variable during effect execution.
-     *
-     * This enables Oblivion Ring-style effects:
-     * - First trigger exiles a creature and stores it: `StoreResultEffect(exile, "exiledCard")`
-     * - Second trigger returns it: `ReturnFromExileEffect(StoredEntityTarget("exiledCard"))`
-     *
-     * @property variableName The name of the variable holding the entity reference.
-     */
-    @SerialName("StoredEntityTarget")
-    @Serializable
-    data class StoredEntityTarget(val variableName: String) : EffectTarget {
-        override val description: String = "the stored $variableName"
-    }
-
-    /**
      * PLAYER REFERENCE: Refers to a player or set of players.
      *
      * Usage:
