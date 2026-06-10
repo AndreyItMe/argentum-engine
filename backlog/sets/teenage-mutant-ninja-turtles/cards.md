@@ -65,7 +65,7 @@
 - [x] Illegitimate Business
 - [x] Improvised Arsenal
 - [ ] Insectoid Exterminator
-- [ ] Jennika's Technique
+- [x] Jennika's Technique
 - [x] Jennika, Bad Apple Big Sister
 - [ ] Karai's Technique
 - [ ] Karai, Future of the Foot
