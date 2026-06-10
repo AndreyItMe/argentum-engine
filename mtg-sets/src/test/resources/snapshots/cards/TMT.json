@@ -5508,6 +5508,68 @@
         "RED"
     ]
 }
+// Splinter's Technique
+{
+    "name": "Splinter's Technique",
+    "manaCost": "{3}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Sneak {1}{B} (You may cast this spell for {1}{B} if you also return an unblocked attacker you control to hand during the declare blockers step.)\nSearch your library for a card, put that card into your hand, then shuffle.",
+    "keywords": [
+        "SNEAK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Sneak",
+            "cost": "{1}{B}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Library"
+                    },
+                    "storeAs": "searchable"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "searchable",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "found"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "found",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                },
+                "ShuffleLibrary"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "80",
+        "rarity": "RARE",
+        "artist": "Jo Cordisco",
+        "flavorText": "\"Possess the right thinking. Only then can one receive the gifts of strength, knowledge, and peace.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/d/fd3a5465-074a-4688-b79b-68e232076581.jpg?1769006137"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
 // Splinter, Hamato Yoshi
 {
     "name": "Splinter, Hamato Yoshi",

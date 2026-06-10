@@ -160,7 +160,7 @@
 - [ ] Slithering Cryptid
 - [x] South Wind Avatar
 - [x] Spicy Oatmeal Pizza
-- [ ] Splinter's Technique
+- [x] Splinter's Technique
 - [x] Splinter, Hamato Yoshi
 - [x] Splinter, Radical Rat
 - [x] Squirrelanoids
