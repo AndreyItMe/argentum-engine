@@ -5284,6 +5284,49 @@
         "RED"
     ]
 }
+// Splinter, Hamato Yoshi
+{
+    "name": "Splinter, Hamato Yoshi",
+    "manaCost": "{1}{B}",
+    "typeLine": "Legendary Creature — Mutant Ninja Rat",
+    "oracleText": "Sneak {B} (You may cast this spell for {B} if you also return an unblocked attacker you control to hand during the declare blockers step. He enters tapped and attacking.)\nMenace (This creature can't be blocked except by two or more creatures.)\nOther Ninjas you control get +1/+1.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "MENACE",
+        "SNEAK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Sneak",
+            "cost": "{B}"
+        }
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Ninja ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "79",
+        "rarity": "UNCOMMON",
+        "artist": "April Prime",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/e/9ea9d072-aa98-405e-a475-26f93cc37e53.jpg?1771586909"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
 // Splinter, Radical Rat
 {
     "name": "Splinter, Radical Rat",

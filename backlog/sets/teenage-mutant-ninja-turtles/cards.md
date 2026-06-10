@@ -161,7 +161,7 @@
 - [x] South Wind Avatar
 - [x] Spicy Oatmeal Pizza
 - [ ] Splinter's Technique
-- [ ] Splinter, Hamato Yoshi
+- [x] Splinter, Hamato Yoshi
 - [x] Splinter, Radical Rat
 - [x] Squirrelanoids
 - [x] Stockman, Mad Fly-entist
