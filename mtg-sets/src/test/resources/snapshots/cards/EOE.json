@@ -798,10 +798,7 @@
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
-                        "target": {
-                            "type": "ContextTarget",
-                            "index": 0
-                        }
+                        "target": "Self"
                     }
                 }
             }
