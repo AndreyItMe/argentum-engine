@@ -68,6 +68,39 @@ class ForgeAnewScenarioTest : FunSpec({
         driver.state.getEntity(sword)?.get<AttachedToComponent>()?.targetId shouldBe a
     }
 
+    test("the equip ability is ENUMERATED at begin-of-combat and after declaring attackers") {
+        val driver = createDriver()
+        val you = driver.activePlayer!!
+        val opponent = driver.getOpponent(you)
+        val courser = driver.putCreatureOnBattlefield(you, "Centaur Courser")
+        val sword = driver.putPermanentOnBattlefield(you, "Bonesplitter")
+        driver.putPermanentOnBattlefield(you, "Forge Anew")
+        driver.removeSummoningSickness(courser)
+        driver.giveColorlessMana(you, 1)
+
+        val services = com.wingedsheep.engine.core.EngineServices(driver.cardRegistry)
+        val enumerator = com.wingedsheep.engine.legalactions.LegalActionEnumerator(
+            services.cardRegistry, services.manaSolver, services.costCalculator,
+            services.predicateEvaluator, services.conditionEvaluator, services.turnManager
+        )
+        fun equipOffered(): Boolean {
+            val pid = driver.state.priorityPlayerId ?: return false
+            return enumerator.enumerate(driver.state, pid).any {
+                val a = it.action
+                a is ActivateAbility && a.sourceId == sword
+            }
+        }
+
+        // At begin-of-combat (a normal priority window), the equip is offered.
+        driver.passPriorityUntil(Step.BEGIN_COMBAT)
+        equipOffered() shouldBe true
+
+        // After attackers are declared, the declare-attackers priority window also offers it.
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(you, listOf(courser), opponent)
+        equipOffered() shouldBe true
+    }
+
     test("grants instant-speed equip during your turn (equip in combat)") {
         val driver = createDriver()
         val you = driver.activePlayer!!
