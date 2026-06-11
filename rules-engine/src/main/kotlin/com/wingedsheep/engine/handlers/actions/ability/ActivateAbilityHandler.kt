@@ -652,6 +652,14 @@ class ActivateAbilityHandler(
         // Collect events from cost payment (e.g., sacrifice events)
         events.addAll(costResult.events)
 
+        // Cost-payment events drive triggered abilities (e.g., a mana ability whose cost
+        // sacrifices the source — Wizard's Rockets: "{X}, {T}, Sacrifice this artifact: ..."
+        // — fires its dies/leaves-the-battlefield trigger). The mana-ability path resolves off
+        // the stack and returns early, so capture these now to detect triggers before returning.
+        // Scoped to cost-payment events so mana-production events keep their existing inline
+        // handling (resolveAdditionalManaOnSourceTap etc.).
+        val costPaymentEvents = costResult.events
+
         // Deduct X mana from the pool. ManaPool.pay() skips X symbols ("handled by caller"),
         // so we must explicitly spend the X portion here (same pattern as CastSpellHandler.autoPay).
         // Skip for Explicit payment — sources were already tapped to cover the full cost including X.
@@ -805,11 +813,42 @@ class ActivateAbilityHandler(
                 controllerId = action.playerId,
                 opponentId = opponentId,
                 targets = action.targets,
-                xValue = null,
+                // Thread the chosen X so X-based mana abilities produce the right amount
+                // ("{X}, {T}, Sacrifice this: Add X mana..." — Wizard's Rockets). Without
+                // this, DynamicAmount.XValue resolves to 0 and the ability adds no mana.
+                xValue = action.xValue,
                 manaColorChoice = action.manaColorChoice
             )
 
             val effectResult = effectExecutorRegistry.execute(currentState, finalEffect, context).toExecutionResult()
+            if (effectResult.isPaused) {
+                // The mana ability's effect paused for a decision (e.g. choosing colors for
+                // "add X mana in any combination of colors"). Any triggered ability that fired
+                // from the cost payment (e.g. the source's dies trigger when sacrificed —
+                // Wizard's Rockets: "When this artifact is put into a graveyard..., draw a card")
+                // must survive that pause. Queue it as a PendingTriggersContinuation beneath the
+                // in-flight decision so it's put on the stack once the ability finishes resolving
+                // (mirrors PassPriorityHandler / SubmitDecisionHandler mid-resolution handling).
+                val deferred = triggerDetector.detectTriggers(effectResult.state, costPaymentEvents)
+                if (deferred.isNotEmpty()) {
+                    val pending = com.wingedsheep.engine.core.PendingTriggersContinuation(
+                        decisionId = "mana-ability-cost-triggers-${java.util.UUID.randomUUID()}",
+                        remainingTriggers = deferred
+                    )
+                    val stack = effectResult.state.continuationStack
+                    val newStack = if (stack.isNotEmpty()) {
+                        stack.dropLast(1) + pending + stack.last()
+                    } else {
+                        listOf(pending)
+                    }
+                    return ExecutionResult.paused(
+                        effectResult.state.copy(continuationStack = newStack),
+                        effectResult.pendingDecision!!,
+                        events + effectResult.events
+                    )
+                }
+                return effectResult
+            }
             if (!effectResult.isSuccess) {
                 return effectResult
             }
@@ -988,7 +1027,29 @@ class ActivateAbilityHandler(
             // fixed/mirror bonuses above these need a per-tap color choice, so this may pause for a
             // color decision (resuming via ChooseAnyColorTapBonusContinuation).
             val anyColorBonuses = tappedForManaBonusResolver.collect(currentState, action.sourceId, action.playerId)
-            return tappedForManaBonusResolver.drive(currentState, anyColorBonuses, allManaEvents)
+            val bonusResult = tappedForManaBonusResolver.drive(currentState, anyColorBonuses, allManaEvents)
+            if (bonusResult.isPaused) return bonusResult
+
+            // Detect and queue any triggered abilities from the cost payment — e.g. the
+            // dies/leaves-the-battlefield trigger of a source sacrificed to pay a mana ability.
+            // Such triggered abilities still use the stack even though the mana ability itself
+            // resolves off it (mirrors the non-mana path below).
+            val costTriggers = triggerDetector.detectTriggers(bonusResult.newState, costPaymentEvents)
+            if (costTriggers.isNotEmpty()) {
+                val triggerResult = triggerProcessor.processTriggers(bonusResult.newState, costTriggers)
+                if (triggerResult.isPaused) {
+                    return ExecutionResult.paused(
+                        triggerResult.state.withPriority(action.playerId),
+                        triggerResult.pendingDecision!!,
+                        bonusResult.events + triggerResult.events
+                    )
+                }
+                return ExecutionResult.success(
+                    triggerResult.newState.withPriority(action.playerId),
+                    bonusResult.events + triggerResult.events
+                )
+            }
+            return bonusResult
         }
 
         // Non-mana abilities go on the stack
