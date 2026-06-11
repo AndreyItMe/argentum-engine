@@ -12,7 +12,9 @@ import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.scripting.EventPattern
 import com.wingedsheep.sdk.scripting.TriggeredAbility
 import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
+import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
@@ -400,12 +402,17 @@ class CardValidatorTest : DescribeSpec({
                 manaCost = ManaCost.parse("{B}"),
                 typeLine = TypeLine.instant(),
                 script = CardScript(
-                    spellEffect = IfYouDoEffect(
-                        action = MoveCollectionEffect(
-                            from = "discarded",
-                            destination = CardDestination.ToZone(Zone.GRAVEYARD),
+                    spellEffect = CompositeEffect(
+                        listOf(
+                            GatherCardsEffect(CardSource.FromZone(Zone.HAND), storeAs = "discarded"),
+                            IfYouDoEffect(
+                                action = MoveCollectionEffect(
+                                    from = "discarded",
+                                    destination = CardDestination.ToZone(Zone.GRAVEYARD),
+                                ),
+                                ifYouDo = DrawCardsEffect(1),
+                            ),
                         ),
-                        ifYouDo = DrawCardsEffect(1),
                     ),
                 ),
             )

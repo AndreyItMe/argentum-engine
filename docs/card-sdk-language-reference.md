@@ -3304,6 +3304,43 @@ Card authors rarely reference these directly; they are created/updated by the ma
 - Server is authoritative; never compute legal actions in the client. Every state change emits a `GameEvent` so triggers
   and animations can react.
 
+## 21. Structural lint (`CardLinter`)
+
+Every registered card is structurally validated at build time: `CardValidator.validate` runs
+`CardLinter` (mtg-sdk `serialization/CardLinter.kt`), and the corpus-wide gate is
+`CardLintTest` in mtg-sets (beside `CardDefinitionSnapshotTest`). The linter walks the card's
+serialized JSON tree, so every container — composites, gates, modes, granted abilities, class
+levels, saga chapters, faces — is covered automatically. What it checks:
+
+- **Pipeline dataflow** — every read of a named pipeline variable (`MoveCollection.from`,
+  `CardSource.FromVariable`, `VariableReference`, `CollectionContainsMatch`, `chosenSubtypeKey`,
+  …) must have a writer (`storeAs` / `storeSelected` / `storeMatching` / `StoreNumber` /
+  `ChooseOption` / a cast-time additional cost, …) in the same resolution scope. A read written
+  *nowhere* on the card is an **error** (typo → silent no-op); read-before-write and
+  cross-resolution reads are warnings, as are stores nothing reads. A collection write `x`
+  also satisfies the numeric read `x_count`.
+- **Target bindings per owning ability** — `ContextTarget(i)` must fit the owning ability's
+  flattened target slots (a `count = 2` requirement spans two indices); `BoundVariable(name)`
+  must match a requirement `id` (indexed form `id[i]` allowed). Modes inherit the card-level
+  requirements unless they declare their own; `ReflexiveTriggerEffect.reflexiveEffect` resolves
+  against `reflexiveTargetRequirements`; `CreateDelayedTriggerEffect.effect` against its
+  `targetRequirement`; granted/token abilities against their own requirements only.
+- **Choice slots** — a `ChoiceSlot` read (`CastChoiceMade`, `DynamicAmount.CastChoice`,
+  `HasChosenColor`, `SourceChosenModeIs`, …) needs a declarer on the card (`EntersWithChoice`,
+  kicker, blight, sneak, `ChooseColorThen`/`ChooseColorForTarget`); `SourceChosenModeIs` ids
+  must match a declared `modeOptions` id.
+- **Registry hygiene** — a string field whose name follows the dataflow conventions (`store*`,
+  `from`, `collectionName`, `variableName`, …) on a node type the linter doesn't know is itself
+  an error: **when you add an SDK type that reads or writes a named pipeline variable, classify
+  it in `CardLinter.dataflowFields` in the same change** (and name the field conventionally so
+  the hygiene net sees it).
+
+Intentional exceptions go in `mtg-sets/src/test/resources/lint-allowlist.txt`
+(`ErrorType|Card Name`, stale entries fail). Inside `ForEachInGroup` / `ForEachInCollection`,
+address the iterated entity with `EffectTarget.Self` — `ContextTarget(0)` reads the cast-time
+target list, which is unrelated to the iteration (this exact bug shipped on a real card before
+the linter).
+
 ---
 
 ## Authoritative source files

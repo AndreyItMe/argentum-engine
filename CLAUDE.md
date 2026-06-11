@@ -165,6 +165,11 @@ continuations, layer system, mana, priority): [`docs/architecture-principles.md`
   compiled JSON tree against a committed golden per set, so any SDK change shows up as a reviewable
   per-card diff across the whole corpus. After an *intentional* change, re-bless with
   `./gradlew :mtg-sets:test --tests "*CardDefinitionSnapshotTest" -DupdateSnapshots=true`.
+- **Card lint net** — `CardLintTest` (in `mtg-sets`) runs `CardLinter` over every registered card:
+  pipeline-variable reads must have writers in scope, `ContextTarget`/`BoundVariable` must resolve
+  against the owning ability's requirements, choice-slot reads need declarations. A new SDK type
+  that reads/writes a named pipeline variable must be classified in `CardLinter.dataflowFields`
+  (the hygiene check fails otherwise). See `card-sdk-language-reference.md` §21.
 - **E2E tests** — Playwright in `e2e-scenarios/`, run against full stack. Patterns, scenario config, and `GamePage`
   helper reference: [`docs/e2e-test-patterns.md`](docs/e2e-test-patterns.md).
 - **Manual self-play** — drive a full game over the gym server's HTTP step loop to shake out new-set cards that
