@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.ltr.cards
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
@@ -40,7 +41,7 @@ val HornOfGondor = card("Horn of Gondor") {
     activatedAbility {
         cost = AbilityCost.Composite(
             listOf(
-                AbilityCost.Mana(ManaCost.parse("{3}")),
+                Costs.Mana(ManaCost.parse("{3}")),
                 AbilityCost.Tap
             )
         )

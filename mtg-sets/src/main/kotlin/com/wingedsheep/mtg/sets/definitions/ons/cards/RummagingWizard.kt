@@ -1,8 +1,9 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
 import com.wingedsheep.sdk.core.ManaCost
-import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Patterns
+import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
 
@@ -23,7 +24,7 @@ val RummagingWizard = card("Rummaging Wizard") {
     oracleText = "{2}{U}: Surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)"
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{2}{U}"))
+        cost = Costs.Mana(ManaCost.parse("{2}{U}"))
         effect = Patterns.Library.surveil(1)
     }
 

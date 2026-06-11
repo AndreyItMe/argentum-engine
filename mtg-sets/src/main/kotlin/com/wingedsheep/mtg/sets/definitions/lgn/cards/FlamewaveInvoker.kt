@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -23,7 +24,7 @@ val FlamewaveInvoker = card("Flamewave Invoker") {
     oracleText = "{7}{R}: Flamewave Invoker deals 5 damage to target player or planeswalker."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{7}{R}"))
+        cost = Costs.Mana(ManaCost.parse("{7}{R}"))
         val t = target("target player or planeswalker", TargetPlayer())
         effect = DealDamageEffect(5, t)
     }

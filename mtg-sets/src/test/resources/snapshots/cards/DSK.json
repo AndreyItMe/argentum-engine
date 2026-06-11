@@ -1060,9 +1060,12 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostTapPermanents",
-                    "count": 1,
-                    "excludeSelf": true
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomTapPermanents",
+                        "filter": "creature",
+                        "excludeSelf": true
+                    }
                 },
                 "effect": {
                     "type": "Composite",
@@ -1083,8 +1086,11 @@
             {
                 "id": "ability_2",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{3}{G}{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{G}{G}"
+                    }
                 },
                 "effect": {
                     "type": "Composite",

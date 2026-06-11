@@ -133,12 +133,18 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         {
-                            "type": "CostSacrifice",
-                            "filter": "creature|artifact"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature|artifact"
+                            }
                         }
                     ]
                 },

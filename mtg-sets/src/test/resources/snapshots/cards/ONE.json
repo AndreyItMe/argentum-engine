@@ -435,8 +435,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{W}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{W}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -488,8 +491,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostPayLife",
-                            "amount": 2
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomPayLife",
+                                "amount": 2
+                            }
                         },
                         "CostTap"
                     ]

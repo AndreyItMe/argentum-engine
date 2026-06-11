@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.one.cards
 
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -39,7 +40,7 @@ val SkrelvDefectorMite = card("Skrelv, Defector Mite") {
     }
 
     activatedAbility {
-        cost = AbilityCost.Composite(listOf(AbilityCost.Mana(ManaCost.parse("{W}")), AbilityCost.Tap))
+        cost = AbilityCost.Composite(listOf(Costs.Mana(ManaCost.parse("{W}")), AbilityCost.Tap))
         val t = target("another target creature you control", TargetCreature(filter = TargetFilter.OtherCreatureYouControl))
         effect = Effects.ChooseColorThen(
             Effects.Composite(listOf(
@@ -51,7 +52,7 @@ val SkrelvDefectorMite = card("Skrelv, Defector Mite") {
     }
 
     activatedAbility {
-        cost = AbilityCost.Composite(listOf(AbilityCost.PayLife(2), AbilityCost.Tap))
+        cost = AbilityCost.Composite(listOf(Costs.PayLife(2), AbilityCost.Tap))
         val t = target("another target creature you control", TargetCreature(filter = TargetFilter.OtherCreatureYouControl))
         effect = Effects.ChooseColorThen(
             Effects.Composite(listOf(

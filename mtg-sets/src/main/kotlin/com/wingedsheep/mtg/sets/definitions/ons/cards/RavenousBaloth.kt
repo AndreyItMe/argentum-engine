@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -22,7 +23,7 @@ val RavenousBaloth = card("Ravenous Baloth") {
     oracleText = "Sacrifice a Beast: You gain 4 life."
 
     activatedAbility {
-        cost = AbilityCost.Sacrifice(GameObjectFilter.Creature.withSubtype("Beast"))
+        cost = Costs.Sacrifice(GameObjectFilter.Creature.withSubtype("Beast"))
         effect = GainLifeEffect(4)
     }
 

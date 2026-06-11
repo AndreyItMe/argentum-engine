@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.tdm.cards
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
@@ -55,7 +56,7 @@ val SultaiMonument = card("Sultai Monument") {
     activatedAbility {
         cost = AbilityCost.Composite(
             listOf(
-                AbilityCost.Mana(ManaCost.parse("{2}{B}{G}{U}")),
+                Costs.Mana(ManaCost.parse("{2}{B}{G}{U}")),
                 AbilityCost.Tap,
                 AbilityCost.SacrificeSelf
             )

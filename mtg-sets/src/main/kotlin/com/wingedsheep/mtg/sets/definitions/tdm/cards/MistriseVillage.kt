@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.Conditions
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -53,7 +54,7 @@ val MistriseVillage = card("Mistrise Village") {
     activatedAbility {
         cost = AbilityCost.Composite(
             listOf(
-                AbilityCost.Mana(ManaCost.parse("{U}")),
+                Costs.Mana(ManaCost.parse("{U}")),
                 AbilityCost.Tap
             )
         )

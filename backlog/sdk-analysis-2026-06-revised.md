@@ -215,7 +215,13 @@ Family-specific notes:
 - **Review rule, enforced in `add-feature`:** a new `Effect` subtype must include one sentence in
   the PR description proving it cannot be a parameter of an existing family.
 
-### 3.2 One cost language — [HIGH]
+### 3.2 One cost language — [HIGH] — ✅ DONE
+
+> Landed across multiple PRs: `CostAtom` extracted for `PayCost` + `AdditionalCost` (commit
+> 87b71bf2e), then `AbilityCost` folded onto `AbilityCost.Atom(CostAtom)` (this PR). All three cost
+> contexts now carry one shared `CostAtom` vocabulary; the `Costs.*` facades are unchanged.
+> Counter-removal, X-variable, and named-mechanic costs stay as context-specific wrapper members by
+> design.
 
 **Problem.** Three parallel cost hierarchies — `AbilityCost`, `AdditionalCost` (591 lines),
 `PayCost` — share ~70% of their constructors. Each new payable thing (Blight, waterbend fodder, …)

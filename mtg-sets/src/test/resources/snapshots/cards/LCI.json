@@ -820,8 +820,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{4}{R}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}{R}"
+                            }
                         },
                         {
                             "type": "CostCraft",

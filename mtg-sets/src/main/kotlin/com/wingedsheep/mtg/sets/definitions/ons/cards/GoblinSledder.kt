@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -24,7 +25,7 @@ val GoblinSledder = card("Goblin Sledder") {
     oracleText = "Sacrifice a Goblin: Target creature gets +1/+1 until end of turn."
 
     activatedAbility {
-        cost = AbilityCost.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
+        cost = Costs.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
         val t = target("target", Targets.Creature)
         effect = ModifyStatsEffect(
             powerModifier = 1,

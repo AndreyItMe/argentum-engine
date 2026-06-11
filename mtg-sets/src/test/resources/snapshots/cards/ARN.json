@@ -16,8 +16,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}{R}{R}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}{R}{R}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -70,8 +73,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{8}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{8}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -120,8 +126,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "TapUntap",
@@ -339,8 +348,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         "CostSacrificeSelf"
                     ]
@@ -737,8 +749,11 @@
                     "costs": [
                         "CostTap",
                         {
-                            "type": "CostSacrifice",
-                            "filter": "creature"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature"
+                            }
                         }
                     ]
                 },
@@ -776,8 +791,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1083,8 +1101,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1325,8 +1346,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{G}"
+                    }
                 },
                 "effect": {
                     "type": "Composite",
@@ -1516,8 +1540,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap",
                         "CostDiscardLastDrawnThisTurn"
@@ -1565,8 +1592,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{3}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{3}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -2538,8 +2568,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{2}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
                 },
                 "effect": {
                     "type": "Modal",
@@ -2705,8 +2738,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap"
                     ]

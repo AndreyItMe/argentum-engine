@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -24,7 +25,7 @@ val NantukoHusk = card("Nantuko Husk") {
     oracleText = "Sacrifice a creature: Nantuko Husk gets +2/+2 until end of turn."
 
     activatedAbility {
-        cost = AbilityCost.Sacrifice(GameObjectFilter.Creature)
+        cost = Costs.Sacrifice(GameObjectFilter.Creature)
         effect = ModifyStatsEffect(
             powerModifier = 2,
             toughnessModifier = 2,

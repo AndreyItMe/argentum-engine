@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -23,7 +24,7 @@ val SmokespewInvoker = card("Smokespew Invoker") {
     oracleText = "{7}{B}: Target creature gets -3/-3 until end of turn."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{7}{B}"))
+        cost = Costs.Mana(ManaCost.parse("{7}{B}"))
         val t = target("target creature", TargetCreature())
         effect = Effects.ModifyStats(-3, -3, t)
     }

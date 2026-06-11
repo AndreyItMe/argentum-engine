@@ -438,8 +438,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -629,8 +632,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}{B}"
+                    }
                 },
                 "effect": "Counter",
                 "targetRequirements": [
@@ -761,8 +767,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -1073,8 +1082,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -1217,8 +1229,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "GrantKeyword",
@@ -1301,8 +1316,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -1450,8 +1468,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1648,8 +1669,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1754,8 +1778,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{4}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1939,8 +1966,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{G}{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{G}{G}"
+                    }
                 },
                 "effect": "Counter",
                 "targetRequirements": [
@@ -2020,8 +2050,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{1}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -2375,8 +2408,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -2465,8 +2501,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{W}{W}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{W}{W}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -2944,8 +2983,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{3}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{3}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -3232,8 +3274,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -3819,8 +3864,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -3885,8 +3933,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -3925,8 +3976,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{G}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -3965,8 +4019,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -4088,8 +4145,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{U}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{U}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -4337,8 +4397,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",

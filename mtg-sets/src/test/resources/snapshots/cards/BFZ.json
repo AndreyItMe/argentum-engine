@@ -25,8 +25,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{3}{G}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{3}{G}"
+                            }
                         },
                         "CostTap",
                         "CostSacrificeSelf"
@@ -176,8 +179,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{8}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{8}"
+                    }
                 },
                 "effect": {
                     "type": "DealDamage",

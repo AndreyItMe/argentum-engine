@@ -88,8 +88,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{G}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{G}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -301,8 +304,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{G}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{G}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -452,8 +458,11 @@
                     "costs": [
                         "CostTap",
                         {
-                            "type": "CostTapPermanents",
-                            "count": 1
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomTapPermanents",
+                                "filter": "creature"
+                            }
                         }
                     ]
                 },

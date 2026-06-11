@@ -18,6 +18,8 @@ import com.wingedsheep.engine.state.components.player.FlashGrantsThisTurnCompone
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.ActivationRestriction
@@ -454,9 +456,10 @@ class CastPermissionUtils(
         if (activations > 0) return cost
         if (!hasFreeFirstEquip(state, playerId)) return cost
         return when (cost) {
-            is AbilityCost.Mana -> AbilityCost.Mana(ManaCost.ZERO)
+            is AbilityCost.Atom ->
+                if (cost.manaCostOrNull != null) AbilityCost.Atom(CostAtom.Mana(ManaCost.ZERO)) else cost
             is AbilityCost.Composite -> AbilityCost.Composite(cost.costs.map {
-                if (it is AbilityCost.Mana) AbilityCost.Mana(ManaCost.ZERO) else it
+                if (it.manaCostOrNull != null) AbilityCost.Atom(CostAtom.Mana(ManaCost.ZERO)) else it
             })
             else -> cost
         }

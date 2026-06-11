@@ -158,13 +158,19 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{R}{W}{B}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{R}{W}{B}"
+                            }
                         },
                         "CostTap",
                         {
-                            "type": "CostSacrifice",
-                            "filter": "enchantment"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "enchantment"
+                            }
                         }
                     ]
                 },
@@ -220,13 +226,19 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         "CostTap",
                         {
-                            "type": "CostSacrifice",
-                            "filter": "artifact"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "artifact"
+                            }
                         }
                     ]
                 },
@@ -374,8 +386,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{G}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{G}"
+                            }
                         },
                         "CostTap",
                         {
@@ -383,8 +398,11 @@
                             "costs": [
                                 "CostSacrificeSelf",
                                 {
-                                    "type": "CostSacrifice",
-                                    "filter": "creature green"
+                                    "type": "CostAtomWrapper",
+                                    "atom": {
+                                        "type": "AtomSacrifice",
+                                        "filter": "creature green"
+                                    }
                                 }
                             ]
                         }

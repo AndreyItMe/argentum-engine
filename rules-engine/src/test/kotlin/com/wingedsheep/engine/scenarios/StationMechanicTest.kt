@@ -9,12 +9,14 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCostPayment
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.values.EntityNumericProperty
@@ -50,7 +52,7 @@ class StationMechanicTest : ScenarioTestBase() {
     private val tapCollector = card("Test Tap Collector") {
         typeLine = "Artifact"
         activatedAbility {
-            cost = AbilityCost.TapPermanents(count = 1, filter = GameObjectFilter.Creature, excludeSelf = true)
+            cost = Costs.TapPermanents(count = 1, filter = GameObjectFilter.Creature, excludeSelf = true)
             effect = Effects.AddDynamicCounters(
                 counterType = Counters.CHARGE,
                 amount = DynamicAmount.EntityProperty(EntityReference.TappedAsCost(), EntityNumericProperty.Power),
@@ -72,7 +74,7 @@ class StationMechanicTest : ScenarioTestBase() {
     }
 
     private fun stationAbilityId(cardName: String) =
-        cardRegistry.getCard(cardName)!!.activatedAbilities.first { it.cost is AbilityCost.TapPermanents }.id
+        cardRegistry.getCard(cardName)!!.activatedAbilities.first { (it.cost as? AbilityCost.Atom)?.atom is CostAtom.TapPermanents }.id
 
     init {
         cardRegistry.register(testWall)

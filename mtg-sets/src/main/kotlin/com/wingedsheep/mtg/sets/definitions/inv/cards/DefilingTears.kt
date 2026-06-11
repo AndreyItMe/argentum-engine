@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.inv.cards
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
@@ -32,7 +33,7 @@ val DefilingTears = card("Defiling Tears") {
             GrantActivatedAbilityEffect(
                 ability = ActivatedAbility(
                     id = AbilityId.generate(),
-                    cost = AbilityCost.Mana(ManaCost.parse("{B}")),
+                    cost = Costs.Mana(ManaCost.parse("{B}")),
                     effect = RegenerateEffect(EffectTarget.Self)
                 ),
                 target = t

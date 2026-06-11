@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.Conditions
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -53,9 +54,9 @@ val GreatArashinCity = card("Great Arashin City") {
     activatedAbility {
         cost = AbilityCost.Composite(
             listOf(
-                AbilityCost.Mana(ManaCost.parse("{1}{B}")),
+                Costs.Mana(ManaCost.parse("{1}{B}")),
                 AbilityCost.Tap,
-                AbilityCost.ExileFromGraveyard(count = 1, filter = GameObjectFilter.Creature)
+                Costs.ExileFromGraveyard(count = 1, filter = GameObjectFilter.Creature)
             )
         )
         effect = Effects.CreateToken(

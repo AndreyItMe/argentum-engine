@@ -17,8 +17,11 @@
                     "costs": [
                         "CostTap",
                         {
-                            "type": "CostSacrifice",
-                            "filter": "creature"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature"
+                            }
                         }
                     ]
                 },
@@ -69,13 +72,19 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{4}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}"
+                            }
                         },
                         "CostTap",
                         {
-                            "type": "CostSacrifice",
-                            "filter": "creature"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature"
+                            }
                         }
                     ]
                 },
@@ -216,8 +225,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{U}{U}{U}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{U}{U}{U}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -319,8 +331,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostSacrificeSelf"
                     ]

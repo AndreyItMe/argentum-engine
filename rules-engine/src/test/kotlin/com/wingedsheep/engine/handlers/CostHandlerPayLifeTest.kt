@@ -38,7 +38,7 @@ class CostHandlerPayLifeTest : FunSpec({
             val (driver, player) = createDriver(initialLife = 3)
             CostHandler().canPayAbilityCost(
                 state = driver.state,
-                cost = AbilityCost.PayLife(3),
+                cost = Costs.PayLife(3),
                 sourceId = player,
                 controllerId = player,
                 manaPool = ManaPool()
@@ -49,7 +49,7 @@ class CostHandlerPayLifeTest : FunSpec({
             val (driver, player) = createDriver(initialLife = 20)
             CostHandler().canPayAbilityCost(
                 state = driver.state,
-                cost = AbilityCost.PayLife(3),
+                cost = Costs.PayLife(3),
                 sourceId = player,
                 controllerId = player,
                 manaPool = ManaPool()
@@ -60,7 +60,7 @@ class CostHandlerPayLifeTest : FunSpec({
             val (driver, player) = createDriver(initialLife = 2)
             CostHandler().canPayAbilityCost(
                 state = driver.state,
-                cost = AbilityCost.PayLife(3),
+                cost = Costs.PayLife(3),
                 sourceId = player,
                 controllerId = player,
                 manaPool = ManaPool()

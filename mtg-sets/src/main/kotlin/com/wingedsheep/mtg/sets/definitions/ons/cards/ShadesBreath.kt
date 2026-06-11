@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -33,7 +34,7 @@ val ShadesBreath = card("Shade's Breath") {
         ) then GrantActivatedAbilityToGroupEffect(
             ability = ActivatedAbility(
                 id = AbilityId.generate(),
-                cost = AbilityCost.Mana(ManaCost.parse("{B}")),
+                cost = Costs.Mana(ManaCost.parse("{B}")),
                 effect = ModifyStatsEffect(
                     powerModifier = 1,
                     toughnessModifier = 1,

@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -23,7 +24,7 @@ val StonewoodInvoker = card("Stonewood Invoker") {
     oracleText = "{7}{G}: This creature gets +5/+5 until end of turn."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{7}{G}"))
+        cost = Costs.Mana(ManaCost.parse("{7}{G}"))
         effect = Effects.ModifyStats(5, 5, EffectTarget.Self)
     }
 

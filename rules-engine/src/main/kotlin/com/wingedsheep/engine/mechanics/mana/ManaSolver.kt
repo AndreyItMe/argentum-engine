@@ -25,6 +25,8 @@ import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaSpendOnChosenTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
@@ -930,10 +932,13 @@ class ManaSolver(
                 var abilityTapPermanentsSubCost: TapPermanentsSubCost? = null
                 val abilityCanBeUsed = when (val cost = ability.cost) {
                     is AbilityCost.Tap -> true
-                    is AbilityCost.PayLife -> {
-                        abilityHasPainCost = true
-                        abilityPainAmount = cost.amount
-                        true
+                    is AbilityCost.Atom -> when (val atom = cost.atom) {
+                        is CostAtom.PayLife -> {
+                            abilityHasPainCost = true
+                            abilityPainAmount = atom.amount
+                            true
+                        }
+                        else -> false // Non-pain atom-only cost: skip like other non-tap mana abilities.
                     }
                     is AbilityCost.Composite -> {
                         var hasTap = false
@@ -941,30 +946,35 @@ class ManaSolver(
                         for (subCost in cost.costs) {
                             when (subCost) {
                                 is AbilityCost.Tap -> hasTap = true
-                                is AbilityCost.PayLife -> {
-                                    abilityHasPainCost = true
-                                    abilityPainAmount = maxOf(abilityPainAmount, subCost.amount)
-                                }
-                                is AbilityCost.Mana -> {
-                                    abilityActivationManaCost += subCost.cost.cmc
+                                is AbilityCost.Atom -> when (val atom = subCost.atom) {
+                                    is CostAtom.PayLife -> {
+                                        abilityHasPainCost = true
+                                        abilityPainAmount = maxOf(abilityPainAmount, atom.amount)
+                                    }
+                                    is CostAtom.Mana -> {
+                                        abilityActivationManaCost += atom.cost.cmc
+                                    }
+                                    // TapPermanents as a sub-cost (Springleaf Drum:
+                                    // "{T}, Tap an untapped creature you control: Add …"). Same
+                                    // treatment as SacrificeSelf — auto-pay refuses to silently
+                                    // consume the secondary tap target; manual menus offer the
+                                    // source and the resumer prompts for the creature.
+                                    is CostAtom.TapPermanents -> {
+                                        abilityTapPermanentsSubCost = TapPermanentsSubCost(
+                                            count = atom.count,
+                                            filter = atom.filter,
+                                            excludeSelf = atom.excludeSelf
+                                        )
+                                    }
+                                    // Other choice atoms (sacrifice-something-else, discard, …) still
+                                    // require explicit ActivateAbility entry.
+                                    else -> hasUnsupportedSubCost = true
                                 }
                                 // SacrificeSelf (Treasure: "{T}, Sacrifice this artifact: Add …").
                                 // Auto-tap won't pick these (filtered in solve()), but they appear
                                 // in `findAvailableManaSources` so manual-selection UIs can offer
                                 // them; selecting one triggers an explicit sacrifice in the resumer.
                                 is AbilityCost.SacrificeSelf -> abilityRequiresSacrifice = true
-                                // TapPermanents as a sub-cost (Springleaf Drum:
-                                // "{T}, Tap an untapped creature you control: Add …"). Same
-                                // treatment as SacrificeSelf — auto-pay refuses to silently
-                                // consume the secondary tap target; manual menus offer the
-                                // source and the resumer prompts for the creature.
-                                is AbilityCost.TapPermanents -> {
-                                    abilityTapPermanentsSubCost = TapPermanentsSubCost(
-                                        count = subCost.count,
-                                        filter = subCost.filter,
-                                        excludeSelf = subCost.excludeSelf
-                                    )
-                                }
                                 // Other choice costs (Forage, sacrifice-something-else, etc.) still
                                 // require explicit ActivateAbility entry.
                                 else -> hasUnsupportedSubCost = true
@@ -1780,7 +1790,7 @@ class ManaSolver(
 
             for (ability in cardDef.script.activatedAbilities) {
                 if (!ability.isManaAbility) continue
-                val tapCost = ability.cost as? AbilityCost.TapPermanents ?: continue
+                val tapCost = (ability.cost as? AbilityCost.Atom)?.atom as? CostAtom.TapPermanents ?: continue
 
                 // Find untapped permanents matching the filter that are NOT regular mana sources
                 // and haven't been consumed by another TapPermanents activation.
@@ -1878,7 +1888,7 @@ class ManaSolver(
                 // when the pool has mana, but counting their net production here would
                 // double-count and complicate color resolution. Treasure / Food (mana) / etc.
                 // have a flat tap+sac shape; we cover the canonical case.
-                if (composite.costs.any { it is AbilityCost.Mana }) continue
+                if (composite.costs.any { it.manaCostOrNull != null }) continue
 
                 // Honor activation restrictions (e.g. "only during your turn").
                 if (!activationRestrictionsSatisfied(state, playerId, entityId, ability)) continue
@@ -1995,12 +2005,12 @@ class ManaSolver(
                 val composite = ability.cost as? AbilityCost.Composite ?: continue
                 val hasTap = composite.costs.any { it is AbilityCost.Tap }
                 val tapPermanentsCost = composite.costs
-                    .firstOrNull { it is AbilityCost.TapPermanents } as? AbilityCost.TapPermanents
+                    .firstNotNullOfOrNull { (it as? AbilityCost.Atom)?.atom as? CostAtom.TapPermanents }
                 if (!hasTap || tapPermanentsCost == null) continue
                 // Skip composites that also bundle SacrificeSelf or a mana sub-cost — those are
                 // handled by other helpers (calculateSacrificeSelfBonusMana) and would
                 // double-count or complicate color resolution here.
-                if (composite.costs.any { it is AbilityCost.SacrificeSelf || it is AbilityCost.Mana }) continue
+                if (composite.costs.any { it is AbilityCost.SacrificeSelf || it.manaCostOrNull != null }) continue
 
                 if (!activationRestrictionsSatisfied(state, playerId, entityId, ability)) continue
 

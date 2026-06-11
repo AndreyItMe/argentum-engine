@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.ltr.cards
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -39,7 +40,7 @@ val HauntOfTheDeadMarshes = card("Haunt of the Dead Marshes") {
     }
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{2}{B}"))
+        cost = Costs.Mana(ManaCost.parse("{2}{B}"))
         activateFromZone = Zone.GRAVEYARD
         restrictions = listOf(
             ActivationRestriction.OnlyIfCondition(

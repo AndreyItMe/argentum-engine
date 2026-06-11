@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -24,10 +25,7 @@ val SpurredWolverine = card("Spurred Wolverine") {
     oracleText = "Tap two untapped Beasts you control: Target creature gains first strike until end of turn."
 
     activatedAbility {
-        cost = AbilityCost.TapPermanents(
-            count = 2,
-            filter = GameObjectFilter.Creature.withSubtype("Beast")
-        )
+        cost = Costs.TapPermanents(2, GameObjectFilter.Creature.withSubtype("Beast"))
         val t = target("target", TargetCreature())
         effect = GrantKeywordEffect(Keyword.FIRST_STRIKE, t)
     }

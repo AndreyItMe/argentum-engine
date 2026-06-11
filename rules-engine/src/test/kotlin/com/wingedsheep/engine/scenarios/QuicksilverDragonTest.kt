@@ -48,7 +48,7 @@ class QuicksilverDragonTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = abilityId,
-                cost = AbilityCost.Mana(ManaCost.parse("{U}")),
+                cost = Costs.Mana(ManaCost.parse("{U}")),
                 effect = Effects.ChangeSpellTarget(targetMustBeSource = true),
                 targetRequirement = Targets.Spell
             )

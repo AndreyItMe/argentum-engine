@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -28,7 +29,7 @@ val GoblinClearcutter = card("Goblin Clearcutter") {
         cost = AbilityCost.Composite(
             listOf(
                 AbilityCost.Tap,
-                AbilityCost.Sacrifice(GameObjectFilter.Land.withSubtype("Forest"))
+                Costs.Sacrifice(GameObjectFilter.Land.withSubtype("Forest"))
             )
         )
         effect = AddDynamicManaEffect(

@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.dsl
 
 import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.conditions.Compare
@@ -35,10 +36,11 @@ class StationDslTest : DescribeSpec({
             rammer.activatedAbilities.size shouldBe 1
             val station = rammer.activatedAbilities.single()
 
-            val cost = station.cost.shouldBeInstanceOf<AbilityCost.TapPermanents>()
-            cost.count shouldBe 1
-            cost.excludeSelf shouldBe true
-            cost.filter shouldBe GameObjectFilter.Creature
+            val cost = station.cost.shouldBeInstanceOf<AbilityCost.Atom>()
+            val atom = cost.atom.shouldBeInstanceOf<CostAtom.TapPermanents>()
+            atom.count shouldBe 1
+            atom.excludeSelf shouldBe true
+            atom.filter shouldBe GameObjectFilter.Creature
 
             station.timing shouldBe TimingRule.SorcerySpeed
 

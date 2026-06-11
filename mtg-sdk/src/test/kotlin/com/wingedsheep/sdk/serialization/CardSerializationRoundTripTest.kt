@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.serialization
 
 import com.wingedsheep.sdk.core.*
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
@@ -422,7 +423,7 @@ class CardSerializationRoundTripTest : DescribeSpec({
                 toughness = 5
 
                 activatedAbility {
-                    cost = AbilityCost.TapPermanents(
+                    cost = Costs.TapPermanents(
                         count = 5,
                         filter = GameObjectFilter.Creature.withSubtype("Cleric")
                     )
@@ -434,7 +435,7 @@ class CardSerializationRoundTripTest : DescribeSpec({
             }
 
             val serialized = CardLoader.toJson(card)
-            serialized shouldContain "CostTapPermanents"
+            serialized shouldContain "AtomTapPermanents"
             serialized shouldContain "GainLife"
 
             val deserialized = CardLoader.fromJson(serialized)

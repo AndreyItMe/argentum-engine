@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scg.cards
 
 import com.wingedsheep.sdk.core.Counters
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.core.ManaCost
@@ -27,7 +28,7 @@ val ConsumptiveGoo = card("Consumptive Goo") {
     oracleText = "{2}{B}{B}: Target creature gets -1/-1 until end of turn. Put a +1/+1 counter on Consumptive Goo."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{2}{B}{B}"))
+        cost = Costs.Mana(ManaCost.parse("{2}{B}{B}"))
         val t = target("target creature", Targets.Creature)
         effect = ModifyStatsEffect(
             powerModifier = -1,

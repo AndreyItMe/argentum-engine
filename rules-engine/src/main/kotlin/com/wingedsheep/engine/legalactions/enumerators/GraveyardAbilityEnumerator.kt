@@ -10,6 +10,8 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.TimingRule
 
@@ -71,12 +73,16 @@ class GraveyardAbilityEnumerator : ActionEnumerator {
                 )
 
                 when (effectiveCost) {
-                    is AbilityCost.Mana -> {
-                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) costCanBePaid = false
-                    }
-                    is AbilityCost.Discard -> {
-                        hasDiscardCost = true
-                        if (handCards.isEmpty()) costCanBePaid = false
+                    is AbilityCost.Atom -> when (val atom = effectiveCost.atom) {
+                        is CostAtom.Mana -> {
+                            if (!context.manaSolver.canPay(state, playerId, atom.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) costCanBePaid = false
+                        }
+                        is CostAtom.Discard -> {
+                            hasDiscardCost = true
+                            if (handCards.isEmpty()) costCanBePaid = false
+                        }
+                        // Other atoms — engine validates at payment.
+                        else -> {}
                     }
                     is AbilityCost.Blight -> {
                         blightCost = effectiveCost
@@ -87,22 +93,26 @@ class GraveyardAbilityEnumerator : ActionEnumerator {
                     is AbilityCost.Composite -> {
                         for (subCost in effectiveCost.costs) {
                             when (subCost) {
-                                is AbilityCost.Mana -> {
-                                    if (!context.manaSolver.canPay(state, playerId, subCost.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
-                                        costCanBePaid = false; break
+                                is AbilityCost.Atom -> when (val atom = subCost.atom) {
+                                    is CostAtom.Mana -> {
+                                        if (!context.manaSolver.canPay(state, playerId, atom.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
+                                            costCanBePaid = false; break
+                                        }
                                     }
-                                }
-                                is AbilityCost.Discard -> {
-                                    hasDiscardCost = true
-                                    if (handCards.isEmpty()) {
-                                        costCanBePaid = false; break
+                                    is CostAtom.Discard -> {
+                                        hasDiscardCost = true
+                                        if (handCards.isEmpty()) {
+                                            costCanBePaid = false; break
+                                        }
                                     }
-                                }
-                                is AbilityCost.ReturnToHand -> {
-                                    val targets = context.costUtils.findAbilityBounceTargets(state, playerId, subCost.filter)
-                                    if (targets.size < subCost.count) {
-                                        costCanBePaid = false; break
+                                    is CostAtom.ReturnToHand -> {
+                                        val targets = context.costUtils.findAbilityBounceTargets(state, playerId, atom.filter)
+                                        if (targets.size < atom.count) {
+                                            costCanBePaid = false; break
+                                        }
                                     }
+                                    // Other atoms — engine validates at payment.
+                                    else -> {}
                                 }
                                 is AbilityCost.ExileSelf -> {
                                     // Always payable — the card is in the graveyard
@@ -124,10 +134,10 @@ class GraveyardAbilityEnumerator : ActionEnumerator {
                 if (!costCanBePaid) continue
 
                 // Build cost info for bounce or discard costs
-                val bounceCostFromGraveyard = when (effectiveCost) {
+                val bounceCostFromGraveyard: CostAtom.ReturnToHand? = when (effectiveCost) {
                     is AbilityCost.Composite -> effectiveCost.costs
-                        .filterIsInstance<AbilityCost.ReturnToHand>().firstOrNull()
-                    is AbilityCost.ReturnToHand -> effectiveCost
+                        .firstNotNullOfOrNull { (it as? AbilityCost.Atom)?.atom as? CostAtom.ReturnToHand }
+                    is AbilityCost.Atom -> effectiveCost.atom as? CostAtom.ReturnToHand
                     else -> null
                 }
                 val costInfo = if (bounceCostFromGraveyard != null) {
@@ -135,7 +145,7 @@ class GraveyardAbilityEnumerator : ActionEnumerator {
                         state, playerId, bounceCostFromGraveyard.filter
                     )
                     AdditionalCostData(
-                        description = bounceCostFromGraveyard.description,
+                        description = bounceCostFromGraveyard.description.replaceFirstChar { it.uppercase() },
                         costType = "BouncePermanent",
                         validBounceTargets = bounceTargets,
                         bounceCount = bounceCostFromGraveyard.count
@@ -157,10 +167,9 @@ class GraveyardAbilityEnumerator : ActionEnumerator {
                 } else null
 
                 // Calculate X cost info
-                val abilityManaCost = when (ability.cost) {
-                    is AbilityCost.Mana -> (ability.cost as AbilityCost.Mana).cost
-                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
-                        .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost
+                val abilityManaCost = when (val c = ability.cost) {
+                    is AbilityCost.Atom -> c.manaCostOrNull
+                    is AbilityCost.Composite -> c.costs.firstNotNullOfOrNull { it.manaCostOrNull }
                     else -> null
                 }
                 val graveyardManaCostString = abilityManaCost?.toString()

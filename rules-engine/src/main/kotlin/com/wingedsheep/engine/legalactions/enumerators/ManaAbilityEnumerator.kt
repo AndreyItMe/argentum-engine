@@ -23,6 +23,8 @@ import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.scripting.OverrideEnchantedLandManaColor
@@ -111,9 +113,9 @@ class ManaAbilityEnumerator : ActionEnumerator {
 
                 // Check if the ability can be activated and gather cost info
                 var tapTargets: List<EntityId>? = null
-                var tapCost: AbilityCost.TapPermanents? = null
+                var tapCost: CostAtom.TapPermanents? = null
                 var sacrificeTargets: List<EntityId>? = null
-                var sacrificeCost: AbilityCost.Sacrifice? = null
+                var sacrificeCost: CostAtom.Sacrifice? = null
                 var affordable = true
 
                 when (effectiveCost) {
@@ -123,18 +125,22 @@ class ManaAbilityEnumerator : ActionEnumerator {
                     is AbilityCost.TapAttachedCreature -> {
                         if (!context.costUtils.canPayTapAttachedCreatureCost(state, entityId)) affordable = false
                     }
-                    is AbilityCost.TapPermanents -> {
-                        tapCost = effectiveCost
-                        tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, tapCost.filter)
-                        if (tapTargets.size < tapCost.count) affordable = false
-                    }
-                    is AbilityCost.Sacrifice -> {
-                        sacrificeCost = effectiveCost
-                        sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
-                            state, playerId, sacrificeCost.filter,
-                            if (sacrificeCost.excludeSelf) entityId else null
-                        )
-                        if (sacrificeTargets.size < sacrificeCost.count) affordable = false
+                    is AbilityCost.Atom -> when (val atom = effectiveCost.atom) {
+                        is CostAtom.TapPermanents -> {
+                            tapCost = atom
+                            tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, atom.filter)
+                            if (tapTargets.size < atom.count) affordable = false
+                        }
+                        is CostAtom.Sacrifice -> {
+                            sacrificeCost = atom
+                            sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
+                                state, playerId, atom.filter,
+                                if (atom.excludeSelf) entityId else null
+                            )
+                            if (sacrificeTargets.size < atom.count) affordable = false
+                        }
+                        // Other atoms (mana, life, discard, …) — engine validates at payment.
+                        else -> {}
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
                         val chosenType = container.chosenCreatureType()
@@ -142,7 +148,7 @@ class ManaAbilityEnumerator : ActionEnumerator {
                             affordable = false
                         } else {
                             val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
-                            sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
+                            sacrificeCost = CostAtom.Sacrifice(dynamicFilter)
                             sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(state, playerId, dynamicFilter)
                             if (sacrificeTargets.isEmpty()) affordable = false
                         }
@@ -166,20 +172,34 @@ class ManaAbilityEnumerator : ActionEnumerator {
                                         }
                                     }
                                 }
-                                is AbilityCost.Mana -> {
-                                    if (!context.manaSolver.canPay(state, playerId, subCost.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources, spellContext = manaAbilityContext)) {
-                                        affordable = false; break
+                                is AbilityCost.Atom -> when (val atom = subCost.atom) {
+                                    is CostAtom.Mana -> {
+                                        if (!context.manaSolver.canPay(state, playerId, atom.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources, spellContext = manaAbilityContext)) {
+                                            affordable = false; break
+                                        }
                                     }
-                                }
-                                is AbilityCost.Sacrifice -> {
-                                    sacrificeCost = subCost
-                                    sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
-                                        state, playerId, subCost.filter,
-                                        if (subCost.excludeSelf) entityId else null
-                                    )
-                                    if (sacrificeTargets.size < subCost.count) {
-                                        affordable = false; break
+                                    is CostAtom.Sacrifice -> {
+                                        sacrificeCost = atom
+                                        sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
+                                            state, playerId, atom.filter,
+                                            if (atom.excludeSelf) entityId else null
+                                        )
+                                        if (sacrificeTargets.size < atom.count) {
+                                            affordable = false; break
+                                        }
                                     }
+                                    is CostAtom.TapPermanents -> {
+                                        tapCost = atom
+                                        tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, atom.filter)
+                                        if (tapTargets.size < atom.count) {
+                                            affordable = false; break
+                                        }
+                                    }
+                                    is CostAtom.ReturnToHand -> {
+                                        // Bounce costs not typical for mana abilities but handle for completeness
+                                    }
+                                    // Other atoms (life, discard, exile, reveal) — engine validates at payment.
+                                    else -> {}
                                 }
                                 is AbilityCost.SacrificeChosenCreatureType -> {
                                     val chosenType = container.chosenCreatureType()
@@ -187,7 +207,7 @@ class ManaAbilityEnumerator : ActionEnumerator {
                                         affordable = false; break
                                     }
                                     val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
-                                    sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
+                                    sacrificeCost = CostAtom.Sacrifice(dynamicFilter)
                                     sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(state, playerId, dynamicFilter)
                                     if (sacrificeTargets.isEmpty()) {
                                         affordable = false; break
@@ -200,16 +220,6 @@ class ManaAbilityEnumerator : ActionEnumerator {
                                     if (!context.costUtils.canPayTapAttachedCreatureCost(state, entityId)) {
                                         affordable = false; break
                                     }
-                                }
-                                is AbilityCost.TapPermanents -> {
-                                    tapCost = subCost
-                                    tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, subCost.filter)
-                                    if (tapTargets.size < subCost.count) {
-                                        affordable = false; break
-                                    }
-                                }
-                                is AbilityCost.ReturnToHand -> {
-                                    // Bounce costs not typical for mana abilities but handle for completeness
                                 }
                                 is AbilityCost.Forage -> {
                                     val graveyardSize = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD)).size
@@ -244,14 +254,14 @@ class ManaAbilityEnumerator : ActionEnumerator {
 
                 val costInfo = if (tapTargets != null && tapCost != null) {
                     AdditionalCostData(
-                        description = tapCost.description,
+                        description = tapCost.description.replaceFirstChar { it.uppercase() },
                         costType = "TapPermanents",
                         validTapTargets = tapTargets,
                         tapCount = tapCost.count
                     )
                 } else if (sacrificeTargets != null && sacrificeCost != null) {
                     AdditionalCostData(
-                        description = sacrificeCost.description,
+                        description = sacrificeCost.description.replaceFirstChar { it.uppercase() },
                         costType = "SacrificePermanent",
                         validSacrificeTargets = sacrificeTargets,
                         sacrificeCount = sacrificeCost.count
@@ -259,9 +269,9 @@ class ManaAbilityEnumerator : ActionEnumerator {
                 } else null
 
                 val manaAbilityManaCostString = when (effectiveCost) {
-                    is AbilityCost.Mana -> effectiveCost.cost.toString()
+                    is AbilityCost.Atom -> effectiveCost.manaCostOrNull?.toString()
                     is AbilityCost.Composite -> effectiveCost.costs
-                        .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost?.toString()
+                        .firstNotNullOfOrNull { it.manaCostOrNull }?.toString()
                     else -> null
                 }
 

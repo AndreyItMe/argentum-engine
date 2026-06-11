@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -24,7 +25,7 @@ val SkirkProspector = card("Skirk Prospector") {
     oracleText = "Sacrifice a Goblin: Add {R}."
 
     activatedAbility {
-        cost = AbilityCost.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
+        cost = Costs.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
         effect = AddManaEffect(Color.RED)
         manaAbility = true
         timing = TimingRule.ManaAbility

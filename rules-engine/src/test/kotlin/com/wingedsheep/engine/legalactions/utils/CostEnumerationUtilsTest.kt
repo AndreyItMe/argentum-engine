@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.CostZone
@@ -326,7 +327,7 @@ class CostEnumerationUtilsTest : FunSpec({
             val maxX = u.calculateMaxAffordableX(
                 driver.game.state,
                 driver.player1,
-                AbilityCost.Mana(manaCost),
+                Costs.Mana(manaCost),
                 manaCost
             )
 
@@ -340,7 +341,7 @@ class CostEnumerationUtilsTest : FunSpec({
             )
             val manaCost = ManaCost.parse("{X}")
             val compositeCost = AbilityCost.Composite(listOf(
-                AbilityCost.Mana(manaCost),
+                Costs.Mana(manaCost),
                 AbilityCost.ExileXFromGraveyard()
             ))
 

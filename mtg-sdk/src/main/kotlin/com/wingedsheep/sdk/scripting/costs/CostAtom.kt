@@ -58,15 +58,26 @@ sealed interface CostAtom : TextReplaceable<CostAtom> {
         override val description: String get() = "pay $amount life"
     }
 
-    /** Sacrifice [count] permanents matching [filter]. */
+    /**
+     * Sacrifice [count] permanents matching [filter].
+     *
+     * @property excludeSelf when true the cost's source permanent is excluded from the candidate
+     *   pool — "sacrifice another [filter]" (an activated-ability shape; spell additional costs
+     *   have no single source permanent to exclude, so they leave this false).
+     */
     @SerialName("AtomSacrifice")
     @Serializable
     data class Sacrifice(
         val filter: GameObjectFilter = GameObjectFilter.Any,
-        val count: Int = 1
+        val count: Int = 1,
+        val excludeSelf: Boolean = false
     ) : CostAtom {
         override val selectionCount: Int get() = count
-        override val description: String get() = "sacrifice ${quantify(count, filter.description)}"
+        override val description: String get() = buildString {
+            append("sacrifice ")
+            if (excludeSelf && count == 1) append("another ${filter.description}")
+            else append(quantify(count, filter.description))
+        }
 
         override fun applyTextReplacement(replacer: TextReplacer): CostAtom {
             val newFilter = filter.applyTextReplacement(replacer)
@@ -118,17 +129,23 @@ sealed interface CostAtom : TextReplaceable<CostAtom> {
         }
     }
 
-    /** Tap [count] untapped permanents matching [filter] you control. */
+    /**
+     * Tap [count] untapped permanents matching [filter] you control.
+     *
+     * @property excludeSelf when true the cost's source permanent is excluded from the candidate
+     *   pool — "tap another untapped [filter] you control".
+     */
     @SerialName("AtomTapPermanents")
     @Serializable
     data class TapPermanents(
         val count: Int = 1,
-        val filter: GameObjectFilter = GameObjectFilter.Any
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val excludeSelf: Boolean = false
     ) : CostAtom {
         override val selectionCount: Int get() = count
         override val description: String get() = buildString {
             append("tap ")
-            if (count == 1) append("an untapped ${filter.description}")
+            if (count == 1) append(if (excludeSelf) "another untapped ${filter.description}" else "an untapped ${filter.description}")
             else append("$count untapped ${filter.description}s")
             append(" you control")
         }

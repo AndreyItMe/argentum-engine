@@ -13,8 +13,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostSacrifice",
-                    "filter": "land"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "land"
+                    }
                 },
                 "effect": {
                     "type": "GrantKeyword",
@@ -108,8 +111,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -192,8 +198,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostSacrifice",
-                    "filter": "land"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "land"
+                    }
                 },
                 "effect": {
                     "type": "ForEachInGroup",
@@ -238,8 +247,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{W}{W}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{W}{W}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",

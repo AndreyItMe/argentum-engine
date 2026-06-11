@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -23,7 +24,7 @@ val StarlightInvoker = card("Starlight Invoker") {
     oracleText = "{7}{W}: You gain 5 life."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{7}{W}"))
+        cost = Costs.Mana(ManaCost.parse("{7}{W}"))
         effect = GainLifeEffect(5, EffectTarget.Controller)
     }
 

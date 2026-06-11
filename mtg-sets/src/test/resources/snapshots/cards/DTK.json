@@ -156,8 +156,11 @@
             {
                 "id": "ability_3",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{4}{R}{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{4}{R}{G}"
+                    }
                 },
                 "effect": {
                     "type": "BecomeCreature",

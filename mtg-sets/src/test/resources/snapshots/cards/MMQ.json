@@ -103,8 +103,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostPayLife",
-                    "amount": 2
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomPayLife",
+                        "amount": 2
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -139,8 +142,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{G}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{G}"
+                    }
                 },
                 "effect": {
                     "type": "Regenerate",
@@ -175,8 +181,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",

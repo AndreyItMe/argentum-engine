@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.tdm.cards
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.dsl.Patterns
@@ -56,7 +57,7 @@ val MaelstromOfTheSpiritDragon = card("Maelstrom of the Spirit Dragon") {
     activatedAbility {
         cost = AbilityCost.Composite(
             listOf(
-                AbilityCost.Mana(ManaCost.parse("{4}")),
+                Costs.Mana(ManaCost.parse("{4}")),
                 AbilityCost.Tap,
                 AbilityCost.SacrificeSelf
             )

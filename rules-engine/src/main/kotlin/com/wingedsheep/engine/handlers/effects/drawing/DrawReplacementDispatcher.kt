@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.ModifyDrawAmount
 import com.wingedsheep.sdk.scripting.PreventDraw
 import com.wingedsheep.sdk.scripting.ReplaceDrawWithEffect
@@ -280,9 +281,9 @@ class DrawReplacementDispatcher(
                 if (!ability.promptOnDraw) continue
 
                 val manaCost = when (val cost = ability.cost) {
-                    is AbilityCost.Mana -> cost.cost
+                    is AbilityCost.Atom -> cost.manaCostOrNull
                     is AbilityCost.Composite ->
-                        cost.costs.filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost
+                        cost.costs.firstNotNullOfOrNull { it.manaCostOrNull }
                     else -> null
                 } ?: continue
 

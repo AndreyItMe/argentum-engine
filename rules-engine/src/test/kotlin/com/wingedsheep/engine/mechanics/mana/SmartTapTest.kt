@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
@@ -86,7 +87,7 @@ class SmartTapTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = AbilityId(UUID.randomUUID().toString()),
-                cost = AbilityCost.Composite(listOf(AbilityCost.Tap, AbilityCost.PayLife(1))),
+                cost = AbilityCost.Composite(listOf(AbilityCost.Tap, Costs.PayLife(1))),
                 effect = Effects.AddAnyColorMana(1),
                 isManaAbility = true
             )

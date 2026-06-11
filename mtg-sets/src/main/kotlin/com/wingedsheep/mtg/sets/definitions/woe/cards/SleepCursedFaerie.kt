@@ -3,6 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.woe.cards
 import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -42,7 +43,7 @@ val SleepCursedFaerie = card("Sleep-Cursed Faerie") {
     ))
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{1}{U}"))
+        cost = Costs.Mana(ManaCost.parse("{1}{U}"))
         effect = Effects.Untap(EffectTarget.Self)
     }
 

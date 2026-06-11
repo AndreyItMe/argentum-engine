@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -27,7 +28,7 @@ val Clickslither = card("Clickslither") {
     keywords(Keyword.HASTE)
 
     activatedAbility {
-        cost = AbilityCost.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
+        cost = Costs.Sacrifice(GameObjectFilter.Creature.withSubtype("Goblin"))
         effect = Effects.ModifyStats(2, 2, EffectTarget.Self)
             .then(Effects.GrantKeyword(Keyword.TRAMPLE, EffectTarget.Self))
     }

@@ -721,7 +721,7 @@ class CardBuilder(private val name: String) {
         val renewEffect = requireNotNull(builder.effect) { "renew requires an effect" }
         activatedAbilities.add(
             ActivatedAbility(
-                cost = AbilityCost.Composite(listOf(AbilityCost.Mana(ManaCost.parse(cost)), AbilityCost.ExileSelf)),
+                cost = AbilityCost.Composite(listOf(AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))), AbilityCost.ExileSelf)),
                 effect = renewEffect,
                 targetRequirements = builder.targetRequirements,
                 timing = TimingRule.SorcerySpeed,
@@ -768,7 +768,7 @@ class CardBuilder(private val name: String) {
         activatedAbilities.add(
             ActivatedAbility(
                 cost = AbilityCost.Composite(
-                    listOf(AbilityCost.Mana(ManaCost.parse(cost)), AbilityCost.Craft(filter))
+                    listOf(AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))), AbilityCost.Craft(filter))
                 ),
                 effect = com.wingedsheep.sdk.scripting.effects.ReturnSelfFromExileTransformedEffect,
                 targetRequirements = emptyList(),
@@ -882,11 +882,11 @@ class CardBuilder(private val name: String) {
         activatedAbilities.add(
             ActivatedAbility(
                 id = AbilityId.generate(),
-                cost = AbilityCost.TapPermanents(
+                cost = AbilityCost.Atom(CostAtom.TapPermanents(
                     count = 1,
                     filter = GameObjectFilter.Creature,
                     excludeSelf = true
-                ),
+                )),
                 effect = Effects.AddDynamicCounters(
                     counterType = Counters.CHARGE,
                     amount = DynamicAmount.StationCharge,
@@ -943,7 +943,7 @@ class CardBuilder(private val name: String) {
         activatedAbilities.add(
             ActivatedAbility(
                 id = AbilityId.generate(),
-                cost = AbilityCost.Mana(ManaCost.parse(cost)),
+                cost = AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))),
                 effect = AttachEquipmentEffect(EffectTarget.BoundVariable("creature you control")),
                 targetRequirements = listOf(
                     TargetCreature(filter = TargetFilter.CreatureYouControl, id = "creature you control")

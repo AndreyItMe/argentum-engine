@@ -15,6 +15,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -38,7 +39,7 @@ class MakeNextSpellUncounterableTest : FunSpec({
     val mistriseVillage = card("Mistrise Village") {
         typeLine = "Land"
         activatedAbility {
-            cost = AbilityCost.Composite(listOf(AbilityCost.Mana(ManaCost.parse("{U}")), AbilityCost.Tap))
+            cost = AbilityCost.Composite(listOf(Costs.Mana(ManaCost.parse("{U}")), AbilityCost.Tap))
             effect = Effects.MakeNextSpellUncounterable()
         }
     }
@@ -48,7 +49,7 @@ class MakeNextSpellUncounterableTest : FunSpec({
     val creatureOnlyVillage = card("Creature Village") {
         typeLine = "Land"
         activatedAbility {
-            cost = AbilityCost.Composite(listOf(AbilityCost.Mana(ManaCost.parse("{U}")), AbilityCost.Tap))
+            cost = AbilityCost.Composite(listOf(Costs.Mana(ManaCost.parse("{U}")), AbilityCost.Tap))
             effect = Effects.MakeNextSpellUncounterable(GameObjectFilter.Creature)
         }
     }

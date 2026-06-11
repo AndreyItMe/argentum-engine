@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.ons.cards
 
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -24,7 +25,7 @@ val CatapultSquad = card("Catapult Squad") {
     oracleText = "Tap two untapped Soldiers you control: Catapult Squad deals 2 damage to target attacking or blocking creature."
 
     activatedAbility {
-        cost = AbilityCost.TapPermanents(
+        cost = Costs.TapPermanents(
             count = 2,
             filter = GameObjectFilter.Creature.withSubtype("Soldier")
         )

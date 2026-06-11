@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.ons.cards
 
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -32,7 +33,7 @@ val RunWild = card("Run Wild") {
         ) then GrantActivatedAbilityEffect(
             ability = ActivatedAbility(
                 id = AbilityId.generate(),
-                cost = AbilityCost.Mana(ManaCost.parse("{G}")),
+                cost = Costs.Mana(ManaCost.parse("{G}")),
                 effect = RegenerateEffect(EffectTarget.Self)
             ),
             target = t

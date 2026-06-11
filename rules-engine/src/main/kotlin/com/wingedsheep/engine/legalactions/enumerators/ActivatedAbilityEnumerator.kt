@@ -29,6 +29,8 @@ import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureTypeEffect
@@ -172,21 +174,21 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
 
                 // Check cost requirements and gather sacrifice/tap/bounce targets if needed
                 var sacrificeTargets: List<EntityId>? = null
-                var sacrificeCost: AbilityCost.Sacrifice? = null
+                var sacrificeCost: CostAtom.Sacrifice? = null
                 var tapTargets: List<EntityId>? = null
-                var tapCost: AbilityCost.TapPermanents? = null
+                var tapCost: CostAtom.TapPermanents? = null
                 var bounceTargets: List<EntityId>? = null
-                var bounceCost: AbilityCost.ReturnToHand? = null
+                var bounceCost: CostAtom.ReturnToHand? = null
                 var hasForageCost = false
                 var forageGraveyardCards: List<EntityId> = emptyList()
                 var forageFoodTargets: List<EntityId> = emptyList()
                 var blightCost: AbilityCost.Blight? = null
                 var blightCreatures: List<EntityId> = emptyList()
-                var discardCost: AbilityCost.Discard? = null
+                var discardCost: CostAtom.Discard? = null
                 var discardTargets: List<EntityId>? = null
                 var craftCost: AbilityCost.Craft? = null
                 var craftMaterials: List<EntityId> = emptyList()
-                var exileCost: AbilityCost.ExileFromGraveyard? = null
+                var exileCost: CostAtom.ExileFrom? = null
                 var exileTargets: List<EntityId>? = null
                 var costAffordable = true
 
@@ -210,52 +212,75 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                             if (hasSummoningSickness && !hasHaste) continue
                         }
                     }
-                    is AbilityCost.Mana -> {
-                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
-                            // If the ability has convoke or waterbend, check if the tap-to-pay
-                            // helpers close the affordability gap.
-                            val affordableViaConvoke = ability.hasConvoke &&
-                                context.costUtils.canAffordWithConvoke(
-                                    state, playerId, effectiveCost.cost,
-                                    context.costUtils.findConvokeCreatures(state, playerId),
-                                    precomputedSources = context.availableManaSources
-                                )
-                            val affordableViaWaterbend = ability.hasWaterbend &&
-                                context.costUtils.canAffordWithWaterbend(
-                                    state, playerId, effectiveCost.cost,
-                                    context.costUtils.findWaterbendPermanents(state, playerId),
-                                    precomputedSources = context.availableManaSources
-                                )
-                            if (!affordableViaConvoke && !affordableViaWaterbend) {
-                                costAffordable = false
+                    is AbilityCost.Atom -> when (val atom = effectiveCost.atom) {
+                        is CostAtom.Mana -> {
+                            if (!context.manaSolver.canPay(state, playerId, atom.cost, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
+                                // If the ability has convoke or waterbend, check if the tap-to-pay
+                                // helpers close the affordability gap.
+                                val affordableViaConvoke = ability.hasConvoke &&
+                                    context.costUtils.canAffordWithConvoke(
+                                        state, playerId, atom.cost,
+                                        context.costUtils.findConvokeCreatures(state, playerId),
+                                        precomputedSources = context.availableManaSources
+                                    )
+                                val affordableViaWaterbend = ability.hasWaterbend &&
+                                    context.costUtils.canAffordWithWaterbend(
+                                        state, playerId, atom.cost,
+                                        context.costUtils.findWaterbendPermanents(state, playerId),
+                                        precomputedSources = context.availableManaSources
+                                    )
+                                if (!affordableViaConvoke && !affordableViaWaterbend) {
+                                    costAffordable = false
+                                }
                             }
                         }
-                    }
-                    is AbilityCost.Sacrifice -> {
-                        sacrificeCost = effectiveCost
-                        sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
-                            state, playerId, sacrificeCost.filter, if (sacrificeCost.excludeSelf) entityId else null
-                        )
-                        if (sacrificeTargets.size < sacrificeCost.count) continue
-                    }
-                    is AbilityCost.ReturnToHand -> {
-                        bounceCost = effectiveCost
-                        bounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, bounceCost.filter)
-                        if (bounceTargets.size < bounceCost.count) continue
+                        is CostAtom.Sacrifice -> {
+                            sacrificeCost = atom
+                            sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
+                                state, playerId, atom.filter, if (atom.excludeSelf) entityId else null
+                            )
+                            if (sacrificeTargets.size < atom.count) continue
+                        }
+                        is CostAtom.ReturnToHand -> {
+                            bounceCost = atom
+                            bounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, atom.filter)
+                            if (bounceTargets.size < atom.count) continue
+                        }
+                        is CostAtom.TapPermanents -> {
+                            tapCost = atom
+                            tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, atom.filter)
+                                .let { targets -> if (atom.excludeSelf) targets.filter { it != entityId } else targets }
+                            if (tapTargets.size < atom.count) continue
+                        }
+                        is CostAtom.Discard -> {
+                            val targets = context.costUtils.findDiscardTargets(state, playerId, atom.filter)
+                            if (targets.size < atom.count) continue
+                            // Random discard is paid automatically at cost time — no player selection.
+                            if (!atom.random) {
+                                discardCost = atom
+                                discardTargets = targets
+                            }
+                        }
+                        is CostAtom.ExileFrom -> {
+                            val targets = context.costUtils.findExileTargets(
+                                state, playerId, atom.filter, atom.zone
+                            )
+                            if (targets.size < atom.count) continue
+                            exileCost = atom
+                            exileTargets = targets
+                        }
+                        // Pay-life / reveal carry no enumeration-time selection or affordability gate
+                        // here (life payability is validated at payment time, matching the prior
+                        // fall-through behavior for these costs).
+                        is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
                         val chosenType = container.chosenCreatureType()
                         if (chosenType == null) continue
                         val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
-                        sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
+                        sacrificeCost = CostAtom.Sacrifice(dynamicFilter)
                         sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(state, playerId, dynamicFilter)
                         if (sacrificeTargets.isEmpty()) continue
-                    }
-                    is AbilityCost.TapPermanents -> {
-                        tapCost = effectiveCost
-                        tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, tapCost.filter)
-                            .let { targets -> if (tapCost.excludeSelf) targets.filter { it != entityId } else targets }
-                        if (tapTargets.size < tapCost.count) continue
                     }
                     is AbilityCost.SacrificeSelf -> {
                         // Source must be on battlefield (always true when iterating battlefield)
@@ -266,24 +291,6 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         blightCreatures = projected.getBattlefieldControlledBy(playerId)
                             .filter { projected.isCreature(it) && projected.canReceiveCounters(it) }
                         if (blightCreatures.isEmpty()) continue
-                    }
-                    is AbilityCost.Discard -> {
-                        val targets = context.costUtils.findDiscardTargets(state, playerId, effectiveCost.filter)
-                        if (targets.size < effectiveCost.count) continue
-                        // Random discard is paid automatically at cost time — no player selection.
-                        if (!effectiveCost.atRandom) {
-                            discardCost = effectiveCost
-                            discardTargets = targets
-                        }
-                    }
-                    is AbilityCost.ExileFromGraveyard -> {
-                        val targets = context.costUtils.findExileTargets(
-                            state, playerId, effectiveCost.filter,
-                            com.wingedsheep.sdk.core.Zone.GRAVEYARD
-                        )
-                        if (targets.size < effectiveCost.count) continue
-                        exileCost = effectiveCost
-                        exileTargets = targets
                     }
                     is AbilityCost.DiscardLastDrawnThisTurn -> {
                         // No player choice — engine picks the tracked entity at payment. Gate the
@@ -320,36 +327,87 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                         }
                                     }
                                 }
-                                is AbilityCost.Mana -> {
-                                    if (!context.manaSolver.canPay(state, playerId, subCost.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
-                                        // If the ability has convoke or waterbend, check with the tap-to-pay helpers.
-                                        val affordableViaConvoke = ability.hasConvoke &&
-                                            context.costUtils.canAffordWithConvoke(
-                                                state, playerId, subCost.cost,
-                                                context.costUtils.findConvokeCreatures(state, playerId),
-                                                precomputedSources = context.availableManaSources
-                                            )
-                                        val affordableViaWaterbend = ability.hasWaterbend &&
-                                            context.costUtils.canAffordWithWaterbend(
-                                                state, playerId, subCost.cost,
-                                                context.costUtils.findWaterbendPermanents(state, playerId),
-                                                precomputedSources = context.availableManaSources
-                                            )
-                                        if (!affordableViaConvoke && !affordableViaWaterbend) {
+                                is AbilityCost.Atom -> when (val atom = subCost.atom) {
+                                    is CostAtom.Mana -> {
+                                        if (!context.manaSolver.canPay(state, playerId, atom.cost, excludeSources = excludeFromMana, precomputedSources = context.availableManaSources, spellContext = abilityContext)) {
+                                            // If the ability has convoke or waterbend, check with the tap-to-pay helpers.
+                                            val affordableViaConvoke = ability.hasConvoke &&
+                                                context.costUtils.canAffordWithConvoke(
+                                                    state, playerId, atom.cost,
+                                                    context.costUtils.findConvokeCreatures(state, playerId),
+                                                    precomputedSources = context.availableManaSources
+                                                )
+                                            val affordableViaWaterbend = ability.hasWaterbend &&
+                                                context.costUtils.canAffordWithWaterbend(
+                                                    state, playerId, atom.cost,
+                                                    context.costUtils.findWaterbendPermanents(state, playerId),
+                                                    precomputedSources = context.availableManaSources
+                                                )
+                                            if (!affordableViaConvoke && !affordableViaWaterbend) {
+                                                costCanBePaid = false
+                                                break
+                                            }
+                                        }
+                                    }
+                                    is CostAtom.Sacrifice -> {
+                                        sacrificeCost = atom
+                                        sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
+                                            state, playerId, atom.filter, if (atom.excludeSelf) entityId else null
+                                        )
+                                        if (sacrificeTargets.size < atom.count) {
                                             costCanBePaid = false
                                             break
                                         }
                                     }
-                                }
-                                is AbilityCost.Sacrifice -> {
-                                    sacrificeCost = subCost
-                                    sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(
-                                        state, playerId, subCost.filter, if (subCost.excludeSelf) entityId else null
-                                    )
-                                    if (sacrificeTargets.size < subCost.count) {
-                                        costCanBePaid = false
-                                        break
+                                    is CostAtom.TapPermanents -> {
+                                        tapCost = atom
+                                        tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, atom.filter)
+                                            .let { targets -> if (atom.excludeSelf) targets.filter { it != entityId } else targets }
+                                        if (tapTargets.size < atom.count) {
+                                            costCanBePaid = false
+                                            break
+                                        }
                                     }
+                                    is CostAtom.ReturnToHand -> {
+                                        bounceCost = atom
+                                        bounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, atom.filter)
+                                        if (bounceTargets.size < atom.count) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                    }
+                                    is CostAtom.ExileFrom -> {
+                                        // Filter the source zone by the cost's GameObjectFilter so the
+                                        // payability check matches what CostHandler will see, and so
+                                        // we can surface the matching cards to the UI via
+                                        // AdditionalCostData.validExileTargets (the picker prompt
+                                        // for Rust Harvester's "Exile an artifact card from your
+                                        // graveyard" cost).
+                                        val targets = context.costUtils.findExileTargets(
+                                            state, playerId, atom.filter, atom.zone
+                                        )
+                                        if (targets.size < atom.count) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                        exileCost = atom
+                                        exileTargets = targets
+                                    }
+                                    is CostAtom.Discard -> {
+                                        val targets = context.costUtils.findDiscardTargets(state, playerId, atom.filter)
+                                        if (targets.size < atom.count) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                        // Random discard is paid automatically at cost time — no player selection.
+                                        if (!atom.random) {
+                                            discardCost = atom
+                                            discardTargets = targets
+                                        }
+                                    }
+                                    // Pay-life / reveal carry no enumeration-time gate here (matching
+                                    // the prior else fall-through for these sub-costs).
+                                    is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
                                 }
                                 is AbilityCost.SacrificeChosenCreatureType -> {
                                     val chosenType = container.chosenCreatureType()
@@ -358,7 +416,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                         break
                                     }
                                     val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
-                                    sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
+                                    sacrificeCost = CostAtom.Sacrifice(dynamicFilter)
                                     sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(state, playerId, dynamicFilter)
                                     if (sacrificeTargets.isEmpty()) {
                                         costCanBePaid = false
@@ -389,41 +447,6 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                         }
                                     }
                                 }
-                                is AbilityCost.TapPermanents -> {
-                                    tapCost = subCost
-                                    tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, subCost.filter)
-                                        .let { targets -> if (subCost.excludeSelf) targets.filter { it != entityId } else targets }
-                                    if (tapTargets.size < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
-                                }
-                                is AbilityCost.ReturnToHand -> {
-                                    bounceCost = subCost
-                                    bounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, subCost.filter)
-                                    if (bounceTargets.size < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
-                                }
-                                is AbilityCost.ExileFromGraveyard -> {
-                                    // Filter the graveyard by the cost's GameObjectFilter so the
-                                    // payability check matches what CostHandler will see, and so
-                                    // we can surface the matching cards to the UI via
-                                    // AdditionalCostData.validExileTargets (the picker prompt
-                                    // for Rust Harvester's "Exile an artifact card from your
-                                    // graveyard" cost).
-                                    val targets = context.costUtils.findExileTargets(
-                                        state, playerId, subCost.filter,
-                                        com.wingedsheep.sdk.core.Zone.GRAVEYARD
-                                    )
-                                    if (targets.size < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
-                                    exileCost = subCost
-                                    exileTargets = targets
-                                }
                                 is AbilityCost.Forage -> {
                                     // Forage: can exile 3 from graveyard OR sacrifice a Food
                                     val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
@@ -449,18 +472,6 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     if (blightCreatures.isEmpty()) {
                                         costCanBePaid = false
                                         break
-                                    }
-                                }
-                                is AbilityCost.Discard -> {
-                                    val targets = context.costUtils.findDiscardTargets(state, playerId, subCost.filter)
-                                    if (targets.size < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
-                                    // Random discard is paid automatically at cost time — no player selection.
-                                    if (!subCost.atRandom) {
-                                        discardCost = subCost
-                                        discardTargets = targets
                                     }
                                 }
                                 is AbilityCost.DiscardLastDrawnThisTurn -> {
@@ -543,12 +554,9 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
 
                 // If cost is unaffordable, add as greyed-out option and skip expensive computations
                 if (!costAffordable) {
-                    val abilityManaCostString = when (effectiveCost) {
-                        is AbilityCost.Mana -> effectiveCost.cost.toString()
-                        is AbilityCost.Composite -> effectiveCost.costs
-                            .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost?.toString()
-                        else -> null
-                    }
+                    val abilityManaCostString = (effectiveCost.manaCostOrNull
+                        ?: (effectiveCost as? AbilityCost.Composite)?.costs?.firstNotNullOfOrNull { it.manaCostOrNull })
+                        ?.toString()
                     result.add(LegalAction(
                         actionType = "ActivateAbility",
                         description = displayDescription,
@@ -607,9 +615,9 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 // Use [effectiveCost] so generic-cost reductions (e.g., The Dominion Bracelet,
                 // Starport Security) flow through to the displayed [manaCostString].
                 val abilityManaCost = when (effectiveCost) {
-                    is AbilityCost.Mana -> effectiveCost.cost
+                    is AbilityCost.Atom -> effectiveCost.manaCostOrNull
                     is AbilityCost.Composite -> effectiveCost.costs
-                        .filterIsInstance<AbilityCost.Mana>().firstOrNull()?.cost
+                        .firstNotNullOfOrNull { it.manaCostOrNull }
                     else -> null
                 }
                 // A mana cost reduced all the way to {0} (e.g. Forge Anew's free first equip)
@@ -639,7 +647,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 // and the effect must "stack" when activated multiple times (e.g., +1/+0 modifiers).
                 // Effects that REPLACE base characteristics (BecomeCreature, SetBasePowerToughness, etc.)
                 // are excluded — repeating them only re-applies the same end state, so the prompt is meaningless.
-                val isRepeatEligible = ability.cost is AbilityCost.Mana
+                val isRepeatEligible = ability.cost.manaCostOrNull != null
                     && !abilityHasXCost
                     && ability.effect !is LevelUpClassEffect
                     && effectStacksOnRepeat(ability.effect)
@@ -810,9 +818,12 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 val anyPlayerAbilityContext = com.wingedsheep.engine.mechanics.mana.buildAbilityPaymentContext(cardComponent, projected, entityId)
                 val anyPlayerManaCostString = when (effectiveCost) {
                     is AbilityCost.Free -> null
-                    is AbilityCost.Mana -> {
-                        if (!context.manaSolver.canPay(state, playerId, effectiveCost.cost, precomputedSources = context.availableManaSources, spellContext = anyPlayerAbilityContext)) continue
-                        effectiveCost.cost.toString()
+                    is AbilityCost.Atom -> {
+                        // Only mana costs on opponents' permanents are supported ("any player may
+                        // activate"); other atoms (sacrifice/discard/…) fall through to continue.
+                        val mana = effectiveCost.manaCostOrNull ?: continue
+                        if (!context.manaSolver.canPay(state, playerId, mana, precomputedSources = context.availableManaSources, spellContext = anyPlayerAbilityContext)) continue
+                        mana.toString()
                     }
                     else -> continue // Other costs on opponent's permanents not yet supported
                 }
@@ -877,7 +888,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
         return listOf(
             ActivatedAbility(
                 id = AbilityId.classLevelUp(nextLevel),
-                cost = AbilityCost.Mana(nextLevelAbility.cost),
+                cost = AbilityCost.Atom(CostAtom.Mana(nextLevelAbility.cost)),
                 effect = LevelUpClassEffect(nextLevel),
                 timing = TimingRule.SorcerySpeed,
                 descriptionOverride = "Level up to level $nextLevel"
@@ -891,23 +902,23 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
     private fun buildAdditionalCostInfo(
         ability: ActivatedAbility,
         tapTargets: List<EntityId>?,
-        tapCost: AbilityCost.TapPermanents?,
+        tapCost: CostAtom.TapPermanents?,
         hasTapXPermanentsCost: Boolean,
         sacrificeTargets: List<EntityId>?,
-        sacrificeCost: AbilityCost.Sacrifice?,
+        sacrificeCost: CostAtom.Sacrifice?,
         bounceTargets: List<EntityId>?,
-        bounceCost: AbilityCost.ReturnToHand?,
+        bounceCost: CostAtom.ReturnToHand?,
         counterRemovalCreatures: List<CounterRemovalCreatureData>,
         hasForageCost: Boolean = false,
         forageGraveyardCards: List<EntityId> = emptyList(),
         forageFoodTargets: List<EntityId> = emptyList(),
         blightCost: AbilityCost.Blight? = null,
         blightCreatures: List<EntityId> = emptyList(),
-        discardCost: AbilityCost.Discard? = null,
+        discardCost: CostAtom.Discard? = null,
         discardTargets: List<EntityId>? = null,
         craftCost: AbilityCost.Craft? = null,
         craftMaterials: List<EntityId> = emptyList(),
-        exileCost: AbilityCost.ExileFromGraveyard? = null,
+        exileCost: CostAtom.ExileFrom? = null,
         exileTargets: List<EntityId>? = null
     ): AdditionalCostData? {
         if (craftCost != null) {
@@ -929,7 +940,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
         }
         if (tapTargets != null && tapCost != null) {
             return AdditionalCostData(
-                description = tapCost.description,
+                description = tapCost.description.replaceFirstChar { it.uppercase() },
                 costType = "TapPermanents",
                 validTapTargets = tapTargets,
                 tapCount = tapCost.count,
@@ -955,7 +966,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
         }
         if (sacrificeTargets != null && sacrificeCost != null) {
             return AdditionalCostData(
-                description = sacrificeCost.description,
+                description = sacrificeCost.description.replaceFirstChar { it.uppercase() },
                 costType = "SacrificePermanent",
                 validSacrificeTargets = sacrificeTargets,
                 sacrificeCount = sacrificeCost.count,
@@ -973,7 +984,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
         }
         if (discardCost != null && discardTargets != null && discardTargets.isNotEmpty()) {
             return AdditionalCostData(
-                description = discardCost.description,
+                description = discardCost.description.replaceFirstChar { it.uppercase() },
                 costType = "DiscardCard",
                 validDiscardTargets = discardTargets,
                 discardCount = discardCost.count,
@@ -982,7 +993,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
         }
         if (bounceTargets != null && bounceCost != null) {
             return AdditionalCostData(
-                description = bounceCost.description,
+                description = bounceCost.description.replaceFirstChar { it.uppercase() },
                 costType = "BouncePermanent",
                 validBounceTargets = bounceTargets,
                 bounceCount = bounceCost.count,
@@ -1012,7 +1023,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
             // renders a card-picker; ActivateAbilityHandler's matching fast-path pauses for a
             // SelectCardsDecision when candidate count > required count.
             return AdditionalCostData(
-                description = exileCost.description,
+                description = exileCost.description.replaceFirstChar { it.uppercase() },
                 costType = "ExileFromGraveyard",
                 validExileTargets = exileTargets,
                 exileMinCount = exileCost.count,
@@ -1149,13 +1160,15 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
     }
 
     private fun reduceGenericInAbilityCost(cost: AbilityCost, amount: Int): AbilityCost = when (cost) {
-        is AbilityCost.Mana -> AbilityCost.Mana(cost.cost.reduceGeneric(amount))
+        is AbilityCost.Atom -> cost.manaCostOrNull
+            ?.let { AbilityCost.Atom(CostAtom.Mana(it.reduceGeneric(amount))) } ?: cost
         is AbilityCost.Composite -> {
             var applied = false
             AbilityCost.Composite(cost.costs.map { sub ->
-                if (!applied && sub is AbilityCost.Mana) {
+                val subMana = sub.manaCostOrNull
+                if (!applied && subMana != null) {
                     applied = true
-                    AbilityCost.Mana(sub.cost.reduceGeneric(amount))
+                    AbilityCost.Atom(CostAtom.Mana(subMana.reduceGeneric(amount)))
                 } else sub
             })
         }

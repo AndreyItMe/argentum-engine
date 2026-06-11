@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.ody.cards
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -20,7 +21,7 @@ val MossfireValley = card("Mossfire Valley") {
 
     activatedAbility {
         cost = AbilityCost.Composite(listOf(
-            AbilityCost.Mana(ManaCost.parse("{1}")),
+            Costs.Mana(ManaCost.parse("{1}")),
             AbilityCost.Tap,
         ))
         effect = Effects.AddMana(Color.RED).then(Effects.AddMana(Color.GREEN))

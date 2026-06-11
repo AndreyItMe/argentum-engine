@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 import com.wingedsheep.sdk.scripting.text.TextReplaceable
@@ -121,6 +122,25 @@ data class ActivatedAbility(
 sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     val description: String
 
+    /**
+     * A single shared payable thing — see [CostAtom]. Carries the payable concepts that mean the
+     * same in any cost context (pay mana, pay life, sacrifice/tap/return permanents, discard cards,
+     * exile from a zone). The activated-ability-specific costs — [Free], [Tap]/[Untap], the
+     * X-variable costs, the self-referential sacrifice/exile costs, counter removal, [Loyalty],
+     * [Composite], and named mechanics ([Forage], [Blight], [Craft]) — stay as their own subtypes.
+     * Ability-cost text leads a clause, so the description is the atom's phrase capitalized.
+     */
+    @SerialName("CostAtomWrapper")
+    @Serializable
+    data class Atom(val atom: CostAtom) : AbilityCost {
+        override val description: String get() = atom.description.replaceFirstChar { it.uppercase() }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newAtom = atom.applyTextReplacement(replacer)
+            return if (newAtom !== atom) copy(atom = newAtom) else this
+        }
+    }
+
     /** No cost ({0}) — the ability is free to activate */
     @SerialName("CostFree")
     @Serializable
@@ -142,20 +162,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
         override val description: String = "{Q}"
     }
 
-    /** Pay mana */
-    @SerialName("CostMana")
-    @Serializable
-    data class Mana(val cost: ManaCost) : AbilityCost {
-        override val description: String = cost.toString()
-    }
-
-    /** Pay life */
-    @SerialName("CostPayLife")
-    @Serializable
-    data class PayLife(val amount: Int) : AbilityCost {
-        override val description: String = "Pay $amount life"
-    }
-
     /**
      * Pay X life, where X is the value chosen for the ability's `{X}` mana cost.
      *
@@ -170,88 +176,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     @Serializable
     data object PayXLife : AbilityCost {
         override val description: String = "Pay X life"
-    }
-
-    /**
-     * Sacrifice a permanent
-     *
-     * @property filter Which permanents can be sacrificed
-     */
-    @SerialName("CostSacrifice")
-    @Serializable
-    data class Sacrifice(
-        val filter: GameObjectFilter = GameObjectFilter.Any,
-        val excludeSelf: Boolean = false,
-        val count: Int = 1
-    ) : AbilityCost {
-        override val description: String = buildString {
-            append("Sacrifice ")
-            if (count == 1) {
-                append(if (excludeSelf) "another " else "a ")
-            } else {
-                append("$count ")
-            }
-            append(filter.description)
-            if (count > 1) append("s")
-        }
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
-    }
-
-    /**
-     * Discard one or more cards.
-     *
-     * @property filter Which cards can be discarded
-     * @property count How many cards to discard
-     * @property atRandom When true, the engine chooses the discarded cards at random
-     *   (no player selection); otherwise the player picks which cards to discard.
-     */
-    @SerialName("CostDiscard")
-    @Serializable
-    data class Discard(
-        val filter: GameObjectFilter = GameObjectFilter.Any,
-        val count: Int = 1,
-        val atRandom: Boolean = false
-    ) : AbilityCost {
-        override val description: String = buildString {
-            append("Discard ")
-            if (count == 1) append("a ") else append("$count ")
-            append(filter.description)
-            if (count != 1) append("s")
-            if (atRandom) append(" at random")
-        }
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
-    }
-
-    /**
-     * Exile cards from graveyard
-     *
-     * @property count Number of cards to exile
-     * @property filter Which cards can be exiled
-     */
-    @SerialName("CostExileFromGraveyard")
-    @Serializable
-    data class ExileFromGraveyard(
-        val count: Int,
-        val filter: GameObjectFilter = GameObjectFilter.Any
-    ) : AbilityCost {
-        override val description: String = buildString {
-            append("Exile $count ${filter.description}")
-            if (count > 1) append("s")
-            append(" from your graveyard")
-        }
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
     }
 
     /**
@@ -344,38 +268,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     }
 
     /**
-     * Tap permanents you control.
-     * Example: "Tap five untapped Clerics you control"
-     *
-     * @property count Number of permanents to tap
-     * @property filter Which permanents can be tapped
-     */
-    @SerialName("CostTapPermanents")
-    @Serializable
-    data class TapPermanents(
-        val count: Int,
-        val filter: GameObjectFilter = GameObjectFilter.Creature,
-        val excludeSelf: Boolean = false
-    ) : AbilityCost {
-        override val description: String = buildString {
-            append("Tap ")
-            if (count == 1) {
-                append(if (excludeSelf) "another untapped " else "an untapped ")
-            } else {
-                append("$count untapped ")
-            }
-            append(filter.description)
-            if (count != 1) append("s")
-            append(" you control")
-        }
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
-    }
-
-    /**
      * Tap a variable number of permanents you control, where the count equals the ability's X value.
      * Example: "Tap X untapped Knights you control" for Aryel, Knight of Windgrace.
      *
@@ -416,30 +308,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     @Serializable
     data object TapAttachedCreature : AbilityCost {
         override val description: String = "{T} enchanted creature"
-    }
-
-    /**
-     * Return a permanent you control to its owner's hand.
-     * Example: "Return an Elf you control to its owner's hand"
-     *
-     * @property filter Which permanents can be returned
-     */
-    @SerialName("CostReturnToHand")
-    @Serializable
-    data class ReturnToHand(
-        val filter: GameObjectFilter = GameObjectFilter.Any,
-        val count: Int = 1
-    ) : AbilityCost {
-        override val description: String = if (count == 1) {
-            "Return a ${filter.description} you control to its owner's hand"
-        } else {
-            "Return $count ${filter.description}s you control to their owner's hand"
-        }
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
     }
 
     /** Loyalty cost for planeswalker abilities */

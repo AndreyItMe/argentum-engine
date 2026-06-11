@@ -9,8 +9,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostSacrifice",
-                    "filter": "creature"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
                 },
                 "effect": {
                     "type": "Composite",
@@ -128,8 +131,11 @@
                 "ability": {
                     "id": "ability_1",
                     "cost": {
-                        "type": "CostMana",
-                        "cost": "{2}"
+                        "type": "CostAtomWrapper",
+                        "atom": {
+                            "type": "AtomMana",
+                            "cost": "{2}"
+                        }
                     },
                     "effect": {
                         "type": "ModifyStats",
@@ -179,8 +185,11 @@
                 "ability": {
                     "id": "ability_1",
                     "cost": {
-                        "type": "CostMana",
-                        "cost": "{2}"
+                        "type": "CostAtomWrapper",
+                        "atom": {
+                            "type": "AtomMana",
+                            "cost": "{2}"
+                        }
                     },
                     "effect": {
                         "type": "ModifyStats",
@@ -380,12 +389,18 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{1}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
                         },
                         {
-                            "type": "CostDiscard",
-                            "atRandom": true
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomDiscard",
+                                "random": true
+                            }
                         }
                     ]
                 },
@@ -533,8 +548,11 @@
                 "ability": {
                     "id": "ability_1",
                     "cost": {
-                        "type": "CostMana",
-                        "cost": "{2}"
+                        "type": "CostAtomWrapper",
+                        "atom": {
+                            "type": "AtomMana",
+                            "cost": "{2}"
+                        }
                     },
                     "effect": {
                         "type": "Regenerate",
@@ -727,8 +745,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{W}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{W}"
+                    }
                 },
                 "effect": {
                     "type": "MoveToZone",
@@ -785,8 +806,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{R}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",
@@ -829,8 +853,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{2}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -884,8 +911,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{U}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{U}"
+                    }
                 },
                 "effect": {
                     "type": "ChangeColor",
@@ -959,8 +989,11 @@
             {
                 "id": "ability_2",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{0}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{0}"
+                    }
                 },
                 "effect": {
                     "type": "MoveToZone",
@@ -996,8 +1029,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostSacrifice",
-                    "filter": "creature"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
                 },
                 "effect": {
                     "type": "DealDamage",
@@ -1124,8 +1160,11 @@
             {
                 "id": "ability_2",
                 "cost": {
-                    "type": "CostSacrifice",
-                    "filter": "creature"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
                 },
                 "effect": {
                     "type": "GiveControlToTargetPlayer",
@@ -1229,8 +1268,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{U}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{U}"
+                    }
                 },
                 "effect": {
                     "type": "GrantKeyword",
@@ -1268,8 +1310,11 @@
                     "type": "CostComposite",
                     "costs": [
                         {
-                            "type": "CostMana",
-                            "cost": "{W}"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{W}"
+                            }
                         },
                         "CostTap"
                     ]
@@ -1391,8 +1436,11 @@
                         "type": "CostComposite",
                         "costs": [
                             {
-                                "type": "CostMana",
-                                "cost": "{2}"
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomMana",
+                                    "cost": "{2}"
+                                }
                             },
                             "CostSacrificeSelf"
                         ]
@@ -1482,8 +1530,11 @@
                         "type": "CostComposite",
                         "costs": [
                             {
-                                "type": "CostMana",
-                                "cost": "{2}"
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomMana",
+                                    "cost": "{2}"
+                                }
                             },
                             "CostSacrificeSelf"
                         ]
@@ -1663,7 +1714,10 @@
         "activatedAbilities": [
             {
                 "id": "ability_1",
-                "cost": "CostDiscard",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": "AtomDiscard"
+                },
                 "effect": {
                     "type": "Regenerate",
                     "target": "Self"
@@ -1808,8 +1862,11 @@
             {
                 "id": "ability_1",
                 "cost": {
-                    "type": "CostMana",
-                    "cost": "{B}"
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{B}"
+                    }
                 },
                 "effect": {
                     "type": "ModifyStats",

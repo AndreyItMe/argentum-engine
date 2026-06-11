@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
@@ -42,7 +43,7 @@ class RummagingWizardTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = wizardAbilityId,
-                cost = AbilityCost.Mana(ManaCost.parse("{2}{U}")),
+                cost = Costs.Mana(ManaCost.parse("{2}{U}")),
                 effect = Patterns.Library.surveil(1)
             )
         )

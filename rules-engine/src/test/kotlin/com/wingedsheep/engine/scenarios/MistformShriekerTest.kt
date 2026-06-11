@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
@@ -46,7 +47,7 @@ class MistformShriekerTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = mistformShriekerAbilityId,
-                cost = AbilityCost.Mana(ManaCost.parse("{1}")),
+                cost = Costs.Mana(ManaCost.parse("{1}")),
                 effect = BecomeCreatureTypeEffect(
                     target = EffectTarget.Self
                 )

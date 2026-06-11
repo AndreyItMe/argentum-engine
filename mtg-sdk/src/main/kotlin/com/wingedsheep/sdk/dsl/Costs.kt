@@ -56,13 +56,13 @@ object Costs {
      * Pay mana cost from string (e.g., "{2}{B}").
      */
     fun Mana(cost: String): AbilityCost =
-        AbilityCost.Mana(ManaCost.parse(cost))
+        AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost)))
 
     /**
      * Pay mana cost from ManaCost object.
      */
     fun Mana(cost: ManaCost): AbilityCost =
-        AbilityCost.Mana(cost)
+        AbilityCost.Atom(CostAtom.Mana(cost))
 
     // =========================================================================
     // Life Costs
@@ -72,7 +72,7 @@ object Costs {
      * Pay life.
      */
     fun PayLife(amount: Int): AbilityCost =
-        AbilityCost.PayLife(amount)
+        AbilityCost.Atom(CostAtom.PayLife(amount))
 
     /**
      * Pay X life, where X is the value chosen for the ability's `{X}` mana cost
@@ -88,19 +88,19 @@ object Costs {
      * Sacrifice a permanent matching the filter.
      */
     fun Sacrifice(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.Sacrifice(filter)
+        AbilityCost.Atom(CostAtom.Sacrifice(filter))
 
     /**
      * Sacrifice another permanent matching the filter (excludes the source permanent).
      */
     fun SacrificeAnother(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.Sacrifice(filter, excludeSelf = true)
+        AbilityCost.Atom(CostAtom.Sacrifice(filter, excludeSelf = true))
 
     /**
      * Sacrifice multiple permanents matching the filter.
      */
     fun SacrificeMultiple(count: Int, filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.Sacrifice(filter, count = count)
+        AbilityCost.Atom(CostAtom.Sacrifice(filter, count = count))
 
     // =========================================================================
     // Discard Costs
@@ -109,7 +109,7 @@ object Costs {
     /**
      * Discard a card (any card).
      */
-    val DiscardCard: AbilityCost = AbilityCost.Discard()
+    val DiscardCard: AbilityCost = AbilityCost.Atom(CostAtom.Discard())
 
     /**
      * Discard one or more cards matching the filter.
@@ -121,13 +121,13 @@ object Costs {
         filter: GameObjectFilter = GameObjectFilter.Any,
         count: Int = 1,
         atRandom: Boolean = false
-    ): AbilityCost = AbilityCost.Discard(filter, count, atRandom)
+    ): AbilityCost = AbilityCost.Atom(CostAtom.Discard(count, filter, random = atRandom))
 
     /**
      * Discard [count] cards chosen at random (e.g. Meteor Storm's "Discard two cards at random").
      */
     fun DiscardAtRandom(count: Int, filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.Discard(filter, count, atRandom = true)
+        AbilityCost.Atom(CostAtom.Discard(count, filter, random = true))
 
     /**
      * Discard your entire hand.
@@ -183,7 +183,7 @@ object Costs {
      * Exile cards from graveyard.
      */
     fun ExileFromGraveyard(count: Int, filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.ExileFromGraveyard(count, filter)
+        AbilityCost.Atom(CostAtom.ExileFrom(Zone.GRAVEYARD, filter, count))
 
     /**
      * Exile X cards from graveyard, where X is the ability's X value.
@@ -207,9 +207,13 @@ object Costs {
 
     /**
      * Tap permanents you control (e.g., "Tap five untapped Clerics you control").
+     * Set [excludeSelf] for "tap N other untapped … you control" (excludes the source permanent).
      */
-    fun TapPermanents(count: Int, filter: GameObjectFilter = GameObjectFilter.Creature): AbilityCost =
-        AbilityCost.TapPermanents(count, filter)
+    fun TapPermanents(
+        count: Int,
+        filter: GameObjectFilter = GameObjectFilter.Creature,
+        excludeSelf: Boolean = false
+    ): AbilityCost = AbilityCost.Atom(CostAtom.TapPermanents(count, filter, excludeSelf))
 
     /**
      * Tap another untapped permanent you control (e.g., "Tap another untapped permanent you control").
@@ -217,7 +221,7 @@ object Costs {
      * Pass `GameObjectFilter.Creature` to restrict to creatures, etc.
      */
     fun TapAnotherPermanent(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.TapPermanents(count = 1, filter = filter, excludeSelf = true)
+        AbilityCost.Atom(CostAtom.TapPermanents(count = 1, filter = filter, excludeSelf = true))
 
     /**
      * Tap X permanents you control, where X is the ability's chosen X value.
@@ -234,7 +238,7 @@ object Costs {
      * Return a permanent you control matching the filter to its owner's hand.
      */
     fun ReturnToHand(filter: GameObjectFilter = GameObjectFilter.Any, count: Int = 1): AbilityCost =
-        AbilityCost.ReturnToHand(filter, count)
+        AbilityCost.Atom(CostAtom.ReturnToHand(filter, count))
 
     // =========================================================================
     // Counter Removal Costs

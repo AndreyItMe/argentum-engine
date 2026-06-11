@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
@@ -26,7 +27,7 @@ val RiptideMangler = card("Riptide Mangler") {
     oracleText = "{1}{U}: Change this creature's base power to target creature's power. (This effect lasts indefinitely.)"
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{1}{U}"))
+        cost = Costs.Mana(ManaCost.parse("{1}{U}"))
         target("target creature", Targets.Creature)
         effect = Effects.SetBasePower(
             target = EffectTarget.Self,

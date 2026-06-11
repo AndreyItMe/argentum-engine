@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.ltr.cards
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
@@ -36,7 +37,7 @@ val DunedainBlade = card("Dúnedain Blade") {
 
     // Equip Human {1}: attach only to a Human creature you control, sorcery speed.
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{1}"))
+        cost = Costs.Mana(ManaCost.parse("{1}"))
         timing = TimingRule.SorcerySpeed
         val creature = target(
             "Human creature you control",

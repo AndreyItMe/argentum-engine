@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.CardDestination
@@ -56,7 +57,7 @@ class GoblinMachinistTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = machinistAbilityId,
-                cost = AbilityCost.Mana(ManaCost.parse("{2}{R}")),
+                cost = Costs.Mana(ManaCost.parse("{2}{R}")),
                 effect = CompositeEffect(
                     listOf(
                         GatherUntilMatchEffect(

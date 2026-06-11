@@ -2,6 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.lgn.cards
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -23,7 +24,7 @@ val WitheredWretch = card("Withered Wretch") {
     oracleText = "{1}: Exile target card from a graveyard."
 
     activatedAbility {
-        cost = AbilityCost.Mana(ManaCost.parse("{1}"))
+        cost = Costs.Mana(ManaCost.parse("{1}"))
         val t = target("target card in a graveyard", Targets.CardInGraveyard)
         effect = Effects.Move(t, Zone.EXILE)
     }

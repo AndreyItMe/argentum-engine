@@ -5,6 +5,7 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.*
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
@@ -45,7 +46,7 @@ class DwarvenBlastminerTest : FunSpec({
             ActivatedAbility(
                 id = blastminerAbilityId,
                 cost = AbilityCost.Composite(
-                    listOf(AbilityCost.Mana(ManaCost.parse("{2}{R}")), AbilityCost.Tap)
+                    listOf(Costs.Mana(ManaCost.parse("{2}{R}")), AbilityCost.Tap)
                 ),
                 effect = MoveToZoneEffect(EffectTarget.BoundVariable("target"), Zone.GRAVEYARD, byDestruction = true),
                 targetRequirement = TargetPermanent(id = "target",

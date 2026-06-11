@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
@@ -44,7 +45,7 @@ class MistformMutantTest : FunSpec({
         script = CardScript.permanent(
             ActivatedAbility(
                 id = mutantAbilityId,
-                cost = AbilityCost.Mana(ManaCost.parse("{1}{U}")),
+                cost = Costs.Mana(ManaCost.parse("{1}{U}")),
                 effect = BecomeCreatureTypeEffect(
                     target = EffectTarget.BoundVariable("target"),
                     excludedTypes = listOf("Wall")

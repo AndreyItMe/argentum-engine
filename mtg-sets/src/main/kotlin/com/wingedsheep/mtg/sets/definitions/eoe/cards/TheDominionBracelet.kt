@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.eoe.cards
 
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
@@ -48,7 +49,7 @@ val TheDominionBracelet = card("The Dominion Bracelet") {
                 id = AbilityId.generate(),
                 cost = AbilityCost.Composite(
                     listOf(
-                        AbilityCost.Mana(ManaCost.parse("{15}")),
+                        Costs.Mana(ManaCost.parse("{15}")),
                         AbilityCost.ExileGrantingPermanent
                     )
                 ),
