@@ -39,8 +39,8 @@ data class SpellOnStackComponent(
     /**
      * For sneak (CR 702.190b): the player/planeswalker the returned unblocked attacker was
      * attacking. A permanent spell whose sneak cost was paid enters attacking this same
-     * defender. Null when not cast for sneak (or the defender is no longer valid at resolution,
-     * in which case the resolver falls back to the caster's opponent).
+     * defender. Null when not cast for sneak. If the defender is no longer legal at
+     * resolution, the resolver enters the creature not attacking (CR 506.3c) — no redirect.
      */
     val sneakAttackDefenderId: EntityId? = null,
     val beheldCards: List<EntityId> = emptyList(),  // Cards chosen via Behold (stored in pipeline as named collection)

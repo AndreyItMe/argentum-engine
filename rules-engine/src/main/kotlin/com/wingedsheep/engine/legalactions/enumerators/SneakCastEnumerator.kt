@@ -48,7 +48,7 @@ class SneakCastEnumerator : ActionEnumerator {
                 .filterIsInstance<KeywordAbility.Sneak>()
                 .firstOrNull() ?: continue
 
-            // Honor cast restrictions exactly like the normal cast path (CR 601.3e).
+            // Honor cast restrictions exactly like the normal cast path (CR 601.3).
             if (!context.castPermissionUtils.checkCastRestrictions(
                     state, playerId, cardDef.script.castRestrictions
                 )

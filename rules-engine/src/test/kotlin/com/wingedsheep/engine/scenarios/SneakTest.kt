@@ -5,6 +5,8 @@ import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.legalactions.LegalActionEnumerator
+import com.wingedsheep.engine.mechanics.SneakWindow
+import com.wingedsheep.engine.mechanics.combat.CombatRemovalHelper
 import com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.combat.AttackingComponent
@@ -253,6 +255,84 @@ class SneakTest : FunSpec({
             SneakCostWasPaid,
             EffectContext(sourceId = ninjaPerm, controllerId = attacker, opponentId = driver.getOpponent(attacker))
         ).shouldBeFalse()
+    }
+
+    test("a blocked attacker stays blocked when its blocker leaves combat and can't pay a sneak cost (CR 509.1h)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40), startingLife = 20)
+        val attacker = driver.activePlayer!!
+        val defender = driver.getOpponent(attacker)
+
+        val brawler = driver.putCreatureOnBattlefield(attacker, "Plain Brawler")
+        driver.removeSummoningSickness(brawler)
+        val blocker = driver.putCreatureOnBattlefield(defender, "Plain Brawler")
+        val ninja = driver.putCardInHand(attacker, "Sneaky Ninja")
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(attacker, listOf(brawler), defender).isSuccess shouldBe true
+        driver.passPriorityUntil(Step.DECLARE_BLOCKERS)
+        driver.declareBlockers(defender, mapOf(blocker to listOf(brawler))).isSuccess shouldBe true
+        var guard = 0
+        while (driver.state.priorityPlayerId != null && driver.state.priorityPlayerId != attacker &&
+            driver.state.step == Step.DECLARE_BLOCKERS && guard++ < 4
+        ) {
+            driver.passPriority(driver.state.priorityPlayerId!!)
+        }
+
+        // The blocker leaves combat. CR 509.1h: "A creature remains blocked even if all the
+        // creatures blocking it are removed from combat" — the Brawler is NOT unblocked and
+        // can't be returned to pay a sneak cost.
+        driver.replaceState(CombatRemovalHelper.removeFromCombat(driver.state, blocker))
+
+        SneakWindow.unblockedAttackers(driver.state, attacker).isEmpty().shouldBeTrue()
+        driver.giveMana(attacker, Color.GREEN, 2)
+        driver.submitExpectFailure(
+            CastSpell(
+                playerId = attacker,
+                cardId = ninja,
+                useAlternativeCost = true,
+                alternativeCostType = AlternativeCostType.SNEAK,
+                additionalCostPayment = AdditionalCostPayment(bouncedPermanents = listOf(brawler)),
+                paymentStrategy = PaymentStrategy.FromPool
+            )
+        )
+    }
+
+    test("the defending player cannot cast for sneak during the attacker's combat") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40), startingLife = 20)
+        val attacker = driver.activePlayer!!
+        val defender = driver.getOpponent(attacker)
+
+        val brawler = driver.putCreatureOnBattlefield(attacker, "Plain Brawler")
+        driver.removeSummoningSickness(brawler)
+        // The sneak card is in the DEFENDER's hand — it's not their declare blockers step
+        // (CR 702.190a "your declare blockers step"), so the window never opens for them.
+        val ninja = driver.putCardInHand(defender, "Sneaky Ninja")
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(attacker, listOf(brawler), defender).isSuccess shouldBe true
+        driver.passPriorityUntil(Step.DECLARE_BLOCKERS)
+        driver.declareBlockers(defender, emptyMap()).isSuccess shouldBe true
+        var guard = 0
+        while (driver.state.priorityPlayerId != null && driver.state.priorityPlayerId != defender &&
+            driver.state.step == Step.DECLARE_BLOCKERS && guard++ < 4
+        ) {
+            driver.passPriority(driver.state.priorityPlayerId!!)
+        }
+        driver.state.priorityPlayerId shouldBe defender
+
+        driver.giveMana(defender, Color.GREEN, 2)
+        driver.submitExpectFailure(
+            CastSpell(
+                playerId = defender,
+                cardId = ninja,
+                useAlternativeCost = true,
+                alternativeCostType = AlternativeCostType.SNEAK,
+                additionalCostPayment = AdditionalCostPayment(bouncedPermanents = listOf(brawler)),
+                paymentStrategy = PaymentStrategy.FromPool
+            )
+        )
     }
 
     test("sneaked creature enters not attacking when its carried defender has left (CR 506.3c)") {
