@@ -40,6 +40,31 @@
     ]
 }
 
+// Angelic Wall
+{
+    "name": "Angelic Wall",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Wall",
+    "oracleText": "Defender (This creature can't attack.)\nFlying",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 4
+    },
+    "keywords": [
+        "DEFENDER",
+        "FLYING"
+    ],
+    "metadata": {
+        "collectorNumber": "10",
+        "artist": "Rebecca Guay",
+        "flavorText": "Be at peace, and observe its beauty. Be at war, and feel its justice.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/0/e0bb39fb-29fc-4e69-9918-47277b8af0d3.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Goblin Glider
 {
     "name": "Goblin Glider",

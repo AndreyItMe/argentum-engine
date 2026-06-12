@@ -968,6 +968,62 @@
     ]
 }
 
+// Gallantry
+{
+    "name": "Gallantry",
+    "manaCost": "{1}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Target blocking creature gets +4/+4 until end of turn.\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature blocking"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "20",
+        "rarity": "UNCOMMON",
+        "artist": "Douglas Shuler",
+        "flavorText": "\"Forgive me,\" Mirri whispered. \"I thought you a burden, and you saved my life.\" Hanna quietly accepted the apology.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/c/1ccdca3b-7d53-4d19-bd15-9a1b148c4aaf.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Ghost Town
 {
     "name": "Ghost Town",
@@ -1700,6 +1756,57 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Overrun
+{
+    "name": "Overrun",
+    "manaCost": "{2}{G}{G}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Creatures you control get +3/+3 and gain trample until end of turn. (Each of those creatures can deal excess combat damage to the player or planeswalker it's attacking.)",
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "target": "Self"
+                    },
+                    {
+                        "type": "GrantKeyword",
+                        "keyword": "TRAMPLE",
+                        "target": "Self"
+                    }
+                ]
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "243",
+        "rarity": "UNCOMMON",
+        "artist": "Jeff Miracola",
+        "flavorText": "\"You want to know your enemy? Look at your feet while you trample him.\"\n—Tahngarth of the Weatherlight",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/a/0ad7a961-d3a1-471a-8472-8407d1057de0.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 

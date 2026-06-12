@@ -1,3 +1,102 @@
+// Anarchist
+{
+    "name": "Anarchist",
+    "manaCost": "{4}{R}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "When this creature enters, you may return target sorcery card from your graveyard to your hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "sorcery own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "79",
+        "artist": "Brom",
+        "flavorText": "\"I'll take that. You won't need it when the revolution comes.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a298df66-2075-40a7-bced-457656b6b788.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Cartographer
+{
+    "name": "Cartographer",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Human",
+    "oracleText": "When this creature enters, you may return target land card from your graveyard to your hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "land own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "107",
+        "rarity": "UNCOMMON",
+        "artist": "Jeff Laubenstein",
+        "flavorText": "How do you map a world when the land moves beneath your feet?",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/f/7f2c2cc9-37ce-435e-9df2-083d5e3c8c5c.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Cursed Flesh
 {
     "name": "Cursed Flesh",
@@ -109,6 +208,56 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Scrivener
+{
+    "name": "Scrivener",
+    "manaCost": "{4}{U}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "When this creature enters, you may return target instant card from your graveyard to your hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "instant own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "46",
+        "rarity": "UNCOMMON",
+        "artist": "Heather Hudson",
+        "flavorText": "\"History is a potent weapon.\"\n—Karn, silver golem",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/b/8b236bba-160a-4637-a83e-8456834ce59f.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
