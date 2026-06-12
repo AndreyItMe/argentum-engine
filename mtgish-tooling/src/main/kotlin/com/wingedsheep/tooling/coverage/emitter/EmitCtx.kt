@@ -167,6 +167,19 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         "Trigger_AmountOfDamageDealt" ->
             return call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT"))
         "PowerOfTheSacrificedCreature" -> return call("DynamicAmounts.sacrificedPower")
+        // "the number of [filter] cards in your graveyard" (Rise of the Varmints' Varmint count). The
+        // count's args are a `_CardsInGraveyard` filter — typically `And(IsCardtype Creature,
+        // InAPlayersGraveyard(You))`. Render as a resolution-time `DynamicAmount.Count` over the You
+        // graveyard with the recovered filter. Only the You-scoped graveyard renders; any other player
+        // scope (an opponent's graveyard, "each player's") declines -> SCAFFOLD rather than miscount.
+        "TheNumberOfGraveyardCards" -> {
+            if (!jsonContains(node["args"], "_Player", "You")) return null
+            val filter = gameObjectFilterDsl(node["args"]) ?: "GameObjectFilter.Any"
+            return call(
+                "DynamicAmount.Count",
+                arg("Player.You"), arg("Zone.GRAVEYARD"), arg(Lit(filter)),
+            )
+        }
         // "X is its toughness" / "its power" on THIS permanent (Armored Armadillo's "+X/+0 where X is its
         // toughness"). Only the ThisPermanent subject maps to the source-relative facade; any other
         // permanent subject declines (-> scaffold) rather than misattribute the stat.

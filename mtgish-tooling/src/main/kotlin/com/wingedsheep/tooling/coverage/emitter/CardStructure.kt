@@ -473,10 +473,21 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject, oncePerTurn: Boolean = false
     // card), so the MayAction wrapper is absorbed by the effect, not re-expressed as `optional = true`
     // (which would double-wrap vs the golden — Elvish Pioneer).
     val selfOptional = mayInner?.strField("_Action") in SELF_OPTIONAL_ACTIONS
-    val edsl = renderEffectList(effectActions, tvar) ?: return null
+
+    // An intervening-if written in the trigger's effect — "Whenever ~ attacks, create a token IF you
+    // control a creature with power 4 or greater" (Scalestorm Summoner) — is modeled in mtgish as a lone
+    // `If{cond}[then]` action, not a TriggerI. Per CR 603.4 this IS an intervening-if ability: the
+    // condition is checked when the trigger would fire and again on resolution. Lift it to a
+    // `triggerCondition = …` gate over the then-branch, but ONLY when the condition renders via the same
+    // strict [interveningIfDsl] used by TriggerI (no else-branch, single If). Any other shape falls
+    // through to the normal action path (where `on("If")` handles the static gates or declines).
+    val lifted = if (effTriggerCondition == null) liftInterveningIfAction(effectActions) else null
+    val condFromIf = lifted?.first
+    val edsl = renderEffectList(lifted?.second ?: effectActions, tvar) ?: return null
 
     val stmts = mutableListOf<Stmt>(Assign("trigger", Lit(spec)))
-    if (effTriggerCondition != null) stmts.add(Assign("triggerCondition", Lit(effTriggerCondition)))
+    val triggerCond = effTriggerCondition ?: condFromIf
+    if (triggerCond != null) stmts.add(Assign("triggerCondition", Lit(triggerCond)))
     if (oncePerTurn) stmts.add(Assign("oncePerTurn", Lit("true")))
     if (mayWrapped && !selfOptional) stmts.add(Assign("optional", Lit("true")))
     if (tvar != null) stmts.add(targetLocal(tnode!!))
@@ -530,6 +541,28 @@ internal fun EmitCtx.triggerIBlock(rule: JsonObject): List<Stmt>? {
         put("args", JsonArray(listOfNotNull(args.getOrNull(0)) + listOfNotNull(args.getOrNull(2))))
     }
     return triggerBlock(triggerA, triggerCondition = condDsl)
+}
+
+/**
+ * A trigger effect that is a single `If{cond}[then]` action -> the intervening-if condition DSL plus
+ * the then-branch actions, or null when it isn't a lone liftable `If`. Used by [triggerBlock] to model
+ * "Whenever ~ attacks, create a token if you control …" (Scalestorm Summoner) as a `triggerCondition`
+ * gate (CR 603.4). Declines (returns null, leaving the normal action path to handle/decline the `If`)
+ * when: there's more than one action, the action isn't an `If`, the condition doesn't render via the
+ * strict [interveningIfDsl], or the `If` carries an else-branch (which a single triggerCondition can't
+ * express). Never drops the condition or an else-branch.
+ */
+private fun EmitCtx.liftInterveningIfAction(actions: List<JsonObject>): Pair<String, List<JsonObject>>? {
+    val only = actions.singleOrNull() ?: return null
+    if (only.strField("_Action") != "If") return null
+    val args = only["args"].asArr ?: return null
+    val cond = args.getOrNull(0) as? JsonObject ?: return null
+    val thenActions = (args.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    if (thenActions.isEmpty()) return null
+    // An else-branch (args[2]) can't be folded into a single intervening-if gate — decline.
+    if (args.getOrNull(2) != null) return null
+    val condDsl = interveningIfDsl(cond) ?: return null
+    return condDsl to thenActions
 }
 
 /**

@@ -2,6 +2,7 @@ package com.wingedsheep.tooling.coverage.emitter
 
 import com.wingedsheep.tooling.coverage.Call
 import com.wingedsheep.tooling.coverage.Dsl
+import com.wingedsheep.tooling.coverage.Lit
 import com.wingedsheep.tooling.coverage.Eval
 import com.wingedsheep.tooling.coverage.Stmt
 import com.wingedsheep.tooling.coverage.arg
@@ -35,13 +36,19 @@ private val TOKEN_COLOR = mapOf(
 
 /** A `_CreatableToken` spec -> `Effects.CreateToken(...)`, or null (-> SCAFFOLD) for shapes we can't
  *  render exactly. `NumberTokens` wraps a base spec with a fixed count. */
-internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1): Dsl? {
+internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1, dynamicCount: Dsl? = null): Dsl? {
     when (spec.strField("_CreatableToken")) {
         "NumberTokens" -> {
             val a = spec["args"].asArr ?: return null
-            val n = findInteger(a.getOrNull(0)) as? Int ?: return null
             val inner = a.getOrNull(1) as? JsonObject ?: return null
-            return createTokenDsl(inner, n)
+            // A fixed integer count renders inline as `count = N`. A dynamic count — "X" tokens
+            // (ValueX, Form a Posse) or "the number of creature cards in your graveyard" (Rise of
+            // the Varmints) — renders as a `DynamicAmount` via [dynamicAmountExpr]; decline
+            // (-> SCAFFOLD) on a count we can't render exactly rather than emit a wrong fixed number.
+            val n = findInteger(a.getOrNull(0)) as? Int
+            if (n != null) return createTokenDsl(inner, n)
+            val dynamic = dynamicAmountExpr(a.getOrNull(0)) ?: return null
+            return createTokenDsl(inner, dynamicCount = dynamic)
         }
         // Predefined artifact token with fixed characteristics -> its dedicated facade
         // (serialises as CreatePredefinedToken, not the generic CreateToken).
@@ -92,8 +99,21 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1): Dsl? {
             if (tokenActivatedAbilities.isNotEmpty()) {
                 parts.add(arg("activatedAbilities", Call("listOf", tokenActivatedAbilities.map { arg(it) })))
             }
-            if (count != 1) parts.add(arg("count", "$count"))
-            return Call(ctor, parts)
+            // Count rendering depends on the constructor we picked:
+            //  - `Effects.CreateToken` facade: a fixed count is the trailing named `count: Int` overload;
+            //    a dynamic count is the `count: DynamicAmount` first-positional overload.
+            //  - raw `CreateTokenEffect` ctor (used when the token has activated abilities): the `count: Int`
+            //    secondary ctor does NOT expose `activatedAbilities`, so the count MUST be a `DynamicAmount`
+            //    on the primary ctor — a fixed count renders as `DynamicAmount.Fixed(N)`, not a bare Int
+            //    (otherwise `CreateTokenEffect(count = 2, activatedAbilities = …)` fails to compile —
+            //    Hellspur Posse Boss).
+            val usesRawCtor = tokenActivatedAbilities.isNotEmpty()
+            when {
+                dynamicCount != null -> return Call(ctor, listOf(arg("count", dynamicCount)) + parts)
+                count == 1 -> return Call(ctor, parts)
+                usesRawCtor -> return Call(ctor, listOf(arg("count", Lit("DynamicAmount.Fixed($count)"))) + parts)
+                else -> { parts.add(arg("count", "$count")); return Call(ctor, parts) }
+            }
         }
     }
     return null

@@ -583,12 +583,17 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     FilterPredicates.untapped(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.attacking(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.nontoken(filterNode)?.let { node = node.dot(it) }
-    if ("\"You\"" in blob) node = node.dot("youControl")
-    if ("\"Opponent\"" in blob) node = node.dot("opponentControls")
+    // The `.youControl()`/`.opponentControls()` suffix is a *controller* predicate — only a
+    // `ControlledByAPlayer` clause carries it. A bare `"You"` elsewhere in the blob (e.g. a graveyard
+    // count's `InAPlayersGraveyard(You)` ownership clause, whose player scope is carried separately by
+    // the enclosing DynamicAmount.Count) must NOT be misread as control of a battlefield permanent.
+    val hasControllerClause = "ControlledByAPlayer" in blob
+    if (hasControllerClause && "\"You\"" in blob) node = node.dot("youControl")
+    if (hasControllerClause && "\"Opponent\"" in blob) node = node.dot("opponentControls")
     // A ControlledByAPlayer clause naming a player we can't render (e.g. Ref_TargetPlayer — "creatures
     // target opponent controls") must decline rather than silently widen to every creature on the
     // battlefield (Neutralize the Guards).
-    if ("ControlledByAPlayer" in blob && "\"You\"" !in blob && "\"Opponent\"" !in blob) return null
+    if (hasControllerClause && "\"You\"" !in blob && "\"Opponent\"" !in blob) return null
     return node
 }
 

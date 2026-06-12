@@ -2105,6 +2105,70 @@
     ]
 }
 
+// Form a Posse
+{
+    "name": "Form a Posse",
+    "manaCost": "{X}{R}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create X 1/1 red Mercenary creature tokens with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"",
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "count": "XValue",
+            "power": 1,
+            "toughness": 1,
+            "colors": [
+                "RED"
+            ],
+            "creatureTypes": [
+                "Mercenary"
+            ],
+            "imageUri": "https://cards.scryfall.io/normal/front/5/f/5f04607f-eed2-462e-897f-82e41e5f7049.jpg?1712316319",
+            "activatedAbilities": [
+                {
+                    "id": "ability_1",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 0
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
+                        }
+                    ],
+                    "timing": "SorcerySpeed"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "204",
+        "rarity": "UNCOMMON",
+        "artist": "J.Lonnee",
+        "flavorText": "The terms were simple: half in advance, half when the entire town belonged to their employer.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/9/39ee1387-c24e-4a66-8ad6-9afa9c0abcbb.jpg?1712356094"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
 // Forsaken Miner
 {
     "name": "Forsaken Miner",
@@ -4212,6 +4276,66 @@
     ]
 }
 
+// Rise of the Varmints
+{
+    "name": "Rise of the Varmints",
+    "manaCost": "{3}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create X 2/1 green Varmint creature tokens, where X is the number of creature cards in your graveyard.\nPlot {2}{G} (You may pay {2}{G} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "keywords": [
+        "PLOT"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Plot",
+            "cost": "{2}{G}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "count": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Graveyard",
+                "filter": "creature"
+            },
+            "power": 2,
+            "toughness": 1,
+            "colors": [
+                "GREEN"
+            ],
+            "creatureTypes": [
+                "Varmint"
+            ],
+            "imageUri": "https://cards.scryfall.io/normal/front/d/c/dcefb329-b93d-41a1-88d3-8058afebeca8.jpg?1712316688"
+        }
+    },
+    "metadata": {
+        "collectorNumber": "179",
+        "rarity": "UNCOMMON",
+        "artist": "Ralph Horsley",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/4/f4e879d8-a058-48e8-9733-f58b1e0da4b9.jpg?1712355986",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "The number of creature cards in your graveyard is counted as Rise of the Varmints resolves."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Plot abilities are written \"Plot [cost],\" which means \"Any time you have priority during your main phase while the stack is empty, you may pay [cost] and exile this card from your hand. It becomes plotted.\""
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You can't cast a plotted card on the same turn it became plotted. On any future turn, you may cast that card from exile without paying its mana cost during your main phase while the stack is empty."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Rooftop Assassin
 {
     "name": "Rooftop Assassin",
@@ -4270,6 +4394,54 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Scalestorm Summoner
+{
+    "name": "Scalestorm Summoner",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Human Warlock",
+    "oracleText": "Whenever this creature attacks, create a 3/1 red Dinosaur creature token if you control a creature with power 4 or greater.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 1,
+                    "colors": [
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Dinosaur"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/c/7/c75c01ea-427d-4401-b5b0-166e87c4585e.jpg?1712316260"
+                },
+                "triggerCondition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature pow>=4"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "144",
+        "rarity": "UNCOMMON",
+        "artist": "Xabi Gaztelua",
+        "flavorText": "The herd followed him through an Omenpath and found their curiosity rewarded with an untamed world rich with unsuspecting prey.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/6/d603c00f-048a-4a05-9df9-52844819d523.jpg?1712355842"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
