@@ -10,8 +10,11 @@ projects compose without rework (Commander engine work lives in [`commander-form
 
 - **Pod size: 2–4 players.** The UI is designed around the worst case of 3 opponent boards. Larger pods are
   out of scope (no "scales to N" hedging in the layout math).
-- **UI approach: equal split + zoom.** All opponent boards always visible side-by-side at reduced scale;
-  any board enlarges on demand. Full overview at all times, detail when you ask for it.
+- **UI approach: one viewed opponent + opponent rail.** (Revised 2026-06-12; the earlier equal-split idea
+  died on the screen budget — the opponent half is sized for exactly one board.) One opponent's board is
+  shown full-size at a time; the others live off-screen and **slide into view** when selected. An
+  always-visible **opponent rail** (life, hand count, warnings, attention cues per opponent) is the
+  overview guarantee.
 - **First playable milestone: one online multi-player game via the lobby flow** — premade/custom decks or a
   draft/sealed pool, then a single Free-for-All game. Explicitly *not* a tournament: no rounds, no bracket,
   no best-of-N. Dev-loop testing rides on the scenario builder + hotseat seam, which is already N-player
@@ -149,9 +152,10 @@ layer, the client's "the opponent" rendering, and the AI.
 3. **CR 802.2a is the model for "defending player".** Per-attacking-creature, stored where the attack is
    stored (`AttackingComponent.defenderId` — already right). Combat code derives "the defending player" from
    the creature in question, never from `turnOrder`.
-4. **Overview always, detail on demand (UI).** Every player's full board state is visible at all times at
-   overview fidelity (what's there, how big, tapped/untapped, counters). Reading small text is an explicit
-   gesture (hover preview, board zoom) — never a prerequisite for following the game.
+4. **Overview always, one board at a time (UI).** Every opponent's *vital state* (life, hand count,
+   warnings, what-just-happened cues) is visible at all times via the opponent rail; full boards are
+   viewed one at a time at full fidelity and switch instantly. Cards are never shrunk below today's
+   2-player scale — the screen budget compresses *how many boards* you see, never *how well* you see one.
 5. **Seat identity is a first-class visual.** With 4 players, "who did that?" becomes the dominant UX
    question. Every player gets a stable seat color used consistently: board frame, life orb, log entries,
    combat arrows, stack item borders, targeting glows.
@@ -322,173 +326,162 @@ opponent column); the DTO shape leaves room. Commander-damage rows already ride 
 
 ## Phase 3 — Client UI/UX (the centerpiece)
 
-### 3.1 Layout: equal split + zoom
+### 3.1 Layout: one viewed board + opponent rail
 
-The current 5-row grid generalizes: the opponent half becomes **1–3 equal columns**, your half is unchanged.
-With one opponent the layout degenerates to exactly today's board.
+The opponent half of today's screen is sized for **exactly one board** — that stays true. Multiplayer shows
+one opponent at full 2-player scale; the other boards live off-screen in a horizontal strip and **slide into
+view** when selected. The overview guarantee moves into an always-visible **opponent rail** of summary chips.
 
 ```
-┌─────────────┬─────────────┬─────────────┐
-│ ▾ Opp A     │ ▾ Opp B     │ ▾ Opp C     │   ← nameplate strip (name, life, hand n,
-│  hand(fan)  │  hand(fan)  │  hand(fan)  │      library, cmd-dmg) — always readable
-│ ┌─────────┐ │ ┌─────────┐ │ ┌─────────┐ │
-│ │ battle- │ │ │ battle- │ │ │ battle- │ │   ← per-column Battlefield, cards scaled
-│ │ field   │ │ │ field   │ │ │ field   │ │      down (existing slot-sizing logic
-│ └─────────┘ │ └─────────┘ │ └─────────┘ │      runs per column, 60px floor)
-│ piles: 🂠 ⚰ │ piles: 🂠 ⚰ │ piles: 🂠 ⚰ │
-├─────────────┴─────────────┴─────────────┤
-│ HUD: turn-order ribbon · step strip · priority │
-├──────────────────────────────────────────┤
-│            YOUR battlefield (full width) │
-├──────────────────────────────────────────┤
-│    your hand · stack(left) · buttons     │
+┌──────────────────────────────────────────────────┐
+│ ▸[●A ❤34 🂠5] [●B ❤27 🂠2 ⚠] [●C ❤40 🂠7]        │ ← opponent rail: one chip per
+├──────────────────────────────────────────────────┤   opponent, always visible
+│   hand(fan) · piles 🂠 ⚰ · command zone           │ ┐
+│ ┌──────────────────────────────────────────────┐ │ │ viewed opponent board —
+│ │      VIEWED opponent battlefield             │ │ ├ today's opponent half,
+│ │      (full size, today's card scale)         │ │ │ unchanged scale; slides
+│ └──────────────────────────────────────────────┘ │ ┘ horizontally on switch
+├──────────────────────────────────────────────────┤
+│ HUD: step strip · priority · stack indicator     │
+├──────────────────────────────────────────────────┤
+│             YOUR battlefield (full width)        │
+├──────────────────────────────────────────────────┤
+│        your hand · stack(left) · buttons         │
+└──────────────────────────────────────────────────┘
+```
+
+- **The viewed board is pixel-identical to today's opponent half** (hand fan, battlefield with its
+  intentional row asymmetry, zone piles). No new battlefield scaling work — the slot-sizing machinery is
+  untouched. With one opponent, the rail collapses and the layout *is* today's 2-player board.
+- **Boards are ordered by turn order** in the strip (rotated to read left→right in play order after you);
+  switching slides left/right along that order, so spatial direction matches "who's next".
+- **Your half is sacred.** Your battlefield, hand, and action buttons keep today's size and position —
+  all multiplayer adaptation happens in the opponent half and the rail.
+
+### 3.2 Switching boards (slide + follow)
+
+- **Select**: click an opponent's rail chip; the strip slides their board into view (~200ms horizontal
+  slide, seat-colored edge flash on arrival). Keyboard `1`/`2`/`3` and edge arrows / horizontal swipe
+  (touch) do the same.
+- **Follow-the-action (default on)**: the view slides automatically on *coarse* boundaries — to the active
+  opponent when their turn starts, and to the attacking player's board when you're being attacked. It never
+  moves mid-step for resolutions (attention cues on the rail cover those — 3.5), and **never while you have
+  a pending input or an in-progress targeting selection** (the stale-UI-suppression principle applies to
+  camera movement).
+- **Pin**: selecting a board manually pins it (chip shows a pin glyph) and suspends follow until unpinned
+  (re-click the chip / Esc). A settings toggle turns follow off entirely for players who want a fully
+  manual camera.
+- Off-screen boards stay mounted (3 boards of render cost ≈ today's 2-player game ×1.5 — cheap) so slides
+  are instant and animations on off-screen boards still run their state forward.
+
+### 3.3 The opponent rail
+
+The rail is the overview: every opponent's vital state, always readable, never occluded.
+
+```
+┌──────────────────────────────────────────┐
+│ ▸ ● Anna   ❤ 34  🂠 5  ⚔3/21  ⌁ 2  ◔     │   ▸ viewed   ● seat color  ❤ life
+│   ● Bram   ❤ 27  🂠 2  ⚠ ⚔18/21          │   🂠 hand  ⌁ poison  ◔ deciding
+│   ● Cleo   ❤ 40  🂠 7                    │   ⚔ cmd dmg (worst pair, later)
 └──────────────────────────────────────────┘
 ```
 
-- **Column order = turn order**, rotated so the seats read left→right in the order play proceeds after you.
-  Stable for the whole game (no reordering on deaths — a dead seat collapses, see 3.6).
-- **Card scale per column:** reuse the battlefield slot-sizing machinery (wrap-line search, stacking of
-  duplicates, 60px floor) — it already handles "too many cards for the space"; a column is just a narrower
-  battlefield. At 3 columns on a 1440px display, cards land around 55–70px wide: art + frame color +
-  tapped state + P/T badge are recognizable; rules text is not — that's what zoom and hover preview are for.
-- **The intentional battlefield row asymmetry** (lands row vs others) is preserved per column — opponent
-  columns keep the inverted row order exactly as the single opponent board does today.
-- **Your half is sacred.** Your battlefield, hand, and action buttons keep today's size and position.
-  Multiplayer never shrinks *your* play surface — all compression happens in the opponent half.
-
-### 3.2 Board zoom (detail on demand)
-
-- **Hover (desktop)**: hovering an opponent column for ~300ms raises a **zoom overlay** — that player's
-  board rendered at full 2-player scale, anchored over the opponent half (other columns dim under it).
-  Mouse-out lowers it. Individual card hover inside the overlay shows the existing full card preview.
-- **Click-to-pin (and mobile tap)**: clicking the nameplate pins the zoom; Esc / click-outside / tapping
-  another nameplate unpins. Keyboard `1`/`2`/`3` focuses opponent columns, `` ` `` returns to overview.
-- **Interaction passes through**: while zoomed, the board is live — targeting clicks, ability activation
-  on opponents' permanents (e.g. your granted abilities), graveyard inspection all work inside the overlay.
-  Zoom is a *view* state, never a *mode* that blocks input elsewhere (the stack, your hand, and pass
-  button stay visible and clickable).
-- **Never auto-zoom.** Stealing the camera is disorienting. Instead, *attention cues* (3.5) point at the
-  column where something happened; the user decides whether to zoom.
-
-### 3.3 Nameplates + HUD
-
-Each opponent column is headed by a **nameplate strip** that stays readable at any board scale:
-
-```
-┌────────────────────────────────────┐
-│ ● Vincent      ❤ 34   🂠 5   ⌁ 2  │   ● seat color  ❤ life  🂠 hand  ⌁ poison
-│ ⚔ 12  ⚔ 7  ⚔ 0                    │   ⚔ commander damage from each commander (later)
-└────────────────────────────────────┘
-```
-
-- **Seat color**: 4 fixed, colorblind-safe hues assigned by seat index. Used on: nameplate dot, board
-  column frame, log entry names, combat arrows, stack item borders, targeting glow. One legend, everywhere.
-- **Active player**: animated ring around the nameplate + subtle column header glow.
-  **Priority holder**: small pulsing dot. **Deciding**: the existing "thinking" spinner moves onto the
-  nameplate of whoever the pending decision belongs to (the DTO now says who).
-- **Turn-order ribbon** in the center HUD: small seat-colored chips in play order with an arrow at the
-  current turn ("whose turn is next" is constant table talk in commander pods — answer it ambiently).
-- Your own life/mana stays in today's position by your battlefield; your nameplate joins the ribbon.
-- The current center-HUD life orbs (one per player) are replaced by the nameplate strips + ribbon;
-  the freed center row keeps the step strip and stack indicator.
+- **Seat color**: 4 fixed, colorblind-safe hues assigned by seat index. Used on: rail chips, viewed-board
+  frame, log entry names, combat arrows, stack item borders, targeting glow. One legend, everywhere.
+- **Per chip**: name, life (with floating ±deltas), hand count, poison, warnings (commander damage ≥18,
+  low life), **active-turn ring**, **priority dot**, **deciding spinner** (the DTO now says whose decision
+  is pending), and attention pulses (3.5). Chips are the player-level click target for targeting (3.4).
+- **Turn order is the rail order**, with a small arrow marking the current turn and the next seat — "whose
+  turn is next" is constant table talk in commander pods; answer it ambiently.
+- Your own life/mana stays in today's position by your battlefield; you don't get a rail chip (you're
+  always on screen). The current center-HUD opponent life orb is absorbed by the rail.
 
 ### 3.4 Targeting across seats
 
-- Valid targets glow with the existing affordance, across **all** columns simultaneously; an opponent's
-  *nameplate* is the click target for "target player" (bigger than the old life orb, works at small scale).
-- When valid targets are inside a cramped column, the column gets a faint "contains targets" halo; zooming
-  is never required (small cards remain clickable — minimum hit target enforced by slot sizing's 60px
-  floor), but the halo tells you where to look.
-- The targeting banner (TargetingOverlay) gains the target list with seat-colored chips as you pick —
-  "2/3 targets: ● Goblin (B), ● Anna" — so multi-target spells across players stay legible.
+- Targets on the **viewed** board use the existing glow/click affordance unchanged.
+- Rail chips of opponents with valid targets on their off-screen board get a **"contains targets" halo**;
+  clicking the chip slides their board in *without canceling the in-progress selection* — switching boards
+  is a view change, never an input mode change.
+- **"Target player"**: when a player is a valid target, their chip grows an explicit crosshair badge —
+  clicking the badge targets the player; clicking the rest of the chip still just switches the view.
+  (Disambiguating view-switch vs target-player on one chip is the interaction to playtest hardest.)
+- The targeting banner (TargetingOverlay) lists picks as seat-colored chips — "2/3 targets: ● Goblin (B),
+  ● Anna" — so multi-target spells across players stay legible even when their boards aren't in view.
 
-### 3.5 Attention cues (following a 4-player game)
+### 3.5 Attention cues (following what's off-screen)
 
-The overview must make "what just happened, and to whom" readable without zoom:
+With only one opponent board visible, the rail must answer "what just happened, and to whom":
 
-- **Event pulses**: when a spell resolves against a player/permanent, the affected column flashes its seat
-  color briefly; life changes float a delta (`-5`) off the nameplate (existing animation, re-anchored).
-- **Stack items carry caster seat color** (border) and, when targeting, a thin arrow from stack card to the
-  target's column while the item is topmost — answers "whose spell, at whom" at a glance.
-- **Log**: seat-colored player names; clicking a log entry pulses the involved column(s). The log keeps its
-  position; on mobile it stays hidden as today.
+- **Chip pulses**: when a spell resolves against an off-screen player or their permanents, their chip
+  flashes its seat color; deaths/destruction use a sharper red pulse; life deltas float off the chip.
+- **Stack items carry caster seat color** (border) and, when the topmost item targets an off-screen
+  player's stuff, a thin arrow from stack card to that player's rail chip — "whose spell, at whom" at a
+  glance without sliding.
+- **Log**: seat-colored player names; clicking a log entry slides the involved board into view. The log
+  keeps its position; on mobile it stays hidden as today.
 
 ### 3.6 Combat UX
 
 **Declaring attacks (you):**
-- Click creatures to select attackers (unchanged). With >1 possible defender, the default assignment is
-  **the last defender you assigned this combat** (sticky), seeded by… nothing: the *first* selection pops a
-  one-time defender pick. Per-creature override: with an attacker selected, click an opponent nameplate or
-  their planeswalker to (re)assign. Assignment shown as a seat-colored chevron on the attacker card.
+- Click creatures to select attackers (unchanged). With >1 possible defender, the first selection pops a
+  one-time defender pick; after that, assignment is **sticky** (new attackers default to the last defender
+  you assigned). Per-creature override: with an attacker selected, click a defender's rail chip (or their
+  planeswalker — see flyout below) to (re)assign. Assignment shows as a seat-colored chevron on the
+  attacker card.
+- **Planeswalker flyout**: a rail chip expands on hover/long-press to show that player's planeswalkers, so
+  you can assign attacks to off-screen planeswalkers without sliding (sliding also works — their board view
+  is live for assignment clicks).
 - An "all → ●B" quick action in the combat button cluster covers the common alpha-strike-one-player case.
-- Attack arrows render in **the defender's seat color**, bundled per defender to avoid spaghetti
-  (one thick arrow per defender with a creature count badge, fanning out on hover/zoom).
+- **Arrows**: attacks against the *viewed* defender render full per-creature arrows in that defender's seat
+  color; attacks against off-screen defenders bundle into one arrow from the attacker group to the
+  defender's rail chip with a creature-count badge.
 
 **Being attacked (you defend):**
-- Only the creatures attacking *you* matter for your block decision; they get the existing attacker
-  highlight, and the other defenders' incoming attacks render dimmed (you can watch, not act).
-  Your declare-blockers UI is unchanged — it just may arrive while other defenders also have (separate,
+- The attacker is the active player, so their board is already in view (follow-the-action). Creatures
+  attacking *you* get the existing attacker highlight; creatures attacking other defenders render dimmed.
+  Your declare-blockers UI is unchanged — it just may arrive alongside other defenders' (separate,
   APNAP-ordered) block decisions; the server's decision protocol already serializes this.
 
 **Watching combat (not involved):**
-- Arrows + pulses only; the existing spectator-ish passivity. The step strip shows "B is declaring blockers"
-  via the decision status.
+- Arrows + chip pulses only. The step strip + rail spinner show "B is declaring blockers".
 
 ### 3.7 Mobile / portrait
 
-3 columns of battlefield in portrait is below the readability floor. Portrait gets a different opponent-half
-treatment, reusing the overview-vs-detail split:
-
-```
-┌──────────────────────────────┐
-│ ●A ❤34 🂠5 │ ●B ❤27 🂠2 │ ●C…│  ← summary bar: all opponents, always visible
-├──────────────────────────────┤
-│   [ one opponent board ]     │  ← swipeable carousel (or tap a summary chip);
-│   ⟵ swipe / tap chips ⟶      │     auto-advances to the acting opponent ONLY
-├──────────────────────────────┤     between your interactions (never mid-input)
-│ HUD: step strip · priority   │
-├──────────────────────────────┤
-│       YOUR battlefield       │
-├──────────────────────────────┤
-│  hand · stack · buttons      │
-└──────────────────────────────┘
-```
-
-- The summary bar is the overview guarantee: life, hand count, poison/cmd-damage warnings, attention pulses
-  for off-screen events ("●C's chip flashes red — something died there").
-- Carousel auto-advance follows the action (active player's column on their turn, attacker when you're
-  attacked) but **never moves while you have a pending input** — the stale-UI-suppression principle applies
-  to camera movement too.
-- Landscape tablet uses the desktop 3-column layout with the smaller card floor.
+The model converges: mobile portrait is the same viewed-board + rail design with a denser rail (the
+summary chips compress to `●A ❤34 🂠5` pills) and swipe as the primary switch gesture. No separate mobile
+layout to design or maintain — the desktop slide/carousel *is* the mobile pattern, which is exactly why the
+single-viewed-board approach beats equal-split on this codebase (one layout, two densities).
 
 ### 3.8 Dead seats, spectator, replay
 
-- When a player leaves, their column collapses to a slim **tombstone strip** (grayed nameplate, final life
-  struck through, skull icon); remaining columns re-flow to share the freed width. Engine has already
-  removed their cards (Phase 1.2), so there's no board to show.
-- Spectator mode: spectators see the same layout anchored to a chosen seat's perspective (default: seat 0
-  at the bottom); a seat-switcher cycles the bottom player. Replays reuse this verbatim
+- When a player leaves, their board drops out of the strip and their chip becomes a **tombstone** (grayed,
+  final life struck through, skull icon, elimination order number). Engine has already removed their cards
+  (Phase 1.2), so there's no board to keep.
+- Spectator mode: same layout anchored to a chosen seat's perspective (default: seat 0 at the bottom); a
+  seat-switcher cycles which player's view occupies the bottom half. Replays reuse this verbatim
   (replay = spectating the recorded stream, as today).
-- Hotseat: the seat whose decision is pending takes the bottom position? **No** — hotseat keeps a fixed
-  bottom seat and routes inputs as today (the actorFor seam already stamps seats); rotating the whole board
-  per decision would be disorienting. Revisit only if hotseat pods become a real use case beyond dev testing.
+- Hotseat keeps a fixed bottom seat and routes inputs as today (the actorFor seam already stamps seats);
+  rotating the whole board per decision would be disorienting. Revisit only if hotseat pods become a real
+  use case beyond dev testing.
 
 ### 3.9 Component-level changes (summary)
 
-- `selectors.ts`: `useOpponent()` → `useOpponents(): ClientPlayer[]` (turn-order rotated); migrate ~every
-  consumer. Add `useSeatColor(playerId)`.
-- `GameBoard.tsx` / `board/styles.ts`: opponent half becomes a column container; per-column subtree =
-  `OpponentColumn` (nameplate + `HandZone` + `Battlefield` + `ZonePiles` + command zone slot).
-- `Battlefield.tsx`: already takes a player's cards + size context; needs a width-budget prop instead of
-  assuming full row width (slot sizing logic unchanged, fed a narrower container).
-- New: `NameplateStrip`, `TurnOrderRibbon`, `BoardZoomOverlay`, `OpponentSummaryBar` (mobile),
-  `TombstoneStrip`. Combat arrow bundling in `CombatArrows.tsx`.
+- `selectors.ts`: `useOpponent()` → `useOpponents(): ClientPlayer[]` (turn-order rotated) +
+  `useViewedOpponent()` (the slide state). Migrate ~every consumer. Add `useSeatColor(playerId)`.
+- New store slice: `boardView` — viewed opponent ID, pinned flag, follow setting; written by chip clicks,
+  swipe, keyboard, and the follow-the-action rules (which check pending-input state before moving).
+- `GameBoard.tsx` / `board/styles.ts`: opponent half becomes a horizontally sliding strip of
+  `OpponentBoard` subtrees (today's opponent-half markup, parameterized by player ID); `Battlefield.tsx`
+  and slot sizing are **unchanged**.
+- New: `OpponentRail` (+ chip, crosshair badge, planeswalker flyout, tombstone state). Combat arrow
+  bundling + arrow-to-chip rendering in `CombatArrows.tsx`.
 - `ClientCombatState` consumers: per-attacker defender map.
 
-**Commander check:** the opponent column reserves a command-zone slot next to the zone piles (commander art
-+ tax badge); nameplate has the commander-damage row (data already flows via `ClientPlayer.commanderDamage`);
-40 starting life fits the nameplate (`❤ 40`); the commander-damage warning (≥18 flash) lives on the
-nameplate. The 1v1 commander UI from `commander-format.md` §1.8 lands inside this same column structure.
+**Commander check:** the viewed opponent board keeps today's full-size command zone slot (commander art +
+tax badge — no shrinking needed, unlike equal-split); rail chips carry the commander-damage warning
+(`⚔ 18/21` from the worst commander pair, expandable to the full per-commander row on hover); 40 starting
+life fits the chip (`❤ 40`). The 1v1 commander UI from `commander-format.md` §1.8 lands inside the
+`OpponentBoard` subtree unchanged.
 
 ---
 
@@ -552,10 +545,10 @@ axis). This is the payoff of keeping them orthogonal.
 - **Decision protocol under concurrent combat decisions**: APNAP-serialized block declarations mean players
   wait on each other; the UI must make "waiting for B to block" obvious (decision status on nameplate) or
   pods will feel stalled.
-- **Performance**: state masking + broadcast ×4 per action, and the client rendering 4 battlefields.
-  The per-column battlefields are smaller, not more numerous in card count, so render cost is roughly
-  today's; masking cost scales linearly and is already per-recipient. Watch the projection cost in
-  `StateProjector` once `getOpponents` fans out.
+- **Performance**: state masking + broadcast ×4 per action server-side (linear, already per-recipient),
+  and 3 mounted opponent boards client-side (only one visible; keep off-screen boards mounted for instant
+  slides unless profiling says otherwise). Watch the projection cost in `StateProjector` once
+  `getOpponents` fans out.
 - **Replay/admin tooling** (`tournament-newspaper`) reads replays assuming 1v1 reconstruction — flag for a
   later pass; do not let it block the replay format.
 - **Disconnect policy** in pods (2.1): a 30-second reconnect window then forfeit is simple but feels bad in
