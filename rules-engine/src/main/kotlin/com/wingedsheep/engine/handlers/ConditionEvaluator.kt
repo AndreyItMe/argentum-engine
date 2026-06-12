@@ -406,7 +406,9 @@ class ConditionEvaluator(
      * - [EffectTarget.TriggeringEntity]: resolution-only; match the triggering spell by its static
      *   cast characteristics so the answer survives the spell leaving the stack (CR 603.4).
      *
-     * Other entity roles are unsupported and evaluate to `false`.
+     * Other entity roles are unsupported: the `CardLinter` rejects them at card load
+     * (`UnsupportedEntityMatchesRole` — its supported-role set must extend in lockstep with this
+     * dispatch), and the `else` here is the defense-in-depth backstop, not a contract.
      */
     private fun evaluateEntityMatches(
         state: GameState,

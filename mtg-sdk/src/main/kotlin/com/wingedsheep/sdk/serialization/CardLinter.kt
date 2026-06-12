@@ -642,6 +642,20 @@ object CardLinter {
         obj[effectField]?.let { walk(it, child, state) }
     }
 
+    /**
+     * Entity roles `ConditionEvaluator.evaluateEntityMatches` dispatches. Any other
+     * `EffectTarget` inside an `EntityMatches` evaluates to a constant `false`, so the linter
+     * rejects it at card load. Extending the evaluator to a new role must extend this set.
+     */
+    private val supportedEntityMatchesRoles = setOf(
+        "Self",
+        "EnchantedPermanent",
+        "EnchantedCreature",
+        "EquippedCreature",
+        "ContextTarget",
+        "TriggeringEntity",
+    )
+
     /** Records this node's dataflow accesses and target references (not its children). */
     private fun visitNode(obj: JsonObject, scope: Scope, state: LintState) {
         val type = obj.typeName()
@@ -653,6 +667,24 @@ object CardLinter {
                 ?.let { scope.targetRefs.add(TargetRef(type, it, null)) }
             "BoundVariable" -> (obj["name"] as? JsonPrimitive)?.contentOrNull
                 ?.let { scope.targetRefs.add(TargetRef(type, null, it)) }
+            "EntityMatches" -> {
+                val role = when (val entity = obj["entity"]) {
+                    is JsonPrimitive -> entity.contentOrNull
+                    is JsonObject -> entity.typeName()
+                    else -> null
+                }
+                if (role !in supportedEntityMatchesRoles) {
+                    state.findings.add(
+                        CardValidationError.UnsupportedEntityMatchesRole(
+                            cardName = state.cardName,
+                            message = "'${state.cardName}': EntityMatches names entity role " +
+                                "'${role ?: "(none)"}', which the ConditionEvaluator doesn't dispatch — " +
+                                "the condition would silently evaluate to false. Supported roles: " +
+                                supportedEntityMatchesRoles.joinToString(", ") + ".",
+                        )
+                    )
+                }
+            }
         }
 
         for ((kind, spaceAndName) in implicitAccesses(type, obj)) {

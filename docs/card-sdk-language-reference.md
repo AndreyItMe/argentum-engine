@@ -2428,7 +2428,9 @@ The entity role fixes *when* the condition can be answered: `Self` and the encha
 attachment roles evaluate in both resolution and static-ability projection; `ContextTarget` and
 `TriggeringEntity` are resolution-only (false under projection). Use `Conditions.EntityMatches`
 directly only for a role the helpers don't name (e.g. the equipped creature). It is deliberately
-*not* a player check (`TargetIsPlayer`) nor a numeric/tracker check (`Compare`).
+*not* a player check (`TargetIsPlayer`) nor a numeric/tracker check (`Compare`). Any other
+`EffectTarget` role is rejected by the `CardLinter` at card load (§21) — the evaluator can't
+answer it and would silently return `false`.
 
 **Two anti-patterns to avoid when adding conditions:**
 
@@ -3532,6 +3534,11 @@ levels, saga chapters, faces — is covered automatically. What it checks:
   an error: **when you add an SDK type that reads or writes a named pipeline variable, classify
   it in `CardLinter.dataflowFields` in the same change** (and name the field conventionally so
   the hygiene net sees it).
+- **`EntityMatches` entity roles** — the condition's `entity` must be a role the
+  `ConditionEvaluator` dispatches (`Self`, `EnchantedPermanent`, `EnchantedCreature`,
+  `EquippedCreature`, `ContextTarget`, `TriggeringEntity`); any other `EffectTarget` would be a
+  silent constant `false` and is an **error**. Extending the evaluator to a new role must extend
+  `CardLinter.supportedEntityMatchesRoles` in the same change.
 
 Intentional exceptions go in `mtg-sets/src/test/resources/lint-allowlist.txt`
 (`ErrorType|Card Name`, stale entries fail). Inside `ForEachInGroup` / `ForEachInCollection`,

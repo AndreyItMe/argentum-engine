@@ -38,7 +38,9 @@ import kotlinx.serialization.Serializable
  *
  * Deliberately **not**: a player check (use `Conditions.TargetIsPlayer`) nor a numeric/tracker
  * check (use `Compare` over a `DynamicAmount`). Entity roles other than those listed above are
- * unsupported and evaluate to `false`.
+ * unsupported: the `CardLinter` rejects them at card load
+ * (`CardValidationError.UnsupportedEntityMatchesRole`), and the evaluator answers `false` as the
+ * defense-in-depth backstop.
  *
  * @property entity Which entity to test.
  * @property filter The filter the entity must match.

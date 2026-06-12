@@ -580,44 +580,44 @@ object Conditions {
 
     /** If this creature is attacking. */
     val SourceIsAttacking: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.attacking())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.attacking())
 
     /** If this creature is blocking. */
     val SourceIsBlocking: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.blocking())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.blocking())
 
     /** If this permanent is tapped. */
     val SourceIsTapped: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.tapped())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.tapped())
 
     /** If this permanent is untapped. */
     val SourceIsUntapped: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.untapped())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.untapped())
 
     /** If this creature has dealt damage at least once since entering the battlefield. */
     val SourceHasDealtDamage: ConditionInterface =
-        EntityMatches(EffectTarget.Self,
+        SourceMatches(
             com.wingedsheep.sdk.scripting.GameObjectFilter.Any
                 .copy(statePredicates = listOf(StatePredicate.HasDealtDamage))
         )
 
     /** If this creature has dealt combat damage to a player (Saboteur-style payoffs). */
     val SourceHasDealtCombatDamageToPlayer: ConditionInterface =
-        EntityMatches(EffectTarget.Self,
+        SourceMatches(
             com.wingedsheep.sdk.scripting.GameObjectFilter.Any
                 .copy(statePredicates = listOf(StatePredicate.HasDealtCombatDamageToPlayer))
         )
 
     /** If this permanent entered the battlefield this turn. */
     val SourceEnteredThisTurn: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.enteredThisTurn())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.enteredThisTurn())
 
     /**
      * If this permanent is saddled (CR 702.171b). Gates Mount payoffs on "while saddled" /
      * "as long as it's saddled" — evaluates identically at resolution and during projection.
      */
     val SourceIsSaddled: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.saddled())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.saddled())
 
     /**
      * If this creature was declared as an attacker at least once during the current turn.
@@ -625,21 +625,21 @@ object Conditions {
      * turn, deal 2 damage to you" (negate via [com.wingedsheep.sdk.scripting.conditions.NotCondition]).
      */
     val SourceAttackedThisTurn: ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.attackedThisTurn())
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.attackedThisTurn())
 
     /**
      * As long as this creature is a specific subtype.
      * Used for conditional static abilities like "has defender as long as it's a Wall."
      */
     fun SourceHasSubtype(subtype: Subtype): ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withSubtype(subtype))
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withSubtype(subtype))
 
     /**
      * As long as this creature has a specific keyword.
      * Used for conditional effects like "If this creature has flying, it gets +1/+1."
      */
     fun SourceHasKeyword(keyword: Keyword): ConditionInterface =
-        EntityMatches(EffectTarget.Self, com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withKeyword(keyword))
+        SourceMatches(com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withKeyword(keyword))
 
     /**
      * While this creature has a counter of the given type on it.
@@ -655,8 +655,7 @@ object Conditions {
                 counterType.name.uppercase().replace(' ', '_')
             )
         }
-        return EntityMatches(
-            EffectTarget.Self,
+        return SourceMatches(
             com.wingedsheep.sdk.scripting.GameObjectFilter.Any
                 .copy(statePredicates = listOf(predicate))
         )
