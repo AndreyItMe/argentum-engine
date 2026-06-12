@@ -83,16 +83,15 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "TapUntap",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "TapUntap",
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
                             }
-                        ]
+                        }
                     },
                     "targetRequirements": [
                         {
@@ -204,34 +203,33 @@
     "oracleText": "Exile X target artifacts and/or creatures. Return the exiled cards to the battlefield under their owners' control at the beginning of the next end step.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "Composite",
-                    "effects": [
-                        {
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Exile"
+                    },
+                    {
+                        "type": "CreateDelayedTrigger",
+                        "step": "END",
+                        "effect": {
                             "type": "MoveToZone",
                             "target": {
                                 "type": "ContextTarget",
                                 "index": 0
                             },
-                            "destination": "Exile"
-                        },
-                        {
-                            "type": "CreateDelayedTrigger",
-                            "step": "END",
-                            "effect": {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Battlefield"
-                            }
+                            "destination": "Battlefield"
                         }
-                    ]
-                }
-            ]
+                    }
+                ]
+            }
         },
         "targetRequirements": [
             {
@@ -437,31 +435,34 @@
                 "id": "ability_1",
                 "cost": "CostTap",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                {
-                                    "type": "Or",
-                                    "predicates": [
-                                        {
-                                            "type": "And",
-                                            "predicates": [
-                                                "IsArtifact",
-                                                "IsCreature"
-                                            ]
-                                        },
-                                        {
-                                            "type": "HasSubtype",
-                                            "subtype": "Vehicle"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "controllerPredicate": "ControlledByYou"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    {
+                                        "type": "Or",
+                                        "predicates": [
+                                            {
+                                                "type": "And",
+                                                "predicates": [
+                                                    "IsArtifact",
+                                                    "IsCreature"
+                                                ]
+                                            },
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Vehicle"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,

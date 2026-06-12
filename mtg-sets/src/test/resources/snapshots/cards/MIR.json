@@ -552,19 +552,22 @@
     "oracleText": "Tap all nonwhite creatures.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": {
-                    "cardPredicates": [
-                        "IsCreature",
-                        {
-                            "type": "NotColor",
-                            "color": "WHITE"
-                        }
-                    ]
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "NotColor",
+                                "color": "WHITE"
+                            }
+                        ]
+                    }
                 }
             },
-            "effect": {
+            "body": {
                 "type": "TapUntap",
                 "target": "Self"
             }
@@ -2171,11 +2174,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature red"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature red"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -2962,11 +2968,14 @@
     "oracleText": "Black creatures get +2/+0 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature black"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature black"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -3090,18 +3099,17 @@
     "oracleText": "This spell costs 3 life more to cast for each target.\nDestroy any number of target creatures.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Graveyard",
-                    "byDestruction": true
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Graveyard",
+                "byDestruction": true
+            }
         },
         "targetRequirements": [
             {
@@ -3519,11 +3527,14 @@
     "oracleText": "Savage Twister deals X damage to each creature.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": "XValue",
                 "target": "Self"
@@ -3653,11 +3664,14 @@
     "oracleText": "Destroy all Auras.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "permanent"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "permanent"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -4113,19 +4127,22 @@
                 "id": "ability_1",
                 "cost": "CostTap",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "NotKeyword",
-                                    "keyword": "FLYING"
-                                }
-                            ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotKeyword",
+                                        "keyword": "FLYING"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -4267,11 +4284,14 @@
                 "id": "ability_1",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature attacking"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature attacking"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -4385,11 +4405,14 @@
     "oracleText": "Destroy all non-Aura enchantments.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "enchantment"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "enchantment"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -4843,16 +4866,15 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "TapUntap",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "TapUntap",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirements": [
                     {

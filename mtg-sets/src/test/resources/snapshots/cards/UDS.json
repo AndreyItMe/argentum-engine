@@ -129,11 +129,14 @@
     "oracleText": "Creatures you control get +0/+5 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",

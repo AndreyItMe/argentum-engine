@@ -268,11 +268,14 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "land ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self",
                         "tap": false

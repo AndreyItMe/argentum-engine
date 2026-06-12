@@ -532,11 +532,14 @@
     "oracleText": "Destroy all Islands.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "land Island"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "land Island"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -1037,17 +1040,16 @@
     "oracleText": "Cast this spell only during the declare attackers step and only if you've been attacked this step.\nReturn one or two target attacking creatures to their owner's hand.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Hand"
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Hand"
+            }
         },
         "targetRequirements": [
             {
@@ -1512,11 +1514,14 @@
     "oracleText": "Destroy all creatures and lands.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature|land"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature|land"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -2108,11 +2113,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -2122,18 +2130,19 @@
                     }
                 },
                 {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "DealDamage",
-                            "amount": {
-                                "type": "Fixed",
-                                "amount": 6
-                            },
-                            "target": "Controller"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 6
+                        },
+                        "target": "Controller"
+                    }
                 }
             ]
         }
@@ -2197,46 +2206,52 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseUpTo",
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 100
+                                    }
+                                },
+                                "storeSelected": "toDiscard"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "toDiscard",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            },
+                            {
+                                "type": "DrawCards",
                                 "count": {
-                                    "type": "Fixed",
-                                    "amount": 100
+                                    "type": "VariableReference",
+                                    "variableName": "toDiscard_count"
                                 }
-                            },
-                            "storeSelected": "toDiscard"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "toDiscard",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        },
-                        {
-                            "type": "DrawCards",
-                            "count": {
-                                "type": "VariableReference",
-                                "variableName": "toDiscard_count"
                             }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 {
                     "type": "DrawCards",
@@ -3201,11 +3216,14 @@
     "oracleText": "Untap all creatures you control.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "TapUntap",
                 "target": "Self",
                 "tap": false
@@ -3386,11 +3404,14 @@
     "oracleText": "Green creatures you control gain forestwalk until end of turn. (They can't be blocked as long as defending player controls a Forest.)",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature green ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature green ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "GrantKeyword",
                 "keyword": "FORESTWALK",
                 "target": "Self"
@@ -3416,11 +3437,14 @@
     "oracleText": "Destroy all green creatures.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature green"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature green"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -3448,11 +3472,14 @@
     "oracleText": "Needle Storm deals 4 damage to each creature with flying.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature kw:flying"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature kw:flying"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",
@@ -3493,39 +3520,45 @@
                     "to": "Graveyard"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
                             },
-                            "storeSelected": "discarded"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "discarded",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
                 }
             }
         ]
@@ -4020,18 +4053,17 @@
     "oracleText": "Destroy two target lands.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Graveyard",
-                    "byDestruction": true
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Graveyard",
+                "byDestruction": true
+            }
         },
         "targetRequirements": [
             {
@@ -4308,11 +4340,14 @@
     "oracleText": "Cast this spell only during the declare attackers step and only if you've been attacked this step.\nScorching Winds deals 1 damage to each attacking creature.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature attacking"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature attacking"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",
@@ -4805,11 +4840,14 @@
     "oracleText": "Creatures you control get +0/+3 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -5038,26 +5076,32 @@
     "oracleText": "Each player may draw up to two cards. For each card less than two a player draws this way, that player gains 2 life.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "ActivePlayerFirst",
-            "effects": [
-                {
-                    "type": "DrawUpTo",
-                    "maxCards": 2,
-                    "storeNotDrawnAs": "cardsNotDrawn"
-                },
-                {
-                    "type": "GainLife",
-                    "amount": {
-                        "type": "Multiply",
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "ActivePlayerFirst"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "DrawUpTo",
+                        "maxCards": 2,
+                        "storeNotDrawnAs": "cardsNotDrawn"
+                    },
+                    {
+                        "type": "GainLife",
                         "amount": {
-                            "type": "VariableReference",
-                            "variableName": "cardsNotDrawn"
-                        },
-                        "multiplier": 2
+                            "type": "Multiply",
+                            "amount": {
+                                "type": "VariableReference",
+                                "variableName": "cardsNotDrawn"
+                            },
+                            "multiplier": 2
+                        }
                     }
-                }
-            ]
+                ]
+            }
         }
     },
     "metadata": {
@@ -5211,12 +5255,15 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature",
-                        "excludeSelf": true
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature",
+                            "excludeSelf": true
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self"
                     }
@@ -5243,16 +5290,15 @@
     "oracleText": "Tap up to three target creatures without flying.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "TapUntap",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    }
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "TapUntap",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
                 }
-            ]
+            }
         },
         "targetRequirements": [
             {
@@ -5356,11 +5402,14 @@
     "oracleText": "Cast this spell only during the declare attackers step and only if you've been attacked this step.\nCreatures you control gain reach until end of turn. (They can block creatures with flying.)",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "GrantKeyword",
                 "keyword": "REACH",
                 "target": "Self"
@@ -5434,11 +5483,14 @@
     "oracleText": "White creatures get +2/+0 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature white"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature white"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -5647,11 +5699,14 @@
     "oracleText": "Destroy all white creatures.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature white"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature white"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -5740,11 +5795,14 @@
     "oracleText": "Creatures you control get +1/+1 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -5801,18 +5859,17 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Graveyard",
-                            "byDestruction": true
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    }
                 },
                 {
                     "type": "LoseLife",

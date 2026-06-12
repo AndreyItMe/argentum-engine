@@ -330,14 +330,15 @@
     "typeLine": "Sorcery",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "DrawCards",
-                    "count": "XValue"
-                }
-            ]
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "DrawCards",
+                "count": "XValue"
+            }
         }
     },
     "metadata": {
@@ -380,11 +381,14 @@
     "oracleText": "Simoon deals 1 damage to each creature target opponent controls.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:target-opponent"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:target-opponent"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",
@@ -472,19 +476,22 @@
     "oracleText": "Tremor deals 1 damage to each creature without flying.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": {
-                    "cardPredicates": [
-                        "IsCreature",
-                        {
-                            "type": "NotKeyword",
-                            "keyword": "FLYING"
-                        }
-                    ]
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "NotKeyword",
+                                "keyword": "FLYING"
+                            }
+                        ]
+                    }
                 }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",

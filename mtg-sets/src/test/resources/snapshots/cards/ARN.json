@@ -211,11 +211,14 @@
     "oracleText": "Attacking creatures get +2/+0 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature attacking"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature attacking"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -1356,11 +1359,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature kw:flying"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature kw:flying"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -1370,18 +1376,19 @@
                             }
                         },
                         {
-                            "type": "ForEachPlayer",
-                            "players": "Each",
-                            "effects": [
-                                {
-                                    "type": "DealDamage",
-                                    "amount": {
-                                        "type": "Fixed",
-                                        "amount": 1
-                                    },
-                                    "target": "Controller"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Players",
+                                "players": "Each"
+                            },
+                            "body": {
+                                "type": "DealDamage",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                },
+                                "target": "Controller"
+                            }
                         }
                     ]
                 },
@@ -2113,9 +2120,12 @@
                                     }
                                 },
                                 "then": {
-                                    "type": "ForEachInCollection",
-                                    "collection": "chosen",
-                                    "effect": {
+                                    "type": "ForEach",
+                                    "space": {
+                                        "type": "IterationSpace.Collection",
+                                        "collection": "chosen"
+                                    },
+                                    "body": {
                                         "type": "TapUntap",
                                         "target": "Self",
                                         "tap": false
@@ -2528,11 +2538,14 @@
     "oracleText": "Blocking creatures get +0/+3 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature blocking"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature blocking"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -2808,11 +2821,14 @@
     "oracleText": "Sandstorm deals 1 damage to each attacking creature.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature attacking"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature attacking"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",

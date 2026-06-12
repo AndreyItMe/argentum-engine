@@ -146,7 +146,7 @@ object CardLinter {
         put("ForEachCapturedController" to "collection", read(Space.COLLECTION))
         put("ForEachCapturedController" to "originalCollection", read(Space.COLLECTION))
         put("ForEachCapturedController" to "controllerSnapshot", read(Space.COLLECTION))
-        put("ForEachInCollection" to "collection", read(Space.COLLECTION))
+        put("IterationSpace.Collection" to "collection", read(Space.COLLECTION))
         put("ConditionalOnCollection" to "collection", read(Space.COLLECTION))
         put("CollectionContainsMatch" to "collection", read(Space.COLLECTION))
         put("SuccessCriterion.CollectionNonEmpty" to "name", read(Space.COLLECTION))

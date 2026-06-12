@@ -25,8 +25,7 @@ class CompositeExecutors(
 
     private val compositeEffectExecutor by lazy { CompositeEffectExecutor(effectExecutor) }
     private val createDelayedTriggerExecutor by lazy { CreateDelayedTriggerExecutor() }
-    private val forEachTargetExecutor by lazy { ForEachTargetExecutor(effectExecutor) }
-    private val forEachPlayerExecutor by lazy { ForEachPlayerExecutor(effectExecutor) }
+    private val forEachExecutor by lazy { ForEachExecutor(effectExecutor) }
     private val forEachCapturedControllerExecutor by lazy { ForEachCapturedControllerExecutor(effectExecutor) }
     private val mayRevealCardFromHandEffectExecutor by lazy { MayRevealCardFromHandEffectExecutor(effectExecutor) }
     private val beholdEffectExecutor by lazy { BeholdEffectExecutor(effectExecutor) }
@@ -37,9 +36,6 @@ class CompositeExecutors(
     private val payDynamicManaCostExecutor by lazy { PayDynamicManaCostExecutor(cardRegistry) }
     private val reflexiveTriggerEffectExecutor by lazy { ReflexiveTriggerEffectExecutor(effectExecutor, targetFinder, decisionHandler) }
     private val flipCoinExecutor by lazy { FlipCoinExecutor(effectExecutor) }
-    private val forEachInGroupExecutor by lazy { ForEachInGroupExecutor(effectExecutor) }
-    private val forEachColorOfExecutor by lazy { ForEachColorOfExecutor(effectExecutor) }
-    private val forEachInCollectionExecutor by lazy { ForEachInCollectionExecutor(effectExecutor) }
     private val repeatWhileExecutor by lazy { RepeatWhileExecutor(effectExecutor) }
     private val conditionalOnCollectionExecutor by lazy { ConditionalOnCollectionExecutor(effectExecutor) }
     private val flipTwoCoinsExecutor by lazy { FlipTwoCoinsExecutor(effectExecutor) }
@@ -60,12 +56,8 @@ class CompositeExecutors(
         chooseActionEffectExecutor,
         compositeEffectExecutor,
         createDelayedTriggerExecutor,
-        forEachTargetExecutor,
-        forEachPlayerExecutor,
+        forEachExecutor,
         forEachCapturedControllerExecutor,
-        forEachInGroupExecutor,
-        forEachColorOfExecutor,
-        forEachInCollectionExecutor,
         mayRevealCardFromHandEffectExecutor,
         beholdEffectExecutor,
         modalEffectExecutor,

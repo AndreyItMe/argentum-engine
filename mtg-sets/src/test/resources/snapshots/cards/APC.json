@@ -177,11 +177,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -191,18 +194,19 @@
                             }
                         },
                         {
-                            "type": "ForEachPlayer",
-                            "players": "Each",
-                            "effects": [
-                                {
-                                    "type": "DealDamage",
-                                    "amount": {
-                                        "type": "Fixed",
-                                        "amount": 6
-                                    },
-                                    "target": "Controller"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Players",
+                                "players": "Each"
+                            },
+                            "body": {
+                                "type": "DealDamage",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 6
+                                },
+                                "target": "Controller"
+                            }
                         }
                     ]
                 }
@@ -249,19 +253,22 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "NotKeyword",
-                                    "keyword": "FLYING"
-                                }
-                            ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotKeyword",
+                                        "keyword": "FLYING"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -312,11 +319,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -2149,11 +2159,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "enchantment"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "enchantment"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "MoveToZone",
                         "target": "Self",
                         "destination": "Graveyard",

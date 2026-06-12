@@ -762,8 +762,28 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `CompositeEffect(effects)` — run effects in order. Card definitions use the facade
   `Effects.Composite(e1, e2, ...)` (vararg) or `Effects.Composite(effects, stopOnError?,
   descriptionOverride?, descriptionAmounts?)` (list + render options).
-- `ForEachInGroupEffect(filter, effect, …)` — apply `effect` to every entity matching a group
-  filter; facade `Effects.ForEachInGroup(filter, effect, noRegenerate?, simultaneous?)`.
+- `ForEachEffect(space, body)` — the **single compiled iteration effect**: run `body` once per item
+  of a sealed `IterationSpace`. Five lowering facades keep the pre-unification authoring names
+  (same precedent as `IfYouDoEffect` → `GatedEffect`); use the one matching the iteration source:
+  - `ForEachTargetEffect(effects)` → `IterationSpace.Targets` — per chosen target; the body sees
+    only the current target as `ContextTarget(0)`, fresh `storedCollections` (Kaboom!).
+  - `ForEachPlayerEffect(players, effects)` → `IterationSpace.Players(players)` — per matching
+    player; `controllerId` rebound so `Player.You` is the current player, `opponentId` recomputed,
+    fresh `storedCollections` (Winds of Change, Bend or Break).
+  - `ForEachInCollectionEffect(collection, effect)` → `IterationSpace.Collection(name)` — per
+    entity of a named pipeline collection; `pipeline.iterationTarget` bound so `EffectTarget.Self`
+    is the current entity; outer collections preserved (Fight or Flight).
+  - `ForEachInGroupEffect(filter, effect, noRegenerate?)` / facade
+    `Effects.ForEachInGroup(...)` → `IterationSpace.Group(filter, noRegenerate)` — per battlefield
+    permanent matching a group filter; same `iterationTarget` binding as Collection.
+  - `ForEachColorOfEffect(source, effect)` / facade `Effects.ForEachColorOf(...)` →
+    `IterationSpace.ColorsOf(source)` — per color of an entity, WUBRG order, bound via the
+    chosen-color channel (see the choice section).
+
+  Every space snapshots its items before the first iteration (entities destroyed mid-loop stay in
+  the list) and every space is **pause-safe**: a body that pauses for a decision resumes the
+  remaining iterations via the shared `ForEachContinuation`. Multi-effect bodies lower to a
+  `CompositeEffect`.
 - `ConditionalEffect(condition, ifTrue, ifFalse?)` / `Branch(...)` — conditional branch. Facade
   preserved for existing cards; it now **lowers to `GatedEffect(Gate.WhenCondition(condition), then =
   ifTrue, otherwise = ifFalse)`** (compiled form is `Gated`, not a distinct `Conditional` type). It is
@@ -3139,7 +3159,9 @@ Counter effects live in §4 (`AddCounters`, `RemoveCounters`, `Proliferate`, `Mo
   `GatherCards(ChosenTargets) → CaptureControllers → MoveCollection(Destroy, storeMovedAs) → ForEachCapturedController`
   shape.
 - `ForEachInCollectionEffect(collection, effect)` — run `effect` once per entity in a named pipeline collection
-  (snapshotted at resolution), with `pipeline.iterationTarget` set to that entity. Collection-based sibling of
+  (snapshotted at resolution), with `pipeline.iterationTarget` set to that entity. Lowers to
+  `ForEachEffect(IterationSpace.Collection(...))` — see the unified ForEach entry under "Sequencing &
+  conditional". Collection-based sibling of
   `ForEachInGroupEffect` (which iterates a battlefield filter): use it to apply a per-entity effect to a *chosen*
   set rather than a re-evaluated filter. Pair with a single-target effect on `EffectTarget.Self` — e.g.
   `ForEachInCollection(nonChosenPile, Effects.CantAttack(EffectTarget.Self))` gives each creature in a chosen pile

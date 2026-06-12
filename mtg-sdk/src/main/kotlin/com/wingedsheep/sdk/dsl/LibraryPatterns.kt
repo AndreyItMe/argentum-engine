@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.EmitScriedEventEffect
+import com.wingedsheep.sdk.scripting.effects.ForEachEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
@@ -324,7 +325,7 @@ object LibraryPatterns {
         )
     )
 
-    fun revealUntilNonlandDealDamageEachTarget(): ForEachTargetEffect = ForEachTargetEffect(
+    fun revealUntilNonlandDealDamageEachTarget(): ForEachEffect = ForEachTargetEffect(
         listOf(
             GatherUntilMatchEffect(
                 filter = GameObjectFilter.Nonland,
@@ -454,7 +455,7 @@ object LibraryPatterns {
     fun eachPlayerSearchesLibrary(
         filter: GameObjectFilter,
         count: DynamicAmount
-    ): ForEachPlayerEffect = ForEachPlayerEffect(
+    ): ForEachEffect = ForEachPlayerEffect(
         players = Player.Each,
         effects = listOf(
             GatherCardsEffect(

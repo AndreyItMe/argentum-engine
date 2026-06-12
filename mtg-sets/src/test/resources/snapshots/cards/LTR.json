@@ -194,12 +194,15 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you",
-                                "excludeSelf": true
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you",
+                                    "excludeSelf": true
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "AddCounters",
                                 "counterType": "+1/+1",
                                 "count": 1,
@@ -225,12 +228,15 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you",
-                                "excludeSelf": true
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you",
+                                    "excludeSelf": true
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "AddCounters",
                                 "counterType": "+1/+1",
                                 "count": 1,
@@ -798,11 +804,14 @@
                     "subtype": "Orc"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Goblin|Orc ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Goblin|Orc ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
@@ -1386,11 +1395,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -1404,11 +1416,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "MENACE",
                                 "target": "Self"
@@ -1658,20 +1673,19 @@
             "modes": [
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
                             }
-                        ]
+                        }
                     },
                     "targetRequirements": [
                         {
@@ -2719,11 +2733,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -2737,11 +2754,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "FIRST_STRIKE",
                                 "target": "Self"
@@ -3021,18 +3041,17 @@
                 "trigger": "ScriedEvent",
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "AddCounters",
-                            "counterType": "+1/+1",
-                            "count": 1,
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -3302,16 +3321,15 @@
                 "trigger": "ScriedEvent",
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "TapUntap",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "TapUntap",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -3649,11 +3667,14 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -3872,11 +3893,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -5228,11 +5252,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -6754,17 +6781,16 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Hand"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Hand"
+                    }
                 },
                 {
                     "type": "Composite",
@@ -9505,11 +9531,14 @@
                 "trigger": "RingTemptedEvent",
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Wraith ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Wraith ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
@@ -9664,11 +9693,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
@@ -10479,32 +10511,36 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "ModifyStats",
-                            "powerModifier": {
-                                "type": "Fixed",
-                                "amount": 2
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
                             },
-                            "toughnessModifier": {
-                                "type": "Fixed",
-                                "amount": 2
-                            },
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
+                            {
+                                "type": "GrantKeyword",
+                                "keyword": "TRAMPLE",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
                             }
-                        },
-                        {
-                            "type": "GrantKeyword",
-                            "keyword": "TRAMPLE",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -10557,11 +10593,14 @@
                     "imageUri": "https://cards.scryfall.io/normal/front/a/6/a6181330-7521-4ec6-be6c-b35487c2d2d4.jpg?1699974464"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Human ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Human ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "HASTE",
                         "target": "Self"
@@ -11606,11 +11645,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -11691,25 +11733,29 @@
             {
                 "chapter": 2,
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "TapUntap",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "TapUntap",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            {
+                                "type": "AddCounters",
+                                "counterType": "stun",
+                                "count": 1,
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
                             }
-                        },
-                        {
-                            "type": "AddCounters",
-                            "counterType": "stun",
-                            "count": 1,
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -12652,11 +12698,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": "XValue",
                         "target": "Self"
@@ -13218,17 +13267,16 @@
             {
                 "chapter": 3,
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "GrantKeyword",
-                            "keyword": "LIFELINK",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "GrantKeyword",
+                        "keyword": "LIFELINK",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -13419,17 +13467,16 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachTarget",
-                            "effects": [
-                                {
-                                    "type": "MoveToZone",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    },
-                                    "destination": "Library"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": "IterationSpace.Targets",
+                            "body": {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "destination": "Library"
+                            }
                         },
                         "ShuffleLibrary",
                         {
@@ -13494,11 +13541,14 @@
                     "moveType": "Destroy"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "CreatePredefinedToken",
                         "tokenType": "Food"
                     }
@@ -13529,11 +13579,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -14379,11 +14432,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "DOUBLE_STRIKE",
                                 "target": "Self"
@@ -14901,11 +14957,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "TapUntap",
                                 "target": "Self",
                                 "tap": false
@@ -14955,20 +15014,26 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachColorOf",
-                            "source": "Target",
-                            "effect": {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": {
-                                        "cardPredicates": [
-                                            "IsCreature",
-                                            "IsLegendary"
-                                        ],
-                                        "controllerPredicate": "ControlledByYou"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.ColorsOf",
+                                "source": "Target"
+                            },
+                            "body": {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature",
+                                                "IsLegendary"
+                                            ],
+                                            "controllerPredicate": "ControlledByYou"
+                                        }
                                     }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "GrantProtectionFromChosenColor",
                                     "target": "Self"
                                 }

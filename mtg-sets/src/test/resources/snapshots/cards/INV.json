@@ -1621,52 +1621,58 @@
     "oracleText": "Each player separates all nontoken lands they control into two piles. For each player, one of their piles is chosen by one of their opponents of their choice. Destroy all lands in the chosen piles. Tap all lands in the other piles.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "ControlledPermanents",
-                        "filter": "land nontoken"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "ControlledPermanents",
+                            "filter": "land nontoken"
+                        },
+                        "storeAs": "lands"
                     },
-                    "storeAs": "lands"
-                },
-                {
-                    "type": "SelectFromCollection",
-                    "from": "lands",
-                    "selection": "ChooseAnyNumber",
-                    "storeSelected": "pileA",
-                    "storeRemainder": "pileB",
-                    "prompt": "Separate your lands into two piles. The lands you select form Pile 1; the rest form Pile 2.",
-                    "selectedLabel": "Pile 1",
-                    "remainderLabel": "Pile 2",
-                    "useTargetingUI": true,
-                    "alwaysPrompt": true
-                },
-                {
-                    "type": "ChoosePile",
-                    "pileA": "pileA",
-                    "pileB": "pileB",
-                    "chooser": "Opponent",
-                    "storeChosenAs": "destroyed",
-                    "storeOtherAs": "tapped",
-                    "prompt": "Choose which of the player's land piles is destroyed; the other pile is tapped."
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "destroyed",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Graveyard"
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "lands",
+                        "selection": "ChooseAnyNumber",
+                        "storeSelected": "pileA",
+                        "storeRemainder": "pileB",
+                        "prompt": "Separate your lands into two piles. The lands you select form Pile 1; the rest form Pile 2.",
+                        "selectedLabel": "Pile 1",
+                        "remainderLabel": "Pile 2",
+                        "useTargetingUI": true,
+                        "alwaysPrompt": true
                     },
-                    "moveType": "Destroy"
-                },
-                {
-                    "type": "TapUntapCollection",
-                    "collectionName": "tapped"
-                }
-            ]
+                    {
+                        "type": "ChoosePile",
+                        "pileA": "pileA",
+                        "pileB": "pileB",
+                        "chooser": "Opponent",
+                        "storeChosenAs": "destroyed",
+                        "storeOtherAs": "tapped",
+                        "prompt": "Choose which of the player's land piles is destroyed; the other pile is tapped."
+                    },
+                    {
+                        "type": "MoveCollection",
+                        "from": "destroyed",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Graveyard"
+                        },
+                        "moveType": "Destroy"
+                    },
+                    {
+                        "type": "TapUntapCollection",
+                        "collectionName": "tapped"
+                    }
+                ]
+            }
         }
     },
     "metadata": {
@@ -2046,19 +2052,22 @@
                 "type": "Composite",
                 "effects": [
                     {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": {
-                                "cardPredicates": [
-                                    "IsCreature",
-                                    {
-                                        "type": "NotKeyword",
-                                        "keyword": "FLYING"
-                                    }
-                                ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "NotKeyword",
+                                            "keyword": "FLYING"
+                                        }
+                                    ]
+                                }
                             }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -2068,18 +2077,19 @@
                         }
                     },
                     {
-                        "type": "ForEachPlayer",
-                        "players": "Each",
-                        "effects": [
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 4
-                                },
-                                "target": "Controller"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Players",
+                            "players": "Each"
+                        },
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 4
+                            },
+                            "target": "Controller"
+                        }
                     }
                 ]
             },
@@ -2087,19 +2097,22 @@
                 "type": "Composite",
                 "effects": [
                     {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": {
-                                "cardPredicates": [
-                                    "IsCreature",
-                                    {
-                                        "type": "NotKeyword",
-                                        "keyword": "FLYING"
-                                    }
-                                ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "NotKeyword",
+                                            "keyword": "FLYING"
+                                        }
+                                    ]
+                                }
                             }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -2109,18 +2122,19 @@
                         }
                     },
                     {
-                        "type": "ForEachPlayer",
-                        "players": "Each",
-                        "effects": [
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": "Controller"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Players",
+                            "players": "Each"
+                        },
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Controller"
+                        }
                     }
                 ]
             }
@@ -2196,11 +2210,14 @@
                 "type": "Composite",
                 "effects": [
                     {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature kw:flying"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature kw:flying"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -2210,18 +2227,19 @@
                         }
                     },
                     {
-                        "type": "ForEachPlayer",
-                        "players": "Each",
-                        "effects": [
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 4
-                                },
-                                "target": "Controller"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Players",
+                            "players": "Each"
+                        },
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 4
+                            },
+                            "target": "Controller"
+                        }
                     }
                 ]
             },
@@ -2229,11 +2247,14 @@
                 "type": "Composite",
                 "effects": [
                     {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature kw:flying"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature kw:flying"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -2243,18 +2264,19 @@
                         }
                     },
                     {
-                        "type": "ForEachPlayer",
-                        "players": "Each",
-                        "effects": [
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": "Controller"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Players",
+                            "players": "Each"
+                        },
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Controller"
+                        }
                     }
                 ]
             }
@@ -5145,9 +5167,12 @@
                             "prompt": "Choose which pile of your creatures can attack this turn."
                         },
                         {
-                            "type": "ForEachInCollection",
-                            "collection": "cantAttack",
-                            "effect": {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Collection",
+                                "collection": "cantAttack"
+                            },
+                            "body": {
                                 "type": "CantAttack",
                                 "target": "Self"
                             }
@@ -5613,42 +5638,48 @@
     "oracleText": "Each player chooses from the lands they control a land of each basic land type, then sacrifices the rest.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "ControlledPermanents",
-                        "filter": "land"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "ControlledPermanents",
+                            "filter": "land"
+                        },
+                        "storeAs": "lands"
                     },
-                    "storeAs": "lands"
-                },
-                {
-                    "type": "SelectFromCollection",
-                    "from": "lands",
-                    "selection": "ChooseAnyNumber",
-                    "storeSelected": "kept",
-                    "storeRemainder": "sacrificed",
-                    "prompt": "Choose a land of each basic land type to keep; the rest are sacrificed.",
-                    "selectedLabel": "Keep",
-                    "remainderLabel": "Sacrifice",
-                    "useTargetingUI": true,
-                    "restrictions": [
-                        "OnePerBasicLandType"
-                    ],
-                    "alwaysPrompt": true
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "sacrificed",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Graveyard"
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "lands",
+                        "selection": "ChooseAnyNumber",
+                        "storeSelected": "kept",
+                        "storeRemainder": "sacrificed",
+                        "prompt": "Choose a land of each basic land type to keep; the rest are sacrificed.",
+                        "selectedLabel": "Keep",
+                        "remainderLabel": "Sacrifice",
+                        "useTargetingUI": true,
+                        "restrictions": [
+                            "OnePerBasicLandType"
+                        ],
+                        "alwaysPrompt": true
                     },
-                    "moveType": "Sacrifice"
-                }
-            ]
+                    {
+                        "type": "MoveCollection",
+                        "from": "sacrificed",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Graveyard"
+                        },
+                        "moveType": "Sacrifice"
+                    }
+                ]
+            }
         }
     },
     "metadata": {
@@ -9217,11 +9248,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -9255,11 +9289,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -10758,17 +10795,16 @@
     "oracleText": "Return two target cards from your graveyard to your hand. Exile Restock.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Hand"
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Hand"
+            }
         },
         "targetRequirements": [
             {
@@ -11809,11 +11845,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "FIRST_STRIKE",
                         "target": "Self"
@@ -11826,11 +11865,14 @@
                         "condition": "WasKicked"
                     },
                     "then": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature ctrl:you"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "ModifyStats",
                             "powerModifier": {
                                 "type": "Fixed",
@@ -12088,25 +12130,26 @@
         "spellEffect": {
             "type": "ChooseColorThen",
             "then": {
-                "type": "ForEachPlayer",
-                "players": "Each",
-                "effects": [
-                    {
-                        "type": "DealDamage",
-                        "amount": {
-                            "type": "Count",
-                            "player": "You",
-                            "zone": "Battlefield",
-                            "filter": {
-                                "cardPredicates": [
-                                    "IsCreature",
-                                    "HasChosenColor"
-                                ]
-                            }
-                        },
-                        "target": "Controller"
-                    }
-                ]
+                "type": "ForEach",
+                "space": {
+                    "type": "IterationSpace.Players",
+                    "players": "Each"
+                },
+                "body": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Count",
+                        "player": "You",
+                        "zone": "Battlefield",
+                        "filter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                "HasChosenColor"
+                            ]
+                        }
+                    },
+                    "target": "Controller"
+                }
             }
         }
     },
@@ -13539,47 +13582,56 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "ControlledPermanents",
-                                "filter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "ControlledPermanents",
+                                    "filter": "creature"
+                                },
+                                "storeAs": "creatures"
                             },
-                            "storeAs": "creatures"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "creatures",
-                            "selection": "ChooseAnyNumber",
-                            "chooser": "SourceController",
-                            "storeSelected": "pileA",
-                            "storeRemainder": "pileB",
-                            "prompt": "Separate this player's creatures into two piles. The creatures you select form Pile 1; the rest form Pile 2.",
-                            "selectedLabel": "Pile 1",
-                            "remainderLabel": "Pile 2",
-                            "useTargetingUI": true,
-                            "alwaysPrompt": true
-                        },
-                        {
-                            "type": "ChoosePile",
-                            "pileA": "pileA",
-                            "pileB": "pileB",
-                            "storeChosenAs": "canBlock",
-                            "storeOtherAs": "cantBlock",
-                            "prompt": "Choose which pile of your creatures can block this turn."
-                        },
-                        {
-                            "type": "ForEachInCollection",
-                            "collection": "cantBlock",
-                            "effect": {
-                                "type": "CantBlockTargetCreatures",
-                                "target": "Self"
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "creatures",
+                                "selection": "ChooseAnyNumber",
+                                "chooser": "SourceController",
+                                "storeSelected": "pileA",
+                                "storeRemainder": "pileB",
+                                "prompt": "Separate this player's creatures into two piles. The creatures you select form Pile 1; the rest form Pile 2.",
+                                "selectedLabel": "Pile 1",
+                                "remainderLabel": "Pile 2",
+                                "useTargetingUI": true,
+                                "alwaysPrompt": true
+                            },
+                            {
+                                "type": "ChoosePile",
+                                "pileA": "pileA",
+                                "pileB": "pileB",
+                                "storeChosenAs": "canBlock",
+                                "storeOtherAs": "cantBlock",
+                                "prompt": "Choose which pile of your creatures can block this turn."
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Collection",
+                                    "collection": "cantBlock"
+                                },
+                                "body": {
+                                    "type": "CantBlockTargetCreatures",
+                                    "target": "Self"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         ]
@@ -14149,11 +14201,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -14226,10 +14281,9 @@
                 {
                     "type": "ChooseColorThen",
                     "then": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            "ChangeColorToChosen"
-                        ]
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": "ChangeColorToChosen"
                     }
                 },
                 {
@@ -14323,11 +14377,14 @@
                     "scope": "CombatOnly"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature attacking"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature attacking"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "DOESNT_UNTAP",
                         "target": "Self",
@@ -14365,19 +14422,22 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsLand"
-                            ],
-                            "controllerPredicate": {
-                                "type": "ControlledByReferencedPlayer",
-                                "target": "ControllerOfTriggeringEntity"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsLand"
+                                ],
+                                "controllerPredicate": {
+                                    "type": "ControlledByReferencedPlayer",
+                                    "target": "ControllerOfTriggeringEntity"
+                                }
                             }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self"
                     }
@@ -14715,16 +14775,19 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsPermanent"
-                            ],
-                            "controllerPredicate": "ControlledByActivePlayer"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsPermanent"
+                                ],
+                                "controllerPredicate": "ControlledByActivePlayer"
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "RemoveCounters",
                         "counterType": "hourglass",
                         "count": 2147483647,
@@ -15188,11 +15251,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -16103,12 +16169,15 @@
                     "moveType": "Discard"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:target-player",
-                        "chosenSubtypeKey": "chosenCreatureType"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:target-player",
+                            "chosenSubtypeKey": "chosenCreatureType"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
