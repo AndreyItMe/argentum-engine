@@ -531,6 +531,15 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.HasGreatestPower
     )
 
+    /**
+     * Must have the least power among *all* creatures on the battlefield (global, both players).
+     * On a tie every minimum-power creature matches — pair with a "choose one" selection to break
+     * the tie (Drop of Honey).
+     */
+    fun hasLeastPowerAmongAllCreatures() = copy(
+        statePredicates = statePredicates + StatePredicate.HasLeastPowerAmongAllCreatures
+    )
+
     /** Must have at least one Equipment attached */
     fun equipped() = copy(
         statePredicates = statePredicates + StatePredicate.IsEquipped

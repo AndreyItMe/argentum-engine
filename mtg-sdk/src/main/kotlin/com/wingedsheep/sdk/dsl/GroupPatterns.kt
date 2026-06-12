@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardSource
+import com.wingedsheep.sdk.scripting.effects.Chooser
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachEffect
@@ -85,6 +86,37 @@ object GroupPatterns {
             moveType = MoveType.Destroy,
             noRegenerate = noRegenerate,
             storeMovedAs = storeDestroyedAs
+        )
+    ))
+
+    /**
+     * "Destroy the creature with the least power" (Drop of Honey). Gathers every creature tied
+     * for the global minimum power, lets the controller pick one (auto-selected when there's a
+     * single minimum, a choice on a tie — CR: "if two or more are tied, you choose"), and
+     * destroys it.
+     */
+    fun destroyLeastPowerCreature(
+        noRegenerate: Boolean = false
+    ): CompositeEffect = CompositeEffect(listOf(
+        GatherCardsEffect(
+            source = CardSource.BattlefieldMatching(
+                filter = GameObjectFilter.Creature.hasLeastPowerAmongAllCreatures()
+            ),
+            storeAs = "leastPower_gathered"
+        ),
+        SelectFromCollectionEffect(
+            from = "leastPower_gathered",
+            selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(1)),
+            chooser = Chooser.Controller,
+            storeSelected = "leastPower_chosen",
+            useTargetingUI = true,
+            prompt = "Choose a creature with the least power to destroy"
+        ),
+        MoveCollectionEffect(
+            from = "leastPower_chosen",
+            destination = CardDestination.ToZone(Zone.GRAVEYARD),
+            moveType = MoveType.Destroy,
+            noRegenerate = noRegenerate
         )
     ))
 

@@ -124,6 +124,14 @@ object Conditions {
         Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Creature)
 
     /**
+     * If there are no creatures anywhere on the battlefield (either player). Global scope —
+     * `Player.Each` checks every player's battlefield, negated. Used by Drop of Honey's
+     * "when there are no creatures on the battlefield, sacrifice this enchantment".
+     */
+    val NoCreaturesOnBattlefield: ConditionInterface =
+        Exists(Player.Each, Zone.BATTLEFIELD, GameObjectFilter.Creature, negate = true)
+
+    /**
      * If you control at least one permanent matching [filter].
      * General-purpose battlefield existence check — pass any [GameObjectFilter]
      * (e.g. `GameObjectFilter.Creature.copy(statePredicates = listOf(StatePredicate.HasAnyCounter))`

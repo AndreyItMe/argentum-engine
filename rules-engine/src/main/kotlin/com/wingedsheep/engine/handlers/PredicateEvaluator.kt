@@ -830,6 +830,20 @@ class PredicateEvaluator {
                 entityPower >= maxPower
             }
 
+            // Global least power: the minimum power among *all* creatures on the battlefield,
+            // regardless of controller. Ties leave every minimum-power creature matching, so a
+            // downstream "choose one" selection breaks them (Drop of Honey).
+            StatePredicate.HasLeastPowerAmongAllCreatures -> {
+                val projected = state.projectedState
+                if (!projected.isCreature(entityId)) return false
+                val entityPower = projected.getPower(entityId) ?: return false
+                val minPower = state.getBattlefield()
+                    .filter { projected.isCreature(it) }
+                    .minOfOrNull { projected.getPower(it) ?: Int.MAX_VALUE }
+                    ?: return false
+                entityPower <= minPower
+            }
+
             // Composite / logical combinators
             is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicate(state, entityId, it, context) }
             is StatePredicate.And -> predicate.predicates.all { matchesStatePredicate(state, entityId, it, context) }

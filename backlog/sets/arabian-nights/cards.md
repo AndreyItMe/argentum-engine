@@ -2,7 +2,7 @@
 
 **Set Size:** 78 cards
 **Release Date:** December 17, 1993
-**Implemented:** 65 / 78
+**Implemented:** 66 / 78
 | Color | Count |
 |-------|-------|
 | White | 11 |
@@ -61,7 +61,7 @@
 - [x] Ydwen Efreet
 - [ ] Cyclone
 - [x] Desert Twister
-- [ ] Drop of Honey
+- [x] Drop of Honey
 - [x] Erhnam Djinn
 - [x] Ghazbán Ogre
 - [x] Ifh-Bíff Efreet

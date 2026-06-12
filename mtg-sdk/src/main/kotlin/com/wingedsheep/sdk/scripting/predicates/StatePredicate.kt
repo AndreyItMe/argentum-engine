@@ -218,6 +218,18 @@ sealed interface StatePredicate {
         override val description: String = "with the greatest power"
     }
 
+    /**
+     * Has the least power among *all* creatures on the battlefield (global scope, both players),
+     * not just the ones its controller controls. On a tie every creature sharing the minimum
+     * matches, so a downstream "choose one" selection breaks the tie (Drop of Honey: "destroy the
+     * creature with the least power … if two or more are tied, you choose one").
+     */
+    @SerialName("HasLeastPowerAmongAllCreatures")
+    @Serializable
+    data object HasLeastPowerAmongAllCreatures : Entity {
+        override val description: String = "with the least power"
+    }
+
     // =============================================================================
     // Equipment (Entity)
     // =============================================================================

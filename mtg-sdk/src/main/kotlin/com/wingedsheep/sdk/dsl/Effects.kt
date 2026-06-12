@@ -444,6 +444,14 @@ object Effects {
     ): Effect = GroupPatterns.destroyAllAndAttachedPipeline(filter, noRegenerate)
 
     /**
+     * Destroy the creature with the least power among all creatures on the battlefield. On a tie
+     * for least power the controller chooses which one (CR — Drop of Honey).
+     */
+    fun DestroyLeastPowerCreature(
+        noRegenerate: Boolean = false
+    ): Effect = GroupPatterns.destroyLeastPowerCreature(noRegenerate)
+
+    /**
      * Destroy all creatures blocking or blocked by the effect's source (CR 509), using the
      * combat pairing last known when the source left the battlefield. Intended for a dies
      * trigger (Abu Ja'far) — the live combat cross-references are already gone by resolution, so
