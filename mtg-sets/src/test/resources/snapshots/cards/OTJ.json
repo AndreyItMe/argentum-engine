@@ -1730,6 +1730,77 @@
     ]
 }
 
+// Desperate Bloodseeker
+{
+    "name": "Desperate Bloodseeker",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Vampire",
+    "oracleText": "Lifelink\nWhen this creature enters, target player mills two cards.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "player": {
+                                    "type": "ContextPlayer",
+                                    "index": 0
+                                }
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard",
+                                "player": {
+                                    "type": "ContextPlayer",
+                                    "index": 0
+                                }
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetPlayer",
+                    "id": "target player"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "86",
+        "artist": "Camille Alquier",
+        "flavorText": "With no mammals around, some vampires tried to feed on cactusfolk, with horrible results for everyone involved.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/5/a59da027-b5dd-4920-b3a1-9da05fcb1977.jpg?1712355583"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Discerning Peddler
 {
     "name": "Discerning Peddler",
@@ -2023,6 +2094,108 @@
     "colorIdentityOverride": [
         "BLUE",
         "RED"
+    ]
+}
+
+// Failed Fording
+{
+    "name": "Failed Fording",
+    "manaCost": "{1}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Return target nonland permanent to its owner's hand. If you control a Desert, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target nonland permanent"
+                    },
+                    "destination": "Hand"
+                },
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "Exists",
+                            "player": "You",
+                            "zone": "Battlefield",
+                            "filter": "land Desert"
+                        }
+                    },
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeAs": "surveiled"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "surveiled",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "toGraveyard",
+                                "storeRemainder": "toTop",
+                                "selectedLabel": "Put in graveyard",
+                                "remainderLabel": "Put on top"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "toGraveyard",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "toTop",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Library",
+                                    "placement": "Top"
+                                },
+                                "order": "ControllerChooses"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "nonland permanent"
+                },
+                "id": "target nonland permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "47",
+        "artist": "José Parodi",
+        "flavorText": "\"We should have taken the blasted ferry!\"\n—Hope Hagan, prospector",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/2/62bbe11b-e959-4080-98ac-09bd57519c00.jpg?1712355418"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -4040,6 +4213,64 @@
     ]
 }
 
+// Nimble Brigand
+{
+    "name": "Nimble Brigand",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Human Rogue",
+    "oracleText": "This creature can't be blocked if you've committed a crime this turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\nWhenever this creature deals combat damage to a player, draw a card.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": "CantBeBlocked",
+                "condition": "PlayerCommittedCrimeThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "58",
+        "rarity": "UNCOMMON",
+        "artist": "Kim Sokol",
+        "flavorText": "The hard part wasn't sneaking aboard. It was safely exiting with Slickshot flair.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/3/73c74d48-362d-4c3b-9ff7-39bdd19657a6.jpg?1712355461",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "A player commits a crime as they cast a spell, activate an ability, or put a triggered ability on the stack that targets at least one opponent, at least one permanent, spell, or ability an opponent controls, and/or at least one card in an opponent's graveyard."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Whether you've committed a crime is checked as blocks are declared. Committing a crime after blockers are declared won't make Nimble Brigand unblocked."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Oasis Gardener
 {
     "name": "Oasis Gardener",
@@ -4085,6 +4316,54 @@
         "imageUri": "https://cards.scryfall.io/normal/front/e/e/ee0dc663-4bfb-46d4-af79-d0143c799487.jpg?1712356276"
     },
     "colorIdentityOverride": []
+}
+
+// Omenport Vigilante
+{
+    "name": "Omenport Vigilante",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Human Mercenary",
+    "oracleText": "This creature has double strike as long as you've committed a crime this turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "DOUBLE_STRIKE",
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "PlayerCommittedCrimeThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "21",
+        "rarity": "UNCOMMON",
+        "artist": "Forrest Imel",
+        "flavorText": "Freestriders took to patrolling near the Omenpaths, protecting new arrivals from the robbers and charlatans prowling for easy marks.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/e/7ecd8b6f-b9aa-466a-909c-3209beef8244.jpg?1712355310",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "A player commits a crime as they cast a spell, activate an ability, or put a triggered ability on the stack that targets at least one opponent, at least one permanent, spell, or ability an opponent controls, and/or at least one card in an opponent's graveyard."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Whether you've committed a crime this turn is checked continuously. Omenport Vigilante loses double strike at the start of the cleanup step, when \"this turn\" effects end."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
 }
 
 // Outcaster Greenblade
