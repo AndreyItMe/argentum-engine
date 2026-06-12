@@ -7,7 +7,7 @@ import type { EntityId } from '@/types'
 import type { ClientGameState, ClientEvent, LegalActionInfo, PendingDecision, OpponentDecisionStatus, PriorityModeValue, Step } from '@/types'
 import { trackEvent, setInGame } from '@/utils/analytics.ts'
 import { applyStateDelta } from '@/network/deltaApplicator.ts'
-import { getWebSocket, clearLobbyId } from '../shared'
+import { getWebSocket, clearLobbyId, requestReauth } from '../shared'
 import type { SetState, GetState } from './types'
 
 /**
@@ -567,6 +567,11 @@ export function createGameplayHandlers(set: SetState, get: GetState): Pick<Messa
     },
 
     onError: (msg) => {
+      // NOT_CONNECTED means the server no longer recognizes this socket as an
+      // authenticated session (e.g. it restarted while the tab was backgrounded).
+      // Re-send the connect message with the stored token instead of surfacing the
+      // error — the server's reconnect path restores identity, game, and lobby state.
+      if (msg.code === 'NOT_CONNECTED' && requestReauth()) return
       if (msg.code === 'GAME_NOT_FOUND' || msg.message?.toLowerCase().includes('lobby')) {
         clearLobbyId()
       }

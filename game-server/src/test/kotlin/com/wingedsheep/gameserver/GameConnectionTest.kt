@@ -21,6 +21,49 @@ class GameConnectionTest : GameServerTestBase() {
                 connected.playerId shouldBe playerId
             }
 
+            test("ping is answered with pong before authentication") {
+                val client = createClient()
+                client.connect()
+                client.send(ClientMessage.Ping)
+
+                eventually(5.seconds) {
+                    client.messages.any { it is ServerMessage.Pong } shouldBe true
+                }
+            }
+
+            test("ping is answered with pong after authentication") {
+                val client = createClient()
+                client.connectAs("TestPlayer")
+                client.send(ClientMessage.Ping)
+
+                eventually(5.seconds) {
+                    client.messages.any { it is ServerMessage.Pong } shouldBe true
+                }
+            }
+
+            test("connecting from a second socket with the same token notifies and closes the first") {
+                val first = createClient()
+                first.connectAs("TabTester")
+                val token = first.messages.filterIsInstance<ServerMessage.Connected>().first().token
+
+                val second = createClient()
+                second.connect()
+                second.send(ClientMessage.Connect("TabTester", token))
+
+                eventually(5.seconds) {
+                    second.messages.any { it is ServerMessage.Reconnected } shouldBe true
+                }
+                eventually(5.seconds) {
+                    first.messages.any { it is ServerMessage.SessionReplaced } shouldBe true
+                }
+
+                // The winning socket keeps working.
+                second.send(ClientMessage.Ping)
+                eventually(5.seconds) {
+                    second.messages.any { it is ServerMessage.Pong } shouldBe true
+                }
+            }
+
             test("two players can create and join a game") {
                 val ctx = setupGame(skipMulligan = false)
                 ctx.sessionId shouldNotBe null

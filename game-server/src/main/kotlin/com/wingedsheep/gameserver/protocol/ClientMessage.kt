@@ -387,6 +387,15 @@ sealed interface ClientMessage {
     @SerialName("requestResync")
     data object RequestResync : ClientMessage
 
+    /**
+     * Connection liveness probe. The server always answers with [ServerMessage.Pong],
+     * regardless of authentication or game state. Sent by the client when a backgrounded
+     * tab becomes visible again, to detect half-open sockets (e.g. after OS sleep).
+     */
+    @Serializable
+    @SerialName("ping")
+    data object Ping : ClientMessage
+
     // =========================================================================
     // Quick Game Lobby Messages
     // =========================================================================

@@ -129,6 +129,27 @@ Sent when the user interacts with the UI.
 }
 ```
 
+### C. Connection Liveness (Client <-> Server)
+
+`{"type": "ping"}` (client) is always answered with `{"type": "pong"}` (server), regardless of
+authentication or game state. The client sends it when a backgrounded tab becomes visible while
+the socket still claims to be open: a socket can sit half-open after OS sleep without ever firing
+`close`, and a silent server (no message within 5s) tells the client to tear the socket down and
+reconnect. Any inbound message counts as proof of life, not just the pong.
+
+Related recovery contracts:
+
+- `{"type": "requestResync"}` (client) asks for a full `stateUpdate` instead of deltas — sent on
+  tab return and when a `stateVersion` gap is detected.
+- A `NOT_CONNECTED` error (server) means the socket is open but not associated with an
+  authenticated session (e.g. the server restarted). The client recovers by re-sending `connect`
+  with its stored token rather than surfacing the error.
+- `{"type": "sessionReplaced"}` (server) is sent to the *previous* socket when the same identity
+  (token) authenticates from a new socket — i.e. the player opened the game in another tab or
+  device. The server closes that socket right after sending; the receiving client stops all
+  auto-reconnect (reconnecting would steal the session straight back) and shows a takeover
+  overlay whose "Use here" button reclaims the session explicitly.
+
 ---
 
 ## 3. Drafting Payload (REST / HTTP)
