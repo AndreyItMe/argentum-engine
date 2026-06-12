@@ -1,9 +1,15 @@
 package com.wingedsheep.engine.scenarios
 
+import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
+import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
+import com.wingedsheep.engine.mechanics.layers.Layer
+import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.Duration
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -14,10 +20,12 @@ import io.kotest.matchers.shouldNotBe
  * Oracle: "When this creature dies, destroy all creatures blocking or blocked by it.
  * They can't be regenerated."
  *
- * The dies trigger uses the source-relative [com.wingedsheep.sdk.scripting.predicates.StatePredicate.BlockingOrBlockedBySource]
- * predicate: it reads the *surviving* creatures' combat components against Abu Ja'far's
- * (now graveyard-bound) entity id, so the combat pairing is recovered as last-known
- * information after Abu Ja'far has left combat.
+ * The dies trigger uses [com.wingedsheep.sdk.scripting.effects.CardSource.LastKnownCombatPairedWithSource]:
+ * the live combat cross-references are torn down by the time a dies trigger resolves, so the
+ * pairing (CR 509) is captured as last-known information on Abu Ja'far's leaves-battlefield
+ * event ([com.wingedsheep.engine.core.ZoneChangeEvent.lastKnownBlockingOrBlockedByIds]) and the
+ * gather restricts it to creatures still on the battlefield. `noRegenerate = true`, so a
+ * shielded blocker is destroyed anyway.
  */
 class AbuJafarTest : FunSpec({
 
@@ -98,4 +106,54 @@ class AbuJafarTest : FunSpec({
         driver.findPermanent(attacker, "Abu Ja'far") shouldBe null
         driver.findPermanent(defender, "Grizzly Bears") shouldBe null
     }
+
+    test("Abu Ja'far's trigger can't be regenerated — a shielded blocker is destroyed anyway") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Plains" to 40), startingLife = 20)
+
+        val attacker = driver.activePlayer!!
+        val defender = driver.getOpponent(attacker)
+
+        val abu = driver.putCreatureOnBattlefield(attacker, "Abu Ja'far")
+        driver.removeSummoningSickness(abu)
+
+        // The 2/2 blocks Abu Ja'far (0/1) — it takes no combat damage back, so its
+        // regeneration shield is still up when the dies trigger resolves.
+        val blockingBears = driver.putCreatureOnBattlefield(defender, "Grizzly Bears")
+        driver.removeSummoningSickness(blockingBears)
+        driver.replaceState(
+            driver.state.copy(
+                floatingEffects = driver.state.floatingEffects + regenerationShield(blockingBears, defender)
+            )
+        )
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        if (driver.activePlayer != attacker) {
+            driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        }
+
+        driver.declareAttackers(attacker, listOf(abu), defender)
+        driver.passPriorityUntil(Step.DECLARE_BLOCKERS)
+        driver.declareBlockers(defender, mapOf(blockingBears to listOf(abu)))
+
+        // Abu Ja'far dies; its "can't be regenerated" trigger destroys the blocker even
+        // though a regeneration shield is up.
+        driver.passPriorityUntil(Step.POSTCOMBAT_MAIN)
+
+        driver.findPermanent(attacker, "Abu Ja'far") shouldBe null
+        driver.findPermanent(defender, "Grizzly Bears") shouldBe null
+    }
 })
+
+private fun regenerationShield(entityId: EntityId, controllerId: EntityId) = ActiveFloatingEffect(
+    id = EntityId.generate(),
+    effect = FloatingEffectData(
+        layer = Layer.ABILITY,
+        modification = SerializableModification.RegenerationShield,
+        affectedEntities = setOf(entityId)
+    ),
+    duration = Duration.EndOfTurn,
+    sourceId = null,
+    controllerId = controllerId,
+    timestamp = 1L
+)
