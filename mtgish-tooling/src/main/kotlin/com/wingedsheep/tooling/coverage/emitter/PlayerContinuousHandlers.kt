@@ -2,6 +2,7 @@ package com.wingedsheep.tooling.coverage.emitter
 
 import com.wingedsheep.tooling.coverage.Dsl
 import com.wingedsheep.tooling.coverage.Lit
+import com.wingedsheep.tooling.coverage.amountNode
 import com.wingedsheep.tooling.coverage.arg
 import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.call
@@ -172,6 +173,13 @@ internal fun EmitCtx.renderPlayerAction(node: JsonObject, tvar: String?): Dsl? {
         }
         "DiscardACardAtRandom" -> {
             return if (ptv != null) call("Patterns.Hand.discardRandom", arg("1"), arg(Lit(ptv))) else call("Patterns.Hand.discardRandom", arg("1"))
+        }
+        "MillNumberCards" -> {
+            // "target player mills N cards" (Desperate Bloodseeker's enters trigger). The milled player
+            // is the bound target; the count is a fixed Integer or a recognised dynamic amount. An
+            // unrenderable count scaffolds rather than guessing.
+            val amt = amountExpr(inner["args"]) ?: dynamicAmountExpr(amountNode(inner["args"])) ?: return null
+            return if (ptv != null) call("Patterns.Library.mill", arg(amt), arg(Lit(ptv))) else call("Patterns.Library.mill", arg(amt))
         }
         "SkipAllCombatPhasesTheirNextTurn" -> {
             return if (ptv != null) call("SkipCombatPhasesEffect", arg(Lit(ptv))) else call("SkipCombatPhasesEffect")

@@ -101,14 +101,29 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
     }
 
     // Inline `If{cond}[effects]` action (inside an ActionList) -> a `ConditionalEffect`. Renders only the
-    // one condition shape we can express faithfully: "if [the targeted permanent] had mana value N or
-    // less" (`PermanentPassesFilter(Ref_TargetPermanent, ManaValueIs(LessThanOrEqualTo Integer N))`),
-    // mapped to `Conditions.TargetSpellManaValueAtMost(DynamicAmount.Fixed(N))` — Consuming Ashes'
-    // "Exile target creature. If it had mana value 3 or less, surveil 2." Any other condition / target
-    // index / comparator declines (-> SCAFFOLD) rather than widening.
+    // condition shapes we can express faithfully:
+    //  - "if [the targeted permanent] had mana value N or less"
+    //    (`PermanentPassesFilter(Ref_TargetPermanent, ManaValueIs(LessThanOrEqualTo Integer N))`) ->
+    //    `Conditions.TargetSpellManaValueAtMost(DynamicAmount.Fixed(N))` — Consuming Ashes' "Exile target
+    //    creature. If it had mana value 3 or less, surveil 2."
+    //  - "if you control a <filter>" (`PlayerPassesFilter(You, ControlsA(<filter>))`) ->
+    //    `Conditions.YouControl(<filter>)` via [actionConditionDsl] — Failed Fording's "Return target
+    //    nonland permanent to its owner's hand. If you control a Desert, surveil 1."
+    // Any other condition / target index / comparator declines (-> SCAFFOLD) rather than widening.
     on("If") { node, args, tvar ->
         val a = args.asArr ?: return@on null
         val cond = a.getOrNull(0) as? JsonObject ?: return@on null
+        val inner = (a.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return@on null
+        // "if you control a <filter>" — a resolution-time state test over your own board.
+        if (cond.strField("_Condition") == "PlayerPassesFilter") {
+            val condDsl = actionConditionDsl(cond) ?: return@on null
+            val edsl = renderEffectList(inner, tvar) ?: return@on null
+            return@on call(
+                "ConditionalEffect",
+                arg("condition", Lit(condDsl)),
+                arg("effect", edsl),
+            )
+        }
         if (cond.strField("_Condition") != "PermanentPassesFilter") return@on null
         val condArgs = cond["args"].asArr ?: return@on null
         // Subject must be the first targeted permanent (Ref_TargetPermanent / Ref_TargetPermanent1).
@@ -119,7 +134,6 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         val cmp = filter["args"] as? JsonObject ?: return@on null
         if (cmp.strField("_Comparison") != "LessThanOrEqualTo") return@on null
         val n = (cmp["args"].asInt()) ?: ((cmp["args"] as? JsonObject)?.get("args").asInt()) ?: return@on null
-        val inner = (a.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return@on null
         val edsl = renderEffectList(inner, tvar) ?: return@on null
         call(
             "ConditionalEffect",

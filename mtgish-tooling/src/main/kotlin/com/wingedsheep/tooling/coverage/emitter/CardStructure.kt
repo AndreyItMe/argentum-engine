@@ -268,6 +268,25 @@ private fun EmitCtx.youControlConditionDsl(condNode: JsonElement?): String? {
 }
 
 /**
+ * "you've committed a crime this turn" (`PlayerPassesFilter(You, CommitedACrimeThisTurn)`, OTJ) ->
+ * the `Conditions.YouCommittedCrimeThisTurn` DSL string, or null when the player isn't You / the
+ * filter isn't the bare crime predicate. Used by the [ifRuleBlock] static gates (Nimble Brigand's
+ * conditional unblockable, Omenport Vigilante's conditional double strike). The predicate reads the
+ * per-turn crime tracker each time the projected state is computed, so the gated ability appears the
+ * moment a crime is committed and reverts at cleanup.
+ */
+private fun EmitCtx.youCommittedCrimeConditionDsl(condNode: JsonElement?): String? {
+    val cond = condNode as? JsonObject ?: return null
+    if (cond.strField("_Condition") != "PlayerPassesFilter") return null
+    val args = cond["args"].asArr ?: return null
+    if ((args.getOrNull(0) as? JsonObject)?.strField("_Player") != "You") return null
+    val crime = args.getOrNull(1) as? JsonObject ?: return null
+    // The bare crime predicate carries no further args; a parameterized variant would change meaning.
+    if (crime.strField("_Players") != "CommitedACrimeThisTurn") return null
+    return "Conditions.YouCommittedCrimeThisTurn"
+}
+
+/**
  * `If{cond}[rules]` permanent rule -> one or more `staticAbility { ability = ... }` blocks gating a
  * continuous effect on a condition. Renders only the exact shapes we can express faithfully:
  *
@@ -323,16 +342,43 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
         return listOf(staticAbilityStmt(call("CanAttackDespiteDefender", arg("condition", Lit(condDsl)))))
     }
 
+    // Nimble Brigand: "This creature can't be blocked if you've committed a crime this turn."
+    //   If(PlayerPassesFilter(You, CommitedACrimeThisTurn))
+    //     [ PermanentRuleEffect(ThisPermanent, [ CantBeBlocked ]) ]
+    // -> ConditionalStaticAbility(CantBeBlocked(), Conditions.YouCommittedCrimeThisTurn). Only the
+    // SELF (ThisPermanent), bare CantBeBlocked inner rule gated on the crime predicate renders; any
+    // other permanent rule or condition declines -> SCAFFOLD. The conditional evasion (CR 509.1b is
+    // checked as blocks are declared) is left to the engine's projected-state read of the gate.
+    if (innerRule.strField("_Rule") == "PermanentRuleEffect" &&
+        jsonContains(innerRule, "_PermanentRule", "CantBeBlocked") &&
+        jsonContains(innerRule, "_Permanent", "ThisPermanent")
+    ) {
+        // A CantBeBlocked carrying any further args ("can't be blocked except by …") isn't the bare
+        // unblockable rule — decline rather than drop the exception.
+        val pr = (innerRule["args"].asArr?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()?.singleOrNull()
+        if (pr == null || pr.strField("_PermanentRule") != "CantBeBlocked" || pr.size > 1) { reasons.add("If"); return null }
+        val condDsl = youCommittedCrimeConditionDsl(cond) ?: run { reasons.add("If"); return null }
+        return listOf(staticAbilityStmt(call(
+            "ConditionalStaticAbility",
+            arg("ability", call("CantBeBlocked")),
+            arg("condition", Lit(condDsl)),
+        )))
+    }
+
     // Stoic Sphinx: "This creature has hexproof as long as you haven't cast a spell this turn."
     //   If(PlayerPassesFilter(You, HasntCastASpellThisTurn(AnySpell)))
     //     [ PermanentLayerEffect(ThisPermanent, [ AddAbility(<keyword>) ]) ]
     // -> ConditionalStaticAbility(GrantKeyword(Keyword.X, Filters.Self), Not(YouCastSpellsThisTurn(1))).
+    // Omenport Vigilante: "This creature has double strike as long as you've committed a crime this
+    //   turn." — same shape with a `CommitedACrimeThisTurn` gate.
     // Only the SELF "grant a single keyword to this permanent" inner shape renders; any other layer
     // effect (stat change, multi-keyword, group filter) declines -> SCAFFOLD.
     if (innerRule.strField("_Rule") == "PermanentLayerEffect" &&
         jsonContains(innerRule, "_Permanent", "ThisPermanent")
     ) {
-        val condDsl = youHaventCastASpellConditionDsl(cond) ?: run { reasons.add("If"); return null }
+        val condDsl = youHaventCastASpellConditionDsl(cond)
+            ?: youCommittedCrimeConditionDsl(cond)
+            ?: run { reasons.add("If"); return null }
         val layerEffects = (innerRule["args"].asArr?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
         val le = layerEffects?.singleOrNull()
         if (le == null || le.strField("_StaticLayerEffect") != "AddAbility") { reasons.add("If"); return null }
@@ -950,7 +996,10 @@ private fun isSelf(trig: JsonObject): Boolean {
     // Trophy Hunter's WasDealtDamageByPermanentThisTurn(ThisPermanent), "a creature with flying dealt
     // damage by THIS dies" — is NOT a self-trigger, so scope the check to the trigger's own subject
     // rather than a deep search that any nested ThisPermanent reference would satisfy.
-    val subject = trig["args"]
+    // Some triggers carry their subject as the FIRST of several args (the combat-damage-to-a-player
+    // trigger is `[SinglePermanent(ThisPermanent), AnyPlayer]`) — the subject is then args[0], not the
+    // whole args node. A plain SinglePermanent object stays the subject directly.
+    val subject = (trig["args"] as? JsonArray)?.firstOrNull() ?: trig["args"]
     return subject.strField("_Permanents") == "SinglePermanent" &&
         subject.field("args").strField("_Permanent") == "ThisPermanent"
 }
