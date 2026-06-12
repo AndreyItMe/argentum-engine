@@ -81,16 +81,34 @@ private fun targetLocalNamed(varName: String, targetName: String, node: Dsl): St
  * exactly as the single-target path does (Skulduggery: "target creature you control … and target
  * creature an opponent controls …").
  */
-private fun EmitCtx.multiTargetLocals(targets: List<JsonObject>, actions: List<JsonObject>?): Pair<List<Stmt>, List<String>>? {
+private data class MultiTargetLocals(
+    val statements: List<Stmt>,
+    val vars: List<String>,
+    val refVars: Map<String, String>,
+)
+
+private fun EmitCtx.multiTargetLocals(targets: List<JsonObject>, actions: List<JsonObject>?): MultiTargetLocals? {
     val stmts = mutableListOf<Stmt>()
     val vars = mutableListOf<String>()
+    val refsByKind = mutableMapOf<String, MutableList<String>>()
     targets.forEachIndexed { i, t ->
         val node = targetExpr(t, actions) ?: run { reasons.add("target:${t.strField("_Target")}"); return null }
         val varName = "t${i + 1}"
         stmts.add(targetLocalNamed(varName, varName, node))
         vars.add(varName)
+        refKindForTarget(t)?.let { refsByKind.getOrPut(it) { mutableListOf() }.add(varName) }
     }
-    return stmts to vars
+    val refVars = refsByKind.mapNotNull { (ref, refVars) ->
+        if (refVars.size == 1) ref to refVars.single() else null
+    }.toMap()
+    return MultiTargetLocals(stmts, vars, refVars)
+}
+
+private fun refKindForTarget(target: JsonObject): String? = when (target.strField("_Target")) {
+    "TargetPlayer" -> "Ref_TargetPlayer"
+    "TargetPermanent", "NumberTargetPermanents", "UptoNumberTargetPermanents", "OneOrTwoTargetPermanents" -> "Ref_TargetPermanent"
+    "TargetGraveyardCard", "UptoOneTargetGraveyardCard" -> "Ref_TargetGraveyardCard"
+    else -> null
 }
 
 private fun EmitCtx.conditionDsl(ifNode: JsonElement?): String? {
@@ -446,8 +464,10 @@ internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
     // resolve to the right local. Any target the renderer can't express declines -> SCAFFOLD.
     if (targets != null && targets.size > 1) {
         val multi = multiTargetLocals(targets, actions) ?: run { reasons.add("multi-target"); return null }
-        val (targetStmts, vars) = multi
+        val targetStmts = multi.statements
+        val vars = multi.vars
         targetVars = vars
+        targetRefVars = multi.refVars
         try {
             val edsl = renderEffectList(actions, vars.firstOrNull()) ?: run { reasons.add("multi-target"); return null }
             val restrictions = castRestrictionLines((card["Rules"].asArr ?: JsonArray(emptyList())).filterIsInstance<JsonObject>()) ?: return null
@@ -458,6 +478,7 @@ internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
             return listOf(Sub(Block("spell", stmts)))
         } finally {
             targetVars = emptyList()
+            targetRefVars = emptyMap()
         }
     }
 

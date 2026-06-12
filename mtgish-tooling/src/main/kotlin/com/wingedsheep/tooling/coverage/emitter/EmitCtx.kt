@@ -77,6 +77,13 @@ class EmitCtx(val keywords: Set<String>, val oracleText: String? = null) {
      * to the right local; cleared otherwise.
      */
     var targetVars: List<String> = emptyList()
+
+    /**
+     * For multi-target spells whose IR uses unsuffixed refs (`Ref_TargetPlayer`, `Ref_TargetPermanent`),
+     * map the ref to a target local only when that ref kind appears exactly once. Ambiguous same-kind
+     * multi-targets deliberately decline rather than guessing.
+     */
+    var targetRefVars: Map<String, String> = emptyMap()
 }
 
 internal val SELF_REFS = setOf(
@@ -338,7 +345,9 @@ private fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
             return targetVars.getOrNull(idx)
         }
     }
-    if (ref in setOf("Ref_TargetPermanent", "Ref_TargetPlayer", "Ref_TargetGraveyardCard")) return tvar
+    if (ref in setOf("Ref_TargetPermanent", "Ref_TargetPlayer", "Ref_TargetGraveyardCard")) {
+        return if (targetVars.isNotEmpty()) targetRefVars[ref] else tvar
+    }
     if (ref in SELF_REFS) return "EffectTarget.Self"
     // "that player" in a trigger ("the player ~ dealt combat damage to") -> the triggering player.
     if (ref == "Trigger_ThatPlayer") return "EffectTarget.PlayerRef(Player.TriggeringPlayer)"
