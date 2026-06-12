@@ -97,8 +97,7 @@ class CounterEffectExecutor(
         // a spell carries SpellOnStackComponent; activated/triggered abilities do not.
         val effectiveTarget = when (effect.target) {
             CounterTarget.SpellOrAbility -> {
-                val isSpell = state.getEntity(entityId)?.has<SpellOnStackComponent>() == true
-                if (isSpell) CounterTarget.Spell else CounterTarget.Ability
+                if (state.isSpellOnStack(entityId)) CounterTarget.Spell else CounterTarget.Ability
             }
             else -> effect.target
         }
