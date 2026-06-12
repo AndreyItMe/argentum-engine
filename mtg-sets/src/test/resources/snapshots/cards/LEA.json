@@ -3084,6 +3084,52 @@
     ]
 }
 
+// Samite Healer
+{
+    "name": "Samite Healer",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Human Cleric",
+    "oracleText": "{T}: Prevent the next 1 damage that would be dealt to any target this turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "PreventDamageShield",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "AnyTarget",
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "37",
+        "artist": "Tom Wänerstrand",
+        "flavorText": "Healers ultimately acquire the divine gifts of spiritual and physical wholeness. The most devout are also granted the ability to pass physical wholeness on to others.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/f/efba235e-04e5-449c-906c-0ac33f6d7929.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Savannah
 {
     "name": "Savannah",

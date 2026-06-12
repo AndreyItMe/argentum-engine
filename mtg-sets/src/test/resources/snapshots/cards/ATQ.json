@@ -81,6 +81,28 @@
     "colorIdentityOverride": []
 }
 
+// Ornithopter
+{
+    "name": "Ornithopter",
+    "manaCost": "{0}",
+    "typeLine": "Artifact Creature — Thopter",
+    "oracleText": "Flying",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "metadata": {
+        "collectorNumber": "60",
+        "artist": "Amy Weber",
+        "flavorText": "Many scholars believe that these creatures were the result of Urza's first attempt at mechanical life, perhaps created in his early days as an apprentice to Tocasia.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/9/59cc9bdb-7cf2-4795-bac7-ffff605c9eb0.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Sage of Lat-Nam
 {
     "name": "Sage of Lat-Nam",
@@ -125,6 +147,42 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Shatterstorm
+{
+    "name": "Shatterstorm",
+    "manaCost": "{2}{R}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy all artifacts. They can't be regenerated.",
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "artifact"
+                },
+                "noRegenerate": true
+            },
+            "body": {
+                "type": "MoveToZone",
+                "target": "Self",
+                "destination": "Graveyard",
+                "byDestruction": true
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "28",
+        "rarity": "RARE",
+        "artist": "Mark Poole",
+        "flavorText": "Chains of leaping fire and sizzling lightning laid waste the artificers' handiwork, sparing not a single device.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/9/0987461a-45c0-4956-8627-cd27a7e038d0.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 

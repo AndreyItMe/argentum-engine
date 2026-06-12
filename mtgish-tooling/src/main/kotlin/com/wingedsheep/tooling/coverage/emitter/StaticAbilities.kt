@@ -436,6 +436,12 @@ private fun EmitCtx.staticAbilityExpr(ruleName: String, ruleNode: JsonObject): D
  * floating one-shot `Effects.GrantCantBeBlockedExceptBy` grant (`CreatePermanentRuleEffectUntil`).
  */
 internal fun EmitCtx.cantBeBlockedExceptByFilter(ruleNode: JsonObject): String? {
+    // A compound blocker restriction ("except by Walls and/or creatures with flying" — Elven Riders)
+    // unions a creature subtype with a keyword/type clause via an Or/And node. This surface renders only
+    // flat single-clause shapes; the nested IsCreatureType / HasAbility scans below would each grab one
+    // branch and silently drop the other (emitting "except by Walls", dropping the flyers). Decline so
+    // the card scaffolds rather than emitting a confidently-wrong, too-narrow blocker filter.
+    if ((ruleNode["args"] as? JsonObject)?.strField("_Permanents") in setOf("Or", "And")) return null
     if (oracleText?.contains("defender", ignoreCase = true) == true)
         return "GameObjectFilter.Creature.withKeyword(Keyword.DEFENDER)"
     // "except by [creature subtype]" (Invisibility: except by Walls). The rule names the *only* legal

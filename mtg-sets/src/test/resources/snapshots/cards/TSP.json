@@ -1,3 +1,69 @@
+// Assassinate
+{
+    "name": "Assassinate",
+    "manaCost": "{2}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy target tapped creature.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target"
+            },
+            "destination": "Graveyard",
+            "byDestruction": true
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature tapped"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "95",
+        "artist": "Kev Walker",
+        "flavorText": "The rulers of old Dominaria kept assassins on retainer. However, the true loyalty of these master killers was always to their peers. This elite brotherhood survived the fall of the old royal order.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/0/40b67839-622d-41c1-b9c7-1a26b021ec78.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Cancel
+{
+    "name": "Cancel",
+    "manaCost": "{1}{U}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Counter target spell.",
+    "script": {
+        "spellEffect": "Counter",
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {},
+                    "zone": "Stack"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "51",
+        "artist": "Mark Poole",
+        "flavorText": "Fendros gasped as he watched the spell drip from the ends of his fingers. He moved his foot, afraid to disturb the spot where it lay slain.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b4e175f7-f649-451b-9ee5-ad1140b2e8a7.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Terramorphic Expanse
 {
     "name": "Terramorphic Expanse",

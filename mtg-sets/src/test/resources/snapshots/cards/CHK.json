@@ -1,3 +1,29 @@
+// Counsel of the Soratami
+{
+    "name": "Counsel of the Soratami",
+    "manaCost": "{2}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Draw two cards.",
+    "script": {
+        "spellEffect": {
+            "type": "DrawCards",
+            "count": {
+                "type": "Fixed",
+                "amount": 2
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "55",
+        "artist": "Randy Gallegos",
+        "flavorText": "\"Wisdom is not the counting of all the drops in a waterfall. Wisdom is learning why the water seeks the earth.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/4/4401911c-bfb0-4c94-9fc1-49198ccecc94.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Kodama's Reach
 {
     "name": "Kodama's Reach",
@@ -50,5 +76,41 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Uncontrollable Anger
+{
+    "name": "Uncontrollable Anger",
+    "manaCost": "{2}{R}{R}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nEnchant creature\nEnchanted creature gets +2/+2 and attacks each combat if able.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 2,
+                "toughnessBonus": 2
+            },
+            "MustAttack"
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "195",
+        "artist": "Matt Thompson",
+        "flavorText": "To an akki warrior, gravity is the direction of the nearest unsmashed face.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/3/83fca4fa-d0e1-41c4-999a-9804786eacbb.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }

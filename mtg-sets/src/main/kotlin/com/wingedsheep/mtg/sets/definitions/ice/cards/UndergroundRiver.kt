@@ -1,4 +1,4 @@
-package com.wingedsheep.mtg.sets.definitions.blc.cards
+package com.wingedsheep.mtg.sets.definitions.ice.cards
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.dsl.Effects
@@ -10,16 +10,16 @@ import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
- * Karplusan Forest
+ * Underground River
  * Land
  *
  * {T}: Add {C}.
- * {T}: Add {R} or {G}. This land deals 1 damage to you.
+ * {T}: Add {U} or {B}. This land deals 1 damage to you.
  */
-val KarplusanForest = card("Karplusan Forest") {
+val UndergroundRiver = card("Underground River") {
     typeLine = "Land"
-    colorIdentity = "RG"
-    oracleText = "{T}: Add {C}.\n{T}: Add {R} or {G}. This land deals 1 damage to you."
+    colorIdentity = "UB"
+    oracleText = "{T}: Add {C}.\n{T}: Add {U} or {B}. This land deals 1 damage to you."
 
     activatedAbility {
         cost = AbilityCost.Tap
@@ -30,7 +30,7 @@ val KarplusanForest = card("Karplusan Forest") {
 
     activatedAbility {
         cost = AbilityCost.Tap
-        effect = Effects.AddMana(Color.RED)
+        effect = Effects.AddMana(Color.BLUE)
             .then(Effects.DealDamage(1, EffectTarget.PlayerRef(Player.You)))
         manaAbility = true
         timing = TimingRule.ManaAbility
@@ -38,7 +38,7 @@ val KarplusanForest = card("Karplusan Forest") {
 
     activatedAbility {
         cost = AbilityCost.Tap
-        effect = Effects.AddMana(Color.GREEN)
+        effect = Effects.AddMana(Color.BLACK)
             .then(Effects.DealDamage(1, EffectTarget.PlayerRef(Player.You)))
         manaAbility = true
         timing = TimingRule.ManaAbility
@@ -46,9 +46,8 @@ val KarplusanForest = card("Karplusan Forest") {
 
     metadata {
         rarity = Rarity.RARE
-        collectorNumber = "314"
-        artist = "Sam Burley"
-        flavorText = "Between jagged, snowcapped peaks, the dense bands of hardy evergreens provide the perfect cover for roving bands of orc and goblin raiders."
-        imageUri = "https://cards.scryfall.io/normal/front/b/f/bf999ad0-ec64-4bbc-b0c3-fc0946cf65de.jpg?1721429765"
+        collectorNumber = "362"
+        artist = "NéNé Thomas"
+        imageUri = "https://cards.scryfall.io/normal/front/9/2/92369d7e-5e5a-46f9-bb31-c57d62410283.jpg"
     }
 }
