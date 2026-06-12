@@ -1107,11 +1107,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "VariableReference",

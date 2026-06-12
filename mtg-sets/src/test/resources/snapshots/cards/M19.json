@@ -20,11 +20,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {

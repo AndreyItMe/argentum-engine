@@ -92,39 +92,45 @@
                     "to": "Graveyard"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
                             },
-                            "storeSelected": "discarded"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "discarded",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
                 }
             }
         ]
@@ -291,11 +297,14 @@
                 "id": "ability_1",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature kw:flying attacking"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature kw:flying attacking"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -313,11 +322,14 @@
                 "id": "ability_2",
                 "trigger": "BlockEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature kw:flying"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature kw:flying"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -552,11 +564,14 @@
     "oracleText": "Destroy all creatures and planeswalkers except for commanders.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",

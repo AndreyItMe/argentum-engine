@@ -32,11 +32,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "AddCounters",
                                 "counterType": "+1/+1",
                                 "count": 1,
@@ -88,18 +91,17 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "AddCounters",
-                            "counterType": "+1/+1",
-                            "count": 1,
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -394,18 +396,17 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Graveyard",
-                            "byDestruction": true
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -2577,11 +2578,14 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",
@@ -3031,11 +3035,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -4707,17 +4714,16 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachTarget",
-                            "effects": [
-                                {
-                                    "type": "TapUntap",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    },
-                                    "tap": false
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": "IterationSpace.Targets",
+                            "body": {
+                                "type": "TapUntap",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "tap": false
+                            }
                         },
                         "AddCombatPhase"
                     ]
@@ -4972,11 +4978,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature token ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature token ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "HASTE",
                         "target": "Self"
@@ -5019,20 +5028,23 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsNonland",
-                                "IsPermanent"
-                            ],
-                            "statePredicates": [
-                                "EnteredThisTurn"
-                            ]
-                        },
-                        "excludeSelf": true
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsNonland",
+                                    "IsPermanent"
+                                ],
+                                "statePredicates": [
+                                    "EnteredThisTurn"
+                                ]
+                            },
+                            "excludeSelf": true
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "MoveToZone",
                         "target": "Self",
                         "destination": "Hand"
@@ -5204,11 +5216,14 @@
                 "id": "ability_2",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
@@ -6780,12 +6795,15 @@
                 "id": "ability_2",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Dinosaur ctrl:you",
-                        "excludeSelf": true
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Dinosaur ctrl:you",
+                            "excludeSelf": true
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
@@ -7342,12 +7360,15 @@
                 "id": "ability_2",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature attacking",
-                        "excludeSelf": true
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature attacking",
+                            "excludeSelf": true
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",

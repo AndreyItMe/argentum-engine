@@ -12,7 +12,9 @@ import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
+import com.wingedsheep.sdk.scripting.effects.ForEachEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
+import com.wingedsheep.sdk.scripting.effects.IterationSpace
 import com.wingedsheep.sdk.scripting.effects.GainControlEffect
 import com.wingedsheep.sdk.scripting.effects.GrantHarmonizeEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
@@ -195,10 +197,11 @@ class CardSerializationRoundTripTest : DescribeSpec({
             serialized shouldContain "ControlledByYou"
 
             val deserialized = CardLoader.fromJson(serialized)
-            val effect = deserialized.script.spellEffect as ForEachInGroupEffect
-            effect.filter.baseFilter.cardPredicates.any { it is CardPredicate.HasColor } shouldBe true
-            effect.filter.baseFilter.statePredicates.any { it is StatePredicate.IsTapped } shouldBe true
-            effect.filter.baseFilter.controllerPredicate shouldBe ControllerPredicate.ControlledByYou
+            val effect = deserialized.script.spellEffect as ForEachEffect
+            val space = effect.space as IterationSpace.Group
+            space.filter.baseFilter.cardPredicates.any { it is CardPredicate.HasColor } shouldBe true
+            space.filter.baseFilter.statePredicates.any { it is StatePredicate.IsTapped } shouldBe true
+            space.filter.baseFilter.controllerPredicate shouldBe ControllerPredicate.ControlledByYou
         }
     }
 

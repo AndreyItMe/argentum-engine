@@ -54,11 +54,14 @@
     "oracleText": "Creatures you control get +1/+0 and gain indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy them.)",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature ctrl:you"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "Composite",
                 "effects": [
                     {

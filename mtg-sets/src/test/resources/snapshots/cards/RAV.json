@@ -17,11 +17,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature red attacking"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature red attacking"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -35,11 +38,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature white attacking"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature white attacking"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -183,11 +189,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature tapped"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature tapped"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -197,18 +206,19 @@
                             }
                         },
                         {
-                            "type": "ForEachPlayer",
-                            "players": "Each",
-                            "effects": [
-                                {
-                                    "type": "DealDamage",
-                                    "amount": {
-                                        "type": "Fixed",
-                                        "amount": 3
-                                    },
-                                    "target": "Controller"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Players",
+                                "players": "Each"
+                            },
+                            "body": {
+                                "type": "DealDamage",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                },
+                                "target": "Controller"
+                            }
                         }
                     ]
                 }
@@ -1389,11 +1399,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
@@ -1833,19 +1846,22 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": {
-                                    "cardPredicates": [
-                                        "IsCreature",
-                                        {
-                                            "type": "NotKeyword",
-                                            "keyword": "FLYING"
-                                        }
-                                    ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "NotKeyword",
+                                                "keyword": "FLYING"
+                                            }
+                                        ]
+                                    }
                                 }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -1855,18 +1871,19 @@
                             }
                         },
                         {
-                            "type": "ForEachPlayer",
-                            "players": "Each",
-                            "effects": [
-                                {
-                                    "type": "DealDamage",
-                                    "amount": {
-                                        "type": "Fixed",
-                                        "amount": 4
-                                    },
-                                    "target": "Controller"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Players",
+                                "players": "Each"
+                            },
+                            "body": {
+                                "type": "DealDamage",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 4
+                                },
+                                "target": "Controller"
+                            }
                         }
                     ]
                 }
@@ -1893,18 +1910,17 @@
     "oracleText": "Destroy six target creatures.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Graveyard",
-                    "byDestruction": true
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Graveyard",
+                "byDestruction": true
+            }
         },
         "targetRequirements": [
             {
@@ -2458,11 +2474,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -2472,18 +2491,19 @@
                     }
                 },
                 {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "DealDamage",
-                            "amount": {
-                                "type": "Fixed",
-                                "amount": 1
-                            },
-                            "target": "Controller"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": "Controller"
+                    }
                 }
             ]
         }
@@ -2671,11 +2691,14 @@
                     }
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",

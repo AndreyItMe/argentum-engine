@@ -1059,11 +1059,14 @@
                     }
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Saproling"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Saproling"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -1177,11 +1180,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "land"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "land"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "SHROUD",
                         "target": "Self"

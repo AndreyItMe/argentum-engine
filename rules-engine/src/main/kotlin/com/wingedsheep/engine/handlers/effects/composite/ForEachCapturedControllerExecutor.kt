@@ -2,14 +2,19 @@ package com.wingedsheep.engine.handlers.effects.composite
 
 import com.wingedsheep.engine.core.EffectContinuation
 import com.wingedsheep.engine.core.EffectResult
-import com.wingedsheep.engine.core.ForEachPlayerContinuation
+import com.wingedsheep.engine.core.ForEachContinuation
+import com.wingedsheep.engine.core.ForEachItem
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.ForEachCapturedControllerEffect
+import com.wingedsheep.sdk.scripting.effects.ForEachEffect
+import com.wingedsheep.sdk.scripting.effects.IterationSpace
+import com.wingedsheep.sdk.scripting.references.Player
 import kotlin.reflect.KClass
 
 /**
@@ -20,12 +25,13 @@ import kotlin.reflect.KClass
  * from the active player) with `context.controllerId` set to that player and
  * `storedNumbers[countVariable]` set to that player's count.
  *
- * Unlike [ForEachPlayerExecutor], the outer pipeline's `storedCollections` are
- * preserved per iteration so sub-effects can reference the same collections that
+ * Unlike [ForEachExecutor]'s player space, the outer pipeline's `storedCollections`
+ * are preserved per iteration so sub-effects can reference the same collections that
  * drove the tally.
  *
- * Continuation handling mirrors [ForEachPlayerExecutor] — sub-effect pauses re-enter
- * via [ForEachPlayerContinuation] over the remaining controllers.
+ * Sub-effect pauses re-enter via a player-space [ForEachContinuation] over the
+ * remaining controllers, resumed by [ForEachExecutor.processItems] with the standard
+ * player binding (the per-controller `countVariable` is not re-bound on that path).
  */
 class ForEachCapturedControllerExecutor(
     private val effectExecutor: (GameState, Effect, EffectContext) -> EffectResult
@@ -90,17 +96,22 @@ class ForEachCapturedControllerExecutor(
             val perIterationContext = outerContext.copy(
                 controllerId = playerId,
                 pipeline = outerContext.pipeline.copy(
-                    // Preserve outer storedCollections (unlike ForEachPlayerExecutor) so the
+                    // Preserve outer storedCollections (unlike the player iteration space) so the
                     // sub-effects can still see the dead pile, original list, and snapshot.
                     storedNumbers = outerContext.pipeline.storedNumbers + (effect.countVariable to count)
                 )
             )
 
             val stateForExecution = if (remaining.isNotEmpty()) {
-                val continuation = ForEachPlayerContinuation(
+                val continuation = ForEachContinuation(
                     decisionId = "pending",
-                    remainingPlayers = remaining,
-                    effects = effect.effects,
+                    remainingItems = remaining.map { ForEachItem.OfPlayer(it) },
+                    effect = ForEachEffect(
+                        // Resume-only carrier: the items are already enumerated, so the
+                        // Players selector is never consulted — only the per-player binding.
+                        space = IterationSpace.Players(Player.Each),
+                        body = effect.effects.singleOrNull() ?: CompositeEffect(effect.effects)
+                    ),
                     effectContext = outerContext
                 )
                 currentState.pushContinuation(continuation)

@@ -113,11 +113,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
@@ -698,29 +701,35 @@
                 },
                 "binding": "OTHER",
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "TopOfLibrary",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeAs": "milled"
                             },
-                            "storeAs": "milled"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "milled",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
+                            {
+                                "type": "MoveCollection",
+                                "from": "milled",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         ]
@@ -817,22 +826,28 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "FIRST_STRIKE",
                                 "target": "Self"
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "DEATHTOUCH",
                                 "target": "Self"
@@ -1211,11 +1226,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -1496,11 +1514,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -2357,46 +2378,52 @@
                     }
                 },
                 {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "ControlledPermanents",
-                                "filter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "ControlledPermanents",
+                                    "filter": "creature"
+                                },
+                                "storeAs": "creatures"
                             },
-                            "storeAs": "creatures"
-                        },
-                        {
-                            "type": "FilterCollection",
-                            "from": "creatures",
-                            "filter": "GreatestPower",
-                            "storeMatching": "greatest"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "greatest",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "FilterCollection",
+                                "from": "creatures",
+                                "filter": "GreatestPower",
+                                "storeMatching": "greatest"
                             },
-                            "storeSelected": "toSacrifice",
-                            "prompt": "Choose a creature to sacrifice"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "toSacrifice",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "greatest",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "toSacrifice",
+                                "prompt": "Choose a creature to sacrifice"
                             },
-                            "moveType": "Sacrifice"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "toSacrifice",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Sacrifice"
+                            }
+                        ]
+                    }
                 }
             ]
         }
@@ -2658,11 +2685,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -3223,24 +3253,30 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you",
-                                    "excludeSelf": true
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you",
+                                        "excludeSelf": true
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "GrantKeyword",
                                     "keyword": "TRAMPLE",
                                     "target": "Self"
                                 }
                             },
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you",
-                                    "excludeSelf": true
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you",
+                                        "excludeSelf": true
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "ModifyStats",
                                     "powerModifier": {
                                         "type": "EntityProperty",
@@ -3514,17 +3550,16 @@
     "oracleText": "Return up to two target creature cards from your graveyard to your hand.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Hand"
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Hand"
+            }
         },
         "targetRequirements": [
             {
@@ -4008,33 +4043,42 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self",
                         "tap": false
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "FLYING",
                         "target": "Self"
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "DOUBLE_STRIKE",
                         "target": "Self"
@@ -5203,16 +5247,15 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "TapUntap",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "TapUntap",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 {
                     "type": "Gated",
@@ -5226,18 +5269,17 @@
                         }
                     },
                     "then": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "GrantKeyword",
-                                "keyword": "DOESNT_UNTAP",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "duration": "UntilAfterAffectedControllersNextUntap"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "GrantKeyword",
+                            "keyword": "DOESNT_UNTAP",
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "duration": "UntilAfterAffectedControllersNextUntap"
+                        }
                     }
                 }
             ]
@@ -5419,11 +5461,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -5437,11 +5482,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "TapUntap",
                                 "target": "Self",
                                 "tap": false
@@ -5661,11 +5709,14 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "ModifyStats",
                                     "powerModifier": {
                                         "type": "Fixed",
@@ -5679,11 +5730,14 @@
                                 }
                             },
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "GrantKeyword",
                                     "keyword": "LIFELINK",
                                     "target": "Self"
@@ -6709,11 +6763,14 @@
                 "id": "ability_2",
                 "cost": "CostSacrificeSelf",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -7394,11 +7451,14 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -9304,11 +9364,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -9322,11 +9385,14 @@
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Warrior ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Warrior ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "LIFELINK",
                         "target": "Self"
@@ -9432,11 +9498,14 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "LIFELINK",
                         "target": "Self"
@@ -11096,11 +11165,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -11115,11 +11187,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "LIFELINK",
                                 "target": "Self",
@@ -12999,11 +13074,14 @@
     "oracleText": "Attacking creatures get +2/+0 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature attacking"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature attacking"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -13570,17 +13648,16 @@
     "oracleText": "Return up to two target creatures to their owners' hands.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "MoveToZone",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    },
-                    "destination": "Hand"
-                }
-            ]
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Hand"
+            }
         },
         "targetRequirements": [
             {
@@ -13771,11 +13848,14 @@
     "oracleText": "Windstorm deals X damage to each creature with flying.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature kw:flying"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature kw:flying"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": "XValue",
                 "target": "Self"

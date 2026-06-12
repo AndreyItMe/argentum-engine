@@ -271,24 +271,23 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "ModifyStats",
-                    "powerModifier": {
-                        "type": "Fixed",
-                        "amount": 2
-                    },
-                    "toughnessModifier": {
-                        "type": "Fixed",
-                        "amount": 1
-                    },
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    }
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "ModifyStats",
+                "powerModifier": {
+                    "type": "Fixed",
+                    "amount": 2
+                },
+                "toughnessModifier": {
+                    "type": "Fixed",
+                    "amount": 1
+                },
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
                 }
-            ]
+            }
         },
         "targetRequirements": [
             {
@@ -410,22 +409,25 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": {
-                                "cardPredicates": [
-                                    "IsCreature"
-                                ],
-                                "controllerPredicate": {
-                                    "type": "ControlledByReferencedPlayer",
-                                    "target": {
-                                        "type": "BoundVariable",
-                                        "name": "target player"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ],
+                                    "controllerPredicate": {
+                                        "type": "ControlledByReferencedPlayer",
+                                        "target": {
+                                            "type": "BoundVariable",
+                                            "name": "target player"
+                                        }
                                     }
                                 }
                             }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -3059,11 +3061,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -3077,11 +3082,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "HASTE",
                                 "target": "Self"
@@ -4428,22 +4436,25 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature"
-                            ],
-                            "controllerPredicate": {
-                                "type": "ControlledByReferencedPlayer",
-                                "target": {
-                                    "type": "BoundVariable",
-                                    "name": "target opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "controllerPredicate": {
+                                    "type": "ControlledByReferencedPlayer",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target opponent"
+                                    }
                                 }
                             }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "Composite",
                         "effects": [
                             {
@@ -4513,11 +4524,14 @@
     "oracleText": "Put two -1/-1 counters on each creature.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "AddCounters",
                 "counterType": "-1/-1",
                 "count": 2,
@@ -5112,12 +5126,15 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Merfolk ctrl:you",
-                        "excludeSelf": true
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Merfolk ctrl:you",
+                            "excludeSelf": true
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self",
                         "tap": false
@@ -5612,39 +5629,45 @@
                                 "counterType": "-1/-1"
                             },
                             {
-                                "type": "ForEachPlayer",
-                                "players": "EachOpponent",
-                                "effects": [
-                                    {
-                                        "type": "GatherCards",
-                                        "source": {
-                                            "type": "FromZone",
-                                            "zone": "Hand"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Players",
+                                    "players": "EachOpponent"
+                                },
+                                "body": {
+                                    "type": "Composite",
+                                    "effects": [
+                                        {
+                                            "type": "GatherCards",
+                                            "source": {
+                                                "type": "FromZone",
+                                                "zone": "Hand"
+                                            },
+                                            "storeAs": "hand"
                                         },
-                                        "storeAs": "hand"
-                                    },
-                                    {
-                                        "type": "SelectFromCollection",
-                                        "from": "hand",
-                                        "selection": {
-                                            "type": "ChooseExactly",
-                                            "count": {
-                                                "type": "Fixed",
-                                                "amount": 1
-                                            }
+                                        {
+                                            "type": "SelectFromCollection",
+                                            "from": "hand",
+                                            "selection": {
+                                                "type": "ChooseExactly",
+                                                "count": {
+                                                    "type": "Fixed",
+                                                    "amount": 1
+                                                }
+                                            },
+                                            "storeSelected": "discarded"
                                         },
-                                        "storeSelected": "discarded"
-                                    },
-                                    {
-                                        "type": "MoveCollection",
-                                        "from": "discarded",
-                                        "destination": {
-                                            "type": "ToZone",
-                                            "zone": "Graveyard"
-                                        },
-                                        "moveType": "Discard"
-                                    }
-                                ]
+                                        {
+                                            "type": "MoveCollection",
+                                            "from": "discarded",
+                                            "destination": {
+                                                "type": "ToZone",
+                                                "zone": "Graveyard"
+                                            },
+                                            "moveType": "Discard"
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     },
@@ -7760,11 +7783,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -7778,11 +7804,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature Kithkin ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature Kithkin ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "FIRST_STRIKE",
                                 "target": "Self"
@@ -9291,22 +9320,25 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": {
-                                        "cardPredicates": [
-                                            "IsCreature"
-                                        ],
-                                        "controllerPredicate": {
-                                            "type": "ControlledByReferencedPlayer",
-                                            "target": {
-                                                "type": "BoundVariable",
-                                                "name": "target player"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "controllerPredicate": {
+                                                "type": "ControlledByReferencedPlayer",
+                                                "target": {
+                                                    "type": "BoundVariable",
+                                                    "name": "target player"
+                                                }
                                             }
                                         }
                                     }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "ModifyStats",
                                     "powerModifier": {
                                         "type": "Fixed",
@@ -9320,22 +9352,25 @@
                                 }
                             },
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": {
-                                        "cardPredicates": [
-                                            "IsCreature"
-                                        ],
-                                        "controllerPredicate": {
-                                            "type": "ControlledByReferencedPlayer",
-                                            "target": {
-                                                "type": "BoundVariable",
-                                                "name": "target player"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "controllerPredicate": {
+                                                "type": "ControlledByReferencedPlayer",
+                                                "target": {
+                                                    "type": "BoundVariable",
+                                                    "name": "target player"
+                                                }
                                             }
                                         }
                                     }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "GrantKeyword",
                                     "keyword": "HASTE",
                                     "target": "Self"
@@ -10018,37 +10053,43 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "ControlledPermanents",
-                                "filter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "ControlledPermanents",
+                                    "filter": "creature"
+                                },
+                                "storeAs": "blightTargets"
                             },
-                            "storeAs": "blightTargets"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "blightTargets",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "blightTargets",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "blighted",
+                                "prompt": "Blight 1 — choose a creature you control",
+                                "useTargetingUI": true
                             },
-                            "storeSelected": "blighted",
-                            "prompt": "Blight 1 — choose a creature you control",
-                            "useTargetingUI": true
-                        },
-                        {
-                            "type": "AddCountersToCollection",
-                            "collectionName": "blighted",
-                            "counterType": "-1/-1"
-                        }
-                    ]
+                            {
+                                "type": "AddCountersToCollection",
+                                "collectionName": "blighted",
+                                "counterType": "-1/-1"
+                            }
+                        ]
+                    }
                 }
             }
         ],
@@ -12810,30 +12851,34 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Exile"
-                        },
-                        {
-                            "type": "CreateDelayedTrigger",
-                            "step": "END",
-                            "effect": {
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
                                 "type": "MoveToZone",
                                 "target": {
                                     "type": "ContextTarget",
                                     "index": 0
                                 },
-                                "destination": "Battlefield",
-                                "placement": "Tapped"
+                                "destination": "Exile"
+                            },
+                            {
+                                "type": "CreateDelayedTrigger",
+                                "step": "END",
+                                "effect": {
+                                    "type": "MoveToZone",
+                                    "target": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "destination": "Battlefield",
+                                    "placement": "Tapped"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 {
                     "type": "PreventDamageShield",
@@ -13904,28 +13949,27 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "ModifyStats",
-                            "powerModifier": {
-                                "type": "AggregateBattlefield",
-                                "player": "You",
-                                "filter": "permanent",
-                                "aggregation": "DISTINCT_COLORS"
-                            },
-                            "toughnessModifier": {
-                                "type": "AggregateBattlefield",
-                                "player": "You",
-                                "filter": "permanent",
-                                "aggregation": "DISTINCT_COLORS"
-                            },
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "permanent",
+                            "aggregation": "DISTINCT_COLORS"
+                        },
+                        "toughnessModifier": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "permanent",
+                            "aggregation": "DISTINCT_COLORS"
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -14777,25 +14821,29 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "TapUntap",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "TapUntap",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            {
+                                "type": "AddCounters",
+                                "counterType": "STUN",
+                                "count": 1,
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
                             }
-                        },
-                        {
-                            "type": "AddCounters",
-                            "counterType": "STUN",
-                            "count": 1,
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 {
                     "type": "DrawCards",
@@ -15049,17 +15097,16 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachTarget",
-                            "effects": [
-                                {
-                                    "type": "MoveToZone",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    },
-                                    "destination": "Exile"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": "IterationSpace.Targets",
+                            "body": {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "destination": "Exile"
+                            }
                         },
                         {
                             "type": "GainLife",
@@ -15401,40 +15448,43 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                {
-                                    "type": "Or",
-                                    "predicates": [
-                                        {
-                                            "type": "And",
-                                            "predicates": [
-                                                "IsPermanent",
-                                                {
-                                                    "type": "HasSubtype",
-                                                    "subtype": "Treefolk"
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "type": "And",
-                                            "predicates": [
-                                                "IsPermanent",
-                                                {
-                                                    "type": "HasSubtype",
-                                                    "subtype": "Forest"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ],
-                            "controllerPredicate": "ControlledByYou"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    {
+                                        "type": "Or",
+                                        "predicates": [
+                                            {
+                                                "type": "And",
+                                                "predicates": [
+                                                    "IsPermanent",
+                                                    {
+                                                        "type": "HasSubtype",
+                                                        "subtype": "Treefolk"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "And",
+                                                "predicates": [
+                                                    "IsPermanent",
+                                                    {
+                                                        "type": "HasSubtype",
+                                                        "subtype": "Forest"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "INDESTRUCTIBLE",
                         "target": "Self"
@@ -15734,13 +15784,16 @@
                             "storeAs": "chosenCreatureType"
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "permanent ctrl:you",
-                                "excludeSelf": true,
-                                "chosenSubtypeKey": "chosenCreatureType"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "permanent ctrl:you",
+                                    "excludeSelf": true,
+                                    "chosenSubtypeKey": "chosenCreatureType"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "Composite",
                                 "effects": [
                                     {
@@ -16444,11 +16497,14 @@
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "CastChoice",
@@ -17632,22 +17688,25 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": {
-                                "cardPredicates": [
-                                    "IsCreature"
-                                ],
-                                "controllerPredicate": {
-                                    "type": "ControlledByReferencedPlayer",
-                                    "target": {
-                                        "type": "BoundVariable",
-                                        "name": "target player"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ],
+                                    "controllerPredicate": {
+                                        "type": "ControlledByReferencedPlayer",
+                                        "target": {
+                                            "type": "BoundVariable",
+                                            "name": "target player"
+                                        }
                                     }
                                 }
                             }
                         },
-                        "effect": {
+                        "body": {
                             "type": "GrantKeyword",
                             "keyword": "LIFELINK",
                             "target": "Self"
@@ -18722,11 +18781,14 @@
                     }
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -18840,17 +18902,16 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Hand"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "destination": "Hand"
+                        }
                     },
                     "targetRequirements": [
                         {
@@ -18891,22 +18952,25 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": {
-                                        "cardPredicates": [
-                                            "IsCreature"
-                                        ],
-                                        "controllerPredicate": {
-                                            "type": "ControlledByReferencedPlayer",
-                                            "target": {
-                                                "type": "BoundVariable",
-                                                "name": "target player"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "controllerPredicate": {
+                                                "type": "ControlledByReferencedPlayer",
+                                                "target": {
+                                                    "type": "BoundVariable",
+                                                    "name": "target player"
+                                                }
                                             }
                                         }
                                     }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "ModifyStats",
                                     "powerModifier": {
                                         "type": "Fixed",
@@ -18920,22 +18984,25 @@
                                 }
                             },
                             {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": {
-                                        "cardPredicates": [
-                                            "IsCreature"
-                                        ],
-                                        "controllerPredicate": {
-                                            "type": "ControlledByReferencedPlayer",
-                                            "target": {
-                                                "type": "BoundVariable",
-                                                "name": "target player"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "controllerPredicate": {
+                                                "type": "ControlledByReferencedPlayer",
+                                                "target": {
+                                                    "type": "BoundVariable",
+                                                    "name": "target player"
+                                                }
                                             }
                                         }
                                     }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "TapUntap",
                                     "target": "Self",
                                     "tap": false
@@ -20272,17 +20339,16 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Hand"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Hand"
+                    }
                 },
                 {
                     "type": "Gated",
@@ -20607,66 +20673,72 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "ActivePlayerFirst",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "ControlledPermanents",
-                        "filter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "ActivePlayerFirst"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "ControlledPermanents",
+                            "filter": "creature"
+                        },
+                        "storeAs": "playerCreatures"
                     },
-                    "storeAs": "playerCreatures"
-                },
-                {
-                    "type": "SelectFromCollection",
-                    "from": "playerCreatures",
-                    "selection": {
-                        "type": "ChooseExactly",
-                        "count": {
-                            "type": "Fixed",
-                            "amount": 1
-                        }
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "playerCreatures",
+                        "selection": {
+                            "type": "ChooseExactly",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "chooser": "SourceController",
+                        "storeSelected": "chosen",
+                        "storeRemainder": "rest",
+                        "prompt": "Choose a creature this player controls",
+                        "useTargetingUI": true
                     },
-                    "chooser": "SourceController",
-                    "storeSelected": "chosen",
-                    "storeRemainder": "rest",
-                    "prompt": "Choose a creature this player controls",
-                    "useTargetingUI": true
-                },
-                {
-                    "type": "GatherSubtypes",
-                    "from": "chosen",
-                    "storeAs": "chosenSubtypes"
-                },
-                {
-                    "type": "FilterCollection",
-                    "from": "rest",
-                    "filter": {
-                        "type": "MatchesFilter",
+                    {
+                        "type": "GatherSubtypes",
+                        "from": "chosen",
+                        "storeAs": "chosenSubtypes"
+                    },
+                    {
+                        "type": "FilterCollection",
+                        "from": "rest",
                         "filter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "HasSubtypeInEachStoredGroup",
-                                    "groupName": "chosenSubtypes"
-                                }
-                            ]
-                        }
+                            "type": "MatchesFilter",
+                            "filter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "HasSubtypeInEachStoredGroup",
+                                        "groupName": "chosenSubtypes"
+                                    }
+                                ]
+                            }
+                        },
+                        "storeMatching": "shareTypes",
+                        "storeNonMatching": "noShareTypes"
                     },
-                    "storeMatching": "shareTypes",
-                    "storeNonMatching": "noShareTypes"
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "noShareTypes",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Graveyard"
-                    },
-                    "moveType": "Sacrifice"
-                }
-            ]
+                    {
+                        "type": "MoveCollection",
+                        "from": "noShareTypes",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Graveyard"
+                        },
+                        "moveType": "Sacrifice"
+                    }
+                ]
+            }
         }
     },
     "metadata": {

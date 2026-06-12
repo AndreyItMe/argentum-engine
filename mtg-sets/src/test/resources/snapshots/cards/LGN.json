@@ -272,11 +272,14 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Multiply",
@@ -511,11 +514,14 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Beast ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Beast ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -828,18 +834,17 @@
                             "destination": "Exile"
                         },
                         {
-                            "type": "ForEachTarget",
-                            "effects": [
-                                {
-                                    "type": "MoveToZone",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    },
-                                    "destination": "Battlefield",
-                                    "fromZone": "Graveyard"
-                                }
-                            ]
+                            "type": "ForEach",
+                            "space": "IterationSpace.Targets",
+                            "body": {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "destination": "Battlefield",
+                                "fromZone": "Graveyard"
+                            }
                         }
                     ]
                 },
@@ -1845,11 +1850,14 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -2701,11 +2709,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature Soldier"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature Soldier"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -2719,11 +2730,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature Soldier"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature Soldier"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "FIRST_STRIKE",
                                 "target": "Self"
@@ -2878,11 +2892,14 @@
                 "id": "ability_1",
                 "trigger": "CycleEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Wizard"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Wizard"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "FLYING",
                         "target": "Self"
@@ -2924,11 +2941,14 @@
                 "id": "ability_1",
                 "trigger": "CycleEvent",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Elf"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Elf"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -3160,18 +3180,19 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "FlipCoin",
-                            "lostEffect": {
-                                "type": "ForceSacrifice",
-                                "filter": "creature",
-                                "target": "Controller"
-                            }
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "FlipCoin",
+                        "lostEffect": {
+                            "type": "ForceSacrifice",
+                            "filter": "creature",
+                            "target": "Controller"
                         }
-                    ]
+                    }
                 }
             }
         ]
@@ -3487,11 +3508,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Goblin"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Goblin"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -3636,11 +3660,14 @@
                     "to": "Graveyard"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -3969,27 +3996,33 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Graveyard",
-                                "filter": "Zombie"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Graveyard",
+                                    "filter": "Zombie"
+                                },
+                                "storeAs": "zombies"
                             },
-                            "storeAs": "zombies"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "zombies",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Hand"
+                            {
+                                "type": "MoveCollection",
+                                "from": "zombies",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Hand"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         ]
@@ -4807,11 +4840,14 @@
                             "storeAs": "chosenCreatureType"
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "SetCreatureSubtypes",
                                 "duration": "EndOfTurn",
                                 "fromChosenValueKey": "chosenCreatureType"
@@ -4940,19 +4976,22 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "NotSubtype",
-                                    "subtype": "Zombie"
-                                }
-                            ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotSubtype",
+                                        "subtype": "Zombie"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -6827,12 +6866,15 @@
                             "storeAs": "chosenCreatureType"
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature",
-                                "chosenSubtypeKey": "chosenCreatureType"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature",
+                                    "chosenSubtypeKey": "chosenCreatureType"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "Composite",
                                 "effects": [
                                     {
@@ -7353,10 +7395,9 @@
                 "id": "ability_1",
                 "trigger": "TurnFaceUpEvent",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        "TurnFaceDown"
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": "TurnFaceDown"
                 },
                 "targetRequirement": {
                     "type": "TargetObject",

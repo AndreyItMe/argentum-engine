@@ -240,34 +240,40 @@
     "typeLine": "Sorcery",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "FromZone",
-                        "zone": "Hand"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "FromZone",
+                            "zone": "Hand"
+                        },
+                        "storeAs": "wheelHand"
                     },
-                    "storeAs": "wheelHand"
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "wheelHand",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Library",
-                        "placement": "Shuffled"
+                    {
+                        "type": "MoveCollection",
+                        "from": "wheelHand",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Library",
+                            "placement": "Shuffled"
+                        }
+                    },
+                    {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "VariableReference",
+                            "variableName": "wheelHand_count"
+                        }
                     }
-                },
-                {
-                    "type": "DrawCards",
-                    "count": {
-                        "type": "VariableReference",
-                        "variableName": "wheelHand_count"
-                    }
-                }
-            ]
+                ]
+            }
         }
     },
     "metadata": {

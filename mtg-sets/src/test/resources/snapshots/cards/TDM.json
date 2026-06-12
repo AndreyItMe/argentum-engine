@@ -775,11 +775,14 @@
                         {
                             "type": "CreateDelayedTrigger",
                             "effect": {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "TapUntap",
                                     "target": "Self",
                                     "tap": false
@@ -1014,17 +1017,16 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Exile"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Exile"
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -1421,11 +1423,14 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
@@ -1530,11 +1535,14 @@
                     }
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -1628,11 +1636,14 @@
                                 }
                             },
                             "then": {
-                                "type": "ForEachInGroup",
-                                "filter": {
-                                    "baseFilter": "creature ctrl:you"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
                                 },
-                                "effect": {
+                                "body": {
                                     "type": "TapUntap",
                                     "target": "Self",
                                     "tap": false
@@ -1729,11 +1740,14 @@
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:opponent"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -4082,11 +4096,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature|planeswalker"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature|planeswalker"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -4747,22 +4764,28 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "INDESTRUCTIBLE",
                         "target": "Self"
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "AddCounters",
                         "counterType": "+1/+1",
                         "count": 1,
@@ -4870,11 +4893,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "AddCounters",
                                 "counterType": "+1/+1",
                                 "count": 1,
@@ -4882,11 +4908,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "FLYING",
                                 "target": "Self",
@@ -5590,11 +5619,14 @@
                         "target": "Controller"
                     },
                     "reflexiveEffect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature ctrl:you"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "AddCounters",
                             "counterType": "+1/+1",
                             "count": 1,
@@ -5614,11 +5646,14 @@
                         "target": "Controller"
                     },
                     "reflexiveEffect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature ctrl:you"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "AddCounters",
                             "counterType": "+1/+1",
                             "count": 1,
@@ -5665,17 +5700,16 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "MoveToZone",
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            },
-                            "destination": "Exile"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Exile"
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -11963,24 +11997,23 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "ModifyStats",
-                                "powerModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "toughnessModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
                             }
-                        ]
+                        }
                     },
                     "targetRequirements": [
                         {
@@ -12633,22 +12666,28 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "TRAMPLE",
                                 "target": "Self"
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "LIFELINK",
                                 "target": "Self"
@@ -13160,11 +13199,14 @@
             {
                 "chapter": 3,
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "EntityProperty",
@@ -13334,18 +13376,17 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "AddCounters",
-                            "counterType": "decayed",
-                            "count": 1,
-                            "target": {
-                                "type": "ContextTarget",
-                                "index": 0
-                            }
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "decayed",
+                        "count": 1,
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
                         }
-                    ]
+                    }
                 },
                 "targetRequirements": [
                     {
@@ -14149,19 +14190,22 @@
             "oracleText": "Each non-Dragon creature gets -X/-X until end of turn. (Then shuffle this card into its owner's library.)",
             "script": {
                 "spellEffect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "NotSubtype",
-                                    "subtype": "Dragon"
-                                }
-                            ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotSubtype",
+                                        "subtype": "Dragon"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Multiply",
@@ -14229,24 +14273,23 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "ModifyStats",
-                                "powerModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "toughnessModifier": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
                             }
-                        ]
+                        }
                     },
                     "targetRequirements": [
                         {
@@ -14946,32 +14989,31 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachTarget",
-                    "effects": [
-                        {
-                            "type": "Composite",
-                            "effects": [
-                                {
-                                    "type": "MoveToZone",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    },
-                                    "destination": "Battlefield",
-                                    "fromZone": "Graveyard"
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
                                 },
-                                {
-                                    "type": "AddCounters",
-                                    "counterType": "+1/+1",
-                                    "count": 1,
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
-                                    }
+                                "destination": "Battlefield",
+                                "fromZone": "Graveyard"
+                            },
+                            {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
                                 }
-                            ]
-                        }
-                    ]
+                            }
+                        ]
+                    }
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
@@ -16528,38 +16570,44 @@
                     "totalCounters": 2
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature"
-                            ],
-                            "statePredicates": [
-                                "HasAnyCounter"
-                            ],
-                            "controllerPredicate": "ControlledByYou"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "statePredicates": [
+                                    "HasAnyCounter"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "VIGILANCE",
                         "target": "Self"
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature"
-                            ],
-                            "statePredicates": [
-                                "HasAnyCounter"
-                            ],
-                            "controllerPredicate": "ControlledByYou"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "statePredicates": [
+                                    "HasAnyCounter"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "TRAMPLE",
                         "target": "Self"
@@ -18683,22 +18731,25 @@
             "modes": [
                 {
                     "effect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": {
-                                "cardPredicates": [
-                                    "IsCreature"
-                                ],
-                                "controllerPredicate": {
-                                    "type": "ControlledByReferencedPlayer",
-                                    "target": {
-                                        "type": "BoundVariable",
-                                        "name": "target opponent"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ],
+                                    "controllerPredicate": {
+                                        "type": "ControlledByReferencedPlayer",
+                                        "target": {
+                                            "type": "BoundVariable",
+                                            "name": "target opponent"
+                                        }
                                     }
                                 }
                             }
                         },
-                        "effect": {
+                        "body": {
                             "type": "ModifyStats",
                             "powerModifier": {
                                 "type": "Fixed",
@@ -18721,17 +18772,16 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachTarget",
-                        "effects": [
-                            {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Hand"
-                            }
-                        ]
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "destination": "Hand"
+                        }
                     },
                     "targetRequirements": [
                         {

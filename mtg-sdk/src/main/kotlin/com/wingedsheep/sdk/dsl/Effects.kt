@@ -1728,15 +1728,15 @@ object Effects {
      * Apply [effect] to every entity matching [filter] (Rule: "each", "all"). Within the inner
      * effect, [EffectTarget.Self] resolves to the current iteration entity.
      *
+     * The group is snapshotted before any iteration applies.
+     *
      * @param noRegenerate affected entities cannot be regenerated.
-     * @param simultaneous snapshot the group before applying (default true).
      */
     fun ForEachInGroup(
         filter: GroupFilter,
         effect: Effect,
-        noRegenerate: Boolean = false,
-        simultaneous: Boolean = true
-    ): Effect = ForEachInGroupEffect(filter, effect, noRegenerate, simultaneous)
+        noRegenerate: Boolean = false
+    ): Effect = ForEachInGroupEffect(filter, effect, noRegenerate)
 
     /**
      * Copy a card referenced by [source] into the pipeline collection [storeAs] (Rule 707.12).

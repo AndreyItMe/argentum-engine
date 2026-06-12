@@ -15,6 +15,7 @@ import com.wingedsheep.sdk.scripting.effects.DrawUpToEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.EffectChoice
 import com.wingedsheep.sdk.scripting.effects.FeasibilityCheck
+import com.wingedsheep.sdk.scripting.effects.ForEachEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.GainLifeEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
@@ -156,7 +157,7 @@ object HandPatterns {
         )
     )
 
-    fun eachOpponentMayPutFromHand(filter: GameObjectFilter = GameObjectFilter.Any): ForEachPlayerEffect =
+    fun eachOpponentMayPutFromHand(filter: GameObjectFilter = GameObjectFilter.Any): ForEachEffect =
         ForEachPlayerEffect(
             players = Player.EachOpponent,
             effects = listOf(
@@ -177,7 +178,7 @@ object HandPatterns {
             )
         )
 
-    fun wheelEffect(players: Player = Player.Each): ForEachPlayerEffect = ForEachPlayerEffect(
+    fun wheelEffect(players: Player = Player.Each): ForEachEffect = ForEachPlayerEffect(
         players = players,
         effects = listOf(
             GatherCardsEffect(CardSource.FromZone(Zone.HAND, Player.You), storeAs = "wheelHand"),
@@ -237,7 +238,7 @@ object HandPatterns {
     fun eachPlayerDrawsX(
         includeController: Boolean = true,
         includeOpponents: Boolean = true
-    ): ForEachPlayerEffect {
+    ): ForEachEffect {
         val players = when {
             includeController && includeOpponents -> Player.Each
             includeOpponents -> Player.EachOpponent
@@ -249,7 +250,7 @@ object HandPatterns {
         )
     }
 
-    fun eachPlayerMayDraw(maxCards: Int, lifePerCardNotDrawn: Int = 0): ForEachPlayerEffect {
+    fun eachPlayerMayDraw(maxCards: Int, lifePerCardNotDrawn: Int = 0): ForEachEffect {
         val effects = mutableListOf<Effect>()
         effects.add(
             DrawUpToEffect(

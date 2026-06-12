@@ -105,11 +105,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "TapUntap",
                                 "target": "Self",
                                 "tap": false
@@ -245,11 +248,14 @@
         "spellEffect": {
             "type": "ChooseColorThen",
             "then": {
-                "type": "ForEachInGroup",
-                "filter": {
-                    "baseFilter": "creature ctrl:you"
+                "type": "ForEach",
+                "space": {
+                    "type": "IterationSpace.Group",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    }
                 },
-                "effect": {
+                "body": {
                     "type": "GrantProtectionFromChosenColor",
                     "target": "Self"
                 }
@@ -282,11 +288,14 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "artifact|creature|enchantment"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "artifact|creature|enchantment"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "MoveToZone",
                 "target": "Self",
                 "destination": "Graveyard",
@@ -970,11 +979,14 @@
                     "from": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "RemoveCounters",
                         "counterType": "gold",
                         "count": 2147483647,
@@ -1525,18 +1537,19 @@
     "oracleText": "Each player's life total becomes the number of creatures they control.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "SetLifeTotal",
-                    "amount": {
-                        "type": "AggregateBattlefield",
-                        "player": "You",
-                        "filter": "creature"
-                    }
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "SetLifeTotal",
+                "amount": {
+                    "type": "AggregateBattlefield",
+                    "player": "You",
+                    "filter": "creature"
                 }
-            ]
+            }
         }
     },
     "metadata": {
@@ -2915,16 +2928,15 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "TapUntap",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    }
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "TapUntap",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
                 }
-            ]
+            }
         },
         "targetRequirements": [
             {
@@ -4429,12 +4441,15 @@
                     "storeAs": "chosenCreatureType"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature",
-                        "chosenSubtypeKey": "chosenCreatureType"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature",
+                            "chosenSubtypeKey": "chosenCreatureType"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -4512,11 +4527,14 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "GrantKeyword",
                 "keyword": "FEAR",
                 "target": "Self"
@@ -7383,11 +7401,14 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Goblin"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Goblin"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": {
                             "type": "Fixed",
@@ -7410,11 +7431,14 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature Goblin"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Goblin"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "MoveToZone",
                         "target": "Self",
                         "destination": "Graveyard",
@@ -8422,39 +8446,45 @@
                         "effects": [
                             "SacrificeSelf",
                             {
-                                "type": "ForEachPlayer",
-                                "players": "EachOpponent",
-                                "effects": [
-                                    {
-                                        "type": "GatherCards",
-                                        "source": {
-                                            "type": "FromZone",
-                                            "zone": "Hand"
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Players",
+                                    "players": "EachOpponent"
+                                },
+                                "body": {
+                                    "type": "Composite",
+                                    "effects": [
+                                        {
+                                            "type": "GatherCards",
+                                            "source": {
+                                                "type": "FromZone",
+                                                "zone": "Hand"
+                                            },
+                                            "storeAs": "hand"
                                         },
-                                        "storeAs": "hand"
-                                    },
-                                    {
-                                        "type": "SelectFromCollection",
-                                        "from": "hand",
-                                        "selection": {
-                                            "type": "ChooseExactly",
-                                            "count": {
-                                                "type": "Fixed",
-                                                "amount": 3
-                                            }
+                                        {
+                                            "type": "SelectFromCollection",
+                                            "from": "hand",
+                                            "selection": {
+                                                "type": "ChooseExactly",
+                                                "count": {
+                                                    "type": "Fixed",
+                                                    "amount": 3
+                                                }
+                                            },
+                                            "storeSelected": "discarded"
                                         },
-                                        "storeSelected": "discarded"
-                                    },
-                                    {
-                                        "type": "MoveCollection",
-                                        "from": "discarded",
-                                        "destination": {
-                                            "type": "ToZone",
-                                            "zone": "Graveyard"
-                                        },
-                                        "moveType": "Discard"
-                                    }
-                                ]
+                                        {
+                                            "type": "MoveCollection",
+                                            "from": "discarded",
+                                            "destination": {
+                                                "type": "ToZone",
+                                                "zone": "Graveyard"
+                                            },
+                                            "moveType": "Discard"
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     }
@@ -8601,39 +8631,45 @@
                     "recipient": "AnyPlayer"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
                             },
-                            "storeSelected": "discarded"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "discarded",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
                 }
             }
         ]
@@ -8843,11 +8879,14 @@
     "oracleText": "All creatures get -2/-2 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
@@ -8997,33 +9036,42 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GainControl",
                         "target": "Self",
                         "duration": "EndOfTurn"
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "TapUntap",
                         "target": "Self",
                         "tap": false
                     }
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "GrantKeyword",
                         "keyword": "HASTE",
                         "target": "Self"
@@ -9306,40 +9354,44 @@
     "oracleText": "Choose any number of target players or planeswalkers. For each of them, reveal cards from the top of your library until you reveal a nonland card, Kaboom! deals damage equal to that card's mana value to that player or planeswalker, then you put the revealed cards on the bottom of your library in any order.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "GatherUntilMatch",
-                    "filter": "nonland",
-                    "storeMatch": "nonland",
-                    "storeRevealed": "allRevealed"
-                },
-                {
-                    "type": "RevealCollection",
-                    "from": "allRevealed"
-                },
-                {
-                    "type": "DealDamage",
-                    "amount": {
-                        "type": "StoredCardManaValue",
-                        "collectionName": "nonland"
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherUntilMatch",
+                        "filter": "nonland",
+                        "storeMatch": "nonland",
+                        "storeRevealed": "allRevealed"
                     },
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
+                    {
+                        "type": "RevealCollection",
+                        "from": "allRevealed"
+                    },
+                    {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "StoredCardManaValue",
+                            "collectionName": "nonland"
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    {
+                        "type": "MoveCollection",
+                        "from": "allRevealed",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Library",
+                            "placement": "Bottom"
+                        },
+                        "order": "ControllerChooses"
                     }
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "allRevealed",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Library",
-                        "placement": "Bottom"
-                    },
-                    "order": "ControllerChooses"
-                }
-            ]
+                ]
+            }
         },
         "targetRequirements": [
             {
@@ -9368,42 +9420,48 @@
     "oracleText": "Each player may reveal any number of creature cards from their hand. Then each player creates a 2/2 green Bear creature token for each card they revealed this way.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "FromZone",
-                        "zone": "Hand",
-                        "filter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "FromZone",
+                            "zone": "Hand",
+                            "filter": "creature"
+                        },
+                        "storeAs": "creatures"
                     },
-                    "storeAs": "creatures"
-                },
-                {
-                    "type": "SelectFromCollection",
-                    "from": "creatures",
-                    "selection": "ChooseAnyNumber",
-                    "storeSelected": "revealed",
-                    "prompt": "You may reveal any number of creature cards from your hand"
-                },
-                {
-                    "type": "CreateToken",
-                    "count": {
-                        "type": "VariableReference",
-                        "variableName": "revealed_count"
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "creatures",
+                        "selection": "ChooseAnyNumber",
+                        "storeSelected": "revealed",
+                        "prompt": "You may reveal any number of creature cards from your hand"
                     },
-                    "power": 2,
-                    "toughness": 2,
-                    "colors": [
-                        "GREEN"
-                    ],
-                    "creatureTypes": [
-                        "Bear"
-                    ],
-                    "imageUri": "https://cards.scryfall.io/normal/front/7/7/772dac39-269b-4a35-aad3-320279af833f.jpg?1675455454"
-                }
-            ]
+                    {
+                        "type": "CreateToken",
+                        "count": {
+                            "type": "VariableReference",
+                            "variableName": "revealed_count"
+                        },
+                        "power": 2,
+                        "toughness": 2,
+                        "colors": [
+                            "GREEN"
+                        ],
+                        "creatureTypes": [
+                            "Bear"
+                        ],
+                        "imageUri": "https://cards.scryfall.io/normal/front/7/7/772dac39-269b-4a35-aad3-320279af833f.jpg?1675455454"
+                    }
+                ]
+            }
         }
     },
     "metadata": {
@@ -9469,11 +9527,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "ModifyStats",
                                 "powerModifier": {
                                     "type": "Fixed",
@@ -9487,11 +9548,14 @@
                             }
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature ctrl:you"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "GrantKeyword",
                                 "keyword": "TRAMPLE",
                                 "target": "Self"
@@ -10812,11 +10876,14 @@
                     ]
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "enchantment"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "enchantment"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "MoveToZone",
                         "target": "Self",
                         "destination": "Graveyard",
@@ -11068,35 +11135,41 @@
                     "storeAs": "biddingTypes"
                 },
                 {
-                    "type": "ForEachPlayer",
-                    "players": "ActivePlayerFirst",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Graveyard",
-                                "filter": {
-                                    "cardPredicates": [
-                                        "IsCreature",
-                                        {
-                                            "type": "HasSubtypeInStoredList",
-                                            "listName": "biddingTypes"
-                                        }
-                                    ]
-                                }
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "ActivePlayerFirst"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Graveyard",
+                                    "filter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeInStoredList",
+                                                "listName": "biddingTypes"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "storeAs": "toReturn"
                             },
-                            "storeAs": "toReturn"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "toReturn",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Battlefield"
+                            {
+                                "type": "MoveCollection",
+                                "from": "toReturn",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             ]
         }
@@ -11218,12 +11291,15 @@
                         "condition": "YouControlMostOfChosenType"
                     },
                     "then": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature",
-                            "chosenSubtypeKey": "chosenCreatureType"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature",
+                                "chosenSubtypeKey": "chosenCreatureType"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "GainControl",
                             "target": "Self"
                         }
@@ -11304,11 +11380,14 @@
                 },
                 {
                     "effect": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature ctrl:you"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "GrantKeyword",
                             "keyword": "VIGILANCE",
                             "target": "Self"
@@ -12138,19 +12217,22 @@
                             "storeAs": "chosenType"
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": {
-                                    "cardPredicates": [
-                                        "IsCreature",
-                                        {
-                                            "type": "HasSubtypeFromVariable",
-                                            "variableName": "chosenType"
-                                        }
-                                    ]
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasSubtypeFromVariable",
+                                                "variableName": "chosenType"
+                                            }
+                                        ]
+                                    }
                                 }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "TapUntap",
                                 "target": "Self",
                                 "tap": false
@@ -12966,39 +13048,45 @@
                     "to": "Graveyard"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
                             },
-                            "storeSelected": "discarded"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "discarded",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
                 }
             }
         ]
@@ -13660,39 +13748,45 @@
                     "recipient": "AnyPlayer"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
                             },
-                            "storeAs": "hand"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "hand",
-                            "selection": {
-                                "type": "ChooseExactly",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                }
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                "storeSelected": "discarded"
                             },
-                            "storeSelected": "discarded"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "discarded",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Graveyard"
-                            },
-                            "moveType": "Discard"
-                        }
-                    ]
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
                 }
             }
         ]
@@ -13734,11 +13828,14 @@
                     }
                 },
                 "effect": {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature kw:flying"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature kw:flying"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": "XValue",
                         "target": "Self"
@@ -13904,11 +14001,14 @@
                     "type": "Composite",
                     "effects": [
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature"
+                                }
                             },
-                            "effect": {
+                            "body": {
                                 "type": "DealDamage",
                                 "amount": {
                                     "type": "Fixed",
@@ -14098,11 +14198,14 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": {
                     "type": "Fixed",
@@ -14119,11 +14222,14 @@
                     "type": "Gated",
                     "gate": "Gate.MayDecide",
                     "then": {
-                        "type": "ForEachInGroup",
-                        "filter": {
-                            "baseFilter": "creature"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
                         },
-                        "effect": {
+                        "body": {
                             "type": "DealDamage",
                             "amount": {
                                 "type": "Fixed",
@@ -14891,11 +14997,14 @@
                     ]
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "SetCreatureSubtypes",
                         "duration": "EndOfTurn",
                         "fromChosenValueKey": "chosenCreatureType"
@@ -15037,11 +15146,14 @@
     ],
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "DealDamage",
                 "amount": "XValue",
                 "target": "Self"
@@ -15621,34 +15733,40 @@
                     "to": "Battlefield"
                 },
                 "effect": {
-                    "type": "ForEachPlayer",
-                    "players": "EachOpponent",
-                    "effects": [
-                        {
-                            "type": "GatherCards",
-                            "source": {
-                                "type": "FromZone",
-                                "zone": "Hand",
-                                "filter": "artifact|creature|enchantment|land"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand",
+                                    "filter": "artifact|creature|enchantment|land"
+                                },
+                                "storeAs": "put_candidates"
                             },
-                            "storeAs": "put_candidates"
-                        },
-                        {
-                            "type": "SelectFromCollection",
-                            "from": "put_candidates",
-                            "selection": "ChooseAnyNumber",
-                            "storeSelected": "putting",
-                            "prompt": "Choose cards to put onto the battlefield"
-                        },
-                        {
-                            "type": "MoveCollection",
-                            "from": "putting",
-                            "destination": {
-                                "type": "ToZone",
-                                "zone": "Battlefield"
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "put_candidates",
+                                "selection": "ChooseAnyNumber",
+                                "storeSelected": "putting",
+                                "prompt": "Choose cards to put onto the battlefield"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "putting",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         ]
@@ -15893,19 +16011,22 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": {
-                            "cardPredicates": [
-                                "IsCreature",
-                                {
-                                    "type": "NotKeyword",
-                                    "keyword": "FLYING"
-                                }
-                            ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotKeyword",
+                                        "keyword": "FLYING"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "AggregateBattlefield",
@@ -16243,12 +16364,15 @@
                     "storeAs": "chosenCreatureType"
                 },
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature",
-                        "chosenSubtypeKey": "chosenCreatureType"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature",
+                            "chosenSubtypeKey": "chosenCreatureType"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "ModifyStats",
                         "powerModifier": "XValue",
                         "toughnessModifier": "XValue",
@@ -16977,12 +17101,15 @@
                             "storeAs": "chosenCreatureType"
                         },
                         {
-                            "type": "ForEachInGroup",
-                            "filter": {
-                                "baseFilter": "creature",
-                                "chosenSubtypeKey": "chosenCreatureType"
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature",
+                                    "chosenSubtypeKey": "chosenCreatureType"
+                                }
                             },
-                            "effect": "MarkMustAttackThisTurn"
+                            "body": "MarkMustAttackThisTurn"
                         }
                     ]
                 },
@@ -17074,16 +17201,15 @@
     "oracleText": "X target creatures can't block this turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachTarget",
-            "effects": [
-                {
-                    "type": "CantBlockTargetCreatures",
-                    "target": {
-                        "type": "ContextTarget",
-                        "index": 0
-                    }
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "CantBlockTargetCreatures",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
                 }
-            ]
+            }
         },
         "targetRequirements": [
             {
@@ -17211,38 +17337,44 @@
     "oracleText": "Each player may search their library for up to X creature cards, reveal those cards, put them into their hand, then shuffle.",
     "script": {
         "spellEffect": {
-            "type": "ForEachPlayer",
-            "players": "Each",
-            "effects": [
-                {
-                    "type": "GatherCards",
-                    "source": {
-                        "type": "FromZone",
-                        "zone": "Library",
-                        "filter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Players",
+                "players": "Each"
+            },
+            "body": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "FromZone",
+                            "zone": "Library",
+                            "filter": "creature"
+                        },
+                        "storeAs": "searchable"
                     },
-                    "storeAs": "searchable"
-                },
-                {
-                    "type": "SelectFromCollection",
-                    "from": "searchable",
-                    "selection": {
-                        "type": "ChooseUpTo",
-                        "count": "XValue"
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "searchable",
+                        "selection": {
+                            "type": "ChooseUpTo",
+                            "count": "XValue"
+                        },
+                        "storeSelected": "found"
                     },
-                    "storeSelected": "found"
-                },
-                {
-                    "type": "MoveCollection",
-                    "from": "found",
-                    "destination": {
-                        "type": "ToZone",
-                        "zone": "Hand"
+                    {
+                        "type": "MoveCollection",
+                        "from": "found",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Hand"
+                        },
+                        "revealed": true
                     },
-                    "revealed": true
-                },
-                "ShuffleLibrary"
-            ]
+                    "ShuffleLibrary"
+                ]
+            }
         }
     },
     "metadata": {
@@ -18002,39 +18134,45 @@
                 "effect": {
                     "type": "ReplaceNextDrawWith",
                     "replacementEffect": {
-                        "type": "ForEachPlayer",
-                        "players": "EachOpponent",
-                        "effects": [
-                            {
-                                "type": "GatherCards",
-                                "source": {
-                                    "type": "FromZone",
-                                    "zone": "Hand"
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Players",
+                            "players": "EachOpponent"
+                        },
+                        "body": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Hand"
+                                    },
+                                    "storeAs": "hand"
                                 },
-                                "storeAs": "hand"
-                            },
-                            {
-                                "type": "SelectFromCollection",
-                                "from": "hand",
-                                "selection": {
-                                    "type": "ChooseExactly",
-                                    "count": {
-                                        "type": "Fixed",
-                                        "amount": 1
-                                    }
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "hand",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "discarded"
                                 },
-                                "storeSelected": "discarded"
-                            },
-                            {
-                                "type": "MoveCollection",
-                                "from": "discarded",
-                                "destination": {
-                                    "type": "ToZone",
-                                    "zone": "Graveyard"
-                                },
-                                "moveType": "Discard"
-                            }
-                        ]
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "discarded",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    },
+                                    "moveType": "Discard"
+                                }
+                            ]
+                        }
                     }
                 },
                 "promptOnDraw": true

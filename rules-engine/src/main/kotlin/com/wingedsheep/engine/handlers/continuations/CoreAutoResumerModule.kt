@@ -7,8 +7,7 @@ import com.wingedsheep.engine.handlers.EffectContext
 /**
  * Core auto-resumers that process continuations without player input:
  * - PendingTriggersContinuation (remaining triggers after first pauses)
- * - ForEachTargetContinuation (iterate sub-pipeline per target)
- * - ForEachPlayerContinuation (iterate sub-pipeline per player)
+ * - ForEachContinuation (remaining ForEach iterations, any iteration space)
  * - DrawReplacementRemainingDrawsContinuation (remaining draws after bounce)
  * - CycleDrawContinuation (draw after cycling triggers)
  * - TypecycleSearchContinuation (search after typecycling triggers)
@@ -26,30 +25,14 @@ class CoreAutoResumerModule(
             mergeAndContinue(result, events)
         },
 
-        autoResumer(ForEachTargetContinuation::class, canResume = { it.remainingTargets.isNotEmpty() }) { state, continuation, events, checkForMore ->
-            val forEachTargetExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachTargetExecutor { s, e, c ->
+        autoResumer(ForEachContinuation::class, canResume = { it.remainingItems.isNotEmpty() }) { state, continuation, events, checkForMore ->
+            val forEachExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachExecutor { s, e, c ->
                 services.effectExecutorRegistry.execute(s, e, c)
             }
-            val outerContext = continuation.effectContext.copy(
-                targets = continuation.remainingTargets
-            )
-            val result = forEachTargetExecutor.processTargets(
+            val result = forEachExecutor.processItems(
                 state,
-                continuation.effects,
-                continuation.remainingTargets,
-                outerContext
-            ).toExecutionResult()
-            mergeAndContinue(result, events, checkForMore)
-        },
-
-        autoResumer(ForEachPlayerContinuation::class, canResume = { it.remainingPlayers.isNotEmpty() }) { state, continuation, events, checkForMore ->
-            val forEachPlayerExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachPlayerExecutor { s, e, c ->
-                services.effectExecutorRegistry.execute(s, e, c)
-            }
-            val result = forEachPlayerExecutor.processPlayers(
-                state,
-                continuation.effects,
-                continuation.remainingPlayers,
+                continuation.effect,
+                continuation.remainingItems,
                 continuation.effectContext
             ).toExecutionResult()
             mergeAndContinue(result, events, checkForMore)

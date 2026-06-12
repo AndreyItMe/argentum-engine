@@ -289,46 +289,46 @@ data class MayTriggerContinuation(
 ) : ContinuationFrame
 
 /**
- * Continuation for ForEachTargetEffect.
- *
- * When a sub-effect pipeline pauses for a decision during one iteration,
- * this continuation stores the remaining targets so execution continues
- * with the next target after the current pipeline completes.
- *
- * @property remainingTargets The targets still to process
- * @property effects The sub-effects to execute for each remaining target
- * @property sourceId The spell that caused this effect
- * @property controllerId The controller of the effect
- * @property opponentId The opponent (if applicable)
- * @property xValue The X value (if applicable)
+ * One snapshotted iteration item of a [com.wingedsheep.sdk.scripting.effects.ForEachEffect].
+ * The variant corresponds to (but is deliberately decoupled from) the effect's
+ * [com.wingedsheep.sdk.scripting.effects.IterationSpace]: targets iterate [OfTarget],
+ * players iterate [OfPlayer], collections/groups iterate [OfEntity], colors iterate
+ * [OfColor]. Serializable so a [ForEachContinuation] can carry the remaining items
+ * across a mid-iteration pause.
  */
 @Serializable
-data class ForEachTargetContinuation(
-    override val decisionId: String,
-    val remainingTargets: List<ChosenTarget>,
-    val effects: List<Effect>,
-    val effectContext: EffectContext
-) : ContinuationFrame
+sealed interface ForEachItem {
+    @Serializable
+    data class OfTarget(val target: ChosenTarget) : ForEachItem
+
+    @Serializable
+    data class OfPlayer(val playerId: EntityId) : ForEachItem
+
+    @Serializable
+    data class OfEntity(val entityId: EntityId) : ForEachItem
+
+    @Serializable
+    data class OfColor(val color: com.wingedsheep.sdk.core.Color) : ForEachItem
+}
 
 /**
- * Continuation for ForEachPlayerEffect.
+ * Continuation for [com.wingedsheep.sdk.scripting.effects.ForEachEffect] — one frame for
+ * every iteration space (targets, players, collection, group, colors).
  *
- * When a sub-effect pipeline pauses for a decision during one iteration,
- * this continuation stores the remaining players so execution continues
- * with the next player after the current pipeline completes.
+ * Pre-pushed before each iteration's body executes; when the body pauses for a decision,
+ * this frame remains beneath the body's own frames so the remaining iterations resume
+ * after the decision resolves. The full effect is carried so the resumer can re-bind the
+ * per-iteration context for the effect's space.
  *
- * @property remainingPlayers The players still to process
- * @property effects The sub-effects to execute for each remaining player
- * @property sourceId The spell that caused this effect
- * @property controllerId The original controller of the effect
- * @property opponentId The opponent (if applicable)
- * @property xValue The X value (if applicable)
+ * @property remainingItems The snapshotted items still to process
+ * @property effect The ForEach effect being iterated (space + body)
+ * @property effectContext The outer execution context (re-bound per iteration)
  */
 @Serializable
-data class ForEachPlayerContinuation(
+data class ForEachContinuation(
     override val decisionId: String,
-    val remainingPlayers: List<EntityId>,
-    val effects: List<Effect>,
+    val remainingItems: List<ForEachItem>,
+    val effect: com.wingedsheep.sdk.scripting.effects.ForEachEffect,
     val effectContext: EffectContext
 ) : ContinuationFrame
 

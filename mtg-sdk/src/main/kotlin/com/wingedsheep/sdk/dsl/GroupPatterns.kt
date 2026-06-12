@@ -8,6 +8,7 @@ import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
+import com.wingedsheep.sdk.scripting.effects.ForEachEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.GainControlEffect
@@ -35,13 +36,13 @@ import com.wingedsheep.sdk.scripting.values.EntityReference
  */
 object GroupPatterns {
 
-    fun untapGroup(filter: GroupFilter = GroupFilter.AllCreatures): ForEachInGroupEffect =
+    fun untapGroup(filter: GroupFilter = GroupFilter.AllCreatures): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = TapUntapEffect(EffectTarget.Self, tap = false)
         )
 
-    fun tapAll(filter: GroupFilter): ForEachInGroupEffect =
+    fun tapAll(filter: GroupFilter): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = TapUntapEffect(EffectTarget.Self, tap = true)
@@ -61,7 +62,7 @@ object GroupPatterns {
         )
     ))
 
-    fun destroyAll(filter: GroupFilter, noRegenerate: Boolean = false): ForEachInGroupEffect =
+    fun destroyAll(filter: GroupFilter, noRegenerate: Boolean = false): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = MoveToZoneEffect(EffectTarget.Self, Zone.GRAVEYARD, byDestruction = true),
@@ -128,7 +129,7 @@ object GroupPatterns {
         keyword: Keyword,
         filter: GroupFilter,
         duration: Duration = Duration.EndOfTurn
-    ): ForEachInGroupEffect =
+    ): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = GrantKeywordEffect(keyword.name, EffectTarget.Self, duration)
@@ -138,7 +139,7 @@ object GroupPatterns {
         keyword: Keyword,
         filter: GroupFilter,
         duration: Duration = Duration.EndOfTurn
-    ): ForEachInGroupEffect =
+    ): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = RemoveKeywordEffect(keyword.name, EffectTarget.Self, duration)
@@ -149,7 +150,7 @@ object GroupPatterns {
         toughness: Int,
         filter: GroupFilter,
         duration: Duration = Duration.EndOfTurn
-    ): ForEachInGroupEffect =
+    ): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
@@ -160,7 +161,7 @@ object GroupPatterns {
         toughness: DynamicAmount,
         filter: GroupFilter,
         duration: Duration = Duration.EndOfTurn
-    ): ForEachInGroupEffect =
+    ): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
@@ -183,7 +184,7 @@ object GroupPatterns {
     fun doublePowerAndToughnessForAll(
         filter: GroupFilter,
         duration: Duration = Duration.EndOfTurn
-    ): ForEachInGroupEffect =
+    ): ForEachEffect =
         modifyStatsForAll(
             power = DynamicAmount.EntityProperty(EntityReference.IterationEntity, EntityNumericProperty.Power),
             toughness = DynamicAmount.EntityProperty(EntityReference.IterationEntity, EntityNumericProperty.Toughness),
@@ -191,19 +192,19 @@ object GroupPatterns {
             duration = duration
         )
 
-    fun dealDamageToAll(amount: Int, filter: GroupFilter): ForEachInGroupEffect =
+    fun dealDamageToAll(amount: Int, filter: GroupFilter): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = DealDamageEffect(amount, EffectTarget.Self)
         )
 
-    fun dealDamageToAll(amount: DynamicAmount, filter: GroupFilter): ForEachInGroupEffect =
+    fun dealDamageToAll(amount: DynamicAmount, filter: GroupFilter): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = DealDamageEffect(amount, EffectTarget.Self)
         )
 
-    fun gainControlOfGroup(filter: GroupFilter = GroupFilter.AllCreatures, duration: Duration = Duration.EndOfTurn): ForEachInGroupEffect =
+    fun gainControlOfGroup(filter: GroupFilter = GroupFilter.AllCreatures, duration: Duration = Duration.EndOfTurn): ForEachEffect =
         ForEachInGroupEffect(
             filter = filter,
             effect = GainControlEffect(EffectTarget.Self, duration)
@@ -213,7 +214,7 @@ object GroupPatterns {
      * "Each player returns a permanent they control to its owner's hand." Per-player
      * Gather → Select(1) → Move(hand), in active-player-first order.
      */
-    fun eachPlayerReturnsPermanentToHand(): ForEachPlayerEffect = ForEachPlayerEffect(
+    fun eachPlayerReturnsPermanentToHand(): ForEachEffect = ForEachPlayerEffect(
         players = Player.ActivePlayerFirst,
         effects = listOf(
             GatherCardsEffect(

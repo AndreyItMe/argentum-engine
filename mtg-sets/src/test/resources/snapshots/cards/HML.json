@@ -66,11 +66,14 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "ForEachInGroup",
-                    "filter": {
-                        "baseFilter": "creature"
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
                     },
-                    "effect": {
+                    "body": {
                         "type": "DealDamage",
                         "amount": {
                             "type": "Fixed",
@@ -80,18 +83,19 @@
                     }
                 },
                 {
-                    "type": "ForEachPlayer",
-                    "players": "Each",
-                    "effects": [
-                        {
-                            "type": "DealDamage",
-                            "amount": {
-                                "type": "Fixed",
-                                "amount": 1
-                            },
-                            "target": "Controller"
-                        }
-                    ]
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": "Controller"
+                    }
                 }
             ]
         }

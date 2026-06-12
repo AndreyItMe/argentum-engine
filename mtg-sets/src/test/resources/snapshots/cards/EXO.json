@@ -80,11 +80,14 @@
     "oracleText": "All creatures get -1/-1 until end of turn.",
     "script": {
         "spellEffect": {
-            "type": "ForEachInGroup",
-            "filter": {
-                "baseFilter": "creature"
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
             },
-            "effect": {
+            "body": {
                 "type": "ModifyStats",
                 "powerModifier": {
                     "type": "Fixed",
