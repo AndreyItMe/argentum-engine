@@ -29,7 +29,9 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  *    on the bottom in a random order, then a real `DrawCards(1)` draws the kept card (so draw
  *    triggers see a genuine draw). The shield is consumed before the inner draw, so it doesn't
  *    re-trigger itself.
- *  - "X can't be 0" is a flavor restriction; X=0 degenerates to an ordinary draw and is harmless.
+ *  - "X can't be 0" is not separately enforced. With X=0 the dig looks at zero cards, so
+ *    `SelectFromCollection` short-circuits on the empty collection (no prompt, empty kept/rest) and
+ *    the inner `DrawCards(1)` runs as an ordinary draw. Covered by the X=0 scenario test.
  */
 val AladdinsLamp = card("Aladdin's Lamp") {
     manaCost = "{10}"

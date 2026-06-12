@@ -190,6 +190,38 @@ data class ManaPool(
     }
 
     /**
+     * The ordered units of *unrestricted* floating mana this pool would spend to cover up to
+     * [xAmount] of an {X} cost: colorless first (only when X is not color-restricted), then the
+     * allowed colors (all colors when [xManaRestriction] is empty). Each element is the color of
+     * one unit, or `null` for a colorless unit; the list length is how much of X this pool covers.
+     * Restricted/rider mana is not considered.
+     *
+     * Shared by `CastPaymentProcessor.autoPay` (spends each unit and tallies per-color X spend)
+     * and `ActivateAbilityHandler.autoTapForManaCost` (uses only the count, to reduce how much X
+     * it must tap sources for) so both apply the exact same coverage rule.
+     */
+    fun xCoveragePlan(xAmount: Int, xManaRestriction: Set<Color>): List<Color?> {
+        if (xAmount <= 0) return emptyList()
+        val allowed = if (xManaRestriction.isEmpty()) Color.entries.toSet() else xManaRestriction
+        val plan = ArrayList<Color?>(xAmount)
+        var remaining = xAmount
+        // Colorless pays generic X, but never a color-restricted X.
+        if (xManaRestriction.isEmpty()) {
+            val take = minOf(remaining, colorless)
+            repeat(take) { plan.add(null) }
+            remaining -= take
+        }
+        for (color in Color.entries) {
+            if (remaining <= 0) break
+            if (color !in allowed) continue
+            val take = minOf(remaining, get(color))
+            repeat(take) { plan.add(color) }
+            remaining -= take
+        }
+        return plan
+    }
+
+    /**
      * Check if this pool can pay a mana cost.
      * When [spellContext] is provided, eligible restricted mana is considered (spent first).
      */

@@ -178,30 +178,24 @@ class CastPaymentProcessor(
             }
         }
 
-        // Spend colorless first for X — never allowed when X is color-restricted.
-        if (xManaRestriction.isEmpty()) {
-            while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-                poolAfterPayment = poolAfterPayment.spendColorless()!!
+        // Spend unrestricted floating mana for the remaining X: colorless first (unless X is
+        // color-restricted), then allowed colors. Same coverage rule as autoTapForManaCost.
+        for (unit in poolAfterPayment.xCoveragePlan(xRemainingToPay, xManaRestriction)) {
+            poolAfterPayment = if (unit == null) {
                 colorlessSpent++
-                xRemainingToPay--
-            }
-        }
-
-        // Spend colored mana for remaining X (restricted to allowed colors).
-        for (color in Color.entries) {
-            if (color !in xColorsAllowed) continue
-            while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
-                poolAfterPayment = poolAfterPayment.spend(color)!!
-                when (color) {
+                poolAfterPayment.spendColorless()!!
+            } else {
+                when (unit) {
                     Color.WHITE -> whiteSpent++
                     Color.BLUE -> blueSpent++
                     Color.BLACK -> blackSpent++
                     Color.RED -> redSpent++
                     Color.GREEN -> greenSpent++
                 }
-                xSpentByColor[color] = (xSpentByColor[color] ?: 0) + 1
-                xRemainingToPay--
+                xSpentByColor[unit] = (xSpentByColor[unit] ?: 0) + 1
+                poolAfterPayment.spend(unit)!!
             }
+            xRemainingToPay--
         }
 
         // Check if we could pay for all of X
@@ -308,30 +302,24 @@ class CastPaymentProcessor(
             }
         }
 
-        // Spend colorless first for X — never allowed when X is color-restricted.
-        if (xManaRestriction.isEmpty()) {
-            while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-                poolAfterPayment = poolAfterPayment.spendColorless()!!
+        // Spend unrestricted floating mana for the remaining X: colorless first (unless X is
+        // color-restricted), then allowed colors. Same coverage rule as autoTapForManaCost.
+        for (unit in poolAfterPayment.xCoveragePlan(xRemainingToPay, xManaRestriction)) {
+            poolAfterPayment = if (unit == null) {
                 colorlessSpent++
-                xRemainingToPay--
-            }
-        }
-
-        // Spend colored mana for remaining X (restricted to allowed colors).
-        for (color in Color.entries) {
-            if (color !in xColorsAllowed) continue
-            while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
-                poolAfterPayment = poolAfterPayment.spend(color)!!
-                when (color) {
+                poolAfterPayment.spendColorless()!!
+            } else {
+                when (unit) {
                     Color.WHITE -> whiteSpent++
                     Color.BLUE -> blueSpent++
                     Color.BLACK -> blackSpent++
                     Color.RED -> redSpent++
                     Color.GREEN -> greenSpent++
                 }
-                xSpentByColor[color] = (xSpentByColor[color] ?: 0) + 1
-                xRemainingToPay--
+                xSpentByColor[unit] = (xSpentByColor[unit] ?: 0) + 1
+                poolAfterPayment.spend(unit)!!
             }
+            xRemainingToPay--
         }
 
         // Consume `treasureMana` proportional to unrestricted mana pulled from

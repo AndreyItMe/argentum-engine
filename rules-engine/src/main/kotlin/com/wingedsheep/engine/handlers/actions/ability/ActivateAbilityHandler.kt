@@ -1301,26 +1301,15 @@ class ActivateAbilityHandler(
         val remainingCost = partialResult.remainingCost
 
         // The floating pool also pays toward the {X} portion before any sources are tapped —
-        // mirroring CastPaymentProcessor.autoPay. Without this, an {X} ability whose X is solved
-        // purely by tapping sources reports "Not enough mana" even when the pool already holds
-        // enough (e.g. Aladdin's Lamp activated with X=4 while 4 mana float in the pool). We only
-        // reduce how much X the solver must tap for here; the actual pool spend for X happens later
-        // in `payAbilityCost`, so we count exactly what that deduction can consume from the pool
-        // after base payment — colorless (unless X is color-restricted) plus the allowed colors.
+        // sharing the same coverage rule as CastPaymentProcessor.autoPay (ManaPool.xCoveragePlan).
+        // Without this, an {X} ability whose X is solved purely by tapping sources reports "Not
+        // enough mana" even when the pool already holds enough (e.g. Aladdin's Lamp activated with
+        // X=4 while 4 mana float in the pool). We only reduce how much X the solver must tap for
+        // here; the actual pool spend for X happens later in `payAbilityCost`.
         val xSymbolCount = cost.xCount.coerceAtLeast(1)
         var xToTap = xValue * xSymbolCount
         if (xToTap > 0) {
-            val poolAfterBase = partialResult.newPool
-            val xColorsAllowed: Set<Color> =
-                if (xManaRestriction.isEmpty()) Color.entries.toSet() else xManaRestriction
-            if (xManaRestriction.isEmpty()) {
-                xToTap -= minOf(xToTap, poolAfterBase.colorless)
-            }
-            for (color in Color.entries) {
-                if (xToTap <= 0) break
-                if (color !in xColorsAllowed) continue
-                xToTap -= minOf(xToTap, poolAfterBase.get(color))
-            }
+            xToTap -= partialResult.newPool.xCoveragePlan(xToTap, xManaRestriction).size
         }
 
         // If floating pool covers everything (and no X left to tap for), no tapping needed.

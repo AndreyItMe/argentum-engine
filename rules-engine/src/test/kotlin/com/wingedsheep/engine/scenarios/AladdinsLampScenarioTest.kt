@@ -141,6 +141,50 @@ class AladdinsLampScenarioTest : ScenarioTestBase() {
                     game.state.getEntity(game.findPermanent("Island")!!)?.get<TappedComponent>() shouldBe null
                 }
             }
+
+            test("X=0 degenerates to an ordinary draw (no prompt, library order preserved)") {
+                // "X can't be 0" isn't separately enforced; with X=0 the dig looks at zero cards,
+                // so the replacement is just the inner DrawCards(1) — a plain top-of-library draw.
+                val game = scenario()
+                    .withPlayers("Player", "Opponent")
+                    .withCardOnBattlefield(1, "Aladdin's Lamp", summoningSickness = false)
+                    .withCardInHand(1, "Draw One Test")
+                    .withCardInLibrary(1, "Plains")    // top — drawn by the ordinary draw
+                    .withCardInLibrary(1, "Swamp")
+                    .withCardInLibrary(1, "Mountain")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                fun libraryNames(): List<String> =
+                    game.state.getZone(ZoneKey(game.player1Id, Zone.LIBRARY))
+                        .mapNotNull { game.state.getEntity(it)?.get<CardComponent>()?.name }
+
+                // {X=0}, {T}: install the shield. No mana needed — X=0 is {0}.
+                val activation = game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = game.findPermanent("Aladdin's Lamp")!!,
+                        abilityId = lampAbilityId,
+                        xValue = 0,
+                    )
+                )
+                withClue("Activating Aladdin's Lamp with X=0 should succeed: ${activation.error}") {
+                    activation.error shouldBe null
+                }
+                game.resolveStack()
+
+                // Trigger the replaced draw; with X=0 the shield fires but asks for no decision.
+                game.castSpell(1, "Draw One Test")
+                game.resolveStack()
+
+                withClue("The top card (Plains) is drawn as an ordinary draw") {
+                    game.isInHand(1, "Plains") shouldBe true
+                }
+                withClue("No card was looked at or moved — the rest of the library keeps its order") {
+                    libraryNames() shouldBe listOf("Swamp", "Mountain")
+                }
+            }
         }
     }
 }
