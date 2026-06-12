@@ -104,6 +104,15 @@ class ActivateAbilityHandler(
     override val actionType: KClass<ActivateAbility> = ActivateAbility::class
 
     override fun validate(state: GameState, action: ActivateAbility): String? {
+        // `opponentTargetsChosen` is an internal resume marker for "… of an opponent's choice"
+        // targets (Cuombajj Witches). Only the engine's resumer sets it, and the resumer re-enters
+        // via execute() directly — never through validate() — so any action carrying it here came
+        // from a player/client. Reject it: otherwise a client could set it to skip the
+        // opponent-target pause and resolve the opponent-chosen damage with no target. See
+        // [com.wingedsheep.sdk.scripting.targets.TargetChooser].
+        if (action.opponentTargetsChosen) {
+            return "Internal resume flag cannot be set by a player"
+        }
         if (state.priorityPlayerId != action.playerId) {
             return "You don't have priority"
         }
@@ -1215,10 +1224,10 @@ class ActivateAbilityHandler(
         fullTargetReqs: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>,
         opponentReqs: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>
     ): ExecutionResult {
-        // The controller chooses which opponent makes the selection (CR 800.4g / Cuombajj ruling).
-        // In a two-player game that's the sole opponent; choosing among several opponents in
-        // multiplayer is a future extension — default to the first opponent in turn order so the
-        // ability still functions.
+        // The controller chooses which opponent makes the selection (per the card's own ruling:
+        // "You choose which opponent chooses the second target"). In a two-player game that's the
+        // sole opponent; choosing among several opponents in multiplayer is a future extension —
+        // default to the first opponent in turn order so the ability still functions.
         val deciderId = state.turnOrder.firstOrNull { it != action.playerId && state.hasEntity(it) }
             ?: return ExecutionResult.error(state, "No opponent available to choose a target")
 

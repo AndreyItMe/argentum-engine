@@ -59,16 +59,29 @@ class ActivateAbilityOpponentTargetResumer(
             .sortedBy { it.key }
             .flatMap { (_, ids) -> ids.map { entityIdToChosenTarget(state, it) } }
 
-        // Validate the opponent stayed within the legal targets we offered, and picked the right
-        // count, before committing — defends against a malformed/hostile response.
+        // The opponent's pick was already checked against the offered legal targets and per-
+        // requirement count bounds upstream in DecisionValidators.validateTargets (run by
+        // SubmitDecisionHandler before this resumer). Re-assert the minimum total here as cheap
+        // defense-in-depth against a malformed response reaching the resume path.
         val expectedCount = continuation.opponentRequirements.sumOf { it.effectiveMinCount }
         if (opponentTargets.size < expectedCount) {
             return ExecutionResult.error(state, "Not enough targets chosen for opponent's choice")
         }
 
+        // The interleave below relies on each requirement consuming exactly `count` targets
+        // (the positional model buildNamedTargets uses on resolution). That holds only for
+        // fixed-count requirements; an optional/variable requirement would misalign the cursors.
+        // Cuombajj is the only printed use and is fixed-count — guard the generalization explicitly
+        // rather than silently producing a wrong target mapping.
+        if (continuation.fullRequirements.any { it.minCount != it.count || it.optional || it.unlimited }) {
+            return ExecutionResult.error(
+                state,
+                "Opponent-chosen targets are only supported with fixed-count requirements"
+            )
+        }
+
         // Interleave the controller's targets (already on the action) with the opponent's, in the
-        // script order of the full requirement list. Fixed-count requirements consume `count`
-        // targets each — the same positional model buildNamedTargets uses on resolution.
+        // script order of the full requirement list. Each requirement consumes `count` targets.
         val controllerTargets = continuation.action.targets
         val merged = mutableListOf<ChosenTarget>()
         var controllerCursor = 0

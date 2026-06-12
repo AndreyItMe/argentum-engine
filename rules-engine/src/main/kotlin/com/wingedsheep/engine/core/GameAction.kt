@@ -215,7 +215,9 @@ data class ActivateAbility(
      * first pass the handler pauses to let an opponent pick the opponent-chosen target(s); the
      * resumer re-enters [com.wingedsheep.engine.handlers.actions.ability.ActivateAbilityHandler.execute]
      * with those targets merged into [targets] and this flag set, so the opponent-target pause is
-     * not raised a second time. Never set by a player/client — only by the engine's resumer.
+     * not raised a second time. Only the engine's resumer sets it (re-entering via execute()
+     * directly); ActivateAbilityHandler.validate() rejects any client-submitted action that carries
+     * it, so it can't be used to skip the opponent-target pause.
      */
     val opponentTargetsChosen: Boolean = false
 ) : GameAction

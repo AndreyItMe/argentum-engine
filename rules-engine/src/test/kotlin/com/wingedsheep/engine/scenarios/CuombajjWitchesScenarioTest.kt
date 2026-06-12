@@ -197,6 +197,40 @@ class CuombajjWitchesScenarioTest : ScenarioTestBase() {
                     game.getLifeTotal(1) shouldBe 19
                 }
             }
+
+            test("a client cannot set the internal opponentTargetsChosen flag to skip the opponent's choice") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Cuombajj Witches", summoningSickness = false)
+                    .withLifeTotal(1, 20)
+                    .withLifeTotal(2, 20)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val witches = game.findPermanent("Cuombajj Witches")!!
+
+                // A non-conforming client tries to pre-set the internal resume marker, supplying
+                // only its own target — which would otherwise skip the opponent-target pause and
+                // resolve the opponent-chosen damage with no target. validate() must reject it.
+                val result = game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = witches,
+                        abilityId = abilityId(),
+                        targets = listOf(ChosenTarget.Player(game.player2Id)),
+                        opponentTargetsChosen = true,
+                    )
+                )
+
+                withClue("Activation carrying the internal flag is rejected") {
+                    result.error shouldBe "Internal resume flag cannot be set by a player"
+                }
+                withClue("No decision was raised and no damage dealt") {
+                    game.getLifeTotal(1) shouldBe 20
+                    game.getLifeTotal(2) shouldBe 20
+                }
+            }
         }
     }
 }
