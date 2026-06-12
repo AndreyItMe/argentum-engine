@@ -329,8 +329,19 @@ internal class BlockPhaseManager(
             }
         }
 
-        // Check evasion abilities of each attacker
+        // Check each attacker
         for (attackerId in attackerIds) {
+            // CR 509.1b: a creature can only block an attacker that is attacking its
+            // controller (or a planeswalker/battle its controller protects). In a
+            // multiplayer combat this stops a player from blocking an attack aimed at
+            // someone else.
+            val attacking = state.getEntity(attackerId)?.get<AttackingComponent>()
+                ?: return "${cardComponent.name} can't block: ${attackerId.value} isn't attacking"
+            val attackedDefender = CombatDefenders.defendingPlayerOf(state, attacking.defenderId)
+            if (attackedDefender != blockingPlayer) {
+                return "${cardComponent.name} can't block a creature attacking another player"
+            }
+
             val evasionValidation = validateCanBlock(state, blockerId, attackerId, blockingPlayer)
             if (evasionValidation != null) {
                 return evasionValidation

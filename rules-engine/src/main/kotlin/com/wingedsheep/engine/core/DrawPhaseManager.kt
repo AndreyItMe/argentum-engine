@@ -44,6 +44,18 @@ class DrawPhaseManager(
         val activePlayer = stateIn.activePlayerId
             ?: return ExecutionResult.error(stateIn, "No active player")
 
+        // CR 800.4j: a turn whose active player has left the game continues without an
+        // active player — there is no one to take the draw turn-based action, so it doesn't
+        // happen. (Their library is gone too, so attempting it would be a spurious deck-out.)
+        if (stateIn.getEntity(activePlayer)
+                ?.has<com.wingedsheep.engine.state.components.player.PlayerLostComponent>() == true
+        ) {
+            return ExecutionResult.success(
+                stateIn.withPriority(activePlayer),
+                listOf(StepChangedEvent(Step.DRAW))
+            )
+        }
+
         // Snapshot the active player's cards-drawn-this-turn count as the draw step begins,
         // before the turn-based draw (CR 504.1). The first card drawn from here on is "the first
         // card they draw in this draw step" — the one exempted by Orcish Bowmasters. Captured for
@@ -55,7 +67,12 @@ class DrawPhaseManager(
             drawStepStartDrawCountByPlayer = stateIn.drawStepStartDrawCountByPlayer + (activePlayer to drawnSoFar)
         )
 
-        val isFirstTurnFirstPlayer = state.turnNumber == 1 && activePlayer == state.turnOrder.first()
+        // CR 103.8a: in a two-player game the player who plays first skips the draw step
+        // of their first turn. CR 103.8c: in all other multiplayer games, no player skips
+        // the first draw. So the skip is gated on the table having exactly two players.
+        val isFirstTurnFirstPlayer = state.turnNumber == 1 &&
+            activePlayer == state.turnOrder.first() &&
+            state.turnOrder.size == 2
         if (isFirstTurnFirstPlayer) {
             return ExecutionResult.success(
                 state.withPriority(activePlayer),

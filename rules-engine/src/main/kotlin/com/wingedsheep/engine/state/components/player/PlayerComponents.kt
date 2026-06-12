@@ -318,6 +318,18 @@ data class PlayerLostComponent(
 ) : Component
 
 /**
+ * Marks that a player who lost the game has already had the "leaving the game"
+ * processing (CR 800.4a–c) applied — their owned objects removed, their stack objects
+ * cleared, and control effects involving them ended.
+ *
+ * A player carries [PlayerLostComponent] the instant they lose, but the leave-the-game
+ * cleanup is a separate step run once by [com.wingedsheep.engine.mechanics.sba.player.PlayerLeavesGameCheck].
+ * This marker is the idempotency guard so the SBA loop applies that cleanup exactly once.
+ */
+@Serializable
+data object PlayerLeftGameComponent : Component
+
+/**
  * Reason why a player lost the game.
  */
 @Serializable

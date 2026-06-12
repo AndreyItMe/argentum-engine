@@ -20,5 +20,6 @@ object SbaOrder {
     const val COMMANDER_ZONE_CHOICE = 950   // 903.9a (Commander format)
     const val TOKENS_IN_WRONG_ZONES = 1000  // 704.5s
     const val PHANTOM_CARD_COPIES = 1050    // 707.10a
+    const val LEAVE_GAME = 9000             // 800.4a–c (multiplayer: process a player who has left)
     const val GAME_END = 9999
 }

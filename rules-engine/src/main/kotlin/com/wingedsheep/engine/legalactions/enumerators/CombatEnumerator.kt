@@ -36,7 +36,11 @@ class CombatEnumerator : ActionEnumerator {
         if (state.step == Step.DECLARE_BLOCKERS && state.activePlayerId != playerId) {
             val blockersAlreadyDeclared = state.getEntity(playerId)
                 ?.get<BlockersDeclaredThisCombatComponent>() != null
-            if (!blockersAlreadyDeclared) return true
+            if (!blockersAlreadyDeclared &&
+                com.wingedsheep.engine.mechanics.combat.CombatDefenders.isDefendingPlayer(state, playerId)
+            ) {
+                return true
+            }
         }
         return false
     }
@@ -70,8 +74,10 @@ class CombatEnumerator : ActionEnumerator {
             }
         }
 
-        // Declare blockers
-        if (state.step == Step.DECLARE_BLOCKERS && state.activePlayerId != playerId) {
+        // Declare blockers — offered only to a defending player (one being attacked).
+        if (state.step == Step.DECLARE_BLOCKERS && state.activePlayerId != playerId &&
+            com.wingedsheep.engine.mechanics.combat.CombatDefenders.isDefendingPlayer(state, playerId)
+        ) {
             val blockersAlreadyDeclared = state.getEntity(playerId)
                 ?.get<BlockersDeclaredThisCombatComponent>() != null
             if (!blockersAlreadyDeclared) {

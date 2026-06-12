@@ -543,9 +543,22 @@ data class GameState(
 
     /**
      * Set the priority player (returns new state).
+     *
+     * CR 800.4a / 800.4j: priority that would be given to a player who has left the game
+     * passes instead to the next player still in the game. Routing every priority
+     * assignment through here means the rest of the engine never has to special-case a
+     * departed active player — a turn whose active player has left simply hands each
+     * priority window to the next remaining player.
      */
     fun withPriority(playerId: EntityId?): GameState =
-        copy(priorityPlayerId = playerId, priorityPassedBy = emptySet())
+        copy(priorityPlayerId = redirectPriorityIfLeft(playerId), priorityPassedBy = emptySet())
+
+    private fun redirectPriorityIfLeft(playerId: EntityId?): EntityId? {
+        if (playerId == null) return null
+        val hasLeft = getEntity(playerId)
+            ?.has<com.wingedsheep.engine.state.components.player.PlayerLostComponent>() == true
+        return if (hasLeft) getNextPlayer(playerId) else playerId
+    }
 
     /**
      * Record that a player passed priority (returns new state).
@@ -554,9 +567,11 @@ data class GameState(
         copy(priorityPassedBy = priorityPassedBy + playerId)
 
     /**
-     * Check if all players have passed priority.
+     * Check if all players still in the game have passed priority. Players who have
+     * left the game (CR 800.4a) never receive priority, so they are excluded — checking
+     * against the full [turnOrder] would deadlock a multiplayer game once a player leaves.
      */
-    fun allPlayersPassed(): Boolean = priorityPassedBy.containsAll(turnOrder)
+    fun allPlayersPassed(): Boolean = priorityPassedBy.containsAll(activePlayers)
 
     /**
      * Check if the engine is paused awaiting a decision.
@@ -641,11 +656,27 @@ data class GameState(
         copy(delayedTriggers = delayedTriggers.filter { it.id !in ids })
 
     /**
-     * Get the next player in turn order after the given player.
+     * Get the next player still in the game in turn order after the given player.
+     *
+     * Players who have left the game (CR 800.4a) are skipped: priority that would pass
+     * to a departed player goes to the next remaining player (CR 800.4a), and a turn a
+     * departed player would begin doesn't begin — the next remaining player's turn is
+     * next instead (CR 800.4k). If everyone else has left, returns [afterPlayer]
+     * (the game-end SBA resolves the single survivor).
      */
     fun getNextPlayer(afterPlayer: EntityId): EntityId {
-        val index = turnOrder.indexOf(afterPlayer)
-        return turnOrder[(index + 1) % turnOrder.size]
+        val size = turnOrder.size
+        if (size == 0) return afterPlayer
+        val start = turnOrder.indexOf(afterPlayer)
+        for (step in 1..size) {
+            val candidate = turnOrder[((start + step) % size + size) % size]
+            if (getEntity(candidate)
+                    ?.has<com.wingedsheep.engine.state.components.player.PlayerLostComponent>() != true
+            ) {
+                return candidate
+            }
+        }
+        return afterPlayer
     }
 
     companion object {

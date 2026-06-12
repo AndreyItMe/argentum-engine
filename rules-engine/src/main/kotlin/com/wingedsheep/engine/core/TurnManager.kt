@@ -296,10 +296,8 @@ class TurnManager(
                     }
                     newState = newState.copy(
                         step = Step.POSTCOMBAT_MAIN,
-                        phase = Phase.POSTCOMBAT_MAIN,
-                        priorityPlayerId = activePlayer,
-                        priorityPassedBy = emptySet()
-                    )
+                        phase = Phase.POSTCOMBAT_MAIN
+                    ).withPriority(activePlayer)
                     events.add(PhaseChangedEvent(Phase.POSTCOMBAT_MAIN))
                     events.add(StepChangedEvent(Step.POSTCOMBAT_MAIN))
                     return ExecutionResult.success(newState, events)
@@ -318,9 +316,16 @@ class TurnManager(
                 if (!hasAttackingCreatures(newState)) {
                     return advanceStep(newState.copy(step = Step.DECLARE_BLOCKERS))
                 }
-                val defendingPlayer = newState.turnOrder.firstOrNull { it != activePlayer }
+                // Each defending player declares blockers for the attackers aimed at them,
+                // in APNAP order (CR 509.1 / 101.4). Hand priority to the first defender; as
+                // each declares and passes, the priority round walks to the next defender
+                // (a defending player who hasn't declared can't pass — see PassPriorityHandler),
+                // and the step only advances to combat damage once every defender has declared.
+                val firstDefender = com.wingedsheep.engine.mechanics.combat.CombatDefenders
+                    .defendingPlayersInApnapOrder(newState).firstOrNull()
+                    ?: newState.turnOrder.firstOrNull { it != activePlayer }
                     ?: activePlayer
-                newState = newState.withPriority(defendingPlayer)
+                newState = newState.withPriority(firstDefender)
             }
 
             Step.FIRST_STRIKE_COMBAT_DAMAGE -> {

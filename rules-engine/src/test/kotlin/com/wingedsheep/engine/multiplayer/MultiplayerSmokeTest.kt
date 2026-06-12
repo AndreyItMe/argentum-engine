@@ -95,6 +95,22 @@ class MultiplayerSmokeTest : FunSpec({
         // Drive the game until the turn passes to the second seat.
         while (state.activePlayerId == players[0]) {
             check(++safety < 500) { "turn never advanced (stuck at step ${state.step})" }
+
+            // The starting player draws on turn one in multiplayer (CR 103.8c), so they end
+            // up with eight cards and must discard one at cleanup — answer that decision.
+            val pending = state.pendingDecision
+            if (pending is com.wingedsheep.engine.core.SelectCardsDecision) {
+                val response = com.wingedsheep.engine.core.CardsSelectedResponse(
+                    pending.id, pending.options.take(pending.minSelections)
+                )
+                val result = processor.process(
+                    state, com.wingedsheep.engine.core.SubmitDecision(pending.playerId, response)
+                ).result
+                check(result.isSuccess || result.isPaused) { "discard failed: ${result.error}" }
+                state = result.newState
+                continue
+            }
+
             val prio = state.priorityPlayerId ?: break
             playersSeenWithPriority.add(prio)
             val action = when {

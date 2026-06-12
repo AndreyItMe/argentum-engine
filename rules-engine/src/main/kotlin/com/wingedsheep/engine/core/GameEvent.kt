@@ -875,6 +875,20 @@ data class PlayerLostEvent(
     val message: String? = null
 ) : GameEvent
 
+/**
+ * A player left the game and their "leaving the game" processing (CR 800.4a–c) was
+ * applied: all objects they owned left the game, their stack objects were removed, and
+ * control effects involving them ended. In a multiplayer pod the game continues for the
+ * remaining players. [removedObjectCount] is informational (for logs / animation).
+ */
+@Serializable
+@SerialName("PlayerLeftGameEvent")
+data class PlayerLeftGameEvent(
+    val playerId: EntityId,
+    val reason: GameEndReason,
+    val removedObjectCount: Int
+) : GameEvent
+
 // =============================================================================
 // Creature Events
 // =============================================================================

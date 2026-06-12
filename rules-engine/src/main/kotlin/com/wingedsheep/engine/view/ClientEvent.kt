@@ -961,6 +961,10 @@ object ClientEventTransformer {
                 reason = event.reason.name
             )
 
+            // The player-left cleanup is a consequence of the already-announced loss; the
+            // multiplayer board-teardown UX is Phase 3 of backlog/multiplayer.md.
+            is PlayerLeftGameEvent -> null
+
             is GameEndedEvent -> ClientEvent.GameEnded(
                 winnerId = event.winnerId
             )
