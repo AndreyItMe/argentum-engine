@@ -85,6 +85,7 @@ private data class MultiTargetLocals(
     val statements: List<Stmt>,
     val vars: List<String>,
     val refVars: Map<String, String>,
+    val refVarsByKind: Map<String, List<String>>,
 )
 
 private fun EmitCtx.multiTargetLocals(targets: List<JsonObject>, actions: List<JsonObject>?): MultiTargetLocals? {
@@ -101,7 +102,7 @@ private fun EmitCtx.multiTargetLocals(targets: List<JsonObject>, actions: List<J
     val refVars = refsByKind.mapNotNull { (ref, refVars) ->
         if (refVars.size == 1) ref to refVars.single() else null
     }.toMap()
-    return MultiTargetLocals(stmts, vars, refVars)
+    return MultiTargetLocals(stmts, vars, refVars, refsByKind.mapValues { it.value.toList() })
 }
 
 private fun refKindForTarget(target: JsonObject): String? = when (target.strField("_Target")) {
@@ -514,6 +515,7 @@ internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
         val vars = multi.vars
         targetVars = vars
         targetRefVars = multi.refVars
+        targetRefVarsByKind = multi.refVarsByKind
         try {
             val edsl = renderEffectList(actions, vars.firstOrNull()) ?: run { reasons.add("multi-target"); return null }
             val restrictions = castRestrictionLines((card["Rules"].asArr ?: JsonArray(emptyList())).filterIsInstance<JsonObject>()) ?: return null
@@ -525,6 +527,7 @@ internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
         } finally {
             targetVars = emptyList()
             targetRefVars = emptyMap()
+            targetRefVarsByKind = emptyMap()
         }
     }
 

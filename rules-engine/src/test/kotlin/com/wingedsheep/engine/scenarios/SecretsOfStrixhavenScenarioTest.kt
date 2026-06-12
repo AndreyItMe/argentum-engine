@@ -4,6 +4,7 @@ import com.wingedsheep.engine.core.ActivateAbility
 import com.wingedsheep.engine.core.CastSpell
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
@@ -455,6 +456,99 @@ class SecretsOfStrixhavenScenarioTest : ScenarioTestBase() {
             projector.getProjectedPower(game.state, pterafractyl) shouldBe 4
             projector.getProjectedToughness(game.state, pterafractyl) shouldBe 3
             game.getLifeTotal(1) shouldBe 22
+        }
+
+        test("Dissection Practice: drain opponent, pump one creature, shrink another") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Dissection Practice")
+                .withCardOnBattlefield(1, "Glory Seeker") // my 2/2
+                .withCardOnBattlefield(2, "Glory Seeker") // their 2/2
+                .withLandsOnBattlefield(1, "Swamp", 1)
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            val mine = game.state.getBattlefield(game.player1Id).first {
+                game.state.getEntity(it)?.get<CardComponent>()?.name == "Glory Seeker"
+            }
+            val theirs = game.state.getBattlefield(game.player2Id).first {
+                game.state.getEntity(it)?.get<CardComponent>()?.name == "Glory Seeker"
+            }
+
+            // Slot order: target opponent, up-to-one pump, up-to-one shrink.
+            game.execute(
+                CastSpell(
+                    game.player1Id,
+                    game.findCardsInHand(1, "Dissection Practice").first(),
+                    listOf(
+                        ChosenTarget.Player(game.player2Id),
+                        ChosenTarget.Permanent(mine),
+                        ChosenTarget.Permanent(theirs)
+                    )
+                )
+            ).error shouldBe null
+            game.resolveStack()
+
+            game.getLifeTotal(2) shouldBe 19
+            game.getLifeTotal(1) shouldBe 21
+            projector.getProjectedPower(game.state, mine) shouldBe 3
+            projector.getProjectedToughness(game.state, mine) shouldBe 3
+            projector.getProjectedPower(game.state, theirs) shouldBe 1
+            projector.getProjectedToughness(game.state, theirs) shouldBe 1
+        }
+
+        test("Dissection Practice: the two creature targets are optional — drain alone resolves") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Dissection Practice")
+                .withLandsOnBattlefield(1, "Swamp", 1)
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            game.execute(
+                CastSpell(
+                    game.player1Id,
+                    game.findCardsInHand(1, "Dissection Practice").first(),
+                    listOf(ChosenTarget.Player(game.player2Id))
+                )
+            ).error shouldBe null
+            game.resolveStack()
+
+            game.getLifeTotal(2) shouldBe 19
+            game.getLifeTotal(1) shouldBe 21
+        }
+
+        test("Proctor's Gaze: bounce a nonland permanent and ramp a tapped basic") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Proctor's Gaze")
+                .withCardOnBattlefield(2, "Glory Seeker") // opponent's creature to bounce
+                .withLandsOnBattlefield(1, "Forest", 2)
+                .withLandsOnBattlefield(1, "Island", 2)
+                .withCardInLibrary(1, "Mountain")
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            val target = game.findPermanent("Glory Seeker")!!
+            game.castSpell(1, "Proctor's Gaze", target).error shouldBe null
+            game.resolveStack()
+            // Mandatory search: pick the only basic available.
+            if (game.getPendingDecision() != null) {
+                val land = game.findCardsInLibrary(1, "Mountain").firstOrNull()
+                if (land != null) game.selectCards(listOf(land))
+                game.resolveStack()
+            }
+
+            // Bounced creature returned to its owner's hand.
+            game.isInHand(2, "Glory Seeker").shouldBeTrue()
+            game.findPermanents("Glory Seeker").shouldBe(emptyList())
+            // Basic land fetched onto the battlefield, tapped.
+            val fetched = game.findPermanent("Mountain")
+            fetched.shouldNotBe(null)
+            game.state.getEntity(fetched!!)!!.get<TappedComponent>().shouldNotBe(null)
         }
     }
 

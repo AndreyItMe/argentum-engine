@@ -86,6 +86,15 @@ class EmitCtx(val keywords: Set<String>, val oracleText: String? = null) {
      * multi-targets deliberately decline rather than guessing.
      */
     var targetRefVars: Map<String, String> = emptyMap()
+
+    /**
+     * For multi-target spells, the ordered list of target locals per ref kind, so a suffixed
+     * `Ref_TargetPermanentN` resolves to the N-th *permanent* target (1-based) — the IR ordinal counts
+     * only targets of that kind, not the flat target list (which may interleave players). e.g. Dissection
+     * Practice's `[TargetPlayer, UptoOneTargetPermanent, UptoOneTargetPermanent]` -> `Ref_TargetPermanent`
+     * maps to `[t2, t3]`, so `Ref_TargetPermanent1` is `t2` and `Ref_TargetPermanent2` is `t3`.
+     */
+    var targetRefVarsByKind: Map<String, List<String>> = emptyMap()
 }
 
 internal val SELF_REFS = setOf(
@@ -365,12 +374,15 @@ internal fun EmitCtx.refTargetIn(args: JsonElement?, markerKey: String, tvar: St
 }
 
 private fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
-    // A suffixed multi-target ref (Ref_TargetPermanent1 / Ref_TargetPermanent2 / …) indexes the named
-    // per-target locals set up by the multi-target spell path. The ordinal is 1-based in the IR.
+    // A suffixed multi-target ref (Ref_TargetPermanent1 / Ref_TargetPermanent2 / …) indexes the
+    // per-KIND ordered list of target locals (1-based). The IR ordinal counts only targets of that
+    // kind, so it must not index the flat target list — that would skew when an earlier slot is a
+    // player (Dissection Practice: t1 is the opponent, so Ref_TargetPermanent1 is t2, not t1).
     if (ref != null && targetVars.isNotEmpty()) {
         Regex("^Ref_TargetPermanent(\\d+)$").matchEntire(ref)?.let { m ->
             val idx = m.groupValues[1].toInt() - 1
-            return targetVars.getOrNull(idx)
+            return targetRefVarsByKind["Ref_TargetPermanent"]?.getOrNull(idx)
+                ?: targetVars.getOrNull(idx)
         }
     }
     if (ref in setOf("Ref_TargetPermanent", "Ref_TargetPlayer", "Ref_TargetGraveyardCard")) {
