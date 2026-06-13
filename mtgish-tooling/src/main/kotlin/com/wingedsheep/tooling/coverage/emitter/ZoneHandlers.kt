@@ -60,6 +60,18 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         call("Effects.Exile", arg(Lit(tgt)))
     }
 
+    // "Exile the top card of your library." (the first half of the impulse-draw idiom — Irascible
+    // Wolverine, Alania's Pathmaker). The exiled card is stored under the shared "exiledCard" key that
+    // the paired `CreatePlayerEffectUntil{MayPlayExiledCard(TheCardExiledThisWay)}` action reads to grant
+    // the may-play window (see TapLayerStateHandlers' CreatePlayerEffectUntil branch). The exile itself is
+    // the gather + move-to-exile atomic pair.
+    on("ExileTopCardOfLibrary") { _, _, _ ->
+        Composite(listOf(
+            Lit("GatherCardsEffect(CardSource.TopOfLibrary(DynamicAmount.Fixed(1)), storeAs = \"exiledCard\")"),
+            Lit("MoveCollectionEffect(from = \"exiledCard\", destination = CardDestination.ToZone(Zone.EXILE))"),
+        ))
+    }
+
     // "Return the exiled card to the battlefield under its owner's control" (the second half of the
     // exile-then-return idiom — Conciliator's Duelist, Parting Gust). `TheCardExiledThisWay` refers to
     // the same bound target that was exiled earlier in the ability, so it resolves to the ability's
@@ -70,6 +82,11 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         if (!jsonContains(node, "_CardInExile", "TheCardExiledThisWay")) return@on null
         val flagBlob = compact(node)
         if ("EntersUnderPlayersControl" in flagBlob || "EntersUnderYourControl" in flagBlob) return@on null
+        // We render only the bare "return under its owner's control". Any extra enter flag — a +1/+1
+        // counter (Daydream), entering tapped, etc. — would be silently dropped, producing a
+        // confidently-wrong card, so decline (-> SCAFFOLD) when one is present.
+        if ("EntersWithACounter" in flagBlob || "EntersWithNumberCounters" in flagBlob ||
+            "EntersTapped" in flagBlob) return@on null
         call("Effects.Move", arg(Lit(tvar)), arg("Zone.BATTLEFIELD"))
     }
 

@@ -8,6 +8,9 @@ internal fun BridgeBuilder.damageLifeAndCards() {
         // deal N damage to <recipient>" (Skirk Commando, Snapping Thragg, Aether Charge) — both realise as
         // a DealDamageEffect, so they carry the same DealDamage capability as the plain spell/permanent forms.
         "SpellDealsDamageCantBePrevented", "HavePermanentDealDamage",
+        // "it deals N damage to <recipient>" where "it" is a card face up in exile (Longhorn
+        // Sharpshooter's plot trigger) — same DealDamageEffect, attributed to the ability source.
+        "ExiledCardDealsDamage",
         tag = "DealDamage",
     )
     effect("SpellDealsDistributedDamage", "DividedDamage")

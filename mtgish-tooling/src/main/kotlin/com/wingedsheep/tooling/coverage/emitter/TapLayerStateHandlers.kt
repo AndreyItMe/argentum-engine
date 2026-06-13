@@ -89,23 +89,23 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         // counter"). Only the bare ±1/±1 PTCounter and the keyword counters we name render; any other
         // counter kind scaffolds rather than guess. The subject ref is self or the bound target.
         val arr = args.asArr ?: return@on null
-        val counterNode = arr.getOrNull(0) as? JsonObject ?: return@on null
-        val counter = when (counterNode.strField("_CounterType")) {
-            "PTCounter" -> {
-                val pt = counterNode["args"].asArr ?: return@on null
-                when (Pair(pt.getOrNull(0).asInt(), pt.getOrNull(1).asInt())) {
-                    Pair(1, 1) -> "Counters.PLUS_ONE_PLUS_ONE"
-                    Pair(-1, -1) -> "Counters.MINUS_ONE_MINUS_ONE"
-                    else -> return@on null
-                }
-            }
-            // Keyword counters (CR 122.1c) that grant their keyword via the engine's keyword-counter
-            // projection. Only the ones we can name render; anything else scaffolds.
-            "FlyingCounter" -> "Counters.FLYING"
-            else -> return@on null
-        }
+        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
         val tgt = refTarget(arr.getOrNull(1), tvar) ?: return@on null
         call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", tgt))
+    }
+
+    on("PutACounterOfTypeOnEachPermanent") { _, args, _ ->
+        // "Put a +1/+1 counter on each <filter>." — the mass form of PutACounterOfTypeOnPermanent
+        // (Bounding Felidar's "each other creature you control"). IR args are [<CounterType>, <filter>].
+        // Render as ForEachInGroup(AddCountersEffect(..., Self)) over the recovered group filter; the
+        // same named-counter restriction applies, and an unrenderable filter declines (-> SCAFFOLD).
+        val arr = args.asArr ?: return@on null
+        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
+        val filter = groupFilterExpr(arr.getOrNull(1)) ?: return@on null
+        call(
+            "Effects.ForEachInGroup", arg(filter),
+            arg(call("AddCountersEffect", arg(Lit(counter)), arg("1"), arg("EffectTarget.Self"))),
+        )
     }
 
     on("PutNumberCountersOfTypeOnPermanent") { _, args, tvar ->
@@ -115,19 +115,7 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         // other counter kind or a derived count scaffolds rather than guess.
         val arr = args.asArr ?: return@on null
         val count = findInteger(arr.getOrNull(0)) as? Int ?: return@on null
-        val counterNode = arr.getOrNull(1) as? JsonObject ?: return@on null
-        val counter = when (counterNode.strField("_CounterType")) {
-            "PTCounter" -> {
-                val pt = counterNode["args"].asArr ?: return@on null
-                when (Pair(pt.getOrNull(0).asInt(), pt.getOrNull(1).asInt())) {
-                    Pair(1, 1) -> "Counters.PLUS_ONE_PLUS_ONE"
-                    Pair(-1, -1) -> "Counters.MINUS_ONE_MINUS_ONE"
-                    else -> return@on null
-                }
-            }
-            "FlyingCounter" -> "Counters.FLYING"
-            else -> return@on null
-        }
+        val counter = counterTypeDsl(arr.getOrNull(1)) ?: return@on null
         val tgt = refTarget(arr.getOrNull(2), tvar) ?: return@on null
         call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
     }
@@ -195,8 +183,25 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
     on("CreatePlayerEffectUntil") { node, _, _ ->  // Summer Bloom: may play N additional lands
         val n = findInteger(node)
         if (jsonContains(node, "_PlayerEffect", "MayPlayAdditionalLands") && n is Int) {
-            call("PlayAdditionalLandsEffect", arg("$n"))
-        } else null
+            return@on call("PlayAdditionalLandsEffect", arg("$n"))
+        }
+        // "Until end of turn / end of your next turn, you may play that card." — the second half of the
+        // impulse-draw idiom (Irascible Wolverine, Alania's Pathmaker). The grant reads the card the paired
+        // `ExileTopCardOfLibrary` action stashed under "exiledCard". Only the controller-scoped grant on the
+        // card-exiled-this-way renders, and only for the two expirations the MayPlayExpiry facade names;
+        // any other player scope or expiration declines (-> SCAFFOLD) rather than emit a wrong window.
+        if (jsonContains(node, "_PlayerEffect", "MayPlayExiledCard") &&
+            jsonContains(node, "_CardInExile", "TheCardExiledThisWay") &&
+            jsonContains(node, "_Player", "You")
+        ) {
+            val expiry = when (firstExpiration(node)) {
+                "UntilEndOfTurn" -> "MayPlayExpiry.EndOfTurn"
+                "UntilEndOfNextTurn" -> "MayPlayExpiry.UntilEndOfNextTurn"
+                else -> return@on null
+            }
+            return@on call("GrantMayPlayFromExileEffect", arg("\"exiledCard\""), arg(Lit(expiry)))
+        }
+        null
     }
 
     on("EachPermanentDoesntUntapDuringControllersNextUntap") { _, _, tvar ->
@@ -204,6 +209,28 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
     }
     on("SkipAllCombatPhasesTheirNextTurn") { _, _, tvar ->
         if (tvar != null) call("SkipCombatPhasesEffect", arg(Lit(tvar))) else call("SkipCombatPhasesEffect")
+    }
+}
+
+/** A mtgish `_CounterType` node -> the `Counters.*` constant the AddCountersEffect facade takes, or null
+ *  for a counter kind we can't name (-> the caller scaffolds rather than guess). Shared by every "put a
+ *  counter" handler (single / N / each). Only the bare ±1/±1 PTCounter and the keyword counters whose
+ *  engine keyword-counter projection we model render. */
+internal fun counterTypeDsl(counterNode: JsonElement?): String? {
+    val node = counterNode as? JsonObject ?: return null
+    return when (node.strField("_CounterType")) {
+        "PTCounter" -> {
+            val pt = node["args"].asArr ?: return null
+            when (Pair(pt.getOrNull(0).asInt(), pt.getOrNull(1).asInt())) {
+                Pair(1, 1) -> "Counters.PLUS_ONE_PLUS_ONE"
+                Pair(-1, -1) -> "Counters.MINUS_ONE_MINUS_ONE"
+                else -> null
+            }
+        }
+        // Keyword counters (CR 122.1c) that grant their keyword via the engine's keyword-counter
+        // projection. Only the ones we can name render; anything else scaffolds.
+        "FlyingCounter" -> "Counters.FLYING"
+        else -> null
     }
 }
 

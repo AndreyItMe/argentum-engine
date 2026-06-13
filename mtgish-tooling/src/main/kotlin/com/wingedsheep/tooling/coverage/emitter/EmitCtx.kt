@@ -322,6 +322,11 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         //   a tapped/untapped LAND — only "tapped creature" is recovered, via the oracle text (Theft of
         //     Dreams, correctly); "tapped land" (Mana Geyser) would silently drop the restriction.
         val countBlob = compact(node)
+        // "for each of those creatures" — a `HadCountersPutOnItThisWay` permanent set scopes to the
+        // creatures THIS resolution just put counters on (Bounding Felidar's "gain 1 life for each of
+        // those creatures"), not a current battlefield tally. The land/type search filter can't express
+        // it and would silently widen to GameObjectFilter.Any (every permanent). Decline -> SCAFFOLD.
+        if ("HadCountersPutOnItThisWay" in countBlob) return null
         if ("IsArtifactType" in countBlob) return null
         if (("IsTapped" in countBlob && "tapped creature" !in oracle) || "IsUntapped" in countBlob) return null
         //   IsNamed — "the number of creatures named ~ on the battlefield" (Plague Rats): the search

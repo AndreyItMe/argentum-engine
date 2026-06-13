@@ -552,6 +552,98 @@
     ]
 }
 
+// Bounding Felidar
+{
+    "name": "Bounding Felidar",
+    "manaCost": "{5}{W}",
+    "typeLine": "Creature — Cat Beast Mount",
+    "oracleText": "Whenever this creature attacks while saddled, put a +1/+1 counter on each other creature you control. You gain 1 life for each of those creatures.\nSaddle 2 (Tap any number of other creatures you control with total power 2 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 7
+    },
+    "keywords": [
+        "SADDLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "SADDLE",
+            "n": 2
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you",
+                                    "excludeSelf": true
+                                }
+                            },
+                            "body": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "AggregateBattlefield",
+                                "player": "You",
+                                "filter": "creature",
+                                "excludeSelf": true
+                            }
+                        }
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "IsSaddled"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "5",
+        "rarity": "UNCOMMON",
+        "artist": "Lars Grant-West",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/9/8925279f-c16a-43b4-b791-ce450157275b.jpg",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "In the rare case where +1/+1 counters can't be put on one or more creatures you control, you still gain 1 life for each creature you control when Bounding Felidar's first ability resolves."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "An ability that triggers when a creature \"attacks while saddled\" will trigger only if that creature was saddled when it was declared as an attacker."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "\"Saddled\" isn't an ability that a creature has. It's just something true about that creature. It won't stop being saddled until the turn ends or it leaves the battlefield."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Bovine Intervention
 {
     "name": "Bovine Intervention",
@@ -3429,6 +3521,84 @@
     ]
 }
 
+// Irascible Wolverine
+{
+    "name": "Irascible Wolverine",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Wolverine",
+    "oracleText": "When this creature enters, exile the top card of your library. Until end of turn, you may play that card.\nPlot {2}{R} (You may pay {2}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "PLOT"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Plot",
+            "cost": "{2}{R}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeAs": "exiledCard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "exiledCard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Exile"
+                            }
+                        },
+                        {
+                            "type": "GrantMayPlayFromExile",
+                            "from": "exiledCard"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "130",
+        "artist": "Darrell Riche",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/2/324c0af5-7cdf-4c71-84cc-6349f10e0d66.jpg",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "Plot abilities are written \"Plot [cost],\" which means \"Any time you have priority during your main phase while the stack is empty, you may pay [cost] and exile this card from your hand. It becomes plotted.\""
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You can't cast a plotted card on the same turn it became plotted. On any future turn, you may cast that card from exile without paying its mana cost during your main phase while the stack is empty."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Jagged Barrens
 {
     "name": "Jagged Barrens",
@@ -3794,6 +3964,74 @@
     "colorIdentityOverride": [
         "WHITE",
         "BLUE"
+    ]
+}
+
+// Longhorn Sharpshooter
+{
+    "name": "Longhorn Sharpshooter",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Minotaur Rogue",
+    "oracleText": "Reach\nWhen this card becomes plotted, it deals 2 damage to any target.\nPlot {3}{R} (You may pay {3}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "REACH",
+        "PLOT"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Plot",
+            "cost": "{3}{R}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "BecomesPlottedEvent",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "AnyTarget",
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "132",
+        "rarity": "UNCOMMON",
+        "artist": "Diego Gisbert",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/9/398d9a16-d72c-42e2-a0ea-d9da642ee046.jpg",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "Plot abilities are written \"Plot [cost],\" which means \"Any time you have priority during your main phase while the stack is empty, you may pay [cost] and exile this card from your hand. It becomes plotted.\""
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Longhorn Sharpshooter's triggered ability triggers when it becomes plotted, not when you cast it from exile. You choose the target as the ability is put onto the stack."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You can't cast a plotted card on the same turn it became plotted. On any future turn, you may cast that card from exile without paying its mana cost during your main phase while the stack is empty."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 

@@ -43,6 +43,9 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("LookAtTheTopNumberCardsOfPlayersLibrary", "look pipeline on opponent library -> MoveCollection", composes = listOf("MoveCollection"))
 
     composed("ExilePermanent", UNIVERSAL, composes = listOf("MoveToZone"))
+    // "Exile the top card of your library" — the impulse-draw exile half (Irascible Wolverine, Alania's
+    // Pathmaker). Gather(top of library) + MoveCollection -> exile; paired with a MayPlayExiledCard grant.
+    composed("ExileTopCardOfLibrary", "Gather(top of library) + MoveCollection -> exile (impulse)", composes = listOf("MoveCollection"))
     // "Return the exiled card to the battlefield" — the delayed return half of exile-then-return
     // (Conciliator's Duelist). A plain MoveToZone back to the battlefield under its owner's control.
     composed("PutExiledCardOntoBattlefield", UNIVERSAL, composes = listOf("MoveToZone"))

@@ -78,6 +78,17 @@ internal val damageDrawLifeHandlers: Map<String, ActionHandler> = actionHandlers
         call("DealDamageEffect", arg(amt), arg(Lit(tgt)))
     }
 
+    on("ExiledCardDealsDamage") { _, args, tvar ->
+        // "it deals N damage to <recipient>" where "it" is the card sitting face up in exile (Longhorn
+        // Sharpshooter's "When this card becomes plotted, it deals 2 damage to any target"). The damage
+        // source is the plotted card; the engine attributes it via the ability source (the default), so —
+        // like HavePermanentDealDamage — the golden carries no damageSource. IR args are
+        // [<CardInExile>, N, <recipient>]. Render only a fixed amount + an exactly-resolvable recipient.
+        val amt = amountExpr(args) ?: dynamicAmountExpr(amountNode(args)) ?: return@on null
+        val tgt = refTargetIn(args, "_DamageRecipient", tvar) ?: return@on null
+        call("DealDamageEffect", arg(amt), arg(Lit(tgt)))
+    }
+
     on("SpellDealsDistributedDamage") { _, args, _ ->
         val total = findInteger(args)
         if (total !is Int) return@on null

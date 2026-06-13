@@ -23,6 +23,10 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // layer effect collapse to one BecomeCreatureTypeEffect (Mistform cycle, Imagecrafter).
     effect("AddCreatureTypeVariable", "BecomeCreatureType", UNIVERSAL)
     effects("PutACounterOfTypeOnPermanent", "PutNumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
+    // "Put a counter on each <filter>" — the mass form, rendered as ForEachInGroup(AddCounters) over the
+    // recovered group filter (Bounding Felidar's "each other creature you control").
+    composed("PutACounterOfTypeOnEachPermanent", "ForEachInGroup(AddCounters) over a group filter",
+        composes = listOf("AddCounters"))
     // "Until end of turn, if you would put one or more +1/+1 counters on a creature you control, put
     // that many plus N +1/+1 counters on it instead." (Prairie Dog) — the duration-/controller-scoped
     // analogue of Hardened Scales' static ModifyCounterPlacement, lowered to
