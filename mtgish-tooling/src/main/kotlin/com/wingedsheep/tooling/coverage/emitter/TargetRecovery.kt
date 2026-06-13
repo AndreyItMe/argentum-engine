@@ -822,6 +822,11 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     )
     if (types.size > 1 && types !in renderableTypeUnions) return null
     var node: Dsl = when {
+        // "non-outlaw" (IsNonOutlaw): a creature with none of the five outlaw subtypes. Render the
+        // non-outlaw creature group (matches Filters.NonOutlawCreature) — checked BEFORE the positive
+        // cardtype arms so the restriction isn't silently dropped to a bare Creature group
+        // (Caught in the Crossfire's "each non-outlaw creature").
+        "IsNonOutlaw" in blob -> Lit("GameObjectFilter.Creature").dot("notAnyOfSubtypes", arg("Subtype.OUTLAW_TYPES"))
         // "outlaw" (IsAnOutlaw): Assassin/Mercenary/Pirate/Rogue/Warlock. Render the outlaw creature group
         // (matches Filters.OutlawCreature) rather than widening to any permanent (Vial Smasher).
         "IsAnOutlaw" in blob -> Lit("GameObjectFilter.Creature").dot("withAnyOfSubtypes", arg("Subtype.OUTLAW_TYPES"))
