@@ -674,7 +674,7 @@ internal fun EmitCtx.modalChooseOneSpell(card: JsonObject): List<Stmt>? {
 
     val modeBlocks = arms.mapIndexed { i, arm ->
         val body = modalArmBody(arm) ?: run { reasons.add("modal-spell"); return null }
-        Sub(Block("mode(\"${bullets[i]}\")", body))
+        Sub(Block("mode(\"${ktStr(bullets[i])}\")", body))
     }
     return listOf(Sub(Block("spell", listOf(Sub(Block("modal(chooseCount = 1)", modeBlocks))))))
 }

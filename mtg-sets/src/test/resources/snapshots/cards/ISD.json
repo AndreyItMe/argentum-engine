@@ -1408,6 +1408,47 @@
     ]
 }
 
+// Heartless Summoning
+{
+    "name": "Heartless Summoning",
+    "manaCost": "{1}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "Creature spells you cast cost {2} less to cast.\nCreatures you control get -1/-1.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCast",
+                    "filter": "creature"
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 2
+                }
+            },
+            {
+                "type": "ModifyStats",
+                "powerBonus": -1,
+                "toughnessBonus": -1,
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "104",
+        "rarity": "RARE",
+        "artist": "Anthony Palumbo",
+        "flavorText": "\"They won't be winning any beauty pageants, but they'll do the trick.\"\n—Enslow, ghoulcaller of Nephalia",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/4/14f8f638-b7fc-4e38-8623-ce7d2ebc82e6.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Hysterical Blindness
 {
     "name": "Hysterical Blindness",
@@ -2150,6 +2191,62 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Morkrut Banshee
+{
+    "name": "Morkrut Banshee",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "Morbid — When this creature enters, if a creature died this turn, target creature gets -4/-4 until end of turn.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": -4
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": -4
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "target"
+                },
+                "triggerCondition": "CreatureDiedThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "110",
+        "rarity": "UNCOMMON",
+        "artist": "Svetlin Velinov",
+        "flavorText": "\"Let go your grudges, or risk wandering the bogs forever in a murderous rage.\"\n—Hildin, priest of Avacyn",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/fff9989f-77a3-4f73-ade6-c04306c98501.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
@@ -3008,6 +3105,82 @@
         "artist": "James Ryman",
         "flavorText": "\"Nobody's seen the Lady of Videns for years. Poor dear, no companions at all in that old castle.\"\n—Yonda of Gavony",
         "imageUri": "https://cards.scryfall.io/normal/front/c/c/ccbdfd82-d025-4070-a1f5-4ee759978bcb.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Splinterfright
+{
+    "name": "Splinterfright",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Elemental",
+    "oracleText": "Trample\nSplinterfright's power and toughness are each equal to the number of creature cards in your graveyard.\nAt the beginning of your upkeep, mill two cards. (Put the top two cards of your library into your graveyard.)",
+    "creatureStats": {
+        "power": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Graveyard",
+                "filter": "creature"
+            }
+        },
+        "toughness": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Graveyard",
+                "filter": "creature"
+            }
+        }
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "205",
+        "rarity": "RARE",
+        "artist": "Eric Deschamps",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/7/37068a41-bc5c-44b9-a307-5d3919794233.jpg"
     },
     "colorIdentityOverride": [
         "GREEN"

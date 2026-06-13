@@ -383,6 +383,13 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
                     val costNode = granted["args"] as? JsonObject
                     if (costNode?.strField("_Cost") != "PayMana") { reasons.add("PermanentLayerEffect"); return null }
                     listOf(call("GrantWard", arg("WardCost.Mana(\"${renderMana(costNode["args"])}\")")))
+                } else if (granted?.strField("_Rule") in setOf("Activated", "ActivatedWithModifiers", "TriggerA", "TriggerI")) {
+                    // "Enchanted creature has '{1}, Sacrifice a permanent: … gains flying …'" (Lunarch
+                    // Mantle): the host gains a whole ACTIVATED ability, not a keyword. keywordOf would dig
+                    // into the nested effect and wrongly extract the inner "flying", flattening a
+                    // pay-and-sacrifice ability into a permanent static keyword grant. No aura-grants-
+                    // activated-ability rendering exists on this surface, so decline (-> SCAFFOLD).
+                    reasons.add("PermanentLayerEffect"); return null
                 } else {
                     val kw = keywordOf(le) ?: run { reasons.add("PermanentLayerEffect"); return null }
                     // Prowess grants need the +1/+1 trigger, not just the keyword tag (see staticLordBlock) —

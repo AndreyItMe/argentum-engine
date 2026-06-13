@@ -18,6 +18,7 @@ import com.wingedsheep.tooling.coverage.dot
 import com.wingedsheep.tooling.coverage.findInteger
 import com.wingedsheep.tooling.coverage.findRef
 import com.wingedsheep.tooling.coverage.findRefIn
+import com.wingedsheep.tooling.coverage.argWordsTagged
 import com.wingedsheep.tooling.coverage.firstArgWordTagged
 import com.wingedsheep.tooling.coverage.jsonContains
 import com.wingedsheep.tooling.coverage.pascalToUpperSnake
@@ -209,6 +210,10 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // scope (an opponent's graveyard, "each player's") declines -> SCAFFOLD rather than miscount.
         "TheNumberOfGraveyardCards" -> {
             if (!jsonContains(node["args"], "_Player", "You")) return null
+            // "the number of cards named ~ in your graveyard" (Ancestral Anger): an IsNamed clause
+            // gameObjectFilterDsl can't render — it would fall through to the `?: GameObjectFilter.Any`
+            // below and count EVERY graveyard card. Decline rather than over-count.
+            if ("IsNamed" in compact(node["args"])) return null
             val filter = gameObjectFilterDsl(node["args"]) ?: "GameObjectFilter.Any"
             return call(
                 "DynamicAmount.Count",
@@ -353,7 +358,10 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
             else -> "Player.You"
         }
         // "for each Goblin/Bird/Elf on the battlefield": a creature subtype, which the land-oriented
-        // search filter misses; otherwise fall back to the land/type search filter.
+        // search filter misses; otherwise fall back to the land/type search filter. Only a SINGLE creature
+        // subtype is modeled — "Wolves and Werewolves you control" (Runebound Wolf) carries two, and
+        // rendering only the first under-counts, so decline rather than drop a subtype.
+        if (node.argWordsTagged("IsCreatureType").size > 1) return null
         val subtype = node.firstArgWordTagged("IsCreatureType")
         // "for each Shrine you control" — an enchantment subtype the land/type search filter can't express;
         // it would silently widen the count's filter to GameObjectFilter.Any and over-count every permanent.

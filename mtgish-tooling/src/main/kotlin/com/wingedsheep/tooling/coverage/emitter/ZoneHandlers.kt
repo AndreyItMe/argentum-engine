@@ -88,7 +88,13 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         // A player-directed sacrifice ("that player sacrifices …") arrives wrapped in a PlayerAction and is
         // handled there; the bare effect sacrifices via the controller, so render SacrificeEffect(filter).
         val filter = gameObjectFilterExpr(args) ?: return@on null
-        call("SacrificeEffect", arg(filter))
+        // "sacrifice a creature OTHER THAN this creature" (Demonic Taskmaster): the filter carries an
+        // `Other(ThisPermanent)` self-exclusion that gameObjectFilterExpr drops. SacrificeEffect models it
+        // with `excludeSource = true`; render it so the source isn't a legal sacrifice (else we'd widen).
+        val excludeSource = jsonContains(args, "_Permanents", "Other") &&
+            jsonContains(args, "_Permanent", "ThisPermanent")
+        if (excludeSource) call("SacrificeEffect", arg(filter), arg("excludeSource", "true"))
+        else call("SacrificeEffect", arg(filter))
     }
 
     on("ShuffleGraveyardCardIntoLibrary") { _, args, tvar ->  // e.g. Alabaster Dragon

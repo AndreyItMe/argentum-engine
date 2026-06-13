@@ -59,6 +59,12 @@ internal object FilterPredicates {
     /** `.powerAtMost(N)` for a `PowerIs <= N` clause, else null. */
     fun powerAtMost(node: JsonElement?): Link? = powerBound(node, "LessThanOrEqualTo")?.let { Link("powerAtMost", listOf(arg("$it"))) }
 
+    /** `.toughnessAtLeast(N)` for a `ToughnessIs >= N` clause, else null ("toughness 4 or greater"). */
+    fun toughnessAtLeast(node: JsonElement?): Link? = toughnessBound(node, "GreaterThanOrEqualTo")?.let { Link("toughnessAtLeast", listOf(arg("$it"))) }
+
+    /** `.toughnessAtMost(N)` for a `ToughnessIs <= N` clause, else null ("toughness 2 or less"). */
+    fun toughnessAtMost(node: JsonElement?): Link? = toughnessBound(node, "LessThanOrEqualTo")?.let { Link("toughnessAtMost", listOf(arg("$it"))) }
+
     /** `.manaValueAtMost(N)` for a `ManaValueIs <= N` clause, else null (Smother's "mana value 3 or less"). */
     fun manaValueAtMost(node: JsonElement?): Link? = manaValueBound(node, "LessThanOrEqualTo")?.let { Link("manaValueAtMost", listOf(arg("$it"))) }
 
@@ -111,6 +117,13 @@ internal object FilterPredicates {
      *  scoped to the matching `PowerIs` node so a power range's two bounds stay distinct. */
     private fun powerBound(node: JsonElement?, comparison: String): Int? =
         node.nodesTagged("PowerIs")
+            .firstOrNull { it["args"].strField("_Comparison") == comparison }
+            ?.let { findInteger(it["args"]) as? Int }
+
+    /** The integer bound of a `ToughnessIs` clause whose `args` is `{ _Comparison, args: Integer }`,
+     *  scoped to the matching `ToughnessIs` node so a toughness range's two bounds stay distinct. */
+    private fun toughnessBound(node: JsonElement?, comparison: String): Int? =
+        node.nodesTagged("ToughnessIs")
             .firstOrNull { it["args"].strField("_Comparison") == comparison }
             ?.let { findInteger(it["args"]) as? Int }
 
@@ -242,6 +255,15 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     val subs = filterNode.argWordsTagged("IsCreatureType")
     if (subs.isNotEmpty()) {
         if (hasController) return null
+        // The subtype-Or form composes only the subtypes. If the filter ALSO carries a state predicate
+        // (e.g. "attacking Wolf or Werewolf" — Ulrich's Kindred), this branch would silently drop it and
+        // widen the target. Decline so the card scaffolds rather than emit a too-broad filter.
+        val statePredicates = listOf(
+            "IsAttacking", "IsBlocking", "IsTapped", "IsUntapped", "PowerIs", "ToughnessIs", "ManaValueIs",
+            "IsColor", "IsNonColor", "HasAbility", "DoesntHaveAbility", "IsNonToken", "HasACounterOfType",
+            "WasDealtDamageThisTurn",
+        )
+        if (statePredicates.any { it in blob }) return null
         return Call("TargetFilter", listOf(arg(Infix("or", subs.map { Lit("GameObjectFilter.Creature").dot("withSubtype", arg("\"$it\"")) }))))
     }
     var node: Dsl = Lit("TargetFilter.Creature")
@@ -267,6 +289,8 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     if (powerOrToughness != null) node = node.dot(powerOrToughness) else {
         FilterPredicates.powerAtMost(filterNode)?.let { node = node.dot(it) }
         FilterPredicates.powerAtLeast(filterNode)?.let { node = node.dot(it) }
+        FilterPredicates.toughnessAtMost(filterNode)?.let { node = node.dot(it) }
+        FilterPredicates.toughnessAtLeast(filterNode)?.let { node = node.dot(it) }
     }
     FilterPredicates.manaValueAtMost(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.manaValueAtLeast(filterNode)?.let { node = node.dot(it) }
@@ -531,6 +555,9 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
     }
     if (ttype == "TargetGraveyardCard" || ttype == "UptoOneTargetGraveyardCard") {
         val blob = compact(args)
+        // "target BASIC land card from your graveyard" (Groundskeeper): a supertype restriction none of the
+        // graveyard branches below compose. Decline rather than drop "basic" and widen to any land.
+        if ("IsSupertype" in blob) return null
         // "target permanent card with mana value N or less from your graveyard" (Shepherd of the Clouds):
         // an IsPermanent type check + an optional ManaValueIs <= N cap + an ownership clause. There's no
         // named graveyard TargetFilter constant for "permanent card", so compose
@@ -697,6 +724,11 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // surface — widening it to GameObjectFilter.Enchantment/Permanent would silently drop the subtype.
     // Decline rather than emit a too-broad filter (The Spirit Oasis / Kyoshi Island Plaza Shrine triggers).
     if (filterNode.argWordsTagged("IsEnchantmentType").isNotEmpty()) return null
+    // An artifact subtype ("an Equipment", "each Vehicle you control") likewise has no rendering here;
+    // widening to GameObjectFilter.Artifact/Permanent would silently drop the subtype (the bare
+    // `"Permanent" in blob` arm below even matches the `_Permanents` key). Decline rather than emit a
+    // too-broad filter (Strength of Arms' "if you control an Equipment").
+    if (filterNode.argWordsTagged("IsArtifactType").isNotEmpty()) return null
     // "destroy each NONLAND artifact" (Granulate): a negated cardtype (IsNonCardtype). This surface has
     // no nonland/non-cardtype rendering, and the positive-type `when` below would misread the IsNonCardtype
     // "Land" clause as a positive Land filter — destroying lands instead of the nonland artifacts. Decline

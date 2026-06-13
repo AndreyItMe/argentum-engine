@@ -154,6 +154,13 @@ internal fun EmitCtx.renderPlayerAction(node: JsonObject, tvar: String?): Dsl? {
         val amt = amount(loseLife?.get("args")) ?: return null
         return call("LoseLifeEffect", arg(Lit(amt)), arg("EffectTarget.TargetController"))
     }
+    // A relational player ref — the OWNER/CONTROLLER of the targeted permanent — is only modeled for the
+    // specific shapes handled above (owner-gains-life, controller-creates-tokens, controller-loses-life).
+    // The generic path below resolves the acting player via refTarget, which mis-maps such a ref to the
+    // permanent's OWN bound target — e.g. aiming "then that player discards a card" at the bounced
+    // permanent rather than its owner (Compelling Deterrence). Decline (-> SCAFFOLD) rather than
+    // mis-attribute the action.
+    if (jsonContains(node, "_Player", "OwnerOfPermanent") || jsonContains(node, "_Player", "ControllerOfPermanent")) return null
     val inner = innerAction(node) ?: return null
     val ptv = refTarget(args, tvar)  // the player the action applies to
     when (inner.strField("_Action")) {
