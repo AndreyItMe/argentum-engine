@@ -263,6 +263,14 @@ internal fun EmitCtx.renderEachPlayer(node: JsonObject): Dsl? {
         val amt = findInteger(inner["args"]) as? Int ?: return null
         return call("Effects.LoseLife", arg("$amt"), arg("EffectTarget.PlayerRef(Player.EachOpponent)"))
     }
+    // "each player loses N life" (Conciliator's Duelist). Like the opponent shape above but scoped to
+    // every player (controller included) via EffectTarget.PlayerRef(Player.Each); a derived/X amount scaffolds.
+    if (jsonContains(node, "_Players", "AnyPlayer") && jsonContains(node, "_Action", "LoseLife")) {
+        val inner = node["args"].asArr?.filterIsInstance<JsonObject>()
+            ?.firstOrNull { it.strField("_Action") == "LoseLife" } ?: return null
+        val amt = findInteger(inner["args"]) as? Int ?: return null
+        return call("Effects.LoseLife", arg("$amt"), arg("EffectTarget.PlayerRef(Player.Each)"))
+    }
     if (jsonContains(node, "_Action", "DrawNumberCards") || jsonContains(node, "_GameNumber", "ValueX"))
         return call("Patterns.Hand.eachPlayerDrawsX", arg("includeController", "true"), arg("includeOpponents", "true"))
     return null

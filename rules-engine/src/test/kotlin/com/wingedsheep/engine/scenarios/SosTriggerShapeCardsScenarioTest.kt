@@ -3,6 +3,7 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.support.ScenarioTestBase
+import com.wingedsheep.sdk.core.AbilityFlag
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
@@ -186,6 +187,153 @@ class SosTriggerShapeCardsScenarioTest : ScenarioTestBase() {
                 }
                 withClue("Grizzly Bears left the graveyard") {
                     game.findCardsInGraveyard(1, "Grizzly Bears").isEmpty() shouldBe true
+                }
+            }
+        }
+
+        context("Snooping Page — Repartee makes it unblockable; combat damage draws and self-pays 1 life") {
+
+            test("casting a creature-targeting instant grants the Page CANT_BE_BLOCKED until end of turn") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Snooping Page") // 2/3
+                    .withCardInHand(1, "Lightning Bolt")
+                    .withCardOnBattlefield(2, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Mountain", 2)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val page = game.findPermanent("Snooping Page")!!
+                val bears = game.findPermanent("Grizzly Bears")!!
+
+                withClue("Page can be blocked before Repartee fires") {
+                    projector.project(game.state).hasKeyword(page, AbilityFlag.CANT_BE_BLOCKED) shouldBe false
+                }
+
+                game.castSpell(1, "Lightning Bolt", targetId = bears).error shouldBe null
+                game.resolveStack()
+
+                withClue("Repartee fires: the Page can't be blocked this turn") {
+                    projector.project(game.state).hasKeyword(page, AbilityFlag.CANT_BE_BLOCKED) shouldBe true
+                }
+            }
+
+            test("casting an instant targeting a player does NOT make the Page unblockable") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Snooping Page") // 2/3
+                    .withCardInHand(1, "Lightning Bolt")
+                    .withLandsOnBattlefield(1, "Mountain", 2)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val page = game.findPermanent("Snooping Page")!!
+
+                game.castSpellTargetingPlayer(1, "Lightning Bolt", targetPlayerNumber = 2).error shouldBe null
+                game.resolveStack()
+
+                withClue("Spell targeted a player, not a creature → Repartee does not fire") {
+                    projector.project(game.state).hasKeyword(page, AbilityFlag.CANT_BE_BLOCKED) shouldBe false
+                }
+            }
+
+            test("dealing combat damage to a player draws a card and the controller loses 1 life") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Snooping Page", tapped = false, summoningSickness = false) // 2/3
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withLifeTotal(1, 20)
+                    .withLifeTotal(2, 20)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+                    .build()
+
+                val handBefore = game.handSize(1)
+
+                game.declareAttackers(mapOf("Snooping Page" to 2)).error shouldBe null
+                game.passUntilPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
+                game.resolveStack()
+
+                withClue("Defending player took 2 combat damage") {
+                    game.getLifeTotal(2) shouldBe 18
+                }
+                withClue("Controller drew a card from the combat-damage trigger") {
+                    game.handSize(1) shouldBe handBefore + 1
+                }
+                withClue("Controller lost 1 life from the combat-damage trigger") {
+                    game.getLifeTotal(1) shouldBe 19
+                }
+            }
+        }
+
+        context("Conciliator's Duelist — ETB draws + each player loses 1; Repartee exiles up to one creature, returns at next end step") {
+
+            test("entering draws a card and makes each player lose 1 life") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardInHand(1, "Conciliator's Duelist") // {W}{W}{B}{B}
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withCardInLibrary(1, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Plains", 2)
+                    .withLandsOnBattlefield(1, "Swamp", 2)
+                    .withLifeTotal(1, 20)
+                    .withLifeTotal(2, 20)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val handBefore = game.handSize(1)
+
+                game.castSpell(1, "Conciliator's Duelist").error shouldBe null
+                game.resolveStack() // resolve the creature, then its ETB trigger
+
+                withClue("Conciliator's Duelist is on the battlefield") {
+                    game.isOnBattlefield("Conciliator's Duelist") shouldBe true
+                }
+                // Hand: -1 for casting the Duelist, +1 from the ETB draw → net unchanged.
+                withClue("ETB drew a card (net: cast one creature, drew one)") {
+                    game.handSize(1) shouldBe handBefore
+                }
+                withClue("Each player loses 1 life") {
+                    game.getLifeTotal(1) shouldBe 19
+                    game.getLifeTotal(2) shouldBe 19
+                }
+            }
+
+            test("Repartee exiles a creature and returns it at the beginning of the next end step") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Conciliator's Duelist") // 4/3
+                    .withCardInHand(1, "Lightning Bolt")
+                    .withCardOnBattlefield(2, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Mountain", 2)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val bears = game.findPermanent("Grizzly Bears")!!
+
+                // Cast Lightning Bolt at the Bears (also the Repartee creature target).
+                game.castSpell(1, "Lightning Bolt", targetId = bears).error shouldBe null
+                game.resolveStack() // Repartee trigger asks for its "up to one target creature"
+                game.selectTargets(listOf(bears)).error shouldBe null
+                game.resolveStack()
+
+                withClue("The targeted creature has been exiled by Repartee") {
+                    game.isOnBattlefield("Grizzly Bears") shouldBe false
+                }
+
+                // Advance to the next end step; the delayed trigger returns it.
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.resolveStack()
+
+                withClue("Grizzly Bears returns to the battlefield at the next end step") {
+                    game.isOnBattlefield("Grizzly Bears") shouldBe true
                 }
             }
         }

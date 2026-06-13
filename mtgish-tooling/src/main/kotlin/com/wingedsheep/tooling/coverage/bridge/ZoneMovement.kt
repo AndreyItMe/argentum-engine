@@ -43,6 +43,9 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("LookAtTheTopNumberCardsOfPlayersLibrary", "look pipeline on opponent library -> MoveCollection", composes = listOf("MoveCollection"))
 
     composed("ExilePermanent", UNIVERSAL, composes = listOf("MoveToZone"))
+    // "Return the exiled card to the battlefield" — the delayed return half of exile-then-return
+    // (Conciliator's Duelist). A plain MoveToZone back to the battlefield under its owner's control.
+    composed("PutExiledCardOntoBattlefield", UNIVERSAL, composes = listOf("MoveToZone"))
     composed("ExileEachPermanent", UNIVERSAL, composes = listOf("MoveCollection", "MoveToZone"))
     composed("MillNumberCards", UNIVERSAL, composes = listOf("MoveCollection"))
     composed("MillCards", UNIVERSAL, composes = listOf("MoveCollection"))

@@ -60,6 +60,33 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         call("Effects.Exile", arg(Lit(tgt)))
     }
 
+    // "Return the exiled card to the battlefield under its owner's control" (the second half of the
+    // exile-then-return idiom — Conciliator's Duelist, Parting Gust). `TheCardExiledThisWay` refers to
+    // the same bound target that was exiled earlier in the ability, so it resolves to the ability's
+    // bound `tvar`; a plain Move to the battlefield returns it under its owner's control (the default).
+    // Only the under-owner's-control form renders; an under-your-control / no-bound-target form declines.
+    on("PutExiledCardOntoBattlefield") { node, _, tvar ->
+        if (tvar == null) return@on null
+        if (!jsonContains(node, "_CardInExile", "TheCardExiledThisWay")) return@on null
+        val flagBlob = compact(node)
+        if ("EntersUnderPlayersControl" in flagBlob || "EntersUnderYourControl" in flagBlob) return@on null
+        call("Effects.Move", arg(Lit(tvar)), arg("Zone.BATTLEFIELD"))
+    }
+
+    // "...at the beginning of the next end step" delayed trigger (the return half of exile-then-return).
+    // Renders only the next-end-step timing as a `CreateDelayedTriggerEffect(step = Step.END, …)`; the
+    // body is the normal action-list renderer sharing the ability's bound `tvar` so the exiled target
+    // returns. Any other future-trigger timing, or a body the renderer can't express, declines -> SCAFFOLD.
+    on("CreateFutureTrigger") { _, args, tvar ->
+        val a = args.asArr ?: return@on null
+        val timing = a.getOrNull(0) as? JsonObject ?: return@on null
+        if (timing.strField("_FutureTrigger") != "AtTheBeginningOfTheNextEndStep") return@on null
+        val actionsNode = a.getOrNull(1) as? JsonObject ?: return@on null
+        val inner = actionsNode["args"].asArr?.filterIsInstance<JsonObject>() ?: return@on null
+        val body = renderEffectList(inner, tvar) ?: return@on null
+        call("CreateDelayedTriggerEffect", arg("step", "Step.END"), arg("effect", body))
+    }
+
     on("PutPermanentIntoItsOwnersHand") { _, args, tvar ->  // bounce
         val tgt = refTarget(args, tvar) ?: return@on null
         call("Effects.Move", arg(Lit(tgt)), arg("Zone.HAND"))
