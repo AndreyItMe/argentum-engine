@@ -99,8 +99,15 @@ private fun EmitCtx.multiTargetLocals(targets: List<JsonObject>, actions: List<J
     // mandatory TargetPermanent). The oracle text is authoritative, so recover per-target optionality
     // from the ordered "target …" clauses there and inject `optional = true` when the IR omitted it.
     val optionalByOrdinal = oracleOptionalTargetOrdinals(targets.size)
+    // The mtgish IR occasionally mistypes one slot of a multi-graveyard-target spell. Badlands Revival's
+    // second slot is "target permanent card from your graveyard", but the IR encodes it as `IsCardtype
+    // Creature` like the first slot. The oracle text is authoritative, so recover the intended
+    // graveyard-card noun ("permanent"/"creature"/…) per ordinal and rebuild the target when the IR
+    // disagrees — rendering correctly rather than emitting the IR's lossy (too-narrow) filter.
+    val graveyardNounByOrdinal = oracleGraveyardTargetNouns(targets.size)
     targets.forEachIndexed { i, t ->
         var node = targetExpr(t, actions) ?: run { reasons.add("target:${t.strField("_Target")}"); return null }
+        graveyardTargetCorrection(t, graveyardNounByOrdinal.getOrNull(i))?.let { node = it }
         if (optionalByOrdinal.getOrNull(i) == true) node = node.withOptionalArg()
         val varName = "t${i + 1}"
         stmts.add(targetLocalNamed(varName, varName, node))
@@ -136,6 +143,52 @@ private fun EmitCtx.oracleOptionalTargetOrdinals(targetCount: Int): List<Boolean
         .findAll(text).map { it.groupValues[1].isNotBlank() }.toList()
     if (mentions.size != targetCount) return List(targetCount) { false }
     return mentions
+}
+
+/**
+ * For each declared target ordinal (oracle order), the noun in a "target <noun> card from … graveyard"
+ * mention, or null if the ordinal's mention isn't a graveyard-card target. Used to repair an IR slot
+ * the mtgish data mistyped (Badlands Revival's "permanent card" slot arriving as `IsCardtype Creature`).
+ * If the count of graveyard-card mentions doesn't line up with [targetCount], returns all-null (no
+ * over-claiming — better an IR-faithful mismatch caught by the gate than a wrongly-recovered noun).
+ */
+private fun EmitCtx.oracleGraveyardTargetNouns(targetCount: Int): List<String?> {
+    val text = oracleText?.lowercase() ?: return List(targetCount) { null }
+    // Each ordered "target <noun> card from [a|an|your|its owner's|…] graveyard" mention -> its noun.
+    val nouns = Regex("""target (\w+) card from [^.]*?graveyard""")
+        .findAll(text).map { it.groupValues[1] }.toList()
+    if (nouns.size != targetCount) return List(targetCount) { null }
+    return nouns
+}
+
+/**
+ * If [target] is a graveyard-card target and the oracle's recovered [oracleNoun] for this slot names
+ * a card type the IR-rendered filter would contradict, returns the oracle-correct target node;
+ * otherwise null (keep the IR-derived node). Only the "permanent card from your graveyard" repair is
+ * modelled (Badlands Revival) — it maps to the same `GameObjectFilter.Permanent.ownedByYou()` in the
+ * GRAVEYARD zone that the single-target path emits for Shepherd of the Clouds.
+ */
+private fun EmitCtx.graveyardTargetCorrection(target: JsonObject, oracleNoun: String?): Dsl? {
+    val ttype = target.strField("_Target")
+    if (ttype != "TargetGraveyardCard" && ttype != "UptoOneTargetGraveyardCard") return null
+    val blob = compact(target)
+    return when (oracleNoun) {
+        // IR says creature, oracle says permanent -> the broader permanent-card-in-graveyard target.
+        "permanent" -> {
+            if ("IsPermanent" in blob) return null // already correct in the IR
+            val owner = when {
+                "\"You\"" in blob -> ".ownedByYou()"
+                "\"Opponent\"" in blob -> ".ownedByOpponent()"
+                else -> ""
+            }
+            val filt = Call(
+                "TargetFilter",
+                listOf(arg(Lit("GameObjectFilter.Permanent$owner")), arg("zone", "Zone.GRAVEYARD")),
+            )
+            Call("TargetObject", listOf(arg("filter", filt)))
+        }
+        else -> null
+    }
 }
 
 private fun refKindForTarget(target: JsonObject): String? = when (target.strField("_Target")) {

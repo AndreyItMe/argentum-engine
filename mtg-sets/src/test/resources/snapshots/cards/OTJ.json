@@ -378,6 +378,68 @@
     ]
 }
 
+// Badlands Revival
+{
+    "name": "Badlands Revival",
+    "manaCost": "{3}{B}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Return up to one target creature card from your graveyard to the battlefield. Return up to one target permanent card from your graveyard to your hand.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature"
+                    },
+                    "destination": "Battlefield"
+                },
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "permanent"
+                    },
+                    "destination": "Hand"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "optional": true,
+                "filter": {
+                    "baseFilter": "creature own:you",
+                    "zone": "Graveyard"
+                },
+                "id": "creature"
+            },
+            {
+                "type": "TargetObject",
+                "optional": true,
+                "filter": {
+                    "baseFilter": "permanent own:you",
+                    "zone": "Graveyard"
+                },
+                "id": "permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "194",
+        "rarity": "UNCOMMON",
+        "artist": "Carlos Palma Cruchaga",
+        "flavorText": "The cactusfolk were a young culture, but they already knew the pains of death and joys of birth.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/d/8d3ef971-cdd4-410c-97c3-df98e4f02ab2.jpg?1712356053"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
+
 // Beastbond Outcaster
 {
     "name": "Beastbond Outcaster",
@@ -3968,6 +4030,81 @@
     ]
 }
 
+// Intimidation Campaign
+{
+    "name": "Intimidation Campaign",
+    "manaCost": "{1}{U}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "When this enchantment enters, each opponent loses 1 life, you gain 1 life, and you draw a card.\nWhenever you commit a crime, you may return this enchantment to its owner's hand. (It returns only from the battlefield. Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this enchantment enters, each opponent loses 1 life, you gain 1 life, and you draw a card."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "CommitCrimeEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "MoveToZone",
+                        "target": "Self",
+                        "destination": "Hand"
+                    }
+                },
+                "descriptionOverride": "Whenever you commit a crime, you may return this enchantment to its owner's hand."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "208",
+        "rarity": "UNCOMMON",
+        "artist": "Svetlin Velinov",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/9/596fb7a2-bb79-44b7-ad84-414c8139ec13.jpg?1712356111"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
 // Inventive Wingsmith
 {
     "name": "Inventive Wingsmith",
@@ -4114,6 +4251,115 @@
                 "text": "You can't cast a plotted card on the same turn it became plotted. On any future turn, you may cast that card from exile without paying its mana cost during your main phase while the stack is empty."
             }
         ]
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Iron-Fist Pulverizer
+{
+    "name": "Iron-Fist Pulverizer",
+    "manaCost": "{4}{R}",
+    "typeLine": "Creature — Giant Warrior",
+    "oracleText": "Reach\nWhenever you cast your second spell each turn, this creature deals 2 damage to target opponent. Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 5
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "NthSpellCastEvent",
+                    "nthSpell": 2,
+                    "player": "You"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "opponent"
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeAs": "scried"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "scried",
+                                    "selection": {
+                                        "type": "ChooseUpTo",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "toBottom",
+                                    "storeRemainder": "toTop",
+                                    "selectedLabel": "Put on bottom",
+                                    "remainderLabel": "Put on top"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "toBottom",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Library",
+                                        "placement": "Bottom"
+                                    }
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "toTop",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Library",
+                                        "placement": "Top"
+                                    },
+                                    "order": "ControllerChooses"
+                                },
+                                "EmitScriedEvent"
+                            ]
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetOpponent",
+                    "id": "opponent"
+                },
+                "descriptionOverride": "Whenever you cast your second spell each turn, this creature deals 2 damage to target opponent. Scry 1."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "131",
+        "artist": "Xabi Gaztelua",
+        "flavorText": "\"The 3:10 to Omenport will be delayed.\"\n—Prosperity Station announcement",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/d/cd7f984a-0b56-45df-958d-6178e4da61ed.jpg?1712355784"
     },
     "colorIdentityOverride": [
         "RED"
@@ -6895,6 +7141,73 @@
     "colorIdentityOverride": [
         "BLACK"
     ]
+}
+
+// Sandstorm Verge
+{
+    "name": "Sandstorm Verge",
+    "manaCost": "",
+    "typeLine": "Land — Desert",
+    "oracleText": "{T}: Add {C}.\n{3}, {T}: Target creature can't block this turn. Activate only as a sorcery.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddColorlessMana",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{3}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "CantBlockTargetCreatures",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "creature"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "{3}, {T}: Target creature can't block this turn. Activate only as a sorcery."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "263",
+        "rarity": "UNCOMMON",
+        "artist": "Jorge Jacinto",
+        "flavorText": "\"Ever been caught out in a storm like that? Think of it like drowning, but all the water is knives.\"\n—Annie Flash",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/a/3ab4e0a4-2faf-456b-99e3-ee06c008538c.jpg?1712356353"
+    },
+    "colorIdentityOverride": []
 }
 
 // Scalestorm Summoner

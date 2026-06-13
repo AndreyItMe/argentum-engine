@@ -437,10 +437,14 @@ internal fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
     // per-KIND ordered list of target locals (1-based). The IR ordinal counts only targets of that
     // kind, so it must not index the flat target list — that would skew when an earlier slot is a
     // player (Dissection Practice: t1 is the opponent, so Ref_TargetPermanent1 is t2, not t1).
+    // The same suffixing applies to graveyard-card refs (Ref_TargetGraveyardCard1 /
+    // Ref_TargetGraveyardCard2) on spells with two graveyard targets (Badlands Revival's two
+    // "up to one target … card from your graveyard" slots); each action must bind to its own slot.
     if (ref != null && targetVars.isNotEmpty()) {
-        Regex("^Ref_TargetPermanent(\\d+)$").matchEntire(ref)?.let { m ->
-            val idx = m.groupValues[1].toInt() - 1
-            return targetRefVarsByKind["Ref_TargetPermanent"]?.getOrNull(idx)
+        Regex("^(Ref_TargetPermanent|Ref_TargetGraveyardCard)(\\d+)$").matchEntire(ref)?.let { m ->
+            val kind = m.groupValues[1]
+            val idx = m.groupValues[2].toInt() - 1
+            return targetRefVarsByKind[kind]?.getOrNull(idx)
                 ?: targetVars.getOrNull(idx)
         }
     }
