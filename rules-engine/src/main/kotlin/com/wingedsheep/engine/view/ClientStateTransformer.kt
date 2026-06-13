@@ -1014,6 +1014,11 @@ class ClientStateTransformer(
         // client can badge them as plotted (otherwise indistinguishable from any other exiled card).
         val isPlotted = zoneKey.zoneType == Zone.EXILE && container.has<PlottedComponent>()
 
+        // Prepared permanents (Secrets of Strixhaven) carry a PreparedComponent while a copy of their
+        // prepare spell waits castable in exile; surface a flag so the client can badge the creature.
+        val isPrepared = zoneKey.zoneType == Zone.BATTLEFIELD &&
+            container.has<com.wingedsheep.engine.state.components.battlefield.PreparedComponent>()
+
         // Threshold-style progress badge: detect static abilities gated on
         // "controller's graveyard has at least N cards".
         val thresholdInfo = cardDef?.let { def ->
@@ -1073,6 +1078,7 @@ class ClientStateTransformer(
             isFaceDown = isFaceDown,
             isSuspected = projectedValues?.isSuspected == true,
             isPlotted = isPlotted,
+            isPrepared = isPrepared,
             morphCost = if (isFaceDown && morphData != null) morphData.morphCost.description else null,
             targets = targets,
             imageUri = cardComponent.imageUri ?: cardDef?.metadata?.imageUri,

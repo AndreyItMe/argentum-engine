@@ -219,6 +219,10 @@ data class ClientCard(
     /** Whether this card is plotted in exile (CR 718 — Plot keyword, castable for free on a later turn). Exile only. */
     val isPlotted: Boolean = false,
 
+    /** Whether this permanent is prepared (Secrets of Strixhaven — Prepared keyword): a copy of its
+     * prepare spell sits castable in its controller's exile until cast. Battlefield only. */
+    val isPrepared: Boolean = false,
+
     /** Morph cost for face-down creatures (only visible to controller) */
     val morphCost: String? = null,
 

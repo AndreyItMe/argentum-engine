@@ -1441,6 +1441,13 @@ function GameCardImpl({
         </div>
       )}
 
+      {/* Prepared (Secrets of Strixhaven): a copy of this creature's prepare spell waits castable in exile */}
+      {card.isPrepared && (
+        <div style={styles.preparedBadge} title="Prepared (Secrets of Strixhaven) — cast a copy of its spell from exile; doing so unprepares it">
+          Prepared
+        </div>
+      )}
+
       {/* Counter badge for creatures with +1/+1 or -1/-1 counters */}
       {battlefield && hasStatCounters(card) && (
         <div style={{

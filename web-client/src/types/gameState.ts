@@ -208,6 +208,10 @@ export interface ClientCard {
   /** Whether this card is plotted in exile (CR 718 — Plot keyword, castable for free on a later turn). Exile only. */
   readonly isPlotted?: boolean
 
+  /** Whether this permanent is prepared (Secrets of Strixhaven — Prepared keyword): a copy of its
+   * prepare spell sits castable in its controller's exile. Battlefield only. */
+  readonly isPrepared?: boolean
+
   /** Morph cost for face-down creatures (only visible to controller) */
   readonly morphCost?: string | null
 

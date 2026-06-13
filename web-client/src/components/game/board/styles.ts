@@ -1560,6 +1560,27 @@ export const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none',
     zIndex: 6,
   } as React.CSSProperties,
+
+  // Prepared status (Secrets of Strixhaven) — a creature whose prepare-spell copy waits castable in exile.
+  preparedBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    borderRadius: 4,
+    padding: '1px 5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 3,
+    fontWeight: 700,
+    fontSize: 10,
+    color: '#f3ecff',
+    background: 'linear-gradient(135deg, #5b3fb0, #8f6fe0)',
+    border: '1px solid #cdb8ff',
+    boxShadow: '0 0 6px rgba(143, 111, 224, 0.85)',
+    textShadow: 'none',
+    pointerEvents: 'none',
+    zIndex: 6,
+  } as React.CSSProperties,
 }
 
 /**
