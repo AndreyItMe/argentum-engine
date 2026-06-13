@@ -111,6 +111,13 @@ class DynamicAmountEvaluator(
 
             is DynamicAmount.TotalManaSpent -> context.totalManaSpent
 
+            // Distinct colors of mana spent to cast the source (Converge / Sunburst). Read off
+            // the source entity's recorded payment via the shared reader so it resolves at ETB
+            // (EntersWithDynamicCounters) as well as mid-resolution; falls through to the context
+            // total being irrelevant — color breakdown only lives on the entity's components.
+            is DynamicAmount.DistinctColorsManaSpent ->
+                context.sourceId?.let { ManaSpentReader.distinctColorsSpent(state, it) } ?: 0
+
             is DynamicAmount.ManaSpentOnX -> context.manaSpentOnXByColor[amount.color] ?: 0
 
             is DynamicAmount.YourLifeTotal -> {

@@ -308,7 +308,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   library was empty) → `RevealCollection("drawn", revealToSelf = false)` →
   `FilterCollection(MatchesFilter(Land), storeNonMatching = "notLand")` →
   `MoveCollection("notLand" → graveyard, moveType = Discard)`.
-- `Discard(count, target)` — controller-of-target chooses; mandatory.
+- `Discard(count, target)` — controller-of-target chooses; mandatory. `count` is an `Int` or a
+  `DynamicAmount` ("discard X cards, where X is …" — e.g. Converge's Arcane Omens with
+  `DynamicAmounts.colorsOfManaSpent()`).
 - `EachOpponentDiscards(count)` — each opponent discards N.
 - `EachPlayerReturnPermanentToHand()` — each player bounces a permanent.
 - `EachPlayerDrawsForDamageDealtToSource()` — each player draws equal to damage source took this turn.
@@ -361,6 +363,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `ReturnToHand(target)` — bounce to hand.
 - `PutOnTopOfLibrary(target)` — place target on top of its owner's library.
+- `PutOnBottomOfLibrary(target)` — place target on the bottom of its owner's library (forced, no choice).
 - `PutOnTopOrBottomOfLibrary(target)` — player chooses top or bottom.
 - `PutSecondFromTopOrBottomOfLibrary(target)` — second-from-top or bottom.
 - `ShuffleIntoLibrary(target)` — shuffle target into owner's library.
@@ -1303,6 +1306,11 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   `CastRecordComponent` snapshot once it has resolved onto the battlefield (0 if it was never cast).
   Used by Edge of Eternities warp payoffs like Astelli Reclaimer ("…mana value X or less…, where X is the
   amount of mana spent to cast this creature") — X is 5 for `{3}{W}{W}`, 3 for warp `{2}{W}`, 0 for free.
+- `.manaValueAtMostColorsSpent(ref)` — mana value ≤ the number of distinct **colors** of mana spent to
+  cast a referenced entity (0–5). Sibling of `.manaValueAtMostEntityManaSpent`, but compares against the
+  color *count* rather than total mana (colorless is not a color). The **Converge** exile-by-color-count
+  gate — Sundering Archaic ("exile target nonland permanent an opponent controls with mana value less than
+  or equal to the number of colors of mana spent to cast this creature"), with `EntityReference.Source`.
 - `.manaValueIsOdd()` / `.manaValueIsEven()` — mana-value parity (zero is even). Pair with modal
   spells whose modes ask the caster to choose a parity (e.g. *Mutinous Massacre*).
 - `.toughnessAtMost(n)` / `.toughnessAtLeast(n)` — toughness comparator.
@@ -2267,13 +2275,22 @@ activatedAbility {
 
 > **Where set-mechanic helpers live.** The `card { … }` keyword helpers below for *set-specific*
 > mechanics — `leyline()`, `flurry { }`, `mobilize(…)`, `firebending(n)`, `sneak(cost)`, `decayed()`,
-> `vividEtb { }` / `vividCostReduction()`, `impending(time, cost)`, `renew(cost) { }`,
+> `vividEtb { }` / `vividCostReduction()`, `convergeEntersWithCounters(counterType?)`,
+> `impending(time, cost)`, `renew(cost) { }`,
 > `craft(filter, cost)`, `station()` — are `CardBuilder` **extension functions** in
 > `mtg-sdk/.../dsl/mechanics/` (one file per mechanic), not methods on the core `CardBuilder`. They
 > stay in package `com.wingedsheep.sdk.dsl`, so the call syntax is unchanged, but a card file that
 > uses one needs the matching import (e.g. `import com.wingedsheep.sdk.dsl.station`). Evergreen /
 > multi-set parameterized keywords (`prowess()`, `rampage(n)`, `keywordAbility(…)`) remain on the core
 > builder. New set mechanics get an extension file in `dsl/mechanics/`.
+
+> **Converge** (ability word, CR 207.2c — flavor only, no keyword, like Opus/Vivid). Scales an effect
+> by the number of distinct colors of mana spent to cast the spell. Three shapes:
+> (1) *enters with counters* — `convergeEntersWithCounters(counterType = PlusOnePlusOne)` (the SOS
+> "Archaic" cycle; lowers to `EntersWithDynamicCounters(DynamicAmount.DistinctColorsManaSpent)`);
+> (2) *spell whose effect scales* — read `DynamicAmounts.colorsOfManaSpent()` directly (Arcane Omens
+> "discard X"); (3) *exile-by-color-count* — the `manaValueAtMostColorsSpent(EntityReference.Source)`
+> target predicate (Sundering Archaic). Author the printed "Converge — …" text into `oracleText`.
 
 **`Keyword` enum (display-level)**
 
@@ -2844,6 +2861,14 @@ Numbers computed at resolution time.
   down by color. Used by payoffs that scale with how much of a color went into X — Soul Burn ("you gain
   life equal to the amount of black mana spent on X"). Pair with `xManaRestriction` (see below) so the X
   can only be paid with the relevant colors.
+- `DistinctColorsManaSpent` — the number of distinct *colors* of mana spent to cast the source spell
+  (0–5), counting how many of the W/U/B/R/G payment buckets are non-zero. Colorless is not a color
+  (CR 105.1) and never counts; mana spent on `{X}` and on generic costs still has its color counted.
+  Backs the **Converge** ability word and the classic **Sunburst** rule. Resolves off the source
+  entity's recorded payment (live `SpellOnStackComponent` while on the stack, the resolved permanent's
+  `CastRecordComponent` afterward), so it reads correctly both at resolution and as the permanent enters
+  (the common use: feeding `EntersWithDynamicCounters`). Facade: `DynamicAmounts.colorsOfManaSpent()`.
+  A permanent put onto the battlefield without being cast spent no mana, so this is 0 for it.
 - `Add(a, b)` — `a + b`.
 - `Subtract(a, b)` — `a − b`.
 - `Multiply(a, b)` — `a × b`.

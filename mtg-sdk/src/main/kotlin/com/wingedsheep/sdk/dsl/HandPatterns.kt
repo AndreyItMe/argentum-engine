@@ -87,7 +87,24 @@ object HandPatterns {
         )
     }
 
-    fun discardCards(count: Int, target: EffectTarget = EffectTarget.Controller): CompositeEffect {
+    fun discardCards(count: Int, target: EffectTarget = EffectTarget.Controller): CompositeEffect =
+        discardCards(
+            DynamicAmount.Fixed(count),
+            target,
+            prompt = "Choose $count card${if (count != 1) "s" else ""} to discard",
+        )
+
+    /**
+     * Discard a [DynamicAmount] of cards (e.g. "discard X cards, where X is the number of colors
+     * of mana spent to cast this spell" — SOS Converge's Arcane Omens). Same Gather → Select →
+     * Move pipeline as the fixed-count overload; the count is resolved at the SelectFromCollection
+     * step.
+     */
+    fun discardCards(
+        count: DynamicAmount,
+        target: EffectTarget = EffectTarget.Controller,
+        prompt: String = "Choose cards to discard",
+    ): CompositeEffect {
         val player = effectTargetToPlayer(target)
         val chooser = effectTargetToChooser(target)
         return CompositeEffect(
@@ -98,10 +115,10 @@ object HandPatterns {
                 ),
                 SelectFromCollectionEffect(
                     from = "hand",
-                    selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(count)),
+                    selection = SelectionMode.ChooseExactly(count),
                     chooser = chooser,
                     storeSelected = "discarded",
-                    prompt = "Choose $count card${if (count != 1) "s" else ""} to discard"
+                    prompt = prompt
                 ),
                 MoveCollectionEffect(
                     from = "discarded",

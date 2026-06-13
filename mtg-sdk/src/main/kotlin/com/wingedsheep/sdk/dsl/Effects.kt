@@ -350,6 +350,14 @@ object Effects {
         HandPatterns.discardCards(count, target)
 
     /**
+     * Target player discards a [DynamicAmount] of cards (controller chooses, mandatory) — e.g.
+     * "discard X cards, where X is the number of colors of mana spent" (Converge). Delegates to
+     * the same Gather → Select → Move pipeline as the fixed-count overload.
+     */
+    fun Discard(count: DynamicAmount, target: EffectTarget = EffectTarget.Controller): Effect =
+        HandPatterns.discardCards(count, target)
+
+    /**
      * Connive (CR 702.166): draw a card, then discard a card. If the discarded card
      * is a nonland, put a +1/+1 counter on [target].
      *
@@ -623,6 +631,14 @@ object Effects {
      */
     fun PutOnTopOfLibrary(target: EffectTarget): Effect =
         MoveToZoneEffect(target, Zone.LIBRARY, ZonePlacement.Top)
+
+    /**
+     * Put on the bottom of its owner's library (forced — no player choice). Mirror of
+     * [PutOnTopOfLibrary]; used by graveyard-hate abilities like Sundering Archaic's
+     * "{2}: Put target card from a graveyard on the bottom of its owner's library."
+     */
+    fun PutOnBottomOfLibrary(target: EffectTarget): Effect =
+        MoveToZoneEffect(target, Zone.LIBRARY, ZonePlacement.Bottom)
 
     /**
      * Owner chooses to put target on top or bottom of their library.

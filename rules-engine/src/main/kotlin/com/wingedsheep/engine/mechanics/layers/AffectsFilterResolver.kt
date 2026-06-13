@@ -525,6 +525,7 @@ internal class AffectsFilterResolver {
         // Entity-relative — layer-projection has no trigger/source context for filter purposes here.
         is CardPredicate.ManaValueAtMostEntity -> false
         is CardPredicate.ManaValueAtMostEntityManaSpent -> false
+        is CardPredicate.ManaValueAtMostColorsSpent -> false
         is CardPredicate.PowerGreaterThanEntity -> false
         is CardPredicate.PowerAtMostEntity -> false
         CardPredicate.ManaValueIsEven -> card.manaValue % 2 == 0

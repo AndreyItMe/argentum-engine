@@ -273,6 +273,11 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.ManaValueAtMostEntityManaSpent(reference)
     )
 
+    /** Mana value at most the number of colors of mana spent to cast a referenced entity (Converge). */
+    fun manaValueAtMostColorsSpent(reference: EntityReference) = copy(
+        cardPredicates = cardPredicates + CardPredicate.ManaValueAtMostColorsSpent(reference)
+    )
+
     /** Mana value is even (zero is even). */
     fun manaValueIsEven() = copy(
         cardPredicates = cardPredicates + CardPredicate.ManaValueIsEven

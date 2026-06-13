@@ -351,6 +351,26 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * The number of distinct *colors* of mana spent to cast the source spell (0–5).
+     *
+     * Backs the **Converge** ability word — "Converge — … for each color of mana spent to
+     * cast it" — and the classic **Sunburst** counter rule. Counts how many of the five
+     * colored buckets (W/U/B/R/G) recorded on the spell's stack object are non-zero; colorless
+     * is not a color (CR 105.1) and never contributes. As with [TotalManaSpent], mana spent on
+     * the `{X}` portion is already folded into those buckets, so it counts here too.
+     *
+     * Evaluated against the source entity's recorded payment, so it resolves correctly whether
+     * read while the spell is still on the stack or as the permanent enters (the dominant use:
+     * feeding `ReplacementEffect.EntersWithDynamicCounters`). A permanent put onto the
+     * battlefield without being cast spent no mana, so this is 0 for it.
+     */
+    @SerialName("DistinctColorsManaSpent")
+    @Serializable
+    data object DistinctColorsManaSpent : DynamicAmount {
+        override val description: String = "the number of colors of mana spent to cast this spell"
+    }
+
+    /**
      * Reference to a stored variable by name.
      * Used for effects that need to reference a previously computed/stored value.
      * Example: Scapeshift stores "sacrificedCount" and SearchLibrary reads it.

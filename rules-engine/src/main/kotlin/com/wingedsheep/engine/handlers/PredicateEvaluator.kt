@@ -21,7 +21,6 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.HasMorphAbilityComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
-import com.wingedsheep.engine.state.components.battlefield.CastRecordComponent
 import com.wingedsheep.engine.state.components.identity.MorphDataComponent
 import com.wingedsheep.engine.state.components.identity.PutIntoGraveyardFromBattlefieldThisTurnMarker
 import com.wingedsheep.engine.state.components.identity.TokenComponent
@@ -290,9 +289,15 @@ class PredicateEvaluator {
             }
             is CardPredicate.ManaValueAtMostEntityManaSpent -> {
                 val refEntityId = resolveEntityReference(predicate.reference, context) ?: return false
-                val manaSpent = manaSpentToCast(state, refEntityId)
+                val manaSpent = ManaSpentReader.totalSpent(state, refEntityId)
                 val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
                 cmc <= manaSpent
+            }
+            is CardPredicate.ManaValueAtMostColorsSpent -> {
+                val refEntityId = resolveEntityReference(predicate.reference, context) ?: return false
+                val colorsSpent = ManaSpentReader.distinctColorsSpent(state, refEntityId)
+                val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
+                cmc <= colorsSpent
             }
             CardPredicate.ManaValueIsEven -> {
                 val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
@@ -614,26 +619,6 @@ class PredicateEvaluator {
     /**
      * Resolve an EntityReference to an EntityId using the predicate context.
      */
-    /**
-     * Total mana actually spent to cast an entity. Reads the live [SpellOnStackComponent]
-     * buckets while the entity is still a spell on the stack, otherwise the
-     * [CastRecordComponent] snapshot stamped when it resolved onto the battlefield. Returns 0
-     * when neither is present (entity was put onto the battlefield without being cast, or is
-     * a copy created on the stack — no mana was spent in either case).
-     */
-    private fun manaSpentToCast(state: GameState, entityId: EntityId): Int {
-        val container = state.getEntity(entityId) ?: return 0
-        container.get<SpellOnStackComponent>()?.let { spell ->
-            return spell.manaSpentWhite + spell.manaSpentBlue + spell.manaSpentBlack +
-                spell.manaSpentRed + spell.manaSpentGreen + spell.manaSpentColorless
-        }
-        container.get<CastRecordComponent>()?.let { record ->
-            return record.whiteSpent + record.blueSpent + record.blackSpent +
-                record.redSpent + record.greenSpent + record.colorlessSpent
-        }
-        return 0
-    }
-
     private fun resolveEntityReference(ref: EntityReference, context: PredicateContext?): EntityId? {
         return when (ref) {
             is EntityReference.Source -> context?.sourceId
@@ -924,6 +909,7 @@ class PredicateEvaluator {
             // Entity-relative — no entity context for cast records
             is CardPredicate.ManaValueAtMostEntity -> false
             is CardPredicate.ManaValueAtMostEntityManaSpent -> false
+            is CardPredicate.ManaValueAtMostColorsSpent -> false
             CardPredicate.ManaValueIsEven -> record.manaValue % 2 == 0
             CardPredicate.ManaValueIsOdd -> record.manaValue % 2 != 0
 

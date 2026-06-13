@@ -116,6 +116,13 @@ object DynamicAmounts {
     ): DynamicAmount =
         DynamicAmount.AggregateBattlefield(player, filter, Aggregation.DISTINCT_COLORS)
 
+    /**
+     * The number of distinct colors of mana spent to cast the source spell (0–5).
+     * Backs the Converge ability word and the Sunburst counter rule. Colorless is not a
+     * color, so it never contributes.
+     */
+    fun colorsOfManaSpent(): DynamicAmount = DynamicAmount.DistinctColorsManaSpent
+
     fun creaturesYouControl(): DynamicAmount =
         battlefield(Player.You, GameObjectFilter.Creature).count()
 
