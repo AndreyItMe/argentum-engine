@@ -96,6 +96,17 @@ class EmitCtx(val keywords: Set<String>, val oracleText: String? = null) {
      * maps to `[t2, t3]`, so `Ref_TargetPermanent1` is `t2` and `Ref_TargetPermanent2` is `t3`.
      */
     var targetRefVarsByKind: Map<String, List<String>> = emptyMap()
+
+    /**
+     * True while rendering the effect of a trigger whose triggering entity is a *spell* (a
+     * `WhenAPlayerCastsASpell` cast trigger). In that context the IR's "that player"
+     * (`Trigger_ThatPlayer`) is the spell's controller — the caster — so a damage recipient resolves
+     * to `EffectTarget.ControllerOfTriggeringEntity` (Magebane Lizard). For every other trigger
+     * ("~ deals combat damage to a player", …) "that player" is the triggering player itself, so the
+     * flag stays false and [refTargetFromRef] keeps emitting `PlayerRef(Player.TriggeringPlayer)`.
+     * Set/cleared only by [triggerBlock]; default false on every other path.
+     */
+    var triggeringEntityIsSpell: Boolean = false
 }
 
 internal val SELF_REFS = setOf(
@@ -446,8 +457,12 @@ internal fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
     // executor publishes its ids under the CREATED_TOKENS pipeline collection, so the follow-up effect
     // addresses it via PipelineTarget(CREATED_TOKENS, 0).
     if (ref == "TheCreatedToken") return "EffectTarget.PipelineTarget(CREATED_TOKENS, 0)"
-    // "that player" in a trigger ("the player ~ dealt combat damage to") -> the triggering player.
-    if (ref == "Trigger_ThatPlayer") return "EffectTarget.PlayerRef(Player.TriggeringPlayer)"
+    // "that player" in a trigger. In a spell-cast trigger the triggering entity is the spell, so "that
+    // player" is its controller — the caster — modeled as ControllerOfTriggeringEntity (Magebane Lizard).
+    // In every other trigger ("the player ~ dealt combat damage to") it's the triggering player itself.
+    if (ref == "Trigger_ThatPlayer") return if (triggeringEntityIsSpell)
+        "EffectTarget.ControllerOfTriggeringEntity"
+    else "EffectTarget.PlayerRef(Player.TriggeringPlayer)"
     // A plain player reference (no target) — the controller / "you" or an opponent. The pain-land idiom
     // "{T}: Add {C}. This land deals N damage to you" carries a `_DamageRecipient: Player{You}` recipient
     // that is the controller, not a chosen target (Adarkar Wastes, Caldera Lake, Ancient Tomb).
