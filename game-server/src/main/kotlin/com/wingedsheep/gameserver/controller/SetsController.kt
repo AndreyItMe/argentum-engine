@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException
  * - `GET /api/sets`                       — every catalogued set (deckbuilder, search filters).
  * - `GET /api/sets/booster-ready`         — subset draftable for sealed/draft (booster generation).
  * - `GET /api/sets/coverage`              — per-set card-implementation coverage (Set Completion view).
+ * - `GET /api/sets/coverage/summary`      — project-wide distinct + printing rollup (Set Completion banner).
  * - `GET /api/sets/progress`              — distinct-cards-over-time series (Set Completion chart).
  * - `GET /api/sets/{setCode}/archetypes`  — limited archetype synergies for a single set.
  *
@@ -82,6 +83,14 @@ class SetsController(
      */
     @GetMapping("/coverage")
     fun getCoverage(): List<SetCoverageService.SetCoverageDTO> = setCoverageService.coverage()
+
+    /**
+     * Project-wide coverage rollup for the Set Completion banner: distinct booster cards (reprints
+     * deduped by name) alongside the printing sum of the per-set rows. Summing `/coverage` yourself
+     * gives the printing figures; this also gives the distinct ones.
+     */
+    @GetMapping("/coverage/summary")
+    fun getCoverageSummary(): SetCoverageService.CoverageSummaryDTO = setCoverageService.summary()
 
     /**
      * One set's full canonical card list, each card marked implemented / missing

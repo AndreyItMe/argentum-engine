@@ -83,6 +83,41 @@ class SetCoverageServiceTest : FunSpec({
         service.detail("ZZZ") shouldBe null
     }
 
+    test("summary printing totals equal the sum of the per-set rows") {
+        val summary = service.summary()
+        summary.printingsImplemented shouldBe coverage.sumOf { it.implemented }
+        summary.printingsTotal shouldBe coverage.sumOf { it.total }
+        summary.setsComplete shouldBe coverage.count { it.percent >= 100.0 }
+        summary.setCount shouldBe coverage.size
+    }
+
+    test("distinct dedupes reprints, so it never exceeds the printing sum but covers the same universe") {
+        val summary = service.summary()
+        // Reprints inflate the printing sum; deduping by name can only shrink it.
+        summary.distinctImplemented shouldBeLessThanOrEqualTo summary.printingsImplemented
+        summary.distinctTotal shouldBeLessThanOrEqualTo summary.printingsTotal
+        // Intersection numerator can never exceed the deduped denominator.
+        summary.distinctImplemented shouldBeLessThanOrEqualTo summary.distinctTotal
+        summary.distinctImplemented shouldBeGreaterThanOrEqualTo 1
+        val expected =
+            if (summary.distinctTotal == 0) 0.0
+            else Math.round(summary.distinctImplemented * 1000.0 / summary.distinctTotal) / 10.0
+        summary.distinctPercent shouldBe expected
+    }
+
+    test("distinct extras are well-formed and partitioned away from the booster universe") {
+        val summary = service.summary()
+        summary.extraDistinctImplemented shouldBeGreaterThanOrEqualTo 0
+        summary.extraDistinctImplemented shouldBeLessThanOrEqualTo summary.extraDistinctTotal
+        // Extras live alongside, never inside, the booster pool — so the two distinct universes
+        // partition the catalog: their sizes can't overlap into a count above the raw printing extras.
+        summary.extraDistinctTotal shouldBeLessThanOrEqualTo coverage.sumOf { it.extraTotal }
+        val expected =
+            if (summary.extraDistinctTotal == 0) 0.0
+            else Math.round(summary.extraDistinctImplemented * 1000.0 / summary.extraDistinctTotal) / 10.0
+        summary.extraDistinctPercent shouldBe expected
+    }
+
     test("progress is a non-empty, monotonically non-decreasing cumulative series") {
         val series = service.progress()
         series.shouldNotBeEmpty()

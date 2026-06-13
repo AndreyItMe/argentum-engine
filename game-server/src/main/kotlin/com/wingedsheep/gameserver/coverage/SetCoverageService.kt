@@ -105,6 +105,43 @@ class SetCoverageService {
     @Serializable
     data class ProgressPointDTO(val date: String, val added: Int, val total: Int)
 
+    /**
+     * Project-wide headline rollup for the Set Completion view, in two flavours:
+     *
+     * - **distinct** — booster cards deduped by front-face name across the whole catalog, so a
+     *   staple reprinted in 15 sets counts once. This is the "how much of Magic do we cover" number.
+     * - **printings** — the naive sum of every set's per-set counts, where each reprint counts once
+     *   per set it appears in. This is the "how much booster content across all sets" number, and is
+     *   what you get by summing the [coverage] rows.
+     *
+     * The two differ purely by reprint multiplicity; surfacing both stops the printings total from
+     * masquerading as a distinct-card count.
+     */
+    data class CoverageSummaryDTO(
+        /** Distinct booster card names (front-face) we've authored anywhere. */
+        val distinctImplemented: Int,
+        /** Distinct booster card names (front-face) across the whole catalog — the deduped universe. */
+        val distinctTotal: Int,
+        /** `distinctImplemented / distinctTotal * 100`, one decimal. */
+        val distinctPercent: Double,
+        /** Distinct completionist-extra card names we've authored, EXCLUDING any that are also booster cards. */
+        val extraDistinctImplemented: Int,
+        /** Distinct completionist-extra card names (front-face), partitioned away from the booster universe. */
+        val extraDistinctTotal: Int,
+        /** `extraDistinctImplemented / extraDistinctTotal * 100`, one decimal. */
+        val extraDistinctPercent: Double,
+        /** Booster-card printings implemented = sum of per-set [SetCoverageDTO.implemented]. */
+        val printingsImplemented: Int,
+        /** Booster-card printings total = sum of per-set [SetCoverageDTO.total]. */
+        val printingsTotal: Int,
+        /** `printingsImplemented / printingsTotal * 100`, one decimal. */
+        val printingsPercent: Double,
+        /** Sets at 100% booster coverage. */
+        val setsComplete: Int,
+        /** Catalogued sets with baked totals. */
+        val setCount: Int,
+    )
+
     private val canonical: List<CanonicalSet> =
         ClassPathResource(RESOURCE_PATH).inputStream.bufferedReader().use {
             JSON.decodeFromString<List<CanonicalSet>>(it.readText())
@@ -141,6 +178,54 @@ class SetCoverageService {
                 )
             }
             .sortedWith(compareByDescending<SetCoverageDTO> { it.releaseDate ?: "" }.thenBy { it.code })
+
+    /**
+     * Project-wide headline rollup: distinct (reprints deduped by front-face name) alongside
+     * printings (the naive per-set sum). See [CoverageSummaryDTO]. Powers the Set Completion banner,
+     * which previously summed the per-set rows and so reported reprint-inflated printing counts as if
+     * they were distinct cards.
+     */
+    fun summary(): CoverageSummaryDTO {
+        // A card is implemented globally once we've authored its name in any set, not per set, so
+        // dedup the numerator against the union of every set's authored names.
+        val authoredAnywhere =
+            canonical.asSequence().flatMap { authoredNames(MtgSetCatalog.byCode(it.code)).asSequence() }.toSet()
+        // Distinct booster universe: every front-face main-pool name across the catalog, deduped.
+        val universe = canonical.asSequence().flatMap { it.mainCards.asSequence() }.map { frontFace(it.name) }.toSet()
+        val distinctImplemented = universe.count { it in authoredAnywhere }
+        // Distinct extra universe: completionist exclusives, partitioned away from the booster universe so
+        // a card that is a booster card in one set and an extra in another counts only as a booster card —
+        // booster + extra distinct never double-count the same name.
+        val extraUniverse =
+            canonical.asSequence().flatMap { it.secondaryCards.asSequence() }.map { frontFace(it.name) }.toSet() -
+                universe
+        val extraDistinctImplemented = extraUniverse.count { it in authoredAnywhere }
+
+        var printingsImplemented = 0
+        var printingsTotal = 0
+        var setsComplete = 0
+        for (c in canonical) {
+            val authored = authoredNames(MtgSetCatalog.byCode(c.code))
+            val implemented = c.mainCards.count { frontFace(it.name) in authored }
+            printingsImplemented += implemented
+            printingsTotal += c.mainCards.size
+            if (percent(implemented, c.mainCards.size) >= 100.0) setsComplete++
+        }
+
+        return CoverageSummaryDTO(
+            distinctImplemented = distinctImplemented,
+            distinctTotal = universe.size,
+            distinctPercent = percent(distinctImplemented, universe.size),
+            extraDistinctImplemented = extraDistinctImplemented,
+            extraDistinctTotal = extraUniverse.size,
+            extraDistinctPercent = percent(extraDistinctImplemented, extraUniverse.size),
+            printingsImplemented = printingsImplemented,
+            printingsTotal = printingsTotal,
+            printingsPercent = percent(printingsImplemented, printingsTotal),
+            setsComplete = setsComplete,
+            setCount = canonical.size,
+        )
+    }
 
     /** Full canonical card list for one set, each card marked implemented / missing. Null if unknown. */
     fun detail(code: String): SetDetailDTO? {

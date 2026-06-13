@@ -6,8 +6,10 @@ import { ProgressChartOverlay } from './ProgressChartOverlay'
 import { getScryfallFallbackUrl } from '@/utils/cardImages'
 import {
   fetchSetCoverage,
+  fetchCoverageSummary,
   fetchSetDetail,
   type SetCoverage,
+  type CoverageSummary,
   type SetDetail,
   type CardCoverage,
 } from '@/api/setCoverage'
@@ -61,6 +63,7 @@ interface HoverState {
 export function SetCompletionPage() {
   const navigate = useNavigate()
   const [sets, setSets] = useState<readonly SetCoverage[] | null>(null)
+  const [summary, setSummary] = useState<CoverageSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('newest')
@@ -73,6 +76,9 @@ export function SetCompletionPage() {
     fetchSetCoverage()
       .then((data) => !cancelled && setSets(data))
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : String(e)))
+    fetchCoverageSummary()
+      .then((data) => !cancelled && setSummary(data))
+      .catch(() => {}) // banner falls back to summing the per-set rows
     return () => {
       cancelled = true
     }
@@ -137,25 +143,58 @@ export function SetCompletionPage() {
           onClick={() => setShowProgress(true)}
           title="View implementation progress over time"
         >
-          <div className={styles.summaryStat}>
-            <span className={styles.summaryValue}>{fmtPct(totals.percent)}%</span>
-            <span className={styles.summaryLabel}>overall</span>
-          </div>
-          <div className={styles.summaryBarWrap}>
-            <div className={styles.summaryBarTrack}>
-              <div className={styles.summaryBarFill} style={{ width: `${Math.min(100, totals.percent)}%` }} />
-            </div>
-            <div className={styles.summaryMeta}>
-              <span>
-                <strong>{totals.implemented.toLocaleString()}</strong> / {totals.total.toLocaleString()} booster
-                cards implemented
-              </span>
-              <span>
-                <strong>{totals.complete}</strong> / {totals.setCount} sets complete
-              </span>
-            </div>
-          </div>
-          <span className={styles.summaryHint}>📈 View progress →</span>
+          {(() => {
+            // Headline is the DISTINCT figure (reprints deduped by name) so it answers "how much of
+            // Magic is covered" rather than "how many booster printings across all sets" — the latter
+            // double-counts a staple once per set. Printings stay as a secondary line. Until the
+            // summary endpoint loads we fall back to the printing-based sum of the per-set rows.
+            const pct = summary ? summary.distinctPercent : totals.percent
+            return (
+              <>
+                <div className={styles.summaryStat}>
+                  <span className={styles.summaryValue}>{fmtPct(pct)}%</span>
+                  <span className={styles.summaryLabel}>overall</span>
+                </div>
+                <div className={styles.summaryBarWrap}>
+                  <div className={styles.summaryBarTrack}>
+                    <div className={styles.summaryBarFill} style={{ width: `${Math.min(100, pct)}%` }} />
+                  </div>
+                  <div className={styles.summaryMeta}>
+                    {summary ? (
+                      <>
+                        <span>
+                          <strong>{summary.distinctImplemented.toLocaleString()}</strong> /{' '}
+                          {summary.distinctTotal.toLocaleString()} distinct booster cards implemented
+                        </span>
+                        <span>
+                          + <strong>{summary.extraDistinctImplemented.toLocaleString()}</strong> /{' '}
+                          {summary.extraDistinctTotal.toLocaleString()} distinct extras (completionist)
+                        </span>
+                        <span>
+                          <strong>{summary.printingsImplemented.toLocaleString()}</strong> /{' '}
+                          {summary.printingsTotal.toLocaleString()} booster printings across all sets
+                        </span>
+                        <span>
+                          <strong>{summary.setsComplete}</strong> / {summary.setCount} sets complete
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          <strong>{totals.implemented.toLocaleString()}</strong> / {totals.total.toLocaleString()}{' '}
+                          booster printings implemented
+                        </span>
+                        <span>
+                          <strong>{totals.complete}</strong> / {totals.setCount} sets complete
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <span className={styles.summaryHint}>📈 View progress →</span>
+              </>
+            )
+          })()}
         </button>
       )}
 
