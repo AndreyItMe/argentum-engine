@@ -212,6 +212,13 @@ object Emitter {
                 rname == "Affinity" -> block = ctx.affinityBlock(rule)
                 // Station keyword ability (CR 702.184a) — fully fixed, renders the no-arg builder.
                 rname == "Station" -> block = listOf(Eval(call("station")))
+                // Increment keyword ability (Secrets of Strixhaven) — fully fixed, no args. Like
+                // `station()`/`firebending()`, the engine has no Increment handler: the behavior
+                // (whenever you cast a spell, if mana spent > min(power, toughness), put a +1/+1
+                // counter on it) lives in the `increment()` CardBuilder helper's composed triggered
+                // ability. Render the builder call directly, NOT a bare keyword (which would add the
+                // display keyword but drop the counter trigger — a silent no-op).
+                rname == "Increment" -> block = listOf(Eval(call("increment")))
                 // {N+} station symbol that animates into a creature (CR 721.2b). Non-animating
                 // `StationCharged` (gating an activated/triggered ability) is left to the default
                 // branch → scaffold, since its payload is arbitrary.

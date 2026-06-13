@@ -61,4 +61,10 @@ internal fun BridgeBuilder.keywords() {
     supported("Station", "keyword ability: Station (CR 702.184a) -> station() builder; adds charge counters = tapped creature's power")
     supported("StationChargedAnimate", "{N+} station symbol -> animate into a creature: gated GrantCardType + GrantKeyword rows (CR 721.2b)")
     supported("StationCharged", "{N+} station symbol gating an ability (CR 721.2a) -> OnlyIfCondition(SourceCounterCountAtLeast(CHARGE, N)); emitter scaffolds the payload")
+    // Increment (Secrets of Strixhaven) — a bare `_Rule: "Increment"` keyword in the IR, but it carries
+    // a composed triggered ability (cast a spell -> if mana spent > min(power, toughness), +1/+1 counter)
+    // that the engine has no handler for. Like Saddle/Firebending/Station it must be `supported`, not
+    // `keyword`: a bare `keywords(Keyword.INCREMENT)` stamp would add the display keyword and silently drop
+    // the counter trigger. The emitter's `rname == "Increment"` branch renders the `increment()` builder.
+    supported("Increment", "keyword ability: Increment (Secrets of Strixhaven) -> increment() builder; +1/+1 counter when a cast spell's mana spent exceeds min(power, toughness)")
 }

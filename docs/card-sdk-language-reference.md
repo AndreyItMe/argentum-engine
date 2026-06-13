@@ -2268,7 +2268,7 @@ activatedAbility {
 > **Where set-mechanic helpers live.** The `card { … }` keyword helpers below for *set-specific*
 > mechanics — `leyline()`, `flurry { }`, `mobilize(…)`, `firebending(n)`, `sneak(cost)`, `decayed()`,
 > `vividEtb { }` / `vividCostReduction()`, `impending(time, cost)`, `renew(cost) { }`,
-> `craft(filter, cost)`, `station()` — are `CardBuilder` **extension functions** in
+> `craft(filter, cost)`, `station()`, `increment()` — are `CardBuilder` **extension functions** in
 > `mtg-sdk/.../dsl/mechanics/` (one file per mechanic), not methods on the core `CardBuilder`. They
 > stay in package `com.wingedsheep.sdk.dsl`, so the call syntax is unchanged, but a card file that
 > uses one needs the matching import (e.g. `import com.wingedsheep.sdk.dsl.station`). Evergreen /
@@ -2344,6 +2344,16 @@ composite abilities).
   with [ManaExpiry](#manaexpiry).`END_OF_COMBAT` and discarded by `CombatManager.endCombat`. It is a normal
   triggered ability (not a mana ability): it uses the stack and can be responded to. `n` may be any fixed value;
   "firebending X (X = its power)" is not yet expressible by this helper (the keyword carries only a fixed Int).
+- `Increment` — "Whenever you cast a spell, if the amount of mana you spent is greater than this creature's
+  power or toughness, put a +1/+1 counter on this creature." (Secrets of Strixhaven). Display-only; wire the
+  behavior with the `card { increment() }` builder helper, which adds the keyword ability plus a `YouCastSpell`
+  triggered ability whose **intervening-if** (CR 603.4) compares the *triggering* spell's mana spent
+  (`DynamicAmount.ContextProperty(MANA_SPENT_ON_TRIGGERING_SPELL)`) against `Min(EntityProperty(Source, Power),
+  EntityProperty(Source, Toughness))` with `ComparisonOperator.GT`, then puts one `+1/+1` counter on the source.
+  "greater than its power or toughness" is satisfied as soon as the mana spent beats the *smaller* stat, hence
+  `Min`; the comparison reads the creature's **projected** P/T, so the threshold rises as it grows. Shares the
+  triggering-spell mana-spent primitive with `opus { }` (§"Set mechanics") — build it once. Composition only; no
+  new engine type.
 - `Decayed` — "This creature can't block, and when it attacks, sacrifice it at end of combat" (CR 702.147,
   Innistrad: Midnight Hunt). Display-only; wire the behavior with the `card { decayed() }` builder helper, which adds
   the keyword plus a `CantBlock(GroupFilter.source())` static ability and a "whenever this attacks" triggered
