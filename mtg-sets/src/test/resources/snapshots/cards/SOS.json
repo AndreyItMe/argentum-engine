@@ -1123,6 +1123,135 @@
     ]
 }
 
+// Lorehold Charm
+{
+    "name": "Lorehold Charm",
+    "manaCost": "{R}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Choose one —\n• Each opponent sacrifices a nontoken artifact of their choice.\n• Return target artifact or creature card with mana value 2 or less from your graveyard to the battlefield.\n• Creatures you control get +1/+1 and gain trample until end of turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "ForceSacrifice",
+                        "filter": "artifact nontoken",
+                        "target": {
+                            "type": "PlayerRef",
+                            "player": "EachOpponent"
+                        }
+                    },
+                    "description": "Each opponent sacrifices a nontoken artifact of their choice"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target artifact or creature card with mana value 2 or less from your graveyard"
+                        },
+                        "destination": "Battlefield"
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": {
+                                    "cardPredicates": [
+                                        {
+                                            "type": "Or",
+                                            "predicates": [
+                                                {
+                                                    "type": "And",
+                                                    "predicates": [
+                                                        "IsArtifact",
+                                                        {
+                                                            "type": "ManaValueAtMost",
+                                                            "max": 2
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "And",
+                                                    "predicates": [
+                                                        "IsCreature",
+                                                        {
+                                                            "type": "ManaValueAtMost",
+                                                            "max": 2
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "controllerPredicate": "OwnedByYou"
+                                },
+                                "zone": "Graveyard"
+                            },
+                            "id": "target artifact or creature card with mana value 2 or less from your graveyard"
+                        }
+                    ],
+                    "description": "Return target artifact or creature card with mana value 2 or less from your graveyard to the battlefield"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
+                                },
+                                "body": {
+                                    "type": "ModifyStats",
+                                    "powerModifier": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "toughnessModifier": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "target": "Self"
+                                }
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
+                                },
+                                "body": {
+                                    "type": "GrantKeyword",
+                                    "keyword": "TRAMPLE",
+                                    "target": "Self"
+                                }
+                            }
+                        ]
+                    },
+                    "description": "Creatures you control get +1/+1 and gain trample until end of turn"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "200",
+        "rarity": "UNCOMMON",
+        "artist": "Ksenia Kim",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/f/5fe70295-e550-4577-a341-dab6c25aabfd.jpg?1775938389"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
 // Masterful Flourish
 {
     "name": "Masterful Flourish",
@@ -1477,6 +1606,135 @@
     ]
 }
 
+// Prismari Charm
+{
+    "name": "Prismari Charm",
+    "manaCost": "{U}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Choose one —\n• Surveil 2, then draw a card.\n• Prismari Charm deals 1 damage to each of one or two targets.\n• Return target nonland permanent to its owner's hand.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                "storeAs": "surveiled"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "surveiled",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                "storeSelected": "toGraveyard",
+                                "storeRemainder": "toTop",
+                                "selectedLabel": "Put in graveyard",
+                                "remainderLabel": "Put on top"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "toGraveyard",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "toTop",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Library",
+                                    "placement": "Top"
+                                },
+                                "order": "ControllerChooses"
+                            },
+                            {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            }
+                        ]
+                    },
+                    "description": "Surveil 2, then draw a card"
+                },
+                {
+                    "effect": {
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            }
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "AnyTarget",
+                            "count": 2,
+                            "minCount": 1
+                        }
+                    ],
+                    "description": "Prismari Charm deals 1 damage to each of one or two targets"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target nonland permanent"
+                        },
+                        "destination": "Hand"
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "nonland permanent"
+                            },
+                            "id": "target nonland permanent"
+                        }
+                    ],
+                    "description": "Return target nonland permanent to its owner's hand"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "211",
+        "rarity": "UNCOMMON",
+        "artist": "Inkognit",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/f/8f6c2a5e-fe13-407c-aadd-c9caf2884ff1.jpg?1775938465"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
 // Proctor's Gaze
 {
     "name": "Proctor's Gaze",
@@ -1818,6 +2076,98 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Silverquill Charm
+{
+    "name": "Silverquill Charm",
+    "manaCost": "{W}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Choose one —\n• Put two +1/+1 counters on target creature.\n• Exile target creature with power 2 or less.\n• Each opponent loses 3 life and you gain 3 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "AddCounters",
+                        "counterType": "+1+1",
+                        "count": 2,
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target creature"
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            },
+                            "id": "target creature"
+                        }
+                    ],
+                    "description": "Put two +1/+1 counters on target creature"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target creature with power 2 or less"
+                        },
+                        "destination": "Exile"
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature pow<=2"
+                            },
+                            "id": "target creature with power 2 or less"
+                        }
+                    ],
+                    "description": "Exile target creature with power 2 or less"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "LoseLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                },
+                                "target": {
+                                    "type": "PlayerRef",
+                                    "player": "EachOpponent"
+                                }
+                            },
+                            {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            }
+                        ]
+                    },
+                    "description": "Each opponent loses 3 life and you gain 3 life"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "225",
+        "rarity": "UNCOMMON",
+        "artist": "Ksenia Kim",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/e/3eb73579-f1c6-4762-81d2-9568ab501fac.jpg?1775938570"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLACK"
     ]
 }
 

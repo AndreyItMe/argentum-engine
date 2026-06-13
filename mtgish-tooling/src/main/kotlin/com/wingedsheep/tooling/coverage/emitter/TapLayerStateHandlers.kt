@@ -96,6 +96,30 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", tgt))
     }
 
+    on("PutNumberCountersOfTypeOnPermanent") { _, args, tvar ->
+        // "Put N +1/+1 (or -1/-1) counters on <permanent>." — the plural form of
+        // PutACounterOfTypeOnPermanent. IR args are [<N>, <counterType>, <permanent ref>]. Only the
+        // bare ±1/±1 PTCounter and the keyword counters we name render with a fixed integer N; any
+        // other counter kind or a derived count scaffolds rather than guess.
+        val arr = args.asArr ?: return@on null
+        val count = findInteger(arr.getOrNull(0)) as? Int ?: return@on null
+        val counterNode = arr.getOrNull(1) as? JsonObject ?: return@on null
+        val counter = when (counterNode.strField("_CounterType")) {
+            "PTCounter" -> {
+                val pt = counterNode["args"].asArr ?: return@on null
+                when (Pair(pt.getOrNull(0).asInt(), pt.getOrNull(1).asInt())) {
+                    Pair(1, 1) -> "Counters.PLUS_ONE_PLUS_ONE"
+                    Pair(-1, -1) -> "Counters.MINUS_ONE_MINUS_ONE"
+                    else -> return@on null
+                }
+            }
+            "FlyingCounter" -> "Counters.FLYING"
+            else -> return@on null
+        }
+        val tgt = refTarget(arr.getOrNull(2), tvar) ?: return@on null
+        call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
+    }
+
     on("Earthbend") { _, args, tvar ->
         // Earthbend N (TLA keyword action): "target land becomes a 0/0 creature with haste that's still
         // a land. Put N +1/+1 counters on it. When it dies or is exiled, return it to the battlefield

@@ -230,6 +230,15 @@ internal fun EmitCtx.renderEachPlayer(node: JsonObject): Dsl? {
     if (jsonContains(node, "_Players", "AnyPlayer") && "PutAPermanentIntoItsOwnersHand" in blob)
         return call("Effects.EachPlayerReturnPermanentToHand")
     if (jsonContains(node, "_Players", "Opponent") && "Discard" in blob) return call("Patterns.Hand.eachOpponentDiscards", arg("1"))  // Noxious Toad
+    // "Each opponent sacrifices a <filter> of their choice" (Lorehold Charm). The sacrificing player
+    // chooses, scoped to every opponent via ForceSacrificeEffect over EffectTarget.PlayerRef(EachOpponent).
+    // Only a renderable filter and a count-of-one form render; anything else scaffolds.
+    if (jsonContains(node, "_Players", "Opponent") && jsonContains(node, "_Action", "SacrificeAPermanent")) {
+        val inner = node["args"].asArr?.filterIsInstance<JsonObject>()
+            ?.firstOrNull { it.strField("_Action") == "SacrificeAPermanent" } ?: return null
+        val filter = gameObjectFilterExpr(inner["args"]) ?: return null
+        return call("Effects.Sacrifice", arg("filter", filter), arg("target", "EffectTarget.PlayerRef(Player.EachOpponent)"))
+    }
     // "each opponent loses N life" (Raven of Fell Omens). Only a fixed Integer amount renders, scoped to
     // every opponent via EffectTarget.PlayerRef(Player.EachOpponent); a derived/X amount scaffolds.
     if (jsonContains(node, "_Players", "Opponent") && jsonContains(node, "_Action", "LoseLife")) {

@@ -554,6 +554,37 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
             if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
             return Call("TargetObject", parts)
         }
+        // "target artifact or creature card with mana value N or less from your graveyard" (Lorehold
+        // Charm): an `Or[IsCardtype X, IsCardtype Y]` over two single-card-types, plus a `<=` MV cap and
+        // an optional ownership clause, no creature subtype. The typed branches below handle a single
+        // card type only, so compose the OR explicitly:
+        // `GameObjectFilter.X[.ownedBy…].manaValueAtMost(N).or(GameObjectFilter.Y[.ownedBy…].manaValueAtMost(N))`.
+        // Only the two-type OR with both types in [graveyardCardtypeFilters] renders; anything else falls
+        // through (a single-type ManaValueIs cap declines at the guard below), so no restriction is dropped.
+        run {
+            val ts = targetTypes(args).toList()
+            if (ts.size == 2 && ts.all { it in graveyardCardtypeFilters } &&
+                "IsCreatureType" !in blob && "\"Or\"" in blob) {
+                val mvCap = FilterPredicates.manaValueAtMost(args)
+                if ("ManaValueIs" in blob && mvCap == null) return null
+                val owner: Link? = when {
+                    "\"You\"" in blob -> Link("ownedByYou")
+                    "\"Opponent\"" in blob -> Link("ownedByOpponent")
+                    else -> null
+                }
+                fun typeFilter(t: String): Dsl {
+                    var g: Dsl = Lit("GameObjectFilter.${graveyardCardtypeFilters.getValue(t)}")
+                    owner?.let { g = g.dot(it) }
+                    mvCap?.let { g = g.dot(it) }
+                    return g
+                }
+                val combined = typeFilter(ts[0]).dot("or", arg(typeFilter(ts[1])))
+                val filt = Call("TargetFilter", listOf(arg(combined), arg("zone", "Zone.GRAVEYARD")))
+                val parts = mutableListOf(arg("filter", filt))
+                if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
+                return Call("TargetObject", parts)
+            }
+        }
         // "target artifact card WITH MANA VALUE 1 OR LESS from your graveyard" (Auriok Salvagers, Leonin
         // Squire): a ManaValueIs cap the graveyard filters below don't compose — emitting without it would
         // widen the target to any artifact in the graveyard. Decline (-> SCAFFOLD) rather than drop it.
@@ -592,6 +623,17 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
     }
     return null
 }
+
+/** Card types that map to a same-named `GameObjectFilter.<Type>` constant — for composing an
+ *  `Or`-of-card-types graveyard target (e.g. "artifact or creature card …", Lorehold Charm). */
+private val graveyardCardtypeFilters = mapOf(
+    "Artifact" to "Artifact",
+    "Creature" to "Creature",
+    "Enchantment" to "Enchantment",
+    "Instant" to "Instant",
+    "Land" to "Land",
+    "Sorcery" to "Sorcery",
+)
 
 private val graveyardSingleTypeFilters = mapOf(
     "Artifact" to "Artifact",

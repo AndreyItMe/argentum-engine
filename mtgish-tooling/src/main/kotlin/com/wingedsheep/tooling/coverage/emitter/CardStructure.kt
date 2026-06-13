@@ -485,13 +485,113 @@ private fun EmitCtx.castTimeCaptureSpell(card: JsonObject): List<Stmt>? {
     return listOf(Sub(Block("spell", stmts)))
 }
 
+/**
+ * Split a modal spell's oracle text into its per-mode bullet strings. mtgish carries no per-mode
+ * label, but the engine's `mode("…")` wants the printed bullet text, so derive it from Scryfall's
+ * oracle text: drop the "Choose one —" (or "Choose up to N —") header line, then split on the `•`
+ * bullet marker. Returns null if the oracle text is absent or has no bullets — the renderer then
+ * declines (→ SCAFFOLD) rather than invent labels.
+ */
+private fun EmitCtx.modeBullets(): List<String>? {
+    val oracle = oracleText ?: return null
+    if ("•" !in oracle) return null
+    return oracle.substringAfter("•").let { "•$it" }
+        .split("•")
+        .map { it.trim().removeSuffix(".").trim() }
+        .filter { it.isNotEmpty() }
+        .takeIf { it.isNotEmpty() }
+}
+
+/**
+ * One arm of a `Modal_ChooseOne` spell → the body statements of a `mode("<bullet>") { … }` block.
+ *
+ * Handles the arm shapes seen in the charm corpus, reusing the same machinery the non-modal spell path
+ * uses so a mode renders exactly as the equivalent stand-alone spell would:
+ *  - `ActionList` (no target) → `effect = <renderEffectList>`.
+ *  - `Targeted` with a single conventional target (`TargetPermanent`/`TargetGraveyardCard`/`TargetPlayer`/
+ *    …) → `val t = target("target", <node>)` + `effect = <renderEffectList(…, "t")>`.
+ *  - `Targeted` with `BetweenOneAndNumberAnyTargets` + a fixed `SpellDealsDamage` to `Ref_AnyTargets`
+ *    ("deals N damage to each of one or two targets") → `target = AnyTarget(count, minCount = 1)` +
+ *    `effect = ForEachTargetEffect(listOf(Effects.DealDamage(N, ContextTarget(0))))`.
+ *
+ * Returns null for any arm shape it can't render exactly, so the whole card declines to SCAFFOLD
+ * rather than emit a partial modal.
+ */
+private fun EmitCtx.modalArmBody(arm: JsonObject): List<Stmt>? {
+    val kind = arm.strField("_Actions")
+    if (kind == "ActionList") {
+        val actions = arm["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
+        val effect = renderEffectList(actions, null) ?: return null
+        return listOf(Assign("effect", effect))
+    }
+    if (kind != "Targeted") return null
+    val (targets, actions) = targetedArms(arm) ?: return null
+    if (targets == null || actions == null) return null
+    if (targets.size != 1) return null
+    val target = targets[0]
+
+    // "deals N damage to each of one or two targets": a `BetweenOneAndNumberAnyTargets` target whose only
+    // action is a fixed `SpellDealsDamage` to `Ref_AnyTargets`. The engine models this as a fixed-amount
+    // `ForEachTargetEffect`, NOT the bound-single-target `DealDamageEffect` the generic SpellDealsDamage
+    // handler would emit — so render it here and decline anything else on this target shape.
+    if (target.strField("_Target") == "BetweenOneAndNumberAnyTargets") {
+        val max = findInteger(target) as? Int ?: return null
+        val damage = actions.singleOrNull()?.takeIf { it.strField("_Action") == "SpellDealsDamage" } ?: return null
+        val amt = (findInteger(damage["args"]) as? Int) ?: return null
+        if (!jsonContains(damage, "_DamageRecipient", "Ref_AnyTargets")) return null
+        val forEach = call(
+            "ForEachTargetEffect",
+            arg(call("listOf", arg(call("Effects.DealDamage", arg("$amt"), arg("EffectTarget.ContextTarget(0)"))))),
+        )
+        return listOf(
+            Assign("target", call("AnyTarget", arg("count", "$max"), arg("minCount", "1"))),
+            Assign("effect", forEach),
+        )
+    }
+
+    val tnode = targetExpr(target, actions) ?: run { reasons.add("target:${target.strField("_Target")}"); return null }
+    val effect = renderEffectList(actions, "t") ?: return null
+    return listOf(
+        Local("t", call("target", arg("\"target\""), arg(tnode))),
+        Assign("effect", effect),
+    )
+}
+
+/**
+ * "Choose one —" modal spell (`SpellActions { Modal_ChooseOne([arm, arm, …]) }`) → a
+ * `spell { modal(chooseCount = 1) { mode("…") { … } … } }` block. Each arm is rendered by
+ * [modalArmBody]; the mode labels come from the oracle-text bullets ([modeBullets]). Declines (→
+ * SCAFFOLD) unless every arm renders AND the bullet count matches the arm count, so a card never emits
+ * with a missing or mislabeled mode.
+ */
+internal fun EmitCtx.modalChooseOneSpell(card: JsonObject): List<Stmt>? {
+    val spellActions = (card["Rules"].asArr ?: return null).filterIsInstance<JsonObject>()
+        .firstNotNullOfOrNull { rule ->
+            (rule["args"] as? JsonObject)?.takeIf { it.strField("_Actions") == "Modal_ChooseOne" }
+        } ?: return null
+    val arms = spellActions["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
+    if (arms.isEmpty()) return null
+
+    val bullets = modeBullets() ?: run { reasons.add("modal-spell"); return null }
+    if (bullets.size != arms.size) { reasons.add("modal-spell"); return null }
+
+    val modeBlocks = arms.mapIndexed { i, arm ->
+        val body = modalArmBody(arm) ?: run { reasons.add("modal-spell"); return null }
+        Sub(Block("mode(\"${bullets[i]}\")", body))
+    }
+    return listOf(Sub(Block("spell", listOf(Sub(Block("modal(chooseCount = 1)", modeBlocks))))))
+}
+
 internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
     // "As you cast this spell" cast-time captures arrive as a `Modal_IfElse` envelope; render them
     // (the cast-time form) before the generic modal guard below scaffolds everything `Modal_*`.
     castTimeCaptureSpell(card)?.let { return it }
-    // Modal spells ("Choose one —", "Choose up to four", …) carry a `Modal_*` envelope whose children
-    // are the individual modes. The generic envelope path below would grab only the FIRST mode and
-    // silently drop the rest, so scaffold the whole card rather than emit one arm of a modal spell.
+    // "Choose one —" modal spells (`Modal_ChooseOne`) render to the engine's modal DSL — one
+    // `mode("<bullet>") { … }` per arm. Render them before the generic `Modal_*` scaffold guard.
+    modalChooseOneSpell(card)?.let { return it }
+    // Other modal spells ("Choose up to four", entwine, escalate, …) carry a `Modal_*` envelope whose
+    // children are the individual modes. The generic envelope path below would grab only the FIRST mode
+    // and silently drop the rest, so scaffold the whole card rather than emit one arm of a modal spell.
     if ("\"Modal_" in compact(card["Rules"])) { reasons.add("modal-spell"); return null }
     // One-line `effect =` shortcuts, then whole-block shortcuts, then the generic envelope path.
     eachplayerMaydraw(card)?.let { return spellOf(it) }
