@@ -116,6 +116,20 @@ data class GameState(
     val nonlandPermanentLeftBattlefieldThisTurn: Boolean = false,
 
     /**
+     * Active temporary counter-placement *modifiers* — the duration-scoped, controller-scoped
+     * analogue of a battlefield [com.wingedsheep.sdk.scripting.ModifyCounterPlacement] replacement
+     * (Hardened Scales). Installed by
+     * [com.wingedsheep.sdk.scripting.effects.GrantCounterPlacementModifierEffect] (e.g. Prairie
+     * Dog's "{4}{W}: Until end of turn, if you would put one or more +1/+1 counters on a creature
+     * you control, put that many plus one instead"). Consulted from the single counter-placement
+     * chokepoint
+     * ([com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils.applyCounterPlacementModifiers])
+     * and expired per-entry by `CleanupPhaseManager.cleanupEndOfTurn` (and re-cleared at each turn
+     * boundary as a safety net). See [ActiveCounterPlacementModifier].
+     */
+    val activeCounterPlacementModifiers: List<ActiveCounterPlacementModifier> = emptyList(),
+
+    /**
      * Players (by entity id) who have committed a crime this turn (CR 700-level Outlaws of Thunder
      * Junction rule). Populated wherever a [com.wingedsheep.engine.core.CommitCrimeEvent] is emitted
      * (spell cast, activated ability, triggered ability), and cleared at every turn boundary. Read by
@@ -776,4 +790,34 @@ data class CastSpellRecord(
     val paidWithTreasureMana: Boolean = false,
     val sourceEntityId: EntityId? = null,
     val castFromZone: Zone? = null,
+)
+
+/**
+ * A temporary, duration-scoped counter-placement *modifier* — the activated/spell-granted,
+ * time-bounded analogue of the static [com.wingedsheep.sdk.scripting.ModifyCounterPlacement]
+ * replacement (Hardened Scales). Created by
+ * [com.wingedsheep.sdk.scripting.effects.GrantCounterPlacementModifierEffect] and stored on
+ * [GameState.activeCounterPlacementModifiers].
+ *
+ * Controller-scoped exactly like the static version: [controllerId] is the player who controls
+ * the effect, and the [recipient] filter ("a creature you control") and the placer gate both
+ * resolve relative to *that* player — not to a battlefield permanent's controller. The entry is
+ * consulted from the single counter-placement chokepoint
+ * ([com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils.applyCounterPlacementModifiers])
+ * alongside the battlefield `ModifyCounterPlacement` scan, and is removed when [duration] expires
+ * (typically end of turn) by `CleanupPhaseManager.cleanupEndOfTurn`.
+ *
+ * @property modifier Additional counters placed (negative reduces; chokepoint floors at 0).
+ * @property controllerId The player who controls this modifier ("you").
+ * @property counterType Which counter kind the modifier applies to.
+ * @property recipient Which recipients the modifier applies to, relative to [controllerId].
+ * @property duration How long the modifier stays active.
+ */
+@Serializable
+data class ActiveCounterPlacementModifier(
+    val modifier: Int,
+    val controllerId: EntityId,
+    val counterType: com.wingedsheep.sdk.scripting.events.CounterTypeFilter,
+    val recipient: com.wingedsheep.sdk.scripting.events.RecipientFilter,
+    val duration: com.wingedsheep.sdk.scripting.Duration,
 )

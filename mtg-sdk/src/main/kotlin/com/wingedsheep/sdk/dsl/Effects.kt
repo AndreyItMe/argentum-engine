@@ -943,6 +943,36 @@ object Effects {
         MoveAllLastKnownCountersEffect(target)
 
     /**
+     * Install a temporary, duration-scoped counter-placement *modifier* controlled by the
+     * resolving ability's controller — the activated/spell-granted analogue of the static
+     * `ModifyCounterPlacement` replacement (Hardened Scales).
+     *
+     * While active, if the controller would put [counterType] counters on a recipient matching
+     * [recipient] (resolved relative to that controller — the default "a creature you control"
+     * means a creature the controller controls), [modifier] additional counters are placed
+     * instead. The store is consulted from the single counter-placement chokepoint, so every
+     * counter-adding effect honors it; it expires per [duration] (default end of turn).
+     *
+     * Defaults reproduce the common case (+1/+1, creature you control, until end of turn), which is
+     * Prairie Dog's "{4}{W}: Until end of turn, if you would put one or more +1/+1 counters on a
+     * creature you control, put that many plus one +1/+1 counters on it instead."
+     */
+    fun GrantCounterPlacementModifier(
+        modifier: Int = 1,
+        duration: Duration = Duration.EndOfTurn,
+        counterType: com.wingedsheep.sdk.scripting.events.CounterTypeFilter =
+            com.wingedsheep.sdk.scripting.events.CounterTypeFilter.PlusOnePlusOne,
+        recipient: com.wingedsheep.sdk.scripting.events.RecipientFilter =
+            com.wingedsheep.sdk.scripting.events.RecipientFilter.CreatureYouControl
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.GrantCounterPlacementModifierEffect(
+            modifier = modifier,
+            duration = duration,
+            counterType = counterType,
+            recipient = recipient
+        )
+
+    /**
      * Double the number of counters of [counterType] already on a target (one-shot).
      * Reads the current count and puts that many more on the target, so the total
      * doubles. Distinct from the [DoubleCounterPlacement] replacement, which doubles

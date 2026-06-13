@@ -106,7 +106,14 @@ class TurnManager(
             playersWhoCommittedCrimeThisTurn = emptySet(),
             lastCastSpellColors = null,
             lastCardDrawnThisTurnByPlayer = emptyMap(),
-            drawStepStartDrawCountByPlayer = emptyMap()
+            drawStepStartDrawCountByPlayer = emptyMap(),
+            // Safety net mirroring CleanupPhaseManager.cleanupEndOfTurn: any end-of-turn /
+            // end-of-combat counter-placement modifier still lingering at a turn boundary is
+            // dropped. Longer-lived durations (UntilYourNextTurn, Permanent) survive.
+            activeCounterPlacementModifiers = state.activeCounterPlacementModifiers.filter { modifier ->
+                modifier.duration !is com.wingedsheep.sdk.scripting.Duration.EndOfTurn &&
+                    modifier.duration !is com.wingedsheep.sdk.scripting.Duration.EndOfCombat
+            }
         )
 
         // Reset cards-drawn-this-turn count for ALL players (not just active player)

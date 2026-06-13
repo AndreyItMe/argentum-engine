@@ -441,6 +441,16 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   target: reads the current count and places that many more (so the total doubles). Distinct from the
   `DoubleCounterPlacement` replacement (which doubles *future* placements); the added counters still trigger
   placement replacements like Hardened Scales. No-op with zero counters. Sage of the Fang.
+- `GrantCounterPlacementModifier(modifier?, duration?, counterType?, recipient?)` — install a **temporary,
+  duration-scoped, controller-scoped** counter-placement modifier: the activated/spell-granted analogue of the
+  static `ModifyCounterPlacement` replacement (Hardened Scales). While active, if the *controller* of the effect
+  would put `counterType` counters (default `+1/+1`) on a recipient matching `recipient` (default
+  `RecipientFilter.CreatureYouControl`, resolved relative to that controller), `modifier` additional counters
+  (default `+1`) are placed instead. Recorded in a turn-scoped store on the game state and consulted from the
+  single counter-placement chokepoint (so every AddCounters-style effect honors it); expires per `duration`
+  (default `Duration.EndOfTurn`) via end-of-turn cleanup. Negative `modifier` reduces (floored at 0). Prairie Dog
+  (OTJ): "{4}{W}: Until end of turn, if you would put one or more +1/+1 counters on a creature you control, put
+  that many plus one +1/+1 counters on it instead." → `GrantCounterPlacementModifier()` with all defaults.
 - `RemoveCounters(type, count, target)` — remove N counters.
 - `RemoveAnyNumberOfCounters(target)` — player removes 0 or more.
 - `RemoveAllCounters(target)` — wipe every counter.
@@ -3342,6 +3352,15 @@ replacementEffect {
   "Devour land N" wording. **Scope today:** only the stack-spell entry path is wired; reanimation and
   token entries skip Devour (which is fine for printed cards — Devour creatures all cost real mana to
   cast).
+- `ModifyCounterPlacement(modifier, appliesTo)` / `DoubleCounterPlacement(placedByYou?, appliesTo)` —
+  **static** counter-placement modifiers living on a battlefield permanent for as long as it remains
+  (Hardened Scales `+1`, Winding Constrictor `+1`, Doubling Season doubles). `appliesTo` is an
+  `EventPattern.CounterPlacementEvent(counterType, recipient)`; `recipient = CreatureYouControl` is
+  resolved relative to the *source permanent's* controller. For the **activated/spell-granted,
+  duration-scoped** version of this (Prairie Dog), use the effect
+  `Effects.GrantCounterPlacementModifier(...)` (§4 Counters) instead — it records a controller-scoped
+  modifier in a turn-scoped game-state store consulted from the same counter-placement chokepoint,
+  and expires at end of turn.
 - `ReplaceTokenCreationWithAttachedCopy(optional, oncePerTurn, attachmentVerb, appliesTo)` —
   "the first time you would create one or more tokens each turn, you may instead create that
   many tokens that are copies of [attached] permanent." Works for both Equipment and Auras —

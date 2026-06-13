@@ -346,6 +346,20 @@ class CleanupPhaseManager(
         }
         newState = newState.copy(floatingEffects = remainingEffects)
 
+        // 1b. Expire temporary counter-placement modifiers (GrantCounterPlacementModifierEffect,
+        // e.g. Prairie Dog) whose duration ends at end of turn / end of combat. Longer durations
+        // (UntilYourNextTurn, Permanent, …) are kept and handled by their own expiry path.
+        val remainingCounterModifiers = newState.activeCounterPlacementModifiers.filter { modifier ->
+            when (modifier.duration) {
+                is Duration.EndOfTurn -> false
+                is Duration.EndOfCombat -> false
+                else -> true
+            }
+        }
+        if (remainingCounterModifiers.size != newState.activeCounterPlacementModifiers.size) {
+            newState = newState.copy(activeCounterPlacementModifiers = remainingCounterModifiers)
+        }
+
         // 2. Empty mana pools for all players (unless prevented by a static ability like Upwelling)
         if (!isManaPoolEmptyingPrevented(newState)) {
             for (playerId in newState.turnOrder) {
