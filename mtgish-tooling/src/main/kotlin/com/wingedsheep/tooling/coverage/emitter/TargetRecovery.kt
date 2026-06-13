@@ -165,6 +165,26 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
         )
         if (unrenderableAlongside.any { it in blob }) return null
     }
+    // "non-outlaw creature" (Shoot the Sheriff): IsNonOutlaw excludes the five outlaw creature types
+    // (Assassin, Mercenary, Pirate, Rogue, Warlock) at once. Render the exact filter
+    // Targets.NonOutlawCreature compiles to — Creature.notAnyOfSubtypes(Subtype.OUTLAW_TYPES). Only the
+    // bare shape (optionally a You/Opponent controller) is modeled; any other predicate alongside it
+    // would be silently dropped, so decline rather than widen.
+    if ("IsNonOutlaw" in blob) {
+        val otherPredicates = listOf(
+            "IsTapped", "IsUntapped", "IsAttacking", "IsBlocking", "PowerIs", "ToughnessIs", "ManaValueIs",
+            "IsColor", "IsNonColor", "HasAbility", "DoesntHaveAbility", "IsNonToken", "IsCreatureType",
+            "IsNonCreatureType", "IsNonCardtype", "Other", "HasACounterOfType", "WasDealtDamageThisTurn",
+        )
+        if (otherPredicates.any { it in blob }) return null
+        var g: Dsl = Lit("GameObjectFilter.Creature").dot("notAnyOfSubtypes", arg("Subtype.OUTLAW_TYPES"))
+        when {
+            "\"You\"" in blob -> g = g.dot("youControl")
+            "\"Opponent\"" in blob -> g = g.dot("opponentControls")
+            "ControlledByAPlayer" in blob || "ControlledByPlayer" in blob -> return null
+        }
+        return Call("TargetFilter", listOf(arg(g)))
+    }
     // "non-Mount creature" / "non-<creature-type> creature" (Sterling Keykeeper): a negated creature
     // subtype (IsNonCreatureType). TargetFilter has no `.notSubtype` passthrough, so render the
     // GameObjectFilter form wrapped in TargetFilter. Only the bare negated subtype (optionally a
@@ -220,8 +240,15 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
     // ControlledByAPlayer clause. Preserve it as a `.youControl()` / `.opponentControls()` suffix; never
     // drop it (an unrestricted target would let the spell hit any creature). Only the plain-creature
     // path below can compose it, so the special shapes scaffold when a controller clause is present.
+    // `ControlledByAPlayer` is the generic "you / an opponent" controller clause; `ControlledByPlayer`
+    // names a specific player ref (e.g. the attack trigger's defending player). Either is a controller
+    // restriction that must be preserved or the card declines — never silently widened.
+    val hasController = "ControlledByAPlayer" in blob || "ControlledByPlayer" in blob
     val controller: Link? = when {
-        "ControlledByAPlayer" !in blob -> null
+        !hasController -> null
+        // "target creature defending player controls" in an attack trigger (Spring Splasher): the
+        // defending player is by definition an opponent of the attacking source's controller.
+        "\"Trigger_DefendingPlayer\"" in blob -> Link("opponentControls")
         "\"Opponent\"" in blob -> Link("opponentControls")
         "\"You\"" in blob -> Link("youControl")
         // "a creature that player controls" in a combat-damage trigger: the player ~ dealt damage to is an
@@ -229,7 +256,6 @@ internal fun EmitCtx.creatureFilterExpr(filterNode: JsonElement?): Dsl? {
         "\"Trigger_ThatPlayer\"" in blob -> Link("opponentControls")
         else -> return null
     }
-    val hasController = "ControlledByAPlayer" in blob
     // Whole-creature shapes whose helpers live on GameObjectFilter (not TargetFilter), or are a named
     // TargetFilter constant. ONS targets use these in isolation, so render them as the whole filter.
     if ("IsAttacking" in blob && "IsBlocking" in blob) {

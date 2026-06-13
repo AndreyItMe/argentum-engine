@@ -237,6 +237,30 @@ class TargetRecoveryTest : StringSpec({
         ctx.creatureFilterDsl(dealtDamageGoblin).shouldBeNull()
     }
 
+    "creatureFilterDsl renders a non-outlaw creature via notAnyOfSubtypes (Shoot the Sheriff)" {
+        // "destroy target non-outlaw creature" — IsNonOutlaw excludes the five outlaw creature types at
+        // once; it must render the exact filter Targets.NonOutlawCreature compiles to, not drop to "creature".
+        val nonOutlaw = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsNonOutlaw"},""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"}]}""",
+        )
+        ctx.creatureFilterDsl(nonOutlaw) shouldBe
+            "TargetFilter(GameObjectFilter.Creature.notAnyOfSubtypes(Subtype.OUTLAW_TYPES))"
+    }
+
+    "creatureFilterDsl renders 'defending player controls' as opponentControls (Spring Splasher)" {
+        // "target creature defending player controls" in an attack trigger — a ControlledByPlayer clause
+        // bound to Trigger_DefendingPlayer (an opponent of the attacking source); must preserve the
+        // controller restriction rather than widen to any creature.
+        val defendingPlayer = obj(
+            """{"_Permanents":"And","args":[""" +
+                """{"_Permanents":"IsCardtype","args":"Creature"},""" +
+                """{"_Permanents":"ControlledByPlayer","args":{"_Player":"Trigger_DefendingPlayer"}}]}""",
+        )
+        ctx.creatureFilterDsl(defendingPlayer) shouldBe "TargetFilter.Creature.opponentControls()"
+    }
+
     "gameObjectFilterDsl renders an outlaw filter via withAnyOfSubtypes (Vial Smasher)" {
         // "another outlaw you control" — IsAnOutlaw must render the outlaw creature group, not widen to
         // any permanent.

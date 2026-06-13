@@ -808,7 +808,11 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject, oncePerTurn: Boolean = false
     // through to the normal action path (where `on("If")` handles the static gates or declines).
     val lifted = if (effTriggerCondition == null) liftInterveningIfAction(effectActions) else null
     val condFromIf = lifted?.first
-    val edsl = renderEffectList(lifted?.second ?: effectActions, tvar) ?: return null
+    // A spell-cast trigger's triggering entity is the spell, so "that player" in the body is the caster
+    // (ControllerOfTriggeringEntity), not the triggering player — see [EmitCtx.triggeringEntityIsSpell].
+    val prevTriggeringSpell = triggeringEntityIsSpell
+    triggeringEntityIsSpell = jsonContains(effRule["args"].asArr?.firstOrNull(), "_Trigger", "WhenAPlayerCastsASpell")
+    val edsl = renderEffectList(lifted?.second ?: effectActions, tvar).also { triggeringEntityIsSpell = prevTriggeringSpell } ?: return null
 
     val stmts = mutableListOf<Stmt>(Assign("trigger", Lit(spec)))
     val triggerCond = effTriggerCondition ?: condFromIf
