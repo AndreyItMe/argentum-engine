@@ -1,3 +1,62 @@
+// Aberrant Manawurm
+{
+    "name": "Aberrant Manawurm",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Wurm",
+    "oracleText": "Trample\nWhenever you cast an instant or sorcery spell, this creature gets +X/+0 until end of turn, where X is the amount of mana spent to cast that spell.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 5
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "ContextProperty",
+                        "key": "MANA_SPENT_ON_TRIGGERING_SPELL"
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "138",
+        "rarity": "UNCOMMON",
+        "artist": "Lars Grant-West",
+        "flavorText": "\"What is the equation for terror?\"\n—Lost research note, Paradox Gardens",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/9/797131cf-d80d-4050-bebd-2ce1d7fae5d0.jpg?1775937935"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Banishing Betrayal
 {
     "name": "Banishing Betrayal",
@@ -653,6 +712,89 @@
     ]
 }
 
+// Expressive Firedancer
+{
+    "name": "Expressive Firedancer",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Sorcerer",
+    "oracleText": "Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn. If five or more mana was spent to cast that spell, this creature also gains double strike until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "ContextProperty",
+                                        "key": "MANA_SPENT_ON_TRIGGERING_SPELL"
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 5
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "GrantKeyword",
+                                "keyword": "DOUBLE_STRIKE",
+                                "target": "Self"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "114",
+        "artist": "Billy Christian",
+        "flavorText": "\"Now, let your movements respond to the music! Yes, just like that!\"\n—Introduction to Interpretation",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/5/259b8c45-6241-4206-a34e-34c7f401f47b.jpg?1775937734"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fields of Strife
 {
     "name": "Fields of Strife",
@@ -760,6 +902,83 @@
     "colorIdentityOverride": [
         "WHITE",
         "RED"
+    ]
+}
+
+// Forum Necroscribe
+{
+    "name": "Forum Necroscribe",
+    "manaCost": "{5}{B}",
+    "typeLine": "Creature — Troll Warlock",
+    "oracleText": "Ward—Discard a card.\nRepartee — Whenever you cast an instant or sorcery spell that targets a creature, return target creature card from your graveyard to the battlefield.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 4
+    },
+    "keywords": [
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": "WardCost.Discard"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            },
+                            {
+                                "type": "TargetsMatching",
+                                "subfilter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature card from your graveyard"
+                    },
+                    "destination": "Battlefield"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target creature card from your graveyard"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "84",
+        "rarity": "UNCOMMON",
+        "artist": "Randy Vargas",
+        "flavorText": "She had watched many arguments wither on the Forum floor. Now, it was time to call on them to prove her point.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/7/67504a12-7414-4209-bf1c-624b4db19d52.jpg?1775937497"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
@@ -1120,6 +1339,64 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Lecturing Scornmage
+{
+    "name": "Lecturing Scornmage",
+    "manaCost": "{B}",
+    "typeLine": "Creature — Human Warlock",
+    "oracleText": "Repartee — Whenever you cast an instant or sorcery spell that targets a creature, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            },
+                            {
+                                "type": "TargetsMatching",
+                                "subfilter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "87",
+        "rarity": "UNCOMMON",
+        "artist": "Tuan Duong Chu",
+        "flavorText": "\"I expected better from you.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/d/ad07091e-8c24-43af-8ce8-031847bcaf30.jpg?1775937516"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 

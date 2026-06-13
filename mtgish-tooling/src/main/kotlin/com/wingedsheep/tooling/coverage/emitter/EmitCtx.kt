@@ -193,6 +193,14 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // "gain that much life", Thrashing Mudspawn's "lose that much life").
         "Trigger_AmountOfDamageDealt" ->
             return call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT"))
+        // "the amount of mana spent to cast that spell" on a `WhenAPlayerCastsASpell` trigger
+        // (Aberrant Manawurm's "+X/+0 ... where X is the amount of mana spent to cast that spell").
+        // Only the triggering-spell subject (`Trigger_ThatSpell`) maps to the context key; any other
+        // spell subject declines -> SCAFFOLD rather than misread a different cast's mana.
+        "AmountOfManaSpentToCastSpell" ->
+            return if (jsonContains(node["args"], "_Spell", "Trigger_ThatSpell"))
+                call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL"))
+            else null
         "PowerOfTheSacrificedCreature" -> return call("DynamicAmounts.sacrificedPower")
         // "the number of [filter] cards in your graveyard" (Rise of the Varmints' Varmint count). The
         // count's args are a `_CardsInGraveyard` filter — typically `And(IsCardtype Creature,

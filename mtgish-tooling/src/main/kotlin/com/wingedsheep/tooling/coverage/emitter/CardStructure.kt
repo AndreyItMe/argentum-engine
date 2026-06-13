@@ -925,7 +925,15 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenAPlayerCastsASpell")) {
         val argv = trig["args"].asArr
         val scope = castScope(argv?.getOrNull(0) as? JsonObject) ?: return null
-        val category = spellCastCategory(argv?.getOrNull(1) as? JsonObject) ?: return null
+        val spellsNode = argv?.getOrNull(1) as? JsonObject
+        // "an instant or sorcery spell that targets a creature" (Repartee — Forum Necroscribe,
+        // Lecturing Scornmage): an And of the base spell-type filter + a `TargetsAPermanent`
+        // clause. Recover the base category and a `targetsMatching(<filter>)` subfilter; the
+        // whole thing renders only when BOTH render exactly (decline -> SCAFFOLD otherwise).
+        spellCastTargetsMatching(spellsNode)?.let { (category, sub) ->
+            return castTriggerDsl(scope, category, targetsMatching = sub)
+        }
+        val category = spellCastCategory(spellsNode) ?: return null
         return castTriggerDsl(scope, category)
     }
 
@@ -972,19 +980,51 @@ private fun spellCastCategory(spells: JsonObject?): String? = when (spells?.strF
     else -> null
 }
 
+/** The base [GameObjectFilter] expression for a cast-trigger category, or null for "any" (no filter). */
+private fun categoryFilter(category: String): String? = when (category) {
+    "any" -> null
+    "creature" -> "GameObjectFilter.Creature"
+    "noncreature" -> "GameObjectFilter.Noncreature"
+    "enchantment" -> "GameObjectFilter.Enchantment"
+    "instantOrSorcery" -> "GameObjectFilter.InstantOrSorcery"
+    "historic" -> "GameObjectFilter.Historic"
+    else -> null
+}
+
+/**
+ * "a [type] spell that targets a [permanent]" (Repartee — Forum Necroscribe, Lecturing Scornmage):
+ * the spell filter is an `And` of a base spell-type filter + a `TargetsAPermanent(<perm filter>)`
+ * clause. Returns `(baseCategory, targetsMatchingFilterExpr)` when BOTH halves render exactly, else
+ * null so the trigger declines -> SCAFFOLD rather than dropping the "targets a creature" clause.
+ */
+private fun EmitCtx.spellCastTargetsMatching(spells: JsonObject?): Pair<String, String>? {
+    if (spells?.strField("_Spells") != "And") return null
+    val parts = spells["args"].asArr.orEmpty().filterIsInstance<JsonObject>()
+    if (parts.size != 2) return null
+    val targetsNode = parts.firstOrNull { it.strField("_Spells") == "TargetsAPermanent" } ?: return null
+    val baseNode = parts.firstOrNull { it !== targetsNode } ?: return null
+    val category = spellCastCategory(baseNode) ?: return null
+    val sub = gameObjectFilterDsl(targetsNode["args"]) ?: return null
+    return category to sub
+}
+
 /** (scope, category) -> the exact `Triggers.*` constant/factory. You has named constants; the
  *  any-player / opponent scopes use the `anyPlayerCasts` / `opponentCasts` factories with a
- *  [GameObjectFilter]. */
-private fun castTriggerDsl(scope: CastScope, category: String): String? {
-    val filter = when (category) {
-        "any" -> null
-        "creature" -> "GameObjectFilter.Creature"
-        "noncreature" -> "GameObjectFilter.Noncreature"
-        "enchantment" -> "GameObjectFilter.Enchantment"
-        "instantOrSorcery" -> "GameObjectFilter.InstantOrSorcery"
-        "historic" -> "GameObjectFilter.Historic"
-        else -> return null
+ *  [GameObjectFilter]. When [targetsMatching] is set ("... that targets a creature"), the base
+ *  filter is narrowed with `.targetsMatching(<filter>)` and the factory form is always used (the
+ *  bare `Triggers.YouCastInstantOrSorcery`-style constants carry no spell filter). */
+private fun castTriggerDsl(scope: CastScope, category: String, targetsMatching: String? = null): String? {
+    val baseFilter = categoryFilter(category)
+    if (targetsMatching != null) {
+        // No bare "any spell that targets …" shape appears in the corpus; require a typed base filter.
+        val composed = (baseFilter ?: return null) + ".targetsMatching($targetsMatching)"
+        return when (scope) {
+            CastScope.YOU -> "Triggers.youCastSpell(spellFilter = $composed)"
+            CastScope.ANY -> "Triggers.anyPlayerCasts($composed)"
+            CastScope.OPPONENT -> "Triggers.opponentCasts($composed)"
+        }
     }
+    val filter = baseFilter
     return when (scope) {
         CastScope.YOU -> when (category) {
             "any" -> "Triggers.YouCastSpell"
@@ -998,6 +1038,39 @@ private fun castTriggerDsl(scope: CastScope, category: String): String? {
         CastScope.ANY -> if (filter == null) "Triggers.AnyPlayerCastsSpell" else "Triggers.anyPlayerCasts($filter)"
         CastScope.OPPONENT -> if (filter == null) "Triggers.OpponentCastsSpell" else "Triggers.opponentCasts($filter)"
     }
+}
+
+/**
+ * "Ward—<cost>" (CR 702.21) -> `keywordAbility(KeywordAbility.ward(...) / wardDiscard() / wardLife(N)
+ * / wardSacrifice(filter))`. The rule's `args` is the ward cost; only the cost shapes the SDK exposes
+ * render exactly — mana (`Ward {N}`), discard-a-card, pay-N-life, and sacrifice-a-<filter>. Any other
+ * cost (compound `And`, dynamic life, sacrifice-N) declines -> SCAFFOLD rather than approximating the
+ * ward cost. Forum Necroscribe ("Ward—Discard a card") + the broad Ward {N} / Ward—Pay N life corpus.
+ */
+internal fun EmitCtx.wardKeywordLine(rule: JsonObject): List<Stmt>? {
+    val cost = rule["args"] as? JsonObject ?: return null
+    val ability: Dsl = when (cost.strField("_Cost")) {
+        // Pure-mana Ward keeps the existing `KeywordAbility.Ward(WardCost.Mana("{x}"))` rendering so the
+        // large mana-Ward corpus golden stays byte-identical.
+        "PayMana" -> {
+            val mana = renderMana(cost.field("args"))
+            if (mana.isEmpty()) return null
+            call("KeywordAbility.Ward", arg(call("WardCost.Mana", arg("\"$mana\""))))
+        }
+        "DiscardACard" -> call("KeywordAbility.wardDiscard")
+        "DiscardACardAtRandom" -> call("KeywordAbility.wardDiscard", arg("random", "true"))
+        "PayLife" -> {
+            // Only a fixed integer life cost renders; dynamic life (PowerOfPermanent, X) declines.
+            val n = (cost["args"].asInt()) ?: ((cost["args"] as? JsonObject)?.get("args").asInt()) ?: return null
+            call("KeywordAbility.wardLife", arg("$n"))
+        }
+        "SacrificeAPermanent" -> {
+            val filter = gameObjectFilterDsl(cost.field("args")) ?: return null
+            call("KeywordAbility.wardSacrifice", arg(Lit(filter)))
+        }
+        else -> return null  // compound / dynamic ward costs -> SCAFFOLD
+    }
+    return listOf(Eval(call("keywordAbility", arg(ability))))
 }
 
 /** True when a trigger's subject IS this permanent — ThisPermanent present, but NOT merely as the
