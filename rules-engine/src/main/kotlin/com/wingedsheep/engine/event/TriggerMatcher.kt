@@ -264,6 +264,23 @@ class TriggerMatcher(
                 // here keeps the regular loop from double-firing or mis-binding them.
                 false
             }
+            is EventPattern.BecameSaddledEvent -> {
+                // Saddled permanents stay on the battlefield (CR 702.171b), so this matches in the
+                // regular battlefield trigger loop. SELF binding must match the saddled permanent.
+                if (event !is com.wingedsheep.engine.core.BecameSaddledEvent) return false
+                if (binding == TriggerBinding.SELF && event.entityId != sourceId) return false
+                // "for the first time each turn" intervening-if — only the first saddle this turn.
+                if (trigger.firstTimeEachTurn && !event.firstThisTurn) return false
+                if (trigger.filter != GameObjectFilter.Any) {
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId
+                    )
+                    PredicateEvaluator().matches(
+                        state, state.projectedState, event.entityId, trigger.filter, predicateContext
+                    )
+                } else true
+            }
             is EventPattern.TargetsChosenEvent -> {
                 event is com.wingedsheep.engine.core.TargetsChosenEvent &&
                     matchesPlayer(trigger.player, event.chooserId, controllerId)

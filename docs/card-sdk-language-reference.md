@@ -1794,6 +1794,14 @@ Triggers.youCastSpell(
   very card that was plotted while it sits face up in exile (Aloe Alchemist). Detected by
   `TriggerDetector.detectPlottedCardTriggers` off the plot special action's `CardPlottedEvent`, since
   the card is never on the battlefield for the index loop to see.
+- `becomesSaddled(filter = Any, firstTimeEachTurn = false, binding = SELF)` — OTJ Saddle (CR 702.171b)
+  — "whenever this creature becomes saddled". Fires when a Saddle ability resolves on the permanent
+  (`BecameSaddledEvent`); the Mount stays on the battlefield while saddled, so it matches in the regular
+  battlefield index loop (`TriggerCategory.BECAME_SADDLED`). Pass `firstTimeEachTurn = true` for the
+  "for the first time each turn" intervening-if (Stubborn Burrowfiend) — backed by the event's
+  `firstThisTurn` flag, which is true only when the permanent wasn't already saddled when the ability
+  resolved (re-saddling in the same turn reports false, since `SaddledComponent` persists until
+  cleanup). Use an `ANY` binding + `filter` for "whenever a [filter] becomes saddled".
 - `Valiant` — Bloomburrow Valiant trigger.
 - `RoomFullyUnlocked` — Rooms — both doors unlocked.
 - `OnDoorUnlocked` — single Room door unlocked.

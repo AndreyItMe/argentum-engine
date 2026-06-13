@@ -612,13 +612,20 @@ data class TappedEvent(
 
 /**
  * A permanent became saddled (CR 702.171b) — a Saddle ability resolved. Lets animations and
- * any future "whenever this becomes saddled" triggers react instead of the state changing silently.
+ * "whenever this becomes saddled" triggers react instead of the state changing silently.
+ *
+ * [firstThisTurn] is true when the permanent was not already saddled when this Saddle ability
+ * resolved — i.e. this is the first time it became saddled this turn. Saddle may be activated
+ * again while a permanent is already saddled (CR 702.171a/b), and the SaddledComponent persists
+ * until the cleanup step, so a second activation in the same turn reports false. Drives the
+ * "becomes saddled for the first time each turn" intervening-if (Stubborn Burrowfiend).
  */
 @Serializable
 @SerialName("BecameSaddledEvent")
 data class BecameSaddledEvent(
     val entityId: EntityId,
-    val entityName: String
+    val entityName: String,
+    val firstThisTurn: Boolean = true
 ) : GameEvent
 
 /**

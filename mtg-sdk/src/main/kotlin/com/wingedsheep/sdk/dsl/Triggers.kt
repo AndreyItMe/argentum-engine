@@ -1141,6 +1141,28 @@ object Triggers {
     )
 
     // =========================================================================
+    // Saddle Triggers (Outlaws of Thunder Junction)
+    // =========================================================================
+
+    /**
+     * Whenever this creature becomes saddled (CR 702.171b). SELF binding — fires for the Mount
+     * itself when its Saddle ability resolves. Used by Stubborn Burrowfiend: "Whenever this
+     * creature becomes saddled for the first time each turn, …".
+     *
+     * Pass [firstTimeEachTurn] to restrict to the first time it became saddled this turn (the
+     * default for the Burrowfiend wording); leave it false for an unqualified "becomes saddled".
+     * Use [becomesSaddled] for an ANY binding or a filtered "a [filter] becomes saddled" variant.
+     */
+    fun becomesSaddled(
+        filter: GameObjectFilter = GameObjectFilter.Any,
+        firstTimeEachTurn: Boolean = false,
+        binding: TriggerBinding = TriggerBinding.SELF,
+    ): TriggerSpec = TriggerSpec(
+        event = BecameSaddledEvent(filter = filter, firstTimeEachTurn = firstTimeEachTurn),
+        binding = binding
+    )
+
+    // =========================================================================
     // Gift Triggers
     // =========================================================================
 

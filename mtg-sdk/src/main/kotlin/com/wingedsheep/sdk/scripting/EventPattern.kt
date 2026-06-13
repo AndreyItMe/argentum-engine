@@ -869,6 +869,36 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
+     * When a permanent becomes saddled (CR 702.171b) — a Saddle ability resolved on it.
+     *
+     * Binding SELF = "whenever this creature becomes saddled" (the Mount itself, Stubborn
+     * Burrowfiend); ANY = "whenever a [filter] becomes saddled". The Mount stays on the battlefield
+     * while saddled, so this matches in the regular battlefield trigger loop (unlike the
+     * exile-resident plotted/door designations).
+     *
+     * [firstTimeEachTurn] restricts to the first time the permanent became saddled this turn —
+     * Saddle may be activated again while already saddled, but the "first time each turn"
+     * intervening-if only fires on the first resolution per turn.
+     */
+    @SerialName("BecameSaddledEvent")
+    @Serializable
+    data class BecameSaddledEvent(
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val firstTimeEachTurn: Boolean = false
+    ) : EventPattern {
+        override val description: String = buildString {
+            append(describeObjectForEvent(filter))
+            append(" becomes saddled")
+            if (firstTimeEachTurn) append(" for the first time each turn")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): EventPattern {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
      * When a player chooses one or more targets.
      *
      * Fires when [player] casts a spell, activates an ability, or puts a triggered ability
