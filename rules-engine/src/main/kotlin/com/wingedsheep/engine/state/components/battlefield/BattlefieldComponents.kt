@@ -282,7 +282,9 @@ data class CountersComponent(
 
     fun withAdded(type: CounterType, amount: Int): CountersComponent {
         val current = getCount(type)
-        return CountersComponent(counters + (type to current + amount))
+        // Saturating add: doubling a near-billion-counter permanent must clamp, never wrap to a
+        // negative `Int` (which would corrupt state silently). See GameLimits.
+        return CountersComponent(counters + (type to com.wingedsheep.engine.core.GameLimits.addClamped(current, amount)))
     }
 
     fun withRemoved(type: CounterType, amount: Int): CountersComponent {

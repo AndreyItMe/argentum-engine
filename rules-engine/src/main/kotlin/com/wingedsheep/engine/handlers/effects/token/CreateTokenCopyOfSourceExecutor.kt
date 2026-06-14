@@ -60,7 +60,7 @@ class CreateTokenCopyOfSourceExecutor(
         var newState = state
         val createdTokens = mutableListOf<EntityId>()
 
-        repeat(effect.count) {
+        repeat(com.wingedsheep.engine.core.GameLimits.cappedTokenCount(effect.count, "source-copy tokens")) {
             val (tokenId, stateWithId) = newState.newEntity()
             newState = stateWithId
             createdTokens.add(tokenId)

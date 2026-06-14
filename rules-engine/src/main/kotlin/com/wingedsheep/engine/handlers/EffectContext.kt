@@ -198,7 +198,18 @@ data class EffectContext(
     /** The entity being modified during continuous effect projection (for DynamicAmount evaluation) */
     val affectedEntityId: EntityId? = null,
     // --- Pipeline state ---
-    val pipeline: PipelineState = PipelineState.EMPTY
+    val pipeline: PipelineState = PipelineState.EMPTY,
+    // --- Safety ---
+    /**
+     * How many effect-executions deep this context is within a single resolution. Bumped by one
+     * each time [com.wingedsheep.engine.handlers.effects.EffectExecutorRegistry] recurses into a
+     * sub-effect (composite / iteration / draw / chain executors), and per iteration by
+     * `RepeatWhileEffect`. The registry aborts the branch once this exceeds
+     * [com.wingedsheep.engine.core.GameLimits.MAX_RESOLUTION_DEPTH], so an unbounded effect loop
+     * fails closed instead of `StackOverflowError`. Lives on the (immutable) context rather than
+     * on the shared registry so it stays correct under the AI's parallel state evaluation.
+     */
+    val resolutionDepth: Int = 0
 ) {
     /**
      * Resolve a symbolic effect target to a concrete entity id using just the context.

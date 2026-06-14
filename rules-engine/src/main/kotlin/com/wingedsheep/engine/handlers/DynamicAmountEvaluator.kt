@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.handlers
 
+import com.wingedsheep.engine.core.GameLimits
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.state.GameState
@@ -160,15 +161,26 @@ class DynamicAmountEvaluator(
             }
 
             // Math operations — propagate [projectedState] so a mid-projection caller's
-            // intermediate snapshot survives nested aggregates.
+            // intermediate snapshot survives nested aggregates. Arithmetic is saturating
+            // (GameLimits.*Clamped): a "twice the number of X" / doubling chain must clamp at
+            // MAX_QUANTITY, never silently overflow `Int` to a negative value.
             is DynamicAmount.Add ->
-                evaluate(state, amount.left, context, projectedState) + evaluate(state, amount.right, context, projectedState)
+                GameLimits.addClamped(
+                    evaluate(state, amount.left, context, projectedState),
+                    evaluate(state, amount.right, context, projectedState)
+                )
 
             is DynamicAmount.Subtract ->
-                evaluate(state, amount.left, context, projectedState) - evaluate(state, amount.right, context, projectedState)
+                GameLimits.subClamped(
+                    evaluate(state, amount.left, context, projectedState),
+                    evaluate(state, amount.right, context, projectedState)
+                )
 
             is DynamicAmount.Multiply ->
-                evaluate(state, amount.amount, context, projectedState) * amount.multiplier
+                GameLimits.mulClamped(
+                    evaluate(state, amount.amount, context, projectedState),
+                    amount.multiplier
+                )
 
             is DynamicAmount.IfPositive ->
                 max(0, evaluate(state, amount.amount, context, projectedState))

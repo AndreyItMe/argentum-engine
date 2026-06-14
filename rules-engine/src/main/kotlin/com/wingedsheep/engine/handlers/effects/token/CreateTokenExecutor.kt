@@ -100,10 +100,15 @@ class CreateTokenExecutor(
     ): EffectResult {
         // Apply token-count replacements (Doubling Season / Exalted Sunborn,
         // and per-N modifiers) before downstream replacements get a look.
-        val count = TokenCreationReplacementHelper.applyCountReplacements(
+        val requestedCount = TokenCreationReplacementHelper.applyCountReplacements(
             state, tokenControllerId, baseCount
         )
-        if (count <= 0) return EffectResult.success(state)
+        if (requestedCount <= 0) return EffectResult.success(state)
+
+        // Structural cap: each token is a full ECS entity, so an unbounded doubler stack would
+        // allocate entities until the JVM OOMs. Clamp before the allocation loop — a board this
+        // large is already a decided game. See GameLimits.MAX_TOKENS_PER_EFFECT.
+        val count = com.wingedsheep.engine.core.GameLimits.cappedTokenCount(requestedCount, "tokens")
 
         // Check for token creation replacement effects (e.g., Mirrormind Crown)
         val replacementResult = TokenCreationReplacementHelper.checkReplacement(
