@@ -269,9 +269,11 @@ this turn" can't be expressed. Add the tracker (engine accumulates on draw event
     gated on "as long as this is attacking," with declare-blockers payment enforcement.
     → **Archangel of Tithes**.
 
-14. **Group flicker (mass blink) + repeat-the-whole-effect X+1 times.** No group exile-and-return
-    effect and no generic "repeat this process X more times" loop wrapper.
-    → **Another Round**.
+14. ~~**Group flicker (mass blink) + repeat-the-whole-effect X+1 times.**~~ RESOLVED — no new SDK
+    needed. Composed from existing primitives: an `Effects.Pipeline { gather → chooseAnyNumber →
+    exile(linkToSource) → gather(FromLinkedExile) → move(battlefield, underOwnersControl) }` blink,
+    run once then `RepeatDynamicTimesEffect(amount = DynamicAmount.XValue, body = …)` for "X more times".
+    → **Another Round** (implemented).
 
 15. **Targeted reanimate-attached for Auras/Equipment.** Only `ReturnSelfToBattlefieldAttached`
     (source = self) exists. This mode targets a *separate* graveyard Aura/Equipment and attaches it to

@@ -92,6 +92,19 @@ internal fun BridgeBuilder.structuralEnvelopes() {
     envelope("ChooseACreatureType", UNIVERSAL)
     envelope("ChooseAColor", UNIVERSAL)
     envelope("IfElse", UNIVERSAL)
+
+    // Loop / repeat control-flow. The capability is the nested action body + a repeat count; the engine
+    // expresses bounded repeats via `RepeatDynamicTimesEffect` and "repeat until a condition" via a
+    // `RepeatWhileEffect`. These are STRUCTURAL — the real capability is the nested actions, scored on
+    // their own. The emitter declines (a loop's exact bound — "X more times" vs "once" vs "while" — is
+    // card-specific around the engine's still-rough cast-time X / extra-cost handling), so cards using
+    // them stay SCAFFOLD even though the capability is present.
+    //   - "… Then repeat this process X more times." (Another Round) — a count-bounded repeat.
+    envelope("RepeatableActionsNumTimes", "envelope: repeat a sequence N times (RepeatDynamicTimesEffect)", composes = listOf("RepeatDynamicTimes"))
+    //   - "… Then if [cond], repeat this process [once]." (Claim Jumper) — a do-once-then-repeat loop.
+    envelope("RepeatableActions", "envelope: repeatable action sequence (RepeatDynamicTimes / RepeatWhile)", composes = listOf("RepeatDynamicTimes", "RepeatWhile"))
+    //   - The "repeat this process" loop-back marker inside a RepeatableActions body.
+    supported("RepeatThisProcess", "loop-back marker inside a repeatable action sequence")
     // "[Effect]. [Bigger effect] instead if you controlled a [filter] as you cast this spell" — the OTJ
     // cast-time condition capture (CR 601.2i). Structural: the capability is the nested condition
     // (PlayerPassesFilter) and the two branch effects, scored on their own. The engine freezes the

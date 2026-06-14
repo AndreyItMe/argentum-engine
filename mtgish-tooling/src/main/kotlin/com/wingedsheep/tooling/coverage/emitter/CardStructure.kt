@@ -440,6 +440,19 @@ private fun EmitCtx.youControlConditionDsl(condNode: JsonElement?): String? {
 }
 
 /**
+ * "during your turn" condition (`IsPlayersTurn(You)`) -> the `Conditions.IsYourTurn` DSL string, or
+ * null when the turn isn't scoped to You. Used by the [ifRuleBlock] conditional-lord gate (At
+ * Knifepoint's "during your turn, outlaws you control have first strike"); the projected-state read
+ * drops the grant the moment it stops being the controller's turn.
+ */
+private fun isYourTurnConditionDsl(condNode: JsonElement?): String? {
+    val cond = condNode as? JsonObject ?: return null
+    if (cond.strField("_Condition") != "IsPlayersTurn") return null
+    if (!jsonContains(cond["args"], "_Player", "You")) return null
+    return "Conditions.IsYourTurn"
+}
+
+/**
  * "you control N or more [filter]" condition (`PlayerPassesFilter(You, ControlsNum([Comparison
  * GreaterThanOrEqualTo Integer N], <filter>))`) -> `Conditions.YouControlAtLeast(N, <filter>)`, or null
  * when the player isn't You, the comparison isn't `>= N` (a fixed integer), or the filter doesn't render
@@ -631,6 +644,17 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
             }
             else -> { reasons.add("If"); return null }
         }
+    }
+
+    // At Knifepoint: "During your turn, outlaws you control have first strike."
+    //   If(IsPlayersTurn(You)) [ EachPermanentLayerEffect(<group>, [AddAbility(<keyword>) | AdjustPT]) ]
+    // -> one `staticAbility { condition = Conditions.IsYourTurn; ability = <lord ability> }` per layer
+    // effect, reusing the always-on lord renderer (staticLordBlock) but gated on the controller's turn.
+    // Only the "during YOUR turn" gate renders; any other turn scope declines (-> SCAFFOLD). The lord
+    // renderer itself still declines any group/ability it can't reproduce exactly.
+    if (innerRule.strField("_Rule") == "EachPermanentLayerEffect") {
+        val condDsl = isYourTurnConditionDsl(cond) ?: run { reasons.add("If"); return null }
+        return staticLordBlock(innerRule, condition = condDsl)
     }
 
     // Dust Animus: "If you control five or more untapped lands, this creature enters with two +1/+1

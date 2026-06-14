@@ -34,6 +34,14 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // condition still scaffolds, so these are accepted as supported vocabulary (the emitter is the gate).
     supported("PermanentPassesFilter", "condition: a permanent matches a filter (e.g. ThisPermanent IsSaddled -> Conditions.SourceIsSaddled)")
     supported("PlayerPassesFilter", "condition: a player matches a filter (e.g. You HasntCastASpellThisTurn)")
+    // "an opponent matches [filter]" — APlayerPassesFilter(Opponent, …). Used by Claim Jumper's
+    // intervening-if "if an opponent controls more lands than you". The engine has
+    // Conditions.OpponentControlsMoreLands; the emitter declines the surrounding repeatable-search loop,
+    // so this is capability-only (-> SCAFFOLD).
+    supported("APlayerPassesFilter", "condition: a player (e.g. an opponent) matches a filter")
+    // "controls more [permanents] than [player]" -> Conditions.OpponentControlsMoreLands (for the
+    // Land/You scope). Capability vocabulary; the emitter declines the loop body that uses it.
+    supported("ControlsMorePermanentThanPlayer", "predicate: a player controls more [filter] than another (Opponent>You Lands -> Conditions.OpponentControlsMoreLands)")
     supported("IsSaddled", "predicate: this permanent is saddled (CR 702.171b)")
     // "during your turn" — IsPlayersTurn(You) -> Conditions.IsYourTurn, the gate on Overzealous Muscle's
     // "Whenever you commit a crime during your turn, …". Renders as a triggerCondition when it wraps a

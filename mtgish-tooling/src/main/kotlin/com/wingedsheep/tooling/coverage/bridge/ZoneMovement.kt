@@ -60,4 +60,17 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("ExileEachPermanent", UNIVERSAL, composes = listOf("MoveCollection", "MoveToZone"))
     composed("MillNumberCards", UNIVERSAL, composes = listOf("MoveCollection"))
     composed("MillCards", UNIVERSAL, composes = listOf("MoveCollection"))
+
+    // "Exile any number of [permanents] you control, then return them …" — the player-chosen blink
+    // (Another Round). A Gather -> ChooseAnyNumber -> MoveCollection(-> exile, linked) pipeline; the
+    // return half is `PutEachExiledCardOntoTheBattlefield`. The emitter declines (the loop/return shape
+    // is card-specific), so this is capability-only -> SCAFFOLD.
+    composed("ExileAnyNumberOfPermanents", "Gather->ChooseAnyNumber->MoveCollection (battlefield->exile, linked)", composes = listOf("MoveCollection", "MoveToZone"))
+    // "Return them to the battlefield under their owner's control" — the return half of a blink:
+    // Gather(from linked exile) + MoveCollection(-> battlefield, underOwnersControl).
+    composed("PutEachExiledCardOntoTheBattlefield", "Gather(linked exile) + MoveCollection (exile->battlefield, owners' control)", composes = listOf("MoveCollection", "MoveToZone"))
+    // "If you searched your library this way, shuffle" — a deferred shuffle gated on whether a search
+    // happened (Claim Jumper). The search itself shuffles per `searchLibrary`, so the engine expresses
+    // this; capability-only here (the loop body is card-specific) -> SCAFFOLD.
+    composed("ShuffleLibraryIfSearched", "ShuffleLibrary, gated on whether a search occurred", composes = listOf("ShuffleLibrary"))
 }

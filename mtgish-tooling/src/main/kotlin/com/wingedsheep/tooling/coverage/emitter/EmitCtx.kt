@@ -428,8 +428,19 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // it would silently widen the count's filter to GameObjectFilter.Any and over-count every permanent.
         // Decline (-> SCAFFOLD) rather than misrender (The Spirit Oasis's "draw a card for each Shrine").
         if (subtype == null && node.firstArgWordTagged("IsEnchantmentType") != null) return null
-        val filter = if (subtype != null) Lit("GameObjectFilter.Creature").dot("withSubtype", arg("\"$subtype\""))
-                     else landSearchFilterExpr(node)
+        // A bare "number of LANDS [you control]" battlefield tally (Dance of the Tumbleweeds) is an
+        // explicit `IsCardtype Land` with no land subtype or basic-land signal. Render
+        // `GameObjectFilter.Land` directly: `landSearchFilterExpr` is search-oriented and its
+        // "basic land" oracle fallback would narrow a *lands* count to basics whenever the card's text
+        // also mentions a basic-land search elsewhere (Dance's mode 0). Land subtypes / basic-land
+        // signals still route through the search helper below.
+        val bareLandCount = subtype == null && "\"Land\"" in countBlob &&
+            "IsLandType" !in countBlob && "IsBasicLand" !in countBlob && "IsSupertype" !in countBlob
+        val filter = when {
+            subtype != null -> Lit("GameObjectFilter.Creature").dot("withSubtype", arg("\"$subtype\""))
+            bareLandCount -> Lit("GameObjectFilter.Land")
+            else -> landSearchFilterExpr(node)
+        }
         return call("DynamicAmount.AggregateBattlefield", arg(player), arg(filter))
     }
     return null

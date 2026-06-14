@@ -32,7 +32,7 @@ import kotlinx.serialization.json.JsonObject
 internal fun staticAbilityStmt(ability: Dsl): Stmt = Sub(Block("staticAbility", listOf(Assign("ability", ability))))
 
 /** `staticAbility { condition = <cond>; ability = <ability> }` — a threshold-gated static ability row. */
-private fun gatedStaticAbilityStmt(cond: String, ability: Dsl): Stmt =
+internal fun gatedStaticAbilityStmt(cond: String, ability: Dsl): Stmt =
     Sub(Block("staticAbility", listOf(Assign("condition", Lit(cond)), Assign("ability", ability))))
 
 /**
@@ -125,11 +125,12 @@ internal fun EmitCtx.staticBlock(rule: JsonObject): List<Stmt>? {
  * excludeSelf for "other …", or `GroupFilter.ChosenSubtypeCreatures()` for "creatures of the chosen
  * type"). Anything we can't render exactly scaffolds.
  */
-internal fun EmitCtx.staticLordBlock(rule: JsonObject): List<Stmt>? {
+internal fun EmitCtx.staticLordBlock(rule: JsonObject, condition: String? = null): List<Stmt>? {
     val args = rule["args"] as? JsonArray
     val layerEffects = (args?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
     if (args == null || layerEffects.isNullOrEmpty()) { reasons.add("EachPermanentLayerEffect"); return null }
     val group = lordGroupFilterExpr(args.getOrNull(0)) ?: run { reasons.add("EachPermanentLayerEffect"); return null }
+    fun emit(ability: Dsl): Stmt = if (condition != null) gatedStaticAbilityStmt(condition, ability) else staticAbilityStmt(ability)
     val stmts = mutableListOf<Stmt>()
     for (le in layerEffects) {
         val ability: Dsl = when (le.strField("_StaticLayerEffect")) {
@@ -167,7 +168,7 @@ internal fun EmitCtx.staticLordBlock(rule: JsonObject): List<Stmt>? {
             }
             else -> return scaffoldLord()
         }
-        stmts.add(staticAbilityStmt(ability))
+        stmts.add(emit(ability))
     }
     return stmts
 }
