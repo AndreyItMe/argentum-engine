@@ -4041,6 +4041,148 @@
     ]
 }
 
+// Final Showdown
+{
+    "name": "Final Showdown",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Spree (Choose one or more additional costs.)\n+ {1} — All creatures lose all abilities until end of turn.\n+ {1} — Choose a creature you control. It gains indestructible until end of turn.\n+ {3}{W}{W} — Destroy all creatures.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        },
+                        "body": {
+                            "type": "RemoveAllAbilities",
+                            "target": "Self"
+                        }
+                    },
+                    "description": "+ {1} — All creatures lose all abilities until end of turn.",
+                    "additionalManaCost": "{1}"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "ControlledPermanents",
+                                    "filter": "creature"
+                                },
+                                "storeAs": "chooseIndestructible"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "chooseIndestructible",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "indestructibleChosen",
+                                "prompt": "Choose a creature you control to gain indestructible",
+                                "useTargetingUI": true
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Collection",
+                                    "collection": "indestructibleChosen"
+                                },
+                                "body": {
+                                    "type": "GrantKeyword",
+                                    "keyword": "INDESTRUCTIBLE",
+                                    "target": "Self"
+                                }
+                            }
+                        ]
+                    },
+                    "description": "+ {1} — Choose a creature you control. It gains indestructible until end of turn.",
+                    "additionalManaCost": "{1}"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "BattlefieldMatching",
+                                    "filter": "creature"
+                                },
+                                "storeAs": "destroyAll_gathered"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "destroyAll_gathered",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Destroy"
+                            }
+                        ]
+                    },
+                    "description": "+ {3}{W}{W} — Destroy all creatures.",
+                    "additionalManaCost": "{3}{W}{W}"
+                }
+            ],
+            "chooseCount": 3,
+            "minChooseCount": 1
+        }
+    },
+    "metadata": {
+        "collectorNumber": "11",
+        "rarity": "MYTHIC",
+        "artist": "Izzy",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/5/358968f9-45bd-4022-b6bc-f1f7e0adf0e7.jpg?1712860587",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "The second mode of Final Showdown doesn't target the creature. You don't choose which creature will gain indestructible until the spell is resolving. At that point, it's too late for anyone to respond to the spell."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "If an effect grants a creature an ability after Final Showdown causes all creatures to lose all abilities, that creature won't lose that ability."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You must choose at least one of the listed modes and pay its associated additional cost in order to cast a spell with spree."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You choose the modes as you cast the spell with spree. Once modes are chosen, they can't be changed."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "No matter which modes you choose, you always follow the instructions in the order they are written."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You can't choose the same mode more than once."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "No player can cast spells or activate abilities in between the modes of a resolving spell. Any abilities that trigger won't be put onto the stack until the spell is done resolving."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Forlorn Flats
 {
     "name": "Forlorn Flats",
