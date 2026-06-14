@@ -1070,18 +1070,26 @@ class TriggerMatcher(
         trigger: EventPattern,
         step: Step,
         controllerId: EntityId,
-        activePlayerId: EntityId
+        state: GameState
     ): Boolean {
         if (trigger !is EventPattern.StepEvent) return false
         if (step != trigger.step) return false
-        return matchesPlayerForStep(trigger.player, controllerId, activePlayerId)
+        return matchesPlayerForStep(trigger.player, controllerId, state)
     }
 
-    fun matchesPlayerForStep(player: Player, controllerId: EntityId, activePlayerId: EntityId): Boolean {
+    /**
+     * Whether a step trigger owned by [controllerId] fires this step. "Your" step is the *team's*
+     * step in Two-Headed Giant (CR 805.4d): every member of the active team sees their own "at the
+     * beginning of your upkeep/draw/end step" trigger fire, and a nonactive player's "each opponent's
+     * step" trigger fires while the opposing team is active. In a non-team game this reduces to the
+     * ordinary active-player comparison. (The 805.4d per-opponent *multiplicity* nuance — firing once
+     * per opposing teammate — is not yet modelled; the trigger fires once.)
+     */
+    fun matchesPlayerForStep(player: Player, controllerId: EntityId, state: GameState): Boolean {
         return when (player) {
-            Player.You -> controllerId == activePlayerId
+            Player.You -> state.isActiveTurnFor(controllerId)
             Player.Each -> true
-            Player.EachOpponent -> controllerId != activePlayerId
+            Player.EachOpponent -> !state.isActiveTurnFor(controllerId)
             else -> true
         }
     }

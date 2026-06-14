@@ -59,7 +59,7 @@ class CastPermissionUtils(
     ): Boolean {
         return when (restriction) {
             is ActivationRestriction.AnyPlayerMay -> true
-            is ActivationRestriction.OnlyDuringYourTurn -> state.activePlayerId == playerId
+            is ActivationRestriction.OnlyDuringYourTurn -> state.isActiveTurnFor(playerId)
             is ActivationRestriction.BeforeStep -> state.step.ordinal < restriction.step.ordinal
             is ActivationRestriction.DuringPhase -> state.phase == restriction.phase
             is ActivationRestriction.DuringStep -> state.step == restriction.step

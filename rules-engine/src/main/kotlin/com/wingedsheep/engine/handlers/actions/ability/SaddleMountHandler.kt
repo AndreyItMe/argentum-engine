@@ -47,7 +47,7 @@ class SaddleMountHandler(
 
         // "Activate only as a sorcery" (CR 702.171a)
         if (!state.step.isMainPhase || state.stack.isNotEmpty() ||
-            state.activePlayerId != action.playerId
+            !state.isActiveTurnFor(action.playerId)
         ) {
             return "Saddle can only be activated during your main phase while the stack is empty"
         }

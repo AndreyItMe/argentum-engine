@@ -1615,7 +1615,8 @@ class ActivateAbilityHandler(
         return when (restriction) {
             is ActivationRestriction.AnyPlayerMay -> null // Not a restriction; handled in validate()
             is ActivationRestriction.OnlyDuringYourTurn -> {
-                if (state.activePlayerId != playerId) "This ability can only be activated during your turn"
+                // CR 805.5a — "your turn" is the active team's turn in Two-Headed Giant.
+                if (!state.isActiveTurnFor(playerId)) "This ability can only be activated during your turn"
                 else null
             }
             is ActivationRestriction.BeforeStep -> {

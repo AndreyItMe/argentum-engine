@@ -67,54 +67,80 @@ class DrawPhaseManager(
             drawStepStartDrawCountByPlayer = stateIn.drawStepStartDrawCountByPlayer + (activePlayer to drawnSoFar)
         )
 
-        // CR 103.8a: in a two-player game the player who plays first skips the draw step
-        // of their first turn. CR 103.8c: in all other multiplayer games, no player skips
-        // the first draw. So the skip is gated on the table having exactly two players.
-        val isFirstTurnFirstPlayer = state.turnNumber == 1 &&
+        // CR 103.8a / 810.6: the player (or team) that goes first skips the draw step of its first
+        // turn; CR 103.8c — no one skips in a 3+/4-player free-for-all. With non-team games modeled
+        // as singleton teams, "exactly two teams" captures both cases: a 2-player game and a 2-team
+        // Two-Headed Giant game skip the starting side's first draw, while a 3/4-player FFA does not.
+        val isFirstTurnFirstTeam = state.turnNumber == 1 &&
             activePlayer == state.turnOrder.first() &&
-            state.turnOrder.size == 2
-        if (isFirstTurnFirstPlayer) {
+            state.teams.size == 2
+        if (isFirstTurnFirstTeam) {
             return ExecutionResult.success(
                 state.withPriority(activePlayer),
                 listOf(StepChangedEvent(Step.DRAW))
             )
         }
 
-        // Skip the draw if a "skip your next draw step" marker is present (e.g., Elfhame
-        // Sanctuary). Consume the marker so it only skips one draw step.
-        if (state.getEntity(activePlayer)?.has<SkipDrawStepComponent>() == true) {
-            val consumed = state.updateEntity(activePlayer) { it.without<SkipDrawStepComponent>() }
+        // CR 805.4b — each player on the active team draws during the team's draw step. Draw the
+        // teammates first (a team draws in any order it likes, 805.6a), then the active player last
+        // so its prompt-on-draw pause stays the final action of the step. Deck-out marks the loss in
+        // the returned state, so accumulating each draw's state/events is enough. (Prompt-on-draw for
+        // a teammate's own draw is a rare deferred nuance — teammate draws skip that prompt.) In a
+        // non-team game there are no teammates and this loop is a no-op.
+        var s = state
+        val teammateEvents = mutableListOf<GameEvent>()
+        for (teammate in state.teamActivePlayers(activePlayer)) {
+            if (teammate == activePlayer) continue
+            if (s.getEntity(teammate)?.has<SkipDrawStepComponent>() == true) {
+                s = s.updateEntity(teammate) { it.without<SkipDrawStepComponent>() }
+                continue
+            }
+            val teammateDrawCount = dispatcher.applyDrawAmountModifier(s, teammate, 1)
+            if (teammateDrawCount <= 0) continue
+            val r = drawCards(s, teammate, teammateDrawCount)
+            if (r.isPaused) {
+                return ExecutionResult.paused(r.newState, r.pendingDecision!!, teammateEvents + r.events)
+            }
+            s = r.newState
+            teammateEvents.addAll(r.events)
+        }
+
+        // Skip the active player's draw if a "skip your next draw step" marker is present (e.g.,
+        // Elfhame Sanctuary). Consume the marker so it only skips one draw step.
+        if (s.getEntity(activePlayer)?.has<SkipDrawStepComponent>() == true) {
+            val consumed = s.updateEntity(activePlayer) { it.without<SkipDrawStepComponent>() }
             return ExecutionResult.success(
                 consumed.withPriority(activePlayer),
-                listOf(StepChangedEvent(Step.DRAW))
+                teammateEvents + StepChangedEvent(Step.DRAW)
             )
         }
 
         // Apply ModifyDrawAmount replacements once at the draw-step's announcement
         // site (CR 121.2a) — e.g., Quantum Riddler's "draw that many cards plus one
         // instead" turns this step's draw of 1 into 2 while its restriction holds.
-        val drawCount = dispatcher.applyDrawAmountModifier(state, activePlayer, 1)
+        val drawCount = dispatcher.applyDrawAmountModifier(s, activePlayer, 1)
         if (drawCount <= 0) {
             return ExecutionResult.success(
-                state.withPriority(activePlayer),
-                listOf(StepChangedEvent(Step.DRAW))
+                s.withPriority(activePlayer),
+                teammateEvents + StepChangedEvent(Step.DRAW)
             )
         }
 
         // Ask "prompt on draw" abilities (e.g., Words of Wind) once up-front.
         // The draw loop runs with skipPromptOnDraw=true to avoid asking again.
-        val promptResult = checkPromptOnDraw(state, activePlayer, drawCount, isDrawStep = true)
+        val promptResult = checkPromptOnDraw(s, activePlayer, drawCount, isDrawStep = true)
         if (promptResult != null) {
-            return promptResult
+            return if (teammateEvents.isEmpty()) promptResult
+            else ExecutionResult.paused(promptResult.newState, promptResult.pendingDecision!!, teammateEvents + promptResult.events)
         }
 
-        val drawResult = drawCards(state, activePlayer, drawCount)
+        val drawResult = drawCards(s, activePlayer, drawCount)
         if (!drawResult.isSuccess) {
             return drawResult
         }
 
         val newState = drawResult.newState.withPriority(activePlayer)
-        return ExecutionResult.success(newState, drawResult.events + StepChangedEvent(Step.DRAW))
+        return ExecutionResult.success(newState, teammateEvents + drawResult.events + StepChangedEvent(Step.DRAW))
     }
 
     /**

@@ -55,7 +55,8 @@ class PlayLandHandler(
     override val actionType: KClass<PlayLand> = PlayLand::class
 
     override fun validate(state: GameState, action: PlayLand): String? {
-        if (state.activePlayerId != action.playerId) {
+        if (!state.isActiveTurnFor(action.playerId)) {
+            // CR 805.4c — each player on the active team may play a land on the team's turn.
             return "You can only play lands on your turn"
         }
         if (!state.step.isMainPhase) {

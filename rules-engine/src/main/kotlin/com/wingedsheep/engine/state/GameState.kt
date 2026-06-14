@@ -524,6 +524,49 @@ data class GameState(
         }
 
     // =========================================================================
+    // Shared team turns (Two-Headed Giant — CR 805 / 810.2)
+    //
+    // A team takes ONE turn together (CR 805.4): both members untap and draw (805.4b), each may
+    // play a land (805.4c), and either may take sorcery-speed actions while it is the team's turn
+    // (805.5a — a player may act when their team has priority). The engine keeps a single
+    // [activePlayerId] (CR 805.9 — "active player" is one specific player), but turn *ownership* —
+    // "is it this player's turn?" — is a team question answered by [isActiveTurnFor]. Priority still
+    // cycles per player, so each teammate gets their own window and the phase advances only once
+    // everyone has passed; that already yields the shared-turn outcome.
+    // =========================================================================
+
+    /**
+     * True when it is [playerId]'s team's turn — i.e. [playerId] is on the active team. The
+     * team-aware replacement for `activePlayerId == playerId` at every turn-ownership / sorcery-speed
+     * gate. In a non-team game the active team is just the active player, so this reduces to equality.
+     */
+    fun isActiveTurnFor(playerId: EntityId): Boolean {
+        val active = activePlayerId ?: return false
+        return teamOf(active).contains(playerId)
+    }
+
+    /**
+     * The representative (first still-in member) of the team that takes its turn after [afterPlayer]'s
+     * team — the team-level analogue of [getNextPlayer]. Fully-eliminated teams are skipped. For a
+     * player with no team this is identical to [getNextPlayer]. Used by turn advancement so the turn
+     * passes to the next *team*, not to a teammate who shares the same turn (CR 805.4).
+     */
+    fun getNextTeam(afterPlayer: EntityId): EntityId {
+        val teamsList = teams
+        if (teamsList.isEmpty()) return afterPlayer
+        val curIdx = teamsList.indexOfFirst { afterPlayer in it }
+        val n = teamsList.size
+        for (step in 1..n) {
+            val team = teamsList[((curIdx + step) % n + n) % n]
+            val rep = team.firstOrNull {
+                getEntity(it)?.has<com.wingedsheep.engine.state.components.player.PlayerLostComponent>() != true
+            }
+            if (rep != null) return rep
+        }
+        return afterPlayer
+    }
+
+    // =========================================================================
     // Shared life total (Two-Headed Giant — CR 810.4 / 810.9)
     //
     // A team has ONE life total (CR 810.4); "if a cost or effect needs an individual player's life

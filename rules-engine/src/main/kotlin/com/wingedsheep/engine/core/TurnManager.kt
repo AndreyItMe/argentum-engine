@@ -126,13 +126,16 @@ class TurnManager(
             }
         }
 
-        // Increment the active player's turn-taken counter. CR 500.11 / 614.10a
-        // make a skipped turn "proceed past as though it didn't exist", so a
-        // skipped turn should not count — the increment lives here, downstream of
-        // the SkipNextTurn consumption path that decides whether a turn runs at all.
-        newState = newState.updateEntity(playerId) { container ->
-            val prev = container.get<PlayerTurnsTakenComponent>() ?: PlayerTurnsTakenComponent()
-            container.with(prev.increment())
+        // Increment the turn-taken counter for every player on the active team. CR 500.11 / 614.10a
+        // make a skipped turn "proceed past as though it didn't exist", so a skipped turn should not
+        // count — the increment lives here, downstream of the SkipNextTurn consumption path. In a
+        // shared team turn (CR 805.4) both teammates are taking the turn, so both counters advance;
+        // in a non-team game this is just the active player.
+        for (member in newState.teamActivePlayers(playerId)) {
+            newState = newState.updateEntity(member) { container ->
+                val prev = container.get<PlayerTurnsTakenComponent>() ?: PlayerTurnsTakenComponent()
+                container.with(prev.increment())
+            }
         }
 
         // Activate MustAttackPlayerComponent if present (Taunt effect)
@@ -447,19 +450,22 @@ class TurnManager(
         val currentPlayer = state.activePlayerId
             ?: return ExecutionResult.error(state, "No active player")
 
-        // Get next player
-        var nextPlayer = state.getNextPlayer(currentPlayer)
-
         // Clean up end-of-turn effects
         var cleanedState = cleanupPhaseManager.cleanupEndOfTurn(state)
 
-        // Check if the next player should skip their turn (e.g., Last Chance effect)
-        val nextPlayerEntity = cleanedState.getEntity(nextPlayer)
-        if (nextPlayerEntity?.has<SkipNextTurnComponent>() == true) {
-            cleanedState = cleanedState.updateEntity(nextPlayer) { container ->
-                container.without<SkipNextTurnComponent>()
+        // The turn passes to the next *team* (CR 805.4) — both teammates share one turn, so we
+        // advance past the whole active team, not to a teammate. In a non-team game getNextTeam is
+        // identical to getNextPlayer.
+        var nextPlayer = cleanedState.getNextTeam(currentPlayer)
+
+        // Team-wide skip (CR 805.8): if any member of the next team has a skip marker, the whole
+        // team skips its turn. Clear the marker from every member and move on to the team after.
+        val nextTeam = cleanedState.teamOf(nextPlayer)
+        if (nextTeam.any { cleanedState.getEntity(it)?.has<SkipNextTurnComponent>() == true }) {
+            for (member in nextTeam) {
+                cleanedState = cleanedState.updateEntity(member) { it.without<SkipNextTurnComponent>() }
             }
-            nextPlayer = cleanedState.getNextPlayer(nextPlayer)
+            nextPlayer = cleanedState.getNextTeam(nextPlayer)
         }
 
         // Start the new turn (sets step to UNTAP with no priority)
@@ -521,7 +527,7 @@ class TurnManager(
     fun canPlaySorcerySpeed(state: GameState, playerId: EntityId): Boolean {
         return state.step.allowsSorcerySpeed &&
             state.priorityPlayerId == playerId &&
-            state.activePlayerId == playerId &&
+            state.isActiveTurnFor(playerId) && // CR 805.5a — either teammate may act on the team's turn
             state.stack.isEmpty()
     }
 

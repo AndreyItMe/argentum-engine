@@ -163,7 +163,7 @@ class CastZoneResolver(
         if (!cardComponent.typeLine.isPermanent) return false
 
         // Only works on controller's turn
-        if (state.activePlayerId != playerId) return false
+        if (!state.isActiveTurnFor(playerId)) return false
 
         // Find a Muldrotha-like permanent with available permission for any of this card's types
         val permanentTypes = cardComponent.typeLine.cardTypes.filter { it.isPermanent }
@@ -194,7 +194,7 @@ class CastZoneResolver(
             val permDef = cardRegistry.getCard(permCard.cardDefinitionId) ?: continue
             for (sa in permDef.script.staticAbilities) {
                 if (sa !is MayCastFromGraveyard) continue
-                if (sa.duringYourTurnOnly && state.activePlayerId != playerId) continue
+                if (sa.duringYourTurnOnly && !state.isActiveTurnFor(playerId)) continue
                 if (predicateEvaluator.matches(
                         state, state.projectedState, cardId, sa.filter,
                         PredicateContext(controllerId = playerId)
@@ -475,7 +475,7 @@ class CastZoneResolver(
                 .filterIsInstance<GrantMayCastFromLinkedExile>()
                 .firstOrNull() ?: continue
 
-            if (grantAbility.duringYourTurnOnly && state.activePlayerId != playerId) continue
+            if (grantAbility.duringYourTurnOnly && !state.isActiveTurnFor(playerId)) continue
 
             if (grantAbility.ownedByYou && cardComponent.ownerId != playerId) continue
 

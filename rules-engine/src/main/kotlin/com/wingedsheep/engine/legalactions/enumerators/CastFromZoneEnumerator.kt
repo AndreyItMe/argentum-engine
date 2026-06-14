@@ -592,7 +592,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 .firstOrNull() ?: continue
 
             // Timing restriction — e.g. Dawnhand Dissident's "during your turn"
-            if (grantAbility.duringYourTurnOnly && state.activePlayerId != playerId) continue
+            if (grantAbility.duringYourTurnOnly && !state.isActiveTurnFor(playerId)) continue
 
             // Once-per-turn restriction (Maralen, Fae Ascendant) — skip the granter entirely
             // once it's already been used this turn.
@@ -940,7 +940,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
         val playerId = context.playerId
 
         // Only the active player can use Muldrotha-style permissions
-        if (state.activePlayerId != playerId) return
+        if (!state.isActiveTurnFor(playerId)) return
 
         val graveyardCards = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
         for (cardId in graveyardCards) {
@@ -1471,7 +1471,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
         if (!playerEntity.has<MayCastCreaturesFromGraveyardWithForageComponent>()) return
 
         // Only the active player can cast creature spells (sorcery timing)
-        if (state.activePlayerId != playerId) return
+        if (!state.isActiveTurnFor(playerId)) return
 
         val graveyardCards = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
 
@@ -1608,7 +1608,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
 
         // Check timing restrictions
         for (permission in permissions) {
-            if (permission.duringYourTurnOnly && state.activePlayerId != playerId) continue
+            if (permission.duringYourTurnOnly && !state.isActiveTurnFor(playerId)) continue
             val lifeCost = permission.lifeCost
             val lifeSuffix = if (lifeCost > 0) " (pay $lifeCost life)" else ""
 

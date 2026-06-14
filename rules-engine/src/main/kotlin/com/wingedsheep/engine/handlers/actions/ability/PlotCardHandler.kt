@@ -59,7 +59,7 @@ class PlotCardHandler(
             return "You don't have priority"
         }
         if (!state.step.isMainPhase || state.stack.isNotEmpty() ||
-            state.activePlayerId != action.playerId) {
+            !state.isActiveTurnFor(action.playerId)) {
             return "Plot can only be activated during your main phase while the stack is empty"
         }
 

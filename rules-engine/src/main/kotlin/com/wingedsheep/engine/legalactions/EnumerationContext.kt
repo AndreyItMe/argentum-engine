@@ -69,9 +69,10 @@ class EnumerationContext(
         manaSolver.findAvailableManaSources(state, playerId)
     }
 
-    // Timing flags
+    // Timing flags. CR 805.5a — on a shared team turn either teammate may take sorcery-speed
+    // actions, so this is gated on the active *team*, not the single active player.
     val canPlaySorcerySpeed: Boolean by lazy {
-        state.step.isMainPhase && state.stack.isEmpty() && state.activePlayerId == playerId
+        state.step.isMainPhase && state.stack.isEmpty() && state.isActiveTurnFor(playerId)
     }
 
     // Land drop availability (accounts for static ability bonuses like GrantAdditionalLandDrop)

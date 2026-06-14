@@ -170,13 +170,16 @@ class ConditionEvaluator(
             is Compare -> evaluateCompareCtx(state, condition, ctx)
             is Exists -> evaluateExistsCtx(state, condition, ctx)
 
-            is IsYourTurn -> ctx.controllerId?.let { state.activePlayerId == it } ?: false
-            is IsNotYourTurn -> ctx.controllerId?.let { state.activePlayerId != it } ?: false
+            // CR 805 — "your turn" is the active team's turn for every member of that team.
+            is IsYourTurn -> ctx.controllerId?.let { state.isActiveTurnFor(it) } ?: false
+            is IsNotYourTurn -> ctx.controllerId?.let { !state.isActiveTurnFor(it) } ?: false
 
             // Board-derived (current step + active player), so it works identically at resolution
             // and under projection — used as a ConditionalStaticAbility gate (Zurgo's end step).
             is IsInStep -> {
-                if (condition.yoursOnly && state.activePlayerId != ctx.controllerId) false
+                val cid = ctx.controllerId
+                val notYourTurn = cid == null || !state.isActiveTurnFor(cid)
+                if (condition.yoursOnly && notYourTurn) false
                 else state.step in condition.steps
             }
 
@@ -811,7 +814,7 @@ class ConditionEvaluator(
     }
 
     private fun evaluateIsInPhase(state: GameState, condition: IsInPhase, context: EffectContext): Boolean {
-        if (condition.yoursOnly && state.activePlayerId != context.controllerId) return false
+        if (condition.yoursOnly && !state.isActiveTurnFor(context.controllerId)) return false
         return state.phase in condition.phases
     }
 

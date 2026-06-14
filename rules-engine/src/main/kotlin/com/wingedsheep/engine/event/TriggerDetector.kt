@@ -360,7 +360,7 @@ class TriggerDetector(
         for (entry in index.getEntitiesForCategory(TriggerCategory.STEP)) {
             for (ability in entry.abilities) {
                 if (ability.activeZone != Zone.BATTLEFIELD) continue
-                if (matcher.matchesStepTrigger(ability.trigger, step, entry.controllerId, activePlayerId)) {
+                if (matcher.matchesStepTrigger(ability.trigger, step, entry.controllerId, state)) {
                     triggers.add(
                         PendingTrigger(
                             ability = ability,
@@ -384,7 +384,7 @@ class TriggerDetector(
                     if (ability.activeZone != Zone.BATTLEFIELD) continue
                     val trigger = ability.trigger as? EventPattern.StepEvent ?: continue
                     if (step != trigger.step) continue
-                    if (matcher.matchesPlayerForStep(trigger.player, enchantedController, activePlayerId)) {
+                    if (matcher.matchesPlayerForStep(trigger.player, enchantedController, state)) {
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
@@ -413,7 +413,7 @@ class TriggerDetector(
                     val ownerId = cardComponent.ownerId
                         ?: container.get<OwnerComponent>()?.playerId
                         ?: continue
-                    if (matcher.matchesStepTrigger(ability.trigger, step, ownerId, activePlayerId)) {
+                    if (matcher.matchesStepTrigger(ability.trigger, step, ownerId, state)) {
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
@@ -441,7 +441,7 @@ class TriggerDetector(
                     val ownerId = cardComponent.ownerId
                         ?: container.get<OwnerComponent>()?.playerId
                         ?: continue
-                    if (matcher.matchesStepTrigger(ability.trigger, step, ownerId, activePlayerId)) {
+                    if (matcher.matchesStepTrigger(ability.trigger, step, ownerId, state)) {
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
@@ -460,7 +460,7 @@ class TriggerDetector(
         // (e.g., Dimensional Breach creates a permanent global upkeep trigger)
         for (global in state.globalGrantedTriggeredAbilities) {
             val ability = global.ability
-            if (matcher.matchesStepTrigger(ability.trigger, step, global.controllerId, activePlayerId)) {
+            if (matcher.matchesStepTrigger(ability.trigger, step, global.controllerId, state)) {
                 triggers.add(
                     PendingTrigger(
                         ability = ability,
