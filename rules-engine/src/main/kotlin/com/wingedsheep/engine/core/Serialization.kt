@@ -304,6 +304,7 @@ val engineSerializersModule = SerializersModule {
         subclass(ControllerComponent::class)
         subclass(PlayerComponent::class)
         subclass(LifeTotalComponent::class)
+        subclass(TeamComponent::class)
         subclass(TokenComponent::class)
         subclass(FaceDownComponent::class)
         subclass(RevealedToComponent::class)
