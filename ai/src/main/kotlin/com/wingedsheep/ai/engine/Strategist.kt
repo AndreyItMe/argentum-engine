@@ -318,9 +318,20 @@ class Strategist(
         }
         "STACK" -> ChosenTarget.Spell(entityId)
         else -> {
+            // `targetZone` is only populated for multi-requirement spells; a single-target
+            // spell (Reprieve, a counterspell, …) surfaces `validTargets` with `targetZone = null`.
+            // So fall back to authoritative game state: a target that is a spell on the stack must
+            // become a `ChosenTarget.Spell`, not a `Permanent`. Wrapping it as a `Permanent` here
+            // made the engine reject the cast ("Target must be a spell on the stack"), and the AI
+            // re-picked the same failing action forever.
+            val isSpell = state.isSpellOnStack(entityId)
             val isPlayer = state.getEntity(entityId)
                 ?.get<com.wingedsheep.engine.state.components.identity.PlayerComponent>() != null
-            if (isPlayer) ChosenTarget.Player(entityId) else ChosenTarget.Permanent(entityId)
+            when {
+                isSpell -> ChosenTarget.Spell(entityId)
+                isPlayer -> ChosenTarget.Player(entityId)
+                else -> ChosenTarget.Permanent(entityId)
+            }
         }
     }
 
