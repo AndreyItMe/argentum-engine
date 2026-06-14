@@ -469,6 +469,14 @@ private fun EmitCtx.youControlAtLeastConditionDsl(condNode: JsonElement?): Strin
  * "you control a [filter]" condition the shared [youControlConditionDsl] renders exactly produces a
  * line; any other flash condition declines (null -> SCAFFOLD) so the emitter never grants flash on a
  * condition it can't reproduce.
+ *
+ * Note: the OTJ "...as long as you've committed a crime this turn" flash condition
+ * ([youCommittedCrimeConditionDsl]) is renderable in isolation, but every OTJ card that carries it
+ * (e.g. Take for a Ride) also has a spell body the mtgish IR renders lossily — Take for a Ride's
+ * "It gains haste until end of turn" is absent from the IR, so a whole-card AUTO render would silently
+ * drop it. Rendering the flash gate while the body stays lossy would ship a confidently-wrong card, so
+ * we keep declining (-> SCAFFOLD) here rather than emit a partial card. Revisit if/when the IR carries
+ * the full spell body.
  */
 internal fun EmitCtx.conditionalFlashLines(rule: JsonObject): List<Stmt>? {
     val cond = youControlConditionDsl(rule["args"]) ?: run { reasons.add("FlashForCasters"); return null }

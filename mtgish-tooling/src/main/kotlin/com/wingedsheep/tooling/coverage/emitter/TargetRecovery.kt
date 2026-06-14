@@ -896,8 +896,13 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
             playersKind == "Opponent" -> node.dot("opponentControls")
             playersKind == "Other" && playerRef == "You" -> node.dot("opponentControls")
             playersKind == "SinglePlayer" && playerRef == "You" -> node.dot("youControl")
-            // Any other player scope (Ref_TargetPlayer, Trigger_ThatPlayer, YourTeam, …) has no
+            // "...target player controls" (Rustler Rampage / Requisition Raid): the group is keyed to
+            // a player target the spell/mode declares. In every shape this surface renders (a single
+            // chosen player), that target lives in the first slot, so bind the controller predicate to
+            // ContextTarget(0). Any other player scope (Trigger_ThatPlayer, YourTeam, …) has no
             // rendering here; widening to every permanent would be confidently wrong, so decline.
+            playersKind == "SinglePlayer" && playerRef == "Ref_TargetPlayer" ->
+                node.dot("targetPlayerControls", arg("EffectTarget.ContextTarget(0)"))
             else -> return null
         }
     }
