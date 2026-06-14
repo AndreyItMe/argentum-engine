@@ -271,6 +271,20 @@ internal fun EmitCtx.renderEachPlayer(node: JsonObject): Dsl? {
         val amt = findInteger(inner["args"]) as? Int ?: return null
         return call("Effects.LoseLife", arg("$amt"), arg("EffectTarget.PlayerRef(Player.Each)"))
     }
+    // "each opponent mills N cards" (Deepmuck Desperado). Mill is a pipeline composite, so it can't be
+    // scoped via a PlayerRef target the way LoseLife/Sacrifice are — it is fanned over every opponent
+    // with ForEachPlayerEffect wrapping the standard mill pipeline. Only a fixed Integer count renders;
+    // a derived/X amount scaffolds rather than guessing.
+    if (jsonContains(node, "_Players", "Opponent") && jsonContains(node, "_Action", "MillNumberCards")) {
+        val inner = node["args"].asArr?.filterIsInstance<JsonObject>()
+            ?.firstOrNull { it.strField("_Action") == "MillNumberCards" } ?: return null
+        val amt = findInteger(inner["args"]) as? Int ?: return null
+        return call(
+            "ForEachPlayerEffect",
+            arg("players", "Player.EachOpponent"),
+            arg("effects", "Patterns.Library.mill($amt).effects"),
+        )
+    }
     if (jsonContains(node, "_Action", "DrawNumberCards") || jsonContains(node, "_GameNumber", "ValueX"))
         return call("Patterns.Hand.eachPlayerDrawsX", arg("includeController", "true"), arg("includeOpponents", "true"))
     return null
