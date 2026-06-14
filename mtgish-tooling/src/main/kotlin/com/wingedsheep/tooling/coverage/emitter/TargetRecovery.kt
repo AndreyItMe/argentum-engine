@@ -881,6 +881,13 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     if ("SaddledPermanentThisTurn" in blob || "CrewedPermanentThisTurn" in blob) {
         node = node.dot("crewedOrSaddledSourceThisTurn")
     }
+    // "...that entered (the battlefield) this turn" (EnteredTheBattlefieldThisTurn) — Raucous
+    // Entertainer's "each creature you control that entered this turn". Backed by the engine's
+    // EnteredThisTurnComponent; composes via .enteredThisTurn(). Dropping it would widen the group to
+    // every creature you control, so it's a real predicate here.
+    if ("EnteredTheBattlefieldThisTurn" in blob) {
+        node = node.dot("enteredThisTurn")
+    }
     // The `.youControl()`/`.opponentControls()` suffix is a *controller* predicate — only a
     // `ControlledByAPlayer` clause carries it. Inspect that clause's player scope directly rather than
     // scanning the whole blob, so a bare `"You"` elsewhere (e.g. a graveyard count's

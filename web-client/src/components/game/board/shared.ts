@@ -641,7 +641,7 @@ export function getCounterCount(card: ClientCard, type: CounterType): number {
 }
 
 /**
- * LTR passive counters (hope/verse/influence/burden) — pure marker counters whose only
+ * Passive storage counters (hope/verse/influence/burden/loot) — pure marker counters whose only
  * UI is a colored badge with a count. They have no inherent rule and never co-occur on
  * one permanent. Rendered data-driven in GameCard; per-type palette lives in
  * styles.passiveCounterBadgeStyle and icon in counterManaClass.
@@ -651,6 +651,7 @@ export const PASSIVE_COUNTER_TYPES: readonly CounterType[] = [
   CounterType.VERSE,
   CounterType.INFLUENCE,
   CounterType.BURDEN,
+  CounterType.LOOT,
 ]
 
 /**

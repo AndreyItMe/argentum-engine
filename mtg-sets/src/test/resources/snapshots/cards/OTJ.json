@@ -440,6 +440,77 @@
     ]
 }
 
+// Bandit's Haul
+{
+    "name": "Bandit's Haul",
+    "manaCost": "{3}",
+    "typeLine": "Artifact",
+    "oracleText": "Whenever you commit a crime, put a loot counter on this artifact. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\n{T}: Add one mana of any color.\n{2}, {T}, Remove two loot counters from this artifact: Draw a card.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "CommitCrimeEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "loot",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "oncePerTurn": true,
+                "descriptionOverride": "Whenever you commit a crime, put a loot counter on this artifact. This ability triggers only once each turn."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": "AddManaOfChoice",
+                "timing": "ManaAbility",
+                "isManaAbility": true,
+                "descriptionOverride": "{T}: Add one mana of any color."
+            },
+            {
+                "id": "ability_3",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap",
+                        {
+                            "type": "CostRemoveCounterFromSelf",
+                            "counterType": "loot",
+                            "count": 2
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "{2}, {T}, Remove two loot counters from this artifact: Draw a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "240",
+        "rarity": "UNCOMMON",
+        "artist": "Monztre",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/8/68b2e74b-933b-4285-963b-dda3a986a914.jpg?1712356248"
+    },
+    "colorIdentityOverride": []
+}
+
 // Beastbond Outcaster
 {
     "name": "Beastbond Outcaster",
@@ -1660,6 +1731,104 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Caustic Bronco
+{
+    "name": "Caustic Bronco",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Snake Horse Mount",
+    "oracleText": "Whenever this creature attacks, reveal the top card of your library and put it into your hand. You lose life equal to that card's mana value if this creature isn't saddled. Otherwise, each opponent loses that much life.\nSaddle 3 (Tap any number of other creatures you control with total power 3 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "SADDLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "SADDLE",
+            "n": 3
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeAs": "revealed"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "revealed",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            },
+                            "revealed": true
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "EntityMatches",
+                                    "entity": "Self",
+                                    "filter": {
+                                        "statePredicates": [
+                                            "IsSaddled"
+                                        ]
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "LoseLife",
+                                "amount": {
+                                    "type": "StoredCardManaValue",
+                                    "collectionName": "revealed"
+                                },
+                                "target": {
+                                    "type": "PlayerRef",
+                                    "player": "EachOpponent"
+                                }
+                            },
+                            "otherwise": {
+                                "type": "LoseLife",
+                                "amount": {
+                                    "type": "StoredCardManaValue",
+                                    "collectionName": "revealed"
+                                },
+                                "target": "Controller"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "82",
+        "rarity": "RARE",
+        "artist": "Brent Hollowell",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/9/e9a268ba-c442-4fe4-90b4-2810c8474f4e.jpg?1712355566"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
@@ -6744,6 +6913,92 @@
     ]
 }
 
+// Ornery Tumblewagg
+{
+    "name": "Ornery Tumblewagg",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Brushwagg Mount",
+    "oracleText": "At the beginning of combat on your turn, put a +1/+1 counter on target creature.\nWhenever this creature attacks while saddled, double the number of +1/+1 counters on target creature.\nSaddle 2 (Tap any number of other creatures you control with total power 2 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "SADDLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "SADDLE",
+            "n": 2
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "target creature"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "DoubleCounters",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "target creature"
+                },
+                "triggerCondition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "IsSaddled"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "171",
+        "rarity": "RARE",
+        "artist": "Izzy",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/0/0020c31b-002a-4121-bc61-2c2c16e9afc8.jpg?1712355953"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Outcaster Greenblade
 {
     "name": "Outcaster Greenblade",
@@ -7873,6 +8128,72 @@
         "rarity": "UNCOMMON",
         "artist": "Adrián Rodríguez Pérez",
         "imageUri": "https://cards.scryfall.io/normal/front/1/9/19d1e75f-0fee-4e07-9420-df771b696e85.jpg?1712401596"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Raucous Entertainer
+{
+    "name": "Raucous Entertainer",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Plant Bard",
+    "oracleText": "{1}, {T}: Put a +1/+1 counter on each creature you control that entered this turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "statePredicates": [
+                                    "EnteredThisTurn"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        }
+                    },
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": "Self"
+                    }
+                },
+                "descriptionOverride": "{1}, {T}: Put a +1/+1 counter on each creature you control that entered this turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "177",
+        "rarity": "UNCOMMON",
+        "artist": "Forrest Imel",
+        "flavorText": "It's not hard to know the right song for the occasion when most occasions are saloon brawls.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/d/8dc3cbfe-410f-40e3-8021-647a2efb50bf.jpg?1712355978"
     },
     "colorIdentityOverride": [
         "GREEN"

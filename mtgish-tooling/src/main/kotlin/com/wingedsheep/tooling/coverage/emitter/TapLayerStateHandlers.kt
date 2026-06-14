@@ -108,6 +108,17 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         )
     }
 
+    on("DoubleCountersOfTypeOnPermanent") { _, args, tvar ->
+        // "Double the number of +1/+1 counters on <permanent>." (Ornery Tumblewagg's saddled attack.)
+        // IR args are [<CounterType>, <permanent ref>]. Reads the current count and adds that many more
+        // via Effects.DoubleCounters. Only the named ±1/±1 / keyword counters render (same restriction as
+        // the put-a-counter handlers); the subject is self or the bound target.
+        val arr = args.asArr ?: return@on null
+        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
+        val tgt = refTarget(arr.getOrNull(1), tvar) ?: return@on null
+        call("Effects.DoubleCounters", arg(Lit(counter)), arg(Lit(tgt)))
+    }
+
     on("PutNumberCountersOfTypeOnPermanent") { _, args, tvar ->
         // "Put N +1/+1 (or -1/-1) counters on <permanent>." — the plural form of
         // PutACounterOfTypeOnPermanent. IR args are [<N>, <counterType>, <permanent ref>]. Only the
@@ -234,6 +245,9 @@ internal fun counterTypeDsl(counterNode: JsonElement?): String? {
         // become untapped, instead remove a stun counter from it"), engine-wired via `untapOrConsumeStun`.
         // Adding one is a plain AddCounters(Counters.STUN, …) (Rapier Wit, Fractal Mascot).
         "StunCounter" -> "Counters.STUN"
+        // Loot counter (OTJ — Bandit's Haul): a passive storage counter with no inherent rule; the
+        // card's own abilities accumulate it and spend it. Adding one is a plain AddCounters.
+        "LootCounter" -> "Counters.LOOT"
         else -> null
     }
 }

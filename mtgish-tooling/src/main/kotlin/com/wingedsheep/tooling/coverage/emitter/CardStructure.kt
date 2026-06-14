@@ -1442,6 +1442,14 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
         if (jsonContains(trig, "_Players", "AnyPlayer")) return "Triggers.EachEndStep"
     }
 
+    // "At the beginning of combat on your turn" (You) / "on each turn" (any player) — the begin-of-
+    // combat step trigger (Ornery Tumblewagg). Scoped exactly like the upkeep/end-step blocks; an
+    // opponent / host-relative scope has no matching Triggers.* constant, so it declines -> SCAFFOLD.
+    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfCombatDuringAPlayersTurn")) {
+        if (jsonContains(trig, "_Player", "You")) return "Triggers.BeginCombat"
+        if (jsonContains(trig, "_Players", "AnyPlayer")) return "Triggers.EachCombat"
+    }
+
     // "Whenever a player cycles a card" (any player) — Fleeting Aven, Invigorating Boon.
     if (jsonContains(trig, "_Trigger", "WhenAPlayerCyclesACard") && jsonContains(trig, "_Players", "AnyPlayer"))
         return "Triggers.AnyPlayerCycles"
@@ -2063,6 +2071,17 @@ internal fun EmitCtx.abilityCostDsl(node: JsonElement?): String? {
             // creature-subtype distinguishes it; bail if there's no recognisable creature-type filter.
             val ctype = creatureTypeIn(a.getOrNull(1)) ?: return null
             "Costs.TapPermanents($n, GameObjectFilter.Creature.withSubtype(\"$ctype\"))"
+        }
+        // "Remove N <type> counters from this permanent" as an activation cost (Bandit's Haul). IR args
+        // are [<N Integer>, <CounterType>, <Permanent ThisPermanent>]. Only the self-subject and a
+        // nameable counter kind render via Costs.RemoveCounterFromSelf; any other subject or counter
+        // declines (-> SCAFFOLD) rather than guess.
+        "RemoveNumberCountersOfTypeFromPermanent" -> {
+            val a = obj["args"].asArr ?: return null
+            val n = findInteger(a.getOrNull(0)) as? Int ?: return null
+            if (a.getOrNull(2).strField("_Permanent") != "ThisPermanent") return null
+            val counter = counterTypeDsl(a.getOrNull(1)) ?: return null
+            "Costs.RemoveCounterFromSelf($counter, $n)"
         }
         else -> null
     }
