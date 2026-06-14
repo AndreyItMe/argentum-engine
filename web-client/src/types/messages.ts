@@ -874,6 +874,13 @@ export interface AdditionalCostInfo {
   readonly sacrificeCount?: number
   readonly validTapTargets?: readonly EntityId[]
   readonly tapCount?: number
+  /**
+   * Station-style multi-select shortcut (CR 702.184a). When > 1, this single-creature tap cost
+   * belongs to a no-target, stacking ability that may be activated several times in one gesture:
+   * select 1..tapBatchMaxActivations distinct creatures and one activation per creature is queued
+   * (repeatCount = number selected). 1 / absent means the normal "tap exactly tapCount" behaviour.
+   */
+  readonly tapBatchMaxActivations?: number
   readonly validDiscardTargets?: readonly EntityId[]
   readonly discardCount?: number
   readonly validBounceTargets?: readonly EntityId[]
