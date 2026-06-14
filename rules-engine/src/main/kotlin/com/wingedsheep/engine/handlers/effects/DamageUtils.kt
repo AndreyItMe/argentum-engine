@@ -58,6 +58,20 @@ import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
+ * Outcome of a chosen-source deflection/reflection shield matching an incoming damage instance.
+ * [Prevented] short-circuits damage application with the given result (Deflecting Palm). [Reflected]
+ * fires the linked reaction but lets the damage proceed (Eye for an Eye) — the caller merges
+ * [state]/[events] and keeps applying the damage.
+ */
+sealed interface DeflectOutcome {
+    data class Prevented(val result: EffectResult) : DeflectOutcome
+    data class Reflected(
+        val state: GameState,
+        val events: List<com.wingedsheep.engine.core.GameEvent>
+    ) : DeflectOutcome
+}
+
+/**
  * Utility functions for dealing damage, applying damage prevention/amplification/redirection,
  * tracking damage for triggers, and checking life gain prevention.
  */
@@ -178,11 +192,19 @@ object DamageUtils {
             if (counterResult != null) return counterResult
         }
 
+        // Events from a reflect shield (Eye for an Eye) that fired but let the damage proceed.
+        var reflectEvents: List<EngineGameEvent> = emptyList()
         if (!cantBePrevented) {
-            // Check for deflection shields (Deflecting Palm) — prevent + deal back to source's controller
+            // Check for deflection/reflection shields (Deflecting Palm, Eye for an Eye).
             if (sourceId != null) {
-                val deflectResult = checkDeflectDamageShield(newState, targetId, effectiveAmount, sourceId)
-                if (deflectResult != null) return deflectResult
+                when (val deflect = checkDeflectDamageShield(newState, targetId, effectiveAmount, sourceId)) {
+                    is DeflectOutcome.Prevented -> return deflect.result
+                    is DeflectOutcome.Reflected -> {
+                        newState = deflect.state
+                        reflectEvents = deflect.events
+                    }
+                    null -> {}
+                }
 
                 // Check for "prevent all damage from chosen source" shields (Samite Ministration)
                 val preventFromSourceResult = checkPreventFromSourceShield(newState, targetId, effectiveAmount, sourceId)
@@ -193,9 +215,10 @@ object DamageUtils {
             newState = shieldState
             effectiveAmount = reducedAmount
         }
-        if (effectiveAmount <= 0) return EffectResult.success(newState)
+        if (effectiveAmount <= 0) return EffectResult.success(newState, reflectEvents)
 
         val events = mutableListOf<EngineGameEvent>()
+        events.addAll(reflectEvents)
         // Excess damage (CR 120.4a) is only computed below for the non-wither creature
         // branch — planeswalker (above loyalty), battle (above defense), and wither (damage
         // dealt as -1/-1 counters) paths are not yet modelled and stay at 0 here.
@@ -848,7 +871,7 @@ object DamageUtils {
         targetId: EntityId,
         damageAmount: Int,
         sourceId: EntityId
-    ): EffectResult? {
+    ): DeflectOutcome? {
         val shieldIndex = state.floatingEffects.indexOfFirst { effect ->
             val mod = effect.effect.modification
             mod is SerializableModification.PreventNextDamageFromChosenSourceShield &&
@@ -860,22 +883,26 @@ object DamageUtils {
         val shield = state.floatingEffects[shieldIndex]
         val mod = shield.effect.modification as SerializableModification.PreventNextDamageFromChosenSourceShield
 
-        // Consume the shield (one damage instance prevented) and announce the prevention so the
-        // linked delayed triggered ability fires on the stack.
+        // Consume the shield (one damage instance) and announce it so the linked delayed triggered
+        // ability fires on the stack with the captured amount.
         val updatedEffects = state.floatingEffects.toMutableList()
         updatedEffects.removeAt(shieldIndex)
         val newState = state.copy(floatingEffects = updatedEffects)
         val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name
-        return EffectResult.success(
-            newState,
-            listOf(DamagePreventedEvent(
-                sourceId = sourceId,
-                recipientId = targetId,
-                amount = damageAmount,
-                linkId = mod.linkId,
-                sourceName = sourceName
-            ))
+        val event = DamagePreventedEvent(
+            sourceId = sourceId,
+            recipientId = targetId,
+            amount = damageAmount,
+            linkId = mod.linkId,
+            sourceName = sourceName
         )
+        // preventDamage = true (Deflecting Palm): damage is prevented — short-circuit. preventDamage
+        // = false (Eye for an Eye): the reaction fires but the damage still proceeds.
+        return if (mod.preventDamage) {
+            DeflectOutcome.Prevented(EffectResult.success(newState, listOf(event)))
+        } else {
+            DeflectOutcome.Reflected(newState, listOf(event))
+        }
     }
 
     /**

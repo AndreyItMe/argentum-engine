@@ -816,12 +816,20 @@ internal class CombatDamageManager(
             return newState
         }
 
-        // Deflection shields (Deflecting Palm) — prevent + deal back to source's controller
-        val deflectResult = DamageUtils.checkDeflectDamageShield(newState, targetId, amplifiedAmount, sourceId)
-        if (deflectResult != null) {
-            newState = deflectResult.state
-            events.addAll(deflectResult.events)
-            return newState
+        // Deflection / reflection shields (Deflecting Palm prevents; Eye for an Eye reflects but
+        // lets the damage proceed).
+        when (val deflect = DamageUtils.checkDeflectDamageShield(newState, targetId, amplifiedAmount, sourceId)) {
+            is com.wingedsheep.engine.handlers.effects.DeflectOutcome.Prevented -> {
+                newState = deflect.result.state
+                events.addAll(deflect.result.events)
+                return newState
+            }
+            is com.wingedsheep.engine.handlers.effects.DeflectOutcome.Reflected -> {
+                newState = deflect.state
+                events.addAll(deflect.events)
+                // Damage is not prevented — fall through and keep applying it below.
+            }
+            null -> {}
         }
 
         // "Prevent all damage from chosen source" shields (Samite Ministration)

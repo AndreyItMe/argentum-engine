@@ -429,7 +429,13 @@ sealed interface SerializableModification {
     @Serializable
     data class PreventNextDamageFromChosenSourceShield(
         val damageSourceId: EntityId,
-        val linkId: String
+        val linkId: String,
+        /**
+         * When false, the chosen source's damage is not actually prevented — it is still dealt in
+         * full — but the shield is still consumed and its linked reaction still fires with the
+         * captured amount (Eye for an Eye). Defaults to true (ordinary deflection).
+         */
+        val preventDamage: Boolean = true
     ) : SerializableModification
 
     /**

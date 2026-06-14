@@ -169,14 +169,19 @@ data class DamageDealtEvent(
 ) : GameEvent
 
 /**
- * A "prevent the next damage from a chosen source" shield prevented an instance of damage
- * (Deflecting Palm, New Way Forward). Emitted when such a shield fires; carries [linkId] so the
- * shield's own delayed triggered ability ("When damage is prevented this way, …") fires on the
- * stack and reads [amount] (the prevented amount) and [sourceId] (whose controller to hit).
+ * A "next damage from a chosen source" shield fired on an instance of damage (Deflecting Palm,
+ * New Way Forward, Eye for an Eye). Carries [linkId] so the shield's own delayed triggered ability
+ * ("When damage is prevented this way, …") fires on the stack and reads [amount] (the captured
+ * amount) and [sourceId] (whose controller to hit).
  *
- * @property sourceId The source whose damage was prevented
+ * NOTE: despite the name, this fires even when the damage is NOT prevented — a `preventDamage = false`
+ * shield (Eye for an Eye) still emits this to fire its reaction while letting the damage proceed in
+ * full. It is internal (no client event, no generic trigger matches it — only the linked delayed
+ * trigger keyed by [linkId]), so the misnomer has no observable effect.
+ *
+ * @property sourceId The source whose damage triggered the shield
  * @property recipientId The protected player the shield was attached to
- * @property amount The amount of damage prevented
+ * @property amount The captured damage amount
  * @property linkId The id of the delayed triggered ability linked to this shield
  */
 @Serializable

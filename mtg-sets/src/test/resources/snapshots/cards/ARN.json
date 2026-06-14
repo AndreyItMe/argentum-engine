@@ -1491,6 +1491,38 @@
     ]
 }
 
+// Eye for an Eye
+{
+    "name": "Eye for an Eye",
+    "manaCost": "{W}{W}",
+    "typeLine": "Instant",
+    "oracleText": "The next time a source of your choice would deal damage to you this turn, instead that source deals that much damage to you and Eye for an Eye deals that much damage to that source's controller.",
+    "script": {
+        "spellEffect": {
+            "type": "PreventDamageShield",
+            "sourceFilter": "ChosenSource",
+            "onPrevented": {
+                "type": "DealDamage",
+                "amount": {
+                    "type": "ContextProperty",
+                    "key": "PREVENTED_DAMAGE_AMOUNT"
+                },
+                "target": "ControllerOfTriggeringEntity"
+            },
+            "preventDamage": false
+        }
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "UNCOMMON",
+        "artist": "Mark Poole",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/9/2933ca2a-097b-44f4-ae56-ad524d26fd06.jpg?1562902609"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Fishliver Oil
 {
     "name": "Fishliver Oil",

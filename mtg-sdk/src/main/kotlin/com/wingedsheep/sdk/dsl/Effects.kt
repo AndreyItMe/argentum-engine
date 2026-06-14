@@ -2484,6 +2484,22 @@ object Effects {
         )
 
     /**
+     * Choose a source; the next time it would deal damage to you this turn, the damage is still
+     * dealt to you in full **and** that much damage is dealt to that source's controller (Eye for
+     * an Eye). Same chosen-source reaction machinery as [DeflectNextDamageFromChosenSource], but
+     * with `preventDamage = false` so the original damage is not prevented.
+     */
+    fun ReflectNextDamageFromChosenSourceToController(): Effect =
+        PreventDamageEffect(
+            sourceFilter = PreventionSourceFilter.ChosenSource,
+            preventDamage = false,
+            onPrevented = DealDamageEffect(
+                amount = DynamicAmounts.preventedDamage(),
+                target = EffectTarget.ControllerOfTriggeringEntity
+            )
+        )
+
+    /**
      * Prevent the next N damage that would be dealt to a target this turn by a source of your choice.
      */
     fun PreventNextDamageFromChosenSource(amount: Int, target: EffectTarget): Effect =
