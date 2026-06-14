@@ -2515,6 +2515,20 @@ composite abilities).
   Spacecraft that grant `GrantKeyword(...)` / `GrantCardType("CREATURE", …)`, or threshold-gated activated abilities
   for Planets — each gated on `Conditions.SourceCounterCountAtLeast(Counters.CHARGE, N)` (see §12). No dedicated
   `Keyword.STATION`: the layout/symbols are display-only and the ability is the whole mechanic.
+  - **Multi-select activation shortcut.** Because the station ability has no chosen targets and its
+    effect stacks, the player may station with several creatures in one gesture: the cost-selection
+    UI lets them pick 1..N distinct untapped creatures and the engine queues one activation per
+    creature on the stack (each taps exactly its creature and charges by *that* creature's power).
+    This is a pure UX convenience over activating station repeatedly — the resulting state is
+    identical to doing it one creature at a time — and is wired generically, not just for station:
+    any single-creature (`count == 1`) `TapPermanents`-cost activated ability with no target
+    requirements, a repeat-stacking effect, and no once-/max-per-turn restriction is offered the
+    same batch. It rides the existing `ActivateAbility.repeatCount` batch-activation path; the
+    server advertises the cap as `AdditionalCostInfo.tapBatchMaxActivations` (the count of legal tap
+    targets) and `ActivateAbilityHandler` slices `costPayment.tappedPermanents` one creature per
+    activation. Selecting a single creature is the unchanged single-station behaviour. (Saddle/Mount,
+    by contrast, already taps any number of creatures within one activation — a different shape —
+    so it is unaffected.)
 - `Morph(cost)` — cast face-down for `{3}`, flip for cost.
 - `Unmorph(cost, effect)` — turn-face-up cost + bonus effect.
 - `Equip(cost)` — Equipment attach cost. The `equipAbility(cost, genericCostReduction = …)` DSL

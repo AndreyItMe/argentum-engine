@@ -103,6 +103,13 @@ class ActivateAbilityHandler(
 ) : ActionHandler<ActivateAbility> {
     override val actionType: KClass<ActivateAbility> = ActivateAbility::class
 
+    /** The first [CostAtom.TapPermanents] atom anywhere in this cost, or null if it has none. */
+    private fun AbilityCost.firstTapPermanentsAtomOrNull(): CostAtom.TapPermanents? = when (this) {
+        is AbilityCost.Atom -> atom as? CostAtom.TapPermanents
+        is AbilityCost.Composite -> costs.firstNotNullOfOrNull { it.firstTapPermanentsAtomOrNull() }
+        else -> null
+    }
+
     override fun validate(state: GameState, action: ActivateAbility): String? {
         // `opponentTargetsChosen` is an internal resume marker for "… of an opponent's choice"
         // targets (Cuombajj Witches). Only the engine's resumer sets it, and the resumer re-enters
@@ -204,6 +211,30 @@ class ActivateAbilityHandler(
             ability.targetRequirements.map { it.applyTextReplacement(textReplacement) }
         } else {
             ability.targetRequirements
+        }
+
+        // Station-style multi-select batch (CR 702.184a): repeatCount > 1 over a tap-permanents
+        // cost means "queue one activation per chosen creature". Validate the batch is well-formed
+        // so a malformed action can't, e.g., tap one creature for three activations or reuse the
+        // same creature twice. Per-creature legality (untapped/controlled/filter) is re-checked at
+        // payment time in CostHandler.payTapPermanents for every slice.
+        if (action.repeatCount > 1) {
+            val tapAtom = effectiveCost.firstTapPermanentsAtomOrNull()
+            if (tapAtom != null) {
+                if (tapAtom.count != 1) {
+                    return "Batch activation is only supported for single-creature tap costs"
+                }
+                if (effectiveTargetReqs.isNotEmpty()) {
+                    return "Batch activation is not supported for abilities that require targets"
+                }
+                val tapped = action.costPayment?.tappedPermanents ?: emptyList()
+                if (tapped.size != action.repeatCount) {
+                    return "Batch tap-cost activation needs ${action.repeatCount} creatures, got ${tapped.size}"
+                }
+                if (tapped.toSet().size != tapped.size) {
+                    return "Cannot tap the same creature for more than one activation"
+                }
+            }
         }
 
         // Check timing for planeswalker abilities
@@ -627,12 +658,26 @@ class ActivateAbilityHandler(
             }
         }
 
+        // Station-style multi-select batch (CR 702.184a): when repeatCount > 1 over a single-
+        // creature tap cost, `tappedPermanents` holds one creature per queued activation. Each
+        // activation taps exactly its own creature, so slice the list — this activation gets the
+        // first creature; the repeat loop below consumes the rest one at a time. For every other
+        // ability (no tap cost, or repeatCount == 1) the slice is the whole list, unchanged.
+        val tapBatchAtom = if (action.repeatCount > 1) effectiveCost.firstTapPermanentsAtomOrNull() else null
+        val isTapBatch = tapBatchAtom != null && tapBatchAtom.count == 1 &&
+            (action.costPayment?.tappedPermanents?.size ?: 0) == action.repeatCount
+        val firstTapSlice = if (isTapBatch) {
+            listOf(action.costPayment!!.tappedPermanents.first())
+        } else {
+            action.costPayment?.tappedPermanents ?: emptyList()
+        }
+
         // Build cost payment choices from the action
         val costChoices = CostPaymentChoices(
             sacrificeChoices = action.costPayment?.sacrificedPermanents ?: emptyList(),
             discardChoices = action.costPayment?.discardedCards ?: emptyList(),
             exileChoices = action.costPayment?.exiledCards ?: emptyList(),
-            tapChoices = action.costPayment?.tappedPermanents ?: emptyList(),
+            tapChoices = firstTapSlice,
             bounceChoices = action.costPayment?.bouncedPermanents ?: emptyList(),
             xValue = xValue,
             counterRemovalChoices = action.costPayment?.counterRemovals ?: emptyMap(),
@@ -647,7 +692,7 @@ class ActivateAbilityHandler(
 
         // Mirror sacrifice snapshots for tapped-as-cost permanents — they may leave the
         // battlefield in response while the ability is on the stack.
-        val tappedTargetIds = action.costPayment?.tappedPermanents ?: emptyList()
+        val tappedTargetIds = firstTapSlice
         val tappedSnapshots = capturePermanentSnapshots(tappedTargetIds, currentState.projectedState)
 
         // When using Explicit payment, mana sources were already tapped above —
@@ -1096,7 +1141,7 @@ class ActivateAbilityHandler(
             effect = finalEffect,
             sacrificedPermanents = sacrificedSnapshots,
             xValue = action.xValue,
-            tappedPermanents = action.costPayment?.tappedPermanents ?: emptyList(),
+            tappedPermanents = firstTapSlice,
             tappedPermanentSnapshots = tappedSnapshots,
             descriptionOverride = ability.descriptionOverride
         )
@@ -1139,9 +1184,17 @@ class ActivateAbilityHandler(
                     events.addAll(autoTapResult.events)
                 }
 
+                // Station-style batch: this activation taps the i-th chosen creature (1-indexed
+                // list, so iteration `i` consumes element `i - 1`). Other repeatable abilities
+                // (mana-only) carry no tap choices, so the slice is empty and the cost re-pays from
+                // mana as before. Snapshot the creature before it's tapped (Rule 112.7a) so
+                // DynamicAmount.StationCharge reads its power off this instance's own snapshot.
+                val repeatTapSlice = if (isTapBatch) listOf(action.costPayment!!.tappedPermanents[i - 1]) else emptyList()
+                val repeatTapSnapshots = capturePermanentSnapshots(repeatTapSlice, currentState.projectedState)
+
                 // Pay the cost
                 val repeatCostResult = costHandler.payAbilityCost(
-                    currentState, effectiveCost, action.sourceId, action.playerId, repeatPool, CostPaymentChoices(), executeAbilityContext
+                    currentState, effectiveCost, action.sourceId, action.playerId, repeatPool, CostPaymentChoices(tapChoices = repeatTapSlice), executeAbilityContext
                 )
                 if (!repeatCostResult.success) break // Can't pay — stop early
 
@@ -1169,7 +1222,8 @@ class ActivateAbilityHandler(
                     effect = finalEffect,
                     sacrificedPermanents = emptyList(),
                     xValue = action.xValue,
-                    tappedPermanents = emptyList(),
+                    tappedPermanents = repeatTapSlice,
+                    tappedPermanentSnapshots = repeatTapSnapshots,
                     descriptionOverride = ability.descriptionOverride
                 )
                 val repeatStackResult = stackResolver.putActivatedAbility(
