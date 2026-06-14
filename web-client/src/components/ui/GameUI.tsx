@@ -16,7 +16,7 @@ import { SetPickerModal } from './SetPickerModal'
 import { labelForFormat } from '@/utils/deckLegality'
 import styles from './GameUI.module.css'
 
-type GameMode = 'normal' | 'tournament'
+type GameMode = 'normal' | 'tournament' | 'momir'
 
 interface PublicTournamentSummary {
   lobbyId: string
@@ -142,6 +142,9 @@ function ConnectionOverlay({
     if (gameMode === 'tournament') {
       // Create lobby with default settings - host can change in lobby
       createTournamentLobby(['ECL'], 'SEALED')
+    } else if (gameMode === 'momir') {
+      // Momir Basic: no deckbuilding — the lobby's set selector scopes the creature pool.
+      createQuickGameLobby(false, undefined, false, undefined, true)
     } else {
       // Quick games go through a real lobby; deck *and* set selection live inside it.
       createQuickGameLobby(false)
@@ -149,7 +152,7 @@ function ConnectionOverlay({
   }
 
   const handlePlayVsAi = () => {
-    createQuickGameLobby(true)
+    createQuickGameLobby(true, undefined, false, undefined, gameMode === 'momir')
   }
 
   const handleJoin = () => {
@@ -342,6 +345,12 @@ function ConnectionOverlay({
                   onClick={() => setGameMode('tournament')}
                   title="Sealed or Draft with up to 8 players"
                 />
+                <ModeButton
+                  label="Momir Basic"
+                  active={gameMode === 'momir'}
+                  onClick={() => setGameMode('momir')}
+                  title="Vanguard format — no deckbuilding; flip creatures from a random pool"
+                />
               </div>
 
               {/* Game mode description */}
@@ -355,14 +364,20 @@ function ConnectionOverlay({
                   Create a lobby for Sealed or Draft. Configure format and set after creating.
                 </p>
               )}
+              {gameMode === 'momir' && (
+                <p className={styles.modeDescription}>
+                  No deckbuilding — both players run 60 basics and a Momir Vig avatar. Pick the set
+                  that scopes the random creature pool inside the lobby.
+                </p>
+              )}
 
-              {gameMode === 'normal' ? (
+              {gameMode !== 'tournament' ? (
                 <div className={styles.createButtonRow}>
                   <button
                     onClick={handleCreate}
                     className={styles.primaryButton}
                   >
-                    Create Quick Game
+                    {gameMode === 'momir' ? 'Create Momir Game' : 'Create Quick Game'}
                   </button>
                   {aiEnabled && (
                     <button

@@ -4,6 +4,7 @@ import com.wingedsheep.ai.engine.SealedDeckGenerator
 import com.wingedsheep.gameserver.ai.AiGameManager
 import com.wingedsheep.gameserver.config.GameProperties
 import com.wingedsheep.gameserver.deck.DeckValidator
+import com.wingedsheep.gameserver.lobby.MomirBasicSetup
 import com.wingedsheep.gameserver.lobby.QuickGameLobby
 import com.wingedsheep.gameserver.lobby.QuickGameLobbyPlayer
 import com.wingedsheep.gameserver.lobby.QuickGameLobbyRepository
@@ -164,7 +165,9 @@ class QuickGameLobbyHandler(
             setCode = message.setCode,
             // AI lobbies are single-player — never publicly listed.
             isPublic = message.isPublic && !message.vsAi,
-            format = message.format
+            // Momir Basic has no deck-construction restriction; the two flags are mutually exclusive.
+            format = if (message.momirBasic) null else message.format,
+            momirBasic = message.momirBasic,
         )
         lobby.players += QuickGameLobbyPlayer(
             playerId = playerSession.playerId,
@@ -339,8 +342,10 @@ class QuickGameLobbyHandler(
         lobbyRepository.withLock(lobby.lobbyId) { current ->
             if (current == null) return@withLock
             val player = current.findPlayer(playerSession.playerId) ?: return@withLock
-            // Allow ready-up only if a deck has been submitted (null = nothing chosen yet).
-            if (message.ready && player.deckList == null) {
+            // Momir Basic has no deckbuilding (fixed 60 basics), so there is nothing to pick before
+            // readying. For every other lobby, ready-up requires a submitted deck (null = nothing
+            // chosen yet).
+            if (message.ready && !current.momirBasic && player.deckList == null) {
                 sender.sendError(session, ErrorCode.INVALID_ACTION, "Pick a deck before readying up")
                 return@withLock
             }
@@ -392,14 +397,27 @@ class QuickGameLobbyHandler(
             ?: humanPlayers.firstOrNull()?.setCode
             ?: deckGenerator.randomSetCode()
         gameSession.quickGameSetCode = aiSetCode
+        // Momir Basic: both seats play the fixed 60-basic deck and the chosen set scopes the random
+        // creature pool. The engine reads `eligibleCreatureNames` from this format at game init and
+        // when the avatar's "{X}{X}{X}, Discard a card" ability resolves.
+        if (lobby.momirBasic) {
+            val pool = MomirBasicSetup.creaturePool(listOf(aiSetCode))
+            gameSession.engineFormat = com.wingedsheep.sdk.core.Format.MomirBasic(eligibleCreatureNames = pool)
+            logger.info("Momir Basic lobby ${lobby.lobbyId}: set=$aiSetCode, ${pool.size} eligible creatures")
+        }
         gameSession.publicSpectate = lobby.isPublic && !lobby.vsAi
 
         for (lobbyPlayer in humanPlayers) {
             // In a vs-AI lobby, share the resolved set with the single human so a random pool draws
             // from the same set the AI got; multi-human lobbies keep each player's own set, rolling
             // an independent random when they didn't pick one.
-            val randomFallbackSet = if (lobby.vsAi) aiSetCode else deckGenerator.randomSetCode()
-            val deckList = resolveDeck(lobbyPlayer, randomFallbackSet)
+            // Momir Basic uses a fixed deck (resolved below), so skip the random sealed-pool roll.
+            val deckList = if (lobby.momirBasic) {
+                emptyMap()
+            } else {
+                val randomFallbackSet = if (lobby.vsAi) aiSetCode else deckGenerator.randomSetCode()
+                resolveDeck(lobbyPlayer, randomFallbackSet)
+            }
             val playerSession = sessionRegistry
                 .getAllIdentities()
                 .firstOrNull { it.playerId == lobbyPlayer.playerId }
@@ -418,10 +436,11 @@ class QuickGameLobbyHandler(
             // one copy of the commander out of the wire deck list so the engine sees `cards`
             // (= library) excluding the commander, matching `Deck.cards` convention.
             val commander = if (lobby.format?.isCommanderShape == true) lobbyPlayer.commander else null
-            val engineDeckList = if (commander != null) {
-                stripCommanderFromCards(deckList, commander)
-            } else {
-                deckList
+            // Momir Basic ignores any submitted deck: every seat plays the same fixed 60 basics.
+            val engineDeckList = when {
+                lobby.momirBasic -> MomirBasicSetup.fixedBasicDeck
+                commander != null -> stripCommanderFromCards(deckList, commander)
+                else -> deckList
             }
             gameSession.addPlayer(playerSession, engineDeckList, commanderCardName = commander)
             // Persistence info so a mid-game reconnect can find the player by token.
@@ -435,14 +454,16 @@ class QuickGameLobbyHandler(
         gameRepository.save(gameSession)
 
         if (lobby.vsAi) {
-            // AI is added by AiGameManager (it generates its own random sealed deck for the chosen set).
+            // AI is added by AiGameManager. For Momir Basic it plays the same fixed 60-basic deck
+            // as the human; otherwise it generates its own random sealed deck for the chosen set.
             aiGameManager.createAiOpponent(
                 gameSession = gameSession,
                 setCode = aiSetCode,
                 onActionReady = { id, action -> gamePlayHandler.handleAiAction(gameSession, id, action) },
                 onMulliganKeep = { id -> gamePlayHandler.handleAiMulliganKeep(gameSession, id) },
                 onMulliganTake = { id -> gamePlayHandler.handleAiMulliganTake(gameSession, id) },
-                onBottomCards = { id, cardIds -> gamePlayHandler.handleAiBottomCards(gameSession, id, cardIds) }
+                onBottomCards = { id, cardIds -> gamePlayHandler.handleAiBottomCards(gameSession, id, cardIds) },
+                deckOverride = if (lobby.momirBasic) MomirBasicSetup.fixedBasicDeck else null,
             )
         }
 
@@ -482,11 +503,12 @@ class QuickGameLobbyHandler(
             lobbyId = lobby.lobbyId,
             vsAi = lobby.vsAi,
             setCode = lobby.setCode,
-            players = lobby.players.map { it.toView() },
+            players = lobby.players.map { it.toView(lobby) },
             youPlayerId = playerId,
             canStart = lobby.allReady(),
             isPublic = lobby.isPublic,
-            format = lobby.format
+            format = lobby.format,
+            momirBasic = lobby.momirBasic,
         )
         sender.send(session, msg)
     }
@@ -513,11 +535,12 @@ class QuickGameLobbyHandler(
                 lobbyId = lobby.lobbyId,
                 vsAi = lobby.vsAi,
                 setCode = lobby.setCode,
-                players = lobby.players.map { it.toView() },
+                players = lobby.players.map { it.toView(lobby) },
                 youPlayerId = player.playerId,
                 canStart = lobby.allReady(),
                 isPublic = lobby.isPublic,
-                format = lobby.format
+                format = lobby.format,
+                momirBasic = lobby.momirBasic,
             )
             sender.send(ws, msg)
         }
@@ -550,9 +573,12 @@ class QuickGameLobbyHandler(
         }
     }
 
-    private fun QuickGameLobbyPlayer.toView(): ServerMessage.QuickGameLobbyPlayerView {
+    private fun QuickGameLobbyPlayer.toView(lobby: QuickGameLobby): ServerMessage.QuickGameLobbyPlayerView {
         val total = deckList?.values?.sum() ?: 0
+        // Momir Basic has no deckbuilding: every seat plays the fixed 60 basics, so it always counts
+        // as "deck selected" and shows a fixed label rather than the deck-picker states.
         val label = when {
+            lobby.momirBasic -> "Momir Basic (${MomirBasicSetup.COPIES_PER_BASIC * MomirBasicSetup.BASIC_LAND_NAMES.size} lands)"
             deckList == null -> "Choosing…"
             deckList!!.isEmpty() -> if (setCode != null) "Random Pool ($setCode)" else "Random Pool"
             else -> "Custom ($total)"
@@ -562,8 +588,8 @@ class QuickGameLobbyHandler(
             playerName = playerName,
             isAi = isAi,
             ready = ready,
-            deckSelected = deckList != null,
-            deckCardCount = total,
+            deckSelected = lobby.momirBasic || deckList != null,
+            deckCardCount = if (lobby.momirBasic) MomirBasicSetup.COPIES_PER_BASIC * MomirBasicSetup.BASIC_LAND_NAMES.size else total,
             deckLabel = label,
             setCode = setCode
         )

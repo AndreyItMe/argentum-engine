@@ -183,6 +183,29 @@ plan: `ActivateAbilityHandler` *already* handles non-battlefield `activateFromZo
 ## Later phases (scoped, not yet started)
 
 ### Phase 2 — Server / lobby (playability)
+
+**Status (2026-06-14): ✅ DONE via the Quick Game lobby.** Scoped to the Quick Game flow (the
+natural home for a no-deckbuild, fixed-deck format — it already runs 1v1 vs-human and vs-AI),
+reusing the lobby's existing single-set selector for the creature-pool scope. Momir is modelled as a
+lobby **game mode** (`QuickGameLobby.momirBasic`), **not** a `DeckFormat`/`TournamentFormat` value —
+those are deck-construction/legality concepts Momir doesn't fit (`DeckFormat` is Scryfall-legality;
+Momir has no constructed legality). Tournament-lobby support was deliberately left as a follow-up
+(tournaments assume a draft/deckbuild step Momir lacks).
+
+Landed work:
+- New `MomirBasicSetup` (game-server): `fixedBasicDeck` (12×5 basics = 60) + `creaturePool(setCodes)`
+  (creatures from `MtgSetCatalog`, de-duped, **sorted** for replay-stable `GameRng.pick`) +
+  `format(setCodes)`. This is the set-scope seam: server → `Format.MomirBasic.eligibleCreatureNames`.
+- `QuickGameLobby.momirBasic` flag + `CreateQuickGameLobby` / `QuickGameLobbyState` wire fields.
+  `QuickGameLobbyHandler`: create wires the flag; ready-up skips the "pick a deck" gate; `startGame`
+  sets `engineFormat = Format.MomirBasic(creaturePool(resolvedSet))` and hands every seat (incl. AI,
+  via a new `AiGameManager.createAiOpponent(deckOverride=…)`) the fixed 60-basic deck.
+- Client: a "Momir Basic" home-screen mode (`GameUI`), and a Momir branch in `QuickGameLobbyOverlay`
+  (avatar emblem, no deck picker, host-controlled "Creature pool" set selector, ready needs no deck).
+- Tests: `MomirBasicSetupTest` (pool sorting/dedup/scoping + fixed deck). Engine behaviour stays
+  proven by Phase 1's `MomirBasicScenarioTest`.
+
+Original plan (for reference):
 - Add a `MomirBasic` option to the format selector (`TournamentFormat` enum + `LobbyHandler` /
   `TournamentMatchHandler` wiring; `quickGameLobbySlice` / `lobbySlice` on the client).
 - At match start: build the fixed 60-basic `Deck` per seat; compute `eligibleCreatureNames` from the

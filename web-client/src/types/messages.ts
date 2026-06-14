@@ -2530,6 +2530,8 @@ export interface QuickGameLobbyStateMessage {
   readonly canStart: boolean
   readonly isPublic: boolean
   readonly format?: DeckFormat | null
+  /** True for a Momir Basic lobby: no deckbuilding, set scopes the creature pool. */
+  readonly momirBasic?: boolean
 }
 
 export interface QuickGameLobbyClosedMessage {
@@ -2565,6 +2567,8 @@ export interface CreateQuickGameLobbyMessage {
   readonly setCode?: string
   readonly isPublic?: boolean
   readonly format?: DeckFormat
+  /** Create a Momir Basic lobby: fixed 60-basic decks, avatar in the command zone, set scopes the creature pool. */
+  readonly momirBasic?: boolean
 }
 
 export interface JoinQuickGameLobbyMessage {
@@ -2612,6 +2616,7 @@ export function createCreateQuickGameLobbyMessage(
   setCode?: string,
   isPublic?: boolean,
   format?: DeckFormat,
+  momirBasic?: boolean,
 ): CreateQuickGameLobbyMessage {
   return {
     type: 'createQuickGameLobby',
@@ -2619,6 +2624,7 @@ export function createCreateQuickGameLobbyMessage(
     ...(setCode ? { setCode } : {}),
     ...(isPublic ? { isPublic } : {}),
     ...(format ? { format } : {}),
+    ...(momirBasic ? { momirBasic } : {}),
   }
 }
 export function createJoinQuickGameLobbyMessage(lobbyId: string): JoinQuickGameLobbyMessage {

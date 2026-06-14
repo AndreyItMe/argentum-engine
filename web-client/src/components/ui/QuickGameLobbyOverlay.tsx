@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import type { DeckFormat, QuickGameLobbyPlayerView } from '@/types'
 import { randomBackground } from '@/utils/background.ts'
+import momirVigUrl from '@/assets/momir-vig.svg'
 import { DeckPicker } from './DeckPicker'
 import styles from './GameUI.module.css'
 
@@ -93,7 +94,11 @@ export function QuickGameLobbyOverlay() {
   const others = lobby.players.filter((p) => p.playerId !== lobby.youPlayerId)
   const youReady = you?.ready ?? false
   // Host (first non-AI player) controls visibility — matches the leave/close convention.
-  const isHost = lobby.players.find((p) => !p.isAi)?.playerId === lobby.youPlayerId
+  const host = lobby.players.find((p) => !p.isAi)
+  const isHost = host?.playerId === lobby.youPlayerId
+  const isMomir = lobby.momirBasic ?? false
+  // Momir Basic has no deckbuilding; the host's chosen set scopes the shared creature pool.
+  const poolSetCode = host?.setCode ?? null
 
   const copyLobbyId = () => {
     navigator.clipboard.writeText(lobby.lobbyId)
@@ -105,16 +110,40 @@ export function QuickGameLobbyOverlay() {
     <div className={styles.lobbyOverlay} style={{ backgroundImage: `url(${randomBackground})` }}>
       <div className={styles.lobbyContent}>
         <div className={styles.lobbyHeader}>
+          {isMomir && (
+            <div
+              aria-hidden
+              style={{
+                width: 84,
+                height: 84,
+                margin: '0 auto 8px',
+                backgroundColor: 'var(--accent-teal, #6fd3c0)',
+                WebkitMaskImage: `url(${momirVigUrl})`,
+                maskImage: `url(${momirVigUrl})`,
+                WebkitMaskSize: 'contain',
+                maskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskPosition: 'center',
+                opacity: 0.9,
+              }}
+            />
+          )}
           <div className={`${styles.lobbyFormat} ${styles.lobbyFormatSealed}`}>
-            Quick Game
+            {isMomir ? 'Momir Basic' : 'Quick Game'}
           </div>
           <h1 className={styles.lobbyTitle}>
             {lobby.vsAi ? 'vs AI' : 'Lobby'}
           </h1>
           <p className={styles.lobbySubtitle}>
-            {lobby.vsAi
-              ? 'Pick a deck and ready up — the AI starts as soon as you do.'
-              : 'Share the invite code with a friend, then both players ready up.'}
+            {isMomir
+              ? lobby.vsAi
+                ? 'No deckbuilding — ready up and the AI starts. Flip creatures with the Momir Vig avatar.'
+                : 'No deckbuilding — share the invite code, then both players ready up.'
+              : lobby.vsAi
+                ? 'Pick a deck and ready up — the AI starts as soon as you do.'
+                : 'Share the invite code with a friend, then both players ready up.'}
           </p>
         </div>
 
@@ -163,49 +192,67 @@ export function QuickGameLobbyOverlay() {
                 </button>
               </div>
             </div>
-            <div className={styles.settingsRow}>
-              <span className={styles.settingsLabel}>Format</span>
-              <select
-                value={lobby.format ?? ''}
-                onChange={(e) => {
-                  if (!isHost) return
-                  const v = e.target.value
-                  setFormat(v ? (v as DeckFormat) : null)
-                }}
-                disabled={!isHost}
-                title={isHost ? 'Restrict decks to a constructed format. None = no restriction.' : 'Only the host can change the format'}
-                className={styles.settingsButton}
-                style={{ minWidth: 140 }}
-              >
-                <option value="">No restriction</option>
-                {FORMAT_OPTIONS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
-              </select>
-            </div>
+            {isMomir ? (
+              <MomirPoolRow
+                availableSets={availableSets}
+                poolSetCode={poolSetCode}
+                isHost={isHost}
+                onChange={setSetCode}
+              />
+            ) : (
+              <div className={styles.settingsRow}>
+                <span className={styles.settingsLabel}>Format</span>
+                <select
+                  value={lobby.format ?? ''}
+                  onChange={(e) => {
+                    if (!isHost) return
+                    const v = e.target.value
+                    setFormat(v ? (v as DeckFormat) : null)
+                  }}
+                  disabled={!isHost}
+                  title={isHost ? 'Restrict decks to a constructed format. None = no restriction.' : 'Only the host can change the format'}
+                  className={styles.settingsButton}
+                  style={{ minWidth: 140 }}
+                >
+                  <option value="">No restriction</option>
+                  {FORMAT_OPTIONS.map((f) => (
+                    <option key={f.value} value={f.value}>{f.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
         {lobby.vsAi && (
           <div className={styles.settingsPanel}>
-            <div className={styles.settingsRow}>
-              <span className={styles.settingsLabel}>Format</span>
-              <select
-                value={lobby.format ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setFormat(v ? (v as DeckFormat) : null)
-                }}
-                title="Restrict decks to a constructed format. None = no restriction."
-                className={styles.settingsButton}
-                style={{ minWidth: 140 }}
-              >
-                <option value="">No restriction</option>
-                {FORMAT_OPTIONS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
-              </select>
-            </div>
+            {isMomir ? (
+              <MomirPoolRow
+                availableSets={availableSets}
+                poolSetCode={poolSetCode}
+                isHost={isHost}
+                onChange={setSetCode}
+              />
+            ) : (
+              <div className={styles.settingsRow}>
+                <span className={styles.settingsLabel}>Format</span>
+                <select
+                  value={lobby.format ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setFormat(v ? (v as DeckFormat) : null)
+                  }}
+                  title="Restrict decks to a constructed format. None = no restriction."
+                  className={styles.settingsButton}
+                  style={{ minWidth: 140 }}
+                >
+                  <option value="">No restriction</option>
+                  {FORMAT_OPTIONS.map((f) => (
+                    <option key={f.value} value={f.value}>{f.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
@@ -225,15 +272,17 @@ export function QuickGameLobbyOverlay() {
           )}
         </div>
 
-        <DeckPicker
-          onDeckChange={handleDeckChange}
-          onValidityChange={setDeckValid}
-          onSetCodeChange={setSetCode}
-          initialSetCode={you?.setCode ?? null}
-          availableSets={availableSets}
-          disabled={youReady}
-          format={lobby.format ?? null}
-        />
+        {!isMomir && (
+          <DeckPicker
+            onDeckChange={handleDeckChange}
+            onValidityChange={setDeckValid}
+            onSetCodeChange={setSetCode}
+            initialSetCode={you?.setCode ?? null}
+            availableSets={availableSets}
+            disabled={youReady}
+            format={lobby.format ?? null}
+          />
+        )}
 
         <div className={styles.actionsRow}>
           {youReady ? (
@@ -245,8 +294,8 @@ export function QuickGameLobbyOverlay() {
               onClick={() => setReady(true)}
               className={styles.startButton}
               type="button"
-              disabled={!deckValid || !you?.deckSelected}
-              title={!you?.deckSelected ? 'Pick a deck first' : ''}
+              disabled={!isMomir && (!deckValid || !you?.deckSelected)}
+              title={!isMomir && !you?.deckSelected ? 'Pick a deck first' : ''}
             >
               I'm ready
             </button>
@@ -262,6 +311,46 @@ export function QuickGameLobbyOverlay() {
           </p>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Set selector that scopes the Momir Basic creature pool. Only the host controls it — both players
+ * share one pool (the server resolves it from the host's set), so the opponent sees it read-only.
+ * "Random set" (empty value) lets the server roll a set at game start.
+ */
+function MomirPoolRow({
+  availableSets,
+  poolSetCode,
+  isHost,
+  onChange,
+}: {
+  availableSets: readonly { code: string; name: string }[]
+  poolSetCode: string | null
+  isHost: boolean
+  onChange: (setCode: string | null) => void
+}) {
+  return (
+    <div className={styles.settingsRow}>
+      <span className={styles.settingsLabel}>Creature pool</span>
+      <select
+        value={poolSetCode ?? ''}
+        onChange={(e) => {
+          if (!isHost) return
+          const v = e.target.value
+          onChange(v ? v : null)
+        }}
+        disabled={!isHost}
+        title={isHost ? 'The set whose creatures the avatar can flip. Random = the server picks one.' : 'Only the host can change the creature pool'}
+        className={styles.settingsButton}
+        style={{ minWidth: 160 }}
+      >
+        <option value="">Random set</option>
+        {availableSets.map((s) => (
+          <option key={s.code} value={s.code}>{s.name}</option>
+        ))}
+      </select>
     </div>
   )
 }

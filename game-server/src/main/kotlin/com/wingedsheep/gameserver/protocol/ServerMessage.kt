@@ -1051,7 +1051,9 @@ sealed interface ServerMessage {
         val youPlayerId: EntityId,
         val canStart: Boolean,
         val isPublic: Boolean = false,
-        val format: com.wingedsheep.sdk.core.DeckFormat? = null
+        val format: com.wingedsheep.sdk.core.DeckFormat? = null,
+        /** True for a Momir Basic lobby: fixed 60-basic decks, no deckbuilding, [setCode] scopes the creature pool. */
+        val momirBasic: Boolean = false,
     ) : ServerMessage
 
     /**

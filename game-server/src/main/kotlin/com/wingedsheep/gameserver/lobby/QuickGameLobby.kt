@@ -35,6 +35,12 @@ class QuickGameLobby(
      * format's per-card legality. Null = no restriction (existing behaviour). Host-controlled.
      */
     @Volatile var format: DeckFormat? = null,
+    /**
+     * When true this is a Momir Basic lobby: no deckbuilding (every seat gets a fixed 60-basic
+     * deck), the avatar starts in the command zone, and the per-player [QuickGameLobbyPlayer.setCode]
+     * scopes the random creature pool. Fixed at creation. Mutually exclusive with [format].
+     */
+    val momirBasic: Boolean = false,
 ) {
     val players: MutableList<QuickGameLobbyPlayer> = mutableListOf()
 

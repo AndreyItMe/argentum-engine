@@ -441,7 +441,13 @@ sealed interface ClientMessage {
         val vsAi: Boolean = false,
         val setCode: String? = null,
         val isPublic: Boolean = false,
-        val format: com.wingedsheep.sdk.core.DeckFormat? = null
+        val format: com.wingedsheep.sdk.core.DeckFormat? = null,
+        /**
+         * When true the lobby plays the Momir Basic Vanguard format: no deckbuilding (fixed 60
+         * basics), avatar in the command zone, and the per-player [setCode] scopes the random
+         * creature pool. Mutually exclusive with [format] (the constructed-legality restriction).
+         */
+        val momirBasic: Boolean = false,
     ) : ClientMessage
 
     /** Join an existing quick-game lobby by its short code. */
