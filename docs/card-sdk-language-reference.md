@@ -2050,14 +2050,25 @@ staticAbility {
   `CantBeBlockedByCreaturesWithLessPowerRule`; both sides use projected power, so a P/T buff raises the
   threshold.
 - `Effects.CreatePermanentEmblem(...)` — emblem with static abilities (planeswalker ultimates).
-- `AttackTax(amountPerAttacker: DynamicAmount)` — Propaganda / Ghostly Prison / Windborn Muse /
-  Collective Restraint. Per-attacker generic-mana tax for attacking the source's controller; the
-  amount is a `DynamicAmount` so it can scale with state (e.g., `DynamicAmounts.domain()` for
-  "{X} where X is your domain"). Evaluated with the source permanent's controller as "you".
-  When `totalTax > 0`, the engine pauses `DeclareAttackers` for a `YesNoDecision` *before* tapping
-  any mana — declining is a clean no-op that leaves the player in `DECLARE_ATTACKERS` to re-declare.
-  The same prompt/cancel pattern applies to block-tax floating effects (e.g. Whipgrass Entangler)
-  via `AttackBlockTaxPerCreatureType`.
+- `AttackTax(amountPerAttacker: DynamicAmount, condition: Condition? = null)` — Propaganda / Ghostly
+  Prison / Windborn Muse / Collective Restraint. Per-attacker generic-mana tax for attacking the
+  source's controller (and their planeswalkers); the amount is a `DynamicAmount` so it can scale with
+  state (e.g., `DynamicAmounts.domain()` for "{X} where X is your domain"). Evaluated with the source
+  permanent's controller as "you". The optional `condition` gates the whole tax on the source's own
+  state, evaluated with the source as "you"/source — e.g. Archangel of Tithes
+  (`condition = Conditions.SourceIsUntapped`, "As long as this creature is untapped, …"); when null
+  the tax is always active. When `totalTax > 0`, the engine pauses `DeclareAttackers` for a
+  `SelectManaSourcesDecision` *before* tapping any mana — declining is a clean no-op that leaves the
+  player in `DECLARE_ATTACKERS` to re-declare.
+- `BlockTax(amountPerBlocker: DynamicAmount, condition: Condition? = null)` — Archangel of Tithes'
+  second ability ("creatures can't block unless their controller pays {1} for each of those
+  creatures"). A *global* per-blocker generic-mana tax: while any permanent with this ability — whose
+  optional `condition` holds — is on the battlefield, every declared blocker is taxed `amountPerBlocker`
+  (multiple sources stack). The optional `condition` gates the tax on the source's own state — e.g.
+  Archangel uses `Conditions.SourceIsAttacking` ("As long as this creature is attacking, …"). Block
+  declaration pauses for the same mana-source confirmation as the attack tax. The pre-existing
+  per-creature-type block tax (Whipgrass Entangler) uses `AttackBlockTaxPerCreatureType` floating
+  effects instead.
 - `CantBeAttackedWithout(keyword, attackerFilter = null)` — Form of the Dragon-style "Creatures
   without flying can't attack you." defender-side restriction. Optional `attackerFilter` narrows
   which attackers are restricted (evaluated with the source permanent as predicate source, so
@@ -3261,6 +3272,10 @@ of `AddMana`. The engine empties pools at end of turn, so:
   count of nontoken permanent cards put into that player's graveyard from any zone.
   Backs `Conditions.YouDescendedThisTurn(atLeast)` and `DynamicAmounts.descendedThisTurn`
   (descend N / fathomless descent ability words).
+- `CARDS_DRAWN` — number of cards a player has drawn this turn (backed by
+  `CardsDrawnThisTurnComponent`, reset to 0 for every player at turn start). Powers
+  characteristic-defining stats like Duelist of the Mind's "power is equal to the number of
+  cards you've drawn this turn" via `dynamicPower = CharacteristicValue.dynamic(TurnTracking(You, CARDS_DRAWN))`.
 
 ---
 

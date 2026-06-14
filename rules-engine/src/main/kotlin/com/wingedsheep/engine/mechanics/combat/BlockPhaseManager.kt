@@ -22,7 +22,9 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.handlers.ConditionEvaluator
+import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.sdk.scripting.BlockTax
 import com.wingedsheep.sdk.scripting.BlockerCountLimit
 import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
 import com.wingedsheep.sdk.scripting.CantBeBlockedByMoreThan
@@ -49,6 +51,7 @@ internal class BlockPhaseManager(
     private val manaAbilitySideEffectExecutor: com.wingedsheep.engine.mechanics.mana.ManaAbilitySideEffectExecutor,
 ) {
     private val conditionEvaluator = ConditionEvaluator()
+    private val dynamicAmountEvaluator = DynamicAmountEvaluator()
 
     /**
      * Validate and declare blockers.
@@ -109,7 +112,8 @@ internal class BlockPhaseManager(
         // player to confirm — same reasoning as attack taxes: don't tap their mana
         // without consent.
         val projected = state.projectedState
-        val totalBlockTax = calculatePerCreatureTax(state, blockers.keys, projected)
+        val totalBlockTax = calculatePerCreatureTax(state, blockers.keys, projected) +
+            calculateBlockTax(state, blockers.keys, projected)
         if (totalBlockTax > 0) {
             return pauseForBlockTaxConfirmation(state, blockingPlayer, blockers, totalBlockTax)
         }
@@ -894,6 +898,43 @@ internal class BlockPhaseManager(
                 }
                 val costPerCreature = ManaCost.parse(mod.manaCostPer).cmc
                 totalTax += costPerCreature * creatureTypeCount
+            }
+        }
+        return totalTax
+    }
+
+    /**
+     * Calculate the generic-mana block tax from [BlockTax] static abilities (Archangel of Tithes —
+     * "creatures can't block unless their controller pays {1} for each of those creatures").
+     *
+     * Unlike [AttackTax], this is a global restriction: every permanent on the battlefield with a
+     * [BlockTax] ability (whose optional condition holds, e.g. "as long as this creature is
+     * attacking") taxes each declared blocker by its per-blocker amount. Multiple sources stack.
+     */
+    private fun calculateBlockTax(
+        state: GameState,
+        blockerIds: Set<EntityId>,
+        projected: ProjectedState
+    ): Int {
+        if (blockerIds.isEmpty()) return 0
+        var totalTax = 0
+        for (entityId in state.getBattlefield()) {
+            val container = state.getEntity(entityId) ?: continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
+            for (ability in cardDef.staticAbilities) {
+                if (ability !is BlockTax) continue
+                val controllerId = projected.getController(entityId) ?: continue
+                val ctx = EffectContext(
+                    sourceId = entityId,
+                    controllerId = controllerId,
+                )
+                val condition = ability.condition
+                if (condition != null && !conditionEvaluator.evaluate(state, condition, ctx)) {
+                    continue
+                }
+                val taxPerBlocker = maxOf(0, dynamicAmountEvaluator.evaluate(state, ability.amountPerBlocker, ctx, projected))
+                totalTax += taxPerBlocker * blockerIds.size
             }
         }
         return totalTax

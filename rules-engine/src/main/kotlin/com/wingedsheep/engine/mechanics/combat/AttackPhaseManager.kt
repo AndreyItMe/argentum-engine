@@ -51,6 +51,7 @@ internal class AttackPhaseManager(
 
     private val dynamicAmountEvaluator = com.wingedsheep.engine.handlers.DynamicAmountEvaluator()
     private val predicateEvaluator = PredicateEvaluator()
+    private val conditionEvaluator = com.wingedsheep.engine.handlers.ConditionEvaluator()
 
     /**
      * Validate and declare attackers.
@@ -689,6 +690,11 @@ internal class AttackPhaseManager(
                             sourceId = entityId,
                             controllerId = defenderId,
                         )
+                        // Gate on the source's state (e.g. Archangel of Tithes — only while untapped).
+                        val condition = ability.condition
+                        if (condition != null && !conditionEvaluator.evaluate(state, condition, ctx)) {
+                            continue
+                        }
                         val taxPerAttacker = maxOf(0, dynamicAmountEvaluator.evaluate(state, ability.amountPerAttacker, ctx, projected))
                         totalGenericTax += taxPerAttacker * attackerCount
                     }

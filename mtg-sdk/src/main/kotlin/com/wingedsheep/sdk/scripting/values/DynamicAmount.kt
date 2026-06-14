@@ -64,7 +64,13 @@ enum class TurnTracker {
      * permanent cards put into the player's graveyard from any zone. Backs the descend
      * gate and the descend N / fathomless descent ability words.
      */
-    DESCENDED;
+    DESCENDED,
+    /**
+     * Number of cards the player has drawn this turn (CR 120). Backed by
+     * `CardsDrawnThisTurnComponent`, reset to 0 for every player at the start of each turn.
+     * Powers "equal to the number of cards you've drawn this turn" (Duelist of the Mind).
+     */
+    CARDS_DRAWN;
 
     fun descriptionFor(player: Player): String = when (this) {
         CREATURES_DIED -> "the number of creatures that died under ${player.possessive} control this turn"
@@ -82,6 +88,7 @@ enum class TurnTracker {
         FOOD_SACRIFICED -> "whether ${player.description} sacrificed a Food this turn"
         CARDS_LEFT_GRAVEYARD -> "the number of cards that left ${player.possessive} graveyard this turn"
         DESCENDED -> "the number of times ${player.description} descended this turn"
+        CARDS_DRAWN -> "the number of cards ${player.description} have drawn this turn"
     }
 }
 

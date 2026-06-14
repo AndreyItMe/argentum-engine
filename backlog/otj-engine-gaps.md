@@ -220,13 +220,15 @@ with an OTHER-binding variant for "another creature(s)." Mirrors the existing
 
 </details>
 
-### 6. `CARDS_DRAWN` turn-tracker + characteristic-defining P/T from it
+### 6. `CARDS_DRAWN` turn-tracker + characteristic-defining P/T from it — ✅ DONE
 
-`TurnTracker` has no `CARDS_DRAWN` accumulator, so "power equal to the number of cards you've drawn
-this turn" can't be expressed. Add the tracker (engine accumulates on draw events) and read it via
-`DynamicAmount.TurnTracking` for a CDA power.
+~~`TurnTracker` has no `CARDS_DRAWN` accumulator, so "power equal to the number of cards you've drawn
+this turn" can't be expressed.~~ RESOLVED — added `TurnTracker.CARDS_DRAWN`, backed by the existing
+`CardsDrawnThisTurnComponent` (no new accumulator needed — the engine already tracks per-turn draws
+and resets it at turn start). `DynamicAmountEvaluator` reads the component; the value feeds a CDA
+power via `dynamicPower = CharacteristicValue.dynamic(TurnTracking(You, CARDS_DRAWN))`.
 
-→ Duelist of the Mind.
+→ Duelist of the Mind (implemented).
 
 ---
 
@@ -265,11 +267,12 @@ this turn" can't be expressed. Add the tracker (engine accumulates on draw event
     duration. The exile-on-ETB half is supported.
     → **Assimilation Aegis**.
 
-13. **Conditional attack-tax + a new block-tax static.** `AttackTax` exists but is unconditional and
-    defender-side. Archangel needs (a) the attack tax gated on "as long as this is untapped," and
-    (b) a brand-new **block-tax** ("creatures can't block unless their controller pays {1} each")
-    gated on "as long as this is attacking," with declare-blockers payment enforcement.
-    → **Archangel of Tithes**.
+13. ~~**Conditional attack-tax + a new block-tax static.**~~ RESOLVED — `AttackTax` gained an optional
+    `condition` gate (Archangel uses `Conditions.SourceIsUntapped`; it already protected the controller's
+    planeswalkers); added a new global **`BlockTax(amountPerBlocker, condition)`** static (Archangel uses
+    `Conditions.SourceIsAttacking`) evaluated in `BlockPhaseManager` and reusing the existing
+    declare-blockers tax-confirmation pause.
+    → **Archangel of Tithes** (implemented; canonical in ORI, reprint row in OTJ).
 
 14. ~~**Group flicker (mass blink) + repeat-the-whole-effect X+1 times.**~~ RESOLVED — no new SDK
     needed. Composed from existing primitives: an `Effects.Pipeline { gather → chooseAnyNumber →
@@ -304,9 +307,8 @@ this turn" can't be expressed. Add the tracker (engine accumulates on draw event
 
 1. ✅ **Saddle N + Mount** (Tier 1) — done.
 2. **Tier 2 shared primitives** — ✅ contributors-this-turn tracker (#2), ✅ spells-cast
-   `DynamicAmount` (#3), ✅ `fromHand` cast-zone flag (#4), ✅ cast-for-free condition (#5).
-   Remaining: `CARDS_DRAWN` (#6). Small, each unlocks a few scattered cards. **Next up: #6
-   (`CARDS_DRAWN`).**
+   `DynamicAmount` (#3), ✅ `fromHand` cast-zone flag (#4), ✅ cast-for-free condition (#5),
+   ✅ `CARDS_DRAWN` tracker (#6). All Tier-2 shared primitives done.
 3. **Tier-3 one-offs** as the relevant legendaries / rares come up — none block large numbers of
    cards; pick them off individually.
 

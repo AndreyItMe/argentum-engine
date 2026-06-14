@@ -3888,6 +3888,100 @@
     ]
 }
 
+// Duelist of the Mind
+{
+    "name": "Duelist of the Mind",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Advisor",
+    "oracleText": "Flying, vigilance\nDuelist of the Mind's power is equal to the number of cards you've drawn this turn.\nWhenever you commit a crime, you may draw a card. If you do, discard a card. This ability triggers only once each turn.",
+    "creatureStats": {
+        "power": {
+            "type": "Dynamic",
+            "source": {
+                "type": "TurnTracking",
+                "player": "You",
+                "tracker": "CARDS_DRAWN"
+            }
+        },
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "CommitCrimeEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "FromZone",
+                                            "zone": "Hand"
+                                        },
+                                        "storeAs": "hand"
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "hand",
+                                        "selection": {
+                                            "type": "ChooseExactly",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeSelected": "discarded",
+                                        "prompt": "Choose 1 card to discard"
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "discarded",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Graveyard"
+                                        },
+                                        "moveType": "Discard"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "oncePerTurn": true,
+                "descriptionOverride": "Whenever you commit a crime, you may draw a card. If you do, discard a card. This ability triggers only once each turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "45",
+        "rarity": "RARE",
+        "artist": "Darren Tan",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/b/2b58e47b-c165-4a58-aa2a-033a35645adc.jpg?1716283553"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Dust Animus
 {
     "name": "Dust Animus",
@@ -11973,6 +12067,55 @@
         "artist": "Valera Lutfullina",
         "flavorText": "It catches those who are not ready to fall.",
         "imageUri": "https://cards.scryfall.io/normal/front/c/2/c2245f36-2138-4f01-9b70-151137a5ac59.jpg?1712355336"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Sheriff of Safe Passage
+{
+    "name": "Sheriff of Safe Passage",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Knight",
+    "oracleText": "This creature enters with a +1/+1 counter on it plus an additional +1/+1 counter on it for each other creature you control.\nPlot {1}{W} (You may pay {1}{W} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 0
+    },
+    "keywords": [
+        "PLOT"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Plot",
+            "cost": "{1}{W}"
+        }
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "EntersWithDynamicCounters",
+                "count": {
+                    "type": "Add",
+                    "left": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "right": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "29",
+        "rarity": "UNCOMMON",
+        "artist": "Brian Valeza",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/3/c38a845d-f25d-45ab-9154-3fa5291b0ba0.jpg?1712355345"
     },
     "colorIdentityOverride": [
         "WHITE"
