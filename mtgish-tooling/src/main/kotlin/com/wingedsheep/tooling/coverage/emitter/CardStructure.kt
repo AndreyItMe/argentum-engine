@@ -1468,6 +1468,20 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
         val counter = counterNameForFilter(cond) ?: return null
         return "Conditions.Not(Conditions.SourceHasCounter(CounterTypeFilter.Named(\"$counter\")))"
     }
+    // "this enchantment isn't a creature" — PermanentPassesFilter(ThisPermanent, IsNonCardtype Creature)
+    // (Emergent Haunting's end-step "becomes a creature" gate, which self-disables once animated).
+    // Renders to Conditions.SourceMatches(GameObjectFilter.Noncreature). Only the exact bare
+    // "isn't a creature" filter over ThisPermanent renders; another card type declines -> SCAFFOLD.
+    if (cond.strField("_Condition") == "PermanentPassesFilter") {
+        val condArgs = cond["args"].asArr
+        val subject = (condArgs?.getOrNull(0) as? JsonObject)?.strField("_Permanent")
+        val filt = condArgs?.getOrNull(1) as? JsonObject
+        if (subject == "ThisPermanent" &&
+            filt?.strField("_Permanents") == "IsNonCardtype" && filt.field("args").asStr() == "Creature"
+        ) {
+            return "Conditions.SourceMatches(GameObjectFilter.Noncreature)"
+        }
+    }
     // "if a creature died this turn" — ACreatureOrPlaneswalkerDiedThisTurn over a bare creature-cardtype
     // filter (Rictus Robber). Only the unrestricted "a creature" shape (no controller / subtype / count
     // clause) maps to Conditions.CreatureDiedThisTurn; anything more specific declines -> SCAFFOLD.

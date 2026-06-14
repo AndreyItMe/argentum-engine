@@ -2177,9 +2177,12 @@ staticAbility {
 - `PreventManaPoolEmptying` — mana pools don't empty between steps/phases. (Upwelling)
 - `NoMaximumHandSize` — controller has no hand-size limit. (Thought Vessel)
 - `DampLandManaProduction` — a land tapped for 2+ mana produces `{C}` instead. (Damping Sphere)
-- `RestrictSpellsCastPerTurn(maxPerTurn)` — the controller can't cast more than `maxPerTurn`
-  spell(s) each turn. Per-controller; the most restrictive applies when several are in play.
-  Already-cast spells count, even those cast before this permanent entered. (Yawgmoth's Agenda)
+- `RestrictSpellsCastPerTurn(maxPerTurn, eachPlayer = false)` — a per-turn cap on spells cast.
+  `eachPlayer = false` (default) limits only the source's controller (Yawgmoth's Agenda: "You can't
+  cast more than one spell each turn."); `eachPlayer = true` is a *global* restriction binding every
+  player (High Noon: "Each player can't cast more than one spell each turn."). The most restrictive
+  `maxPerTurn` applies when several are in play. Already-cast spells count, even those cast before this
+  permanent entered.
 - `CantCastSpellsSharingColorWithLastCast` — *global* (all players): can't cast a spell that shares a
   color with the spell most recently cast this turn. Backed by `GameState.lastCastSpellColors` (the
   colors of the last spell cast, cleared each turn). Never blocks the first spell of the turn; a

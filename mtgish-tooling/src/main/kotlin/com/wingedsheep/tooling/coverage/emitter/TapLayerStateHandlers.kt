@@ -189,6 +189,17 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         renderLayerEffect(node, node.strField("_Action")!!, tvar)
     }
 
+    on("CreatePermanentLayerEffect") { node, _, tvar ->
+        // The durationless (permanent) layer effect — the "becomes a N/N [type] creature with [keywords]
+        // in addition to its other types" animation that has no end (CR ruling: "remains a creature
+        // indefinitely", Emergent Haunting). The args are `[target, [layerEffects]]` (no expiration). Only
+        // the become-creature shape renders, at Duration.Permanent; anything else declines -> SCAFFOLD.
+        val target = refTarget(node["args"], tvar) ?: return@on null
+        val layerEffects = (node["args"].asArr)?.getOrNull(1) as? JsonArray ?: return@on null
+        if (layerEffects.isEmpty()) return@on null
+        becomeCreatureLayerEffect(layerEffects, target, duration = "Duration.Permanent", allowExtendedGrants = true)
+    }
+
     on("CreatePermanentRuleEffectUntil") { node, _, tvar ->
         // A permanent rule-effect until end of turn. Several single-rule shapes render to a matching
         // Effects facade; anything else (multi-rule, non-EOT duration, an unmodeled rule) scaffolds:
@@ -456,33 +467,56 @@ private val LAYER_EFFECT_COLOR = mapOf(
 )
 
 /**
- * The "becomes a [color] [creature-type] with base power and toughness P/T" shape — a layer-effect list
- * whose entries are exactly one `SetPT` plus an optional `SetColor` and/or `SetCreatureType`, and nothing
- * else. Renders the engine's atomic `Effects.BecomeCreature(target, power, toughness, creatureTypes,
- * colors, duration = EndOfTurn)` (CR 613, layers 5/4/7b), matching the hand-authored idiom (Metamorphic
- * Blast). Returns null — so the caller falls through to the per-layer renderer or scaffolds — whenever:
+ * The "becomes a [color] [creature-type] with base power and toughness P/T [and keywords]" shape — a
+ * layer-effect list whose entries are exactly one `SetPT`/`SetCreatureType`/`AddCreatureType`/`SetColor`/
+ * `AddCardtype Creature`/`AddAbility <bare keyword>` and nothing else. Renders the engine's atomic
+ * `Effects.BecomeCreature(target, power, toughness, creatureTypes, keywords, colors, duration)` (CR 613,
+ * layers 4/5/6/7b), matching the hand-authored idiom (Metamorphic Blast's EOT mode; Emergent Haunting's
+ * permanent end-step animation). The [duration] DSL defaults to `Duration.EndOfTurn`; the durationless
+ * `CreatePermanentLayerEffect` path passes `Duration.Permanent`.
+ *
+ * Returns null — so the caller falls through to the per-layer renderer or scaffolds — whenever:
  *  - there's no `SetPT` (no "becomes a P/T" base — not a become-creature shape),
- *  - any layer effect other than Set{PT,Color,CreatureType} is present (e.g. AddCardtype, AddAbility),
+ *  - any layer effect other than the recognised set above is present,
  *  - a colour isn't one of the five renderable mono-colours, or a SetColor lists more/zero than one,
+ *  - an `AddAbility` grant isn't a single bare keyword, or an `AddCardtype` adds anything but Creature,
  *  - the P/T values aren't plain integers.
- * The duration is always end-of-turn here (the engine's `Effects.BecomeCreature` facade defaults to it),
- * so a non-EOT expiration on this shape declines via the caller's `expirationDsl` guard before this runs.
+ *
+ * `AddCardtype Creature` is the "in addition to its other types" marker — `BecomeCreature` already adds
+ * the CREATURE type (it never removes the existing Enchantment/Land type since `removeTypes` stays empty),
+ * so the marker is consumed and contributes nothing extra.
  */
-internal fun EmitCtx.becomeCreatureLayerEffect(layerEffects: JsonArray, target: String): Dsl? {
+internal fun EmitCtx.becomeCreatureLayerEffect(
+    layerEffects: JsonArray,
+    target: String,
+    duration: String = "Duration.EndOfTurn",
+    allowExtendedGrants: Boolean = false,
+): Dsl? {
+    // The until-EOT callers (CreatePermanentLayerEffectUntil) keep the original strict shape — exactly
+    // SetPT plus an optional SetColor/SetCreatureType — so their golden output is unchanged. The
+    // durationless animate path opts into the extended grants (AddCreatureType / AddCardtype Creature /
+    // AddAbility <keyword>) used by "becomes a N/N [type] creature with [keyword] in addition to its
+    // other types" (Emergent Haunting).
+    val baseKinds = setOf("SetPT", "SetColor", "SetCreatureType")
+    val extendedKinds = setOf("AddCreatureType", "AddCardtype", "AddAbility")
+    val recognised = if (allowExtendedGrants) baseKinds + extendedKinds else baseKinds
+    val typeOrColourKinds = if (allowExtendedGrants) setOf("SetColor", "SetCreatureType", "AddCreatureType", "AddCardtype", "AddAbility")
+                            else setOf("SetColor", "SetCreatureType")
     val effects = layerEffects.filterIsInstance<JsonObject>()
     if (effects.size != layerEffects.size) return null
     if (effects.none { it.strField("_LayerEffect") == "SetPT" }) return null
-    if (effects.any { it.strField("_LayerEffect") !in setOf("SetPT", "SetColor", "SetCreatureType") }) return null
-    // A BARE SetPT ("becomes a 5/1 until end of turn", no type/colour change) is a base-P/T set, not a
-    // "becomes a creature" — keep it as SetBasePowerToughnessEffect (the per-layer renderer). Only the
-    // genuine "becomes a [colour] [type] creature" shape (SetColor and/or SetCreatureType present) maps
+    if (effects.any { it.strField("_LayerEffect") !in recognised }) return null
+    // A BARE SetPT ("becomes a 5/1 until end of turn", no type/colour/keyword change) is a base-P/T set,
+    // not a "becomes a creature" — keep it as SetBasePowerToughnessEffect (the per-layer renderer). Only
+    // the genuine "becomes a [colour] [type] creature" shape (a type/colour/keyword grant present) maps
     // to BecomeCreature.
-    if (effects.none { it.strField("_LayerEffect") in setOf("SetColor", "SetCreatureType") }) return null
+    if (effects.none { it.strField("_LayerEffect") in typeOrColourKinds }) return null
 
     var power: Int? = null
     var toughness: Int? = null
     val creatureTypes = mutableListOf<String>()
     val colors = mutableListOf<String>()
+    val grantedKeywords = mutableListOf<String>()
     for (le in effects) {
         when (le.strField("_LayerEffect")) {
             "SetPT" -> {
@@ -491,7 +525,7 @@ internal fun EmitCtx.becomeCreatureLayerEffect(layerEffects: JsonArray, target: 
                 power = pt[0].asInt() ?: return null
                 toughness = pt[1].asInt() ?: return null
             }
-            "SetCreatureType" -> {
+            "SetCreatureType", "AddCreatureType" -> {
                 val sub = le["args"].asStr() ?: return null
                 creatureTypes.add(sub)
             }
@@ -501,18 +535,26 @@ internal fun EmitCtx.becomeCreatureLayerEffect(layerEffects: JsonArray, target: 
                 if (names.size != 1) return null  // multicolour / colourless set isn't this shape
                 colors.add(LAYER_EFFECT_COLOR[names[0]] ?: return null)
             }
+            // "in addition to its other types" — BecomeCreature adds CREATURE itself, so only the Creature
+            // card type is the no-op marker; any other added card type isn't a BecomeCreature shape.
+            "AddCardtype" -> if (le["args"].asStr() != "Creature") return null
+            // "with <keyword>" — only a single bare keyword grant (Flying) renders; anything richer declines.
+            "AddAbility" -> grantedKeyword(le)?.let { grantedKeywords.add(it) } ?: return null
         }
     }
     if (power == null || toughness == null) return null
 
     val parts = mutableListOf(arg("target", Lit(target)), arg("power", "$power"), arg("toughness", "$toughness"))
+    if (grantedKeywords.isNotEmpty()) {
+        parts.add(arg("keywords", call("setOf", *grantedKeywords.map { arg(Lit("Keyword.$it")) }.toTypedArray())))
+    }
     if (creatureTypes.isNotEmpty()) {
         parts.add(arg("creatureTypes", call("setOf", *creatureTypes.map { arg(Lit("\"${ktStr(it)}\"")) }.toTypedArray())))
     }
     if (colors.isNotEmpty()) {
         parts.add(arg("colors", call("setOf", *colors.map { arg(Lit("Color.$it.name")) }.toTypedArray())))
     }
-    parts.add(arg("duration", Lit("Duration.EndOfTurn")))
+    parts.add(arg("duration", Lit(duration)))
     return Call("Effects.BecomeCreature", parts)
 }
 

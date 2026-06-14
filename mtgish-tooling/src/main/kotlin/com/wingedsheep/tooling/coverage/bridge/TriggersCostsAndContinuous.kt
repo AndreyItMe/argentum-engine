@@ -105,4 +105,9 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // time" (Annie Joins Up, Twinflame Travelers — CR 603.2d). A static doubler over a filtered group;
     // emitter renders staticAbility { ability = AdditionalSourceTriggers(sourceFilter = …) }.
     effect("AbilitiesTriggerAnAdditionalTime", "AdditionalSourceTriggers")
+
+    // "[Each player] can't cast more than N spell(s) each turn" (High Noon / Yawgmoth's Agenda) — the
+    // nested _PlayerEffect of a PlayerEffect / EachPlayerEffect static. Renders to
+    // `RestrictSpellsCastPerTurn(maxPerTurn = N, eachPlayer = <scope>)`.
+    effect("CantCastMoreThanNumberSpellsEachTurn", "RestrictSpellsCastPerTurn")
 }

@@ -129,19 +129,38 @@ class CastPermissionUtils(
     }
 
     /**
-     * Whether [playerId] has already cast as many spells this turn as a permanent they
-     * control with [RestrictSpellsCastPerTurn] allows (e.g., Yawgmoth's Agenda: "You can't
-     * cast more than one spell each turn."). When several such permanents are in play, the
-     * most restrictive (smallest [RestrictSpellsCastPerTurn.maxPerTurn]) applies. Returns
-     * false when no such permanent is controlled.
+     * Whether [playerId] has already cast as many spells this turn as a [RestrictSpellsCastPerTurn]
+     * permanent allows. Two scopes are folded:
+     *
+     *  - **controller-scoped** ([RestrictSpellsCastPerTurn.eachPlayer] = false) — only counts
+     *    permanents [playerId] themselves controls (Yawgmoth's Agenda: "You can't cast more than
+     *    one spell each turn.").
+     *  - **global** ([RestrictSpellsCastPerTurn.eachPlayer] = true) — counts any such permanent
+     *    anywhere on the battlefield, binding every player (High Noon: "Each player can't cast
+     *    more than one spell each turn.").
+     *
+     * When several such permanents apply, the most restrictive (smallest
+     * [RestrictSpellsCastPerTurn.maxPerTurn]) applies. Returns false when no permanent restricts
+     * [playerId].
      */
     fun hasReachedSpellCastLimit(state: GameState, playerId: EntityId): Boolean {
         var limit: Int? = null
+        // Permanents the player controls restrict them whether eachPlayer is true or false.
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             for (sa in cardDef.script.staticAbilities) {
                 if (sa is RestrictSpellsCastPerTurn) {
+                    limit = minOf(limit ?: sa.maxPerTurn, sa.maxPerTurn)
+                }
+            }
+        }
+        // Global (eachPlayer) restrictions bind every player regardless of who controls them.
+        for (entityId in state.getBattlefield()) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            for (sa in cardDef.script.staticAbilities) {
+                if (sa is RestrictSpellsCastPerTurn && sa.eachPlayer) {
                     limit = minOf(limit ?: sa.maxPerTurn, sa.maxPerTurn)
                 }
             }

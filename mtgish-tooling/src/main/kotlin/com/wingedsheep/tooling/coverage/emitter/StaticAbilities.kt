@@ -563,11 +563,58 @@ internal fun EmitCtx.playerEffectBlock(rule: JsonObject): List<Stmt>? {
             // Renders only a single bare generic reduction over a spell filter we can name exactly;
             // a colored/dynamic reduction or a filter we can't express declines -> SCAFFOLD.
             "DecreaseSpellCost" -> decreaseSpellCostAbility(e) ?: run { reasons.add("PlayerEffect"); return null }
+            // "You can't cast more than N spell(s) each turn" (Yawgmoth's Agenda) — controller-scoped.
+            "CantCastMoreThanNumberSpellsEachTurn" ->
+                spellCountRestrictionAbility(e, eachPlayer = false) ?: run { reasons.add("PlayerEffect"); return null }
             else -> { reasons.add("PlayerEffect"); return null }
         }
         stmts.add(staticAbilityStmt(ability))
     }
     return stmts
+}
+
+/**
+ * A top-level `EachPlayerEffect(AnyPlayer, [...])` rule -> one `staticAbility { ability = ... }` per
+ * recognised global, every-player static. Currently only "each player can't cast more than N spell(s)
+ * each turn" (High Noon) renders -> `RestrictSpellsCastPerTurn(maxPerTurn = N, eachPlayer = true)`;
+ * any other player-scope or player-effect declines -> SCAFFOLD rather than guess. The player scope must
+ * be `AnyPlayer` (every player) — a narrower scope (e.g. opponents only) has no exact StaticAbility yet.
+ */
+internal fun EmitCtx.eachPlayerEffectBlock(rule: JsonObject): List<Stmt>? {
+    val args = rule["args"] as? JsonArray
+    val player = args?.getOrNull(0) as? JsonObject
+    val effects = (args?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
+    if (player == null || effects.isNullOrEmpty() || !jsonContains(player, "_Players", "AnyPlayer")) {
+        reasons.add("EachPlayerEffect"); return null
+    }
+    val stmts = mutableListOf<Stmt>()
+    for (e in effects) {
+        val ability = when (e.strField("_PlayerEffect")) {
+            "CantCastMoreThanNumberSpellsEachTurn" ->
+                spellCountRestrictionAbility(e, eachPlayer = true) ?: run { reasons.add("EachPlayerEffect"); return null }
+            else -> { reasons.add("EachPlayerEffect"); return null }
+        }
+        stmts.add(staticAbilityStmt(ability))
+    }
+    return stmts
+}
+
+/**
+ * A `CantCastMoreThanNumberSpellsEachTurn([Integer N], [<spell filter>])` player-static ->
+ * `RestrictSpellsCastPerTurn(maxPerTurn = N, eachPlayer = <scope>)`. Only the unfiltered "any spell"
+ * shape renders — the SDK's `RestrictSpellsCastPerTurn` caps spell *count* across all spell types, so a
+ * filtered cap (a hypothetical "no more than one creature spell") would be a lossy render and declines
+ * (returns null -> SCAFFOLD). The count must be a top-level Integer.
+ */
+private fun EmitCtx.spellCountRestrictionAbility(effect: JsonObject, eachPlayer: Boolean): Dsl? {
+    val a = effect["args"].asArr ?: return null
+    val count = (a.getOrNull(0) as? JsonObject)?.takeIf { it.strField("_GameNumber") == "Integer" }?.field("args").asInt()
+        ?: return null
+    val spells = a.getOrNull(1) as? JsonObject ?: return null
+    if (!jsonContains(spells, "_Spells", "AnySpell")) return null
+    val parts = mutableListOf(arg("maxPerTurn", "$count"))
+    if (eachPlayer) parts.add(arg("eachPlayer", "true"))
+    return Call("RestrictSpellsCastPerTurn", parts)
 }
 
 /**

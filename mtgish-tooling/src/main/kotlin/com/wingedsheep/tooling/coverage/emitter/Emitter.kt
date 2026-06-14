@@ -170,6 +170,7 @@ object Emitter {
                 rname == "PermanentRuleEffect" -> block = ctx.staticBlock(rule)
                 rname == "If" -> block = ctx.ifRuleBlock(rule)
                 rname == "PlayerEffect" -> block = ctx.playerEffectBlock(rule)
+                rname == "EachPlayerEffect" -> block = ctx.eachPlayerEffectBlock(rule)
                 rname == "EnchantPermanent" -> block = ctx.auraTargetBlock(rule)
                 rname == "PermanentLayerEffect" -> block = ctx.staticHostBlock(rule)
                 rname == "AsPermanentEnters" -> block = ctx.asEntersBlock(rule)

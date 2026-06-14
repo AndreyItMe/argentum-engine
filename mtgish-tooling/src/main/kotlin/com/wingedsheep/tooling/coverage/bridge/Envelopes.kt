@@ -49,6 +49,12 @@ internal fun BridgeBuilder.structuralEnvelopes() {
     envelope("EachPlayerActions", "envelope: APNAP each-player (plural)")
     envelope("HavePlayerTakeAction", "envelope: delegated action")
 
+    // A global, every-player continuous static ("Each player can't cast more than one spell each
+    // turn", High Noon). The real capability is the nested _PlayerEffect; the emitter's
+    // eachPlayerEffectBlock renders the shapes it can express exactly (the spell-count cap ->
+    // `RestrictSpellsCastPerTurn(eachPlayer = true)`) and scaffolds the rest.
+    envelope("EachPlayerEffect", "envelope: global every-player static (capability is the _PlayerEffect)")
+
     // Aura / host-permanent continuous effects. `EnchantPermanent` declares the aura's enchant
     // restriction — a universal capability (the engine supports auras). `PermanentLayerEffect` wraps
     // the host's static continuous effect, whose real capability is the nested _StaticLayerEffect.
