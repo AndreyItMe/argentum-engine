@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 18 / 85
+**Implemented:** 19 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -88,7 +88,7 @@
 - [x] Mightstone
 - [x] Millstone
 - [ ] Mishra's War Machine
-- [ ] Obelisk of Undoing
+- [x] Obelisk of Undoing
 - [x] Onulet
 - [x] Ornithopter
 - [ ] Primal Clay

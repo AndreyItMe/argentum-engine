@@ -425,6 +425,71 @@
     "colorIdentityOverride": []
 }
 
+// Obelisk of Undoing
+{
+    "name": "Obelisk of Undoing",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "{6}, {T}: Return target permanent you both own and control to your hand.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{6}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target permanent you both own and control"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsPermanent"
+                                ],
+                                "controllerPredicate": {
+                                    "type": "ControllerAnd",
+                                    "predicates": [
+                                        "OwnedByYou",
+                                        "ControlledByYou"
+                                    ]
+                                }
+                            }
+                        },
+                        "id": "target permanent you both own and control"
+                    }
+                ],
+                "descriptionOverride": "{6}, {T}: Return target permanent you both own and control to your hand."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "58",
+        "rarity": "RARE",
+        "artist": "Tom Wänerstrand",
+        "flavorText": "The Battle of Tomakul taught Urza not to rely on fickle reinforcements.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/b/1ba61ccd-4429-4f7c-b9f3-30867878d88e.jpg?1562900796"
+    },
+    "colorIdentityOverride": []
+}
+
 // Onulet
 {
     "name": "Onulet",
