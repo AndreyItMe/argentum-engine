@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 12 / 85
+**Implemented:** 13 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -108,7 +108,7 @@
 - [ ] Urza's Chalice
 - [ ] Urza's Miter
 - [x] Wall of Spears
-- [ ] Weakstone
+- [x] Weakstone
 - [x] Yotian Soldier
 
 ### Lands

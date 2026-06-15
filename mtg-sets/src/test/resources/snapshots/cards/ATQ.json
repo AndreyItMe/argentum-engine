@@ -483,6 +483,34 @@
     "colorIdentityOverride": []
 }
 
+// Weakstone
+{
+    "name": "Weakstone",
+    "manaCost": "{4}",
+    "typeLine": "Artifact",
+    "oracleText": "Attacking creatures get -1/-0.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": -1,
+                "toughnessBonus": 0,
+                "filter": {
+                    "baseFilter": "creature attacking"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "78",
+        "rarity": "UNCOMMON",
+        "artist": "Justin Hampton",
+        "flavorText": "During the brothers' childhood, Tocasia took them to explore the sacred cave of Koilos. There, in the Hall of Tagsin, Mishra discovered the mysterious weakstone.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/6/46adf48f-99d2-440e-9129-794584c1ea21.jpg?1562909619"
+    },
+    "colorIdentityOverride": []
+}
+
 // Yotian Soldier
 {
     "name": "Yotian Soldier",
