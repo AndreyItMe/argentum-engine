@@ -65,7 +65,7 @@ export function useDraggable(): DraggableResult {
   }, [onPointerMove, onPointerUp])
 
   const style: CSSProperties = pos
-    ? { left: pos.left, top: pos.top, right: 'auto', transform: 'none' }
+    ? { position: 'fixed', left: pos.left, top: pos.top, right: 'auto', transform: 'none' }
     : {}
 
   return { ref, handleProps: { onPointerDown }, style, isDragging }
