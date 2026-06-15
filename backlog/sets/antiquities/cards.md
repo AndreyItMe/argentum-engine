@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 13 / 85
+**Implemented:** 14 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -86,7 +86,7 @@
 - [ ] Ivory Tower
 - [x] Jalum Tome
 - [x] Mightstone
-- [ ] Millstone
+- [x] Millstone
 - [ ] Mishra's War Machine
 - [ ] Obelisk of Undoing
 - [x] Onulet
