@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 23 / 85
+**Implemented:** 24 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -34,7 +34,7 @@
 - [ ] Energy Flux
 - [ ] Hurkyl's Recall
 - [ ] Power Artifact
-- [ ] Reconstruction
+- [x] Reconstruction
 - [x] Sage of Lat-Nam
 - [ ] Transmute Artifact
 

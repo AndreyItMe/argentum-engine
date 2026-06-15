@@ -766,6 +766,43 @@
     "colorIdentityOverride": []
 }
 
+// Reconstruction
+{
+    "name": "Reconstruction",
+    "manaCost": "{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Return target artifact card from your graveyard to your hand.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target artifact card from your graveyard"
+            },
+            "destination": "Hand"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "artifact own:you",
+                    "zone": "Graveyard"
+                },
+                "id": "target artifact card from your graveyard"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "12",
+        "artist": "Anson Maddocks",
+        "flavorText": "Tedious research made the Sages of the College of Lat-Nam adept in repairing broken artifacts.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1aa2d27b-cc25-4baa-86f4-4db45b30e2a4.jpg?1592254833"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Sage of Lat-Nam
 {
     "name": "Sage of Lat-Nam",
