@@ -5718,6 +5718,187 @@
     ]
 }
 
+// Fortune, Loyal Steed
+{
+    "name": "Fortune, Loyal Steed",
+    "manaCost": "{2}{W}",
+    "typeLine": "Legendary Creature — Beast Mount",
+    "oracleText": "When Fortune enters, scry 2.\nWhenever Fortune attacks while saddled, at end of combat, exile it and up to one creature that saddled it this turn, then return those cards to the battlefield under their owner's control.\nSaddle 1 (Tap any number of other creatures you control with total power 1 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "keywords": [
+        "SADDLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "SADDLE",
+            "n": 1
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "scried"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "scried",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeSelected": "toBottom",
+                            "storeRemainder": "toTop",
+                            "selectedLabel": "Put on bottom",
+                            "remainderLabel": "Put on top"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toBottom",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Bottom"
+                            }
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toTop",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Top"
+                            },
+                            "order": "ControllerChooses"
+                        },
+                        "EmitScriedEvent"
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreateDelayedTrigger",
+                    "step": "END_COMBAT",
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": "CreaturesThatSaddledSource",
+                                "storeAs": "gathered0"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "gathered0",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "selected1",
+                                "prompt": "Choose up to one creature that saddled Fortune this turn to exile with it",
+                                "useTargetingUI": true
+                            },
+                            {
+                                "type": "GatherCards",
+                                "source": "Self",
+                                "storeAs": "gathered2"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "gathered2",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile"
+                                },
+                                "linkToSource": true
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "selected1",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile"
+                                },
+                                "linkToSource": true
+                            },
+                            {
+                                "type": "GatherCards",
+                                "source": "FromLinkedExile",
+                                "storeAs": "gathered5"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "gathered5",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield"
+                                },
+                                "underOwnersControl": true
+                            }
+                        ]
+                    }
+                },
+                "triggerCondition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "IsSaddled"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "12",
+        "rarity": "RARE",
+        "artist": "Artur Nakhodkin",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/6/069294a8-e65a-47af-942f-7e99d18658f2.jpg?1712355270",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "If Fortune leaves the battlefield before its triggered ability resolves at end of combat, the creature that saddled it (if any) is still exiled and returned."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "The exiled cards return to the battlefield as new objects with no relation to their previous existence. Any Auras or Equipment that were attached to them are put into their owners' graveyards."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Freestrider Commando
 {
     "name": "Freestrider Commando",
@@ -17384,6 +17565,125 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Trash the Town
+{
+    "name": "Trash the Town",
+    "manaCost": "{G}",
+    "typeLine": "Instant",
+    "oracleText": "Spree (Choose one or more additional costs.)\n+ {2} — Put two +1/+1 counters on target creature.\n+ {1} — Target creature gains trample until end of turn.\n+ {1} — Until end of turn, target creature gains \"Whenever this creature deals combat damage to a player, draw two cards.\"",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 2,
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "+ {2} — Put two +1/+1 counters on target creature.",
+                    "additionalManaCost": "{2}"
+                },
+                {
+                    "effect": {
+                        "type": "GrantKeyword",
+                        "keyword": "TRAMPLE",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "+ {1} — Target creature gains trample until end of turn.",
+                    "additionalManaCost": "{1}"
+                },
+                {
+                    "effect": {
+                        "type": "GrantTriggeredAbility",
+                        "ability": {
+                            "id": "ability_1",
+                            "trigger": {
+                                "type": "DealsDamageEvent",
+                                "damageType": "DamageCombat",
+                                "recipient": "AnyPlayer"
+                            },
+                            "effect": {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            }
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "+ {1} — Until end of turn, target creature gains \"Whenever this creature deals combat damage to a player, draw two cards.\"",
+                    "additionalManaCost": "{1}"
+                }
+            ],
+            "chooseCount": 3,
+            "minChooseCount": 1
+        }
+    },
+    "metadata": {
+        "collectorNumber": "186",
+        "rarity": "UNCOMMON",
+        "artist": "David Auden Nash",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/d/eda59f99-1d6d-4051-ac89-b7cbfa19262e.jpg?1712860614",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "You must choose at least one of the listed modes and pay its associated additional cost in order to cast a spell with spree."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You can't choose the same mode more than once."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Each chosen mode requires a target. You may choose the same creature as the target for multiple modes."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "The mana value of a spell with spree is determined only by its mana cost. It doesn't matter which modes you choose or which additional costs you pay."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 

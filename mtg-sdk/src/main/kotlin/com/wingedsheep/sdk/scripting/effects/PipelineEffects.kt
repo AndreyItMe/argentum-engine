@@ -215,6 +215,22 @@ sealed interface CardSource {
     data object LastKnownCombatPairedWithSource : CardSource {
         override val description: String = "creatures blocking or blocked by it"
     }
+
+    /**
+     * The creatures that saddled the effect's source this turn (CR 702.171c) — the union of every
+     * creature tapped to pay a Saddle ability's cost on this Mount, read off the source's
+     * `CrewSaddleContributorsComponent`. Restricted to creatures still on the battlefield, since a
+     * saddler that has since left can't be affected (the component records last-known crew/saddle
+     * contributors and is cleared at cleanup).
+     *
+     * Backs "exile … up to one creature that saddled it this turn" (Fortune, Loyal Steed): gather
+     * the saddlers, then [SelectFromCollectionEffect] picks up to one of them.
+     */
+    @SerialName("CreaturesThatSaddledSource")
+    @Serializable
+    data object CreaturesThatSaddledSource : CardSource {
+        override val description: String = "creatures that saddled it this turn"
+    }
 }
 
 /**

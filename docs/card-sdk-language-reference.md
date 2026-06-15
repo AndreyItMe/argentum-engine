@@ -1093,6 +1093,21 @@ effect = Effects.Pipeline {
 }
 ```
 
+**Special `gather` sources** (component-backed, no zone scan):
+
+- `CardSource.Self` — the ability's own source card, in whatever zone it currently sits.
+- `CardSource.TappedAsCost` — the permanents tapped to pay the activation cost.
+- `CardSource.ChosenTargets` — the spell/ability's already-resolved targets.
+- `CardSource.FromLinkedExile(count?)` — the cards in the source's linked-exile pile.
+- `CardSource.LastKnownCombatPairedWithSource` — creatures blocking/blocked by the source at the
+  moment it last left the battlefield (Abu Ja'far).
+- `CardSource.CreaturesThatSaddledSource` — the creatures that saddled the source Mount this turn
+  (CR 702.171c), read off its crew/saddle-contributors record and restricted to creatures still on
+  the battlefield. Backs "exile it and up to one creature that saddled it this turn, then return
+  those cards" (Fortune, Loyal Steed): `gather(CreaturesThatSaddledSource)` → `chooseUpTo(1)` →
+  exile linked to the Mount alongside `CardSource.Self` → `gather(FromLinkedExile())` → return
+  under owners' control.
+
 A card needing a genuinely **new step semantic** (a new capture kind, a new decision shape) still
 adds the `Effect` + executor first (`add-feature`); the builder only composes the existing
 vocabulary. The JSON/custom-card authoring path is unchanged — raw step types stay `@Serializable`

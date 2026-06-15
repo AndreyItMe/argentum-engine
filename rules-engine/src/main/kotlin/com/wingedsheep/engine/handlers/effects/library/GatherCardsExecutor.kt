@@ -20,6 +20,7 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
+import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.stack.entityIds
 import kotlin.reflect.KClass
@@ -200,6 +201,20 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 val battlefield = state.getBattlefield().toSet()
                 (context.triggerLastKnownBlockingOrBlockedByIds ?: emptyList())
                     .filter { it in battlefield }
+            }
+
+            is CardSource.CreaturesThatSaddledSource -> {
+                // CR 702.171c — the creatures tapped to saddle this Mount this turn, recorded on
+                // the source's CrewSaddleContributorsComponent. Restrict to creatures still on the
+                // battlefield; one that already left can't be exiled/returned.
+                val sourceId = context.sourceId
+                    ?: return EffectResult.error(state, "No source entity for CreaturesThatSaddledSource")
+                val battlefield = state.getBattlefield().toSet()
+                state.getEntity(sourceId)
+                    ?.get<CrewSaddleContributorsComponent>()
+                    ?.creatureIds
+                    ?.filter { it in battlefield }
+                    ?: emptyList()
             }
         }
 
