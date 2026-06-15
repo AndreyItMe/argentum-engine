@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 26 / 85
+**Implemented:** 27 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -49,7 +49,7 @@
 
 ### Red
 - [x] Artifact Blast
-- [ ] Atog
+- [x] Atog
 - [ ] Detonate
 - [ ] Dwarven Weaponsmith
 - [ ] Goblin Artisans

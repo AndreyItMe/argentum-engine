@@ -230,6 +230,53 @@
     "colorIdentityOverride": []
 }
 
+// Atog
+{
+    "name": "Atog",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Atog",
+    "oracleText": "Sacrifice an artifact: This creature gets +2/+2 until end of turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "artifact"
+                    }
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": "Self"
+                },
+                "descriptionOverride": "Sacrifice an artifact: This creature gets +2/+2 until end of turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "23",
+        "artist": "Jesper Myrfors",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/2/2249fc40-4412-48fd-800a-7ea3678aee3f.jpg?1562902227"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Candelabra of Tawnos
 {
     "name": "Candelabra of Tawnos",
