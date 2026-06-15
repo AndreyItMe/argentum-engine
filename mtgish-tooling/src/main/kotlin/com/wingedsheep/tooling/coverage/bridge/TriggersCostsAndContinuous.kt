@@ -5,6 +5,11 @@ package com.wingedsheep.tooling.coverage.bridge
 internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // Triggers — validated by a Triggers.* facade scan in a later phase.
     supported("WhenAPermanentEntersTheBattlefield", "trigger: ETB (Triggers.* scan validates in P1)")
+    // Batched ETB — "whenever one or more permanents [matching a filter] enter" fires once per event
+    // batch (Triggers.OneOrMorePermanentsEnter / OneOrMoreOpponentPermanentsEnter; controller scope
+    // you-control by default or .opponentControls(); the matching batch members are exposed to the
+    // payoff via the trigger.captured pipeline collection — Kambal, Profiteering Mayor).
+    supported("WhenAnyNumberOfPermanentsEnterTheBattlefield", "trigger: one or more permanents enter, batched (Triggers.OneOrMorePermanentsEnter / OneOrMoreOpponentPermanentsEnter)")
     supported("WhenACreatureOrPlaneswalkerDies", "trigger: dies")
     supported("WhenACreatureAttacks", "trigger: attacks")
     // "Whenever you attack with one or more creatures [matching a filter]" — the batched declare-attackers

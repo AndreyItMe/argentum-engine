@@ -566,6 +566,7 @@ class TriggerProcessor(
                 triggerModesChosenCount = trigger.triggerContext.modesChosenCount,
                 triggerScryCount = trigger.triggerContext.scryCount,
                 triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount,
+                triggerRecipientToughness = trigger.triggerContext.recipientToughnessAtDamage,
                 triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell
             )
             ability.effect.runtimeDescription { amount -> evaluator.evaluate(state, amount, context) }
@@ -614,6 +615,7 @@ class TriggerProcessor(
             enchantedCreatureLastKnownPower = trigger.triggerContext.enchantedCreatureLastKnownPower,
             triggerScryCount = trigger.triggerContext.scryCount,
             triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount,
+            triggerRecipientToughness = trigger.triggerContext.recipientToughnessAtDamage,
             triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell
         )
 
@@ -668,7 +670,9 @@ class TriggerProcessor(
             enchantedCreatureLastKnownPower = trigger.triggerContext.enchantedCreatureLastKnownPower,
             triggerScryCount = trigger.triggerContext.scryCount,
             triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount,
-            triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell
+            triggerRecipientToughness = trigger.triggerContext.recipientToughnessAtDamage,
+            triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell,
+            capturedEntityIds = trigger.triggerContext.capturedEntityIds ?: emptyList()
         )
 
         return stackResolver.putTriggeredAbility(

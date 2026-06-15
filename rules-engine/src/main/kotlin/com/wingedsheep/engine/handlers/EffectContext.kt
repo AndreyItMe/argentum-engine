@@ -188,6 +188,12 @@ data class EffectContext(
      * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT` (Fall of Cair Andros).
      */
     val triggerExcessDamageAmount: Int? = null,
+    /**
+     * The damage recipient creature's toughness at the instant the triggering damage was dealt
+     * (CR 603.10 LKI). Read by `ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS` (Taii Wakeen,
+     * Perfect Shot — "damage equal to that creature's toughness"). `null` for non-creature recipients.
+     */
+    val triggerRecipientToughness: Int? = null,
     // --- Choice state ---
     /** Color chosen for "add one mana of any color" abilities */
     val manaColorChoice: Color? = null,

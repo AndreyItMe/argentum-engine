@@ -104,6 +104,13 @@ enum class ContextPropertyKey(val description: String) {
     /** The amount of damage in the current trigger payload (Tephraderm, Wall of Hope, …). */
     TRIGGER_DAMAGE_AMOUNT("the damage dealt"),
     /**
+     * The damage recipient creature's toughness at the instant the triggering damage was dealt
+     * (last-known information — the creature may have died from the same damage). Read by payoffs
+     * keyed on "damage equal to that creature's toughness" (Taii Wakeen, Perfect Shot). `null`/0
+     * when the recipient was not a creature.
+     */
+    TRIGGER_RECIPIENT_TOUGHNESS("that creature's toughness"),
+    /**
      * The amount of damage prevented by a prevention shield's `onPrevented` reaction context
      * (New Way Forward, Deflecting Palm) — "that much" / "that many". Shares the trigger-amount
      * slot in [com.wingedsheep.engine.handlers.EffectContext].

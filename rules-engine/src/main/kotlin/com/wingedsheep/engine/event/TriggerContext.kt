@@ -97,7 +97,25 @@ data class TriggerContext(
      * Orcs X, where X is the excess damage" — can read it via
      * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`. `null` for non-damage triggers.
      */
-    val excessDamageAmount: Int? = null
+    val excessDamageAmount: Int? = null,
+    /**
+     * The damage recipient creature's toughness at the instant the triggering damage was dealt
+     * (CR 603.10 last-known information). Carried from [DamageDealtEvent.targetToughnessAtDamage]
+     * so "damage equal to that creature's toughness" payoffs (Taii Wakeen, Perfect Shot) can read
+     * it via `ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS` even after the creature died from the
+     * same damage. `null` for non-creature recipients.
+     */
+    val recipientToughnessAtDamage: Int? = null,
+    /**
+     * The entities a batch trigger captured as "the ones that caused it to fire" — e.g. every
+     * matching permanent in a [com.wingedsheep.sdk.scripting.EventPattern.PermanentsEnteredEvent]
+     * batch. Seeded into the resolving ability's pipeline under
+     * [com.wingedsheep.engine.handlers.PipelineState.TRIGGER_CAPTURED_COLLECTION] so a
+     * `ForEachInCollectionEffect` payoff ("for each of them, create a tapped copy of it" —
+     * Kambal, Profiteering Mayor) can iterate them. `null` / empty for triggers that capture a
+     * single entity via [triggeringEntityId] instead.
+     */
+    val capturedEntityIds: List<EntityId>? = null
 ) {
     companion object {
         fun fromEvent(event: com.wingedsheep.engine.core.GameEvent): TriggerContext {
@@ -120,7 +138,8 @@ data class TriggerContext(
                 is DamageDealtEvent -> TriggerContext(
                     triggeringEntityId = event.targetId,
                     damageAmount = event.amount,
-                    excessDamageAmount = event.excessAmount.takeIf { it > 0 }
+                    excessDamageAmount = event.excessAmount.takeIf { it > 0 },
+                    recipientToughnessAtDamage = event.targetToughnessAtDamage
                 )
                 is com.wingedsheep.engine.core.DamagePreventedEvent -> TriggerContext(
                     // The prevented source — so "deal that much to that source's controller" resolves

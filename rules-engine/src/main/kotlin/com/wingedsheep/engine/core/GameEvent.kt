@@ -165,7 +165,15 @@ data class DamageDealtEvent(
      * `DealsDamageEvent(requireExcess = true)` and by payoffs that read
      * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`.
      */
-    val excessAmount: Int = 0
+    val excessAmount: Int = 0,
+    /**
+     * The recipient creature's toughness at the instant the damage was dealt (CR 603.10 last-known
+     * information), captured before state-based actions can move a lethally-damaged creature to the
+     * graveyard. Read by triggers keyed on "damage equal to that creature's toughness" (Taii Wakeen,
+     * Perfect Shot) via `ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS`. `null` for players,
+     * planeswalkers, and events emitted before this was captured.
+     */
+    val targetToughnessAtDamage: Int? = null
 ) : GameEvent
 
 /**

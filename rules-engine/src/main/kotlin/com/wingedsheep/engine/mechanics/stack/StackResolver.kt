@@ -1896,13 +1896,23 @@ class StackResolver(
             triggerModesChosenCount = abilityComponent.triggerModesChosenCount,
             triggerScryCount = abilityComponent.triggerScryCount,
             triggerExcessDamageAmount = abilityComponent.triggerExcessDamageAmount,
+            triggerRecipientToughness = abilityComponent.triggerRecipientToughness,
             triggerManaSpentOnTriggeringSpell = abilityComponent.triggerManaSpentOnTriggeringSpell,
             xValue = abilityComponent.xValue,
             damageDistribution = abilityComponent.damageDistribution,
             chosenModes = abilityComponent.chosenModes,
             modeTargetsOrdered = abilityComponent.modeTargetsOrdered,
             modeTargetRequirements = abilityComponent.modeTargetRequirements,
-            pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(targetReqs, resolvedTargets2))
+            pipeline = PipelineState(
+                namedTargets = EffectContext.buildNamedTargets(targetReqs, resolvedTargets2),
+                // Expose a batch trigger's captured permanents (the matching members of a
+                // PermanentsEnteredEvent batch) so a ForEachInCollectionEffect payoff can iterate
+                // them — "for each of them, create a tapped copy of it" (Kambal). The copy executor
+                // reads each entity at resolution, so any that left the battlefield meanwhile no-op.
+                storedCollections = if (abilityComponent.capturedEntityIds.isNotEmpty()) {
+                    mapOf(PipelineState.TRIGGER_CAPTURED_COLLECTION to abilityComponent.capturedEntityIds)
+                } else emptyMap()
+            )
         )
 
         val effectResult = effectHandler.execute(state, abilityComponent.effect, context)

@@ -750,10 +750,21 @@ object CardLinter {
             read.space == Space.CHOSEN && read.name == "chosenCreatureType" &&
                 "CREATURE_TYPE" in slots.declared
 
+        /**
+         * Collections the engine seeds for the ability before its effect runs, so a read with no
+         * in-card writer is correct, not a silent no-op. `trigger.captured` is the batch-trigger
+         * capture (the matching members of a `PermanentsEnteredEvent` batch — Kambal); the engine
+         * populates it when the triggered ability resolves.
+         */
+        fun engineSeeded(read: Access): Boolean =
+            read.space == Space.COLLECTION &&
+                read.name == com.wingedsheep.sdk.scripting.effects.IterationSpace.TRIGGER_CAPTURED_COLLECTION
+
         for (scope in state.scopes) {
             if (scope.collectionParent != null) continue // merged into parent already
             for (read in scope.reads) {
                 if (satisfiedBySlot(read)) continue
+                if (engineSeeded(read)) continue
                 val inScope = scope.writes.filter { matches(read, it) }
                 when {
                     inScope.any { it.pos <= read.pos } -> {}

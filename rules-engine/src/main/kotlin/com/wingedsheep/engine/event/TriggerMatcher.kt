@@ -1192,6 +1192,7 @@ class TriggerMatcher(
                 triggerLastKnownToughness = trigger.triggerContext.lastKnownToughness,
                 triggerScryCount = trigger.triggerContext.scryCount,
                 triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount,
+                triggerRecipientToughness = trigger.triggerContext.recipientToughnessAtDamage,
                 triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell
             )
             conditionEvaluator.evaluate(state, condition, context)

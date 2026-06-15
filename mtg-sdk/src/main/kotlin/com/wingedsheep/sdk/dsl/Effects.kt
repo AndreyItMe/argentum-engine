@@ -224,6 +224,16 @@ object Effects {
         DealDamageEffect(DynamicAmount.XValue, target)
 
     /**
+     * Install a turn-duration replacement that adds [bonus] to every noncombat damage instance
+     * a source you control would deal to any permanent or player this turn (CR 616).
+     * Combat damage is unaffected. Multiple installs stack additively.
+     *
+     * Taii Wakeen, Perfect Shot: `AmplifyNoncombatDamageThisTurn(DynamicAmount.XValue)`.
+     */
+    fun AmplifyNoncombatDamageThisTurn(bonus: DynamicAmount): Effect =
+        com.wingedsheep.sdk.scripting.effects.AmplifyNoncombatDamageThisTurnEffect(bonus)
+
+    /**
      * Two creatures fight — each deals damage equal to its power to the other.
      */
     fun Fight(target1: EffectTarget, target2: EffectTarget): Effect =

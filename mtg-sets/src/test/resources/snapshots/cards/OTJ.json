@@ -8366,6 +8366,102 @@
     ]
 }
 
+// Kambal, Profiteering Mayor
+{
+    "name": "Kambal, Profiteering Mayor",
+    "manaCost": "{1}{W}{B}",
+    "typeLine": "Legendary Creature — Human Advisor",
+    "oracleText": "Whenever one or more tokens your opponents control enter, for each of them, create a tapped token that's a copy of it. This ability triggers only once each turn.\nWhenever one or more tokens you control enter, each opponent loses 1 life and you gain 1 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "PermanentsEnteredEvent",
+                    "filter": "token ctrl:opponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Collection",
+                        "collection": "trigger.captured"
+                    },
+                    "body": {
+                        "type": "CreateTokenCopyOfTarget",
+                        "target": "Self",
+                        "tapped": true
+                    }
+                },
+                "oncePerTurn": true
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "PermanentsEnteredEvent",
+                    "filter": "token"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "211",
+        "rarity": "RARE",
+        "artist": "Andreas Zafiratos",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d53a775d-5898-41a8-b404-9b7d4721c6ba.jpg?1712356126",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "Each of the new tokens copies the original characteristics of the appropriate token as stated by the effect that created that token and nothing else (unless that creature is copying something else). It doesn't copy whether the opponent's token is tapped or untapped, whether it has any counters on it or Auras and Equipment attached to it, or any non-copy effects that have changed its power, toughness, types, color, and so on."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "If the copied token has {X} in its mana cost, X is 0. (Most tokens don't have a mana cost unless they're copying something else.)"
+            },
+            {
+                "date": "2024-04-12",
+                "text": "If the copied token is copying something else, then the new token enters the battlefield as whatever that token copied."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Any enters-the-battlefield abilities of the copied token will trigger when the token enters the battlefield. Any \"as [this permanent] enters the battlefield\" or \"[this permanent] enters the battlefield with\" abilities of the copied token will also work."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLACK"
+    ]
+}
+
 // Lassoed by the Law
 {
     "name": "Lassoed by the Law",
@@ -9553,6 +9649,61 @@
         "imageUri": "https://cards.scryfall.io/normal/front/c/3/c3d2e816-c06d-4c5d-98fe-c350d8cfab27.jpg?1712356348"
     },
     "colorIdentityOverride": []
+}
+
+// Miriam, Herd Whisperer
+{
+    "name": "Miriam, Herd Whisperer",
+    "manaCost": "{G}{W}",
+    "typeLine": "Legendary Creature — Human Druid",
+    "oracleText": "During your turn, Mounts and Vehicles you control have hexproof.\nWhenever a Mount or Vehicle you control attacks, put a +1/+1 counter on it.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "AttackEvent",
+                    "filter": "Mount|Vehicle ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "TriggeringEntity"
+                },
+                "descriptionOverride": "Whenever a Mount or Vehicle you control attacks, put a +1/+1 counter on it."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "HEXPROOF",
+                    "filter": {
+                        "baseFilter": "Mount|Vehicle ctrl:you"
+                    }
+                },
+                "condition": "IsYourTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "221",
+        "rarity": "UNCOMMON",
+        "artist": "Viko Menezes",
+        "flavorText": "\"Anything willing to bear your weight and save your feet a trip across the hot sands deserves respect. Show some.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/f/bfa7750a-7c32-4413-b762-62e24d992c6b.jpg?1712356167"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "GREEN"
+    ]
 }
 
 // Mobile Homestead
@@ -11792,6 +11943,62 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Railway Brawler
+{
+    "name": "Railway Brawler",
+    "manaCost": "{3}{G}{G}",
+    "typeLine": "Creature — Rhino Warrior",
+    "oracleText": "Reach, trample\nWhenever another creature you control enters, put X +1/+1 counters on it, where X is its power.\nPlot {3}{G} (You may pay {3}{G} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "REACH",
+        "TRAMPLE",
+        "PLOT"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Plot",
+            "cost": "{3}{G}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "AddDynamicCounters",
+                    "counterType": "+1/+1",
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Triggering",
+                        "numericProperty": "Power"
+                    },
+                    "target": "TriggeringEntity"
+                },
+                "descriptionOverride": "Whenever another creature you control enters, put X +1/+1 counters on it, where X is its power."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "175",
+        "rarity": "MYTHIC",
+        "artist": "Kevin Sidharta",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/e/9ec1f76f-f21d-4f06-8c02-be6745183348.jpg?1712355970"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
@@ -15629,6 +15836,85 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Taii Wakeen, Perfect Shot
+{
+    "name": "Taii Wakeen, Perfect Shot",
+    "manaCost": "{R}{W}",
+    "typeLine": "Legendary Creature — Human Mercenary",
+    "oracleText": "Whenever a source you control deals noncombat damage to a creature equal to that creature's toughness, draw a card.\n{X}, {T}: If a source you control would deal noncombat damage to a permanent or player this turn, it deals that much damage plus X instead.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageNonCombat",
+                    "recipient": "AnyCreature",
+                    "sourceFilter": "ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_DAMAGE_AMOUNT"
+                    },
+                    "operator": "EQ",
+                    "right": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_RECIPIENT_TOUGHNESS"
+                    }
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{X}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "AmplifyNoncombatDamageThisTurn",
+                    "bonus": "XValue"
+                },
+                "descriptionOverride": "{X}, {T}: If a source you control would deal noncombat damage to a permanent or player this turn, it deals that much damage plus X instead."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "234",
+        "rarity": "RARE",
+        "artist": "David Auden Nash",
+        "flavorText": "\"You'd best keep yourself out of my sights.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/6/1643af0b-fcbf-4636-8c50-77ec77eaa34d.jpg?1712356219"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
     ]
 }
 

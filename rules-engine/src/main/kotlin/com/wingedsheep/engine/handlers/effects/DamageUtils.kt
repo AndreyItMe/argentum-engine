@@ -313,7 +313,11 @@ object DamageUtils {
         // battlefield, so recipient-based triggers match even if it dies to this damage (LKI).
         val targetControllerId = projected.getController(targetId)
         val targetWasCreature = projected.isCreature(targetId)
-        events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, false, sourceName = sourceName, targetName = targetName, targetIsPlayer = targetIsPlayer, targetWasFaceDown = targetIsFaceDown, targetControllerId = targetControllerId, targetWasCreature = targetWasCreature, excessAmount = creatureExcessDamage))
+        // Capture the recipient creature's toughness as it last existed (CR 603.10) — read from the
+        // ORIGINAL state's projection, before this damage marked the creature / SBAs could move it.
+        // Read by "damage equal to that creature's toughness" triggers (Taii Wakeen).
+        val targetToughnessAtDamage = if (targetWasCreature) projected.getToughness(targetId) else null
+        events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, false, sourceName = sourceName, targetName = targetName, targetIsPlayer = targetIsPlayer, targetWasFaceDown = targetIsFaceDown, targetControllerId = targetControllerId, targetWasCreature = targetWasCreature, excessAmount = creatureExcessDamage, targetToughnessAtDamage = targetToughnessAtDamage))
 
         // Lifelink: if the source has lifelink, its controller gains life equal to the damage dealt
         // (CR 120.3f / 702.15b). The lifelink damage causes a life-gain event, so ModifyLifeGain
@@ -1235,6 +1239,23 @@ object DamageUtils {
                             amplifiedAmount += ability.bonusAmount
                         }
                     }
+                }
+            }
+        }
+
+        // Turn-duration noncombat-damage amplification (Taii Wakeen, Perfect Shot): every source
+        // the effect's controller controls deals +bonus noncombat damage to any permanent or
+        // player this turn (CR 616). No opponent restriction — applies to the controller's own
+        // permanents too. Multiple installs stack additively.
+        if (sourceId != null && !isCombatDamage) {
+            val sourceController = projected.getController(sourceId)
+                ?: state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+            if (sourceController != null) {
+                for (floating in state.floatingEffects) {
+                    val mod = floating.effect.modification
+                    if (mod !is com.wingedsheep.engine.mechanics.layers.SerializableModification.AmplifyNoncombatDamage) continue
+                    if (floating.controllerId != sourceController) continue
+                    amplifiedAmount += mod.bonus
                 }
             }
         }

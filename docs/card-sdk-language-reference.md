@@ -278,6 +278,13 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `DealDamage(amount, target)` — deal fixed/dynamic damage.
 - `DealXDamage(target)` — deal X damage (spell's X).
+- `AmplifyNoncombatDamageThisTurn(bonus)` — install an until-end-of-turn replacement (CR 616): every
+  source you control deals `bonus` *additional* noncombat damage to any permanent or player this turn.
+  Combat damage is unaffected; no opponent restriction. `bonus` (a `DynamicAmount`) is resolved once at
+  resolution and baked in (typically `DynamicAmount.XValue` from an `{X}` cost); multiple installs stack
+  additively. Read at damage time by the engine's static-amplification path, then cleaned up at end of
+  turn. Distinct from the opponent-only, permanent-tied `NoncombatDamageBonus` static. Taii Wakeen,
+  Perfect Shot: `{X}, {T}: … it deals that much damage plus X instead.`
 - `Fight(target1, target2)` — two creatures each deal damage equal to their power to each other (CR 701.12).
 - `DividedDamageEffect(totalDamage, minTargets, maxTargets, dynamicTotal?)` — "N damage divided as you
   choose among target ..." The targets come from the ability's target requirement; pair with
@@ -1623,7 +1630,7 @@ Named sugar for the common cases; reach for the factories for any other combinat
 
 **Factories** (axes: `damageType` × `recipient` × `sourceFilter` × `binding` for outgoing; `source` × `binding` for incoming):
 
-- `dealsDamage(damageType?, recipient?, sourceFilter?, binding?, requireExcess?)` — outgoing-damage trigger. Pick `DamageType.{Any,Combat,NonCombat}`, `RecipientFilter.{Any,AnyPlayer,AnyPlayerOrPlaneswalker,AnyCreature,…}`, an optional source `GameObjectFilter`, and `TriggerBinding.{SELF,ANY,ATTACHED}`. Covers "deals combat damage to a player or planeswalker", "creature you control deals combat damage to a player" (`binding = ANY` + `sourceFilter = Creature.youControl()`), "nontoken creature you control deals…" (`.nontoken()`), and "enchanted creature deals damage" (`binding = ATTACHED`). Pass `requireExcess = true` to fire only when the recipient was dealt damage past lethal (CR 120.4a) — Fall of Cair Andros' "is dealt excess noncombat damage". Read the excess via `DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT)`. **Combat caveat:** combat-damage state-based actions run *before* trigger detection, so a non-indestructible recipient that dies to the same combat-damage event has already left the battlefield when a `RecipientFilter.CreatureOpponentControls`-style filter reads its `ControllerComponent` — the filter silently fails (no last-known-info path yet). A `requireExcess = true` + `DamageType.Combat` trigger therefore only fires reliably on recipients that survive (indestructible / high toughness). Fall of Cair Andros is unaffected because it gates on `DamageType.NonCombat`, where the trigger is detected from the damage event before the kill SBA.
+- `dealsDamage(damageType?, recipient?, sourceFilter?, binding?, requireExcess?)` — outgoing-damage trigger. Pick `DamageType.{Any,Combat,NonCombat}`, `RecipientFilter.{Any,AnyPlayer,AnyPlayerOrPlaneswalker,AnyCreature,…}`, an optional source `GameObjectFilter`, and `TriggerBinding.{SELF,ANY,ATTACHED}`. Covers "deals combat damage to a player or planeswalker", "creature you control deals combat damage to a player" (`binding = ANY` + `sourceFilter = Creature.youControl()`), "nontoken creature you control deals…" (`.nontoken()`), and "enchanted creature deals damage" (`binding = ATTACHED`). Pass `requireExcess = true` to fire only when the recipient was dealt damage past lethal (CR 120.4a) — Fall of Cair Andros' "is dealt excess noncombat damage". Read the excess via `DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT)`. For a creature recipient, read its toughness *as it last existed at damage time* (CR 603.10 LKI — survives a lethal hit) via `DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS)`; pair it with a `triggerCondition` such as `Conditions.CompareAmounts(ContextProperty(TRIGGER_DAMAGE_AMOUNT), ComparisonOperator.EQ, ContextProperty(TRIGGER_RECIPIENT_TOUGHNESS))` for "deals noncombat damage to a creature equal to that creature's toughness" (Taii Wakeen, Perfect Shot). On the observer path (`binding = ANY` + `sourceFilter`), `EntityReference.Triggering` is the damage SOURCE, but the recipient toughness is still carried in this context key. **Combat caveat:** combat-damage state-based actions run *before* trigger detection, so a non-indestructible recipient that dies to the same combat-damage event has already left the battlefield when a `RecipientFilter.CreatureOpponentControls`-style filter reads its `ControllerComponent` — the filter silently fails (no last-known-info path yet). A `requireExcess = true` + `DamageType.Combat` trigger therefore only fires reliably on recipients that survive (indestructible / high toughness). Fall of Cair Andros is unaffected because it gates on `DamageType.NonCombat`, where the trigger is detected from the damage event before the kill SBA.
 - `takesDamage(source?, binding?)` — incoming-damage trigger. Pick `SourceFilter.{Any,Creature,Spell,Combat,NonCombat,HasColor(c),…}` and `TriggerBinding.{SELF,ATTACHED}`. Covers "damaged by a creature/spell" and "enchanted creature is dealt damage" (`binding = ATTACHED`, Aurification / Frozen Solid shape).
 - `becomesTapped(binding?, filter?)` — "becomes tapped" trigger. `BecomesTapped` is the SELF constant; pass `binding = TriggerBinding.ANY` with an optional `filter: GameObjectFilter` for "whenever a [filter] becomes tapped" (e.g. `GameObjectFilter.CreatureOrLand` — Temporal Distortion). The filter is matched against the tapped permanent via projected state.
 
@@ -1873,7 +1880,16 @@ Triggers.youCastSpell(
   `firstTimeEachTurn` gates it to the first counter placement on *that* permanent this turn
   (engine-tracked via `ReceivedCountersThisTurnComponent`). Triggering permanent is
   `EffectTarget.TriggeringEntity`. Stalwart Successor shape.
-- `OneOrMorePermanentsEnter(filter?)` — batched ETB trigger.
+- `OneOrMorePermanentsEnter(filter?)` — batched ETB trigger; fires at most once per event batch
+  (CR 603.3b). The `filter`'s controller predicate scopes which players' permanents count: no
+  predicate means "you control" (default), `.opponentControls()` scopes to your opponents. The
+  matching members of the batch are exposed to the payoff as the pipeline collection
+  `PipelineState.TRIGGER_CAPTURED_COLLECTION` — iterate them with
+  `ForEachInCollectionEffect(PipelineState.TRIGGER_CAPTURED_COLLECTION, body)` where the body uses
+  `EffectTarget.Self` for the current entered permanent ("for each of them, create a tapped copy of
+  it" — Kambal, Profiteering Mayor).
+- `OneOrMoreOpponentPermanentsEnter(filter?)` — same batched ETB trigger with the controller scope
+  fixed to your opponents (sugar for `OneOrMorePermanentsEnter(filter.opponentControls())`).
 - `OneOrMoreLeaveWithoutDying(...)` — batched LTB-without-dying.
 
 ### Conditional
@@ -2667,6 +2683,11 @@ answer it and would silently return `false`.
 - `OpponentControlsMoreCreatures` — an opponent outpaces you.
 - `OpponentControlsMoreLands` — an opponent has more lands.
 - `OpponentControlsLandType(type)` — opponent controls land of a type.
+- `CompareAmounts(left, operator, right)` — generic numeric comparison of two `DynamicAmount`s with a
+  `ComparisonOperator.{LT,LTE,EQ,NEQ,GT,GTE}` (composes the underlying `Compare` condition). The facade
+  entry point for any "if amount X (relation) amount Y" intervening-if or static gate. Used by Taii
+  Wakeen, Perfect Shot's intervening-if: `CompareAmounts(ContextProperty(TRIGGER_DAMAGE_AMOUNT), EQ,
+  ContextProperty(TRIGGER_RECIPIENT_TOUGHNESS))`.
 - `DifferentCounterKindsAtLeast(count, filter = Creature)` — true when `count` or more *different
   kinds* of counters are among permanents you control matching `filter` (default: creatures). A
   +1/+1 and a finality counter is two kinds; the same kind on several permanents counts once.
@@ -3216,6 +3237,11 @@ sibling effect that reads `DynamicAmount.EntityProperty(EntityReference.AmassedA
   - `TRIGGER_EXCESS_DAMAGE_AMOUNT` — damage past lethal in the trigger payload (CR 120.4a).
     Set from `DamageDealtEvent.excessAmount`; non-zero only for `DealsDamageEvent(requireExcess = true)`
     triggers — Fall of Cair Andros' "amass Orcs X, where X is the excess damage."
+  - `TRIGGER_RECIPIENT_TOUGHNESS` — the damage recipient creature's toughness at the instant the
+    triggering damage was dealt (CR 603.10 last-known information — survives a lethal hit). Set from
+    `DamageDealtEvent.targetToughnessAtDamage`; `0` for non-creature recipients. Compare against
+    `TRIGGER_DAMAGE_AMOUNT` for "deals damage to a creature equal to that creature's toughness"
+    (Taii Wakeen, Perfect Shot).
 - `AdditionalCostBlightAmount` — X paid via the Blight additional cost.
 - `ChosenNumber` — number a player chose via a Choose action.
 - `VariableReference(name)` — named count variable stored earlier in the same resolution (e.g. a pipeline `storeCountAs`).

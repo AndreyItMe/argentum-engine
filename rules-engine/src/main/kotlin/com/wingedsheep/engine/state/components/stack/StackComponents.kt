@@ -132,6 +132,9 @@ data class TriggeredAbilityOnStackComponent(
     val triggerScryCount: Int? = null,
     /** Damage past lethal dealt to the trigger's creature recipient (CR 120.4a). Null for non-damage triggers. */
     val triggerExcessDamageAmount: Int? = null,
+    /** Recipient creature's toughness when the triggering damage was dealt (CR 603.10 LKI). Read via
+     *  `ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS` (Taii Wakeen). Null for non-creature recipients. */
+    val triggerRecipientToughness: Int? = null,
     /** Total mana spent to cast the spell that fired this trigger (Aberrant Manawurm, Expressive
      *  Firedancer). Read via `ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL`. Null for non-cast triggers. */
     val triggerManaSpentOnTriggeringSpell: Int? = null,
@@ -141,7 +144,12 @@ data class TriggeredAbilityOnStackComponent(
     val chosenModes: List<Int> = emptyList(),
     val modeTargetsOrdered: List<List<ChosenTarget>> = emptyList(),
     val modeTargetRequirements: Map<Int, List<TargetRequirement>> = emptyMap(),
-    val modeDamageDistribution: Map<Int, Map<EntityId, Int>> = emptyMap()
+    val modeDamageDistribution: Map<Int, Map<EntityId, Int>> = emptyMap(),
+    /** Entities a batch trigger captured (the matching permanents in a `PermanentsEnteredEvent`
+     *  batch). Seeded into the resolving ability's pipeline under
+     *  `PipelineState.TRIGGER_CAPTURED_COLLECTION` so a `ForEachInCollectionEffect` payoff can
+     *  iterate them ("for each of them, create a tapped copy" — Kambal). Empty for non-batch triggers. */
+    val capturedEntityIds: List<EntityId> = emptyList()
 ) : Component {
     val hasTargets: Boolean = false  // Will be updated based on effect
 }

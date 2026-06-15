@@ -1389,14 +1389,32 @@ object Triggers {
     // =========================================================================
 
     /**
-     * Whenever one or more permanents matching a filter you control enter the battlefield.
-     * Batching trigger — fires at most once per event batch.
+     * Whenever one or more permanents matching [filter] enter the battlefield. Batching trigger —
+     * fires at most once per event batch regardless of how many entered (CR 603.3b).
+     *
+     * The [filter]'s controller predicate scopes which players' permanents count: no predicate
+     * (the default) means "you control" — the historical semantics — while `.opponentControls()`
+     * scopes to your opponents (Kambal, Profiteering Mayor). The matching members of the batch are
+     * exposed to the payoff as a pipeline collection, so a `ForEachInCollectionEffect(
+     * PipelineState.TRIGGER_CAPTURED_COLLECTION, …)` body can act on each — "for each of them,
+     * create a tapped copy of it."
      *
      * Example: "Whenever one or more noncreature, nonland permanents you control enter"
      * → OneOrMorePermanentsEnter(GameObjectFilter.Noncreature and GameObjectFilter.Nonland)
      */
     fun OneOrMorePermanentsEnter(filter: GameObjectFilter = GameObjectFilter.Any): TriggerSpec = TriggerSpec(
         event = PermanentsEnteredEvent(filter = filter),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever one or more permanents matching [filter] that an opponent controls enter the
+     * battlefield. Same batching trigger as [OneOrMorePermanentsEnter] with the controller scope
+     * fixed to your opponents — "Whenever one or more tokens your opponents control enter"
+     * (Kambal, Profiteering Mayor).
+     */
+    fun OneOrMoreOpponentPermanentsEnter(filter: GameObjectFilter = GameObjectFilter.Any): TriggerSpec = TriggerSpec(
+        event = PermanentsEnteredEvent(filter = filter.opponentControls()),
         binding = TriggerBinding.ANY
     )
 

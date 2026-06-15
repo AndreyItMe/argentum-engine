@@ -40,6 +40,7 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.*
+import com.wingedsheep.sdk.scripting.predicates.evaluateWith
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.references.Player
@@ -1895,56 +1896,87 @@ class TriggerDetector(
         triggers: MutableList<PendingTrigger>,
         index: TriggerIndex
     ) {
-        // Collect all zone changes to battlefield, grouped by controller
-        data class EnterInfo(val entityId: EntityId, val cardComponent: CardComponent, val isToken: Boolean)
-        val entersByController = mutableMapOf<EntityId, MutableList<EnterInfo>>()
+        // Collect all permanents that entered the battlefield this batch, with their controller.
+        data class EnterInfo(
+            val entityId: EntityId,
+            val cardComponent: CardComponent,
+            val isToken: Boolean,
+            val controllerId: EntityId
+        )
+        val enters = mutableListOf<EnterInfo>()
         for (event in events) {
             if (event is ZoneChangeEvent && event.toZone == Zone.BATTLEFIELD) {
                 val entity = state.getEntity(event.entityId) ?: continue
                 val card = entity.get<CardComponent>() ?: continue
                 val isToken = entity.has<TokenComponent>()
                 val controllerId = entity.get<ControllerComponent>()?.playerId ?: event.ownerId
-                entersByController.getOrPut(controllerId) { mutableListOf() }
-                    .add(EnterInfo(event.entityId, card, isToken))
+                enters.add(EnterInfo(event.entityId, card, isToken, controllerId))
             }
         }
-        if (entersByController.isEmpty()) return
+        if (enters.isEmpty()) return
+
+        fun matchesCardPredicates(info: EnterInfo, filter: GameObjectFilter): Boolean =
+            filter.cardPredicates.all { predicate ->
+                when (predicate) {
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> info.cardComponent.typeLine.isCreature
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNoncreature -> !info.cardComponent.typeLine.isCreature
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland -> !info.cardComponent.typeLine.isLand
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact -> !info.cardComponent.typeLine.isArtifact
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsPermanent -> info.cardComponent.typeLine.isPermanent
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype -> info.cardComponent.typeLine.hasSubtype(predicate.subtype)
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact -> info.cardComponent.typeLine.isArtifact
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsEnchantment -> info.cardComponent.typeLine.isEnchantment
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsToken -> info.isToken
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNontoken -> !info.isToken
+                    else -> true
+                }
+            }
 
         for (entry in index.getEntitiesForCategory(TriggerCategory.PERMANENTS_ENTERED_BATCH)) {
             for (ability in entry.abilities) {
                 val trigger = ability.trigger
                 if (trigger !is EventPattern.PermanentsEnteredEvent) continue
 
-                val controllerId = entry.controllerId
-                val controllerEnters = entersByController[controllerId] ?: continue
-
-                // Check if any entering permanent matches the filter
-                val hasMatch = controllerEnters.any { info ->
-                    trigger.filter.cardPredicates.all { predicate ->
-                        when (predicate) {
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> info.cardComponent.typeLine.isCreature
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNoncreature -> !info.cardComponent.typeLine.isCreature
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland -> !info.cardComponent.typeLine.isLand
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonartifact -> !info.cardComponent.typeLine.isArtifact
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsPermanent -> info.cardComponent.typeLine.isPermanent
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype -> info.cardComponent.typeLine.hasSubtype(predicate.subtype)
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact -> info.cardComponent.typeLine.isArtifact
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsEnchantment -> info.cardComponent.typeLine.isEnchantment
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsToken -> info.isToken
-                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNontoken -> !info.isToken
-                            else -> true
+                val observerId = entry.controllerId
+                // The filter's controller predicate scopes which players' permanents count.
+                // No predicate defaults to "you control" (the historical PermanentsEnteredEvent
+                // semantics — "one or more permanents you control enter"); ControlledByOpponent
+                // scopes to the observer's opponents (Kambal); ControlledByAny / others fall back
+                // to the shared three-valued fold against the observer.
+                val controllerPredicate = trigger.filter.controllerPredicate
+                fun controllerMatches(enterControllerId: EntityId): Boolean = when (controllerPredicate) {
+                    null, com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByYou ->
+                        enterControllerId == observerId
+                    com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByOpponent ->
+                        enterControllerId in state.getOpponents(observerId)
+                    else -> controllerPredicate.evaluateWith { leaf ->
+                        when (leaf) {
+                            com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByYou ->
+                                enterControllerId == observerId
+                            com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByOpponent ->
+                                enterControllerId in state.getOpponents(observerId)
+                            else -> null
                         }
                     }
                 }
 
-                if (hasMatch) {
+                // The permanents in this batch matching both the card filter and the controller
+                // scope — these "caused" the trigger and are exposed to the payoff (CR 603.3b
+                // groups them into a single batch trigger).
+                val matching = enters.filter { info ->
+                    controllerMatches(info.controllerId) && matchesCardPredicates(info, trigger.filter)
+                }
+
+                if (matching.isNotEmpty()) {
                     triggers.add(
                         PendingTrigger(
                             ability = ability,
                             sourceId = entry.entityId,
                             sourceName = entry.cardComponent.name,
-                            controllerId = controllerId,
-                            triggerContext = TriggerContext()
+                            controllerId = observerId,
+                            triggerContext = TriggerContext(
+                                capturedEntityIds = matching.map { it.entityId }
+                            )
                         )
                     )
                 }

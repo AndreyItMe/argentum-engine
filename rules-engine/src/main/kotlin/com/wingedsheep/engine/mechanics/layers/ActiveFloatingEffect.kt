@@ -453,6 +453,17 @@ sealed interface SerializableModification {
         val damageSourceId: EntityId,
         val gainLifeFromColors: Set<String> = emptySet()
     ) : SerializableModification
+
+    /**
+     * Turn-duration noncombat-damage amplification (CR 616): every source the effect's controller
+     * controls deals [bonus] additional noncombat damage to any permanent or player this turn.
+     * Combat damage is unaffected; there is no opponent restriction. Read directly during damage
+     * resolution by `DamageUtils.applyStaticDamageAmplification` (not a layer modification). The
+     * effect's [ActiveFloatingEffect.controllerId] identifies whose sources benefit. Installed by
+     * Taii Wakeen, Perfect Shot's "{X}, {T}" ability with [bonus] = the X paid.
+     */
+    @Serializable
+    data class AmplifyNoncombatDamage(val bonus: Int) : SerializableModification
 }
 
 /**
@@ -532,5 +543,7 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.PreventNextDamageFromChosenSourceShield -> Modification.NoOp
     // PreventAllDamageFromSource doesn't map to a layer modification - it's checked during damage resolution directly
     is SerializableModification.PreventAllDamageFromSource -> Modification.NoOp
+    // AmplifyNoncombatDamage doesn't map to a layer modification - it's read during damage resolution directly
+    is SerializableModification.AmplifyNoncombatDamage -> Modification.NoOp
     is SerializableModification.RemoveAllAbilities -> Modification.RemoveAllAbilities
 }

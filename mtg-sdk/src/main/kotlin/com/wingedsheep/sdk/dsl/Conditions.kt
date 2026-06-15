@@ -83,6 +83,27 @@ object Conditions {
     // =========================================================================
 
     /**
+     * Generic numeric comparison of two [DynamicAmount]s with a [ComparisonOperator] — the
+     * facade entry point for any "if amount X (</≤/=/≠/>/≥) amount Y" intervening-if or static
+     * condition. Composes the underlying [Compare] condition.
+     *
+     * Example (Taii Wakeen, Perfect Shot intervening-if — "damage equal to that creature's
+     * toughness"):
+     * ```
+     * Conditions.CompareAmounts(
+     *     DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT),
+     *     ComparisonOperator.EQ,
+     *     DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_RECIPIENT_TOUGHNESS),
+     * )
+     * ```
+     */
+    fun CompareAmounts(
+        left: DynamicAmount,
+        operator: ComparisonOperator,
+        right: DynamicAmount,
+    ): ConditionInterface = Compare(left, operator, right)
+
+    /**
      * If an opponent controls more lands than you.
      */
     val OpponentControlsMoreLands: ConditionInterface =
