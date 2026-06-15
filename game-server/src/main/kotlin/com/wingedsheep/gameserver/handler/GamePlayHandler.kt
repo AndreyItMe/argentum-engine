@@ -1159,11 +1159,24 @@ class GamePlayHandler(
         aiPlayerId: EntityId
     ): List<com.wingedsheep.engine.core.GameAction> {
         val pass = com.wingedsheep.engine.core.PassPriority(aiPlayerId)
+        // If PassPriority is currently a legal action, we're in a priority window (e.g. after
+        // blockers/attackers were already declared), not the actual declare-step decision. In that
+        // case a do-nothing DeclareBlockers/DeclareAttackers can succeed as a no-op and hand
+        // priority straight back to the AI → infinite loop. Pass FIRST so the loop breaks; keep the
+        // do-nothing declaration only as a fallback for the genuine declare-step decision (where
+        // PassPriority is NOT yet legal).
+        val passIsLegal = gameSession.getLegalActions(aiPlayerId).any {
+            it.action is com.wingedsheep.engine.core.PassPriority
+        }
         return when (gameSession.getStateForTesting()?.step) {
-            com.wingedsheep.sdk.core.Step.DECLARE_BLOCKERS ->
-                listOf(com.wingedsheep.engine.core.DeclareBlockers(aiPlayerId, emptyMap()), pass)
-            com.wingedsheep.sdk.core.Step.DECLARE_ATTACKERS ->
-                listOf(com.wingedsheep.engine.core.DeclareAttackers(aiPlayerId, emptyMap()), pass)
+            com.wingedsheep.sdk.core.Step.DECLARE_BLOCKERS -> {
+                val declare = com.wingedsheep.engine.core.DeclareBlockers(aiPlayerId, emptyMap())
+                if (passIsLegal) listOf(pass, declare) else listOf(declare, pass)
+            }
+            com.wingedsheep.sdk.core.Step.DECLARE_ATTACKERS -> {
+                val declare = com.wingedsheep.engine.core.DeclareAttackers(aiPlayerId, emptyMap())
+                if (passIsLegal) listOf(pass, declare) else listOf(declare, pass)
+            }
             else -> listOf(pass)
         }
     }

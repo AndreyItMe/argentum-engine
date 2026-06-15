@@ -487,3 +487,31 @@ data class ActivateAbilityOpponentTargetContinuation(
     val fullRequirements: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>,
     val deciderId: EntityId
 ) : ContinuationFrame
+
+/**
+ * Resume after a player picks which permanents to sacrifice to satisfy a
+ * [com.wingedsheep.sdk.scripting.costs.CostAtom.Sacrifice] cost on an activated ability.
+ *
+ * Surfaces the cost-choice the original engine path used to fail on: when an activation's
+ * `Sacrifice(filter, count, excludeSelf)` cost has more matching battlefield permanents than
+ * `count`, the handler raises a [SelectCardsDecision] and pushes this frame so the resumer can
+ * re-enter the handler with the player's chosen permanents filled into
+ * `costPayment.sacrificedPermanents`.
+ *
+ * Skipped (no pause) when `sacrificedPermanents` is already pre-filled (engine-direct path /
+ * resumed replay) or when candidate count ≤ required count (no real choice — CostHandler
+ * auto-picks). Sage of Lat-Nam ({T}, Sacrifice an artifact: Draw a card) is the canonical case.
+ *
+ * @property action The original [ActivateAbility] (`costPayment.sacrificedPermanents` still empty),
+ *   so the resumer can re-enter the handler with the chosen sacrifice victims filled in.
+ * @property sacrificeCandidates The matching battlefield permanents offered to the player as
+ *   options; used to validate the response is a subset of the originally legal candidates.
+ * @property sacrificeCount Exact number of permanents the player must pick (`count` from the cost).
+ */
+@Serializable
+data class ActivateAbilitySacrificeContinuation(
+    override val decisionId: String,
+    val action: ActivateAbility,
+    val sacrificeCandidates: List<EntityId>,
+    val sacrificeCount: Int
+) : ContinuationFrame

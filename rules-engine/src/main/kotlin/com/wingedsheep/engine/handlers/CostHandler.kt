@@ -656,7 +656,26 @@ class CostHandler(
         controllerId: EntityId,
         manaPool: ManaPool,
     ): CostPaymentResult {
-        val toSacrificeList = sacrificeChoices.take(requiredCount)
+        // When no choice was supplied, auto-pick from the legal candidates — but ONLY when the
+        // choice is forced (candidates <= requiredCount). When candidates > requiredCount it's a
+        // real choice that ActivateAbilityHandler pauses for; we should never silently take the
+        // first N. This mirrors exileCardsFromZone's auto-pick for empty exile choices, and lets
+        // the forced case (e.g. exactly one artifact) resolve without a decision while breaking the
+        // AI's infinite "Not enough sacrifice targets chosen" loop.
+        val toSacrificeList = if (sacrificeChoices.isEmpty()) {
+            val candidates = findMatchingCardsUnified(state, state.getBattlefield(controllerId), filter, controllerId)
+                .let { if (excludeSelf) it.filter { id -> id != sourceId } else it }
+            if (candidates.size < requiredCount) {
+                return CostPaymentResult.failure("Not enough sacrifice targets chosen (need $requiredCount, got ${candidates.size})")
+            }
+            if (candidates.size > requiredCount) {
+                // A real choice reached the cost path with no selection — fail rather than guess.
+                return CostPaymentResult.failure("Not enough sacrifice targets chosen (need $requiredCount, got 0)")
+            }
+            candidates.take(requiredCount)
+        } else {
+            sacrificeChoices.take(requiredCount)
+        }
         if (toSacrificeList.size < requiredCount) {
             return CostPaymentResult.failure("Not enough sacrifice targets chosen (need $requiredCount, got ${toSacrificeList.size})")
         }

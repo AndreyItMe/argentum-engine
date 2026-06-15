@@ -578,6 +578,63 @@ class ActivateAbilityHandler(
             }
         }
 
+        // -------------------------------------------------------------------
+        // Sacrifice cost-choice pause (legal-actions submission path).
+        //
+        // When the cost is `Sacrifice(filter, count, excludeSelf)` (Sage of
+        // Lat-Nam: "{T}, Sacrifice an artifact: Draw a card", Atog, Ashnod's
+        // Altar, …) and the player controls more matching permanents than the
+        // count, this is a real choice — the engine must pause and ask which
+        // permanent(s) to sacrifice, not fail with "Not enough sacrifice
+        // targets chosen" (an AI submitting a bare ActivateAbility with no
+        // sacrifice chosen would otherwise spin forever).
+        //
+        // Skipped when `sacrificedPermanents` is already pre-filled
+        // (engine-direct path and resumed-replay case) or when candidates <=
+        // count (no real choice — Part 2 / CostHandler auto-picks). Mirrors the
+        // ExileFromGraveyard pause block above.
+        // -------------------------------------------------------------------
+        val sacrificeCost = extractSacrificeCost(effectiveCost)
+        val alreadySacrificing = (action.costPayment?.sacrificedPermanents?.isNotEmpty() == true)
+        if (sacrificeCost != null && !alreadySacrificing) {
+            val sacrificeCandidates = costHandler
+                .findMatchingCardsUnified(state, state.getBattlefield(action.playerId), sacrificeCost.filter, action.playerId)
+                .let { if (sacrificeCost.excludeSelf) it.filter { id -> id != action.sourceId } else it }
+            if (sacrificeCandidates.size > sacrificeCost.count) {
+                val decisionId = java.util.UUID.randomUUID().toString()
+                val prompt = "Select ${sacrificeCost.count} permanent${if (sacrificeCost.count > 1) "s" else ""} to sacrifice for ${cardComponent.name}"
+                val decision = com.wingedsheep.engine.core.SelectCardsDecision(
+                    id = decisionId,
+                    playerId = action.playerId,
+                    prompt = prompt,
+                    context = com.wingedsheep.engine.core.DecisionContext(
+                        sourceId = action.sourceId,
+                        sourceName = cardComponent.name,
+                        phase = com.wingedsheep.engine.core.DecisionPhase.CASTING
+                    ),
+                    options = sacrificeCandidates,
+                    minSelections = sacrificeCost.count,
+                    maxSelections = sacrificeCost.count
+                )
+                val continuation = com.wingedsheep.engine.core.ActivateAbilitySacrificeContinuation(
+                    decisionId = decisionId,
+                    action = action,
+                    sacrificeCandidates = sacrificeCandidates,
+                    sacrificeCount = sacrificeCost.count
+                )
+                val pausedState = state
+                    .withPendingDecision(decision)
+                    .pushContinuation(continuation)
+                val event = com.wingedsheep.engine.core.DecisionRequestedEvent(
+                    decisionId = decisionId,
+                    playerId = action.playerId,
+                    decisionType = "SELECT_CARDS",
+                    prompt = prompt
+                )
+                return ExecutionResult.paused(pausedState, decision, listOf(event))
+            }
+        }
+
         val executeAbilityContext = buildAbilityPaymentContext(cardComponent, state.projectedState, action.sourceId)
 
         var currentState = state
@@ -2183,6 +2240,20 @@ class ActivateAbilityHandler(
         is AbilityCost.Atom -> (cost.atom as? CostAtom.ExileFrom)?.takeIf { it.zone == Zone.GRAVEYARD }
         is AbilityCost.Composite -> cost.costs.firstNotNullOfOrNull {
             ((it as? AbilityCost.Atom)?.atom as? CostAtom.ExileFrom)?.takeIf { ex -> ex.zone == Zone.GRAVEYARD }
+        }
+        else -> null
+    }
+
+    /**
+     * Pull the [CostAtom.Sacrifice] sub-cost out of an ability cost (top-level [AbilityCost.Atom] or
+     * inside a [AbilityCost.Composite]), or null if none. Used by the legal-actions submission path
+     * to detect that an activation needs to pause for a sacrifice-target selection when the player
+     * controls more matching permanents than the cost requires (Sage of Lat-Nam, Atog, …).
+     */
+    private fun extractSacrificeCost(cost: AbilityCost): CostAtom.Sacrifice? = when (cost) {
+        is AbilityCost.Atom -> cost.atom as? CostAtom.Sacrifice
+        is AbilityCost.Composite -> cost.costs.firstNotNullOfOrNull {
+            (it as? AbilityCost.Atom)?.atom as? CostAtom.Sacrifice
         }
         else -> null
     }
