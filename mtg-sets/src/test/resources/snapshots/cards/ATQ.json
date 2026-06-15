@@ -588,6 +588,77 @@
     "colorIdentityOverride": []
 }
 
+// Dwarven Weaponsmith
+{
+    "name": "Dwarven Weaponsmith",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Dwarf Artificer",
+    "oracleText": "{T}, Sacrifice an artifact: Put a +1/+1 counter on target creature. Activate only during your upkeep.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        "CostTap",
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "artifact"
+                            }
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "target creature"
+                    }
+                ],
+                "restrictions": [
+                    {
+                        "type": "ActivationAll",
+                        "restrictions": [
+                            "OnlyDuringYourTurn",
+                            {
+                                "type": "DuringStep",
+                                "step": "UPKEEP"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "25",
+        "rarity": "UNCOMMON",
+        "artist": "Mark Poole",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/8/0848d94a-2704-460f-986b-b192dd6d26b7.jpg?1562896790"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Gaea's Avenger
 {
     "name": "Gaea's Avenger",

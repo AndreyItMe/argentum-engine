@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 33 / 85
+**Implemented:** 34 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -51,7 +51,7 @@
 - [x] Artifact Blast
 - [x] Atog
 - [x] Detonate
-- [ ] Dwarven Weaponsmith
+- [x] Dwarven Weaponsmith
 - [ ] Goblin Artisans
 - [x] Orcish Mechanics
 - [x] Shatterstorm
