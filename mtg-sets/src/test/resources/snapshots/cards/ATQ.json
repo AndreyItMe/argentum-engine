@@ -593,6 +593,52 @@
     "colorIdentityOverride": []
 }
 
+// Tablet of Epityr
+{
+    "name": "Tablet of Epityr",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "Whenever an artifact you control is put into a graveyard from the battlefield, you may pay {1}. If you do, you gain 1 life.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "artifact ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayManaCost",
+                            "cost": "{1}"
+                        }
+                    },
+                    "then": {
+                        "type": "GainLife",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "67",
+        "artist": "Christopher Rush",
+        "flavorText": "Originally considered the work of Urza, this tablet was created by forgers seeking to imitate Urza's masterpieces.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/d/6d7a2718-301f-4191-b348-0c44c7c07d43.jpg?1562917978"
+    },
+    "colorIdentityOverride": []
+}
+
 // Triskelion
 {
     "name": "Triskelion",

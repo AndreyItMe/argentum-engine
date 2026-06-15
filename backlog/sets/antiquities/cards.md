@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 16 / 85
+**Implemented:** 17 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -97,7 +97,7 @@
 - [ ] Shapeshifter
 - [x] Staff of Zegon
 - [ ] Su-Chi
-- [ ] Tablet of Epityr
+- [x] Tablet of Epityr
 - [ ] Tawnos's Coffin
 - [ ] Tawnos's Wand
 - [ ] Tawnos's Weaponry
