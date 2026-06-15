@@ -357,6 +357,22 @@ sealed interface SpellCastPredicate {
         }
     }
 
+    /**
+     * The spell was cast from a zone *other than* [zone] — the negation of [CastFromZone].
+     * Used for "whenever you cast a spell from anywhere other than your hand" (Kellan, the Kid):
+     * `CastFromZoneOtherThan(Zone.HAND)`. A spell with no recorded cast zone (synthetic / put
+     * directly on the stack) does not satisfy this — only an actual cast from a different known
+     * zone counts.
+     */
+    @SerialName("SpellCastFromZoneOtherThan")
+    @Serializable
+    data class CastFromZoneOtherThan(val zone: Zone) : SpellCastPredicate {
+        override val description = when (zone) {
+            Zone.HAND -> "from anywhere other than your hand"
+            else -> "from anywhere other than your ${zone.displayName.lowercase()}"
+        }
+    }
+
     /** The spell was cast with kicker (CR 702.32). */
     @SerialName("SpellWasKicked")
     @Serializable

@@ -899,6 +899,51 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
+     * When an Aura, Equipment, or Fortification becomes attached to a permanent or player
+     * (CR 603.2e — "becomes" triggers fire only at the moment of attaching, not on a state that
+     * already exists, and not on phasing in/out per CR 702.26j).
+     *
+     * The triggering entity is the *attachment* (the aura/equipment that became attached); the
+     * permanent it attached to is carried as the attached-to entity in the trigger context
+     * ([com.wingedsheep.sdk.scripting.targets.EffectTarget.AttachedToTriggeringPermanent]).
+     *
+     * Binding SELF = "whenever this Equipment/Aura becomes attached to a creature" (Assimilation
+     * Aegis). Binding ANY with [attachmentFilter] / [attachmentController] = "whenever a [filter]
+     * you control becomes attached to …" (Eriette, the Beguiler).
+     *
+     * @property attachmentFilter restricts which attachment qualifies (e.g. Aura, Equipment).
+     * @property attachmentController restricts who must control the attachment (e.g. [Player.You]).
+     * @property attachedToFilter restricts what it must attach to (e.g. a nonland permanent an
+     *   opponent controls). The attached-to permanent is matched against this filter, with the
+     *   triggering attachment available as the comparison reference for relative predicates
+     *   (e.g. mana value at most the Aura's mana value).
+     */
+    @SerialName("BecomesAttachedEvent")
+    @Serializable
+    data class BecomesAttachedEvent(
+        val attachmentFilter: GameObjectFilter = GameObjectFilter.Any,
+        val attachmentController: Player = Player.Any,
+        val attachedToFilter: GameObjectFilter = GameObjectFilter.Any,
+    ) : EventPattern {
+        override val description: String = buildString {
+            append(describeObjectForEvent(attachmentFilter))
+            if (attachmentController == Player.You) append(" you control")
+            append(" becomes attached")
+            if (attachedToFilter != GameObjectFilter.Any) {
+                append(" to ${describeObjectForEvent(attachedToFilter)}")
+            }
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): EventPattern {
+            val newAttachment = attachmentFilter.applyTextReplacement(replacer)
+            val newAttachedTo = attachedToFilter.applyTextReplacement(replacer)
+            return if (newAttachment !== attachmentFilter || newAttachedTo !== attachedToFilter) {
+                copy(attachmentFilter = newAttachment, attachedToFilter = newAttachedTo)
+            } else this
+        }
+    }
+
+    /**
      * When a player chooses one or more targets.
      *
      * Fires when [player] casts a spell, activates an ability, or puts a triggered ability

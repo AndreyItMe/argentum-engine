@@ -44,8 +44,10 @@ class EachPermanentBecomesCopyOfTargetExecutor : EffectExecutor<EachPermanentBec
         val targetCard = state.getEntity(targetId)?.get<CardComponent>()
             ?: return EffectResult.success(state)
 
-        // Target must still be on the battlefield to serve as a copy source.
-        if (targetId !in state.getBattlefield()) {
+        // Target must still be on the battlefield to serve as a copy source — unless the effect
+        // allows a non-battlefield source (Lazav, Familiar Stranger copies a creature card it just
+        // exiled), in which case its copiable characteristics are read wherever it currently is.
+        if (!effect.sourceFromAnyZone && targetId !in state.getBattlefield()) {
             return EffectResult.success(state)
         }
 

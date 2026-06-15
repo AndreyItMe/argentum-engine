@@ -156,6 +156,14 @@ enum class ContextPropertyKey(val description: String) {
      */
     MANA_SPENT_ON_TRIGGERING_SPELL("the amount of mana spent to cast that spell"),
     /**
+     * Mana value (CR 202.3) of the spell that fired this trigger. Distinct from
+     * [MANA_SPENT_ON_TRIGGERING_SPELL] (mana actually paid) — this reads the spell's printed
+     * mana value, unaffected by cost reductions / alternative costs. Populated from
+     * `SpellCastEvent.manaValue`; `0` when the trigger was not driven by a spell cast. Used by
+     * Kellan, the Kid — "a permanent spell with equal or lesser mana value."
+     */
+    TRIGGERING_SPELL_MANA_VALUE("the mana value of that spell"),
+    /**
      * Number of cards actually looked at by the scry that fired this trigger. Equals the
      * scry N parameter unless the library held fewer cards. Read by "Whenever you scry,
      * ... for each card looked at" payoffs (Celeborn the Wise, Elrond Master of Healing).

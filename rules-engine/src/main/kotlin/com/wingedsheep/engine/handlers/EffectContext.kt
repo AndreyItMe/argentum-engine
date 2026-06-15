@@ -179,6 +179,12 @@ data class EffectContext(
      */
     val triggerManaSpentOnTriggeringSpell: Int? = null,
     /**
+     * Mana value (CR 202.3) of the spell that fired this trigger. Read by
+     * `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE` (Kellan, the Kid). Distinct from
+     * [triggerManaSpentOnTriggeringSpell], which is the mana actually paid.
+     */
+    val triggerManaValueOfTriggeringSpell: Int? = null,
+    /**
      * Number of cards actually looked at by the scry that fired this trigger. Read by
      * `ContextPropertyKey.TRIGGER_SCRY_COUNT` (Celeborn the Wise, Elrond Master of Healing).
      */

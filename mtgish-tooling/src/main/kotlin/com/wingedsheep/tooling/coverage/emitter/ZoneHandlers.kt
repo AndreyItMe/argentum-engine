@@ -409,6 +409,9 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
             // grab isn't expressible by either facade, so scaffold that pairing.
             val flagBlob = compact(args)
             val entersTapped = "EntersTapped" in flagBlob
+            val counterNode = node.nodesTagged("EntersWithACounter")
+                .firstOrNull()?.get("args")
+            if (counterNode != null && (entersTapped || "EntersUnderPlayersControl" in flagBlob)) return@on null
             // "…to the battlefield attached to a creature you control" (One Last Job mode 3): an
             // EntersAttachedToAPermanent flag whose host filter is Creature + ControlledByAPlayer You.
             // Render the PutOntoBattlefieldAttachedToChosen facade (host chosen at resolution, default
@@ -426,13 +429,20 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
                     call("Effects.PutOntoBattlefieldAttachedToChosen", arg(Lit(tgt)))
                 else null
             }
-            return@on when {
+            val move = when {
                 "EntersUnderPlayersControl" !in flagBlob ->
                     if (entersTapped) call("Effects.PutOntoBattlefield", arg(Lit(tgt)), arg("tapped", "true"))
                     else call("Effects.Move", arg(Lit(tgt)), arg("Zone.BATTLEFIELD"))
                 entersTapped -> null
                 "\"You\"" in flagBlob -> call("Effects.PutOntoBattlefieldUnderYourControl", arg(Lit(tgt)))
                 else -> null
+            } ?: return@on null
+            val counter = counterNode?.let { counterTypeDsl(it) }
+            return@on if (counterNode == null) move else {
+                if (counter == null) null else Composite(listOf(
+                    move,
+                    call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", Lit(tgt))),
+                ))
             }
         }
         val zone = mapOf(

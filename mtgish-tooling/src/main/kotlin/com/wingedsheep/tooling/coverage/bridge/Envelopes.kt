@@ -10,6 +10,11 @@ internal fun BridgeBuilder.structuralEnvelopes() {
     // per-mode `additionalManaCost`, `minChooseCount = 1` (Explosive Derailment, Caught in the Crossfire).
     envelope("SpellActions_Spree", "envelope: Spree — choose one or more additional-cost modes")
     envelope("CastEffect", "envelope: on-cast actions")
+    // "[that spell] does X" / "as it resolves, …" — a one-shot effect attached to a spell on the
+    // stack. The real capability is the nested _SpellEffect / _ResolveAction (e.g. Lilah, Undefeated
+    // Slickshot's AsResolves -> ExileResolvingSpellAndPlotIt). Both are structural wrappers.
+    envelope("CreateSpellEffect", "envelope: a one-shot effect on a spell (capability is the nested _SpellEffect)")
+    envelope("AsResolves", "envelope: an as-it-resolves effect on a spell (capability is the nested _ResolveAction)")
     envelope("PermanentRuleEffect", "envelope: static ability")
     envelope("TriggerA", "envelope: triggered ability (cond in _Trigger)")
     // TriggerI — a triggered ability with an intervening-if condition (CR 603.4): args are

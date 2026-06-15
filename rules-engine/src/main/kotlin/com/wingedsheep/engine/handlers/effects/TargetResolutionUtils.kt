@@ -68,6 +68,13 @@ object TargetResolutionUtils {
             return entity.get<ControllerComponent>()?.playerId
                 ?: entity.get<CardComponent>()?.ownerId
         }
+        if (effectTarget is EffectTarget.AttachedToTriggeringPermanent) {
+            // The triggering entity is the attachment (Aura/Equipment) that became attached; the
+            // host is its current attachment target. Reading it live means a "for as long as
+            // attached" payoff does nothing if the attachment already left (CR 611.2b).
+            val attachmentId = context.triggeringEntityId ?: return null
+            return state.getEntity(attachmentId)?.get<AttachedToComponent>()?.targetId
+        }
         if (effectTarget is EffectTarget.ControllerOfPipelineTarget) {
             val targetEntityId = context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index) ?: return null
             val entity = state.getEntity(targetEntityId) ?: return null

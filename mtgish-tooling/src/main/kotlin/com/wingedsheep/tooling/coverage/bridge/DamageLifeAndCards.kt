@@ -77,4 +77,21 @@ internal fun BridgeBuilder.damageLifeAndCards() {
     // Goblin Piledriver / Shaleskin Bruiser) all realise as a ModifyStatsEffect.
     effects("AdjustPT", "AdjustPTX", "AdjustPTForEach", tag = "ModifyStats")
     effect("AddAbility", "GrantKeyword")
+
+    // "becomes a copy of [target permanent]" (CR 707) — the _LayerEffect inside a copy continuous
+    // effect. Oko, the Ringleader's combat-begin "Oko becomes a copy of up to one target creature you
+    // control". Renders to EachPermanentBecomesCopyOfTarget (affected = the copying permanent). The
+    // emitter declines the planeswalker/loyalty + optional-target + "except hexproof" cluster -> SCAFFOLD.
+    effect("IsACopyOfPermanent", "EachPermanentBecomesCopyOfTarget")
+    // "becomes a copy of [a card in exile]" (CR 707) — the copy source sits outside the battlefield.
+    // Lazav, Familiar Stranger: "you may have Lazav become a copy of that [exiled] card." Renders to
+    // EachPermanentBecomesCopyOfTarget(sourceFromAnyZone = true). Capability-only; the surrounding
+    // crime trigger + may-exile-from-a-graveyard pipeline is card-specific -> SCAFFOLD.
+    effect("IsACopyOfExiledCard", "EachPermanentBecomesCopyOfTarget")
+
+    // "exile that spell instead of putting it into your graveyard as it resolves; it becomes plotted"
+    // (CR 718) — the _ResolveAction inside a CreateSpellEffect/AsResolves on a self-cast spell. Lilah,
+    // Undefeated Slickshot. Renders to MarkSpellPlotOnResolve; the surrounding cast-trigger envelope is
+    // card-specific -> SCAFFOLD.
+    effect("ExileResolvingSpellAndPlotIt", "MarkSpellPlotOnResolve")
 }

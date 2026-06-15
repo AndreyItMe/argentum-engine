@@ -347,6 +347,17 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         val filter = revealedHandFilterExpr(node["args"]) ?: return null
         return call("DynamicAmount.Count", arg("Player.TargetOpponent"), arg("Zone.HAND"), arg(filter))
     }
+    if (gn == "TheNumberOfCardtypesAmongGraveyardCards") {
+        val player = when {
+            jsonContains(node, "_Player", "You") || jsonContains(node, "_Players", "You") -> "Player.You"
+            jsonContains(node, "_Player", "Opponent") || jsonContains(node, "_Players", "Opponent") -> "Player.EachOpponent"
+            else -> return null
+        }
+        return call(
+            "DynamicAmount.AggregateZone",
+            arg(player), arg("Zone.GRAVEYARD"), arg("GameObjectFilter.Any"), arg("Aggregation.DISTINCT_TYPES"),
+        )
+    }
     if (gn == "Multiply" && node["args"].asArr?.size == 2) {
         val arr = node["args"].asArr!!
         val a = arr[0]; val b = arr[1]

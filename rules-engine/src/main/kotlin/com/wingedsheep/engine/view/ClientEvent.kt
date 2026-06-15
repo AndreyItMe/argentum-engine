@@ -1204,6 +1204,10 @@ is PermanentsSacrificedEvent -> {
                 isYours = event.controllerId == viewingPlayerId
             )
 
+            // Internal: drives "becomes attached" triggers; the attach itself is already
+            // reflected by the attachment's zone-change/move animation, so no separate client event.
+            is PermanentAttachedEvent -> null
+
             is TurnHijackedEvent,
             is CommitCrimeEvent,
             is TargetsChosenEvent -> null

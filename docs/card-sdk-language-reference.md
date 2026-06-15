@@ -628,7 +628,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   "for as long as this creature remains tapped [and the stolen creature's power stays ≤ source's
   power]" steal pattern, or `Duration.WhileYouControlSource("<source name>")` for the
   "for as long as you control this [permanent]" pattern (Aladdin, Scroll of Isildur Chapter I,
-  Rangers of Ithilien). `StateProjector` gates these per-frame for the instantaneous view; the
+  Rangers of Ithilien), or `Duration.WhileSourceAttachedToAffected` for "gain control … for as
+  long as that Aura is attached to it" (Eriette, the Beguiler — the effect is sourced from the
+  *Aura*, so the executor swaps the floating effect's source to the triggering attachment, and the
+  control ends the instant the Aura leaves, detaches, or re-attaches elsewhere). `StateProjector`
+  gates these per-frame for the instantaneous view; the
   one-way half of CR 611.2b ("for as long as" durations don't restart) is enforced by the
   `EndedDurationExpiryCheck` state-based action, which physically removes the effect the moment
   the condition fails — so a pump that wears off, a re-tap, or a re-acquired source never
@@ -706,6 +710,8 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   - `condition = CounterCondition.UnlessPaysMana(cost, onPaid?)` / `UnlessPaysDynamic(amount, onPaid?)` — "unless its controller pays …" with an optional `onPaid: Effect` rider that fires **only** when the spell's controller pays (Divert Disaster's "If they do, you create a Lander token"). The rider executes with the counter's controller as `controllerId`, so "you" in the rider resolves to the caster of the counter. The rider does not fire when the spell is countered. Facade: `Effects.CounterUnlessPays(cost, onPaid)` / `Effects.CounterUnlessDynamicPays(amount, exileOnCounter, onPaid)`.
 - `CounterAllOnStackEffect(filter?, destination?)` — counter everything matching.
 - `ExileTargetSpellEffect(makePlotted = false)` (facade `Effects.ExileTargetSpell(makePlotted)`) — exile target spell (CR 718 "exile target spell"). **Not a counter:** it removes the spell from the stack and exiles the card even if the spell *can't be countered* (so it works where `CounterEffect(destination = Exile())` no-ops), and it fires no "whenever a spell is countered" trigger — but the spell still fails to resolve because it left the stack. With `makePlotted = true` the exiled card becomes *plotted* for its **owner** (gains `PlottedComponent` + a permanent free-cast-on-a-later-turn `MayPlayPermission` gated by `SourcePlottedOnPriorTurn`, granted to the owner per CR 718.2), emitting a `CardPlottedEvent`. Pair with `Targets.Spell`. Used by **Aven Interrupter** ("When this creature enters, exile target spell. It becomes plotted.").
+- `MarkSpellExileWithCountersEffect(target = TriggeringEntity, counterType, count = 1)` (facade `Effects.MarkSpellExileWithCounters(target, counterType, count)`) — mark a spell on the stack so that, **as it resolves**, it is exiled with `count` counters of `counterType` on it instead of being put into its owner's graveyard. Lets the spell resolve fully, then re-routes only its post-resolution destination via `ExileAfterResolveComponent(onlyIfResolved = true)` — so if the spell is countered or fizzles it goes to the graveyard normally. Used by **Goliath Daydreamer** ("exile that card with a dream counter on it instead of putting it into your graveyard as it resolves").
+- `MarkSpellPlotOnResolveEffect(target = TriggeringEntity)` (facade `Effects.MarkSpellPlotOnResolve(target)`) — the plot sibling of `MarkSpellExileWithCounters`: as the spell resolves it is exiled instead of going to the graveyard and **becomes plotted** for its owner (`PlottedComponent` + permanent free-cast-on-a-later-turn `MayPlayPermission` gated by `SourcePlottedOnPriorTurn`, emitting `CardPlottedEvent`). Also `onlyIfResolved` — a countered/fizzled spell is not exiled and doesn't become plotted. Distinct from `ExileTargetSpell(makePlotted = true)`, which removes a *targeted* spell from the stack now (it never resolves); this one only changes a self-cast spell's destination after it resolves. Used by **Lilah, Undefeated Slickshot** ("Whenever you cast a multicolored instant or sorcery spell from your hand, exile that spell instead of putting it into your graveyard as it resolves. If you do, it becomes plotted.").
 - `OpenLifeBid(onWin, participant = Player.AnOpponent)` — open life-bidding auction between you and `participant` (resolved against the effect context). You open at a bid of 1; the two bidders alternate topping the high bid (yes/no to top, then a number for the amount, capped at the bidder's life) until one passes. The high bidder loses that much life; `onWin` runs **only if you win**, with the original targets in context. If `participant` resolves to you (or to nobody), you're the sole bidder and win at the opening bid. For Mages' Contest, bid against the targeted spell's controller and counter it: `Effects.OpenLifeBid(Effects.CounterSpell(), Player.ControllerOf("target spell"))` — pair with a `TargetSpell` requirement.
 - `DestroySourceOfTargetedAbilityEffect` — when the targeted stack object is a permanent's activated/triggered ability, destroy that source permanent. Compose *before* the counter step so the ability component is still readable (Teferi's Response).
 - `CopyTargetSpellEffect(target)` — copy a spell on the stack.
@@ -731,6 +737,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `BecomeArtifactEffect(target, cardTypes = {"ARTIFACT"}, subtypes, colors = emptySet(), loseAllAbilities = true, grantedAbility?, duration = Permanent)` — the general "becomes a Treasure/Food/Clue/artifact" transform: stacks continuous floating effects on `target` — Layer 4 `SetCardTypes` (replaces *all* card types) + `SetAllSubtypes` (replaces *all* subtypes), Layer 5 color (`emptySet()` = colorless), Layer 6 `RemoveAllAbilities` when `loseAllAbilities` — plus an optional single `grantedAbility` recorded durably in `grantedActivatedAbilities` (so it survives the ability wipe; the enumerators read it after the projected `lostAllAbilities` check). `Duration.Permanent` ends only when the permanent leaves the battlefield. Differs from `BecomeCreatureEffect` (which *adds* CREATURE + sets P/T): this fully replaces types/subtypes so the result is exactly the named artifact. (Vraska, the Silencer: a dead opponent's creature returns as a bare colorless Treasure with the sac-for-mana ability.)
 - `BecomeSaddledEffect(target = Self)` (facade `Effects.BecomeSaddled()`) — target permanent becomes saddled until end of turn (CR 702.171b). The resolving half of a Saddle ability: stamps the transient `SaddledComponent` marker (cleared at end of turn / on leaving the battlefield; not copiable) and emits `BecameSaddledEvent`. No P/T or type change — read the marker with `Conditions.SourceIsSaddled` / `.saddled()`.
 - `EachPermanentBecomesCopyOfTargetEffect(target, filter, duration, excludeTarget, affected)` — mass copy (Mirrorform, Naga Fleshcrafter renew). Facade `Effects.EachPermanentBecomesCopyOfTarget(...)`. Copies copiable values only (Rule 707) — counters, tapped state, attached auras/equipment and non-copy modifiers stay put. `duration = Duration.Permanent` (default) bakes the copy into base state for good; `Duration.EndOfTurn` makes a temporary copy reverted by the end-of-turn cleanup (each affected permanent restores its pre-copy `CardComponent` from its `CopyOfComponent` snapshot). `excludeTarget = true` keeps the copy **source** out of the affected set, for "each **other** … becomes a copy of that …" wordings where the target keeps its own identity (and any counter just placed on it). `affected` (an `EffectTarget`, e.g. a second `ContextTarget`) switches to the single-permanent "target permanent A becomes a copy of target permanent B" shape (Fleeting Reflection: "target creature you control … becomes a copy of up to one **other** target creature") — only that one resolved permanent becomes a copy of `target`, and `filter`/`excludeTarget` are ignored; if `affected` resolves to nothing (optional target omitted) the effect is a no-op.
+- `BecomeCopyOfLinkedExileEffect(affected = AttachedToTriggeringPermanent)` — facade `Effects.BecomeCopyOfLinkedExile(affected)`. The `affected` permanent becomes a copy of the first creature card in the effect's **source's linked exile** (`LinkedExileComponent` — the card the source banished via `Effects.ExileUntilLeaves`), copiable values only (Rule 707.2). Baked into the affected permanent's `CardComponent` like Clone, but tagged with a `CopyWhileAttachedComponent(sourceId)`; the `AttachedCopyExpiryCheck` state-based action reverts the copy (restoring the pre-copy snapshot) the moment the source stops being attached to it — detach, re-attach elsewhere, or source leaving (CR 611.2b, one-way). No-op when the source's linked exile holds no creature card. Used by Assimilation Aegis ("for as long as this Equipment remains attached to it, that creature becomes a copy of a creature card exiled with this Equipment").
 - `AnimateLandEffect(target, subtypes, keywords, duration)` — land becomes a creature.
 - `ExploreEffect(target)` — Explore mechanic (reveal top; land → battlefield, else hand + counter).
 - `AttachEquipmentEffect(equip, target)` — attach an Equipment.
@@ -1176,6 +1183,11 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
   `resolveTarget(state, target)` overload.
 - `EnchantedPermanent` — same `AttachedToComponent` resolution as `EnchantedCreature`, but type-agnostic; use for
   Auras that enchant non-creature permanents (e.g. Wellspring enchants a land: "gain control of enchanted land").
+- `AttachedToTriggeringPermanent` — inside a `Triggers.becomesAttached` trigger, the permanent the
+  triggering attachment (Aura/Equipment) became attached to. Resolved live from the triggering
+  object's `AttachedToComponent` (so a "for as long as attached" payoff does nothing if the
+  attachment already left — CR 611.2b). Used by Eriette ("gain control of that permanent") and
+  Assimilation Aegis ("that creature becomes a copy …").
 
 ### Cast-time (`Targets.*` / `TargetRequirement`)
 
@@ -1816,6 +1828,12 @@ matcher branch — `SpellCastEvent` does not grow a new field per axis.
 - `SpellCastPredicate.CastFromZone(zone)` — spell was cast from this zone. Used for Sunbird's
   Invocation (`Zone.HAND`), Goliath Daydreamer's instant/sorcery-from-hand trigger,
   Wildsear's enchantment-from-hand cascade.
+- `SpellCastPredicate.CastFromZoneOtherThan(zone)` — the negation: spell was cast from a known
+  zone that is *not* [zone]. Fires only on an actual cast from a different recorded zone (a spell
+  with no recorded cast zone does not satisfy it). Used by Kellan, the Kid — "Whenever you cast a
+  spell from anywhere other than your hand" (`CastFromZoneOtherThan(Zone.HAND)`): casts from
+  exile (Adventure / plotted), graveyard (flashback), or the top of library all match; hand casts
+  don't.
 - `SpellCastPredicate.WasKicked` — spell was cast with kicker (CR 702.32). Used for
   Hallar / Bloodstone Goblin.
 - `SpellCastPredicate.PaidWithManaFromSubtype(subtype)` — mana from a permanent of this
@@ -1900,6 +1918,19 @@ Triggers.youCastSpell(
   `firstThisTurn` flag, which is true only when the permanent wasn't already saddled when the ability
   resolved (re-saddling in the same turn reports false, since `SaddledComponent` persists until
   cleanup). Use an `ANY` binding + `filter` for "whenever a [filter] becomes saddled".
+- `becomesAttached(attachmentFilter = Any, attachmentController = Any, attachedToFilter = Any, binding = SELF)`
+  — "whenever an Aura/Equipment becomes attached to a permanent" (CR 603.2e). Fires from
+  `PermanentAttachedEvent`, emitted at every attach site (aura ETB onto its enchant target, equip
+  resolution, an aura moved onto the battlefield attached by an effect) only when newly attached —
+  not on a persisting attachment, and not on phasing in/out (CR 702.26j). The triggering entity is
+  the **attachment**; the host it attached to is reachable via
+  `EffectTarget.AttachedToTriggeringPermanent`. `SELF` = "whenever **this** Equipment/Aura becomes
+  attached" (Assimilation Aegis). `ANY` + `attachmentController = Player.You` + `attachmentFilter`
+  = "whenever a [filter] you control becomes attached to …" (Eriette, the Beguiler); the
+  `attachedToFilter` is matched against the host with the attaching object exposed as
+  `EntityReference.Triggering`, so relative predicates like
+  `manaValueAtMostEntity(EntityReference.Triggering)` ("MV ≤ that Aura's MV") resolve against it.
+  Indexed under `TriggerCategory.BECOMES_ATTACHED`.
 - `Valiant` — Bloomburrow Valiant trigger.
 - `RoomFullyUnlocked` — Rooms — both doors unlocked.
 - `OnDoorUnlocked` — single Room door unlocked.
@@ -3346,6 +3377,13 @@ sibling effect that reads `DynamicAmount.EntityProperty(EntityReference.AmassedA
     `DynamicAmount.TotalManaSpent`, which reads the *current resolving object's own* cast — this
     reads the **triggering** spell's cast (the payoff lives on a separate permanent). Populated
     from `SpellCastEvent.totalManaSpent`; `0` for non-cast triggers.
+  - `TRIGGERING_SPELL_MANA_VALUE` — mana value (CR 202.3) of the spell that fired the trigger
+    (Kellan, the Kid — "a permanent spell with equal or lesser mana value"). Distinct from
+    `MANA_SPENT_ON_TRIGGERING_SPELL` (mana actually paid): this is the spell's printed mana
+    value, unaffected by cost reductions / alternative costs / X. Populated from
+    `SpellCastEvent.manaValue`; `0` for non-cast triggers. Pair with
+    `CollectionFilter.ManaValueAtMost(ContextProperty(TRIGGERING_SPELL_MANA_VALUE))` to bound a
+    gathered collection by the triggering spell's mana value.
   - `TRIGGER_SCRY_COUNT` — cards looked at by the scry that fired the trigger (Celeborn the
     Wise, Elrond Master of Healing). Equals the scry N parameter.
   - `TRIGGER_EXCESS_DAMAGE_AMOUNT` — damage past lethal in the trigger payload (CR 120.4a).

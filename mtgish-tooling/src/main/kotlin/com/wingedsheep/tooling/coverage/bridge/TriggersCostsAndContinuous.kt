@@ -20,6 +20,15 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     supported("WhenACreatureBlocks", "trigger: blocks (Ydwen Efreet)")
     supported("WhenAPermanentBecomesTapped", "trigger: this permanent becomes tapped (Triggers.BecomesTapped — Wylie Duke, Atiin Hero)")
     supported("WhenACreatureDealsCombatDamageToAPlayer", "trigger: combat damage to player")
+    // "Whenever you sacrifice a/another [filter] …" — the batched sacrifice trigger that fires when a
+    // matching permanent you control is sacrificed (Triggers.YouSacrificeOneOrMore; the first matching
+    // sacrificed permanent is bound as the triggering entity so "its mana value / power" reads from LKI —
+    // Rakdos, the Muscle). You-scope; the emitter recovers the filter or declines -> SCAFFOLD.
+    supported("WhenAPlayerSacrificesAPermanent", "trigger: you sacrifice one or more matching permanents (Triggers.YouSacrificeOneOrMore)")
+    // "At the beginning of combat on your turn, …" (Triggers.BeginCombat — already scoped to your turn).
+    // Oko, the Ringleader's combat-begin copy. You-turn scope only; the emitter renders BeginCombat when
+    // the payoff is renderable (else SCAFFOLD).
+    supported("AtTheBeginningOfCombatDuringAPlayersTurn", "trigger: beginning of combat on your turn (Triggers.BeginCombat)")
     supported("WhenAPlayerCastsASpell", "trigger: a player casts a spell (Triggers.YouCastSpell / AnyPlayerCastsSpell / OpponentCastsSpell + type filters)")
     supported("WhenAPlayerCastsTheirNthSpellInATurn", "trigger: you cast your Nth spell each turn (Triggers.NthSpellCast(N, Player.You) — Rodeo Pyromancers)")
     // DELIBERATE DECLINE — Breeches, the Blastmaker. Its second-spell payoff (NthSpellCast above) is a
@@ -38,6 +47,12 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // OTJ Saddle (CR 702.171b) — "Whenever this creature becomes saddled for the first time each turn, …"
     // (Triggers.becomesSaddled(firstTimeEachTurn = true), Stubborn Burrowfiend).
     supported("WhenAPermanentBecomesSaddledForTheFirstTimeInATurn", "trigger: this permanent becomes saddled for the first time each turn (Triggers.becomesSaddled(firstTimeEachTurn = true))")
+    // "Whenever this Equipment/Aura becomes attached to a permanent, …" (CR 603.2e) — the new
+    // Triggers.becomesAttached. Capability-only: the renderable payoffs (Assimilation Aegis'
+    // copy-of-linked-exile, Eriette's gain-control "for as long as that Aura is attached") carry the
+    // attach-relative duration and exile linkage the emitter does NOT reconstruct, so it declines to
+    // SCAFFOLD per the creator's note (chosen/inherited-value shapes). Hand-authored card is ground truth.
+    supported("WhenAPermanentBecomesAttached", "trigger: an Aura/Equipment becomes attached (Triggers.becomesAttached) — capability only, emitter scaffolds")
     // OTJ crime (CR 700.10) — "Whenever you commit a crime, …" (Triggers.YouCommitCrime, Marauding Sphinx).
     supported("WhenAPlayerCommitsACrime", "trigger: you commit a crime (Triggers.YouCommitCrime)")
     // "Whenever one or more cards leave your graveyard, …" — batching leave-graveyard trigger
@@ -78,6 +93,10 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // loot, rendered by the emitter as MayEffect(IfYouDoEffect(...)). Universal condition vocabulary.
     supported("CostWasPaid", "condition: the optional cost was paid (IfYouDoEffect linkage)")
     supported("WasCastFromTheirHand", "predicate: spell cast from the player's hand (fromZone = HAND)")
+    // The negation — "a spell from anywhere other than your hand" (Kellan, the Kid). Backed by
+    // SpellCastPredicate.CastFromZoneOtherThan(Zone.HAND). The trigger itself is coverable even
+    // though Kellan's free-cast-or-play-land body declines to SCAFFOLD in the emitter.
+    supported("WasntCastFromTheirHand", "predicate: spell cast from a zone other than the player's hand (CastFromZoneOtherThan(HAND))")
     // Source-relative Mount/Vehicle payoff filter: "a creature that crewed/saddled it this turn"
     // (Giant Beaver) -> GameObjectFilter.Creature.crewedOrSaddledSourceThisTurn().
     supported("SaddledPermanentThisTurn", "filter: a creature that saddled this permanent this turn (crewedOrSaddledSourceThisTurn)")
@@ -85,6 +104,10 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
 
     // Costs.
     supported("PayMana", "cost: pay mana (universal)")
+    // Planeswalker loyalty cost (CR 606) — the +N / -N ability activation cost. The engine models it
+    // via `loyaltyAbility(loyaltyChange) { }` with `startingLoyalty`. Oko, the Ringleader. The emitter
+    // declines the whole loyalty-ability envelope (Activated) -> SCAFFOLD, so this is capability-only.
+    supported("Loyalty", "cost: planeswalker loyalty +N/-N (loyaltyAbility(change) { })")
     supported("SacrificeAPermanent", "cost: sacrifice")
     supported("SacrificeNumberPermanents", "cost: sacrifice N")
     // "Pay N life" as an activation cost -> Costs.PayLife(n). The emitter renders fixed-integer amounts

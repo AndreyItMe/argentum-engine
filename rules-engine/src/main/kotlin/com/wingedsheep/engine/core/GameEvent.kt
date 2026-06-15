@@ -336,7 +336,15 @@ data class SpellCastEvent(
      * `ContextPropertyKey.MODES_CHOSEN_ON_TRIGGERING_SPELL` for cards like Riku of Many
      * Paths whose triggered ability scales by the cast's mode count.
      */
-    val chosenModesCount: Int = 0
+    val chosenModesCount: Int = 0,
+    /**
+     * Mana value of the cast spell (CR 202.3), captured at cast time. Distinct from
+     * [totalManaSpent] (actual mana paid, which can differ with cost reductions, alternative
+     * costs, or X). Feeds `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE` so payoffs that key
+     * off "a spell with equal or lesser mana value" (Kellan, the Kid) read the printed value of
+     * the spell that fired the trigger, not the mana spent on it.
+     */
+    val manaValue: Int = 0
 ) : GameEvent
 
 /**
@@ -654,6 +662,32 @@ data class BecameSaddledEvent(
     val entityId: EntityId,
     val entityName: String,
     val firstThisTurn: Boolean = true
+) : GameEvent
+
+/**
+ * An Aura, Equipment, or Fortification became attached to a permanent (CR 603.2e). Emitted only
+ * at the moment of attaching — when the attachment moves onto a new host — not when an
+ * already-attached state persists, and not on phasing in/out (CR 702.26j). Emitted from every
+ * attach site: aura ETB onto its enchant target (StackResolver), equip resolution
+ * (AttachEquipmentExecutor), and an aura moved onto the battlefield attached by an effect
+ * (MoveCollectionExecutor).
+ *
+ * Drives the "becomes attached" trigger family
+ * ([com.wingedsheep.sdk.scripting.EventPattern.BecomesAttachedEvent]): Assimilation Aegis
+ * ("whenever this Equipment becomes attached to a creature") and Eriette, the Beguiler
+ * ("whenever an Aura you control becomes attached to a … permanent an opponent controls").
+ *
+ * @property attachmentId the aura/equipment that became attached (the triggering entity).
+ * @property attachedToId the permanent it became attached to.
+ * @property controllerId the controller of the attachment.
+ */
+@Serializable
+@SerialName("PermanentAttachedEvent")
+data class PermanentAttachedEvent(
+    val attachmentId: EntityId,
+    val attachmentName: String,
+    val attachedToId: EntityId,
+    val controllerId: EntityId,
 ) : GameEvent
 
 /**

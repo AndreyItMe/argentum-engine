@@ -74,6 +74,7 @@ enum class TriggerCategory {
     RING_TEMPTED,
     SCRIED,
     BECAME_SADDLED,
+    BECOMES_ATTACHED,
 }
 
 /**
@@ -210,6 +211,7 @@ class TriggerIndex(
                 is SdkGameEvent.RingTemptedEvent -> RING_TEMPTED_LIST
                 is SdkGameEvent.ScriedEvent -> SCRIED_LIST
                 is SdkGameEvent.BecameSaddledEvent -> BECAME_SADDLED_LIST
+                is SdkGameEvent.BecomesAttachedEvent -> BECOMES_ATTACHED_LIST
                 // These are handled by specialized detect methods, not the main loop
                 else -> emptyList()
             }
@@ -246,6 +248,7 @@ class TriggerIndex(
             is com.wingedsheep.engine.core.RingTemptedEvent -> RING_TEMPTED_LIST
             is com.wingedsheep.engine.core.ScriedEvent -> SCRIED_LIST
             is com.wingedsheep.engine.core.BecameSaddledEvent -> BECAME_SADDLED_LIST
+            is com.wingedsheep.engine.core.PermanentAttachedEvent -> BECOMES_ATTACHED_LIST
             else -> emptyList()
         }
 
@@ -274,5 +277,6 @@ class TriggerIndex(
         private val RING_TEMPTED_LIST = listOf(TriggerCategory.RING_TEMPTED)
         private val SCRIED_LIST = listOf(TriggerCategory.SCRIED)
         private val BECAME_SADDLED_LIST = listOf(TriggerCategory.BECAME_SADDLED)
+        private val BECOMES_ATTACHED_LIST = listOf(TriggerCategory.BECOMES_ATTACHED)
     }
 }

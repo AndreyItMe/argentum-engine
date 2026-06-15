@@ -1183,6 +1183,40 @@ object Triggers {
     )
 
     // =========================================================================
+    // Attachment Triggers
+    // =========================================================================
+
+    /**
+     * Whenever an Aura/Equipment becomes attached to a permanent (CR 603.2e).
+     *
+     * SELF binding (default) = "whenever this Equipment/Aura becomes attached to a creature"
+     * (Assimilation Aegis). Use [binding] = [TriggerBinding.ANY] with [attachmentController] =
+     * [Player.You] and an [attachmentFilter] for "whenever a [filter] you control becomes
+     * attached to …" (Eriette, the Beguiler).
+     *
+     * The triggering entity is the attachment; the permanent it attached to is reachable via
+     * [com.wingedsheep.sdk.scripting.targets.EffectTarget.AttachedToTriggeringPermanent].
+     *
+     * @param attachmentFilter which attachment qualifies (e.g. Aura, Equipment).
+     * @param attachmentController who must control the attachment.
+     * @param attachedToFilter what the attachment must attach to (matched with the attachment as
+     *   the comparison reference for relative predicates, e.g. mana value at most the Aura's).
+     */
+    fun becomesAttached(
+        attachmentFilter: GameObjectFilter = GameObjectFilter.Any,
+        attachmentController: Player = Player.Any,
+        attachedToFilter: GameObjectFilter = GameObjectFilter.Any,
+        binding: TriggerBinding = TriggerBinding.SELF,
+    ): TriggerSpec = TriggerSpec(
+        event = BecomesAttachedEvent(
+            attachmentFilter = attachmentFilter,
+            attachmentController = attachmentController,
+            attachedToFilter = attachedToFilter,
+        ),
+        binding = binding
+    )
+
+    // =========================================================================
     // Gift Triggers
     // =========================================================================
 

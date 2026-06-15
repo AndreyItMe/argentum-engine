@@ -258,8 +258,8 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
 
 /** A mtgish `_CounterType` node -> the `Counters.*` constant the AddCountersEffect facade takes, or null
  *  for a counter kind we can't name (-> the caller scaffolds rather than guess). Shared by every "put a
- *  counter" handler (single / N / each). Only the bare ±1/±1 PTCounter and the keyword counters whose
- *  engine keyword-counter projection we model render. */
+ *  counter" handler (single / N / each). Only the bare ±1/±1 PTCounter, modeled keyword counters, and
+ *  engine-wired utility counters render. */
 internal fun counterTypeDsl(counterNode: JsonElement?): String? {
     val node = counterNode as? JsonObject ?: return null
     return when (node.strField("_CounterType")) {
@@ -282,6 +282,7 @@ internal fun counterTypeDsl(counterNode: JsonElement?): String? {
         // become untapped, instead remove a stun counter from it"), engine-wired via `untapOrConsumeStun`.
         // Adding one is a plain AddCounters(Counters.STUN, …) (Rapier Wit, Fractal Mascot).
         "StunCounter" -> "Counters.STUN"
+        "FinalityCounter" -> "Counters.FINALITY"
         // Loot counter (OTJ — Bandit's Haul): a passive storage counter with no inherent rule; the
         // card's own abilities accumulate it and spend it. Adding one is a plain AddCounters.
         "LootCounter" -> "Counters.LOOT"

@@ -30,6 +30,7 @@ class StackExecutors(
         ChangeTriggeringObjectTargetsExecutor(),
         GrantKeywordToSpellExecutor(),
         MarkSpellExileWithCountersExecutor(),
+        MarkSpellPlotOnResolveExecutor(),
         ReturnSpellToOwnersHandExecutor(),
         DestroySourceOfTargetedAbilityExecutor()
     )

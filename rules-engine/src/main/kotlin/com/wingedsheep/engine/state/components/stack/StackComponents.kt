@@ -138,6 +138,9 @@ data class TriggeredAbilityOnStackComponent(
     /** Total mana spent to cast the spell that fired this trigger (Aberrant Manawurm, Expressive
      *  Firedancer). Read via `ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL`. Null for non-cast triggers. */
     val triggerManaSpentOnTriggeringSpell: Int? = null,
+    /** Mana value (CR 202.3) of the spell that fired this trigger (Kellan, the Kid). Read via
+     *  `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE`. Null for non-cast triggers. */
+    val triggerManaValueOfTriggeringSpell: Int? = null,
     // Modal fields — populated when this triggered ability is a copy of a modal spell (700.2g).
     // Copies inherit the original's chosen modes; targets either inherit too (StormCopy default)
     // or are re-chosen by the copy controller while modes stay fixed.

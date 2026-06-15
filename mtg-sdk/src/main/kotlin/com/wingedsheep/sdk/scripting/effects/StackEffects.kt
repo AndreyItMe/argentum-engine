@@ -724,6 +724,31 @@ data class MarkSpellExileWithCountersEffect(
     }
 }
 
+/**
+ * Mark a spell on the stack so that, when it resolves, it is exiled instead of put into its
+ * owner's graveyard and **becomes plotted** (CR 718). The plot designation and free-cast-on-a-
+ * later-turn permission are granted only if the spell actually resolves into exile — if it is
+ * countered or otherwise fails to resolve, it goes to the graveyard normally (sibling of
+ * [MarkSpellExileWithCountersEffect], which carries the same `onlyIfResolved` semantics).
+ *
+ * Distinct from [ExileTargetSpellEffect]`(makePlotted = true)`: that one targets and removes a
+ * spell from the stack *now* (a non-counter removal); this one lets the spell resolve fully and
+ * only re-routes its post-resolution destination. Used by Lilah, Undefeated Slickshot: "exile
+ * that spell instead of putting it into your graveyard as it resolves. If you do, it becomes
+ * plotted."
+ *
+ * @property target The spell on the stack to mark (typically the triggering entity).
+ */
+@SerialName("MarkSpellPlotOnResolve")
+@Serializable
+data class MarkSpellPlotOnResolveEffect(
+    val target: com.wingedsheep.sdk.scripting.targets.EffectTarget = com.wingedsheep.sdk.scripting.targets.EffectTarget.TriggeringEntity,
+) : Effect {
+    override val description: String =
+        "Exile that spell instead of putting it into your graveyard as it resolves. " +
+            "If you do, it becomes plotted"
+}
+
 // =============================================================================
 // Stack Effects — Return Spell to Hand
 // =============================================================================

@@ -290,6 +290,37 @@ class TriggerMatcher(
                     )
                 } else true
             }
+            is EventPattern.BecomesAttachedEvent -> {
+                if (event !is com.wingedsheep.engine.core.PermanentAttachedEvent) return false
+                // SELF binding = "whenever THIS Equipment/Aura becomes attached" (the attachment
+                // is the source, e.g. Assimilation Aegis).
+                if (binding == TriggerBinding.SELF && event.attachmentId != sourceId) return false
+                // The controller of the attachment (CR — "an Aura you control").
+                if (!matchesPlayer(trigger.attachmentController, event.controllerId, controllerId)) return false
+                // The attachment must match the attachment filter (e.g. Aura, Equipment).
+                val attachmentCtx = com.wingedsheep.engine.handlers.PredicateContext(
+                    controllerId = controllerId,
+                    sourceId = sourceId,
+                )
+                if (trigger.attachmentFilter != GameObjectFilter.Any &&
+                    !PredicateEvaluator().matches(
+                        state, state.projectedState, event.attachmentId, trigger.attachmentFilter, attachmentCtx
+                    )
+                ) return false
+                // The attached-to permanent must match the attached-to filter, with the attachment
+                // exposed as EntityReference.Triggering so relative predicates (mana value at most
+                // the Aura's mana value — Eriette) resolve against it.
+                if (trigger.attachedToFilter != GameObjectFilter.Any) {
+                    val attachedToCtx = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId,
+                        triggeringEntityId = event.attachmentId,
+                    )
+                    PredicateEvaluator().matches(
+                        state, state.projectedState, event.attachedToId, trigger.attachedToFilter, attachedToCtx
+                    )
+                } else true
+            }
             is EventPattern.TargetsChosenEvent -> {
                 event is com.wingedsheep.engine.core.TargetsChosenEvent &&
                     matchesPlayer(trigger.player, event.chooserId, controllerId)
@@ -1220,6 +1251,11 @@ class TriggerMatcher(
             val spellComponent = state.getEntity(event.spellEntityId)?.get<SpellOnStackComponent>()
             spellComponent?.castFromZone == predicate.zone
         }
+        is SpellCastPredicate.CastFromZoneOtherThan -> {
+            val spellComponent = state.getEntity(event.spellEntityId)?.get<SpellOnStackComponent>()
+            val from = spellComponent?.castFromZone
+            from != null && from != predicate.zone
+        }
         SpellCastPredicate.WasKicked -> event.wasKicked
         is SpellCastPredicate.PaidWithManaFromSubtype -> when (predicate.subtype) {
             Subtype.TREASURE -> event.paidWithTreasureMana
@@ -1252,7 +1288,8 @@ class TriggerMatcher(
                 triggerScryCount = trigger.triggerContext.scryCount,
                 triggerExcessDamageAmount = trigger.triggerContext.excessDamageAmount,
                 triggerRecipientToughness = trigger.triggerContext.recipientToughnessAtDamage,
-                triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell
+                triggerManaSpentOnTriggeringSpell = trigger.triggerContext.manaSpentOnTriggeringSpell,
+                triggerManaValueOfTriggeringSpell = trigger.triggerContext.manaValueOfTriggeringSpell
             )
             conditionEvaluator.evaluate(state, condition, context)
         }

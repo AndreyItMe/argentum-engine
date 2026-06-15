@@ -78,7 +78,10 @@ data class TriggeredAbilityContinuation(
     val triggerRecipientToughness: Int? = null,
     /** Total mana spent to cast the spell that fired this trigger (Aberrant Manawurm, Expressive
      *  Firedancer). Read via `ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL`. Null for non-cast triggers. */
-    val triggerManaSpentOnTriggeringSpell: Int? = null
+    val triggerManaSpentOnTriggeringSpell: Int? = null,
+    /** Mana value of the spell that fired this trigger (Kellan, the Kid). Read via
+     *  `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE`. Null for non-cast triggers. */
+    val triggerManaValueOfTriggeringSpell: Int? = null
 ) : ContinuationFrame
 
 /**

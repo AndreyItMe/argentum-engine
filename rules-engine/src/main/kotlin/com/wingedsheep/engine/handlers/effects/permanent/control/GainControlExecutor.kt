@@ -55,9 +55,18 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
             ?: targetContainer.get<ControllerComponent>()?.playerId
         if (currentControllerId == newControllerId) return EffectResult.success(state)
 
+        // "for as long as that Aura is attached to it" (Eriette): the control effect's duration
+        // tracks the *attachment* (the Aura/Equipment), not the card whose ability granted control.
+        // Source the floating effect from the triggering attachment so
+        // [Duration.WhileSourceAttachedToAffected] reads the right attachment's AttachedToComponent.
+        val floatingContext =
+            if (effect.duration == com.wingedsheep.sdk.scripting.Duration.WhileSourceAttachedToAffected) {
+                context.copy(sourceId = context.triggeringEntityId ?: context.sourceId)
+            } else context
+
         // Remove any previous Layer.CONTROL floating effects from the same source on the same target
         val filteredEffects = state.floatingEffects.filter { floating ->
-            !(floating.sourceId == context.sourceId &&
+            !(floating.sourceId == floatingContext.sourceId &&
               floating.effect.layer == Layer.CONTROL &&
               targetId in floating.effect.affectedEntities)
         }
@@ -69,7 +78,7 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
                 modification = SerializableModification.ChangeController(newControllerId),
                 affectedEntities = setOf(targetId),
                 duration = effect.duration,
-                context = context
+                context = floatingContext
             )
             .updateEntity(targetId) { it.with(SummoningSicknessComponent) }
             .let { clearRingBearerOnControlChange(it, targetId, newControllerId) }

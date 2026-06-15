@@ -339,6 +339,14 @@ class CleanupPhaseManager(
                     sourceId != null && newState.getBattlefield().contains(sourceId) &&
                         newState.getEntity(sourceId)?.has<TappedComponent>() == true
                 }
+                Duration.WhileSourceAttachedToAffected -> {
+                    // Keep if the source (Aura/Equipment) is still on the battlefield. The
+                    // per-affected "still attached to it" half is gated per-frame by StateProjector
+                    // and latched off by EndedDurationExpiryCheck; cleanup only drops it once the
+                    // source itself has left.
+                    val sourceId = floatingEffect.sourceId
+                    sourceId != null && newState.getBattlefield().contains(sourceId)
+                }
                 is Duration.WhileControlledByController -> true  // Gated at projection by controller; cleared on leaving play
                 is Duration.UntilAfterAffectedControllersNextUntap -> true  // Expires after affected entity's controller's untap
                 is Duration.UntilPhase -> true  // Handle in phase transitions
