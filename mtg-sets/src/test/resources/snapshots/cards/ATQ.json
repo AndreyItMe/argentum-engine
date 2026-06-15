@@ -529,6 +529,44 @@
     "colorIdentityOverride": []
 }
 
+// Gaea's Avenger
+{
+    "name": "Gaea's Avenger",
+    "manaCost": "{1}{G}{G}",
+    "typeLine": "Creature — Treefolk",
+    "oracleText": "Gaea's Avenger's power and toughness are each equal to 1 plus the number of artifacts your opponents control.",
+    "creatureStats": {
+        "power": {
+            "type": "DynamicWithOffset",
+            "source": {
+                "type": "AggregateBattlefield",
+                "player": "Opponent",
+                "filter": "artifact"
+            },
+            "offset": 1
+        },
+        "toughness": {
+            "type": "DynamicWithOffset",
+            "source": {
+                "type": "AggregateBattlefield",
+                "player": "Opponent",
+                "filter": "artifact"
+            },
+            "offset": 1
+        }
+    },
+    "metadata": {
+        "collectorNumber": "33",
+        "rarity": "RARE",
+        "artist": "Pete Venters",
+        "flavorText": "After the destruction of Argoth, Gaea was willing to instill a portion of her own powers into some of her more vengeful followers.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/9/39d763bd-b0a9-46ba-bcd2-9304063446f2.jpg?1562907103"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Grapeshot Catapult
 {
     "name": "Grapeshot Catapult",
