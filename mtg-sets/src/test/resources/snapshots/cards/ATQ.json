@@ -51,6 +51,44 @@
     "colorIdentityOverride": []
 }
 
+// Ashnod's Altar
+{
+    "name": "Ashnod's Altar",
+    "manaCost": "{3}",
+    "typeLine": "Artifact",
+    "oracleText": "Sacrifice a creature: Add {C}{C}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
+                },
+                "effect": {
+                    "type": "AddColorlessMana",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                },
+                "isManaAbility": true,
+                "descriptionOverride": "Sacrifice a creature: Add {C}{C}."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "38",
+        "rarity": "UNCOMMON",
+        "artist": "Anson Maddocks",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/d/cdcccb0f-ce96-453b-9e82-41d87f52e58b.jpg?1562938535"
+    },
+    "colorIdentityOverride": []
+}
+
 // Candelabra of Tawnos
 {
     "name": "Candelabra of Tawnos",

@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 19 / 85
+**Implemented:** 20 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -68,7 +68,7 @@
 ### Artifacts
 - [x] Amulet of Kroog
 - [ ] Armageddon Clock
-- [ ] Ashnod's Altar
+- [x] Ashnod's Altar
 - [ ] Ashnod's Battle Gear
 - [ ] Ashnod's Transmogrant
 - [ ] Battering Ram
