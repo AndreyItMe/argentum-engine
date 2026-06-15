@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 32 / 85
+**Implemented:** 33 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -40,7 +40,7 @@
 
 ### Black
 - [ ] Artifact Possession
-- [ ] Gate to Phyrexia
+- [x] Gate to Phyrexia
 - [ ] Haunting Wind
 - [ ] Phyrexian Gremlins
 - [ ] Priest of Yawgmoth

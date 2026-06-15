@@ -626,6 +626,69 @@
     ]
 }
 
+// Gate to Phyrexia
+{
+    "name": "Gate to Phyrexia",
+    "manaCost": "{B}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "Sacrifice a creature: Destroy target artifact. Activate only during your upkeep and only once each turn.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target artifact"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "artifact"
+                        },
+                        "id": "target artifact"
+                    }
+                ],
+                "restrictions": [
+                    "OncePerTurn",
+                    {
+                        "type": "ActivationAll",
+                        "restrictions": [
+                            "OnlyDuringYourTurn",
+                            {
+                                "type": "DuringStep",
+                                "step": "UPKEEP"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "16",
+        "rarity": "UNCOMMON",
+        "artist": "Sandra Everingham",
+        "flavorText": "\"The warm rain of grease on my face immediately made it clear I had entered Phyrexia.\" —Jarsyl, Diary",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/f/1f372950-6693-4838-80ef-8fd9aa3e0349.jpg?1592364259"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Grapeshot Catapult
 {
     "name": "Grapeshot Catapult",
