@@ -6386,7 +6386,7 @@
                     "from": "Battlefield",
                     "to": "Graveyard"
                 },
-                "binding": "ANY",
+                "binding": "OTHER",
                 "effect": {
                     "type": "Gated",
                     "gate": {
