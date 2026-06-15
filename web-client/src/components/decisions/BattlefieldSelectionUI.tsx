@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useGameStore } from '@/store/gameStore.ts'
 import type { DecisionSelectionState } from '@/store/slices'
 import type { SelectCardsDecision } from '@/types'
+import { DraggableBanner } from './DraggableBanner'
 import styles from './DecisionUI.module.css'
 
 /**
@@ -56,7 +57,7 @@ export function BattlefieldSelectionUI({
 
   // Side banner (similar to ChooseTargetsDecision)
   return (
-    <div className={styles.sideBannerSelection}>
+    <DraggableBanner className={styles.sideBannerSelection}>
       <div className={styles.bannerTitleSelection}>
         {decision.prompt}
       </div>
@@ -84,6 +85,6 @@ export function BattlefieldSelectionUI({
           </button>
         )}
       </div>
-    </div>
+    </DraggableBanner>
   )
 }
