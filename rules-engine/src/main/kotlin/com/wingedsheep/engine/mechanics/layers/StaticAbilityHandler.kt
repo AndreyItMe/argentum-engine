@@ -105,6 +105,7 @@ import com.wingedsheep.sdk.scripting.MayCastSelfFromZones
 import com.wingedsheep.sdk.scripting.MayCastWithoutPayingManaCost
 import com.wingedsheep.sdk.scripting.MayPlayLandsFromGraveyard
 import com.wingedsheep.sdk.scripting.MayPlayPermanentsFromGraveyard
+import com.wingedsheep.sdk.scripting.ModifyPlotCost
 import com.wingedsheep.sdk.scripting.ModifySpellCost
 import com.wingedsheep.sdk.scripting.NoMaximumHandSize
 import com.wingedsheep.sdk.scripting.NoncombatDamageBonus
@@ -705,6 +706,9 @@ class StaticAbilityHandler(
             // Spell costs (CostCalculator):
             is GrantAlternativeCastingCost,
             is ModifySpellCost,
+
+            // Plot special-action cost (PlotCostReducer / PlotEnumerator / PlotCardHandler):
+            is ModifyPlotCost,
 
             // Spells on the stack (StackResolver / GrantedKeywordResolver):
             is GrantCantBeCountered,

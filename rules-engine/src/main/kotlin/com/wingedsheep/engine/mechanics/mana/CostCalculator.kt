@@ -218,6 +218,14 @@ class CostCalculator(
                 if (sourceController == casterId) return false
                 matchesCardDefinition(cardDef, target.filter, sourceId, state, state.projectedState)
             }
+            is SpellCostTarget.YouCastFromZones -> {
+                // Source must be controlled by the caster, the spell must be cast from one of the
+                // named zones, and the card must match the filter (Doc Aurlock).
+                if (fromZone == null || fromZone !in target.zones) return false
+                val sourceController = state.projectedState.getController(sourceId) ?: return false
+                if (sourceController != casterId) return false
+                matchesCardDefinition(cardDef, target.filter, sourceId, state, state.projectedState)
+            }
             // FaceDown / Morph targets are spell-cast modifiers only when applied to a face-down cast.
             // calculateEffectiveCost is only called for face-up casts; face-down handling is in
             // calculateFaceDownCost / calculateMorphCostIncrease.

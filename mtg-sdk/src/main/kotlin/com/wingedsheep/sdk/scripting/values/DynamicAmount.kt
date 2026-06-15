@@ -697,6 +697,11 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
                     if (excludeSelf) append("other ")
                     append(pluralize(filter.description))
                 }
+                Aggregation.DISTINCT_VALUES -> {
+                    append("the number of different ${property?.description ?: "value"} among ")
+                    if (excludeSelf) append("other ")
+                    append(pluralize(filter.description))
+                }
             }
             append(" ")
             when (player) {
@@ -781,6 +786,10 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
                 }
                 Aggregation.DISTINCT_COUNTER_TYPES -> {
                     append("the number of different kinds of counters among ")
+                    append(pluralize(filter.description))
+                }
+                Aggregation.DISTINCT_VALUES -> {
+                    append("the number of different ${property?.description ?: "value"} among ")
                     append(pluralize(filter.description))
                 }
             }

@@ -43,6 +43,8 @@ data class ModifySpellCost(
                 "Spells your opponents cast that target ${target.targetFilter.description}"
             is SpellCostTarget.OpponentsCastFromZones ->
                 "Spells your opponents cast from ${describeZones(target.zones)}"
+            is SpellCostTarget.YouCastFromZones ->
+                "Spells you cast from ${describeZones(target.zones)}"
             SpellCostTarget.FaceDownYouCast -> "Face-down creature spells you cast"
             SpellCostTarget.MorphActivation -> "All morph costs"
         }
@@ -152,6 +154,28 @@ sealed interface SpellCostTarget {
     @SerialName("AnyCaster")
     @Serializable
     data class AnyCaster(val filter: GameObjectFilter) : SpellCostTarget {
+        override fun applyTextReplacement(replacer: TextReplacer): SpellCostTarget {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
+     * Spells the source's controller casts **from one of [zones]**, matching [filter]
+     * (default: any spell). The you-cast analogue of [OpponentsCastFromZones].
+     *
+     * Used for Doc Aurlock, Grizzled Genius ("Spells you cast from your graveyard or from
+     * exile cost {2} less to cast") via
+     * `YouCastFromZones(setOf(Zone.GRAVEYARD, Zone.EXILE))` paired with
+     * [CostModification.ReduceGeneric]. The cost calculator matches it only when the casting
+     * player controls the source and the spell is being cast from one of the named zones.
+     */
+    @SerialName("YouCastFromZones")
+    @Serializable
+    data class YouCastFromZones(
+        val zones: Set<com.wingedsheep.sdk.core.Zone>,
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+    ) : SpellCostTarget {
         override fun applyTextReplacement(replacer: TextReplacer): SpellCostTarget {
             val newFilter = filter.applyTextReplacement(replacer)
             return if (newFilter !== filter) copy(filter = newFilter) else this
@@ -601,4 +625,58 @@ sealed interface CostReductionSource {
         override val description: String =
             "the number of ${filter.description} on the battlefield"
     }
+}
+
+/**
+ * Static ability that modifies the cost of the **Plot** special action (CR 718).
+ *
+ * Plot is not a spell, so [ModifySpellCost] does not touch it; this is its dedicated cost
+ * modifier. The engine's `PlotCostReducer` scans the battlefield for these and reduces the
+ * plot cost paid by [PlotEnumerator]/`PlotCardHandler`.
+ *
+ * Used for Doc Aurlock, Grizzled Genius ("Plotting cards from your hand costs {2} less") via
+ * `ModifyPlotCost(PlotCostTarget.YouPlotFromHand, CostModification.ReduceGeneric(2))`.
+ *
+ * @property target Which plots the modifier applies to.
+ * @property modification How the cost is changed (reuses the spell-cost [CostModification]
+ *           vocabulary; only generic reductions are currently meaningful for plot).
+ */
+@SerialName("ModifyPlotCost")
+@Serializable
+data class ModifyPlotCost(
+    val target: PlotCostTarget,
+    val modification: CostModification,
+) : StaticAbility {
+    override val description: String = buildString {
+        append(
+            when (target) {
+                PlotCostTarget.YouPlotFromHand -> "Plotting cards from your hand"
+            }
+        )
+        append(
+            when (val m = modification) {
+                is CostModification.ReduceGeneric -> " costs {${m.amount}} less"
+                is CostModification.IncreaseGeneric -> " costs {${m.amount}} more"
+                else -> " has a modified cost"
+            }
+        )
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newModification = modification.applyTextReplacement(replacer)
+        return if (newModification !== modification) copy(modification = newModification) else this
+    }
+}
+
+/**
+ * What a [ModifyPlotCost] applies to. Modeled as a sealed interface so future "plot from the top
+ * of your library" reductions (Fblthp-shaped) slot in as a new variant without changing the
+ * static-ability shape.
+ */
+@Serializable
+sealed interface PlotCostTarget {
+    /** Cards the source's controller plots from their hand (the printed Plot keyword cost). */
+    @SerialName("YouPlotFromHand")
+    @Serializable
+    data object YouPlotFromHand : PlotCostTarget
 }

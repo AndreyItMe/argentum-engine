@@ -559,10 +559,14 @@ internal fun EmitCtx.playerEffectBlock(rule: JsonObject): List<Stmt>? {
     for (e in effects) {
         val ability = when (e.strField("_PlayerEffect")) {
             "Shroud" -> Lit("GrantShroudToController")
-            // "[Filtered] spells you cast cost {N} less to cast" (Honest Rutstein: creature spells).
-            // Renders only a single bare generic reduction over a spell filter we can name exactly;
-            // a colored/dynamic reduction or a filter we can't express declines -> SCAFFOLD.
+            // "[Filtered] spells you cast cost {N} less to cast" (Honest Rutstein: creature spells;
+            // Doc Aurlock: cast from your graveyard or from exile). Renders only a single bare generic
+            // reduction over a spell filter / zone set we can name exactly; a colored/dynamic
+            // reduction or a filter we can't express declines -> SCAFFOLD.
             "DecreaseSpellCost" -> decreaseSpellCostAbility(e) ?: run { reasons.add("PlayerEffect"); return null }
+            // "Plotting cards from your hand costs {N} less" (Doc Aurlock) -> ModifyPlotCost.
+            "DecreasePlotFromHandCost" ->
+                decreasePlotFromHandCostAbility(e) ?: run { reasons.add("PlayerEffect"); return null }
             // "You can't cast more than N spell(s) each turn" (Yawgmoth's Agenda) — controller-scoped.
             "CantCastMoreThanNumberSpellsEachTurn" ->
                 spellCountRestrictionAbility(e, eachPlayer = false) ?: run { reasons.add("PlayerEffect"); return null }
@@ -624,7 +628,23 @@ private fun EmitCtx.spellCountRestrictionAbility(effect: JsonObject, eachPlayer:
  * renders; any colored symbol, a multi-symbol reduction, or an unrenderable filter returns null. */
 private fun EmitCtx.decreaseSpellCostAbility(effect: JsonObject): Dsl? {
     val a = effect["args"].asArr ?: return null
-    val spellFilter = when (val spells = a.getOrNull(0) as? JsonObject) {
+    val spells = a.getOrNull(0) as? JsonObject
+
+    val symbols = (a.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    if (symbols.size != 1 || symbols[0].strField("_CostReductionSymbol") != "CostReduceGeneric") return null
+    val amount = symbols[0]["args"].asInt() ?: return null
+
+    // A "cast from your graveyard or from exile" spell filter maps to the zone-scoped
+    // SpellCostTarget.YouCastFromZones (Doc Aurlock). Recognised exactly; anything else declines.
+    castFromZonesSet(spells)?.let { zonesExpr ->
+        return call(
+            "ModifySpellCost",
+            arg("target", call("SpellCostTarget.YouCastFromZones", arg(zonesExpr))),
+            arg("modification", call("CostModification.ReduceGeneric", arg("$amount"))),
+        )
+    }
+
+    val spellFilter = when (spells) {
         null -> "GameObjectFilter.Any"
         else -> when {
             jsonContains(spells, "_Spells", "AnySpell") -> "GameObjectFilter.Any"
@@ -632,12 +652,52 @@ private fun EmitCtx.decreaseSpellCostAbility(effect: JsonObject): Dsl? {
             else -> return null
         }
     }
-    val symbols = (a.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
-    if (symbols.size != 1 || symbols[0].strField("_CostReductionSymbol") != "CostReduceGeneric") return null
-    val amount = symbols[0]["args"].asInt() ?: return null
     return call(
         "ModifySpellCost",
         arg("target", call("SpellCostTarget.YouCast", arg(spellFilter))),
+        arg("modification", call("CostModification.ReduceGeneric", arg("$amount"))),
+    )
+}
+
+/**
+ * Recognise the spell-zone filter `Or[WasCastFromAPlayersGraveyard(You), WasCastFromExile]`
+ * (in either order) and render it as a `setOf(Zone.GRAVEYARD, Zone.EXILE)` expression for
+ * [SpellCostTarget.YouCastFromZones]. Returns null for any other spell filter so the caller falls
+ * back to the plain `YouCast` shape or declines. Only the exact graveyard+exile pair is handled —
+ * the single shape that appears today (Doc Aurlock); a partial/other zone set declines rather than
+ * guess.
+ */
+private fun castFromZonesSet(spells: JsonObject?): String? {
+    if (spells == null) return null
+    val branches = when {
+        spells.strField("_Spells") == "Or" -> (spells["args"] as? JsonArray)?.filterIsInstance<JsonObject>()
+        else -> listOf(spells)
+    } ?: return null
+    val zones = mutableSetOf<String>()
+    for (b in branches) {
+        when (b.strField("_Spells")) {
+            "WasCastFromAPlayersGraveyard" -> zones.add("Zone.GRAVEYARD")
+            "WasCastFromExile" -> zones.add("Zone.EXILE")
+            else -> return null
+        }
+    }
+    if (zones != setOf("Zone.GRAVEYARD", "Zone.EXILE")) return null
+    return "setOf(Zone.GRAVEYARD, Zone.EXILE)"
+}
+
+/**
+ * A `DecreasePlotFromHandCost([<reduction symbols>])` player-static ->
+ * `ModifyPlotCost(target = PlotCostTarget.YouPlotFromHand, modification = CostModification.ReduceGeneric(N))`.
+ * Only a single bare generic reduction renders (Doc Aurlock: "Plotting cards from your hand costs
+ * {2} less"); a colored/multi-symbol reduction declines -> SCAFFOLD.
+ */
+private fun EmitCtx.decreasePlotFromHandCostAbility(effect: JsonObject): Dsl? {
+    val symbols = (effect["args"] as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    if (symbols.size != 1 || symbols[0].strField("_CostReductionSymbol") != "CostReduceGeneric") return null
+    val amount = symbols[0]["args"].asInt() ?: return null
+    return call(
+        "ModifyPlotCost",
+        arg("target", "PlotCostTarget.YouPlotFromHand"),
         arg("modification", call("CostModification.ReduceGeneric", arg("$amount"))),
     )
 }

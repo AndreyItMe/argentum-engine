@@ -121,8 +121,19 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // `ModifySpellCost(target = SpellCostTarget.OpponentsCastFromZones(...), modification =
     // IncreaseGeneric(N))`. The spell-zone selectors below carry the zone set.
     effect("IncreaseSpellCost", "ModifySpellCost")
-    supported("WasCastFromExile", "spell selector: cast from exile (SpellCostTarget.OpponentsCastFromZones zone = EXILE)")
-    supported("WasCastFromAPlayersGraveyard", "spell selector: cast from a graveyard (SpellCostTarget.OpponentsCastFromZones zone = GRAVEYARD)")
+    supported("WasCastFromExile", "spell selector: cast from exile (SpellCostTarget.*CastFromZones zone = EXILE)")
+    supported("WasCastFromAPlayersGraveyard", "spell selector: cast from a graveyard (SpellCostTarget.*CastFromZones zone = GRAVEYARD)")
+
+    // "Spells you cast from your graveyard or from exile cost {N} less" (Doc Aurlock, Grizzled
+    // Genius) — the nested _PlayerEffect of a controller-scoped PlayerEffect{You} static. Renders to
+    // `ModifySpellCost(target = SpellCostTarget.YouCastFromZones(GRAVEYARD, EXILE), modification =
+    // ReduceGeneric(N))`. The you-cast analogue of the IncreaseSpellCost/OpponentsCastFromZones
+    // shape above; the spell-zone selectors are shared.
+    effect("DecreaseSpellCost", "ModifySpellCost")
+    // "Plotting cards from your hand costs {N} less" (Doc Aurlock) — a controller-scoped player
+    // static over the Plot special action (CR 718). Renders to `ModifyPlotCost(target =
+    // PlotCostTarget.YouPlotFromHand, modification = ReduceGeneric(N))`.
+    effect("DecreasePlotFromHandCost", "ModifyPlotCost")
 
     // Fblthp, Lost on the Range (CR 718) — top-of-library plot + look. Nested _PlayerEffect /
     // _Rule capabilities of the controller-scoped statics.

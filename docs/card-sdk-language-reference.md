@@ -2191,8 +2191,9 @@ staticAbility {
 ```
 
 - `target: SpellCostTarget` — `SelfCast`, `YouCast(filter)`, `AnyCaster(filter)`,
-  `OpponentsCastTargeting(GroupFilter)`, `OpponentsCastFromZones(zones, filter?)`, `FaceDownYouCast`, `MorphActivation`.
+  `OpponentsCastTargeting(GroupFilter)`, `OpponentsCastFromZones(zones, filter?)`, `YouCastFromZones(zones, filter?)`, `FaceDownYouCast`, `MorphActivation`.
   - `OpponentsCastFromZones(zones, filter = Any)` — spells the source-controller's opponents cast **from one of `zones`** (matched against the spell's actual cast zone, threaded as `fromZone`), matching `filter`. Pair with `CostModification.IncreaseGeneric(n)` for the Aven Interrupter shape: `OpponentsCastFromZones(setOf(Zone.GRAVEYARD, Zone.EXILE))` + `IncreaseGeneric(2)` = "Spells your opponents cast from graveyards or from exile cost {2} more to cast."
+  - `YouCastFromZones(zones, filter = Any)` — the you-cast analogue: spells the **source's controller** casts **from one of `zones`**, matching `filter`. Pair with `CostModification.ReduceGeneric(n)` for Doc Aurlock, Grizzled Genius: `YouCastFromZones(setOf(Zone.GRAVEYARD, Zone.EXILE))` + `ReduceGeneric(2)` = "Spells you cast from your graveyard or from exile cost {2} less to cast." (Only the normal-cast path threads `fromZone`; alternative-cost casts such as flashback compute their own base cost and are unaffected.)
 - `modification: CostModification` — `ReduceGeneric(amount)`, `ReduceGenericBy(source)`,
   `ReduceColored(symbols)`, `ReduceColoredPerUnit(symbols, source)`,
   `ReduceColoredIfAnyTargetMatches(symbols, filter)` (target-gated **colored** reduction — the
@@ -2231,6 +2232,30 @@ staticAbility {
     fixed conditional reduction pair it with `ReduceGeneric` (Mental Modulation:
     `ReduceGeneric(1)` gated by `OnlyIf(IsYourTurn)`; Lashwhip Predator / Arwen's Gift gate on a
     `Compare(...)`).
+
+**Plot cost statics — `ModifyPlotCost`**
+
+Plot (CR 718) is a *special action*, not a spell, so `ModifySpellCost` never touches it.
+`ModifyPlotCost(target, modification)` is its dedicated cost modifier, evaluated by the engine's
+`PlotCostReducer` (consulted by both the plot legal-action enumerator and the plot handler so
+affordability and payment stay in lockstep).
+
+```kotlin
+staticAbility {
+    ability = ModifyPlotCost(
+        target = PlotCostTarget.YouPlotFromHand,
+        modification = CostModification.ReduceGeneric(2),
+    )
+}
+```
+
+- `target: PlotCostTarget` — currently `YouPlotFromHand` (cards the source's controller plots from
+  hand; a future "plot from top of library" / Fblthp variant slots in as a new `PlotCostTarget`
+  without changing call sites).
+- `modification: CostModification` — reuses the spell-cost vocabulary, but only the flat generic
+  shapes (`ReduceGeneric` / `IncreaseGeneric`) are meaningful since a printed plot cost is a flat
+  mana cost; generic is floored at {0} and colored pips are never reduced. Doc Aurlock, Grizzled
+  Genius: "Plotting cards from your hand costs {2} less" = `ReduceGeneric(2)`.
 
 **Global denial statics** (no `filter`/`duration` block — they're singleton-style)
 
@@ -3099,8 +3124,12 @@ Numbers computed at resolution time.
   permanents. `aggregation` defaults to `COUNT`; other modes: `MAX`/`MIN`/`SUM` over a
   `property` (`POWER`/`TOUGHNESS`/`MANA_VALUE`), and the distinct-set counters
   `DISTINCT_TYPES`, `DISTINCT_COLORS`, `DISTINCT_NAMES`, `DISTINCT_BASIC_LAND_SUBTYPES`
-  (Domain), and `DISTINCT_COUNTER_TYPES` (the number of different kinds of counters present
-  across the group — same kind on several permanents counts once).
+  (Domain), `DISTINCT_COUNTER_TYPES` (the number of different kinds of counters present
+  across the group — same kind on several permanents counts once), and `DISTINCT_VALUES`
+  (the number of *distinct values* of the configured `property` — Selvala, Eager Trailblazer's
+  "the number of different powers among creatures you control" via
+  `aggregation = DISTINCT_VALUES, property = POWER`; two permanents sharing a value count once).
+  Builder shortcut: `DynamicAmounts.battlefield(player, filter).distinctValues(CardNumericProperty.POWER)`.
 - `AggregateZone(player, zone, filter?, aggregation?)` — count cards in a zone.
 - `CountPermanentsOfType(player, subtype)` — count by creature type.
 - `CountCreaturesYouControl` — shorthand for "your creatures".

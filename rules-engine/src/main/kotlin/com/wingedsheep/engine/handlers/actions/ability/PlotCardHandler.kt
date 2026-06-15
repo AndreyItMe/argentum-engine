@@ -59,6 +59,8 @@ class PlotCardHandler(
     override val actionType: KClass<PlotCard> = PlotCard::class
 
     private val predicateEvaluator = PredicateEvaluator()
+    private val plotCostReducer =
+        com.wingedsheep.engine.mechanics.mana.PlotCostReducer(cardRegistry)
 
     /**
      * Where the card being plotted lives and what its plot cost is. Plot normally exiles a
@@ -72,11 +74,13 @@ class PlotCardHandler(
         val cardComponent = state.getEntity(action.cardId)?.get<CardComponent>() ?: return null
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return null
 
-        // Hand: the card's own Plot keyword.
+        // Hand: the card's own Plot keyword, after any "plotting cards from your hand costs {N}
+        // less" reductions (Doc Aurlock, Grizzled Genius).
         if (action.cardId in state.getZone(ZoneKey(action.playerId, Zone.HAND))) {
             val plotAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Plot>().firstOrNull()
                 ?: return null
-            return PlotSource(Zone.HAND, plotAbility.cost)
+            val reduced = plotCostReducer.effectivePlotCostFromHand(state, action.playerId, plotAbility.cost)
+            return PlotSource(Zone.HAND, reduced)
         }
 
         // Top of library: a battlefield [PlotFromTopOfLibrary] grant (Fblthp). The card must be

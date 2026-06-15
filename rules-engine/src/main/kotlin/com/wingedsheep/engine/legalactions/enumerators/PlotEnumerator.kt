@@ -31,12 +31,15 @@ class PlotEnumerator : ActionEnumerator {
             val plotAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Plot>().firstOrNull()
                 ?: continue
 
+            // Apply Doc Aurlock-style "plotting cards from your hand costs {N} less" reductions.
+            val plotCost = context.plotCostReducer.effectivePlotCostFromHand(state, playerId, plotAbility.cost)
+
             val canAfford = context.manaSolver.canPay(
-                state, playerId, plotAbility.cost, precomputedSources = context.availableManaSources
+                state, playerId, plotCost, precomputedSources = context.availableManaSources
             )
             val autoTapPreview = if (context.skipAutoTapPreview) null else {
                 context.manaSolver.solve(
-                    state, playerId, plotAbility.cost, precomputedSources = context.availableManaSources
+                    state, playerId, plotCost, precomputedSources = context.availableManaSources
                 )?.sources?.map { it.entityId }
             }
             result.add(
@@ -45,7 +48,7 @@ class PlotEnumerator : ActionEnumerator {
                     description = "Plot ${cardComponent.name}",
                     action = PlotCard(playerId, cardId),
                     affordable = canAfford,
-                    manaCostString = plotAbility.cost.toString(),
+                    manaCostString = plotCost.toString(),
                     autoTapPreview = autoTapPreview
                 )
             )

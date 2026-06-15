@@ -67,6 +67,15 @@ object DynamicAmounts {
 
         fun sumPower(): DynamicAmount =
             DynamicAmount.AggregateBattlefield(player, filter, Aggregation.SUM, CardNumericProperty.POWER)
+
+        /**
+         * The number of distinct values of [property] (power / toughness / mana value) among the
+         * matched permanents — e.g. `distinctValues(POWER)` for "the number of different powers
+         * among creatures you control" (Selvala, Eager Trailblazer). Two permanents sharing a
+         * value count once.
+         */
+        fun distinctValues(property: CardNumericProperty): DynamicAmount =
+            DynamicAmount.AggregateBattlefield(player, filter, Aggregation.DISTINCT_VALUES, property)
     }
 
     // =========================================================================

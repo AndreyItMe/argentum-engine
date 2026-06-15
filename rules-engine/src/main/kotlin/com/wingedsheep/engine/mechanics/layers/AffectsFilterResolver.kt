@@ -280,6 +280,10 @@ internal class AffectsFilterResolver {
                         ControllerPredicate.ControlledByYou -> entityController == controller
                         ControllerPredicate.ControlledByOpponent -> entityController != controller
                         ControllerPredicate.ControlledByAny -> true
+                        // Owner-axis leaves read the card's owner relative to the source's
+                        // controller (Laughing Jasper Flint: "creatures you control but don't own").
+                        ControllerPredicate.OwnedByYou -> card.ownerId != null && card.ownerId == controller
+                        ControllerPredicate.OwnedByOpponent -> card.ownerId != null && card.ownerId != controller
                         else -> null // other predicates not applicable in static ability context
                     }
                 }

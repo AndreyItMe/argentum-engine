@@ -55,6 +55,8 @@ class EnumerationContext(
     val targetUtils by lazy { TargetEnumerationUtils(predicateEvaluator) }
     val costUtils by lazy { CostEnumerationUtils(manaSolver, costCalculator, predicateEvaluator, cardRegistry) }
     val castPermissionUtils by lazy { CastPermissionUtils(cardRegistry, predicateEvaluator, conditionEvaluator) }
+    // Plot (CR 718) cost reduction — Doc Aurlock-style "plotting cards costs {N} less".
+    val plotCostReducer by lazy { com.wingedsheep.engine.mechanics.mana.PlotCostReducer(cardRegistry) }
 
     // Projected state
     val projected: ProjectedState by lazy { state.projectedState }

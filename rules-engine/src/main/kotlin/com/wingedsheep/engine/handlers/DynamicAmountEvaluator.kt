@@ -634,6 +634,12 @@ class DynamicAmountEvaluator(
             Aggregation.DISTINCT_COUNTER_TYPES -> matchingEntities.flatMapTo(mutableSetOf()) { entityId ->
                 state.getEntity(entityId)?.get<CountersComponent>()?.counters?.keys ?: emptySet()
             }.size
+            Aggregation.DISTINCT_VALUES -> {
+                val prop = amount.property ?: return 0
+                matchingEntities.mapTo(mutableSetOf()) {
+                    resolveCardNumericProperty(state, projection, it, prop)
+                }.size
+            }
         }
     }
 
@@ -701,6 +707,12 @@ class DynamicAmountEvaluator(
             Aggregation.DISTINCT_COUNTER_TYPES -> {
                 matchingEntities.flatMapTo(mutableSetOf()) { entityId ->
                     state.getEntity(entityId)?.get<CountersComponent>()?.counters?.keys ?: emptySet()
+                }.size
+            }
+            Aggregation.DISTINCT_VALUES -> {
+                val prop = amount.property ?: return 0
+                matchingEntities.mapTo(mutableSetOf()) {
+                    resolveCardNumericProperty(state, null, it, prop)
                 }.size
             }
         }

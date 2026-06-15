@@ -4355,6 +4355,65 @@
     ]
 }
 
+// Doc Aurlock, Grizzled Genius
+{
+    "name": "Doc Aurlock, Grizzled Genius",
+    "manaCost": "{G}{U}",
+    "typeLine": "Legendary Creature — Bear Druid",
+    "oracleText": "Spells you cast from your graveyard or from exile cost {2} less to cast.\nPlotting cards from your hand costs {2} less.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCastFromZones",
+                    "zones": [
+                        "Graveyard",
+                        "Exile"
+                    ]
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 2
+                }
+            },
+            {
+                "type": "ModifyPlotCost",
+                "target": "YouPlotFromHand",
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 2
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "201",
+        "rarity": "UNCOMMON",
+        "artist": "Jesper Ejsing",
+        "flavorText": "\"Learning stops only when you close your mind off to wonder.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/f/6fc27b30-8c8e-434c-a72c-e1d409efc1ae.jpg?1712356080",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "The cost reduction applies to the total cost of the spell, including additional costs such as kicker. It can't reduce a spell's cost below the colored mana in its cost."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Plotting a card is a special action, not casting a spell. The plot cost reduction applies only to the cost to plot, and the spell-cast reduction applies only when you actually cast a spell."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "BLUE"
+    ]
+}
+
 // Double Down
 {
     "name": "Double Down",
@@ -8989,6 +9048,137 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Laughing Jasper Flint
+{
+    "name": "Laughing Jasper Flint",
+    "manaCost": "{1}{B}{R}",
+    "typeLine": "Legendary Creature — Lizard Rogue",
+    "oracleText": "Creatures you control but don't own are Mercenaries in addition to their other types.\nAt the beginning of your upkeep, exile the top X cards of target opponent's library, where X is the number of outlaws you control. Until end of turn, you may cast spells from among those cards, and mana of any type can be spent to cast those spells.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "AggregateBattlefield",
+                                    "player": "You",
+                                    "filter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasAnyOfSubtypes",
+                                                "subtypes": [
+                                                    "Assassin",
+                                                    "Mercenary",
+                                                    "Pirate",
+                                                    "Rogue",
+                                                    "Warlock"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                "player": {
+                                    "type": "ContextPlayer",
+                                    "index": 0
+                                }
+                            },
+                            "storeAs": "stolenCards"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "stolenCards",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Exile",
+                                "player": {
+                                    "type": "ContextPlayer",
+                                    "index": 0
+                                }
+                            }
+                        },
+                        {
+                            "type": "GrantMayPlayFromExile",
+                            "from": "stolenCards",
+                            "withAnyManaType": true
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetOpponent",
+                    "id": "target opponent"
+                },
+                "descriptionOverride": "At the beginning of your upkeep, exile the top X cards of target opponent's library, where X is the number of outlaws you control. Until end of turn, you may cast spells from among those cards, and mana of any type can be spent to cast those spells."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantAdditionalTypesToGroup",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "controllerPredicate": {
+                            "type": "ControllerAnd",
+                            "predicates": [
+                                "ControlledByYou",
+                                "OwnedByOpponent"
+                            ]
+                        }
+                    }
+                },
+                "addSubtypes": [
+                    "Mercenary"
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "215",
+        "rarity": "RARE",
+        "artist": "Francis Tneh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/af0b3a41-ba99-41e8-bcfb-5796500c17c7.jpg?1712356142",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "X is determined as the ability resolves, counting the outlaws you control at that time. (Assassins, Mercenaries, Pirates, Rogues, and Warlocks are outlaws.)"
+            },
+            {
+                "date": "2024-04-12",
+                "text": "You must still follow the normal timing permissions and restrictions of the cards you cast this way. Casting a sorcery, for example, is only possible during your main phase while the stack is empty."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Mana of any type can be spent to cast the exiled cards, but you still must pay those costs. A card with {X} in its cost can have X paid with mana of any type."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "Any cards you don't cast remain in exile."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED"
     ]
 }
 
@@ -14365,6 +14555,119 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Selvala, Eager Trailblazer
+{
+    "name": "Selvala, Eager Trailblazer",
+    "manaCost": "{2}{G}{W}",
+    "typeLine": "Legendary Creature — Elf Scout",
+    "oracleText": "Vigilance\nWhenever you cast a creature spell, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"\n{T}: Choose a color. Add one mana of that color for each different power among creatures you control.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 5
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Mercenary"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/5/f/5f04607f-eed2-462e-897f-82e41e5f7049.jpg?1712316319",
+                    "activatedAbilities": [
+                        {
+                            "id": "ability_2",
+                            "cost": "CostTap",
+                            "effect": {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": 0
+                                },
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you"
+                                    }
+                                }
+                            ],
+                            "timing": "SorcerySpeed"
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever you cast a creature spell, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\""
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_3",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddManaOfChoice",
+                    "amount": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature",
+                        "aggregation": "DISTINCT_VALUES",
+                        "property": "POWER"
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true,
+                "descriptionOverride": "Choose a color. Add one mana of that color for each different power among creatures you control."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "231",
+        "rarity": "MYTHIC",
+        "artist": "Viko Menezes",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/d/7d2e167f-7cb2-4f15-a1db-7ee56b7ba523.jpg?1712356210",
+        "rulings": [
+            {
+                "date": "2024-04-12",
+                "text": "The number of different powers is calculated as the ability resolves. For example, if you control three creatures with powers 1, 1, and 3, there are two different powers, so you add two mana."
+            },
+            {
+                "date": "2024-04-12",
+                "text": "If you control no creatures (which can't normally happen, as Selvala is a creature), or if all your creatures have the same power, you still choose a color."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "WHITE"
     ]
 }
 
