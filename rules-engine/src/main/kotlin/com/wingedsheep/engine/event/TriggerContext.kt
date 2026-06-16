@@ -77,6 +77,13 @@ data class TriggerContext(
      */
     val manaSpentOnTriggeringSpell: Int? = null,
     /**
+     * For SpellCastEvent triggers — number of distinct colors of mana spent to cast the
+     * triggering spell (0–5). `null` when the trigger was not driven by a spell cast. Read by
+     * `ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL` so abilities like Magmablood Archaic
+     * can scale by "for each color of mana spent to cast that spell."
+     */
+    val colorsSpentOnTriggeringSpell: Int? = null,
+    /**
      * For SpellCastEvent triggers — mana value (CR 202.3) of the triggering spell. `null` when
      * the trigger was not driven by a spell cast. Read by
      * `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE` so abilities like Kellan, the Kid can
@@ -171,6 +178,7 @@ data class TriggerContext(
                     triggeringPlayerId = event.casterId,
                     modesChosenCount = event.chosenModesCount.takeIf { it > 0 },
                     manaSpentOnTriggeringSpell = event.totalManaSpent.takeIf { it > 0 },
+                    colorsSpentOnTriggeringSpell = event.distinctColorsSpent.takeIf { it > 0 },
                     manaValueOfTriggeringSpell = event.manaValue.takeIf { it > 0 }
                 )
                 is CardsDrawnEvent -> TriggerContext(triggeringPlayerId = event.playerId)

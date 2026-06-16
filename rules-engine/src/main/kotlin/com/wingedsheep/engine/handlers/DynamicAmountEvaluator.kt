@@ -506,6 +506,8 @@ class DynamicAmountEvaluator(
 
         ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL -> context.triggerManaSpentOnTriggeringSpell ?: 0
 
+        ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL -> context.triggerColorsSpentOnTriggeringSpell ?: 0
+
         ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE -> context.triggerManaValueOfTriggeringSpell ?: 0
 
         ContextPropertyKey.TRIGGER_SCRY_COUNT -> context.triggerScryCount ?: 0

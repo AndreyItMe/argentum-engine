@@ -156,6 +156,16 @@ enum class ContextPropertyKey(val description: String) {
      */
     MANA_SPENT_ON_TRIGGERING_SPELL("the amount of mana spent to cast that spell"),
     /**
+     * Number of distinct *colors* of mana spent to cast the spell that fired this trigger (0–5).
+     * Distinct from [DynamicAmount.DistinctColorsManaSpent], which reads the *current resolving
+     * object's* own cast (Converge) — this reads the **triggering** spell's payment (a "Whenever
+     * you cast an instant or sorcery spell, … for each color of mana spent to cast that spell"
+     * payoff living on a separate permanent). Colorless is not a color (CR 105.1) and never
+     * contributes. Populated from `SpellCastEvent.distinctColorsSpent`; `0` when the trigger was
+     * not driven by a spell cast. Used by Magmablood Archaic.
+     */
+    COLORS_SPENT_ON_TRIGGERING_SPELL("the number of colors of mana spent to cast that spell"),
+    /**
      * Mana value (CR 202.3) of the spell that fired this trigger. Distinct from
      * [MANA_SPENT_ON_TRIGGERING_SPELL] (mana actually paid) — this reads the spell's printed
      * mana value, unaffected by cost reductions / alternative costs. Populated from

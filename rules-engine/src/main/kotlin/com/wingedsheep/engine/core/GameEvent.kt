@@ -323,6 +323,14 @@ data class SpellCastEvent(
     /** Total mana spent to cast this spell (for Expend trigger detection) */
     val totalManaSpent: Int = 0,
     /**
+     * Number of distinct colors of mana spent to cast this spell (0–5); colorless is not a
+     * color (CR 105.1) and never contributes. Feeds
+     * `ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL` so a "Whenever you cast an instant
+     * or sorcery spell, … for each color of mana spent to cast that spell" payoff on a separate
+     * permanent (Magmablood Archaic) scales by the triggering spell's color count.
+     */
+    val distinctColorsSpent: Int = 0,
+    /**
      * True when any of the mana spent on this cast was tagged as Treasure
      * mana (see [com.wingedsheep.engine.state.components.player.ManaPoolComponent.treasureMana]).
      * Drives SDK triggers built with

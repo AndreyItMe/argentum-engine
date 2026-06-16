@@ -263,6 +263,19 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
             return if (jsonContains(node["args"], "_Spell", "Trigger_ThatSpell"))
                 call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL"))
             else null
+        // Converge — "the number of colors of mana spent to cast it" reading the entering/resolving
+        // permanent's own cast (the dominant Converge "Archaic" shape, also Sunburst). Maps to the
+        // source-relative facade `DynamicAmounts.colorsOfManaSpent()` (DistinctColorsManaSpent).
+        "NumColorsManaSpentToCastEnteringPermanent" ->
+            return call("DynamicAmounts.colorsOfManaSpent")
+        // "the number of colors of mana spent to cast that spell" on a `WhenAPlayerCastsASpell`
+        // trigger (Magmablood Archaic's "+1/+0 ... for each color of mana spent to cast that spell").
+        // Only the triggering-spell subject (`Trigger_ThatSpell`) maps to the context key; any other
+        // spell subject declines -> SCAFFOLD rather than misread a different cast's colors.
+        "NumColorsManaSpentToCastSpell" ->
+            return if (jsonContains(node["args"], "_Spell", "Trigger_ThatSpell"))
+                call("DynamicAmount.ContextProperty", arg("ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL"))
+            else null
         "PowerOfTheSacrificedCreature" -> return call("DynamicAmounts.sacrificedPower")
         // "the number of [filter] cards in your graveyard" (Rise of the Varmints' Varmint count). The
         // count's args are a `_CardsInGraveyard` filter — typically `And(IsCardtype Creature,

@@ -325,6 +325,8 @@ class StackResolver(
                 xValue = xValue,
                 wasKicked = wasKicked,
                 totalManaSpent = totalManaSpent,
+                distinctColorsSpent =
+                    com.wingedsheep.engine.handlers.ManaSpentReader.distinctColorsSpent(newState, cardId),
                 paidWithTreasureMana = paidWithTreasureMana,
                 chosenModesCount = reportedChosenModesCount,
                 manaValue = cardComponent.manaValue
@@ -1933,6 +1935,7 @@ class StackResolver(
             triggerExcessDamageAmount = abilityComponent.triggerExcessDamageAmount,
             triggerRecipientToughness = abilityComponent.triggerRecipientToughness,
             triggerManaSpentOnTriggeringSpell = abilityComponent.triggerManaSpentOnTriggeringSpell,
+            triggerColorsSpentOnTriggeringSpell = abilityComponent.triggerColorsSpentOnTriggeringSpell,
             triggerManaValueOfTriggeringSpell = abilityComponent.triggerManaValueOfTriggeringSpell,
             xValue = abilityComponent.xValue,
             damageDistribution = abilityComponent.damageDistribution,

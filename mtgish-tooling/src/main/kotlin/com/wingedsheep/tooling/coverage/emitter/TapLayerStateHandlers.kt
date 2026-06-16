@@ -427,15 +427,17 @@ internal fun EmitCtx.renderLayerEffect(node: JsonObject, action: String, tvar: S
                 inner.add(call("Effects.ModifyStats", arg(power), arg(toughness), arg(Lit(target))))
             }
             "AdjustPTForEach" -> {
-                // "+P/+T for each <count>" (Goblin Piledriver +2/+0 per other attacking Goblin). The base
-                // P/T are fixed ints scaled by the dynamic count; only the "other attacking <subtype>" count
-                // renders exactly (see adjustForEachCount), anything else scaffolds.
+                // "+P/+T for each <count>" (Goblin Piledriver +2/+0 per other attacking Goblin; Magmablood
+                // Archaic +1/+0 per color of mana spent to cast the triggering spell). The base P/T are
+                // fixed ints scaled by the dynamic count: the "other attacking <subtype>" battlefield count
+                // (adjustForEachCount) is tried first, then any other count dynamicAmountExpr can render
+                // exactly (e.g. NumColorsManaSpentToCastSpell). Anything else scaffolds.
                 if (duration.isNotEmpty()) return null
                 val a = leObj["args"].asArr
                 if (a == null || a.size != 3) return null
                 val pBase = a.getOrNull(0).asInt() ?: return null
                 val tBase = a.getOrNull(1).asInt() ?: return null
-                val count = adjustForEachCount(a.getOrNull(2)) ?: return null
+                val count = adjustForEachCount(a.getOrNull(2)) ?: dynamicAmountExpr(a.getOrNull(2)) ?: return null
                 inner.add(call("Effects.ModifyStats", arg(scaleByBase(count, pBase)), arg(scaleByBase(count, tBase)), arg(Lit(target))))
             }
             "AddAbility" -> {

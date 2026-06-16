@@ -2671,6 +2671,16 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
     ) {
         return listOf("        restrictions = listOf(ActivationRestriction.OnlyIfCondition(Conditions.EmptyHand))")
     }
+    // "Activate only if you have seven or more cards in your hand" (Resonating Lute): the sole modifier
+    // is an ActivateOnlyIf whose condition is "you have >= N cards in hand" ->
+    // ActivationRestriction.OnlyIfCondition(Conditions.CardsInHandAtLeast(N)). Match the precise shape
+    // (the You player + NumCardsInHandIs GreaterThanOrEqualTo Integer N) so any other comparator or
+    // player still scaffolds.
+    handSizeAtLeastModifier(rule)?.let { n ->
+        return listOf(
+            "        restrictions = listOf(ActivationRestriction.OnlyIfCondition(Conditions.CardsInHandAtLeast($n)))",
+        )
+    }
     // "Activate only if it's not your turn" (Ghost Town): the sole modifier is an ActivateOnlyIf whose
     // condition is IsAPlayersTurn over a player Other than you -> ActivationRestriction.OnlyIfCondition(
     // IsNotYourTurn). Match the exact shape so any other ActivateOnlyIf condition still scaffolds.
@@ -2722,4 +2732,19 @@ private fun EmitCtx.emptyHandModifier(rule: JsonObject): Boolean {
     if (!jsonContains(mod, "_Players", "NumCardsInHandIs")) return false
     // The compared count must be the literal Integer 0 — not X, not another number.
     return (findInteger(mod.field("args")) as? Int) == 0
+}
+
+/** The threshold N when the rule's only `_ActivateModifier` is an `ActivateOnlyIf` gating on "you have
+ *  N or more cards in hand" (`NumCardsInHandIs(GreaterThanOrEqualTo, Integer N)` over the You player),
+ *  else null. Guards `CardsInHandAtLeast` so a different comparator (less-than, exactly), a different
+ *  player, an X count, or an extra modifier still scaffolds. */
+private fun EmitCtx.handSizeAtLeastModifier(rule: JsonObject): Int? {
+    val modifiers = (rule["args"].asArr ?: emptyList()).filterIsInstance<JsonObject>()
+        .filter { it.strField("_ActivateModifier") != null }
+    val mod = modifiers.singleOrNull() ?: return null
+    if (mod.strField("_ActivateModifier") != "ActivateOnlyIf") return null
+    if (!jsonContains(mod, "_Player", "You")) return null
+    if (!jsonContains(mod, "_Players", "NumCardsInHandIs")) return null
+    if (!jsonContains(mod, "_Comparison", "GreaterThanOrEqualTo")) return null
+    return findInteger(mod.field("args")) as? Int
 }

@@ -179,6 +179,13 @@ data class EffectContext(
      */
     val triggerManaSpentOnTriggeringSpell: Int? = null,
     /**
+     * Number of distinct colors of mana spent to cast the spell that fired this trigger. Read by
+     * `ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL` (Magmablood Archaic). Distinct from
+     * [com.wingedsheep.sdk.scripting.values.DynamicAmount.DistinctColorsManaSpent] (Converge),
+     * which reads the *resolving object's own* cast.
+     */
+    val triggerColorsSpentOnTriggeringSpell: Int? = null,
+    /**
      * Mana value (CR 202.3) of the spell that fired this trigger. Read by
      * `ContextPropertyKey.TRIGGERING_SPELL_MANA_VALUE` (Kellan, the Kid). Distinct from
      * [triggerManaSpentOnTriggeringSpell], which is the mana actually paid.

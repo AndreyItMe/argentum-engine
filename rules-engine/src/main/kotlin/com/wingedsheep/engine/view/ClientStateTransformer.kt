@@ -1541,6 +1541,7 @@ class ClientStateTransformer(
         triggerExcessDamageAmount = triggered.triggerExcessDamageAmount,
         triggerRecipientToughness = triggered.triggerRecipientToughness,
         triggerManaSpentOnTriggeringSpell = triggered.triggerManaSpentOnTriggeringSpell,
+        triggerColorsSpentOnTriggeringSpell = triggered.triggerColorsSpentOnTriggeringSpell,
         triggerManaValueOfTriggeringSpell = triggered.triggerManaValueOfTriggeringSpell
     )
 

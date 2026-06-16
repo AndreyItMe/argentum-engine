@@ -3403,6 +3403,13 @@ sibling effect that reads `DynamicAmount.EntityProperty(EntityReference.AmassedA
     `DynamicAmount.TotalManaSpent`, which reads the *current resolving object's own* cast — this
     reads the **triggering** spell's cast (the payoff lives on a separate permanent). Populated
     from `SpellCastEvent.totalManaSpent`; `0` for non-cast triggers.
+  - `COLORS_SPENT_ON_TRIGGERING_SPELL` — number of distinct *colors* of mana spent to cast the
+    spell that fired the trigger (0–5; colorless is not a color, CR 105.1). The triggering-spell
+    analogue of `DistinctColorsManaSpent` (which reads the resolving object's own cast, i.e.
+    Converge): this reads the **triggering** spell's payment for a payoff on a separate permanent
+    (Magmablood Archaic's "creatures you control get +1/+0 ... for each color of mana spent to cast
+    that spell"). Populated from `SpellCastEvent.distinctColorsSpent`; `0` for non-cast triggers.
+    Facade: `DynamicAmounts.colorsSpentOnTriggeringSpell()`.
   - `TRIGGERING_SPELL_MANA_VALUE` — mana value (CR 202.3) of the spell that fired the trigger
     (Kellan, the Kid — "a permanent spell with equal or lesser mana value"). Distinct from
     `MANA_SPENT_ON_TRIGGERING_SPELL` (mana actually paid): this is the spell's printed mana

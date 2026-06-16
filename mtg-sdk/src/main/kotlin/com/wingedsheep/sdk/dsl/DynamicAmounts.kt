@@ -132,6 +132,16 @@ object DynamicAmounts {
      */
     fun colorsOfManaSpent(): DynamicAmount = DynamicAmount.DistinctColorsManaSpent
 
+    /**
+     * The number of distinct colors of mana spent to cast the spell that fired this trigger
+     * (0–5). The triggering-spell analogue of [colorsOfManaSpent] (which reads the resolving
+     * object's own cast, i.e. Converge). Used by "Whenever you cast an instant or sorcery spell,
+     * … for each color of mana spent to cast that spell" payoffs on a separate permanent
+     * (Magmablood Archaic).
+     */
+    fun colorsSpentOnTriggeringSpell(): DynamicAmount =
+        DynamicAmount.ContextProperty(ContextPropertyKey.COLORS_SPENT_ON_TRIGGERING_SPELL)
+
     fun creaturesYouControl(): DynamicAmount =
         battlefield(Player.You, GameObjectFilter.Creature).count()
 
