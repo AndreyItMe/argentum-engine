@@ -1548,14 +1548,32 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
             return "Conditions.SourceMatches(GameObjectFilter.Noncreature)"
         }
     }
-    // "if a creature died this turn" — ACreatureOrPlaneswalkerDiedThisTurn over a bare creature-cardtype
-    // filter (Rictus Robber). Only the unrestricted "a creature" shape (no controller / subtype / count
-    // clause) maps to Conditions.CreatureDiedThisTurn; anything more specific declines -> SCAFFOLD.
+    // "if a creature died this turn" — ACreatureOrPlaneswalkerDiedThisTurn over a creature-cardtype
+    // filter. Two calibrated shapes render:
+    //  - bare "a creature" (no controller / subtype / count clause) -> Conditions.CreatureDiedThisTurn
+    //    (Rictus Robber).
+    //  - "a creature ... under your control" — And(IsCardtype Creature, ControlledByAPlayer You) ->
+    //    Conditions.ControlledCreatureDiedThisTurn (Essenceknit Scholar's end-step draw).
+    // Anything more specific (subtype, count, an opponent's control) declines -> SCAFFOLD.
     if (cond.strField("_Condition") == "ACreatureOrPlaneswalkerDiedThisTurn") {
         val filter = cond["args"] as? JsonObject
         val bareCreature = filter?.strField("_Permanents") == "IsCardtype" &&
             filter.field("args").asStr() == "Creature"
-        return if (bareCreature) "Conditions.CreatureDiedThisTurn" else null
+        if (bareCreature) return "Conditions.CreatureDiedThisTurn"
+        // And(IsCardtype Creature, ControlledByAPlayer You) — "a creature died under your control".
+        if (filter?.strField("_Permanents") == "And") {
+            val arms = filter["args"].asArr?.filterIsInstance<JsonObject>().orEmpty()
+            val hasCreature = arms.any {
+                it.strField("_Permanents") == "IsCardtype" && it.field("args").asStr() == "Creature"
+            }
+            val controlledByYou = arms.any {
+                it.strField("_Permanents") == "ControlledByAPlayer" && jsonContains(it, "_Player", "You")
+            }
+            if (arms.size == 2 && hasCreature && controlledByYou) {
+                return "Conditions.ControlledCreatureDiedThisTurn"
+            }
+        }
+        return null
     }
     // "if you put a counter on this creature this turn" — PlayerPassesFilter(You,
     // HasPutACounterOnAPermanentThisTurn(SinglePermanent(ThisPermanent))) (Fractal Tender's end-step
