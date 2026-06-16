@@ -1325,6 +1325,77 @@ private fun EmitCtx.modalTriggerBlock(rule: JsonObject, oncePerTurn: Boolean, tr
     ))))
 }
 
+/**
+ * The Opus ability word (Secrets of Strixhaven) -> the `opus { }` builder. "Opus" is a flavor ability
+ * word (CR 207.2c) with **no IR signal**, so the mechanic is recognised purely from its structural
+ * shape: a `WhenAPlayerCastsASpell(You, Instant|Sorcery)` trigger whose sole action is an
+ * `IfElse(SpellPassesFilter(ThatSpell, AnAmountOfManaWasSpentToCastIt >= 5), <then>, <else>)`. The
+ * builder lowers to exactly the `ConditionalEffect(5+ -> then, otherwise -> else)` gameplay tree this
+ * recognises, so the emit is gameplay-tree-identical (Deluge Virtuoso's +2/+2 instead of +1/+1).
+ *
+ * Only the "replaces" tier (`IfElse` with both arms present) maps to `insteadIfFiveOrMore`; the
+ * additive tier (`alsoIfFiveOrMore`, a base effect THEN a 5+ bonus) has a different IR shape and is
+ * left to a future recogniser. Anything off the exact shape — a different mana threshold/comparator, a
+ * spell filter that isn't bare instant-or-sorcery, an `oncePerTurn`/intervening-if wrapper, an extra
+ * action, or a branch that doesn't render to a single effect — declines (null), so the generic trigger
+ * path scaffolds rather than collapse a non-Opus shape.
+ */
+private fun EmitCtx.opusTriggerBlock(rule: JsonObject, oncePerTurn: Boolean, triggerCondition: String?): List<Stmt>? {
+    if (oncePerTurn || triggerCondition != null) return null
+    val ruleArgs = rule["args"].asArr ?: return null
+    // Trigger: WhenAPlayerCastsASpell(You, Or[IsCardtype Instant, IsCardtype Sorcery]).
+    val trig = ruleArgs.getOrNull(0) as? JsonObject ?: return null
+    if (trig.strField("_Trigger") != "WhenAPlayerCastsASpell") return null
+    if (!jsonContains(trig, "_Player", "You")) return null
+    val trigArgs = trig["args"].asArr ?: return null
+    val spellFilter = trigArgs.getOrNull(1) as? JsonObject ?: return null
+    if (spellFilter.strField("_Spells") != "Or") return null
+    val orArgs = spellFilter["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
+    val orTypes = orArgs
+        .filter { it.strField("_Spells") == "IsCardtype" }
+        .mapNotNull { it["args"].asStr() }
+        .toSet()
+    if (orArgs.size != 2 || orTypes != setOf("Instant", "Sorcery")) return null
+
+    // Sole action: a single IfElse with both arms.
+    val (_, actions) = extractEnvelope(rule)
+    val ifElse = actions?.singleOrNull()?.takeIf { it.strField("_Action") == "IfElse" } ?: return null
+    val ifArgs = ifElse["args"].asArr ?: return null
+    val cond = ifArgs.getOrNull(0) as? JsonObject ?: return null
+    if (!isFiveOrMoreManaSpentCondition(cond)) return null
+    val thenActions = (ifArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    val elseActions = (ifArgs.getOrNull(2) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    if (thenActions.isEmpty() || elseActions.isEmpty()) return null
+
+    // A spell-cast trigger's triggering entity is the spell, so any "that …" body reference resolves
+    // against the caster — match the generic path's bookkeeping while rendering the two arms.
+    val prev = triggeringEntityIsSpell
+    triggeringEntityIsSpell = true
+    val base = renderEffectList(elseActions, null).also { triggeringEntityIsSpell = prev } ?: return null
+    triggeringEntityIsSpell = true
+    val bonus = renderEffectList(thenActions, null).also { triggeringEntityIsSpell = prev } ?: return null
+
+    return listOf(Sub(Block("opus", listOf(
+        Assign("effect", base),
+        Assign("insteadIfFiveOrMore", bonus),
+    ))))
+}
+
+/**
+ * True iff a resolution-time condition node is exactly "5 or more mana was spent to cast that spell" —
+ * `SpellPassesFilter(Trigger_ThatSpell, AnAmountOfManaWasSpentToCastIt(GreaterThanOrEqualTo, Integer 5))`
+ * — the Opus 5+ tier gate. Any other comparator, threshold, spell ref, or filter returns false so a
+ * near-miss declines rather than mis-rendering as Opus.
+ */
+private fun isFiveOrMoreManaSpentCondition(cond: JsonObject): Boolean {
+    if (cond.strField("_Condition") != "SpellPassesFilter") return false
+    val blob = compact(cond)
+    if ("AnAmountOfManaWasSpentToCastIt" !in blob) return false
+    if (!jsonContains(cond, "_Comparison", "GreaterThanOrEqualTo")) return false
+    // The compared count must be the literal Integer 5 — Opus's fixed threshold.
+    return (findInteger(cond) as? Int) == 5
+}
+
 /** A TriggerA rule (self-triggered) -> triggeredAbility { trigger; [triggerCondition]; [target]; effect }.
  *  [oncePerTurn] is set by the `TriggerOnceEachTurn` rule envelope, whose body is otherwise shaped
  *  identically to a TriggerA. [triggerCondition] is an optional intervening-if condition DSL (CR 603.4)
@@ -1339,6 +1410,11 @@ internal fun EmitCtx.triggerBlock(rule: JsonObject, oncePerTurn: Boolean = false
     // inside the renderer rather than emit a partial/lossy modal.
     modalTriggerBlock(rule, oncePerTurn, triggerCondition)?.let { return it }
     if ("\"Modal_" in compact(rule)) { reasons.add("modal-trigger"); return null }
+
+    // Opus (Secrets of Strixhaven) — the `opus { }` ability-word builder. Recognise its exact structural
+    // shape before the generic trigger path; "Opus" is a flavor ability word with no IR signal, so it is
+    // inferred from structure alone (then matched precisely so nothing else collapses).
+    opusTriggerBlock(rule, oncePerTurn, triggerCondition)?.let { return it }
 
     // A Mount's "while saddled" attack trigger nests the intervening-if (CR 603.4) *inside* the
     // TriggerA's trigger slot: `args[0]` is an `If { <gate> } <realTrigger>` node rather than a bare
@@ -2611,15 +2687,22 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
             }
         }
     }
-    // "Activate no more than N times each turn" (Pit Imp / Phyrexian Battleflies) -> MaxPerTurn(N).
-    // The modifier list is the rule's args after the cost + action list; render only when EVERY
-    // modifier present is this exact shape, so an unrecognised modifier still scaffolds.
+    // Per-turn activation caps -> ActivationRestriction frequency rules. Render only when EVERY
+    // modifier present is a recognised per-turn cap, so an unrecognised modifier still scaffolds:
+    //  - "Activate only once each turn"  (Mindful Biomancer)              -> OncePerTurn
+    //  - "Activate no more than N times each turn" (Pit Imp / Phyrexian Battleflies) -> MaxPerTurn(N)
     val modifiers = (rule["args"].asArr ?: emptyList()).filterIsInstance<JsonObject>()
         .filter { it.strField("_ActivateModifier") != null }
-    if (modifiers.isNotEmpty() && modifiers.all { it.strField("_ActivateModifier") == "ActivateNoMoreThanNumberTimesEachTurn" }) {
+    val perTurnCaps = setOf("ActivateOnlyOnceEachTurn", "ActivateNoMoreThanNumberTimesEachTurn")
+    if (modifiers.isNotEmpty() && modifiers.all { it.strField("_ActivateModifier") in perTurnCaps }) {
         val lines = modifiers.map { mod ->
-            val n = findInteger(mod.field("args")) as? Int ?: return run { reasons.add("activated-modifiers"); null }
-            "ActivationRestriction.MaxPerTurn($n)"
+            when (mod.strField("_ActivateModifier")) {
+                "ActivateOnlyOnceEachTurn" -> "ActivationRestriction.OncePerTurn"
+                else -> {
+                    val n = findInteger(mod.field("args")) as? Int ?: return run { reasons.add("activated-modifiers"); null }
+                    "ActivationRestriction.MaxPerTurn($n)"
+                }
+            }
         }
         return listOf("        restrictions = listOf(${lines.joinToString(", ")})")
     }

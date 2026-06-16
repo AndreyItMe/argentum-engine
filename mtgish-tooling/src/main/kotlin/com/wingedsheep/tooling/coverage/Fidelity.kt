@@ -355,48 +355,60 @@ object Fidelity {
      * (e.g. `powerAtLeast` vs `powerOrToughnessAtLeast`) still surfaces as a mismatch.
      */
     private fun canonicalizeTargetRefs(root: JsonElement): JsonElement {
-        val labels = LinkedHashSet<String>()
-        fun collect(node: JsonElement?) {
+        fun isTargetScope(node: JsonObject): Boolean =
+            node.containsKey("targetRequirement") || node.containsKey("targetRequirements")
+
+        fun isTargetRequirementId(node: JsonObject): Boolean =
+            node.containsKey("id") && node["type"].asStr()?.contains("Target") == true
+
+        fun collect(node: JsonElement?, out: LinkedHashSet<String>) {
             when (node) {
                 is JsonObject -> {
-                    if (node["type"].asStr() == "BoundVariable") node["name"].asStr()?.let { labels.add(it) }
-                    node.values.forEach { collect(it) }
+                    if (node["type"].asStr() == "BoundVariable") node["name"].asStr()?.let { out.add(it) }
+                    node.values.forEach { collect(it, out) }
                 }
-                is JsonArray -> node.forEach { collect(it) }
+                is JsonArray -> node.forEach { collect(it, out) }
                 else -> {}
             }
         }
-        collect(root)
-        val mapping: Map<String, String> = when {
-            labels.isEmpty() -> emptyMap()
-            labels.size == 1 -> mapOf(labels.first() to "target")
-            else -> labels.withIndex().associate { (i, l) -> l to "§T$i§" }
+
+        fun mappingFor(scope: JsonElement): Map<String, String> {
+            val scopeLabels = LinkedHashSet<String>()
+            collect(scope, scopeLabels)
+            return when {
+                scopeLabels.isEmpty() -> emptyMap()
+                scopeLabels.size == 1 -> mapOf(scopeLabels.first() to "target")
+                else -> scopeLabels.withIndex().associate { (i, l) -> l to "§T$i§" }
+            }
         }
-        // A target-requirement node carries an `id` (the binding key) and a target `type`. Its id is
-        // gameplay-relevant ONLY when some BoundVariable references it by name (handled via `mapping`);
-        // a requirement referenced positionally (`ContextTarget`/`ContextPlayer` index) leaves its id a
-        // pure decoration the golden author still names descriptively ("target player"). Collapse such an
-        // unreferenced id to "target" so [normalizeForFidelity] then drops it, matching the emitter's
-        // generic "target" (Desperate Bloodseeker). Never touches a referenced (`mapping`) id, so the
-        // multi-target binding-reorder check is preserved.
-        fun isTargetRequirementId(node: JsonObject): Boolean =
-            node.containsKey("id") && node["type"].asStr()?.contains("Target") == true
-        fun rewrite(node: JsonElement): JsonElement = when (node) {
-            is JsonArray -> JsonArray(node.map { rewrite(it) })
+
+        fun rewriteWithMapping(node: JsonElement, mapping: Map<String, String>): JsonElement = when (node) {
+            is JsonArray -> JsonArray(node.map { rewriteWithMapping(it, mapping) })
             is JsonObject -> {
                 val isBound = node["type"].asStr() == "BoundVariable"
                 val isReqNode = isTargetRequirementId(node)
                 JsonObject(node.entries.associate { (k, v) ->
                     when {
-                        isBound && k == "name" -> k to (mapping[v.asStr()]?.let { JsonPrimitive(it) } ?: rewrite(v))
+                        isBound && k == "name" -> k to (mapping[v.asStr()]?.let { JsonPrimitive(it) } ?: rewriteWithMapping(v, mapping))
                         k == "id" && v.asStr() in mapping -> k to JsonPrimitive(mapping.getValue(v.asStr()!!))
                         k == "id" && isReqNode -> k to JsonPrimitive("target")  // unreferenced binding key
-                        else -> k to rewrite(v)
+                        else -> k to rewriteWithMapping(v, mapping)
                     }
                 })
             }
             else -> node
         }
+
+        fun rewrite(node: JsonElement): JsonElement = when (node) {
+            is JsonArray -> JsonArray(node.map { rewrite(it) })
+            is JsonObject -> if (isTargetScope(node)) {
+                rewriteWithMapping(node, mappingFor(node))
+            } else {
+                JsonObject(node.entries.associate { (k, v) -> k to rewrite(v) })
+            }
+            else -> node
+        }
+
         return rewrite(root)
     }
 
