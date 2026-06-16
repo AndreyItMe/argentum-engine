@@ -1342,6 +1342,123 @@
     ]
 }
 
+// Elemental Mascot
+{
+    "name": "Elemental Mascot",
+    "manaCost": "{1}{U}{R}",
+    "typeLine": "Creature — Elemental Bird",
+    "oracleText": "Flying, vigilance\nOpus — Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn. If five or more mana was spent to cast that spell, exile the top card of your library. You may play that card until the end of your next turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING",
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 0
+                            },
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "ContextProperty",
+                                        "key": "MANA_SPENT_ON_TRIGGERING_SPELL"
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 5
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "TopOfLibrary",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeAs": "impulseExiled"
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "impulseExiled",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Exile"
+                                        }
+                                    },
+                                    {
+                                        "type": "GrantMayPlayFromExile",
+                                        "from": "impulseExiled",
+                                        "expiry": {
+                                            "type": "UntilControllerStep",
+                                            "step": "CLEANUP",
+                                            "includeCurrentTurn": false
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn. If five or more mana was spent to cast that spell, look at the top 1 cards of your library. Put those cards into exile. Until the cleanup step of your next turn, you may play those cards from exile."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "185",
+        "artist": "Justyna Dura",
+        "flavorText": "It soars in the presence of true beauty.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/5/c507eb1c-48e9-4d28-bb2d-71f2a9df9ab0.jpg?1775938280"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
 // Embrace the Paradox
 {
     "name": "Embrace the Paradox",
@@ -1572,6 +1689,84 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Essenceknit Scholar
+{
+    "name": "Essenceknit Scholar",
+    "manaCost": "{B}{B/G}{G}",
+    "typeLine": "Creature — Dryad Warlock",
+    "oracleText": "When this creature enters, create a 1/1 black and green Pest creature token with \"Whenever this token attacks, you gain 1 life.\"\nAt the beginning of your end step, if a creature died under your control this turn, draw a card.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK",
+                        "GREEN"
+                    ],
+                    "creatureTypes": [
+                        "Pest"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/b/a/ba854032-6ad2-4654-990a-64006e7f92fd.jpg?1777982237",
+                    "triggeredAbilities": [
+                        {
+                            "id": "ability_2",
+                            "trigger": "AttackEvent",
+                            "effect": {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this creature enters, create a 1/1 black and green Pest creature token with \"Whenever this token attacks, you gain 1 life.\""
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "triggerCondition": "ControlledCreatureDiedThisTurn",
+                "descriptionOverride": "At the beginning of your end step, if a creature died under your control this turn, draw a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "187",
+        "rarity": "UNCOMMON",
+        "artist": "Ioannis Fiore",
+        "flavorText": "\"Life and death is a complex pattern that needs careful stitching.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/a/2a3cba55-3fae-4d45-ae03-4d662ec13718.jpg?1775938295"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
     ]
 }
 
@@ -4234,6 +4429,74 @@
     ]
 }
 
+// Pestbrood Sloth
+{
+    "name": "Pestbrood Sloth",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Plant Sloth",
+    "oracleText": "Reach\nWhen this creature dies, create two 1/1 black and green Pest creature tokens with \"Whenever this token attacks, you gain 1 life.\"",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK",
+                        "GREEN"
+                    ],
+                    "creatureTypes": [
+                        "Pest"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/b/a/ba854032-6ad2-4654-990a-64006e7f92fd.jpg?1777982237",
+                    "triggeredAbilities": [
+                        {
+                            "id": "ability_2",
+                            "trigger": "AttackEvent",
+                            "effect": {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this creature dies, create two 1/1 black and green Pest creature tokens with \"Whenever this token attacks, you gain 1 life.\""
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "157",
+        "rarity": "UNCOMMON",
+        "artist": "Alexandre Honoré",
+        "flavorText": "The sloths of Titan's Grave move so infrequently that entire ecosystems develop in their fur.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/1/c1251ae6-2f19-4f84-ab02-6a6cc7ce6056.jpg?1775938073"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Poisoner's Apprentice
 {
     "name": "Poisoner's Apprentice",
@@ -5790,6 +6053,111 @@
         "artist": "Nathaniel Himawan",
         "flavorText": "\"And I won't be writing any more essays for you, either!\"",
         "imageUri": "https://cards.scryfall.io/normal/front/b/7/b756ca13-b904-4510-9bbb-5bc2864abfbd.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Stone Docent
+{
+    "name": "Stone Docent",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Spirit Chimera",
+    "oracleText": "{W}, Exile this card from your graveyard: You gain 2 life. Surveil 1. Activate only as a sorcery. (Look at the top card of your library. You may put it into your graveyard.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{W}"
+                            }
+                        },
+                        "CostExileSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeAs": "surveiled"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "surveiled",
+                                    "selection": {
+                                        "type": "ChooseUpTo",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "toGraveyard",
+                                    "storeRemainder": "toTop",
+                                    "selectedLabel": "Put in graveyard",
+                                    "remainderLabel": "Put on top"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "toGraveyard",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "toTop",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Library",
+                                        "placement": "Top"
+                                    },
+                                    "order": "ControllerChooses"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "activateFromZone": "Graveyard",
+                "descriptionOverride": "{W}, Exile this card from your graveyard: You gain 2 life. Surveil 1. Activate only as a sorcery."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "36",
+        "artist": "Inkognit",
+        "flavorText": "\"For those who might consider cheating, its eyes can see everything. That includes you, Esme. Please see me after class.\"\n—Professor Ghostforge",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c2abfffb-bf36-44af-9a27-6e109e4d77dd.jpg?1775937164"
     },
     "colorIdentityOverride": [
         "WHITE"

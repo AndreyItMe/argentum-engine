@@ -700,10 +700,34 @@ internal fun EmitCtx.actionConditionDsl(cond: JsonObject?): String? {
             }
         }
     }
+    // "If [N] or more mana was spent to cast that spell, …" — the Opus 5+ mana tier
+    // (Elemental Mascot, Expressive Firedancer, Muse Seeker). Renders a Compare over the triggering
+    // spell's mana. See [spellManaSpentConditionDsl] for the exact shape constraints.
+    spellManaSpentConditionDsl(cond)?.let { return it }
     // Other resolution-time intervening-if shapes ("if you gained life this turn", "if you've cast
     // another instant or sorcery this turn", …) reuse the shared condition renderer; declining beats
     // widening. These power the resolution-time `on("If")` action handler.
     return interveningIfDsl(cond)
+}
+
+/**
+ * "[N] or more mana was spent to cast that spell" — a `SpellPassesFilter(Trigger_ThatSpell,
+ * AnAmountOfManaWasSpentToCastIt{GreaterThanOrEqualTo Integer N})` gate on a spell-cast trigger's
+ * triggering spell (the Opus 5+ mana tier). Renders the `Compare(ContextProperty(
+ * MANA_SPENT_ON_TRIGGERING_SPELL), GTE, Fixed(N))` condition DSL, or null (-> SCAFFOLD) for any other
+ * spell subject / comparator so the threshold is never misread.
+ */
+internal fun spellManaSpentConditionDsl(cond: JsonObject?): String? {
+    if (cond?.strField("_Condition") != "SpellPassesFilter") return null
+    val cargs = cond["args"].asArr ?: return null
+    if ((cargs.getOrNull(0) as? JsonObject)?.strField("_Spell") != "Trigger_ThatSpell") return null
+    val spellFilter = cargs.getOrNull(1) as? JsonObject ?: return null
+    if (spellFilter.strField("_Spells") != "AnAmountOfManaWasSpentToCastIt") return null
+    val cmp = spellFilter["args"] as? JsonObject ?: return null
+    if (cmp.strField("_Comparison") != "GreaterThanOrEqualTo") return null
+    val n = cmp["args"].asInt() ?: ((cmp["args"] as? JsonObject)?.get("args").asInt()) ?: return null
+    return "Compare(DynamicAmount.ContextProperty(ContextPropertyKey.MANA_SPENT_ON_TRIGGERING_SPELL), " +
+        "ComparisonOperator.GTE, DynamicAmount.Fixed($n))"
 }
 
 /** The nested _Action node inside an envelope action (PlayerAction / MayAction). */
@@ -878,27 +902,51 @@ internal fun EmitCtx.chooseCreatureTypeRevealTopEffect(actions: List<JsonObject>
  * top card of your library into exile, then grant "you may play that card until the end of your next
  * turn". Renders the foundational gather → move → grant pipeline:
  *
- *   GatherCardsEffect(CardSource.TopOfLibrary(DynamicAmount.Fixed(1)), storeAs = "exiledCard")
- *   MoveCollectionEffect(from = "exiledCard", destination = CardDestination.ToZone(Zone.EXILE))
- *   GrantMayPlayFromExileEffect("exiledCard", MayPlayExpiry.UntilEndOfNextTurn)
+ *   GatherCardsEffect(CardSource.TopOfLibrary(DynamicAmount.Fixed(1)), storeAs = "impulseExiled")
+ *   MoveCollectionEffect(from = "impulseExiled", destination = CardDestination.ToZone(Zone.EXILE))
+ *   GrantMayPlayFromExileEffect("impulseExiled", MayPlayExpiry.UntilEndOfNextTurn)
  *
  * Only this exact two-action shape with the "until end of your next turn" window collapses; any
  * other player effect, expiration, or extra rider declines (null -> SCAFFOLD) rather than guess.
  */
+/**
+ * "Exile the top card of your library" — recognises both IR encodings of the same action:
+ *  - the dedicated `ExileTopCardOfLibrary` action (the common shape, 100+ cards), and
+ *  - the generic `Exile([TheTopCardOfPlayersLibrary(You)])` action (Elemental Mascot's one-off).
+ * Only the You-scoped library renders; any other player scope declines.
+ */
+private fun isExileTopOfYourLibrary(action: JsonObject): Boolean {
+    if (action.strField("_Action") == "ExileTopCardOfLibrary") return true
+    if (action.strField("_Action") != "Exile") return false
+    val exilable = action["args"].asArr?.singleOrNull() as? JsonObject ?: return false
+    return exilable.strField("_Exilable") == "TheTopCardOfPlayersLibrary" &&
+        jsonContains(exilable, "_Player", "You")
+}
+
 internal fun EmitCtx.impulseExileTopMayPlay(actions: List<JsonObject>): Dsl? {
     if (actions.size != 2) return null
-    if (actions[0].strField("_Action") != "ExileTopCardOfLibrary") return null
+    if (!isExileTopOfYourLibrary(actions[0])) return null
     val grant = actions[1]
     if (grant.strField("_Action") != "CreatePlayerEffectUntil") return null
     val blob = compact(grant)
     if ("MayPlayExiledCard" !in blob || "TheCardExiledThisWay" !in blob) return null
-    // "Until the end of your next turn" — never expires this turn even on your own turn.
-    if (!jsonContains(grant, "_Expiration", "UntilEndOfNextTurn")) return null
+    // "Until the end of your next turn" — never expires this turn even on your own turn. mtgish
+    // encodes this window two equivalent ways for the may-play permission: the dedicated
+    // `UntilEndOfNextTurn`, and `UntilPlayersNextTurn(You)` (Elemental Mascot, Light Up the Stage,
+    // Reckless Impulse — all printed "until the end of your next turn"). Both map to
+    // MayPlayExpiry.UntilEndOfNextTurn; any other window declines -> SCAFFOLD.
+    val untilEndOfNextTurn = jsonContains(grant, "_Expiration", "UntilEndOfNextTurn") ||
+        (jsonContains(grant, "_Expiration", "UntilPlayersNextTurn") && jsonContains(grant, "_Player", "You"))
+    if (!untilEndOfNextTurn) return null
+    // Use the shared "impulseExiled" pipeline-variable name — the same key `Patterns.Exile.impulse`
+    // (the hand-authored idiom) writes, so the emitted tree is identical to a card built with that
+    // facade. Diverging on the slot name (e.g. "exiledCard") would be gameplay-equivalent but trip
+    // the fidelity gate's literal tree diff against the impulse golden (Elemental Mascot).
     return Composite(
         listOf(
-            Lit("GatherCardsEffect(source = CardSource.TopOfLibrary(DynamicAmount.Fixed(1)), storeAs = \"exiledCard\")"),
-            Lit("MoveCollectionEffect(from = \"exiledCard\", destination = CardDestination.ToZone(Zone.EXILE))"),
-            Lit("GrantMayPlayFromExileEffect(\"exiledCard\", MayPlayExpiry.UntilEndOfNextTurn)")
+            Lit("GatherCardsEffect(source = CardSource.TopOfLibrary(DynamicAmount.Fixed(1)), storeAs = \"impulseExiled\")"),
+            Lit("MoveCollectionEffect(from = \"impulseExiled\", destination = CardDestination.ToZone(Zone.EXILE))"),
+            Lit("GrantMayPlayFromExileEffect(\"impulseExiled\", MayPlayExpiry.UntilEndOfNextTurn)")
         )
     )
 }
