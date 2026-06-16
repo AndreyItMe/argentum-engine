@@ -140,7 +140,23 @@ internal fun EmitCtx.renderEffectList(actions: List<JsonObject>, tvar: String?):
     lookExileCastFree(actions)?.let { return it }
     createValueXDealsDamageEffect(actions, tvar)?.let { return it }
     val rendered = mutableListOf<Dsl>()
-    for (act in actions) {
+    var i = 0
+    while (i < actions.size) {
+        val act = actions[i]
+        // "You may pay <cost>. If you do, <then>." — a MayCost action immediately followed by an
+        // If(CostWasPaid, [then]) gate (Pursue the Past's "you may discard a card. If you do, draw two
+        // cards"). Collapse the pair into one MayEffect(IfYouDoEffect(action = <cost>, ifYouDo = <then>)),
+        // the engine's loot idiom. Only renderable cost/then shapes collapse; anything else falls through
+        // to the normal per-action path (which renders MayCost/If, or declines).
+        if (act.strField("_Action") == "MayCost") {
+            val next = actions.getOrNull(i + 1)
+            val collapsed = if (next != null) mayCostIfYouDoEffect(act, next, tvar) else null
+            if (collapsed != null) {
+                if (collapsed is Composite) rendered.addAll(collapsed.parts) else rendered.add(collapsed)
+                i += 2
+                continue
+            }
+        }
         val r = renderAction(act, tvar)
         if (r == null) { reasons.add(act.strField("_Action") ?: act.strField("_Rule") ?: "unknown-action"); return null }
         // Splice a sub-action's own Composite into this sequence rather than nesting it — the engine's
@@ -148,6 +164,7 @@ internal fun EmitCtx.renderEffectList(actions: List<JsonObject>, tvar: String?):
         // (e.g. a layer effect granting +P/+T and a keyword) would otherwise double-wrap into
         // Composite([Composite([…]), …]) and diverge from golden (High Stride, Shore Up).
         if (r is Composite) rendered.addAll(r.parts) else rendered.add(r)
+        i += 1
     }
     if (rendered.isEmpty()) return null
     if (rendered.size == 1) return rendered[0]
@@ -963,6 +980,35 @@ internal fun EmitCtx.createValueXDealsDamageEffect(actions: List<JsonObject>, tv
     val amount = dynamicAmountExpr(a0["args"]) ?: return null
     val tgt = damageRecipientTarget(a1["args"], tvar) ?: return null
     return call("Effects.DealDamage", arg(amount), arg(Lit(tgt)))
+}
+
+/**
+ * `MayCost(cost)` + `If(CostWasPaid, [then…])` -> `MayEffect(IfYouDoEffect(action = <cost>, ifYouDo =
+ * <then>))` — the engine's "you may pay <cost>. If you do, <then>." loot idiom (Pursue the Past's "you
+ * may discard a card. If you do, draw two cards"). Only renderable shapes collapse: the cost must be one
+ * we can express as an *effect* (currently the self-discard `DiscardACard` -> `Patterns.Hand.discardCards(1)`),
+ * the gate must be exactly `If(CostWasPaid, [then])` with no else-branch, and the then-actions must render.
+ * Anything else returns null so the caller falls through to the normal per-action path (no lossy emit).
+ */
+internal fun EmitCtx.mayCostIfYouDoEffect(may: JsonObject, ifAct: JsonObject, tvar: String?): Dsl? {
+    if (may.strField("_Action") != "MayCost" || ifAct.strField("_Action") != "If") return null
+    // The gate must be exactly If(CostWasPaid, [then]) — no else-branch (a single IfYouDo can't fork).
+    val ifArgs = ifAct["args"].asArr ?: return null
+    if (!jsonContains(ifArgs.getOrNull(0), "_Condition", "CostWasPaid")) return null
+    if (ifArgs.getOrNull(2) != null) return null
+    val thenActions = (ifArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    if (thenActions.isEmpty()) return null
+    // Render the paid cost as the IfYouDo's `action`. Only the self-discard cost is modeled today; any
+    // other cost (sacrifice, pay life, exile, mana) declines -> the pair stays uncollapsed.
+    val costAction = when ((may["args"] as? JsonObject)?.strField("_Cost")) {
+        "DiscardACard" -> call("Patterns.Hand.discardCards", arg("1"))
+        else -> return null
+    }
+    val thenEffect = renderEffectList(thenActions, tvar) ?: return null
+    return call(
+        "MayEffect",
+        arg("effect", call("IfYouDoEffect", arg("action", costAction), arg("ifYouDo", thenEffect))),
+    )
 }
 
 /** [MayCost(cost), Unless(CostWasPaid, [Sacrifice...])] -> PayOrSufferEffect (echo / upkeep cost). */

@@ -33,6 +33,16 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         } else null
     }
 
+    // "Return up to N target … cards from your graveyard to your hand" (Pull from the Grave). The
+    // companion `UptoNumberTargetGraveyardCards` target slot is recovered in TargetRecovery; this action
+    // returns EACH chosen graveyard card to its owner's hand, one Move per target via ForEachTargetEffect.
+    // Only the chosen-targets form (`Ref_TargetGraveyardCards`) renders; anything else declines.
+    on("PutEachGraveyardCardIntoHand") { node, _, _ ->
+        if (jsonContains(node, "_CardsInGraveyard", "Ref_TargetGraveyardCards")) {
+            call("ForEachTargetEffect", arg(call("listOf", arg(call("Effects.Move", arg("EffectTarget.ContextTarget(0)"), arg("Zone.HAND"))))))
+        } else null
+    }
+
     on("AttachPermanentToPermanent") { _, args, tvar ->
         // "attach it to target …" — an Equipment/Aura attaching ITSELF to a chosen permanent. The
         // engine idiom is `Effects.AttachEquipment(target)`, which always attaches the source. So this

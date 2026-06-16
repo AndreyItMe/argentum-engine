@@ -1596,6 +1596,17 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
     youControlAnotherOutlawDsl(cond)?.let { return it }
     // "you control a <filter>" — reuse the static-gate renderer (PlayerPassesFilter(You, ControlsA(filter))).
     youControlConditionDsl(cond)?.let { return it }
+    // "if a card left your graveyard this turn" — ACardLeftPlayersGraveyardThisTurn(AnyCard, You)
+    // (Primary Research's end-step draw). Only the unrestricted "a card" (AnyCard) over the You player
+    // maps to Conditions.CardsLeftGraveyardThisTurn(1); a typed card filter or any other player scope
+    // declines -> SCAFFOLD rather than over-fire on a narrower/different condition.
+    if (cond.strField("_Condition") == "ACardLeftPlayersGraveyardThisTurn") {
+        val condArgs = cond["args"].asArr ?: return null
+        val cards = (condArgs.getOrNull(0) as? JsonObject)?.strField("_Cards")
+        val player = (condArgs.getOrNull(1) as? JsonObject)?.strField("_Player")
+        if (cards == "AnyCard" && player == "You") return "Conditions.CardsLeftGraveyardThisTurn(1)"
+        return null
+    }
     return null
 }
 

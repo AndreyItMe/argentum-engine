@@ -27,6 +27,7 @@ import com.wingedsheep.tooling.coverage.strField
 import com.wingedsheep.tooling.coverage.subtypes
 import com.wingedsheep.tooling.coverage.wordsAtKey
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -699,8 +700,30 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
         }
         return null
     }
-    if (ttype == "TargetGraveyardCard" || ttype == "UptoOneTargetGraveyardCard") {
+    if (ttype == "TargetGraveyardCard" || ttype == "UptoOneTargetGraveyardCard" ||
+        ttype == "UptoNumberTargetGraveyardCards") {
         val blob = compact(args)
+        // "up to N target … cards from your graveyard" (Pull from the Grave): a bounded, optional
+        // multi-target graveyard slot — args is `[count, filter]`. It renders the same recovered filter
+        // as the single/up-to-one variants, plus `count = N` and `optional = true` (minCount becomes 0).
+        // The companion PutEachGraveyardCardIntoHand action moves each chosen card via ForEachTargetEffect.
+        val isUptoNumberGrave = ttype == "UptoNumberTargetGraveyardCards"
+        // The bound MUST be a fixed top-level `Integer` count. A DYNAMIC bound ("up to X target cards,
+        // where X is the number of black permanents an opponent controls as you cast this" — Reap, encoded
+        // as `TheNumberOfPermanentsOnTheBattlefield`) is a cast-time X the SDK target shape can't carry, so
+        // decline -> SCAFFOLD rather than silently drop the cap and let the spell return any number of cards.
+        if (isUptoNumberGrave) {
+            val countNode = (args as? JsonArray)?.getOrNull(0) as? JsonObject
+            if (countNode?.strField("_GameNumber") != "Integer") return null
+        }
+        val graveCount = if (isUptoNumberGrave) (countInt as? Int) else null
+        // Prepend `count`/`optional` to a graveyard TargetObject's args, covering both the up-to-one
+        // (optional only) and the bounded up-to-N (count + optional) graveyard target variants.
+        fun withGraveCounting(parts: MutableList<com.wingedsheep.tooling.coverage.Arg>): MutableList<com.wingedsheep.tooling.coverage.Arg> {
+            if (graveCount != null) parts.add(0, arg("count", "$graveCount"))
+            if (ttype == "UptoOneTargetGraveyardCard" || isUptoNumberGrave) parts.add(0, arg("optional", "true"))
+            return parts
+        }
         // "target BASIC land card from your graveyard" (Groundskeeper): a supertype restriction none of the
         // graveyard branches below compose. Decline rather than drop "basic" and widen to any land.
         if ("IsSupertype" in blob) return null
@@ -724,8 +747,7 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
             mvCap?.let { g = g.dot(it) }
             val filt = Call("TargetFilter", listOf(arg(g), arg("zone", "Zone.GRAVEYARD")))
             val parts = mutableListOf(arg("filter", filt))
-            if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
-            return Call("TargetObject", parts)
+            return Call("TargetObject", withGraveCounting(parts))
         }
         // "target artifact or creature card with mana value N or less from your graveyard" (Lorehold
         // Charm): an `Or[IsCardtype X, IsCardtype Y]` over two single-card-types, plus a `<=` MV cap and
@@ -754,8 +776,7 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
                 val combined = typeFilter(ts[0]).dot("or", arg(typeFilter(ts[1])))
                 val filt = Call("TargetFilter", listOf(arg(combined), arg("zone", "Zone.GRAVEYARD")))
                 val parts = mutableListOf(arg("filter", filt))
-                if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
-                return Call("TargetObject", parts)
+                return Call("TargetObject", withGraveCounting(parts))
             }
         }
         // "target artifact card WITH MANA VALUE 1 OR LESS from your graveyard" (Auriok Salvagers, Leonin
@@ -779,8 +800,7 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
                 val base = Lit("GameObjectFilter.Any").dot("withAnySubtype", *subtypeArgs)
                 val filt = graveyardFilter(base, blob)
                 val parts = mutableListOf(arg("filter", filt))
-                if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
-                return Call("TargetObject", parts)
+                return Call("TargetObject", withGraveCounting(parts))
             }
         }
         // "target Spirit card from your graveyard" (Angel of Flight Alabaster): a creature-subtype
@@ -809,10 +829,10 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
             else -> return null
         }
         // "Return up to one target … card from your graveyard …" (Mourner's Surprise) — the optional
-        // (zero-or-one) variant renders the same filter under `optional = true`.
+        // (zero-or-one) variant renders the same filter under `optional = true`; the bounded
+        // "up to N" variant (Pull from the Grave) adds `count = N` as well.
         val parts = mutableListOf(arg("filter", filt))
-        if (ttype == "UptoOneTargetGraveyardCard") parts.add(0, arg("optional", "true"))
-        return Call("TargetObject", parts)
+        return Call("TargetObject", withGraveCounting(parts))
     }
     return null
 }

@@ -5110,7 +5110,7 @@ val MemorysJourney = card("Memory's Journey") {
     colorIdentity = "UG"
     typeLine = "Instant"
     oracleText = "Target player shuffles up to three target cards from their graveyard into their library.\nFlashback {G} (You may cast this card from your graveyard for its flashback cost. Then exile it.)"
-    // STRUCTURE needs human wiring: multi-target, target:UptoNumberTargetGraveyardCards
+    // STRUCTURE needs human wiring: PlayerAction, multi-target
     metadata {
         rarity = Rarity.UNCOMMON
         collectorNumber = "66"
