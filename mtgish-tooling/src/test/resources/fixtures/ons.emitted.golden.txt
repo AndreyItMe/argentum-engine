@@ -11880,7 +11880,7 @@ val SyphonSoul = card("Syphon Soul") {
     colorIdentity = "B"
     typeLine = "Sorcery"
     oracleText = "Syphon Soul deals 2 damage to each other player. You gain life equal to the damage dealt this way."
-    // STRUCTURE needs human wiring: GainLife
+    // STRUCTURE needs human wiring: SpellDealsDamage
     metadata {
         rarity = Rarity.COMMON
         collectorNumber = "176"

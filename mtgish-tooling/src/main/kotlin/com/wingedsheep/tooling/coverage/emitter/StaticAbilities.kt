@@ -163,6 +163,11 @@ internal fun EmitCtx.staticLordBlock(rule: JsonObject, condition: String? = null
                     // of the prowess trigger, which this generic AddAbility path doesn't model — decline to a
                     // scaffold (per "decline→SCAFFOLD, don't widen") rather than emit a confidently-wrong lord.
                     if (kw == "PROWESS") return scaffoldLord()
+                    // Ward always carries a cost (ward {N}, ward—pay life, …); a bare GrantKeyword(WARD)
+                    // silently drops it, granting a no-op ward. Faithfully granting it needs
+                    // GrantWard(WardCost.…), which this generic AddAbility lord path doesn't model — decline
+                    // to a scaffold (per "decline→SCAFFOLD, don't widen") rather than emit a costless ward.
+                    if (kw == "WARD") return scaffoldLord()
                     call("GrantKeyword", arg("Keyword.$kw"), arg(group))
                 }
             }
