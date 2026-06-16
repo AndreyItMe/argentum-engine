@@ -128,13 +128,25 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
     on("PutNumberCountersOfTypeOnPermanent") { _, args, tvar ->
         // "Put N +1/+1 (or -1/-1) counters on <permanent>." — the plural form of
         // PutACounterOfTypeOnPermanent. IR args are [<N>, <counterType>, <permanent ref>]. Only the
-        // bare ±1/±1 PTCounter and the keyword counters we name render with a fixed integer N; any
-        // other counter kind or a derived count scaffolds rather than guess.
+        // bare ±1/±1 PTCounter and the keyword counters we name render; any other counter kind
+        // scaffolds rather than guess.
         val arr = args.asArr ?: return@on null
-        val count = findInteger(arr.getOrNull(0)) as? Int ?: return@on null
         val counter = counterTypeDsl(arr.getOrNull(1)) ?: return@on null
         val tgt = refTarget(arr.getOrNull(2), tvar) ?: return@on null
-        call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
+        // A fixed integer N renders through the static AddCountersEffect.
+        (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
+            return@on call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
+        }
+        // A derived count (e.g. "X +1/+1 counters, where X is the number of cards you've drawn this
+        // turn" — Fractal Anomaly) renders through Effects.AddDynamicCounters with the recovered
+        // DynamicAmount. Decline if the amount isn't one we can render exactly.
+        val amount = dynamicAmount(arr.getOrNull(0)) ?: return@on null
+        call(
+            "Effects.AddDynamicCounters",
+            arg("counterType", counter),
+            arg("amount", Lit(amount)),
+            arg("target", tgt),
+        )
     }
 
     on("PutNumberCountersOfTypeOnEachPermanent") { _, args, tvar ->

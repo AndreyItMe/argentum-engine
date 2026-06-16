@@ -761,18 +761,28 @@ internal fun EmitCtx.targetExpr(tnode: JsonObject, actionContext: List<JsonObjec
         // as the single/up-to-one variants, plus `count = N` and `optional = true` (minCount becomes 0).
         // The companion PutEachGraveyardCardIntoHand action moves each chosen card via ForEachTargetEffect.
         val isUptoNumberGrave = ttype == "UptoNumberTargetGraveyardCards"
-        // The bound MUST be a fixed top-level `Integer` count. A DYNAMIC bound ("up to X target cards,
-        // where X is the number of black permanents an opponent controls as you cast this" — Reap, encoded
-        // as `TheNumberOfPermanentsOnTheBattlefield`) is a cast-time X the SDK target shape can't carry, so
+        // The bound is either a fixed top-level `Integer` count, or a cast-time `X` ("up to X target
+        // instant and/or sorcery cards" — Divergent Equation's `{X}{X}{U}`). The X bound maps to
+        // `dynamicMaxCount = DynamicAmount.XValue`, which the engine evaluates as the spell goes on the
+        // stack to cap the target overlay (Distorting Wake / Restock pattern). A DIFFERENT derived bound
+        // ("up to X … where X is the number of black permanents an opponent controls" — Reap, encoded as
+        // `TheNumberOfPermanentsOnTheBattlefield`) is NOT a simple {X} value the target shape can carry, so
         // decline -> SCAFFOLD rather than silently drop the cap and let the spell return any number of cards.
+        var graveDynamicMax: String? = null
         if (isUptoNumberGrave) {
             val countNode = (args as? JsonArray)?.getOrNull(0) as? JsonObject
-            if (countNode?.strField("_GameNumber") != "Integer") return null
+            when (countNode?.strField("_GameNumber")) {
+                "Integer" -> {}
+                "X", "XValue", "ValueX" -> graveDynamicMax = "DynamicAmount.XValue"
+                else -> return null
+            }
         }
-        val graveCount = if (isUptoNumberGrave) (countInt as? Int) else null
-        // Prepend `count`/`optional` to a graveyard TargetObject's args, covering both the up-to-one
-        // (optional only) and the bounded up-to-N (count + optional) graveyard target variants.
+        val graveCount = if (isUptoNumberGrave && graveDynamicMax == null) (countInt as? Int) else null
+        // Prepend `count`/`optional`/`dynamicMaxCount` to a graveyard TargetObject's args, covering the
+        // up-to-one (optional only), bounded up-to-N (count + optional), and X-clamped up-to-X
+        // (dynamicMaxCount + optional) graveyard target variants.
         fun withGraveCounting(parts: MutableList<com.wingedsheep.tooling.coverage.Arg>): MutableList<com.wingedsheep.tooling.coverage.Arg> {
+            graveDynamicMax?.let { parts.add(0, arg("dynamicMaxCount", Lit(it))) }
             if (graveCount != null) parts.add(0, arg("count", "$graveCount"))
             if (ttype == "UptoOneTargetGraveyardCard" || isUptoNumberGrave) parts.add(0, arg("optional", "true"))
             return parts

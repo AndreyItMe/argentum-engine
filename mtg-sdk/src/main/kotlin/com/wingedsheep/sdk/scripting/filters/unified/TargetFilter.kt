@@ -151,6 +151,9 @@ data class TargetFilter(
         /** Target instant or sorcery card in a graveyard */
         val InstantOrSorceryInGraveyard = TargetFilter(GameObjectFilter.Companion.InstantOrSorcery, zone = Zone.GRAVEYARD)
 
+        /** Target instant or sorcery card in your graveyard */
+        val InstantOrSorceryInYourGraveyard = TargetFilter(GameObjectFilter.Companion.InstantOrSorcery.ownedByYou(), zone = Zone.GRAVEYARD)
+
         // =============================================================================
         // Pre-built Stack Targets
         // =============================================================================

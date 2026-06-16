@@ -325,6 +325,13 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
             val player = if (jsonContains(node, "_Player", "Opponent")) "Player.EachOpponent" else "Player.You"
             return call("DynamicAmount.LifeTotal", arg(player))
         }
+        // "the number of cards you've drawn this turn" (Fractal Anomaly, Duelist of the Mind). Backed by
+        // the CARDS_DRAWN turn tracker. Only the You scope maps to the facade; an opponent / each-player
+        // scope declines (-> SCAFFOLD) rather than read the wrong player's draw count.
+        "NumCardsDrawnByPlayerThisTurn" ->
+            return if (jsonContains(node["args"], "_Player", "You"))
+                call("DynamicAmount.TurnTracking", arg("Player.You"), arg("TurnTracker.CARDS_DRAWN"))
+            else null
         // "the number of [type] spells <player> has cast this turn" (Magebane Lizard). args = a spell
         // filter + a player ref. Both must map to an EXACT category/scope we can render — decline
         // (-> SCAFFOLD) on any other spell filter or player scope rather than under-counting.
