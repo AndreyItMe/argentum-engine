@@ -1,10 +1,15 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.handlers.ConditionEvaluator
+import com.wingedsheep.engine.handlers.PredicateEvaluator
+import com.wingedsheep.engine.legalactions.utils.CastPermissionUtils
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
+import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.mtg.sets.definitions.sos.cards.ResonatingLute
+import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.core.spec.style.FunSpec
@@ -38,27 +43,45 @@ class ResonatingLuteScenarioTest : FunSpec({
         return driver.activePlayer!!
     }
 
+    fun makeCastPermissionUtils(driver: GameTestDriver): CastPermissionUtils =
+        CastPermissionUtils(driver.cardRegistry, PredicateEvaluator(), ConditionEvaluator())
+
     test("grants each land you control a {T}: add two mana of one color ability") {
         val driver = createDriver()
         val p = start(driver)
         val opp = driver.getOpponent(p)
 
-        driver.putPermanentOnBattlefield(p, "Resonating Lute") // artifact host
+        val lute = driver.putPermanentOnBattlefield(p, "Resonating Lute") // artifact host
         val myLand = driver.putLandOnBattlefield(p, "Mountain")
         val oppLand = driver.putLandOnBattlefield(opp, "Forest")
 
-        // My land has the granted mana ability; the opponent's does not.
-        val myGrants = driver.state.grantedActivatedAbilities.filter { it.entityId == myLand }
+        // The grant is a static "Lands you control have …" ability, so it surfaces through the
+        // static-grant resolver (CastPermissionUtils), not the resolved-effect
+        // `grantedActivatedAbilities` list (which only one-shot grants populate). My land receives
+        // it from the Lute; the opponent's land does not.
+        val utils = makeCastPermissionUtils(driver)
+        val myGrants = utils.getStaticGrantedAbilitiesWithGranter(myLand, driver.state)
         myGrants.size shouldBe 1
-        driver.state.grantedActivatedAbilities.filter { it.entityId == oppLand }.size shouldBe 0
+        myGrants[0].granterId shouldBe lute
+        utils.getStaticGrantedAbilitiesWithGranter(oppLand, driver.state) shouldBe emptyList()
 
-        // Activating it adds two mana of one chosen color (mana ability — resolves immediately).
+        // Activating it adds two mana of one chosen color (mana ability — resolves immediately;
+        // the colour choice rides along on the activation).
         driver.submitSuccess(
-            ActivateAbility(playerId = p, sourceId = myLand, abilityId = myGrants[0].ability.id),
+            ActivateAbility(
+                playerId = p,
+                sourceId = myLand,
+                abilityId = myGrants[0].ability.id,
+                manaColorChoice = Color.RED,
+            ),
         )
+        // The mana is spendable only on instants/sorceries, so it lands in the restricted-mana
+        // pool (two RED entries) rather than the plain colour counts.
         val pool = driver.state.getEntity(p)?.get<ManaPoolComponent>()!!
-        val total = pool.white + pool.blue + pool.black + pool.red + pool.green + pool.colorless
-        total shouldBe 2
+        pool.total shouldBe 2
+        pool.restrictedMana.size shouldBe 2
+        pool.restrictedMana.all { it.color == Color.RED } shouldBe true
+        pool.restrictedMana.all { it.restriction == ManaRestriction.InstantOrSorceryOnly } shouldBe true
     }
 
     test("draw ability is legal with 7+ cards in hand") {
