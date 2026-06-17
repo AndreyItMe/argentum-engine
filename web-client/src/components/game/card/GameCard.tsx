@@ -1180,6 +1180,12 @@ function GameCardImpl({
         userSelect: 'none',
         ...(voidEligible ? { outline: '1px solid rgba(140, 90, 220, 0.55)', outlineOffset: '2px' } : {}),
         ...(isBeheldPulsing ? { animation: 'beholdPulse 1.1s ease-in-out infinite alternate' } : {}),
+        // Warp (CR 702.185): a breathing cosmic halo around a permanent cast for its warp cost. The
+        // box-shadow lives on the card div (not a child) so it isn't clipped by `overflow: hidden`;
+        // a beheld pulse, when active, wins the single `animation` slot.
+        ...(battlefield && card.isWarped && !faceDown && !isBeheldPulsing
+          ? { animation: 'warpHaloPulse 2.6s ease-in-out infinite' }
+          : {}),
         // Banding: colored ring + glow on every member of a declared band (CR 702.22).
         ...(isBanded && bandColor ? {
           outline: `2px solid ${bandColor.border}`,
@@ -1446,6 +1452,18 @@ function GameCardImpl({
         <div style={styles.preparedBadge} title="Prepared (Secrets of Strixhaven) — cast a copy of its spell from exile; doing so unprepares it">
           Prepared
         </div>
+      )}
+
+      {/* Warp (CR 702.185, Edge of Eternities): a permanent cast for its warp cost — exiled at the next
+          end step, then recastable from exile. Cosmic spinning ring + shimmering badge sell the warp. */}
+      {battlefield && card.isWarped && !faceDown && (
+        <>
+          <div style={styles.warpRing} aria-hidden="true" />
+          <div style={styles.warpedBadge} title="Warped (Edge of Eternities) — exiled at the beginning of the next end step, then castable again from exile">
+            <span aria-hidden="true">✦</span>
+            Warped
+          </div>
+        </>
       )}
 
       {/* Counter badge for creatures with +1/+1 or -1/-1 counters */}

@@ -235,6 +235,10 @@ export interface ClientCard {
    * prepare spell sits castable in its controller's exile. Battlefield only. */
   readonly isPrepared?: boolean
 
+  /** Whether this permanent was cast for its warp cost (CR 702.185, Edge of Eternities): it will be
+   * exiled at the next end step, then can be recast from exile. Drives the cosmic warp cue. Battlefield only. */
+  readonly isWarped?: boolean
+
   /** Morph cost for face-down creatures (only visible to controller) */
   readonly morphCost?: string | null
 

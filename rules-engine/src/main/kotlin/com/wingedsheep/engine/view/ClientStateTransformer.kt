@@ -1065,6 +1065,11 @@ class ClientStateTransformer(
         val isPrepared = zoneKey.zoneType == Zone.BATTLEFIELD &&
             container.has<com.wingedsheep.engine.state.components.battlefield.PreparedComponent>()
 
+        // Warped permanents (CR 702.185, Edge of Eternities) carry a WarpedComponent until they're
+        // exiled at the next end step; surface a flag so the client can show the cosmic warp cue.
+        val isWarped = zoneKey.zoneType == Zone.BATTLEFIELD &&
+            container.has<com.wingedsheep.engine.state.components.battlefield.WarpedComponent>()
+
         // Threshold-style progress badge: detect static abilities gated on
         // "controller's graveyard has at least N cards".
         val thresholdInfo = cardDef?.let { def ->
@@ -1126,6 +1131,7 @@ class ClientStateTransformer(
             isSuspected = projectedValues?.isSuspected == true,
             isPlotted = isPlotted,
             isPrepared = isPrepared,
+            isWarped = isWarped,
             morphCost = if (isFaceDown && morphData != null) morphData.morphCost.description else null,
             targets = targets,
             imageUri = cardComponent.imageUri ?: cardDef?.metadata?.imageUri,

@@ -1689,6 +1689,53 @@ export const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none',
     zIndex: 6,
   } as React.CSSProperties,
+
+  // Warp (CR 702.185, Edge of Eternities) — a permanent cast for its warp cost that will be exiled at
+  // the next end step. The cue reads as the card being pulled out of phase with reality. The outward
+  // breathing halo is a box-shadow animation applied to the card div itself (`warpHaloPulse`), because
+  // a child overlay's box-shadow would be clipped by the card's `overflow: hidden`.
+  //
+  // warpRing: a slowly rotating violet/cyan conic gradient clipped to a thin ring just inside the card
+  // edge (the mask/composite trick hollows out the centre so the art stays clear). The spin sells the
+  // warp. Sits flush inside the card (inset 0) so `overflow: hidden` doesn't crop it.
+  warpRing: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    padding: 2,
+    background:
+      'conic-gradient(from 0deg, rgba(126,92,232,0) 0deg, #9e74ff 70deg, #58dcff 150deg, rgba(126,92,232,0) 210deg, #9e74ff 300deg, rgba(126,92,232,0) 360deg)',
+    WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
+    animation: 'warpRingSpin 5.5s linear infinite',
+    pointerEvents: 'none',
+    opacity: 0.9,
+    zIndex: 5,
+  } as React.CSSProperties,
+
+  // "Warped" badge — cosmic violet→cyan shimmer to match the ring.
+  warpedBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    borderRadius: 4,
+    padding: '1px 5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 3,
+    fontWeight: 700,
+    fontSize: 10,
+    color: '#ecf6ff',
+    background: 'linear-gradient(90deg, #6a3fd0, #58dcff, #6a3fd0)',
+    backgroundSize: '200% 100%',
+    animation: 'warpBadgeShimmer 3.2s linear infinite',
+    border: '1px solid #bfe6ff',
+    boxShadow: '0 0 6px rgba(120, 160, 255, 0.85)',
+    textShadow: 'none',
+    pointerEvents: 'none',
+    zIndex: 6,
+  } as React.CSSProperties,
 }
 
 /**

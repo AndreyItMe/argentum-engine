@@ -94,6 +94,27 @@
 }
 
 /* =========================================================================
+ * Warp (CR 702.185, Edge of Eternities) — a permanent cast for its warp cost
+ * sits on the battlefield until it's exiled at the next end step. The cue reads
+ * as the card being pulled out of phase with reality: a slowly rotating
+ * violet/cyan cosmic ring around its edge plus a soft breathing halo.
+ * ========================================================================= */
+@keyframes warpRingSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes warpHaloPulse {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(126, 92, 232, 0.45), 0 0 15px 3px rgba(72, 200, 232, 0.22); }
+  50%      { box-shadow: 0 0 12px 3px rgba(158, 116, 255, 0.78), 0 0 28px 7px rgba(88, 220, 255, 0.42); }
+}
+
+@keyframes warpBadgeShimmer {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+
+/* =========================================================================
  * Utility classes for responsive visibility
  * ========================================================================= */
 .hide-mobile {
