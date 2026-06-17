@@ -18,15 +18,6 @@ tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()
 
-    // Spread each module's test classes across several forked JVMs. rules-engine alone has
-    // ~1200 test classes, so this is the dominant lever on test wall-clock. game-server's Spring
-    // tests all use RANDOM_PORT, so concurrent forks don't collide. Each fork gets its own heap
-    // (see maxHeapSize below), so the count is capped to keep peak memory bounded:
-    //   forks * 2g  ->  4 forks = 8g, comfortable on a 16g CI runner or dev machine.
-    // Override with -DmaxParallelForks=N (e.g. =1 to debug an ordering-sensitive failure).
-    maxParallelForks = System.getProperty("maxParallelForks")?.toIntOrNull()
-        ?: Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
-
     // Increase heap size for Spring Boot integration tests with WebSocket connections
     maxHeapSize = "2g"
 
