@@ -877,15 +877,20 @@ class GameTestDriver {
     }
 
     /**
-     * Move a permanent from the battlefield to its owner's graveyard (test helper). Strips its
-     * battlefield zone membership without running dies/leaves triggers — a blunt removal for
-     * setting up "the permanent is gone now" states. Returns silently if the entity has no owner.
+     * Move a card or permanent to its owner's graveyard (test helper). Strips its membership from
+     * whatever zone it currently occupies (battlefield, hand, …) without running dies/leaves
+     * triggers — a blunt removal for setting up "the card is in the graveyard now" states, and
+     * usable as a "discard from hand" helper. Returns silently if the entity has no owner.
      */
     fun moveToGraveyard(entityId: EntityId) {
         val ownerId = _state.getEntity(entityId)
             ?.get<com.wingedsheep.engine.state.components.identity.OwnerComponent>()?.playerId
             ?: return
-        _state = _state.removeFromZone(ZoneKey(ownerId, Zone.BATTLEFIELD), entityId)
+        // Remove from every zone the entity currently occupies rather than assuming battlefield;
+        // otherwise discarding a hand card here is a no-op and any "while in hand" setup loop spins
+        // forever (it never leaves the hand) while endlessly re-adding it to the graveyard.
+        val occupiedZones = _state.zones.keys.filter { entityId in _state.getZone(it) }
+        occupiedZones.forEach { _state = _state.removeFromZone(it, entityId) }
         _state = _state.addToZone(ZoneKey(ownerId, Zone.GRAVEYARD), entityId)
     }
 
