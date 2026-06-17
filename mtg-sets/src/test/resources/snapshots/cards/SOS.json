@@ -5385,6 +5385,68 @@
     ]
 }
 
+// Maelstrom Artisan
+{
+    "name": "Maelstrom Artisan",
+    "manaCost": "{1}{R}{R}",
+    "typeLine": "Creature — Minotaur Sorcerer",
+    "oracleText": "Haste\nThis creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "HASTE",
+        "PREPARED"
+    ],
+    "metadata": {
+        "collectorNumber": "122",
+        "rarity": "RARE",
+        "artist": "Eelis Kyttanen",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/c/5c88391d-271f-4021-a5d9-158ebc1e6357.jpg?1778165111"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Rocket Volley",
+            "manaCost": "{1}{R}",
+            "typeLine": "Sorcery",
+            "oracleText": "Destroy target nonbasic land.",
+            "script": {
+                "spellEffect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsLand",
+                                    {
+                                        "type": "Not",
+                                        "predicate": "IsBasicLand"
+                                    }
+                                ]
+                            }
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Magmablood Archaic
 {
     "name": "Magmablood Archaic",
@@ -10041,93 +10103,6 @@
     },
     "colorIdentityOverride": [
         "GREEN"
-    ]
-}
-
-// Thunderdrum Soloist
-{
-    "name": "Thunderdrum Soloist",
-    "manaCost": "{1}{R}",
-    "typeLine": "Creature — Dwarf Bard",
-    "oracleText": "Reach\nOpus — Whenever you cast an instant or sorcery spell, this creature deals 1 damage to each opponent. If five or more mana was spent to cast that spell, this creature deals 3 damage to each opponent instead.",
-    "creatureStats": {
-        "power": 1,
-        "toughness": 3
-    },
-    "keywords": [
-        "REACH"
-    ],
-    "script": {
-        "triggeredAbilities": [
-            {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "SpellCastEvent",
-                    "spellFilter": {
-                        "cardPredicates": [
-                            {
-                                "type": "Or",
-                                "predicates": [
-                                    "IsInstant",
-                                    "IsSorcery"
-                                ]
-                            }
-                        ]
-                    }
-                },
-                "binding": "ANY",
-                "effect": {
-                    "type": "Gated",
-                    "gate": {
-                        "type": "Gate.WhenCondition",
-                        "condition": {
-                            "type": "Compare",
-                            "left": {
-                                "type": "ContextProperty",
-                                "key": "MANA_SPENT_ON_TRIGGERING_SPELL"
-                            },
-                            "operator": "GTE",
-                            "right": {
-                                "type": "Fixed",
-                                "amount": 5
-                            }
-                        }
-                    },
-                    "then": {
-                        "type": "DealDamage",
-                        "amount": {
-                            "type": "Fixed",
-                            "amount": 3
-                        },
-                        "target": {
-                            "type": "PlayerRef",
-                            "player": "EachOpponent"
-                        }
-                    },
-                    "otherwise": {
-                        "type": "DealDamage",
-                        "amount": {
-                            "type": "Fixed",
-                            "amount": 1
-                        },
-                        "target": {
-                            "type": "PlayerRef",
-                            "player": "EachOpponent"
-                        }
-                    }
-                },
-                "descriptionOverride": "Opus — Whenever you cast an instant or sorcery spell, deal 1 damage to each opponent. If five or more mana was spent to cast that spell, deal 3 damage to each opponent instead."
-            }
-        ]
-    },
-    "metadata": {
-        "collectorNumber": "134",
-        "rarity": "UNCOMMON",
-        "artist": "Edgar Sánchez Hidalgo",
-        "imageUri": "https://cards.scryfall.io/normal/front/5/9/590d1d95-ed13-4121-899f-f5a2d8a6617a.jpg?1775937905"
-    },
-    "colorIdentityOverride": [
-        "RED"
     ]
 }
 

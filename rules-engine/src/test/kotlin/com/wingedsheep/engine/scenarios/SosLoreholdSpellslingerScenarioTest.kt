@@ -16,15 +16,15 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 /**
- * Scenario tests for the four Lorehold/spellslinger Secrets of Strixhaven cards added together:
- *  - Blazing Firesinger // Seething Song   (enters prepared; copy adds {R}{R}{R}{R}{R})
- *  - Strife Scholar // Awaken the Ages      (enters prepared + Ward—Pay 2 life; copy makes 2 Spirits)
- *  - Elite Interceptor // Rejoinder         (enters prepared; copy: may tap/untap a creature, draw)
- *  - Thunderdrum Soloist                    (Opus — spell-cast trigger, 1 dmg, 3 instead at 5+ mana)
+ * Scenario tests for the Lorehold/spellslinger Secrets of Strixhaven cards added together:
+ *  - Blazing Firesinger // Seething Song    (enters prepared; copy adds {R}{R}{R}{R}{R})
+ *  - Strife Scholar // Awaken the Ages       (enters prepared + Ward—Pay 2 life; copy makes 2 Spirits)
+ *  - Elite Interceptor // Rejoinder          (enters prepared; copy: may tap/untap a creature, draw)
+ *  - Maelstrom Artisan // Rocket Volley      (haste; enters prepared; copy destroys a nonbasic land)
  *
- * The three prepare cards reuse the existing PREPARE layout + `prepare(name) { }` DSL; this file
- * pins each prepare spell's resolution behaviour and the Opus instead-tier boundary. No new SDK
- * was introduced, so these are pure card-behaviour tests.
+ * These prepare cards reuse the existing PREPARE layout + `prepare(name) { }` DSL; this file pins
+ * each prepare spell's resolution behaviour. No new SDK was introduced (the `TargetFilter.nonbasic()`
+ * helper just composes the existing nonbasic-land predicate), so these are pure card-behaviour tests.
  */
 class SosLoreholdSpellslingerScenarioTest : ScenarioTestBase() {
 
@@ -148,57 +148,49 @@ class SosLoreholdSpellslingerScenarioTest : ScenarioTestBase() {
             }
         }
 
-        context("Thunderdrum Soloist — Opus") {
-            test("a 1-mana instant deals 1 damage to each opponent (5+ tier not reached)") {
-                val game = scenario()
+        context("Maelstrom Artisan — Rocket Volley (enters prepared)") {
+            test("enters prepared with haste; casting the copy destroys a nonbasic land") {
+                var builder = scenario()
                     .withPlayers("Player", "Opponent")
-                    .withCardOnBattlefield(1, "Thunderdrum Soloist") // 1/3
-                    .withCardInHand(1, "Lightning Bolt") // {R}
-                    .withCardOnBattlefield(2, "Grizzly Bears")
-                    .withLandsOnBattlefield(1, "Mountain", 2)
+                    .withCardInHand(1, "Maelstrom Artisan")
+                    .withLandsOnBattlefield(1, "Mountain", 5)
+                    .withCardOnBattlefield(2, "Terramorphic Expanse") // a nonbasic land
+                    .withCardOnBattlefield(2, "Mountain")             // a basic land (must NOT be targetable)
                     .withActivePlayer(1)
                     .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
-                    .build()
+                repeat(5) { builder = builder.withCardInLibrary(1, "Forest") }
+                repeat(5) { builder = builder.withCardInLibrary(2, "Forest") }
+                val game = builder.build()
 
-                val bears = game.findPermanent("Grizzly Bears")!!
-                val oppLifeBefore = game.getLifeTotal(2)
-
-                game.castSpell(1, "Lightning Bolt", targetId = bears).error shouldBe null
+                game.castSpell(1, "Maelstrom Artisan")
                 game.resolveStack()
 
-                withClue("Opus deals 1 damage to the opponent at <5 mana") {
-                    game.getLifeTotal(2) shouldBe oppLifeBefore - 1
+                val artisan = game.findPermanent("Maelstrom Artisan")!!
+                withClue("Maelstrom Artisan should be prepared on ETB") {
+                    game.state.getEntity(artisan)?.get<PreparedComponent>() shouldNotBe null
                 }
-            }
 
-            test("a 5-mana spell makes Opus deal 3 damage to each opponent instead") {
-                val game = scenario()
-                    .withPlayers("Player", "Opponent")
-                    .withCardOnBattlefield(1, "Thunderdrum Soloist") // 1/3
-                    .withCardInHand(1, "Blaze") // {X}{R}
-                    .withLandsOnBattlefield(1, "Mountain", 7)
-                    .withActivePlayer(1)
-                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
-                    .build()
-
-                val oppLifeBefore = game.getLifeTotal(2)
-
-                // Blaze X=4 → {4}{R} → 5 mana spent → Opus deals 3 (instead of 1).
-                // Blaze targets the opponent (X=4 damage), so the opponent loses 4 (Blaze) + 3 (Opus) = 7.
-                game.execute(
+                val nonbasic = game.findPermanent("Terramorphic Expanse")!!
+                val copyId = game.findExileCopy(1, "Maelstrom Artisan")!!
+                // Cast the Rocket Volley copy for {1}{R}, targeting the nonbasic land.
+                val castResult = game.execute(
                     CastSpell(
                         game.player1Id,
-                        game.state.getHand(game.player1Id).first {
-                            game.state.getEntity(it)?.get<CardComponent>()?.name == "Blaze"
-                        },
-                        targets = listOf(ChosenTarget.Player(game.player2Id)),
-                        xValue = 4
+                        copyId,
+                        targets = listOf(ChosenTarget.Permanent(nonbasic)),
+                        faceIndex = 0
                     )
-                ).error shouldBe null
+                )
+                withClue("Casting the Rocket Volley copy should succeed: ${castResult.error}") {
+                    castResult.error shouldBe null
+                }
                 game.resolveStack()
 
-                withClue("5 mana spent → Opus deals 3 (not 1); plus Blaze X=4 → opponent loses 7") {
-                    oppLifeBefore - game.getLifeTotal(2) shouldBe 7
+                withClue("Rocket Volley destroys the targeted nonbasic land") {
+                    game.findPermanent("Terramorphic Expanse") shouldBe null
+                }
+                withClue("Maelstrom Artisan is no longer prepared after casting the copy") {
+                    game.state.getEntity(artisan)?.get<PreparedComponent>() shouldBe null
                 }
             }
         }

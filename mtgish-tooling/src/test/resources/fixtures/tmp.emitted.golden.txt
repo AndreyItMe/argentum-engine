@@ -12476,7 +12476,7 @@ val Wasteland = card("Wasteland") {
     }
     activatedAbility {
         cost = Costs.Composite(Costs.Tap, Costs.SacrificeSelf)
-        val t = target("target", TargetPermanent(filter = TargetFilter.Land))
+        val t = target("target", TargetPermanent(filter = TargetFilter.Land.nonbasic()))
         effect = Effects.Move(t, Zone.GRAVEYARD, byDestruction = true)
     }
     metadata {
