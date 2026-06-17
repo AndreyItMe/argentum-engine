@@ -273,9 +273,12 @@ private fun playGame(
                 break
             }
             if (state.turnNumber > turns) {
+                turns = state.turnNumber
+                // Track the turn we just advanced *to*, so the stuck guard above stays armed
+                // while the game remains on this turn. (Previously this captured the prior turn
+                // value, leaving `turns == lastProgressTurn` permanently false and the guard dead.)
                 lastProgressTurn = turns
                 lastProgressAction = actionCount
-                turns = state.turnNumber
             }
 
             val decision = state.pendingDecision
