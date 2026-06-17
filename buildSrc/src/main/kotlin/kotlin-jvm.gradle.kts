@@ -35,6 +35,11 @@ tasks.withType<Test>().configureEach {
         }
     }
 
+    // Forward the anti-hang guard tunables (see TestHangGuard) so they can be set from the CLI.
+    for (prop in listOf("testTimeoutSeconds", "testHardTimeoutSeconds")) {
+        System.getProperty(prop)?.let { systemProperty(prop, it) }
+    }
+
     // Log information about all test results, not only the failed ones.
     testLogging {
         events(
