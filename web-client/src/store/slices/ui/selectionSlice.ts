@@ -8,6 +8,7 @@ import type {
   ModalModeSelectionState,
   XSelectionState,
   BlightVariableSelectionState,
+  PayXLifeSelectionState,
   ConvokeSelectionState,
   WaterbendSelectionState,
   HarmonizeSelectionState,
@@ -35,6 +36,7 @@ export interface SelectionSliceState {
   modalModeSelectionState: ModalModeSelectionState | null
   xSelectionState: XSelectionState | null
   blightVariableSelectionState: BlightVariableSelectionState | null
+  payXLifeSelectionState: PayXLifeSelectionState | null
   convokeSelectionState: ConvokeSelectionState | null
   waterbendSelectionState: WaterbendSelectionState | null
   harmonizeSelectionState: HarmonizeSelectionState | null
@@ -57,6 +59,10 @@ export interface SelectionSliceActions {
   updateBlightVariableX: (x: number) => void
   cancelBlightVariableSelection: () => void
   confirmBlightVariableSelection: () => void
+  startPayXLifeSelection: (state: PayXLifeSelectionState) => void
+  updatePayXLifeX: (x: number) => void
+  cancelPayXLifeSelection: () => void
+  confirmPayXLifeSelection: () => void
   startConvokeSelection: (state: ConvokeSelectionState) => void
   toggleConvokeCreature: (entityId: EntityId, name: string, payingColor: string | null) => void
   cancelConvokeSelection: () => void
@@ -96,6 +102,7 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
   modalModeSelectionState: null,
   xSelectionState: null,
   blightVariableSelectionState: null,
+  payXLifeSelectionState: null,
   convokeSelectionState: null,
   waterbendSelectionState: null,
   harmonizeSelectionState: null,
@@ -191,6 +198,41 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
     get().advancePipeline({
       type: 'blightVariable',
       blightAmount: selectedX,
+    })
+  },
+
+  // PayXLife selection actions
+  startPayXLifeSelection: (payXLifeSelectionState) => {
+    set({ payXLifeSelectionState })
+  },
+
+  updatePayXLifeX: (x) => {
+    set((state) => {
+      if (!state.payXLifeSelectionState) return state
+      const clamped = Math.max(0, Math.min(state.payXLifeSelectionState.maxX, x))
+      return {
+        payXLifeSelectionState: {
+          ...state.payXLifeSelectionState,
+          selectedX: clamped,
+        },
+      }
+    })
+  },
+
+  cancelPayXLifeSelection: () => {
+    const { pipelineState, cancelPipeline } = get()
+    if (pipelineState) { cancelPipeline(); return }
+    set({ payXLifeSelectionState: null })
+  },
+
+  confirmPayXLifeSelection: () => {
+    const { payXLifeSelectionState, pipelineState } = get()
+    if (!payXLifeSelectionState || !pipelineState) return
+    const { selectedX } = payXLifeSelectionState
+    set({ payXLifeSelectionState: null })
+    get().advancePipeline({
+      type: 'payXLife',
+      payXLifeAmount: selectedX,
     })
   },
 

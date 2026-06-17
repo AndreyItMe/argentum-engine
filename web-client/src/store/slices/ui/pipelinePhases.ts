@@ -13,6 +13,7 @@ import type {
   ModalModeSelectionState,
   XSelectionState,
   BlightVariableSelectionState,
+  PayXLifeSelectionState,
   ConvokeSelectionState,
   WaterbendSelectionState,
   HarmonizeSelectionState,
@@ -30,6 +31,7 @@ export interface PipelineStoreMethods {
   startModalModeSelection: (state: ModalModeSelectionState) => void
   startXSelection: (state: XSelectionState) => void
   startBlightVariableSelection: (state: BlightVariableSelectionState) => void
+  startPayXLifeSelection: (state: PayXLifeSelectionState) => void
   startConvokeSelection: (state: ConvokeSelectionState) => void
   startWaterbendSelection: (state: WaterbendSelectionState) => void
   startHarmonizeSelection: (state: HarmonizeSelectionState) => void
@@ -183,6 +185,8 @@ export function computePhases(actionInfo: LegalActionInfo, options?: ComputePhas
       }
     } else if (costType === 'BlightVariable') {
       phases.push({ type: 'blightVariable' })
+    } else if (costType === 'PayXLife') {
+      phases.push({ type: 'payXLife' })
     }
   }
 
@@ -349,6 +353,19 @@ export function mergeResult(
           additionalCostPayment: {
             ...action.additionalCostPayment,
             blightAmount: result.blightAmount,
+          },
+        }
+      }
+      return action
+    }
+
+    case 'payXLife': {
+      if (action.type === 'CastSpell') {
+        return {
+          ...action,
+          additionalCostPayment: {
+            ...action.additionalCostPayment,
+            payXLifeAmount: result.payXLifeAmount,
           },
         }
       }
@@ -840,6 +857,21 @@ export function enterPhase(
         actionInfo,
         cardName,
         maxX: costInfo.blightVariableMaxX ?? 0,
+        selectedX: 0,
+      })
+      break
+    }
+
+    case 'payXLife': {
+      const costInfo = actionInfo.additionalCostInfo
+      if (!costInfo) return
+      const cardName = actionInfo.description
+        .replace(/^Cast /, '')
+        .replace(/^Activate /, '')
+      store.startPayXLifeSelection({
+        actionInfo,
+        cardName,
+        maxX: costInfo.payXLifeMaxX ?? 0,
         selectedX: 0,
       })
       break

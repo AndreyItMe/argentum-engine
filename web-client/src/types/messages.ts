@@ -972,6 +972,8 @@ export interface AdditionalCostInfo {
   readonly blightAmount?: number
   /** For BlightVariable: cap on X (greatest toughness among creatures you control). */
   readonly blightVariableMaxX?: number
+  /** For PayXLife: cap on X (your current life total). */
+  readonly payXLifeMaxX?: number
   /**
    * Fixed total counters to remove across creatures you control for
    * `RemoveCountersFromYourCreatures` costs (e.g. Dawnhand Dissident's cast cost).

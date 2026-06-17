@@ -114,6 +114,7 @@ class StackResolver(
         chosenCreatureType: String? = null,
         exiledCardCount: Int = 0,
         additionalCostBlightAmount: Int = 0,
+        additionalCostPayXLifeAmount: Int? = null,
         wasKicked: Boolean = false,
         wasBlightPaid: Boolean = false,
         wasWarped: Boolean = false,
@@ -185,6 +186,7 @@ class StackResolver(
                 chosenCreatureType = chosenCreatureType,
                 exiledCardCount = exiledCardCount,
                 additionalCostBlightAmount = additionalCostBlightAmount,
+                additionalCostPayXLifeAmount = additionalCostPayXLifeAmount,
                 castFromZone = castFromZone,
                 wasWarped = wasWarped,
                 wasEvoked = wasEvoked,
@@ -1444,7 +1446,11 @@ class StackResolver(
                 // references — ContextTarget(n), EntityReference.Target(n), ContextPlayer(n) —
                 // resolve by ORIGINAL slot and don't shift onto a later still-valid target.
                 alignedTargets = alignedTargets,
-                xValue = spellComponent.xValue,
+                // A pay-X-life additional cost (AdditionalCost.PayXLife, e.g. Vicious Rivalry) feeds
+                // its declared X through the same X slot read by DynamicAmount.XValue and the
+                // ManaValue*X predicates. Such a card never also carries an {X} mana cost, so
+                // coalescing is unambiguous (CR 601.2b — the value is locked in as the spell is cast).
+                xValue = spellComponent.xValue ?: spellComponent.additionalCostPayXLifeAmount,
                 totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
                     spellComponent.manaSpentBlack + spellComponent.manaSpentRed +
                     spellComponent.manaSpentGreen + spellComponent.manaSpentColorless,

@@ -158,6 +158,7 @@ class LegalActionEnricher(
         validBlightTargets = validBlightTargets,
         blightAmount = blightAmount,
         blightVariableMaxX = blightVariableMaxX,
+        payXLifeMaxX = payXLifeMaxX,
         distributedCounterRemovalTotal = distributedCounterRemovalTotal,
         validCraftMaterials = validCraftMaterials,
         craftMinCount = craftMinCount

@@ -31,6 +31,7 @@ data class SpellOnStackComponent(
     val chosenCreatureType: String? = null,  // For spells that choose a creature type during casting (e.g., Aphetto Dredging)
     val exiledCardCount: Int = 0,  // For variable exile additional costs (e.g., Chill Haunting)
     val additionalCostBlightAmount: Int = 0,  // For variable blight additional costs (e.g., Soul Immolation)
+    val additionalCostPayXLifeAmount: Int? = null,  // For pay-X-life additional costs (e.g., Vicious Rivalry); non-null (incl. 0) marks the spell and is coalesced into xValue at resolution
     val castFromZone: Zone? = null,  // Zone the spell was cast from (e.g., HAND for normal casting)
     val wasWarped: Boolean = false,  // For warp - permanent is exiled at end step
     val wasEvoked: Boolean = false,  // For evoke - permanent is sacrificed on ETB

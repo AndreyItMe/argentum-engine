@@ -241,6 +241,13 @@ export interface BlightVariableSelectionState {
   selectedX: number
 }
 
+export interface PayXLifeSelectionState {
+  actionInfo: LegalActionInfo
+  cardName: string
+  maxX: number
+  selectedX: number
+}
+
 /**
  * X cost selection state when casting spells with X in their mana cost.
  */
@@ -727,6 +734,7 @@ export type PipelinePhase =
   | { type: 'manaSource' }
   | { type: 'costPayment' }
   | { type: 'blightVariable' }
+  | { type: 'payXLife' }
   | { type: 'manaColorChoice' }
   | { type: 'targeting' }
   | { type: 'damageDistribution' }
@@ -750,6 +758,7 @@ export type PhaseResult =
   | { type: 'manaSource'; selectedSources: EntityId[] }
   | { type: 'costPayment'; costType: string; selectedTargets: EntityId[] }
   | { type: 'blightVariable'; blightAmount: number }
+  | { type: 'payXLife'; payXLifeAmount: number }
   | { type: 'manaColorChoice'; color: string }
   | { type: 'targeting'; selectedTargets: EntityId[] }
   | { type: 'damageDistribution'; distribution: Record<EntityId, number> }
@@ -1056,6 +1065,11 @@ export type GameStore = {
   updateBlightVariableX: (x: number) => void
   cancelBlightVariableSelection: () => void
   confirmBlightVariableSelection: () => void
+  payXLifeSelectionState: PayXLifeSelectionState | null
+  startPayXLifeSelection: (state: PayXLifeSelectionState) => void
+  updatePayXLifeX: (x: number) => void
+  cancelPayXLifeSelection: () => void
+  confirmPayXLifeSelection: () => void
   startConvokeSelection: (state: ConvokeSelectionState) => void
   toggleConvokeCreature: (entityId: EntityId, name: string, payingColor: string | null) => void
   cancelConvokeSelection: () => void

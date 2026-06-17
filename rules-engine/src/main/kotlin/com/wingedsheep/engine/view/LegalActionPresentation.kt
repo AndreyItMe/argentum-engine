@@ -192,6 +192,8 @@ data class AdditionalCostInfo(
     val blightAmount: Int = 0,
     /** For BlightVariable: cap on X (greatest toughness among creatures you control). */
     val blightVariableMaxX: Int = 0,
+    /** For PayXLife: cap on X (your current life total). */
+    val payXLifeMaxX: Int = 0,
     /** Total counters to remove across creatures you control (RemoveCountersFromYourCreatures cost). */
     val distributedCounterRemovalTotal: Int = 0,
 

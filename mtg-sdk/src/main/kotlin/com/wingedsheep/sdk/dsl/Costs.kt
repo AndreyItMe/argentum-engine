@@ -357,6 +357,14 @@ object Costs {
         /** Blight X — put X -1/-1 counters on a creature you control (X declared at cast time, min [minCount]). */
         fun BlightVariable(minCount: Int = 0): AdditionalCost = AdditionalCost.BlightVariable(minCount)
 
+        /**
+         * Pay X life — the caster declares X at cast time and pays X life (X declared at cast time,
+         * min [minCount]). X is surfaced to the spell's effects via the resolution context's X value
+         * (read by `DynamicAmount.XValue` / `CardPredicate.ManaValueAtMostX`). The card must not also
+         * carry an `{X}` mana cost (they share the same X slot).
+         */
+        fun PayXLife(minCount: Int = 0): AdditionalCost = AdditionalCost.PayXLife(minCount)
+
         /** Blight [blightAmount] or pay [alternativeManaCost] instead. */
         fun BlightOrPay(blightAmount: Int, alternativeManaCost: String): AdditionalCost =
             AdditionalCost.BlightOrPay(blightAmount, alternativeManaCost)

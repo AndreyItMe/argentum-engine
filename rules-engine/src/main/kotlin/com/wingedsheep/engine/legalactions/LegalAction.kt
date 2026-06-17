@@ -285,6 +285,11 @@ data class AdditionalCostData(
      */
     val blightVariableMaxX: Int = 0,
     /**
+     * For [AdditionalCost.PayXLife]: the cap on X — the caster's current life total at
+     * cast-enumeration time. The client uses this to bound the X slider (0..payXLifeMaxX).
+     */
+    val payXLifeMaxX: Int = 0,
+    /**
      * For [AdditionalCost.RemoveCountersFromYourCreatures]: total counters to remove
      * across all creatures you control (any counter types qualify).
      */

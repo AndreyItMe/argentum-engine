@@ -136,6 +136,8 @@ class CastSpellEnumerator : ActionEnumerator {
             var blightVariableCost: AdditionalCost.BlightVariable? = null
             var blightVariableCreatures = emptyList<EntityId>()
             var blightVariableMaxX = 0
+            var payXLifeCost: AdditionalCost.PayXLife? = null
+            var payXLifeMaxX = 0
             var beholdOrPayCost: AdditionalCost.BeholdOrPay? = null
             var beholdOrPayTargets = emptyList<EntityId>()
             var canPayAdditionalCosts = true
@@ -236,6 +238,16 @@ class CastSpellEnumerator : ActionEnumerator {
                         blightVariableCost = cost
                         blightVariableCreatures = ownCreatures
                         blightVariableMaxX = maxToughness
+                    }
+                    is AdditionalCost.PayXLife -> {
+                        // Always payable when minCount = 0 (X = 0 is valid). Surface the cap (current
+                        // life total) so the client can bound the X slider (0..payXLifeMaxX).
+                        val currentLife = state.lifeTotal(playerId)
+                        if (currentLife < cost.minCount) {
+                            canPayAdditionalCosts = false
+                        }
+                        payXLifeCost = cost
+                        payXLifeMaxX = currentLife
                     }
                     is AdditionalCost.BeholdOrPay -> {
                         // Always payable: player can always choose the "pay mana" path
@@ -428,7 +440,8 @@ class CastSpellEnumerator : ActionEnumerator {
                 additionalCosts, sacrificeTargets, variableSacrificeTargets,
                 exileTargets, exileMinCount, discardTargets, discardCount,
                 beholdTargets, beholdCount,
-                blightVariableCost, blightVariableCreatures, blightVariableMaxX
+                blightVariableCost, blightVariableCreatures, blightVariableMaxX,
+                payXLifeCost, payXLifeMaxX
             )
 
             // Compute blight path info (separate legal action with lower mana cost + blight target selection)
@@ -1524,7 +1537,9 @@ class CastSpellEnumerator : ActionEnumerator {
         beholdCount: Int = 0,
         blightVariableCost: AdditionalCost.BlightVariable? = null,
         blightVariableCreatures: List<EntityId> = emptyList(),
-        blightVariableMaxX: Int = 0
+        blightVariableMaxX: Int = 0,
+        payXLifeCost: AdditionalCost.PayXLife? = null,
+        payXLifeMaxX: Int = 0
     ): AdditionalCostData? {
         if (blightVariableCost != null) {
             return AdditionalCostData(
@@ -1532,6 +1547,13 @@ class CastSpellEnumerator : ActionEnumerator {
                 costType = "BlightVariable",
                 validBlightTargets = blightVariableCreatures,
                 blightVariableMaxX = blightVariableMaxX
+            )
+        }
+        if (payXLifeCost != null) {
+            return AdditionalCostData(
+                description = payXLifeCost.description,
+                costType = "PayXLife",
+                payXLifeMaxX = payXLifeMaxX
             )
         }
         return if (variableSacrificeTargets.isNotEmpty()) {

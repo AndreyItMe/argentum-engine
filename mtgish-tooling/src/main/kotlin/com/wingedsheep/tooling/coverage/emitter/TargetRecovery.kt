@@ -1010,6 +1010,14 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // predicate this flat GroupFilter can't express. Silently dropping it would widen the destroy to a
     // one-sided board wipe, so decline rather than misrender.
     if ("DealtDamageToPlayerThisTurn" in blob) return null
+    // "...with mana value X or less" (ManaValueIs against the cast-time ValueX, e.g. Vicious Rivalry's
+    // "destroy all artifacts and creatures with mana value X or less"). `FilterPredicates.manaValueAtMost`
+    // below returns null for a non-integer (X) bound, so without this guard the X cap would be SILENTLY
+    // DROPPED — turning a "MV ≤ X" wipe into an unbounded board wipe. The SDK *can* express the cap
+    // (CardPredicate.ManaValueAtMostX / .manaValueAtMostX()), but on a card whose X comes from a
+    // pay-X-life additional cost — exactly the cast-time-X / extra-cost shape the module keeps at
+    // SCAFFOLD — so decline the whole group rather than emit a constraint-dropping mass effect.
+    if (filterNode.nodesTagged("ManaValueIs").any { findInteger(it["args"]) == null }) return null
     val types = targetTypes(filterNode)
     val subs = subtypes(filterNode)
     // Creature subtypes come from IsCreatureType (subtypes() only collects land/card subtypes).

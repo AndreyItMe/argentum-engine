@@ -54,6 +54,18 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("LookAtTheTopNumberCardsOfPlayersLibrary", "look pipeline on opponent library -> MoveCollection", composes = listOf("MoveCollection"))
 
     composed("ExilePermanent", UNIVERSAL, composes = listOf("MoveToZone"))
+    // "[A player] exiles a [filter] they control" — the exile flavor of an edict, where the affected
+    // player CHOOSES which of their permanents to exile (End of the Hunt: "target opponent exiles a
+    // creature or planeswalker they control with the greatest mana value among …"). Expressible as a
+    // Gather(that player's matching permanents) -> SelectFromCollection(chooser = TargetPlayer) ->
+    // MoveCollection -> exile pipeline; a greatest-mana-value restriction adds
+    // FilterCollection(GreatestManaValue). Capability-only — the emitter declines the PlayerAction +
+    // highest-mana-value selection cluster -> SCAFFOLD.
+    composed(
+        "ExileAPermanent",
+        "Gather(player's permanents) -> [FilterCollection(GreatestManaValue)] -> Select(chooser=TargetPlayer) -> MoveCollection -> exile",
+        composes = listOf("MoveCollection", "MoveToZone")
+    )
     // "Exile [a card]" — the generic exile action over any exilable card (e.g. a card in a graveyard:
     // Lazav, Familiar Stranger's "you may exile a card from a graveyard"). MoveToZone / Gather +
     // MoveCollection -> exile. Capability-only; the emitter declines the card-specific surrounding

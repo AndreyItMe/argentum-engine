@@ -155,6 +155,30 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
     }
 
     /**
+     * Pay X life (variable): the caster declares X at cast time and pays X life as an additional
+     * cost. X is exposed to the spell's effects via the resolution context's X value (the same slot
+     * read by `DynamicAmount.XValue` and `CardPredicate.ManaValueAtMostX` / `ManaValueEqualsX`), so a
+     * card like Vicious Rivalry ("pay X life; destroy all artifacts and creatures with mana value X
+     * or less") sources its single X from this one cost.
+     *
+     * X is bounded by the caster's current life total (you can never pay more life than you have).
+     * The cap is computed at cast-enumeration time; the only forced minimum is [minCount] (default 0
+     * — the caster may always declare X = 0).
+     *
+     * A card carrying this cost must NOT also have an `{X}` in its mana cost — both write the same X
+     * slot on the spell, so they would collide. The two are mutually exclusive per card.
+     *
+     * @property minCount Minimum X (default 0 — caster may always declare X = 0)
+     */
+    @SerialName("PayXLife")
+    @Serializable
+    data class PayXLife(
+        val minCount: Int = 0
+    ) : AdditionalCost {
+        override val description: String = "Pay X life"
+    }
+
+    /**
      * Blight N or pay additional mana: the caster must either put N -1/-1 counters on a creature
      * they control, or pay extra mana on top of the spell's base mana cost.
      * Used by Lorwyn Eclipsed cards (e.g., Wild Unraveling).
@@ -443,6 +467,12 @@ data class AdditionalCostPayment(
     val blightAmount: Int = 0,
 
     /**
+     * X chosen for [AdditionalCost.PayXLife] — the amount of life paid as the cost.
+     * Zero when no pay-X-life cost is in play, or when the player chose X = 0.
+     */
+    val payXLifeAmount: Int = 0,
+
+    /**
      * Distributed counter removals for costs like
      * [AdditionalCost.RemoveCountersFromYourCreatures] — each entry removes [count]
      * counters of [counterType] from [entityId]. The engine validates that the sum
@@ -462,6 +492,7 @@ data class AdditionalCostPayment(
                 counterRemovals.isEmpty() &&
                 blightTargets.isEmpty() &&
                 blightAmount == 0 &&
+                payXLifeAmount == 0 &&
                 distributedCounterRemovals.isEmpty()
 
     companion object {

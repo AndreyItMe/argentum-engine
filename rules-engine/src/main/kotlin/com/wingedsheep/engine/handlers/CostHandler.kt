@@ -892,6 +892,11 @@ class CostHandler(
                     }
                 }
             }
+            is AdditionalCost.PayXLife -> {
+                // X = 0 is always legal (default minCount = 0); a higher minCount requires
+                // enough life to pay it.
+                cost.minCount <= 0 || state.lifeTotal(controllerId) >= cost.minCount
+            }
             is AdditionalCost.BeholdOrPay -> {
                 // Always payable: player can always choose the "pay mana" path
                 true

@@ -1254,6 +1254,19 @@ class CastSpellHandler(
                         }
                     }
                 }
+                is AdditionalCost.PayXLife -> {
+                    val amount = action.additionalCostPayment?.payXLifeAmount ?: 0
+                    if (amount < additionalCost.minCount) {
+                        return "Pay X life: X must be at least ${additionalCost.minCount} (got $amount)"
+                    }
+                    if (amount < 0) {
+                        return "Pay X life: X cannot be negative"
+                    }
+                    val currentLife = state.lifeTotal(action.playerId)
+                    if (amount > currentLife) {
+                        return "Pay X life: X ($amount) cannot exceed your life total ($currentLife)"
+                    }
+                }
                 is AdditionalCost.BeholdOrPay -> {
                     // BeholdOrPay: player chose behold if beheldCards is non-empty,
                     // otherwise chose to pay extra mana (validated via mana payment)
@@ -1644,6 +1657,7 @@ class CastSpellHandler(
             val lifeToPay = when {
                 atom is CostAtom.PayLife -> atom.amount
                 additionalCost is AdditionalCost.PayLifePerTarget -> additionalCost.amountPerTarget * action.targets.size
+                additionalCost is AdditionalCost.PayXLife -> action.additionalCostPayment?.payXLifeAmount ?: 0
                 else -> continue
             }
             if (lifeToPay == 0) continue
@@ -2313,6 +2327,14 @@ class CastSpellHandler(
                 .toSet()
         }
 
+        // Pay-X-life additional cost (AdditionalCost.PayXLife): record the declared X (non-null,
+        // including 0) only when the spell actually carries this cost, so it's coalesced into the
+        // resolution X value. Other spells leave this null and keep xValue purely from {X}.
+        val payXLifeAmount: Int? =
+            if (castTimeScript?.additionalCosts?.any { it is AdditionalCost.PayXLife } == true) {
+                action.additionalCostPayment?.payXLifeAmount ?: 0
+            } else null
+
         // Cast the spell
         val castResult = stackResolver.castSpell(
             currentState,
@@ -2326,6 +2348,7 @@ class CastSpellHandler(
             targetRequirements = spellTargetRequirements,
             exiledCardCount = exiledCardCount,
             additionalCostBlightAmount = action.additionalCostPayment?.blightAmount ?: 0,
+            additionalCostPayXLifeAmount = payXLifeAmount,
             wasKicked = action.wasKicked,
             wasBlightPaid = (action.additionalCostPayment?.blightTargets?.isNotEmpty() == true),
             wasWarped = wasWarped,

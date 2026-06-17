@@ -7,6 +7,7 @@ import { RevealedCardsUI } from './components/decisions/RevealedCardsUI'
 import { XCostSelector } from './components/ui/XCostSelector'
 import { ModalModeSelector } from './components/ui/ModalModeSelector'
 import { BlightVariableSelector } from './components/ui/BlightVariableSelector'
+import { PayXLifeSelector } from './components/ui/PayXLifeSelector'
 import { ConvokeSelector } from './components/ui/ConvokeSelector'
 import { WaterbendSelector } from './components/ui/WaterbendSelector'
 import { HarmonizeSelector } from './components/ui/HarmonizeSelector'
@@ -339,6 +340,7 @@ export default function App() {
 
       {/* Blight X variable additional cost overlay (e.g., Soul Immolation) */}
       {showGame && <BlightVariableSelector />}
+      {showGame && <PayXLifeSelector />}
 
       {/* Choose-N modal (Spree / "choose one or more") mode-selection panel */}
       {showGame && <ModalModeSelector />}

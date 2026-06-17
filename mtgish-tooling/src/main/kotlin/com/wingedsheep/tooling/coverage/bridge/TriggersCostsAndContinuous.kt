@@ -115,6 +115,11 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // "Pay N life" as an activation cost -> Costs.PayLife(n). The emitter renders fixed-integer amounts
     // (abilityCostDsl); non-integer amounts ({X}, life-total halves, …) are declined -> SCAFFOLD.
     supported("PayLife", "cost: pay life")
+    // "As an additional cost to cast this spell, pay X life" (Vicious Rivalry) — a player-declared
+    // variable additional cost. The engine models it via Costs.additional.PayXLife(); the declared X
+    // flows to the spell's resolution X value. Capability-only: the emitter keeps it at SCAFFOLD because
+    // it sits in the cast-time-X / extra-cost area the module declines to render exactly.
+    supported("AdditionalCastingCostX", "cost: additional pay-X-life (Costs.additional.PayXLife())")
     // Waterbend {N} (Avatar: The Last Airbender, CR) — a generic-mana cost where each generic may be
     // paid by tapping an untapped artifact/creature you control. On activated abilities this maps to
     // `activatedAbility { cost = Costs.Mana("{N}"); hasWaterbend = true }`. The emitter renders the
