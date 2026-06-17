@@ -182,4 +182,9 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // of any type that artifact token produced." A triggered mana ability; renders to the
     // AdditionalManaOnSourceTap mirror static (color = null), the same shape as Lavaleaper's land mirror.
     supported("WhenAPlayerTapsAPermanentForMana", "trigger: tap a permanent for mana → AdditionalManaOnSourceTap mirror static")
+
+    // Torpor Orb / Hushwing Gryff / Tocatli Honor Guard — "Creatures entering don't cause abilities to
+    // trigger." A continuous static that suppresses CR 603.6 enters-the-battlefield triggers caused by a
+    // matching permanent entering. Renders to the SuppressEntersTriggers static ability.
+    supported("PermanentsEnteringTheBattlefieldDontCauseAbilitiesToTrigger", "rule: matching permanents entering don't cause abilities to trigger (SuppressEntersTriggers)")
 }

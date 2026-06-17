@@ -437,6 +437,49 @@ data class PreventActivatedAbilities(
 }
 
 /**
+ * Permanents matching [filter] entering the battlefield don't cause abilities to trigger
+ * (CR 603.6 enters-the-battlefield triggers are suppressed).
+ *
+ * Models the Torpor Orb family — Torpor Orb / Hushwing Gryff ("Creatures entering don't cause
+ * abilities to trigger.") with `filter = GameObjectFilter.Creature`, and Tocatli Honor Guard
+ * ("Creatures entering the battlefield under your control don't cause abilities to trigger") with
+ * `filter = GameObjectFilter.Creature.youControl()`.
+ *
+ * This suppresses **every** triggered ability that the matching permanent's entry would cause —
+ * the entering permanent's own enters-the-battlefield triggers *and* any other permanent's
+ * "whenever a [...] enters" trigger whose triggering object is that permanent (per Torpor Orb's
+ * Gatherer rulings). The gate is whether the *entering object* matches [filter] in projected state
+ * (continuous effects apply — e.g. with March of the Machines an artifact enters as a creature and
+ * is suppressed), not what the watching trigger's text names.
+ *
+ * Deliberately **not** affected, matching the rulings:
+ *  - Replacement effects (enters with counters, enters tapped) — those are not triggered abilities
+ *    and run through the replacement layer, which this never touches.
+ *  - "As [this] enters the battlefield" choices (`EntersWithChoice`) — not triggered abilities.
+ *  - Triggers caused by anything other than a matching permanent entering (leaves-the-battlefield
+ *    triggers, attack triggers, etc.).
+ *
+ * The engine evaluates this as a final filtering pass over the batch's pending triggers, so it
+ * covers the per-permanent ETB path, the "one or more permanents entered" batch path, and any
+ * duplicated (Panharmonicon-style) copies uniformly. Multiple copies are redundant.
+ *
+ * @property filter Which entering permanents have their entry suppressed (matched via projected
+ *   state). Defaults to [GameObjectFilter.Creature].
+ */
+@SerialName("SuppressEntersTriggers")
+@Serializable
+data class SuppressEntersTriggers(
+    val filter: GameObjectFilter = GameObjectFilter.Creature
+) : StaticAbility {
+    override val description: String =
+        "${filter.description} entering the battlefield don't cause abilities to trigger"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
  * Prevents mana pools from emptying as steps and phases end.
  * Used for Upwelling: "Players don't lose unspent mana as steps and phases end."
  *

@@ -2384,6 +2384,14 @@ staticAbility {
 - `PreventActivatedAbilities(filter)` — activated abilities (mana + non-mana) of matching
   permanents can't be activated; loyalty abilities and animation costs that haven't yet
   produced a creature are unaffected. (Cursed Totem → `GameObjectFilter.Creature`)
+- `SuppressEntersTriggers(filter = GameObjectFilter.Creature)` — permanents matching `filter`
+  entering the battlefield don't cause abilities to trigger (CR 603.6 enters-the-battlefield
+  triggers). Suppresses both the entering permanent's *own* ETB triggers and any other permanent's
+  "whenever a [...] enters" trigger whose triggering object is that permanent — the gate is whether
+  the *entering object* matches `filter` in projected state (continuous effects apply), not what the
+  watching trigger names. Replacement effects (enters with counters/tapped) and `EntersWithChoice`
+  "as it enters" choices are unaffected (they aren't triggered abilities). Torpor Orb / Hushwing Gryff
+  → `SuppressEntersTriggers()`; Tocatli Honor Guard → `SuppressEntersTriggers(GameObjectFilter.Creature.youControl())`.
 - `PreventManaPoolEmptying` — mana pools don't empty between steps/phases. (Upwelling)
 - `NoMaximumHandSize` — controller has no hand-size limit *while this permanent is on the
   battlefield*. (Thought Vessel, Reliquary Tower) For a one-shot resolution effect that confers a
