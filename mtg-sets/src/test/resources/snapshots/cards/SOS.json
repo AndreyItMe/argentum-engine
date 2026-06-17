@@ -502,6 +502,100 @@
     ]
 }
 
+// Borrowed Knowledge
+{
+    "name": "Borrowed Knowledge",
+    "manaCost": "{2}{R}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Choose one —\n• Discard your hand, then draw cards equal to the number of cards in target opponent's hand.\n• Discard your hand, then draw cards equal to the number of cards discarded this way.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "discardedHand"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discardedHand",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            },
+                            {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "Count",
+                                    "player": "TargetOpponent",
+                                    "zone": "Hand"
+                                }
+                            }
+                        ]
+                    },
+                    "targetRequirements": [
+                        "TargetOpponent"
+                    ],
+                    "description": "Discard your hand, then draw cards equal to the number of cards in target opponent's hand"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "discardedHand"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discardedHand",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            },
+                            {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "VariableReference",
+                                    "variableName": "discardedHand_count"
+                                }
+                            }
+                        ]
+                    },
+                    "description": "Discard your hand, then draw cards equal to the number of cards discarded this way"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "178",
+        "rarity": "UNCOMMON",
+        "artist": "Inkognit",
+        "flavorText": "\"Professor, we study history and my neighbor wrote his answer first. I was learning from the past.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/3/a3226e14-554d-47c9-b8b6-dfeb53cc41ba.jpg?1775938224"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
+    ]
+}
+
 // Brush Off
 {
     "name": "Brush Off",
@@ -841,6 +935,101 @@
                 ]
             }
         }
+    ]
+}
+
+// Colorstorm Stallion
+{
+    "name": "Colorstorm Stallion",
+    "manaCost": "{1}{U}{R}",
+    "typeLine": "Creature — Elemental Horse",
+    "oracleText": "Ward {1}, haste\nOpus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn. If five or more mana was spent to cast that spell, create a token that's a copy of this creature.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "HASTE",
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Mana",
+                "manaCost": "{1}"
+            }
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "ContextProperty",
+                                        "key": "MANA_SPENT_ON_TRIGGERING_SPELL"
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 5
+                                    }
+                                }
+                            },
+                            "then": "CreateTokenCopyOfSource"
+                        }
+                    ]
+                },
+                "descriptionOverride": "Opus — Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn. If five or more mana was spent to cast that spell, create a token that's a copy of this creature."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "180",
+        "rarity": "RARE",
+        "artist": "Lorenzo Lanfranconi",
+        "flavorText": "Prismari students are never afraid to let their imaginations run wild.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/5/f5b54d46-2caf-4d1b-8be1-dbd9e9dce058.jpg?1775938240"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
     ]
 }
 
@@ -1869,6 +2058,66 @@
     "colorIdentityOverride": [
         "BLUE",
         "GREEN"
+    ]
+}
+
+// Encouraging Aviator
+{
+    "name": "Encouraging Aviator",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Bird Wizard",
+    "oracleText": "Flying\nWhenever this creature attacks, it becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": "BecomePrepared"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "46",
+        "rarity": "UNCOMMON",
+        "artist": "Oriana Menendez",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/2/72654b84-9902-41db-92ab-a3499c31221c.jpg?1778165006"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Jump",
+            "manaCost": "{U}",
+            "typeLine": "Instant",
+            "oracleText": "Target creature gains flying until end of turn.",
+            "script": {
+                "spellEffect": {
+                    "type": "GrantKeyword",
+                    "keyword": "FLYING",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
+                    }
+                ]
+            }
+        }
     ]
 }
 
@@ -5021,6 +5270,71 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Molten Note
+{
+    "name": "Molten Note",
+    "manaCost": "{X}{R}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Molten Note deals damage to target creature equal to the amount of mana spent to cast this spell. Untap all creatures you control.\nFlashback {6}{R}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{6}{R}{W}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": "TotalManaSpent",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "TapUntap",
+                        "target": "Self",
+                        "tap": false
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "204",
+        "rarity": "UNCOMMON",
+        "artist": "David Álvarez",
+        "flavorText": "It's characteristic of the Blood Age for instruments of music to also be tools of war.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/0/506f69aa-7dc4-4dd7-990a-7371fc1762c0.jpg?1775938416"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
     ]
 }
 
