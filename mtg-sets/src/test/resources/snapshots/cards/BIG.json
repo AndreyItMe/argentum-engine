@@ -1,3 +1,315 @@
+// Legion Extruder
+{
+    "name": "Legion Extruder",
+    "manaCost": "{1}{R}",
+    "typeLine": "Artifact",
+    "oracleText": "When this artifact enters, it deals 2 damage to any target.\n{2}, {T}, Sacrifice another artifact: Create a 3/3 colorless Golem artifact creature token.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "AnyTarget",
+                    "id": "target"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap",
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "artifact",
+                                "excludeSelf": true
+                            }
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 3,
+                    "colors": [],
+                    "creatureTypes": [
+                        "Golem"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/0/406e2960-f560-48bb-b4a6-4bd35889a8f8.jpg?1712318018",
+                    "artifactToken": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "12",
+        "rarity": "MYTHIC",
+        "artist": "Anton Solovianchyk",
+        "flavorText": "When the vault door opened, ancient war machines rumbled to life.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/a/5a077de0-1893-40d0-a499-ee2e6e2258f1.jpg?1739804188"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Lotus Ring
+{
+    "name": "Lotus Ring",
+    "manaCost": "{3}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Indestructible\nEquipped creature gets +3/+3 and has vigilance and \"{T}, Sacrifice this creature: Add three mana of any one color.\"\nEquip {3}",
+    "keywords": [
+        "INDESTRUCTIBLE"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 3,
+                "toughnessBonus": 3
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "VIGILANCE"
+            },
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            "CostTap",
+                            "CostSacrificeSelf"
+                        ]
+                    },
+                    "effect": {
+                        "type": "AddManaOfChoice",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 3
+                        }
+                    },
+                    "isManaAbility": true,
+                    "descriptionOverride": "{T}, Sacrifice this creature: Add three mana of any one color."
+                }
+            }
+        ]
+    },
+    "equipCost": "{3}",
+    "metadata": {
+        "collectorNumber": "24",
+        "rarity": "MYTHIC",
+        "artist": "Alayna Danner",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/2/02267717-66e0-41f7-8009-75586a4aa4be.jpg?1739804230"
+    },
+    "colorIdentityOverride": []
+}
+
+// Pest Control
+{
+    "name": "Pest Control",
+    "manaCost": "{W}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy all nonland permanents with mana value 1 or less.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+    "keywordAbilities": [
+        {
+            "type": "Cycling",
+            "cost": "{2}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "BattlefieldMatching",
+                        "filter": "nonland permanent mv<=1"
+                    },
+                    "storeAs": "destroyAll_gathered"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "destroyAll_gathered",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    },
+                    "moveType": "Destroy"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "22",
+        "rarity": "MYTHIC",
+        "artist": "Jonas De Ro",
+        "flavorText": "\"How dare these varmints befoul the shining streets of Prosperity?\"\n—Baron Bertram Graywater",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/4/a4a01b92-dafb-4ea6-8eff-29f881f6be24.jpg?1739804223"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLACK"
+    ]
+}
+
+// Sandstorm Salvager
+{
+    "name": "Sandstorm Salvager",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Human Artificer",
+    "oracleText": "When this creature enters, create a 3/3 colorless Golem artifact creature token.\n{2}, {T}: Put a +1/+1 counter on each creature token you control. They gain trample until end of turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 3,
+                    "colors": [],
+                    "creatureTypes": [
+                        "Golem"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/0/406e2960-f560-48bb-b4a6-4bd35889a8f8.jpg?1712318018",
+                    "artifactToken": true
+                },
+                "descriptionOverride": "When this creature enters, create a 3/3 colorless Golem artifact creature token."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature token ctrl:you"
+                                }
+                            },
+                            "body": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        },
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature token ctrl:you"
+                                }
+                            },
+                            "body": {
+                                "type": "GrantKeyword",
+                                "keyword": "TRAMPLE",
+                                "target": "Self"
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "{2}, {T}: Put a +1/+1 counter on each creature token you control. They gain trample until end of turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "19",
+        "rarity": "MYTHIC",
+        "artist": "Francis Tneh",
+        "flavorText": "Mora didn't want friends, but she didn't mind having someone to watch her back.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/3/13b0f27c-a359-4702-833a-82fec161eeec.jpg?1739804214"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Vaultborn Tyrant
 {
     "name": "Vaultborn Tyrant",
