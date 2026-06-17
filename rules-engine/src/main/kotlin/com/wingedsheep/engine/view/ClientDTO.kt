@@ -258,6 +258,11 @@ data class ClientCard(
      * prepare spell sits castable in its controller's exile until cast. Battlefield only. */
     val isPrepared: Boolean = false,
 
+    /** Whether this permanent was cast for its warp cost (CR 702.185, Edge of Eternities): it will be
+     * exiled at the beginning of the next end step, after which it can be recast from exile. Drives the
+     * cosmic "warped" cue on the battlefield. Battlefield only. */
+    val isWarped: Boolean = false,
+
     /** Morph cost for face-down creatures (only visible to controller) */
     val morphCost: String? = null,
 
