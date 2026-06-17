@@ -1,5 +1,7 @@
 package com.wingedsheep.engine.event
 import com.wingedsheep.engine.state.components.battlefield.chosenCreatureType
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
+import com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString
 
 import com.wingedsheep.engine.core.BecomesTargetEvent
 import com.wingedsheep.engine.core.AbilityActivatedEvent
@@ -1364,6 +1366,29 @@ class TriggerMatcher(
                 matchesStatePredicateForTrigger(predicate, state, event.entityId)
             }
         }
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasCounter -> {
+            // The dying / leaving entity is no longer on the battlefield, so its live counters are
+            // gone; gate against the counters captured on the event (LKI). For non-leave triggers
+            // (e.g. ETB, to=BATTLEFIELD) the entity is live, so read its current counters.
+            if (event.fromZone == Zone.BATTLEFIELD) {
+                event.lastKnownCounters.any { (type, count) ->
+                    count > 0 && counterTypesMatch(predicate.counterType, type)
+                }
+            } else {
+                val counters = state.getEntity(event.entityId)?.get<CountersComponent>()
+                counters?.counters?.entries?.any { (type, count) ->
+                    count > 0 && counterTypesMatch(predicate.counterType, counterTypeToString(type))
+                } ?: false
+            }
+        }
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasAnyCounter -> {
+            if (event.fromZone == Zone.BATTLEFIELD) {
+                event.lastKnownTotalCounterCount > 0
+            } else {
+                val counters = state.getEntity(event.entityId)?.get<CountersComponent>()
+                counters?.counters?.values?.any { it > 0 } ?: false
+            }
+        }
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Or ->
             predicate.predicates.any { matchesStatePredicateForZoneChangeTrigger(it, state, event) }
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.And ->
@@ -1408,7 +1433,6 @@ class TriggerMatcher(
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttackedThisTurn,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceUp,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasMorphAbility,
-        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasAnyCounter,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasGreatestPower,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasLeastPowerAmongAllCreatures,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsEquipped,
@@ -1417,8 +1441,13 @@ class TriggerMatcher(
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.CrewedOrSaddledSourceThisTurn,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsWarpExiled,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasCastForWarp,
-        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasCounter,
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedToCardType -> true
+        // Counter predicates require last-known-info to evaluate a creature that has already left
+        // the battlefield; the zone-change path ([matchesStatePredicateForZoneChangeTrigger])
+        // handles them against the event's captured counters. This entity-only fallback has no LKI,
+        // so it fails closed rather than fail-open (which would create tokens for counter-less deaths).
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasCounter,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.HasAnyCounter -> false
     }
 
     /**
