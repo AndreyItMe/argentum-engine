@@ -383,6 +383,17 @@ object Costs {
             storeAs: String = "beheld"
         ): AdditionalCost = AdditionalCost.BeholdOrPay(filter, alternativeManaCost, storeAs)
 
+        /**
+         * Exile [exileCount] cards matching [filter] from your graveyard, or pay
+         * [alternativeManaCost] instead (Soaring Stoneglider).
+         */
+        fun ExileFromGraveyardOrPay(
+            exileCount: Int,
+            alternativeManaCost: String,
+            filter: GameObjectFilter = GameObjectFilter.Any,
+        ): AdditionalCost =
+            AdditionalCost.ExileFromGraveyardOrPay(exileCount, alternativeManaCost, filter)
+
         /** "Behold a [filter] and exile it" — [Behold] + [ExileFromStorage] composed. */
         fun BeholdAndExile(
             filter: GameObjectFilter,

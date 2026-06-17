@@ -6,6 +6,7 @@ import com.wingedsheep.engine.state.components.battlefield.PreparedSpellCopyComp
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.ScenarioTestBase
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
@@ -280,6 +281,57 @@ class SosPrepareCardsScenarioTest : ScenarioTestBase() {
                 }
                 withClue("The prepare-spell copy should be gone from exile") {
                     game.findExileCopy(1, "Joined Researchers") shouldBe null
+                }
+            }
+        }
+
+        context("Quill-Blade Laureate — Twofold Intent (enters prepared)") {
+            test("enters prepared and the copy gives a creature +1/+0 and double strike, then unprepares") {
+                var builder = scenario()
+                    .withPlayers("Player", "Opponent")
+                    .withCardInHand(1, "Quill-Blade Laureate")
+                    .withCardOnBattlefield(1, "Grizzly Bears", summoningSickness = false)
+                    .withLandsOnBattlefield(1, "Plains", 4)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                repeat(5) { builder = builder.withCardInLibrary(1, "Forest") }
+                repeat(5) { builder = builder.withCardInLibrary(2, "Forest") }
+                val game = builder.build()
+
+                game.castSpell(1, "Quill-Blade Laureate")
+                game.resolveStack()
+
+                val laureate = game.findPermanent("Quill-Blade Laureate")!!
+                withClue("Quill-Blade Laureate should be prepared on ETB") {
+                    game.state.getEntity(laureate)?.get<PreparedComponent>() shouldNotBe null
+                }
+
+                val bear = game.findPermanent("Grizzly Bears")!!
+                val powerBefore = game.state.projectedState.getPower(bear)!!
+
+                val copyId = game.findExileCopy(1, "Quill-Blade Laureate")!!
+                // Twofold Intent is a sorcery — we are in our own precombat main with an empty stack.
+                game.execute(
+                    CastSpell(
+                        game.player1Id,
+                        copyId,
+                        targets = listOf(ChosenTarget.Permanent(bear)),
+                        faceIndex = 0,
+                    )
+                )
+                game.resolveStack()
+
+                withClue("Target creature gets +1/+0") {
+                    game.state.projectedState.getPower(bear) shouldBe powerBefore + 1
+                }
+                withClue("Target creature gains double strike") {
+                    game.state.projectedState.hasKeyword(bear, Keyword.DOUBLE_STRIKE) shouldBe true
+                }
+                withClue("Quill-Blade Laureate is no longer prepared after casting the copy") {
+                    game.state.getEntity(laureate)?.get<PreparedComponent>() shouldBe null
+                }
+                withClue("The prepare-spell copy should be gone from exile") {
+                    game.findExileCopy(1, "Quill-Blade Laureate") shouldBe null
                 }
             }
         }

@@ -239,6 +239,16 @@ definitions construct these through the facade, e.g. `Costs.additional.Sacrifice
 - `Costs.additional.PayLifePerTarget(amountPerTarget)` — "this spell costs N life more to cast for
   each target." Pair with an unbounded `TargetCreature(unlimited = true)` etc.; the engine
   auto-pays `amountPerTarget × action.targets.size` at cast resolution (Phyrexian Purge).
+- `Costs.additional.ExileFromGraveyardOrPay(exileCount, alternativeManaCost, filter = Filters.Any)`
+  — "as an additional cost to cast this spell, exile N cards from your graveyard or pay {mana}"
+  (Soaring Stoneglider: "exile two cards from your graveyard or pay {1}{W}"). The sibling of the
+  `BlightOrPay` / `BeholdOrPay` "do X or pay mana" shapes. The enumerator offers up to two cast
+  paths: the **exile path** (base cost + a graveyard-card selection of exactly `exileCount` cards
+  matching `filter`, surfaced as a `costType = "ExileFromGraveyard"` cost — the same client picker
+  used by a mandatory graveyard-exile cost) and the **pay path** (base cost + `alternativeManaCost`
+  folded in). The chosen path is recovered at payment time from whether the cast action's
+  `additionalCostPayment.exiledCards` is non-empty; the exile path is only offered when the
+  graveyard holds at least `exileCount` matching cards.
 
 **`Costs.pay.*`** (wraps `PayCost`) — payable costs used by [`PayOrSufferEffect`](#15-replacement-effects) ("do X
 unless you Y") and by `morphCost` (non-mana face-up cost). Distinct from `AbilityCost` / `Costs.*`

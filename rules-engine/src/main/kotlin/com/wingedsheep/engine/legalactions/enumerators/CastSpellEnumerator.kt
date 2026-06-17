@@ -140,6 +140,8 @@ class CastSpellEnumerator : ActionEnumerator {
             var payXLifeMaxX = 0
             var beholdOrPayCost: AdditionalCost.BeholdOrPay? = null
             var beholdOrPayTargets = emptyList<EntityId>()
+            var exileOrPayCost: AdditionalCost.ExileFromGraveyardOrPay? = null
+            var exileOrPayTargets = emptyList<EntityId>()
             var canPayAdditionalCosts = true
             val flattenedCosts = additionalCosts.flatMap {
                 if (it is AdditionalCost.Composite) it.steps else listOf(it)
@@ -264,6 +266,14 @@ class CastSpellEnumerator : ActionEnumerator {
                             .filter { context.predicateEvaluator.matches(state, state.projectedState, it, cost.filter, predicateContext) }
                         beholdOrPayTargets = battlefieldMatches + handMatches
                     }
+                    is AdditionalCost.ExileFromGraveyardOrPay -> {
+                        // Always payable: player can always choose the "pay mana" path.
+                        // Surface the graveyard cards eligible for the exile path.
+                        exileOrPayCost = cost
+                        exileOrPayTargets = context.costUtils.findExileTargets(
+                            state, playerId, cost.filter, Zone.GRAVEYARD
+                        )
+                    }
                     is AdditionalCost.ChooseEntity -> {
                         // Search each (zone, filter) pair in `cost.zoneFilters`. Battlefield
                         // uses projected state (continuous effects matter); hidden / card
@@ -319,6 +329,12 @@ class CastSpellEnumerator : ActionEnumerator {
             val beholdBaseCost = effectiveCost
             if (beholdOrPayCost != null) {
                 effectiveCost = effectiveCost + ManaCost.parse(beholdOrPayCost.alternativeManaCost)
+            }
+
+            // Save base cost for exile-from-graveyard path, then add extra mana for the "pay" path
+            val exileOrPayBaseCost = effectiveCost
+            if (exileOrPayCost != null) {
+                effectiveCost = effectiveCost + ManaCost.parse(exileOrPayCost.alternativeManaCost)
             }
 
             // Check mana affordability (including Convoke/Delve if available).
@@ -408,11 +424,17 @@ class CastSpellEnumerator : ActionEnumerator {
                 context.manaSolver.canPay(state, playerId, beholdBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
             } else false
 
+            // Check exile-from-graveyard path affordability (base cost without the extra mana, but
+            // needs enough matching cards in the graveyard to exile).
+            val canAffordExileOrPayPath = if (exileOrPayCost != null && exileOrPayTargets.size >= exileOrPayCost.exileCount) {
+                context.manaSolver.canPay(state, playerId, exileOrPayBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
+            } else false
+
             // A `MayCastWithoutPayingManaCost` battlefield permission (e.g. Weftwalking) makes the
             // spell affordable for {0} when its gates are open. Emitted by its own branch below;
             // don't continue out before reaching it.
             val canAffordFreeCast = context.freeCastPermissionFor(cardId)
-            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath && !canAffordFreeCast) {
+            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath && !canAffordExileOrPayPath && !canAffordFreeCast) {
                 // The primary face can't be paid for by any path. Normally we skip it entirely.
                 // But if this is an Adventure/Omen/modal-DFC card whose *secondary* face is
                 // affordable, surface a grayed-out placeholder for the primary face so the
@@ -474,6 +496,24 @@ class CastSpellEnumerator : ActionEnumerator {
                     beholdCount = 1
                 )
                 Triple(beholdManaCostString, beholdAutoTapPreview, beholdCostInfo)
+            } else null
+
+            // Compute exile-from-graveyard path info (separate legal action with lower mana cost +
+            // exile card selection). The player exiles exactly `exileCount` matching graveyard cards.
+            val exileOrPayPathInfo = if (canAffordExileOrPayPath && exileOrPayCost != null) {
+                val exileManaCostString = exileOrPayBaseCost.toString()
+                val exileAutoTapPreview = if (context.skipAutoTapPreview) null else {
+                    context.manaSolver.solve(state, playerId, exileOrPayBaseCost, precomputedSources = cachedSources)
+                        ?.sources?.map { it.entityId }
+                }
+                val exileCostInfo = AdditionalCostData(
+                    description = "Exile ${exileOrPayCost.exileCount} card(s) from your graveyard",
+                    costType = "ExileFromGraveyard",
+                    validExileTargets = exileOrPayTargets,
+                    exileMinCount = exileOrPayCost.exileCount,
+                    exileMaxCount = exileOrPayCost.exileCount,
+                )
+                Triple(exileManaCostString, exileAutoTapPreview, exileCostInfo)
             } else null
 
             // Calculate X cost info if the spell has X in its cost
@@ -922,6 +962,19 @@ class CastSpellEnumerator : ActionEnumerator {
                                 autoTapPreview = beholdPathInfo.second
                             ))
                         }
+                        if (exileOrPayPathInfo != null) {
+                            result.add(LegalAction(
+                                actionType = "CastSpell",
+                                description = "Cast ${cardComponent.name} (Exile from graveyard)",
+                                action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget)),
+                                additionalCostInfo = exileOrPayPathInfo.third,
+                                manaCostString = exileOrPayPathInfo.first,
+                                requiresDamageDistribution = requiresDamageDistribution,
+                                totalDamageToDistribute = totalDamageToDistribute,
+                                minDamagePerTarget = minDamagePerTarget,
+                                autoTapPreview = exileOrPayPathInfo.second
+                            ))
+                        }
                     } else {
                         if (canAfford) {
                             result.add(LegalAction(
@@ -1088,6 +1141,27 @@ class CastSpellEnumerator : ActionEnumerator {
                                 autoTapPreview = beholdPathInfo.second
                             ))
                         }
+                        if (exileOrPayPathInfo != null) {
+                            result.add(LegalAction(
+                                actionType = "CastSpell",
+                                description = "Cast ${cardComponent.name} (Exile from graveyard)",
+                                action = CastSpell(playerId, cardId),
+                                validTargets = firstReqInfo.validTargets,
+                                requiresTargets = true,
+                                targetCount = firstReq.count,
+                                minTargets = firstReq.effectiveMinCount,
+                                targetDescription = firstReq.description,
+                                targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                                xConstrainsTargetManaValue = firstReqInfo.xConstrainsManaValue,
+                                xConstrainsTargetCount = firstReqInfo.xConstrainsCount,
+                                additionalCostInfo = exileOrPayPathInfo.third,
+                                manaCostString = exileOrPayPathInfo.first,
+                                requiresDamageDistribution = requiresDamageDistribution,
+                                totalDamageToDistribute = totalDamageToDistribute,
+                                minDamagePerTarget = minDamagePerTarget,
+                                autoTapPreview = exileOrPayPathInfo.second
+                            ))
+                        }
                     }
                 }
             } else {
@@ -1173,6 +1247,16 @@ class CastSpellEnumerator : ActionEnumerator {
                         additionalCostInfo = beholdPathInfo.third,
                         manaCostString = beholdPathInfo.first,
                         autoTapPreview = beholdPathInfo.second
+                    ))
+                }
+                if (exileOrPayPathInfo != null) {
+                    result.add(LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${cardComponent.name} (Exile from graveyard)",
+                        action = CastSpell(playerId, cardId),
+                        additionalCostInfo = exileOrPayPathInfo.third,
+                        manaCostString = exileOrPayPathInfo.first,
+                        autoTapPreview = exileOrPayPathInfo.second
                     ))
                 }
             }
