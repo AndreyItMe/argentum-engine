@@ -2218,6 +2218,11 @@ staticAbility {
   among the permanents the source's controller controls, recomputed at projection (Layer 6, after
   Layer 5 colors) so it tracks the board in real time. Colorless permanents add no color. (Pledge of
   Loyalty)
+- `GrantProtectionFromCardType(cardType, filter = attachedCreature())` — "[filter] have protection from
+  [card type]s" (e.g. *protection from instants*, *protection from sorceries*). Projects the keyword
+  `PROTECTION_FROM_CARDTYPE_<TYPE>`; the engine enforces the *targeting* leg (a spell/permanent of that
+  card type can't target the creature), which is the only DEBT leg that matters for instants/sorceries.
+  Pair two of these for the two-type wording. (Sword of Wealth and Power)
 - `GrantHexproofFromMonocoloredToGroup(filter = attachedCreature())` — "[filter] have hexproof from
   monocolored" — adds the projected keyword `HEXPROOF_FROM_MONOCOLORED`, which blocks targeting by
   monocolored (exactly one color, CR 105.2) spells and abilities opponents control. Colorless and

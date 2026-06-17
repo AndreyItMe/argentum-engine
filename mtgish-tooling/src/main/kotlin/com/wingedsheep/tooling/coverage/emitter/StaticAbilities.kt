@@ -412,8 +412,18 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
                 // "Enchanted creature has protection from <color>": the Ward cycle uses a
                 // `ProtectionAndDoesntRemovePermanents` rule, the Crowns a plain `Protection` rule.
                 if (granted?.strField("_Rule") in setOf("Protection", "ProtectionAndDoesntRemovePermanents")) {
-                    val colors = protectionGrantColors(granted!!) ?: run { reasons.add("PermanentLayerEffect"); return null }
-                    colors.map { call("GrantProtection", arg("Color.$it")) }
+                    // "Protection from <color>" -> GrantProtection(Color.X); "protection from
+                    // <card type>(s)" (e.g. instants and sorceries — Sword of Wealth and Power) ->
+                    // one GrantProtectionFromCardType(CardType.X) per type. A protection scope we
+                    // can't render exactly (e.g. from a subtype, or "from everything") scaffolds.
+                    val colors = protectionGrantColors(granted!!)
+                    if (colors != null) {
+                        colors.map { call("GrantProtection", arg("Color.$it")) }
+                    } else {
+                        val cardTypes = protectionGrantCardTypes(granted)
+                            ?: run { reasons.add("PermanentLayerEffect"); return null }
+                        cardTypes.map { call("GrantProtectionFromCardType", arg("CardType.$it")) }
+                    }
                 } else if (granted?.strField("_Rule") == "Ward") {
                     // "Equipped/enchanted creature has ward {N}" (Lavaspur Boots) — render GrantWard carrying
                     // the cost, never a bare GrantKeyword(WARD) which would drop it. Only a mana ward cost
@@ -462,6 +472,23 @@ internal fun protectionGrantColors(granted: JsonObject): List<String>? {
     if (!jsonContains(granted, "_Protectable", "FromColor")) return null
     val colors = Regex(""""_Color":\s*"(\w+)"""").findAll(compact(granted)).map { it.groupValues[1].uppercase() }.toList()
     return colors.ifEmpty { null }
+}
+
+/** The card types of a host "protection from <card type>(s)" grant (`_Protectable` = `FromTypes`,
+ *  e.g. "protection from instants and from sorceries" — Sword of Wealth and Power), uppercased for
+ *  `CardType.X`; null when the scope isn't a card-type protection, which scaffolds. Only the card
+ *  types the SDK `CardType` enum names are recovered (a `_Cards`/`IsCardtype` whose value isn't one
+ *  of those returns null so the card scaffolds rather than emitting an invalid enum). */
+internal fun protectionGrantCardTypes(granted: JsonObject): List<String>? {
+    if (!jsonContains(granted, "_Protectable", "FromTypes")) return null
+    val known = setOf(
+        "ARTIFACT", "BATTLE", "CREATURE", "ENCHANTMENT", "INSTANT",
+        "LAND", "PLANESWALKER", "SORCERY", "KINDRED", "TRIBAL"
+    )
+    val types = Regex(""""_Cards"\s*:\s*"IsCardtype"\s*,\s*"args"\s*:\s*"(\w+)"""")
+        .findAll(compact(granted)).map { it.groupValues[1].uppercase() }.toList()
+    if (types.isEmpty() || types.any { it !in known }) return null
+    return types
 }
 
 /** The affected-group GroupFilter for a lord: chosen-creature-type variable -> the named helper,

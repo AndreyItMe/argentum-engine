@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting
 
+import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -20,6 +21,36 @@ data class GrantProtection(
     val filter: GroupFilter = GroupFilter.attachedCreature()
 ) : StaticAbility {
     override val description: String = "${filter.description} have protection from ${color.displayName.lowercase()}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
+ * Grants protection from a card type (e.g. "from instants", "from sorceries") to a filtered set
+ * of creatures. Rule 702.16 protection-from-a-quality where the quality is a card type.
+ *
+ * Projected onto the affected creature(s) as the keyword `PROTECTION_FROM_CARDTYPE_<TYPE>`, mirroring
+ * the `PROTECTION_FROM_SUBTYPE_<X>` / `PROTECTION_FROM_SUPERTYPE_<X>` keyword conventions. The engine
+ * enforces the *targeting* leg of protection (a spell/permanent of that card type can't target the
+ * creature) — which is the only DEBT leg that matters for instants and sorceries, since they never
+ * deal combat damage to, block, or enchant a creature.
+ *
+ * Used by Sword of Wealth and Power ("Equipped creature ... has protection from instants and from
+ * sorceries.") — one such ability per card type. Pair two of these for the two-type wording.
+ *
+ * @property cardType The card type protection is from (e.g. [CardType.INSTANT]).
+ * @property filter What this applies to — defaults to the attached/equipped creature for Equipment.
+ */
+@SerialName("GrantProtectionFromCardType")
+@Serializable
+data class GrantProtectionFromCardType(
+    val cardType: CardType,
+    val filter: GroupFilter = GroupFilter.attachedCreature()
+) : StaticAbility {
+    override val description: String =
+        "${filter.description} have protection from ${cardType.displayName.lowercase()}s"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
         val newFilter = filter.applyTextReplacement(replacer)
         return if (newFilter !== filter) copy(filter = newFilter) else this

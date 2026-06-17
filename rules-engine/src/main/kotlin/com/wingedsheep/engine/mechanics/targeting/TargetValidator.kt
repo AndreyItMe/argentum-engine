@@ -201,6 +201,11 @@ class TargetValidator {
         val protectionFromSupertypeError = checkProtectionFromSupertype(state, target, sourceId)
         if (protectionFromSupertypeError != null) return protectionFromSupertypeError
 
+        // Check protection from card type, e.g. "protection from instants and from sorceries"
+        // (Rule 702.16). Sword of Wealth and Power.
+        val protectionFromCardTypeError = checkProtectionFromCardType(state, target, sourceId)
+        if (protectionFromCardTypeError != null) return protectionFromCardTypeError
+
         // "Can't be enchanted" (CR 303.4): an Aura can't legally target a permanent with the
         // CANT_BE_ENCHANTED restriction (Guardian Beast). Only applies when the source is an Aura.
         val cantBeEnchantedError = checkCantBeEnchanted(state, target, sourceId)
@@ -257,6 +262,40 @@ class TargetValidator {
             if (projected.hasKeyword(entityId, "PROTECTION_FROM_SUPERTYPE_${supertype.uppercase()}")) {
                 val cardName = state.getEntity(entityId)?.get<CardComponent>()?.name ?: "target"
                 return "$cardName has protection from ${supertype.lowercase()} permanents"
+            }
+        }
+        return null
+    }
+
+    /**
+     * Check if a target has protection from one of the source's card types
+     * (e.g. "protection from instants and from sorceries"). Format:
+     * PROTECTION_FROM_CARDTYPE_<CARDTYPE>.
+     *
+     * The source's card types are read from its [CardComponent.typeLine] directly (not the
+     * projected state), because the source is typically an instant/sorcery spell on the stack —
+     * which the layer projector does not project. Card types of a spell aren't changed by
+     * continuous effects in the cases this guards, so the printed type line is authoritative here.
+     */
+    private fun checkProtectionFromCardType(
+        state: GameState,
+        target: ChosenTarget,
+        sourceId: EntityId?
+    ): String? {
+        if (sourceId == null) return null
+        val entityId = when (target) {
+            is ChosenTarget.Permanent -> target.entityId
+            else -> return null
+        }
+        if (entityId !in state.getBattlefield()) return null
+
+        val sourceCardTypes = state.getEntity(sourceId)
+            ?.get<CardComponent>()?.typeLine?.cardTypes ?: return null
+        val projected = state.projectedState
+        for (cardType in sourceCardTypes) {
+            if (projected.hasKeyword(entityId, "PROTECTION_FROM_CARDTYPE_${cardType.name}")) {
+                val cardName = state.getEntity(entityId)?.get<CardComponent>()?.name ?: "target"
+                return "$cardName has protection from ${cardType.displayName.lowercase()}s"
             }
         }
         return null
