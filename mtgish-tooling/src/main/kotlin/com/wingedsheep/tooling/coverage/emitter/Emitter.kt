@@ -80,12 +80,20 @@ object Emitter {
             return incomplete(ctx, pre, header, body, scryfall, pkg)
         }
 
+        // Preparation cards (Secrets of Strixhaven) are also two-faced on Scryfall (creature // prepare
+        // spell), but unlike generic multi-faced cards the mtgish IR carries BOTH faces — the creature
+        // as the top-level card and the prepare spell under `Prepared` — so the dedicated Preparer path
+        // below renders the whole card faithfully. Detect it before the multi-faced guard so it isn't
+        // declined as a lossy single-face render.
+        val isPreparer = card.strField("_OracleCard") == "Preparer" && card["Prepared"] != null
+
         // Multi-faced cards (transform/MDFC/adventure/split) reach us with their faces' oracle text joined
         // by a `\n//\n` separator (see Scryfall.cardMetadata). The bridge only sees the mtgish IR for the
         // FRONT face, so a generic render would silently emit a single-faced card and drop the entire back
         // face — exactly the lossy approximation the hard rules forbid. Decline unconditionally (even in
-        // partial mode) so these classify as SCAFFOLD/BLOCKED and get hand-authored instead.
-        if (ctx.oracleText?.contains("\n//\n") == true) {
+        // partial mode) so these classify as SCAFFOLD/BLOCKED and get hand-authored instead. Preparer
+        // cards are exempt — both faces come from the IR (see above).
+        if (!isPreparer && ctx.oracleText?.contains("\n//\n") == true) {
             ctx.reasons.add("multi-faced")
             return incomplete(ctx, pre, header, body, scryfall, pkg)
         }
@@ -107,20 +115,26 @@ object Emitter {
         if (plainKw.isNotEmpty()) body.add(RawLine("    keywords(${plainKw.joinToString(", ") { "Keyword.$it" }})"))
         if ("PROWESS" in kw) body.add(RawLine("    prowess()"))
 
-        // Preparation card (Secrets of Strixhaven): `_OracleCard: "Preparer"` with a single
-        // AsPermanentEnters[EntersPrepared] rule and a sibling `Prepared` prepare spell. Emit the
-        // PREPARED keyword + a prepare("…") { spell { … } } block from the nested prepare card, and
-        // skip the AsPermanentEnters rule (the PREPARE layout already encodes "enters prepared").
+        // Preparation card (Secrets of Strixhaven): `_OracleCard: "Preparer"` with a sibling
+        // `Prepared` prepare spell. Always render a prepare("…") { spell { … } } block from the
+        // nested prepare card. Two flavours:
+        //  - "enters prepared" — a top-level AsPermanentEnters[EntersPrepared] rule. Emit the PREPARED
+        //    keyword ("This creature enters prepared") and skip that rule (the keyword encodes it).
+        //  - "becomes prepared via a trigger" (Leech Collector) — no AsPermanentEnters rule; the IR
+        //    carries a TriggerA whose action is PreparePermanent. NO PREPARED keyword (it doesn't enter
+        //    prepared); the trigger renders through the generic trigger path (Triggers.* + BecomePrepared).
         // The whole card scaffolds if the prepare spell can't be rendered exactly.
-        val isPreparer = card.strField("_OracleCard") == "Preparer" && card["Prepared"] != null
         if (isPreparer) {
-            body.add(RawLine("    keywords(Keyword.PREPARED)"))
+            val entersPreparedRule = (card["Rules"].asArr ?: JsonArray(emptyList()))
+                .filterIsInstance<JsonObject>()
+                .firstOrNull { it.strField("_Rule") == "AsPermanentEnters" && jsonContains(it, "_ReplacementActionWouldEnter", "EntersPrepared") }
+            if (entersPreparedRule != null) {
+                body.add(RawLine("    keywords(Keyword.PREPARED)"))
+                skipRules.add(entersPreparedRule)
+            }
             val prepStmts = ctx.prepareBlock(card)
             if (prepStmts == null) gap("Prepared")?.let { return it }
             else body.addAll(prepStmts)
-            (card["Rules"].asArr ?: JsonArray(emptyList())).forEach { r ->
-                if ((r as? JsonObject)?.strField("_Rule") == "AsPermanentEnters") skipRules.add(r)
-            }
             parts++
         }
         val cardLevelLines = ctx.cardLevelCastEffectLines(card)

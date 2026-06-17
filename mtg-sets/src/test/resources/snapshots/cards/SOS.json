@@ -793,6 +793,57 @@
     ]
 }
 
+// Cheerful Osteomancer
+{
+    "name": "Cheerful Osteomancer",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Orc Warlock",
+    "oracleText": "This creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "keywords": [
+        "PREPARED"
+    ],
+    "metadata": {
+        "collectorNumber": "76",
+        "artist": "Diego Gisbert",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/c/3c34660c-25e3-4ff5-9b2b-5554ded2bcc3.jpg?1775937441"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Raise Dead",
+            "manaCost": "{B}",
+            "typeLine": "Sorcery",
+            "oracleText": "Return target creature card from your graveyard to your hand.",
+            "script": {
+                "spellEffect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature own:you",
+                            "zone": "Graveyard"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Conciliator's Duelist
 {
     "name": "Conciliator's Duelist",
@@ -3825,6 +3876,52 @@
     ]
 }
 
+// Infirmary Healer
+{
+    "name": "Infirmary Healer",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Cat Cleric",
+    "oracleText": "This creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "PREPARED"
+    ],
+    "metadata": {
+        "collectorNumber": "152",
+        "rarity": "UNCOMMON",
+        "artist": "Nereida",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/1/911442e3-3003-4683-a766-e791e9553667.jpg?1775938036"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Stream of Life",
+            "manaCost": "{X}{G}",
+            "typeLine": "Sorcery",
+            "oracleText": "Target player gains X life.",
+            "script": {
+                "spellEffect": {
+                    "type": "GainLife",
+                    "amount": "XValue",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                "targetRequirements": [
+                    "TargetPlayer"
+                ]
+            }
+        }
+    ]
+}
+
 // Informed Inkwright
 {
     "name": "Informed Inkwright",
@@ -4243,6 +4340,62 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Leech Collector
+{
+    "name": "Leech Collector",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Human Warlock",
+    "oracleText": "Whenever you gain life for the first time each turn, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "LifeGainEvent",
+                    "firstTimeEachTurn": true
+                },
+                "binding": "ANY",
+                "effect": "BecomePrepared"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "88",
+        "rarity": "UNCOMMON",
+        "artist": "Chris Rallis",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/7/c715fe4c-c0e7-4342-811f-b74687851097.jpg?1775937525"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Bloodletting",
+            "manaCost": "{B}",
+            "typeLine": "Sorcery",
+            "oracleText": "Each opponent loses 2 life.",
+            "script": {
+                "spellEffect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        }
     ]
 }
 
@@ -5435,6 +5588,46 @@
     },
     "colorIdentityOverride": [
         "BLUE",
+        "GREEN"
+    ]
+}
+
+// Pest Mascot
+{
+    "name": "Pest Mascot",
+    "manaCost": "{1}{B}{G}",
+    "typeLine": "Creature — Pest Ape",
+    "oracleText": "Trample\nWhenever you gain life, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "209",
+        "artist": "Filipe Pagliuso",
+        "flavorText": "Hungering for the zest of life.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/8/d882beb9-6766-4818-afbb-f6fd7a2d5b70.jpg?1775938452"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
         "GREEN"
     ]
 }

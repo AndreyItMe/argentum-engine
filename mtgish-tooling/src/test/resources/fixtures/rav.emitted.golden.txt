@@ -8052,7 +8052,7 @@ val SearingMeditation = card("Searing Meditation") {
     colorIdentity = "WR"
     typeLine = "Enchantment"
     oracleText = "Whenever you gain life, you may pay {2}. If you do, this enchantment deals 2 damage to any target."
-    // STRUCTURE needs human wiring: trigger-shape
+    // STRUCTURE needs human wiring: MayCost
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "226"

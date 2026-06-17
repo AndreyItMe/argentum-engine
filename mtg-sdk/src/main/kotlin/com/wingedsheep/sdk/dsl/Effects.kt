@@ -31,6 +31,7 @@ import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
 import com.wingedsheep.sdk.scripting.effects.ExploreEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
+import com.wingedsheep.sdk.scripting.effects.BecomePreparedEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeSaddledEffect
 import com.wingedsheep.sdk.scripting.effects.EachPermanentBecomesCopyOfTargetEffect
 import com.wingedsheep.sdk.scripting.effects.SetBasePowerEffect
@@ -2895,6 +2896,14 @@ object Effects {
      */
     fun BecomeSaddled(target: EffectTarget = EffectTarget.Self): Effect =
         BecomeSaddledEffect(target)
+
+    /**
+     * [target] becomes prepared (Secrets of Strixhaven). The target must be a PREPARE-layout
+     * permanent; becoming prepared creates a castable copy of its prepare spell in exile. A
+     * creature that is already prepared does not re-prepare. Defaults to the source.
+     */
+    fun BecomePrepared(target: EffectTarget = EffectTarget.Self): Effect =
+        BecomePreparedEffect(target)
 
     /**
      * Each permanent matching [filter] becomes a copy of [target].

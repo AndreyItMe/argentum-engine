@@ -1961,6 +1961,17 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenAPlayerCyclesACard") && jsonContains(trig, "_Players", "AnyPlayer"))
         return "Triggers.AnyPlayerCycles"
 
+    // "Whenever you gain life" (You) — Pest Mascot, Essence Channeler. Only the You scope maps to
+    // Triggers.YouGainLife; an any-player / opponent scope has no calibrated card yet, so it
+    // declines -> SCAFFOLD rather than guess a binding.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerGainsLife") && jsonContains(trig, "_Player", "You"))
+        return "Triggers.YouGainLife"
+
+    // "Whenever you gain life for the first time each turn" (You) — Leech Collector. The IR tag bakes
+    // in the once-per-turn semantics. Only the You scope renders.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerGainsLifeForTheFirstTimeEachTurn") && jsonContains(trig, "_Player", "You"))
+        return "Triggers.YouGainLifeFirstTimeEachTurn"
+
     // "Whenever this creature becomes the target of a spell or ability an opponent controls"
     // (Cactarantula). The trigger's args is a 2-tuple [subject, spell/ability-filter]; the subject must
     // be SinglePermanent(ThisPermanent) and the filter an opponent-controlled spell/ability. Only that

@@ -91,12 +91,13 @@ section; do not let SDK additions land without a corresponding doc update.
   when its script sets `selfExileOnResolve` via `spell { selfExile() }`). DSL: `card { modalBack("Name") { spell { … } } }`.
 - `PREPARE` — primary characteristics are the creature face, `cardFaces[0]` is the **prepare spell** (an
   instant/sorcery) (Secrets of Strixhaven). The card is only ever cast as the creature; the prepare spell is never
-  cast from hand. The creature carries `Keyword.PREPARED` ("This creature enters prepared"). When it enters
-  (becomes prepared), the engine creates a **copy of the prepare spell in exile** that the controller may cast for
+  cast from hand. A creature that carries `Keyword.PREPARED` ("This creature enters prepared") becomes prepared on
+  enter; one without the keyword (e.g. Leech Collector) only becomes prepared via an effect — `Effects.BecomePrepared(target)`.
+  When it becomes prepared, the engine creates a **copy of the prepare spell in exile** that the controller may cast for
   the face's cost — surfaced by the cast-from-exile enumerator as `CastSpell(..., faceIndex = 0)` from `EXILE`.
   Casting the copy unprepares the creature; the copy ceases to exist on resolution. The exile copy persists in
   exile (exempt from the 707.10a phantom-copy SBA) until the source leaves the battlefield or stops being prepared,
-  at which point it is cleaned up. DSL: `card { prepare("Name") { spell { … } } }`.
+  at which point it is cleaned up. A creature already prepared does not re-prepare. DSL: `card { prepare("Name") { spell { … } } }`.
 
 **`CardFace` (SPLIT / ADVENTURE / OMEN / MODAL_DFC / PREPARE)**
 
@@ -736,6 +737,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `BecomeCreatureEffect(target, p, t, subtypes, keywords, duration)` — animate non-creature (lands, artifacts).
 - `BecomeArtifactEffect(target, cardTypes = {"ARTIFACT"}, subtypes, colors = emptySet(), loseAllAbilities = true, grantedAbility?, duration = Permanent)` — the general "becomes a Treasure/Food/Clue/artifact" transform: stacks continuous floating effects on `target` — Layer 4 `SetCardTypes` (replaces *all* card types) + `SetAllSubtypes` (replaces *all* subtypes), Layer 5 color (`emptySet()` = colorless), Layer 6 `RemoveAllAbilities` when `loseAllAbilities` — plus an optional single `grantedAbility` recorded durably in `grantedActivatedAbilities` (so it survives the ability wipe; the enumerators read it after the projected `lostAllAbilities` check). `Duration.Permanent` ends only when the permanent leaves the battlefield. Differs from `BecomeCreatureEffect` (which *adds* CREATURE + sets P/T): this fully replaces types/subtypes so the result is exactly the named artifact. (Vraska, the Silencer: a dead opponent's creature returns as a bare colorless Treasure with the sac-for-mana ability.)
 - `BecomeSaddledEffect(target = Self)` (facade `Effects.BecomeSaddled()`) — target permanent becomes saddled until end of turn (CR 702.171b). The resolving half of a Saddle ability: stamps the transient `SaddledComponent` marker (cleared at end of turn / on leaving the battlefield; not copiable) and emits `BecameSaddledEvent`. No P/T or type change — read the marker with `Conditions.SourceIsSaddled` / `.saddled()`.
+- `BecomePreparedEffect(target = Self)` (facade `Effects.BecomePrepared()`) — target permanent becomes prepared (Secrets of Strixhaven). The target must be a `CardLayout.PREPARE` permanent on the battlefield; becoming prepared creates a castable copy of its prepare spell in exile (shared `PreparationLogic.makePrepared`, the same path used when a `Keyword.PREPARED` creature enters prepared). A creature already prepared, not on the battlefield, or not a preparation card does nothing. Used by Leech Collector ("Whenever you gain life for the first time each turn, this creature becomes prepared").
 - `EachPermanentBecomesCopyOfTargetEffect(target, filter, duration, excludeTarget, affected)` — mass copy (Mirrorform, Naga Fleshcrafter renew). Facade `Effects.EachPermanentBecomesCopyOfTarget(...)`. Copies copiable values only (Rule 707) — counters, tapped state, attached auras/equipment and non-copy modifiers stay put. `duration = Duration.Permanent` (default) bakes the copy into base state for good; `Duration.EndOfTurn` makes a temporary copy reverted by the end-of-turn cleanup (each affected permanent restores its pre-copy `CardComponent` from its `CopyOfComponent` snapshot). `excludeTarget = true` keeps the copy **source** out of the affected set, for "each **other** … becomes a copy of that …" wordings where the target keeps its own identity (and any counter just placed on it). `affected` (an `EffectTarget`, e.g. a second `ContextTarget`) switches to the single-permanent "target permanent A becomes a copy of target permanent B" shape (Fleeting Reflection: "target creature you control … becomes a copy of up to one **other** target creature") — only that one resolved permanent becomes a copy of `target`, and `filter`/`excludeTarget` are ignored; if `affected` resolves to nothing (optional target omitted) the effect is a no-op.
 - `BecomeCopyOfLinkedExileEffect(affected = AttachedToTriggeringPermanent)` — facade `Effects.BecomeCopyOfLinkedExile(affected)`. The `affected` permanent becomes a copy of the first creature card in the effect's **source's linked exile** (`LinkedExileComponent` — the card the source banished via `Effects.ExileUntilLeaves`), copiable values only (Rule 707.2). Baked into the affected permanent's `CardComponent` like Clone, but tagged with a `CopyWhileAttachedComponent(sourceId)`; the `AttachedCopyExpiryCheck` state-based action reverts the copy (restoring the pre-copy snapshot) the moment the source stops being attached to it — detach, re-attach elsewhere, or source leaving (CR 611.2b, one-way). No-op when the source's linked exile holds no creature card. Used by Assimilation Aegis ("for as long as this Equipment remains attached to it, that creature becomes a copy of a creature card exiled with this Equipment").
 - `AnimateLandEffect(target, subtypes, keywords, duration)` — land becomes a creature.
@@ -1965,6 +1967,7 @@ Triggers.youCastSpell(
 ### Life
 
 - `YouGainLife` — you gain any life.
+- `YouGainLifeFirstTimeEachTurn` — you gain life for the first time each turn (Leech Collector). Backed by `LifeGainEvent(firstTimeEachTurn = true)`, matched against `LifeChangedEvent.firstThisTurn` (computed in `DamageUtils.gainLife` before the per-turn life-gained marker is set).
 - `AnyPlayerGainsLife` — anyone gains life.
 - `YouLoseLife` — you lose any life.
 - `AnyPlayerLosesLife` — anyone loses life.
@@ -3969,10 +3972,13 @@ Card authors rarely reference these directly; they are created/updated by the ma
   `CastSpell.faceIndex = 0`); reuses the Adventure cast/enumeration path (`enumerateSecondaryFace`) but with no
   exile-then-recast linkage at resolution. `StackResolver` reads the cast face's `selfExileOnResolve`, and the back
   art rides on `CardFace.imageUri` → `CardComponent.backFaceImageUri`. First user: Flamescroll Celebrant.
-- **Prepare / Prepared (Secrets of Strixhaven)** — `layout = PREPARE` + `cardFaces[0]` prepare spell + the creature
-  carries `Keyword.PREPARED` ("This creature enters prepared"); DSL: `card { prepare("Name") { spell { … } } }`.
-  The creature is only cast as itself. When it enters (`StackResolver.enterPermanentOnBattlefield` → `makePrepared`),
-  the engine creates a stack-style copy of the prepare spell in the controller's exile carrying
+- **Prepare / Prepared (Secrets of Strixhaven)** — `layout = PREPARE` + `cardFaces[0]` prepare spell; DSL:
+  `card { prepare("Name") { spell { … } } }`. The creature is only cast as itself. A creature that carries
+  `Keyword.PREPARED` ("This creature enters prepared") becomes prepared on enter
+  (`StackResolver.enterPermanentOnBattlefield`, gated on the keyword). A PREPARE-layout creature *without* the
+  keyword (Leech Collector) only becomes prepared via `Effects.BecomePrepared(target)` (`BecomePreparedExecutor`).
+  Both paths call the shared `PreparationLogic.makePrepared`, which
+  creates a stack-style copy of the prepare spell in the controller's exile carrying
   `PreparedSpellCopyComponent(sourceId)`, stamps `PreparedComponent(exileCopyId)` on the creature, and grants a
   permanent `MayPlayPermission` for the copy. `CastFromZoneEnumerator` recognizes the copy and offers it as
   `CastSpell(..., faceIndex = 0)` from `EXILE` using the prepare face's cost/targets. Casting the copy
@@ -3980,7 +3986,7 @@ Card authors rarely reference these directly; they are created/updated by the ma
   via the face script and ceases to exist (`CopyOfComponent`). The exiled copy is exempt from the 707.10a
   phantom-copy SBA (`PhantomCardCopiesCheck`) while linked, and that same check removes it once the source leaves
   the battlefield or stops being prepared. First users: Adventurous Eater // Have a Bite, Landscape Painter //
-  Vibrant Idea.
+  Vibrant Idea; becomes-prepared-via-trigger: Leech Collector // Bloodletting.
 - **Hideaway N** — `KeywordAbility.hideaway(n)` (display, "Hideaway N") + `MoveCollectionEffect(faceDown = true,
   linkToSource = true)` + `CardSource.FromLinkedExile()`; no special engine plumbing needed.
 - **Ascend / City's Blessing** — `Keyword.ASCEND` + `Effects.GainCitysBlessing()` + `Conditions.YouHaveCitysBlessing` /

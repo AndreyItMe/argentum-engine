@@ -160,6 +160,22 @@ data class BecomeSaddledEffect(
 }
 
 /**
+ * Make [target] become prepared (Secrets of Strixhaven). The target must be a permanent whose
+ * card has the [com.wingedsheep.sdk.model.CardLayout.PREPARE] layout. Becoming prepared creates a
+ * copy of its prepare spell in the controller's exile that may be cast (paying that spell's cost);
+ * casting that copy unprepares the creature. A creature that is already prepared does not
+ * re-prepare. Used by Leech Collector ("Whenever you gain life for the first time each turn, this
+ * creature becomes prepared.").
+ */
+@SerialName("BecomePrepared")
+@Serializable
+data class BecomePreparedEffect(
+    val target: EffectTarget = EffectTarget.Self
+) : Effect {
+    override val description: String = "${target.description} becomes prepared"
+}
+
+/**
  * Turn target creature face down.
  * "Turn target creature with a morph ability face down."
  * Used for Backslide and similar effects.

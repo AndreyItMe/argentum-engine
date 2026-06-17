@@ -109,6 +109,11 @@ data class ZoneChangeEvent(
 
 /**
  * A player's life total changed.
+ *
+ * [firstThisTurn] is only meaningful for [LifeChangeReason.LIFE_GAIN] events: it is `true` when this
+ * is the first life-gaining event for [playerId] this turn (computed by `DamageUtils.gainLife`
+ * before the per-turn life-gained marker is set). It backs "whenever you gain life for the first
+ * time each turn" triggers (Leech Collector). It is always `false` for non-gain reasons.
  */
 @Serializable
 @SerialName("LifeChangedEvent")
@@ -116,7 +121,8 @@ data class LifeChangedEvent(
     val playerId: EntityId,
     val oldLife: Int,
     val newLife: Int,
-    val reason: LifeChangeReason
+    val reason: LifeChangeReason,
+    val firstThisTurn: Boolean = false
 ) : GameEvent
 
 @Serializable

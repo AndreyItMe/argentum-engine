@@ -52,6 +52,9 @@ internal fun BridgeBuilder.manaCountersAndState() {
         composes = listOf("AnimateLand", "GrantKeyword", "AddCounters", "GrantTriggeredAbility", "MoveToZone"))
 
     effect("RegeneratePermanent", "Regenerate", UNIVERSAL)
+    // "<permanent> becomes prepared" (Secrets of Strixhaven — Leech Collector's trigger). Maps to the
+    // BecomePrepared effect; the enters-prepared flavour is the PREPARED keyword + PREPARE layout.
+    effect("PreparePermanent", "BecomePrepared", "a PREPARE-layout permanent becomes prepared (Leech Collector)")
     // "attach it to target …" — an Equipment/Aura attaching ITSELF (the source) to a chosen permanent
     // (Thunder Lasso's ETB "attach it to target creature you control"). The engine idiom is
     // AttachEquipment, which always attaches the source. The emitter only renders the self-attach shape

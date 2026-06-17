@@ -373,7 +373,8 @@ class TriggerMatcher(
             is EventPattern.LifeGainEvent -> {
                 event is LifeChangedEvent &&
                     event.reason == com.wingedsheep.engine.core.LifeChangeReason.LIFE_GAIN &&
-                    matchesPlayer(trigger.player, event.playerId, controllerId)
+                    matchesPlayer(trigger.player, event.playerId, controllerId) &&
+                    (!trigger.firstTimeEachTurn || event.firstThisTurn)
             }
             is EventPattern.RingTemptedEvent -> {
                 event is com.wingedsheep.engine.core.RingTemptedEvent &&

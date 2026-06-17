@@ -469,9 +469,14 @@ object DamageUtils {
         if (state.getEntity(playerId)?.get<LifeTotalComponent>() == null) return state to null
         val currentLife = state.lifeTotal(playerId)
         val newLife = currentLife + gainAmount
+        // First life gain this turn for this player? Read before markLifeGainedThisTurn sets the
+        // flag, so "whenever you gain life for the first time each turn" (Leech Collector) fires
+        // only on the turn's first gaining event.
+        val firstThisTurn = state.getEntity(playerId)
+            ?.has<com.wingedsheep.engine.state.components.player.LifeGainedThisTurnComponent>() != true
         var newState = state.withLifeTotal(playerId, newLife)
         newState = markLifeGainedThisTurn(newState, playerId, gainAmount)
-        return newState to LifeChangedEvent(playerId, currentLife, newLife, LifeChangeReason.LIFE_GAIN)
+        return newState to LifeChangedEvent(playerId, currentLife, newLife, LifeChangeReason.LIFE_GAIN, firstThisTurn)
     }
 
     /**

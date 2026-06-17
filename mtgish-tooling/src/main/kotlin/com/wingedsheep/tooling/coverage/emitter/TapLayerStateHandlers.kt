@@ -90,6 +90,13 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         call("Effects.ForEachInGroup", arg(filter), arg(call("Effects.$verb", arg("EffectTarget.Self"))))
     }
 
+    on("PreparePermanent") { _, args, tvar ->
+        // "<permanent> becomes prepared" (Secrets of Strixhaven — Leech Collector). The subject ref is
+        // self (ThisPermanent) or a bound target. Renders Effects.BecomePrepared(target).
+        val tgt = refTarget(args, tvar) ?: return@on null
+        call("Effects.BecomePrepared", arg(tgt))
+    }
+
     on("PutACounterOfTypeOnPermanent") { _, args, tvar ->
         // "Put a +1/+1 (or -1/-1) counter on <permanent>." or a named keyword counter ("a flying
         // counter"). Only the bare ±1/±1 PTCounter and the keyword counters we name render; any other

@@ -41,6 +41,8 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // (BreechesTheBlastmakerTest) is the ground truth.
     supported("AtTheBeginningOfAPlayersUpkeep", "trigger: upkeep (Triggers.YourUpkeep / EachUpkeep / EachOpponentUpkeep)")
     supported("AtTheBeginningOfAPlayersEndStep", "trigger: end step (Triggers.YourEndStep / EachEndStep)")
+    supported("WhenAPlayerGainsLife", "trigger: you gain life (Triggers.YouGainLife — Pest Mascot, Essence Channeler)")
+    supported("WhenAPlayerGainsLifeForTheFirstTimeEachTurn", "trigger: you gain life for the first time each turn (Triggers.YouGainLifeFirstTimeEachTurn — Leech Collector)")
     // OTJ Plot (CR 718) — "When this card becomes plotted, …" (Triggers.BecomesPlotted, Aloe Alchemist).
     supported("WhenACardBecomesPlotted", "trigger: this card becomes plotted (Triggers.BecomesPlotted)")
     supported("WhenAPermanentBecomesTheTargetOfASpellOrAbility", "trigger: becomes target (Triggers.BecomesTargetByOpponent / BecomesTarget / CreatureYouControlBecomesTargetByOpponent)")

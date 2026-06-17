@@ -271,13 +271,18 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
 
     /**
      * When a player would gain life.
+     *
+     * [firstTimeEachTurn] restricts the match to the first life-gaining event for that player this
+     * turn — "whenever you gain life for the first time each turn" (Leech Collector).
      */
     @SerialName("LifeGainEvent")
     @Serializable
     data class LifeGainEvent(
-        val player: Player = Player.You
+        val player: Player = Player.You,
+        val firstTimeEachTurn: Boolean = false
     ) : EventPattern {
-        override val description: String = "${player.description} would gain life"
+        override val description: String = "${player.description} would gain life" +
+            if (firstTimeEachTurn) " for the first time each turn" else ""
     }
 
     /**

@@ -58,6 +58,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeChosenManaC
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeArtifactExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeCreatureExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeCreatureTypeExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.types.BecomePreparedExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeSaddledExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.ChangeCreatureTypeTextExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.ChangeWordInTextExecutor
@@ -128,6 +129,7 @@ class PermanentExecutors(
         BecomeChosenManaColorExecutor(),
         BecomeCreatureExecutor(),
         BecomeSaddledExecutor(),
+        BecomePreparedExecutor(cardRegistry),
         BecomeCreatureTypeExecutor(),
         ChangeCreatureTypeTextExecutor(decisionHandler),
         ChangeWordInTextExecutor(decisionHandler),

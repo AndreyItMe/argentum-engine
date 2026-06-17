@@ -1331,6 +1331,15 @@ object Triggers {
     )
 
     /**
+     * Whenever you gain life for the first time each turn (Leech Collector). Fires only on the
+     * first life-gaining event you have each turn.
+     */
+    val YouGainLifeFirstTimeEachTurn: TriggerSpec = TriggerSpec(
+        event = LifeGainEvent(Player.You, firstTimeEachTurn = true),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever a player gains life.
      */
     val AnyPlayerGainsLife: TriggerSpec = TriggerSpec(
