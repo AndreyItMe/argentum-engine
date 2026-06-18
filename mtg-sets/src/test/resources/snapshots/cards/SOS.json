@@ -2233,6 +2233,91 @@
     ]
 }
 
+// Dina's Guidance
+{
+    "name": "Dina's Guidance",
+    "manaCost": "{1}{B}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Search your library for a creature card, reveal it, put it into your hand or graveyard, then shuffle.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Library",
+                        "filter": "creature"
+                    },
+                    "storeAs": "gathered0"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "gathered0",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "selected1",
+                    "prompt": "Search your library for a creature card"
+                },
+                {
+                    "type": "RevealCollection",
+                    "from": "selected1"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "selected1",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "selected3",
+                    "storeRemainder": "remainder3",
+                    "prompt": "Put the creature card into your hand or graveyard",
+                    "selectedLabel": "Put into your hand",
+                    "remainderLabel": "Put into your graveyard"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "selected3",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "remainder3",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    }
+                },
+                "ShuffleLibrary"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "184",
+        "rarity": "RARE",
+        "artist": "Manuel Castañón",
+        "flavorText": "\"This last step is very important. You'll need to know if the friend you're searching for is alive or dead.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/7/775c1e50-08a4-413f-ab0f-f1c2a79cfe94.jpg?1775938273"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
+
 // Dissection Practice
 {
     "name": "Dissection Practice",
@@ -6161,6 +6246,74 @@
     ]
 }
 
+// Lumaret's Favor
+{
+    "name": "Lumaret's Favor",
+    "manaCost": "{1}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Infusion — When you cast this spell, copy it if you gained life this turn. You may choose new targets for the copy.\nTarget creature gets +2/+4 until end of turn.",
+    "script": {
+        "spellEffect": {
+            "type": "ModifyStats",
+            "powerModifier": {
+                "type": "Fixed",
+                "amount": 2
+            },
+            "toughnessModifier": {
+                "type": "Fixed",
+                "amount": 4
+            },
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ],
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "CastThisSpellEvent",
+                "effect": {
+                    "type": "CopyTargetSpell",
+                    "target": "TriggeringEntity"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "LIFE_GAINED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "Infusion — When you cast this spell, copy it if you gained life this turn. You may choose new targets for the copy."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "153",
+        "rarity": "UNCOMMON",
+        "artist": "Mariah Tekulve",
+        "flavorText": "Though the lumarets were ignored by the other Witherbloom students, it was clear to Lluwen they were much more complex than they seemed.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/5/c5e7c856-8b71-44e6-8998-0b0b3ff0ef99.jpg?1775938045"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Maelstrom Artisan
 {
     "name": "Maelstrom Artisan",
@@ -8854,6 +9007,92 @@
     ]
 }
 
+// Quandrix Charm
+{
+    "name": "Quandrix Charm",
+    "manaCost": "{G}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Choose one —\n• Counter target spell unless its controller pays {2}.\n• Destroy target enchantment.\n• Target creature has base power and toughness 5/5 until end of turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "Counter",
+                        "condition": {
+                            "type": "CounterCondition.UnlessPaysMana",
+                            "cost": "{2}"
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": {},
+                                "zone": "Stack"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target enchantment"
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "enchantment"
+                            },
+                            "id": "target enchantment"
+                        }
+                    ],
+                    "description": "Destroy target enchantment"
+                },
+                {
+                    "effect": {
+                        "type": "SetBasePowerToughness",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target creature"
+                        },
+                        "power": 5,
+                        "toughness": 5,
+                        "duration": "EndOfTurn"
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            },
+                            "id": "target creature"
+                        }
+                    ],
+                    "description": "Target creature has base power and toughness 5/5 until end of turn"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "217",
+        "rarity": "UNCOMMON",
+        "artist": "Matheus Graef",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/1/318486e0-f255-40f5-8150-dc272eec9d7d.jpg?1775938509"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "GREEN"
+    ]
+}
+
 // Quill-Blade Laureate
 {
     "name": "Quill-Blade Laureate",
@@ -9610,6 +9849,55 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Run Behind
+{
+    "name": "Run Behind",
+    "manaCost": "{3}{U}",
+    "typeLine": "Instant",
+    "oracleText": "This spell costs {1} less to cast if it targets an attacking creature.\nTarget creature's owner puts it on their choice of the top or bottom of their library.",
+    "script": {
+        "spellEffect": {
+            "type": "PutOnLibraryPositionOfChoice",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature to put on top or bottom of library"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature to put on top or bottom of library"
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGenericBy",
+                    "source": {
+                        "type": "FixedIfAnyTargetMatches",
+                        "amount": 1,
+                        "filter": "creature attacking"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "66",
+        "artist": "Nereida",
+        "flavorText": "The skycoach waits for no one.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/0/40ecc34b-4cd0-4998-bbf4-7faa6fd3d7e0.jpg?1775937369"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

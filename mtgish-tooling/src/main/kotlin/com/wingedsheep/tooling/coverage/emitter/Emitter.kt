@@ -205,6 +205,14 @@ object Emitter {
                 rname == "FromAnyZone" -> block = ctx.fromAnyZoneBlock(rule)
                 rname == "FromGraveyard" -> block = ctx.fromGraveyardBlock(rule)
                 rname == "FromHand" -> block = ctx.fromHandBlock(rule)
+                // A `FromStack` rule wraps a cast trigger that fires while the spell is still on the
+                // stack (Infusion copy — Lumaret's Favor). Only the exact Infusion-copy shape renders;
+                // anything else (e.g. the "can't be countered" cast effect on Scragnoth/Bruna) declines
+                // and scaffolds with `FromStack` as the unrecovered structure reason, like before.
+                rname == "FromStack" -> {
+                    block = ctx.lumaretsFavorInfusionCopyBlock(rule)
+                    if (block == null) { gap(rname, addReason = rname)?.let { return it }; continue }
+                }
                 rname == "CDA_Power" -> block = ctx.cdaStatsBlock(card, rule)
                 rname == "CDA_Toughness" ->
                     if (jsonContains(card["Rules"], "_Rule", "CDA_Power")) continue  // emitted with CDA_Power

@@ -448,6 +448,88 @@ internal fun EmitCtx.wisdomOfAgesSpell(card: JsonObject): List<Stmt>? {
  * source dealing a fixed amount of damage to its chosen target — and only when the reflexive target
  * round-trips through [targetExpr]; anything else declines (-> SCAFFOLD).
  */
+/**
+ * Run Behind (bounce arm): `[PlayerAction(OwnerOfPermanent(Ref_TargetPermanent),
+ *                              ReturnPermanentToTopOrBottomOfLibrary(Ref_TargetPermanent))]`
+ * → `Effects.PutOnTopOrBottomOfLibrary(<bound target>)`.
+ *
+ * "Target creature's owner puts it on their choice of the top or bottom of their library." The engine's
+ * `PutOnTopOrBottomOfLibrary` already pauses for the *owner* to choose top or bottom, so the IR's
+ * `PlayerAction(OwnerOfPermanent, …)` wrapper (which the per-action `PlayerAction` handler can't render)
+ * collapses onto it exactly. Renders ONLY this shape — owner-of-target choosing top/bottom for the bound
+ * permanent; any other player scope, action, or extra sibling declines (-> SCAFFOLD). The "{1} less if it
+ * targets an attacking creature" half is a separate `CastEffect` rule the cost-reduction pass renders.
+ */
+internal fun EmitCtx.runBehindOwnerTopOrBottomEffect(actions: List<JsonObject>, tvar: String?): Dsl? {
+    val only = actions.singleOrNull() ?: return null
+    if (only.strField("_Action") != "PlayerAction") return null
+    // The acting player must be the OWNER of the targeted permanent ("that creature's owner puts it…").
+    if (!jsonContains(only, "_Player", "OwnerOfPermanent")) return null
+    if (!jsonContains(only, "_Permanent", "Ref_TargetPermanent")) return null
+    val inner = innerAction(only)
+        ?.takeIf { it.strField("_Action") == "ReturnPermanentToTopOrBottomOfLibrary" } ?: return null
+    if (!jsonContains(inner, "_Permanent", "Ref_TargetPermanent")) return null
+    val target = refTarget(inner["args"], tvar) ?: return null
+    return call("Effects.PutOnTopOrBottomOfLibrary", arg(Lit(target)))
+}
+
+/**
+ * Dina's Guidance: `[SearchLibrary(FindACardOfType(Creature), RevealFoundCards,
+ *                      ChooseAnAction[PutFoundCardsIntoHand, PutFoundCardsIntoGraveyard], Shuffle)]`
+ * → the gather → choose → reveal → split-move (hand vs graveyard) pipeline the hand-authored card uses.
+ *
+ * "Search your library for a creature card, reveal it, put it into your hand or graveyard, then shuffle."
+ * The destination is a *player choice* (`ChooseAnAction[…IntoHand, …IntoGraveyard]`), which the generic
+ * `Patterns.Library.searchLibrary` (single fixed `SearchDestination`) can't express — it explicitly
+ * declines `ChooseAnAction`. Rendered here as the exact `Effects.Pipeline { }` tree the hand-authored
+ * card produces: gather creatures, `chooseUpTo(1)` (the search may fail to find), reveal, a binary split
+ * over the found card (selecting → hand, leaving → graveyard), then shuffle. Renders ONLY this exact
+ * shape (find a creature card, reveal, choose hand-or-graveyard, shuffle); any other filter, extra search
+ * arm, or destination set declines (-> SCAFFOLD).
+ */
+internal fun EmitCtx.dinasGuidanceSearchHandOrGraveyardEffect(actions: List<JsonObject>): Dsl? {
+    val only = actions.singleOrNull() ?: return null
+    if (only.strField("_Action") != "SearchLibrary") return null
+    val searchArgs = only["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
+    // 1. Find a creature card.
+    val find = searchArgs.getOrNull(0)?.takeIf { it.strField("_SearchLibraryAction") == "FindACardOfType" } ?: return null
+    val findBlob = compact(find)
+    if (!("IsCardtype" in findBlob && "\"Creature\"" in findBlob)) return null
+    // 2. Reveal the found card.
+    if (searchArgs.getOrNull(1)?.strField("_SearchLibraryAction") != "RevealFoundCards") return null
+    // 3. Choose: put into hand OR graveyard.
+    val choose = searchArgs.getOrNull(2)?.takeIf { it.strField("_SearchLibraryAction") == "ChooseAnAction" } ?: return null
+    val chooseArms = choose["args"].asArr?.filterIsInstance<JsonObject>()?.map { it.strField("_SearchLibraryAction") } ?: return null
+    if (chooseArms.toSet() != setOf("PutFoundCardsIntoHand", "PutFoundCardsIntoGraveyard")) return null
+    // 4. Shuffle — and nothing else.
+    if (searchArgs.getOrNull(3)?.strField("_SearchLibraryAction") != "Shuffle") return null
+    if (searchArgs.size != 4) return null
+
+    return Raw(
+        "Effects.Pipeline {\n" +
+            "            val pool = gather(\n" +
+            "                CardSource.FromZone(Zone.LIBRARY, Player.You, GameObjectFilter.Creature)\n" +
+            "            )\n" +
+            "            val found = chooseUpTo(\n" +
+            "                1,\n" +
+            "                from = pool,\n" +
+            "                prompt = \"Search your library for a creature card\",\n" +
+            "            )\n" +
+            "            reveal(found)\n" +
+            "            val placed = chooseUpToSplit(\n" +
+            "                1,\n" +
+            "                from = found,\n" +
+            "                prompt = \"Put the creature card into your hand or graveyard\",\n" +
+            "                selectedLabel = \"Put into your hand\",\n" +
+            "                remainderLabel = \"Put into your graveyard\",\n" +
+            "            )\n" +
+            "            move(placed.selected, CardDestination.ToZone(Zone.HAND))\n" +
+            "            move(placed.remainder, CardDestination.ToZone(Zone.GRAVEYARD))\n" +
+            "            run(ShuffleLibraryEffect())\n" +
+            "        }",
+    )
+}
+
 internal fun EmitCtx.mayCostReflexiveDamageEffect(actions: List<JsonObject>): Dsl? {
     if (actions.size != 2) return null
     val (mayCost, ifPaid) = actions
@@ -505,5 +587,71 @@ internal fun EmitCtx.mayCostReflexiveDamageEffect(actions: List<JsonObject>): Ds
             arg("damageSource", Lit("EffectTarget.Self")),
         )),
         arg("reflexiveTargetRequirements", call("listOf", arg(reflexiveTarget))),
+    )
+}
+
+/**
+ * Lumaret's Favor (Infusion copy) — a whole `FromStack` rule recognizer (returns the
+ * `triggeredAbility { … }` statement list):
+ *
+ * `FromStack { TriggerA[
+ *     WhenAPlayerCastsASpell(You, ThisSpell),
+ *     ActionList[ If(PlayerPassesFilter(You, GainedLifeThisTurn))
+ *                   [ CopySpellAndMayChooseNewTargets(Trigger_ThatSpell) ] ] ] }`
+ * →
+ * ```
+ * triggeredAbility {
+ *     trigger = Triggers.WhenYouCastThisSpell()
+ *     triggerCondition = Conditions.YouGainedLifeThisTurn
+ *     effect = Effects.CopyTargetSpell(target = EffectTarget.TriggeringEntity)
+ * }
+ * ```
+ *
+ * "Infusion — When you cast this spell, copy it if you gained life this turn. You may choose new targets
+ * for the copy." The Infusion copy is the cast-trigger sibling of Social Snub, but **mandatory** (no "you
+ * may") and gated by the Infusion intervening-"if" (`GainedLifeThisTurn`). The IR wraps the cast trigger
+ * in a top-level `FromStack` rule — the per-rule dispatch has no `FromStack` handler, so this fuses the
+ * whole shape. Renders ONLY this exact shape (cast-self trigger, `GainedLifeThisTurn` gate, a lone
+ * mandatory copy-with-new-targets of the triggering spell); any other trigger, condition, or body
+ * declines (-> SCAFFOLD). The "Target creature gets +2/+4" body is the separate `SpellActions` rule.
+ */
+internal fun EmitCtx.lumaretsFavorInfusionCopyBlock(rule: JsonObject): List<Stmt>? {
+    if (rule.strField("_Rule") != "FromStack") return null
+    val trigger = rule["args"] as? JsonObject ?: return null
+    if (trigger.strField("_Rule") != "TriggerA") return null
+    val trigArgs = trigger["args"].asArr ?: return null
+
+    // 1. Trigger: WhenAPlayerCastsASpell(You, ThisSpell).
+    val trig = trigArgs.getOrNull(0) as? JsonObject ?: return null
+    if (trig.strField("_Trigger") != "WhenAPlayerCastsASpell") return null
+    val whenArgs = trig["args"].asArr ?: return null
+    if (!jsonContains(whenArgs.getOrNull(0), "_Player", "You")) return null
+    if (!jsonContains(whenArgs.getOrNull(1), "_Spell", "ThisSpell")) return null
+
+    // 2. Sole action: If(PlayerPassesFilter(You, GainedLifeThisTurn))[ CopySpellAndMayChooseNewTargets ].
+    val actionsNode = trigArgs.getOrNull(1) as? JsonObject ?: return null
+    val actions = actionsNode["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
+    val ifAction = actions.singleOrNull()?.takeIf { it.strField("_Action") == "If" } ?: return null
+    val ifArgs = ifAction["args"].asArr ?: return null
+    val cond = ifArgs.getOrNull(0) as? JsonObject ?: return null
+    // "if you gained life this turn".
+    val condBlob = compact(cond)
+    val gainedLife = cond.strField("_Condition") == "PlayerPassesFilter" &&
+        "\"You\"" in condBlob && "GainedLifeThisTurn" in condBlob
+    if (!gainedLife) return null
+    // No else-branch (a plain intervening-if).
+    if (ifArgs.getOrNull(2) != null) return null
+
+    val thenActions = (ifArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
+    val copy = thenActions.singleOrNull()?.takeIf { it.strField("_Action") == "CopySpellAndMayChooseNewTargets" } ?: return null
+    // The copy is of the triggering spell.
+    if (copy["args"].strField("_Spell") != "Trigger_ThatSpell") return null
+
+    return listOf(
+        Sub(Block("triggeredAbility", listOf(
+            Assign("trigger", call("Triggers.WhenYouCastThisSpell")),
+            Assign("triggerCondition", Lit("Conditions.YouGainedLifeThisTurn")),
+            Assign("effect", call("Effects.CopyTargetSpell", arg("target", "EffectTarget.TriggeringEntity"))),
+        ))),
     )
 }

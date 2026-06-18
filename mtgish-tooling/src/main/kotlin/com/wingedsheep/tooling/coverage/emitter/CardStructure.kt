@@ -1441,7 +1441,16 @@ internal fun EmitCtx.spellBlock(card: JsonObject): List<Stmt>? {
     balanceEffect(card)?.let { return it }
     conditionalSpell(card)?.let { return it }
 
-    val (targets, rawActions) = extractEnvelope(card["Rules"])
+    // Extract the spell body from the `SpellActions` rule specifically, not the whole `card["Rules"]`
+    // tree. A card can carry a sibling cast-trigger rule (`FromStack { TriggerA … }` — Infusion copy on
+    // Lumaret's Favor, Social Snub) whose inner `ActionList`/`Targeted` envelope precedes the
+    // `SpellActions` rule; walking the whole tree would grab THAT envelope first and render the trigger's
+    // actions as the spell body (and scaffold on them), dropping the real spell. Scope to the
+    // SpellActions rule so the spell renders its own body.
+    val spellRule = (card["Rules"].asArr ?: JsonArray(emptyList()))
+        .filterIsInstance<JsonObject>().firstOrNull { it.strField("_Rule") == "SpellActions" }
+        ?: card  // fall back to the whole card for cards whose body isn't under a SpellActions rule
+    val (targets, rawActions) = extractEnvelope(spellRule)
     if (rawActions == null) return null
 
     // Paradigm (Secrets of Strixhaven) lowers to the spell-envelope ability word `paradigm()`, not an
