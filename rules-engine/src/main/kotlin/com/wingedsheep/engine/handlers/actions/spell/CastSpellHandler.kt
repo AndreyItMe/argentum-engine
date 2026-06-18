@@ -490,6 +490,19 @@ class CastSpellHandler(
             }
         }
 
+        // Apply ExileFromGraveyardOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val exileOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.ExileFromGraveyardOrPay>()
+                .firstOrNull()
+            if (exileOrPay != null) {
+                val choseExile = action.additionalCostPayment?.exiledCards?.isNotEmpty() == true
+                if (!choseExile) {
+                    effectiveCost = effectiveCost + ManaCost.parse(exileOrPay.alternativeManaCost)
+                }
+            }
+        }
+
         // Apply runtime mana tax from exile permissions (e.g., Soul Partition).
         if (!playForFree) {
             val runtimeCostIncrease = state.getEntity(action.cardId)
@@ -1305,6 +1318,28 @@ class CastSpellHandler(
                     }
                     // If beheldCards is empty, the player is paying extra mana instead
                 }
+                is AdditionalCost.ExileFromGraveyardOrPay -> {
+                    // ExileFromGraveyardOrPay: player chose the exile path if exiledCards is
+                    // non-empty, otherwise they pay extra mana (validated via mana payment).
+                    val exiled = action.additionalCostPayment?.exiledCards ?: emptyList()
+                    if (exiled.isNotEmpty()) {
+                        if (exiled.size != additionalCost.exileCount) {
+                            return "You must exile exactly ${additionalCost.exileCount} card(s) from your graveyard"
+                        }
+                        val graveyard = state.getZone(ZoneKey(action.playerId, Zone.GRAVEYARD))
+                        val context = PredicateContext(controllerId = action.playerId)
+                        for (cardId in exiled) {
+                            if (cardId !in graveyard) {
+                                return "Card to exile is not in your graveyard"
+                            }
+                            if (!predicateEvaluator.matches(state, state.projectedState, cardId, additionalCost.filter, context)) {
+                                val cardName = state.getEntity(cardId)?.get<CardComponent>()?.name ?: "Card"
+                                return "$cardName doesn't match the required filter: ${additionalCost.filter.description}"
+                            }
+                        }
+                    }
+                    // If exiledCards is empty, the player is paying extra mana instead
+                }
                 is AdditionalCost.RemoveCountersFromYourCreatures -> {
                     // Web client sends a typed list of (entity, counterType, count)
                     // entries so the player picks which counter type comes off each
@@ -1572,6 +1607,20 @@ class CastSpellHandler(
                 val choseBehold = action.additionalCostPayment?.beheldCards?.isNotEmpty() == true
                 if (!choseBehold) {
                     effectiveCost = effectiveCost + ManaCost.parse(beholdOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply ExileFromGraveyardOrPay: if player chose the "pay mana" path (no exiled cards),
+        // add the extra mana on top of the base cost.
+        if (cardDef != null && !playForFreeInExecute) {
+            val exileOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.ExileFromGraveyardOrPay>()
+                .firstOrNull()
+            if (exileOrPay != null) {
+                val choseExile = action.additionalCostPayment?.exiledCards?.isNotEmpty() == true
+                if (!choseExile) {
+                    effectiveCost = effectiveCost + ManaCost.parse(exileOrPay.alternativeManaCost)
                 }
             }
         }
@@ -1976,6 +2025,29 @@ class CastSpellHandler(
                             ))
                         }
                         // If beheldCards is empty, "pay mana" path — extra mana already added to effectiveCost
+                    }
+                    is AdditionalCost.ExileFromGraveyardOrPay -> {
+                        // Exile the chosen graveyard cards if the player chose the exile path.
+                        // If exiledCards is empty, "pay mana" path — extra mana already added above.
+                        val exiledCards = action.additionalCostPayment.exiledCards
+                        for (cardId in exiledCards) {
+                            val cardContainer = currentState.getEntity(cardId) ?: continue
+                            val card = cardContainer.get<CardComponent>() ?: continue
+                            val sourceZone = ZoneKey(action.playerId, Zone.GRAVEYARD)
+                            val exileZone = ZoneKey(action.playerId, Zone.EXILE)
+
+                            currentState = currentState.removeFromZone(sourceZone, cardId)
+                            currentState = currentState.addToZone(exileZone, cardId)
+
+                            events.add(ZoneChangeEvent(
+                                entityId = cardId,
+                                entityName = card.name,
+                                fromZone = Zone.GRAVEYARD,
+                                toZone = Zone.EXILE,
+                                ownerId = action.playerId
+                            ))
+                        }
+                        exiledCardCount += exiledCards.size
                     }
                     is AdditionalCost.RemoveCountersFromYourCreatures -> {
                         // Remove the chosen counters from the designated creatures.

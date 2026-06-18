@@ -278,6 +278,43 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
     }
 
     /**
+     * Exile [exileCount] cards matching [filter] from your graveyard, or pay additional mana:
+     * the caster must either exile that many matching cards from their graveyard, or pay extra mana
+     * on top of the spell's base mana cost. The sibling of [BlightOrPay] / [BeholdOrPay] for the
+     * "exile from graveyard or pay" shape (e.g. Soaring Stoneglider — "exile two cards from your
+     * graveyard or pay {1}{W}").
+     *
+     * The enumerator produces up to two legal actions: one for the exile path (base cost + card
+     * selection from the graveyard) and one for the pay path (base cost + [alternativeManaCost]).
+     * The exile path is only offered when the graveyard holds at least [exileCount] matching cards.
+     * The chosen path is recovered at payment time from whether
+     * [AdditionalCostPayment.exiledCards] is non-empty.
+     *
+     * @property exileCount How many matching cards to exile from the graveyard
+     * @property alternativeManaCost Extra mana to pay instead of exiling (e.g., "{1}{W}")
+     * @property filter Which graveyard cards qualify (default any card)
+     */
+    @SerialName("ExileFromGraveyardOrPay")
+    @Serializable
+    data class ExileFromGraveyardOrPay(
+        val exileCount: Int,
+        val alternativeManaCost: String,
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+    ) : AdditionalCost {
+        override val description: String = buildString {
+            append("Exile $exileCount ")
+            append(filter.description)
+            append(if (exileCount == 1) " card from your graveyard or pay " else " cards from your graveyard or pay ")
+            append(alternativeManaCost)
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
      * Exile cards from a named pipeline collection and optionally link them to the
      * source spell/permanent via LinkedExileComponent.
      *

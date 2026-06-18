@@ -125,6 +125,13 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // flows to the spell's resolution X value. Capability-only: the emitter keeps it at SCAFFOLD because
     // it sits in the cast-time-X / extra-cost area the module declines to render exactly.
     supported("AdditionalCastingCostX", "cost: additional pay-X-life (Costs.additional.PayXLife())")
+    // "As an additional cost to cast this spell, <cost>" — the generic additional-cost wrapper (the IR
+    // `AdditionalCastingCost` node). Soaring Stoneglider's "exile two cards from your graveyard or pay
+    // {1}{W}" is `AdditionalCastingCost(Or(ExileNumberGraveyardCards, PayMana))`. The engine models the
+    // exile-or-pay shape via Costs.additional.ExileFromGraveyardOrPay(). Capability-only: the emitter
+    // keeps additional-cost shapes at SCAFFOLD (the cast-time extra-cost area it declines to render).
+    supported("AdditionalCastingCost", "cost: additional cost to cast (Costs.additional.*)")
+    supported("ExileNumberGraveyardCards", "cost: exile N cards from your graveyard (Costs.additional.ExileFromGraveyardOrPay() / exile-from-graveyard)")
     // Waterbend {N} (Avatar: The Last Airbender, CR) — a generic-mana cost where each generic may be
     // paid by tapping an untapped artifact/creature you control. On activated abilities this maps to
     // `activatedAbility { cost = Costs.Mana("{N}"); hasWaterbend = true }`. The emitter renders the
