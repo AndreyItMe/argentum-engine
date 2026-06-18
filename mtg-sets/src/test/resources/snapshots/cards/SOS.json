@@ -57,6 +57,56 @@
     ]
 }
 
+// Abstract Paintmage
+{
+    "name": "Abstract Paintmage",
+    "manaCost": "{U}{U/R}{R}",
+    "typeLine": "Creature — Djinn Sorcerer",
+    "oracleText": "At the beginning of your first main phase, add {U}{R}. Spend this mana only to cast instant and sorcery spells.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "PRECOMBAT_MAIN"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddMana",
+                            "color": "BLUE",
+                            "restriction": "InstantOrSorceryOnly"
+                        },
+                        {
+                            "type": "AddMana",
+                            "color": "RED",
+                            "restriction": "InstantOrSorceryOnly"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "171",
+        "rarity": "UNCOMMON",
+        "artist": "David Auden Nash",
+        "flavorText": "\"Life is vivid; the pigments I use should be too.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/a/ea008094-d995-4740-9b39-c61049356c55.jpg?1775938173"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
 // Additive Evolution
 {
     "name": "Additive Evolution",
@@ -708,6 +758,79 @@
     ]
 }
 
+// Biblioplex Tomekeeper
+{
+    "name": "Biblioplex Tomekeeper",
+    "manaCost": "{4}",
+    "typeLine": "Artifact Creature — Construct",
+    "oracleText": "When this creature enters, choose up to one —\n• Target creature becomes prepared. (Only creatures with prepare spells can become prepared.)\n• Target creature becomes unprepared.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "BecomePrepared",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature"
+                                    }
+                                }
+                            ],
+                            "description": "Target creature becomes prepared"
+                        },
+                        {
+                            "effect": {
+                                "type": "Unprepare",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature"
+                                    }
+                                }
+                            ],
+                            "description": "Target creature becomes unprepared"
+                        }
+                    ],
+                    "minChooseCount": 0,
+                    "countsAsModalSpell": false
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "247",
+        "artist": "Raph Lomotan",
+        "flavorText": "\"Due dates are firm, and will be enforced.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/f/bf2efdd9-d2b4-4bea-a5b9-dbb2eee4dfba.jpg?1775938724"
+    },
+    "colorIdentityOverride": []
+}
+
 // Blazing Firesinger
 {
     "name": "Blazing Firesinger",
@@ -1081,6 +1204,66 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Campus Composer
+{
+    "name": "Campus Composer",
+    "manaCost": "{3}{U}",
+    "typeLine": "Creature — Merfolk Bard",
+    "oracleText": "Ward {2}\nThis creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "PREPARED",
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Mana",
+                "manaCost": "{2}"
+            }
+        }
+    ],
+    "metadata": {
+        "collectorNumber": "40",
+        "rarity": "UNCOMMON",
+        "artist": "Madeline Boni",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/a/fac8ac39-ecb4-4142-bf37-131c65660a9b.jpg?1778164968"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Aqueous Aria",
+            "manaCost": "{4}{U}",
+            "typeLine": "Sorcery",
+            "oracleText": "Create a 3/3 blue and red Elemental creature token with flying.",
+            "script": {
+                "spellEffect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 3,
+                    "colors": [
+                        "BLUE",
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Elemental"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ]
+                }
+            }
+        }
     ]
 }
 
