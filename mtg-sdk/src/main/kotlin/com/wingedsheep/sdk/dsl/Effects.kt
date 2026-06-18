@@ -3340,7 +3340,7 @@ object Effects {
         colors: Set<String>? = null,
         imageUri: String? = null,
         duration: Duration = Duration.EndOfTurn
-    ): Effect = BecomeCreatureEffect(target, power, toughness, keywords, creatureTypes, removeTypes, colors, imageUri, duration)
+    ): Effect = BecomeCreatureEffect(target, power, toughness, keywords, creatureTypes, removeTypes, colors = colors, imageUri = imageUri, duration = duration)
 
     /** Fixed-P/T sugar for [BecomeCreature] — Sarkhan's "4/4 Dragon" and similar constant animates. */
     fun BecomeCreature(
@@ -3350,12 +3350,13 @@ object Effects {
         keywords: Set<Keyword> = emptySet(),
         creatureTypes: Set<String> = emptySet(),
         removeTypes: Set<String> = emptySet(),
+        addTypes: Set<String> = emptySet(),
         colors: Set<String>? = null,
         imageUri: String? = null,
         duration: Duration = Duration.EndOfTurn
     ): Effect = BecomeCreatureEffect(
         target, DynamicAmount.Fixed(power), DynamicAmount.Fixed(toughness),
-        keywords, creatureTypes, removeTypes, colors, imageUri, duration,
+        keywords, creatureTypes, removeTypes, addTypes, colors, imageUri, duration,
     )
 
     /**

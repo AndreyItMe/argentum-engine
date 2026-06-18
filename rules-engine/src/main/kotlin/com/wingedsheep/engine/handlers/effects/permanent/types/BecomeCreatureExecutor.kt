@@ -49,6 +49,18 @@ class BecomeCreatureExecutor : EffectExecutor<BecomeCreatureEffect> {
             context = context
         )
 
+        // Layer 4 (TYPE): Add any additional card types alongside CREATURE (e.g. ARTIFACT for
+        // Mishra's Factory's "2/2 Assembly-Worker artifact creature. It's still a land").
+        for (type in effect.addTypes) {
+            newState = newState.addFloatingEffect(
+                layer = Layer.TYPE,
+                modification = SerializableModification.AddType(type),
+                affectedEntities = affectedEntities,
+                duration = effect.duration,
+                context = context
+            )
+        }
+
         // Layer 4 (TYPE): Remove specified types (e.g., PLANESWALKER)
         for (type in effect.removeTypes) {
             newState = newState.addFloatingEffect(

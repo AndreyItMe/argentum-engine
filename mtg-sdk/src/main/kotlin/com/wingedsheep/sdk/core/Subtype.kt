@@ -13,6 +13,7 @@ value class Subtype(val value: String) {
         val APE = Subtype("Ape")
         val ARCHER = Subtype("Archer")
         val ASSASSIN = Subtype("Assassin")
+        val ASSEMBLY_WORKER = Subtype("Assembly-Worker")
         val CITIZEN = Subtype("Citizen")
         val BEAR = Subtype("Bear")
         val BEAST = Subtype("Beast")

@@ -85,12 +85,21 @@ data class BecomeCreatureEffect(
     val keywords: Set<Keyword> = emptySet(),
     val creatureTypes: Set<String> = emptySet(),
     val removeTypes: Set<String> = emptySet(),
+    /**
+     * Additional card types to grant alongside CREATURE (added, not replaced — the permanent keeps
+     * its existing types). Use for "becomes a 2/2 Assembly-Worker **artifact** creature. It's still
+     * a land" (Mishra's Factory): `addTypes = setOf("ARTIFACT")`. The CREATURE type is always
+     * granted; list any other type here.
+     */
+    val addTypes: Set<String> = emptySet(),
     val colors: Set<String>? = null,
     val imageUri: String? = null,
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = buildString {
-        append("${target.description} becomes a ${power.description}/${toughness.description} creature")
+        append("${target.description} becomes a ${power.description}/${toughness.description} ")
+        if (addTypes.isNotEmpty()) append("${addTypes.joinToString(" ") { it.lowercase() }} ")
+        append("creature")
         if (creatureTypes.isNotEmpty()) append(" ${creatureTypes.joinToString("/")}")
         if (keywords.isNotEmpty()) append(" with ${keywords.joinToString(", ") { it.name.lowercase() }}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
