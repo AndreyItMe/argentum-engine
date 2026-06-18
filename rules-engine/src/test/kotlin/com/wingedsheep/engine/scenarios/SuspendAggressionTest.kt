@@ -42,7 +42,7 @@ class SuspendAggressionTest : FunSpec({
 
     test("exiles target permanent and own top card; each card's owner gets the may-play permission") {
         val driver = createDriver()
-        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Mountain" to 20), skipMulligans = true, startingLife = 20)
+        driver.initMirrorMatch(deck = Deck.of("Plains" to 20, "Mountain" to 20), skipMulligans = true, startingLife = 20)
         val me = driver.activePlayer!!
         val opp = driver.getOpponent(me)
         driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
@@ -53,7 +53,9 @@ class SuspendAggressionTest : FunSpec({
         val myTop = driver.putCardOnTopOfLibrary(me, "Lightning Bolt")
 
         val spell = driver.putCardInHand(me, "Suspend Aggression")
-        repeat(3) { driver.putLandOnBattlefield(me, "Mountain") }
+        // {1}{R}{W}: a Plains for {W}, two Mountains for {R} and {1}.
+        repeat(2) { driver.putLandOnBattlefield(me, "Mountain") }
+        repeat(2) { driver.putLandOnBattlefield(me, "Plains") }
 
         driver.submit(
             CastSpell(

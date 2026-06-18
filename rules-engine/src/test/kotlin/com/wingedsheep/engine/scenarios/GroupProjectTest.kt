@@ -32,7 +32,7 @@ class GroupProjectTest : FunSpec({
 
     fun spiritCount(driver: GameTestDriver, playerId: com.wingedsheep.sdk.model.EntityId): Int =
         driver.getCreatures(playerId).count {
-            driver.getCardName(it) == "Spirit"
+            driver.getCardName(it) == "Spirit Token"
         }
 
     test("normal cast makes a 2/2 Spirit token") {
