@@ -422,6 +422,12 @@ data class SpellCastEvent(
 
 /**
  * An ability was activated.
+ *
+ * [costsTap] is true iff the activation cost includes the {T} symbol; [isManaAbility] is true for
+ * mana abilities (CR 605.1). These let triggers distinguish the two "activates an ability" wordings:
+ * "isn't a mana ability" (Flamescroll Celebrant — fired only for non-mana abilities, which use the
+ * stack) versus "without {T} in its activation cost" (Antiquities Haunting Wind / Powerleech /
+ * Artifact Possession — fired for any ability, mana or not, whose cost lacks {T}).
  */
 @Serializable
 @SerialName("AbilityActivatedEvent")
@@ -429,7 +435,9 @@ data class AbilityActivatedEvent(
     val sourceId: EntityId,
     val sourceName: String,
     val controllerId: EntityId,
-    val abilityEntityId: EntityId? = null
+    val abilityEntityId: EntityId? = null,
+    val costsTap: Boolean = false,
+    val isManaAbility: Boolean = false
 ) : GameEvent
 
 /**

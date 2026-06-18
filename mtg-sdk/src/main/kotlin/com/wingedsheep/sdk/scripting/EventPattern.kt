@@ -1333,13 +1333,13 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
-     * When a player activates an activated ability that isn't a mana ability.
+     * When a player activates an activated ability.
      *
-     * Mana abilities resolve without using the stack (CR 605.3), so the engine only emits its
-     * `AbilityActivatedEvent` for non-mana activated abilities — including planeswalker loyalty
-     * abilities (CR 606), which are activated abilities. This template therefore matches exactly
-     * "activates an ability that isn't a mana ability"; [player] scopes whose activations count
-     * ([Player.EachOpponent] for "an opponent activates …", [Player.You] for your own, etc.).
+     * By default this matches "activates an ability that isn't a mana ability": mana abilities
+     * resolve without using the stack (CR 605.3), so the engine emits its `AbilityActivatedEvent`
+     * for non-mana activated abilities — including planeswalker loyalty abilities (CR 606), which
+     * are activated abilities. [player] scopes whose activations count ([Player.EachOpponent] for
+     * "an opponent activates …", [Player.You] for your own, etc.).
      *
      * Used by Flamescroll Celebrant: "Whenever an opponent activates an ability that isn't a mana
      * ability, this creature deals 1 damage to that player."
@@ -1349,22 +1349,48 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
      * satisfying it — a non-targeting ability never fires. Ertha Jo, Frontier Mentor uses
      * [com.wingedsheep.sdk.scripting.events.AbilityTargetMatch.CreatureOrPlayer] for
      * "Whenever you activate an ability that targets a creature or player".
+     *
+     * [sourceFilter] optionally restricts which permanent the activated ability must belong to
+     * (e.g. [GameObjectFilter.Artifact], or `Artifact.opponentControls()`). Null = any source.
+     *
+     * [requireNoTapInCost] switches the trigger from the "isn't a mana ability" semantic to the
+     * Antiquities "without {T} in its activation cost" semantic (Haunting Wind, Powerleech,
+     * Artifact Possession). When true, the ability matches iff its activation cost does **not**
+     * include the {T} symbol — and mana abilities without {T} *do* count, unlike the default
+     * semantic. The engine emits an `AbilityActivatedEvent` for every activated ability whose cost
+     * lacks {T} (mana or not); this flag is what tells the matcher to accept the mana-ability ones.
      */
     @SerialName("AbilityActivatedEvent")
     @Serializable
     data class AbilityActivatedEvent(
         val player: Player = Player.You,
-        val targetMatch: com.wingedsheep.sdk.scripting.events.AbilityTargetMatch? = null
+        val targetMatch: com.wingedsheep.sdk.scripting.events.AbilityTargetMatch? = null,
+        val sourceFilter: GameObjectFilter? = null,
+        val requireNoTapInCost: Boolean = false
     ) : EventPattern {
         override val description: String = buildString {
             append(player.description)
-            append(" activates an ability that ")
-            if (targetMatch != null) {
-                append("targets a ")
-                append(targetMatch.description)
+            append(" activates ")
+            if (sourceFilter != null) {
+                append("a ")
+                append(sourceFilter.description)
+                append("'s ability that ")
             } else {
-                append("isn't a mana ability")
+                append("an ability that ")
             }
+            when {
+                targetMatch != null -> {
+                    append("targets a ")
+                    append(targetMatch.description)
+                }
+                requireNoTapInCost -> append("doesn't have {T} in its activation cost")
+                else -> append("isn't a mana ability")
+            }
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): EventPattern {
+            val newFilter = sourceFilter?.applyTextReplacement(replacer)
+            return if (newFilter !== sourceFilter) copy(sourceFilter = newFilter) else this
         }
     }
 

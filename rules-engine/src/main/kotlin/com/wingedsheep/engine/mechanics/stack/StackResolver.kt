@@ -611,7 +611,8 @@ class StackResolver(
         ability: ActivatedAbilityOnStackComponent,
         targets: List<ChosenTarget> = emptyList(),
         targetRequirements: List<TargetRequirement> = emptyList(),
-        emitActivationEvent: Boolean = true
+        emitActivationEvent: Boolean = true,
+        costsTap: Boolean = false
     ): ExecutionResult {
         val (abilityId, stateWithId) = state.newEntity()
 
@@ -626,12 +627,17 @@ class StackResolver(
 
         val events = mutableListOf<GameEvent>()
         if (emitActivationEvent) {
+            // Abilities reaching the stack are never mana abilities (CR 605.3 — mana abilities
+            // resolve without the stack). costsTap lets the {T}-in-cost trigger family distinguish
+            // tap-cost abilities (which it must skip) from non-tap ones.
             events.add(
                 AbilityActivatedEvent(
                     ability.sourceId,
                     ability.sourceName,
                     ability.controllerId,
-                    abilityEntityId = abilityId
+                    abilityEntityId = abilityId,
+                    costsTap = costsTap,
+                    isManaAbility = false
                 )
             )
         }

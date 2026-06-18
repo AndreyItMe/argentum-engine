@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers.actions.ability
 import com.wingedsheep.engine.state.components.battlefield.chosenColor
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.core.AbilityActivatedEvent
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.LoyaltyChangedEvent
@@ -936,6 +937,13 @@ class ActivateAbilityHandler(
             events.add(LoyaltyChangedEvent(action.sourceId, cardComponent.name, abilityCost.change))
         }
 
+        // Snapshot of the activation's cost-side events (cost payment + the {T}/tap/loyalty events
+        // emitted just above) before any mana-production event is appended. The mana-ability path
+        // resolves off the stack and returns early, so it must run trigger detection over this set
+        // — including the {T} TappedEvent — so an ANY-binding "whenever an artifact becomes tapped"
+        // trigger (Powerleech, Tap Watcher) fires when a {T} mana ability is activated.
+        val activationCostEvents = events.toList()
+
         // Track per-turn activation if the ability has an OncePerTurn or MaxPerTurn restriction
         fun isPerTurnTracked(r: ActivationRestriction): Boolean =
             r is ActivationRestriction.OncePerTurn || r is ActivationRestriction.MaxPerTurn ||
@@ -1227,26 +1235,49 @@ class ActivateAbilityHandler(
             val bonusResult = tappedForManaBonusResolver.drive(currentState, anyColorBonuses, allManaEvents)
             if (bonusResult.isPaused) return bonusResult
 
-            // Detect and queue any triggered abilities from the cost payment — e.g. the
-            // dies/leaves-the-battlefield trigger of a source sacrificed to pay a mana ability.
-            // Such triggered abilities still use the stack even though the mana ability itself
-            // resolves off it (mirrors the non-mana path below).
-            val costTriggers = triggerDetector.detectTriggers(bonusResult.newState, costPaymentEvents)
+            // A mana ability whose cost lacks {T} (e.g. Ashnod's Altar's "Sacrifice a creature: Add
+            // {C}{C}") still satisfies the Antiquities "activates an ability without {T} in its
+            // activation cost" template (Haunting Wind / Powerleech / Artifact Possession). Mana
+            // abilities resolve off the stack, so StackResolver never emits AbilityActivatedEvent
+            // for them — emit it here. The common tap-for-mana case (cost has {T}) is skipped, so
+            // there's no behavior change or client-log noise for ordinary mana sources.
+            val manaAbilityActivatedEvents: List<GameEvent> =
+                if (!hasTapCost(effectiveCost)) {
+                    listOf(
+                        AbilityActivatedEvent(
+                            sourceId = action.sourceId,
+                            sourceName = cardComponent.name,
+                            controllerId = action.playerId,
+                            abilityEntityId = null,
+                            costsTap = false,
+                            isManaAbility = true
+                        )
+                    )
+                } else emptyList()
+
+            // Detect and queue any triggered abilities from the activation — the cost-side events
+            // (a sacrificed source's dies trigger, the {T} TappedEvent for an artifact-tap trigger)
+            // plus the non-{T} mana-ability activation event above. Such triggered abilities still
+            // use the stack even though the mana ability itself resolves off it.
+            val activationTriggerEvents = activationCostEvents + manaAbilityActivatedEvents
+            val resultEvents = bonusResult.events + manaAbilityActivatedEvents
+            val costTriggers = triggerDetector.detectTriggers(bonusResult.newState, activationTriggerEvents)
             if (costTriggers.isNotEmpty()) {
                 val triggerResult = triggerProcessor.processTriggers(bonusResult.newState, costTriggers)
                 if (triggerResult.isPaused) {
                     return ExecutionResult.paused(
                         triggerResult.state.withPriority(action.playerId),
                         triggerResult.pendingDecision!!,
-                        bonusResult.events + triggerResult.events
+                        resultEvents + triggerResult.events
                     )
                 }
                 return ExecutionResult.success(
                     triggerResult.newState.withPriority(action.playerId),
-                    bonusResult.events + triggerResult.events
+                    resultEvents + triggerResult.events
                 )
             }
-            return bonusResult
+            return if (manaAbilityActivatedEvents.isEmpty()) bonusResult
+            else ExecutionResult.success(bonusResult.newState, resultEvents)
         }
 
         // Non-mana abilities go on the stack
@@ -1275,7 +1306,8 @@ class ActivateAbilityHandler(
 
         var stackResult = stackResolver.putActivatedAbility(
             currentState, abilityOnStack, action.targets,
-            targetRequirements = effectiveTargetReqs
+            targetRequirements = effectiveTargetReqs,
+            costsTap = hasTapCost(effectiveCost)
         )
         currentState = stackResult.newState
         events.addAll(stackResult.events)

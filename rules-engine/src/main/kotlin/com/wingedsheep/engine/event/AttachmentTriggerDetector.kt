@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.event
 
+import com.wingedsheep.engine.core.AbilityActivatedEvent
 import com.wingedsheep.engine.core.AttackersDeclaredEvent
 import com.wingedsheep.engine.core.DamageDealtEvent
 import com.wingedsheep.engine.core.TappedEvent
@@ -45,7 +46,7 @@ class AttachmentTriggerDetector(private val matcher: TriggerMatcher) {
                     // aura's own ZoneChangeEvent. Only equipment stays on the battlefield.
                     if (isZoneChange && ability.trigger is EventPattern.ZoneChangeEvent &&
                         !entry.cardComponent.typeLine.isEquipment) continue
-                    if (matchesAttachedTrigger(ability.trigger, event, entityId, state)) {
+                    if (matchesAttachedTrigger(ability.trigger, event, entityId, entry.controllerId, state)) {
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
@@ -81,6 +82,9 @@ class AttachmentTriggerDetector(private val matcher: TriggerMatcher) {
             is AttackersDeclaredEvent -> event.attackers
             is TurnFaceUpEvent -> listOf(event.entityId)
             is TappedEvent -> listOf(event.entityId)
+            // "an ability of enchanted artifact … was activated" (Artifact Possession) — the
+            // activated ability's source is the enchanted permanent.
+            is AbilityActivatedEvent -> listOf(event.sourceId)
             is ZoneChangeEvent -> {
                 if (event.fromZone == Zone.BATTLEFIELD) listOf(event.entityId) else emptyList()
             }
@@ -96,6 +100,7 @@ class AttachmentTriggerDetector(private val matcher: TriggerMatcher) {
         trigger: EventPattern,
         event: EngineGameEvent,
         attachedEntityId: com.wingedsheep.sdk.model.EntityId,
+        auraControllerId: com.wingedsheep.sdk.model.EntityId,
         state: GameState
     ): Boolean {
         return when (trigger) {
@@ -116,6 +121,14 @@ class AttachmentTriggerDetector(private val matcher: TriggerMatcher) {
             }
             is EventPattern.TapEvent -> {
                 event is TappedEvent && event.entityId == attachedEntityId
+            }
+            is EventPattern.AbilityActivatedEvent -> {
+                if (event !is AbilityActivatedEvent) return false
+                if (event.sourceId != attachedEntityId) return false
+                if (!matcher.matchesPlayer(trigger.player, event.controllerId, auraControllerId)) return false
+                // Mirror the main matcher's two wordings (see TriggerMatcher.AbilityActivatedEvent):
+                // "without {T} in its activation cost" vs. "isn't a mana ability".
+                if (trigger.requireNoTapInCost) !event.costsTap else !event.isManaAbility
             }
             is EventPattern.TurnFaceUpEvent -> {
                 event is TurnFaceUpEvent && event.entityId == attachedEntityId

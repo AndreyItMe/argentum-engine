@@ -2204,6 +2204,20 @@ Named sugar for the common type-primitive cases; reach for `youCastSpell(...)` p
   Mentor, whose payoff is `Effects.CopyTargetSpellOrAbility(EffectTarget.TriggeringEntity)` (for an
   `AbilityActivatedEvent` the triggering entity is the activated ability on the stack; the copy executor reprompts for
   new targets, CR 707.10/707.10c).
+- `activatesAbilityWithoutTap(player?, sourceFilter?, binding?)` — the Antiquities "tap / activate an artifact"
+  punisher half: a permanent matching `sourceFilter` has an activated ability used **without `{T}` in its activation
+  cost** (Haunting Wind, Powerleech, Artifact Possession). Backed by
+  `EventPattern.AbilityActivatedEvent(player, sourceFilter, requireNoTapInCost = true)`. This differs from
+  `OpponentActivatesAbility` / `YouActivateAbility` in two ways: it keys on the literal `{T}`-in-cost wording rather
+  than "isn't a mana ability", so **a non-`{T}` mana ability also fires it** (the engine emits an
+  `AbilityActivatedEvent` for every activated ability whose cost lacks `{T}`, mana or not, and `costsTap`/`isManaAbility`
+  on the event let the matcher pick the right wording); and `sourceFilter` restricts which permanent's ability counts
+  (`GameObjectFilter.Artifact`, `Artifact.opponentControls()`, or null with `TriggerBinding.ATTACHED` for "enchanted
+  artifact"). Pair with `becomesTapped(...)` to cover the full "becomes tapped or has a non-`{T}` ability activated"
+  clause. For "that artifact's controller": the **global** form uses
+  `EffectTarget.PlayerRef(Player.TriggeringPlayer)` (the activator); the **ATTACHED** form uses
+  `EffectTarget.ControllerOfTriggeringEntity` (the enchanted artifact's controller, exposed by
+  `AttachmentTriggerDetector`).
 
 **Other casters.** The same shape, scoped to a different caster via the runtime
 `Player.Each` / `Player.EachOpponent` matching on `SpellCastEvent`. Bind the payoff to the

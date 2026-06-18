@@ -1006,6 +1006,34 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    /**
+     * Whenever [player] activates the ability of a permanent matching [sourceFilter] **without
+     * {T} in its activation cost** (the Antiquities "tap/activate an artifact" punisher template —
+     * Haunting Wind, Powerleech, Artifact Possession).
+     *
+     * Unlike [OpponentActivatesAbility] / [YouActivateAbility] (which key on "isn't a mana
+     * ability"), this keys on the literal {T}-in-cost wording: an ability without {T} fires it
+     * regardless of whether it's a mana ability, and an ability *with* {T} never does. Pair it
+     * with a [becomesTapped] trigger to cover the full "becomes tapped or has a non-{T} ability
+     * activated" clause.
+     *
+     * [sourceFilter] = null matches any permanent's non-{T} ability; pass
+     * [GameObjectFilter.Artifact] (Haunting Wind), `Artifact.opponentControls()` (Powerleech),
+     * or null with [TriggerBinding.ATTACHED] (Artifact Possession — enchanted artifact only).
+     */
+    fun activatesAbilityWithoutTap(
+        player: Player = Player.Each,
+        sourceFilter: GameObjectFilter? = null,
+        binding: TriggerBinding = TriggerBinding.ANY
+    ): TriggerSpec = TriggerSpec(
+        event = AbilityActivatedEvent(
+            player = player,
+            sourceFilter = sourceFilter,
+            requireNoTapInCost = true
+        ),
+        binding = binding
+    )
+
     // =========================================================================
     // Counter Triggers
     // =========================================================================

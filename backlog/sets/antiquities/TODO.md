@@ -114,13 +114,17 @@ confirm the noted clause during `add-card`; if it surprises you, move it to List
 
 Each group is a candidate single feature PR. Confirm with `add-card` before building.
 
-### Artifact-tapped / artifact-ability-activated trigger
+### Artifact-tapped / artifact-ability-activated trigger ✅ DONE
 *Trigger: "whenever an artifact becomes tapped, or a player activates an artifact's ability
-without `{T}` in its cost."* No such trigger today (`becomesTapped` exists but not typed to
-artifacts, and there's no ability-activated-without-tap event).
-- **Haunting Wind** — global; 1 damage to the artifact's controller.
-- **Powerleech** — opponents' artifacts only; you gain 1 life.
-- **Artifact Possession** — single enchanted artifact; 2 damage to its controller.
+without `{T}` in its cost."* Implemented: the tap half reuses `Triggers.becomesTapped(filter)`;
+the ability half is `Triggers.activatesAbilityWithoutTap(player, sourceFilter, binding)`, backed by
+`EventPattern.AbilityActivatedEvent(sourceFilter, requireNoTapInCost)`. The engine now emits
+`AbilityActivatedEvent` (carrying `costsTap`/`isManaAbility`) for every activated ability whose cost
+lacks `{T}` — mana abilities included — so the literal "{T}-in-cost" wording is honored, distinct
+from the existing "isn't a mana ability" wording.
+- [x] **Haunting Wind** — global; 1 damage to the artifact's controller.
+- [x] **Powerleech** — opponents' artifacts only; you gain 1 life.
+- [x] **Artifact Possession** — single enchanted artifact (ATTACHED); 2 damage to its controller.
 
 ### "Doesn't untap" control family (untap restrictions / pay-to-untap / tap-locked buffs)
 No "you may choose not to untap", "doesn't untap during your untap step", per-permanent untap

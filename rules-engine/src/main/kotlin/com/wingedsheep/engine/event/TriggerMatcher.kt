@@ -257,11 +257,39 @@ class TriggerMatcher(
                 targets != null && targets.size == 1
             }
             is EventPattern.AbilityActivatedEvent -> {
-                // The engine only emits AbilityActivatedEvent for non-mana activated abilities
-                // (mana abilities resolve without the stack), so this naturally matches
-                // "activates an ability that isn't a mana ability". Loyalty abilities qualify.
                 if (event !is AbilityActivatedEvent) return false
                 if (!matchesPlayer(trigger.player, event.controllerId, controllerId)) return false
+                if (trigger.requireNoTapInCost) {
+                    // Antiquities "activates an ability without {T} in its activation cost"
+                    // (Haunting Wind / Powerleech / Artifact Possession). Match any activated
+                    // ability whose cost lacks {T} — mana abilities without {T} count too.
+                    if (event.costsTap) return false
+                } else {
+                    // Default "activates an ability that isn't a mana ability" (Flamescroll
+                    // Celebrant): the engine emits AbilityActivatedEvent for non-mana abilities
+                    // (which use the stack) and, for the {T}-cost template above, for non-{T} mana
+                    // abilities — so explicitly reject the mana-ability ones here. Loyalty
+                    // abilities qualify (they aren't mana abilities).
+                    if (event.isManaAbility) return false
+                }
+                // SELF/ATTACHED binding: the ability's source must be this permanent (Artifact
+                // Possession — "enchanted artifact"); the source is exposed via TriggerContext as
+                // the triggering entity for the ATTACHED check upstream, but the source-id match
+                // here keys directly off event.sourceId.
+                if (binding == TriggerBinding.SELF && event.sourceId != sourceId) return false
+                // sourceFilter: the permanent whose ability was activated must match (e.g. an
+                // artifact, or an artifact an opponent controls).
+                val sourceFilter = trigger.sourceFilter
+                if (sourceFilter != null) {
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId
+                    )
+                    if (!PredicateEvaluator().matches(
+                            state, state.projectedState, event.sourceId, sourceFilter, predicateContext
+                        )
+                    ) return false
+                }
                 val targetMatch = trigger.targetMatch
                 if (targetMatch != null) {
                     // "...that targets a creature or player": the activated ability on the stack
