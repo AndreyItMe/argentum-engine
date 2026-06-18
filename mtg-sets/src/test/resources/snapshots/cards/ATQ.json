@@ -1953,6 +1953,90 @@
     "colorIdentityOverride": []
 }
 
+// Mishra's Factory
+{
+    "name": "Mishra's Factory",
+    "manaCost": "",
+    "typeLine": "Land",
+    "oracleText": "{T}: Add {C}.\n{1}: This land becomes a 2/2 Assembly-Worker artifact creature until end of turn. It's still a land.\n{T}: Target Assembly-Worker creature gets +1/+1 until end of turn.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddColorlessMana",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "BecomeCreature",
+                    "power": 2,
+                    "toughness": 2,
+                    "creatureTypes": [
+                        "Assembly-Worker"
+                    ],
+                    "addTypes": [
+                        "ARTIFACT"
+                    ]
+                },
+                "descriptionOverride": "{1}: This land becomes a 2/2 Assembly-Worker artifact creature until end of turn. It's still a land."
+            },
+            {
+                "id": "ability_3",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target Assembly-Worker creature"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature Assembly-Worker"
+                        },
+                        "id": "target Assembly-Worker creature"
+                    }
+                ],
+                "descriptionOverride": "{T}: Target Assembly-Worker creature gets +1/+1 until end of turn."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "80a",
+        "rarity": "UNCOMMON",
+        "artist": "Kaja Foglio & Phil Foglio",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/6/a696c5b6-f216-454d-8029-74e84bbd1428.jpg?1562930097"
+    },
+    "colorIdentityOverride": []
+}
+
 // Mishra's Workshop
 {
     "name": "Mishra's Workshop",
