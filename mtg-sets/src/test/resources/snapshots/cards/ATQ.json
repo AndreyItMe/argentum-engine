@@ -1942,6 +1942,42 @@
     ]
 }
 
+// Power Artifact
+{
+    "name": "Power Artifact",
+    "manaCost": "{U}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant artifact\nEnchanted artifact's activated abilities cost {2} less to activate. This effect can't reduce the mana in that cost to less than one mana.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ReduceActivatedAbilityCost",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                },
+                "amount": 2,
+                "manaFloor": 1
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "artifact"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "11",
+        "rarity": "UNCOMMON",
+        "artist": "Douglas Shuler",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/4/e48bc89e-6da5-43da-b4e0-60d5f850199c.jpg?1562943281"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Powerleech
 {
     "name": "Powerleech",

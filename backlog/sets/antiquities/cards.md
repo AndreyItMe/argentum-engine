@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 57 / 85
+**Implemented:** 58 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -33,7 +33,7 @@
 - [ ] Drafna's Restoration
 - [ ] Energy Flux
 - [x] Hurkyl's Recall
-- [ ] Power Artifact
+- [x] Power Artifact
 - [x] Reconstruction
 - [x] Sage of Lat-Nam
 - [ ] Transmute Artifact
