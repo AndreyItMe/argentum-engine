@@ -53,7 +53,8 @@ enum class CounterType {
     WIND,
     NEST,
     PAGE,
-    REV
+    REV,
+    DOOM
 }
 
 /**
@@ -166,6 +167,13 @@ object Counters {
      * the count to scale the equipped creature's power bonus (+X/+0). No inherent rule.
      */
     const val REV = "rev"
+
+    /**
+     * Doom counter (ATQ — Armageddon Clock). Passive counter accumulated one-per-upkeep; the card
+     * reads the count to scale the damage it deals to each player in the draw step, and a {4}
+     * activated ability removes one. No inherent rule.
+     */
+    const val DOOM = "doom"
 
     /**
      * Wildcard sentinel for triggers/events that fire on counters of *any* type, e.g.
