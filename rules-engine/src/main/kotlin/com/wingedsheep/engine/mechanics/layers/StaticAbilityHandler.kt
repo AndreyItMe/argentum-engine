@@ -118,6 +118,7 @@ import com.wingedsheep.sdk.scripting.ModifyPlotCost
 import com.wingedsheep.sdk.scripting.ModifySpellCost
 import com.wingedsheep.sdk.scripting.ModifyUnlockCost
 import com.wingedsheep.sdk.scripting.NoMaximumHandSize
+import com.wingedsheep.sdk.scripting.ReduceActivatedAbilityCost
 import com.wingedsheep.sdk.scripting.SetMaximumHandSize
 import com.wingedsheep.sdk.scripting.NoncombatDamageBonus
 import com.wingedsheep.sdk.scripting.OpponentsPlayWithHandsRevealed
@@ -738,6 +739,7 @@ class StaticAbilityHandler(
             is EquipAbilitiesAtInstantSpeed,
             is FreeFirstEquipEachTurn,
             is ReduceEquipCost,
+            is ReduceActivatedAbilityCost,
             is PlayFromTopOfLibrary,
             is PlayLandsAndCastFilteredFromTopOfLibrary,
             is PlotFromTopOfLibrary,

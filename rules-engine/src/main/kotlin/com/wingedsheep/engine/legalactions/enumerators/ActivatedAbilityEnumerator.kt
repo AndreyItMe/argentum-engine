@@ -157,7 +157,10 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                     state, entityId,
                     context.castPermissionUtils.applyFreeFirstEquipDiscount(
                         context.castPermissionUtils.applyEquipCostReduction(
-                            applyAbilityGenericCostReduction(rawCost, ability, state, entityId, playerId, context),
+                            context.castPermissionUtils.applyActivatedAbilityCostReduction(
+                                applyAbilityGenericCostReduction(rawCost, ability, state, entityId, playerId, context),
+                                state, entityId
+                            ),
                             ability, state, playerId
                         ),
                         ability, state, playerId

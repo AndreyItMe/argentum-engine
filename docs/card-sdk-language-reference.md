@@ -3125,6 +3125,20 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   `ActivateAbilityHandler` (paid cost), keyed on `ActivatedAbility.isEquipAbility` and applied before
   the `FreeFirstEquipEachTurn` discount. Wrap in a `ConditionalStaticAbility` for a "during your
   turn"-style gate.
+- `ReduceActivatedAbilityCost(filter, amount, manaFloor = 0)` — the activated abilities of permanents
+  matching `filter` cost `{amount}` generic mana less to activate, with the mana in each cost floored
+  at `manaFloor` *total* mana (generic + colored). The activated-ability sibling of `ReduceEquipCost`,
+  generalized over a `GroupFilter`: `GroupFilter.attachedCreature()` keys it to an Aura's enchanted
+  permanent (Power Artifact: "Enchanted artifact's activated abilities cost {2} less to activate. This
+  effect can't reduce the mana in that cost to less than one mana." → `ReduceActivatedAbilityCost(
+  GroupFilter.attachedCreature(), amount = 2, manaFloor = 1)`); `GroupFilter.source()` for "this
+  permanent's abilities"; a battlefield filter for a group lord. Generic-only (colored/hybrid pips
+  untouched, CR 118.7); with `manaFloor = 1` a `{1}` ability stays `{1}`, `{3}`→`{1}`, `{2}{U}`→`{U}`.
+  `manaFloor = 0` (default) floors at `{0}`. Reductions stack additively; the most restrictive
+  (largest) `manaFloor` wins. Consulted by `CastPermissionUtils.applyActivatedAbilityCostReduction`
+  from both the enumerator (displayed cost) and `ActivateAbilityHandler` (paid cost), keyed on the
+  ability's source permanent; non-mana costs (`{T}`, sacrifice) and abilities with no mana cost are
+  unaffected. Backed by `ManaCost.reduceGenericWithManaFloor(amount, minTotalMana)`.
 - `MayCastFromGraveyard(filter, lifeCost = 0, duringYourTurnOnly = false)` — cast spells matching
   `filter` from your graveyard following normal timing, optionally paying `lifeCost` life. Free for
   Yawgmoth's Agenda (`MayCastFromGraveyard(Nonland)`); `lifeCost = 1, duringYourTurnOnly = true` for

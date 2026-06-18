@@ -757,3 +757,52 @@ sealed interface UnlockCostTarget {
     @Serializable
     data object YouUnlock : UnlockCostTarget
 }
+
+/**
+ * The activated abilities of permanents matching [filter] cost [amount] generic mana less to
+ * activate, with the mana in each cost floored at [manaFloor] total mana (generic + colored).
+ *
+ * The activated-ability sibling of [ModifySpellCost] / [ModifyPlotCost] / [ReduceEquipCost],
+ * generalized so one type covers the family:
+ *  - **Power Artifact** ("Enchanted artifact's activated abilities cost {2} less to activate. This
+ *    effect can't reduce the mana in that cost to less than one mana.") →
+ *    `ReduceActivatedAbilityCost(GroupFilter.attachedCreature(), amount = 2, manaFloor = 1)`. The
+ *    `attachedCreature()` scope resolves to the enchanted permanent, so the reduction keys to the
+ *    artifact this Aura is attached to.
+ *  - A future "your creatures' activated abilities cost {1} less" lord →
+ *    `ReduceActivatedAbilityCost(GroupFilter(GameObjectFilter.Creature.youControl()), amount = 1)`.
+ *
+ * Only the **generic** portion of the ability's mana cost is reduced; colored/hybrid/Phyrexian pips
+ * are untouched (CR 118.7). [manaFloor] is the minimum *total* mana the cost may be reduced to: with
+ * `manaFloor = 1`, a `{1}` ability stays `{1}` and a `{2}` ability becomes `{1}` (not `{0}`), while
+ * a `{2}{U}` ability becomes `{U}` (already 1 mana). `manaFloor = 0` (default) floors at `{0}` like
+ * an ordinary reduction. Non-mana costs (`{T}`, sacrifice) and abilities with no mana cost are
+ * unaffected. Multiple sources stack additively before the floor is applied.
+ *
+ * @property filter Which permanents' activated abilities are cheaper (matched via projected state;
+ *   use [GroupFilter.attachedCreature] for an Aura's enchanted permanent, [GroupFilter.source] for
+ *   "this permanent's abilities", or a battlefield filter for a group).
+ * @property amount Generic-mana reduction applied to each matching ability's cost.
+ * @property manaFloor Minimum total mana the cost may be reduced to (default 0).
+ */
+@SerialName("ReduceActivatedAbilityCost")
+@Serializable
+data class ReduceActivatedAbilityCost(
+    val filter: GroupFilter,
+    val amount: Int,
+    val manaFloor: Int = 0
+) : StaticAbility {
+    override val description: String = buildString {
+        append(filter.description.replaceFirstChar { it.uppercase() })
+        append("'s activated abilities cost {$amount} less to activate")
+        if (manaFloor > 0) {
+            append(". This effect can't reduce the mana in that cost to less than ")
+            append(if (manaFloor == 1) "one mana" else "$manaFloor mana")
+        }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}

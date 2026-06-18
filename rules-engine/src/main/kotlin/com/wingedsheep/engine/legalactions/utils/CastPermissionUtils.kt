@@ -596,6 +596,88 @@ class CastPermissionUtils(
         return total
     }
 
+    /**
+     * Reduce the generic portion of an activated ability's [cost] by any [ReduceActivatedAbilityCost]
+     * static on the battlefield whose [filter] matches the ability's source ([sourceId]) — e.g.
+     * Power Artifact reducing the enchanted artifact's activated abilities by {2} (floored so the
+     * mana in the cost stays at least one mana). Shared by the enumerator (offered/displayed cost)
+     * and [ActivateAbilityHandler] (paid cost) so the two always agree. Returns [cost] unchanged
+     * when no reduction applies, the ability has no mana cost, or the source can't be resolved.
+     *
+     * Generic-only (colored pips untouched, CR 118.7); reductions stack additively and the most
+     * restrictive (largest) [ReduceActivatedAbilityCost.manaFloor] is applied as the floor.
+     */
+    fun applyActivatedAbilityCostReduction(
+        cost: AbilityCost,
+        state: GameState,
+        sourceId: EntityId?
+    ): AbilityCost {
+        if (sourceId == null) return cost
+        val (amount, manaFloor) = sumActivatedAbilityCostReductions(state, sourceId)
+        if (amount <= 0) return cost
+        return when (cost) {
+            is AbilityCost.Atom -> cost.manaCostOrNull
+                ?.let { AbilityCost.Atom(CostAtom.Mana(it.reduceGenericWithManaFloor(amount, manaFloor))) } ?: cost
+            is AbilityCost.Composite -> {
+                var applied = false
+                AbilityCost.Composite(cost.costs.map { sub ->
+                    val subMana = sub.manaCostOrNull
+                    if (!applied && subMana != null) {
+                        applied = true
+                        AbilityCost.Atom(CostAtom.Mana(subMana.reduceGenericWithManaFloor(amount, manaFloor)))
+                    } else sub
+                })
+            }
+            else -> cost
+        }
+    }
+
+    /**
+     * Sum the generic reduction (and take the most restrictive mana floor) from every
+     * [ReduceActivatedAbilityCost] static on the battlefield whose [ReduceActivatedAbilityCost.filter]
+     * matches the ability source [sourceId]. The filter scope is resolved directly:
+     * `Scope.Self` → the static's own source; `Scope.AttachedTo` → the permanent the static's
+     * source (an Aura/Equipment) is attached to; any other (battlefield) scope → the source's
+     * base filter matched against [sourceId] under projected state.
+     */
+    private fun sumActivatedAbilityCostReductions(state: GameState, sourceId: EntityId): Pair<Int, Int> {
+        var totalAmount = 0
+        var floor = 0
+        for (entityId in state.getBattlefield()) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            for (ability in cardDef.script.staticAbilities) {
+                val reduce = ability as? com.wingedsheep.sdk.scripting.ReduceActivatedAbilityCost ?: continue
+                if (activatedAbilityReductionApplies(state, entityId, reduce.filter, sourceId)) {
+                    totalAmount += reduce.amount
+                    floor = maxOf(floor, reduce.manaFloor)
+                }
+            }
+        }
+        return totalAmount to floor
+    }
+
+    /** Whether a [ReduceActivatedAbilityCost] on [staticSourceId] reaches the ability source [sourceId]. */
+    private fun activatedAbilityReductionApplies(
+        state: GameState,
+        staticSourceId: EntityId,
+        filter: com.wingedsheep.sdk.scripting.filters.unified.GroupFilter,
+        sourceId: EntityId
+    ): Boolean = when (filter.scope) {
+        is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self -> staticSourceId == sourceId
+        is com.wingedsheep.sdk.scripting.filters.unified.Scope.AttachedTo ->
+            state.getEntity(staticSourceId)
+                ?.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()
+                ?.targetId == sourceId
+        else -> {
+            val projected = state.projectedState
+            predicateEvaluator.matches(
+                state, projected, sourceId, filter.baseFilter,
+                PredicateContext(controllerId = state.getEntity(staticSourceId)?.get<ControllerComponent>()?.playerId ?: staticSourceId)
+            )
+        }
+    }
+
     fun isCyclingPrevented(state: GameState): Boolean {
         for (entityId in state.getBattlefield()) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
