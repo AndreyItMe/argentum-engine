@@ -59,6 +59,9 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // "<permanent> becomes prepared" (Secrets of Strixhaven — Leech Collector's trigger). Maps to the
     // BecomePrepared effect; the enters-prepared flavour is the PREPARED keyword + PREPARE layout.
     effect("PreparePermanent", "BecomePrepared", "a PREPARE-layout permanent becomes prepared (Leech Collector)")
+    // "<permanent> becomes unprepared" (Secrets of Strixhaven — Biblioplex Tomekeeper). The inverse of
+    // BecomePrepared: maps to the Unprepare effect (strips prepared status + its exile prepare-spell copy).
+    effect("UnpreparePermanent", "Unprepare", "a prepared permanent becomes unprepared (Biblioplex Tomekeeper)")
     // "attach it to target …" — an Equipment/Aura attaching ITSELF (the source) to a chosen permanent
     // (Thunder Lasso's ETB "attach it to target creature you control"). The engine idiom is
     // AttachEquipment, which always attaches the source. The emitter only renders the self-attach shape

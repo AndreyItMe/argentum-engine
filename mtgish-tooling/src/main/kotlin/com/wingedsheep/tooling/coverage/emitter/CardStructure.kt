@@ -1096,6 +1096,17 @@ private fun EmitCtx.castTimeCaptureSpell(card: JsonObject): List<Stmt>? {
 }
 
 /**
+ * True iff the oracle text introduces its modes with "choose up to" (e.g. "choose up to one —",
+ * "choose up to two —"). mtgish sometimes drops the "up to" and encodes such a card as a bare
+ * `Modal_ChooseOne`, which the engine would render as a MANDATORY choose-one (minChooseCount = 1).
+ * The modal renderers consult this to decline those lossy cases rather than force a choice the printed
+ * card lets the player skip (Biblioplex Tomekeeper). Note the dedicated `Modal_ChooseUptoNumber` /
+ * `Modal_ChooseUptoOne` IR tags carry the "up to" faithfully and aren't affected by this guard.
+ */
+internal fun EmitCtx.oracleSaysChooseUpTo(): Boolean =
+    oracleText?.lowercase()?.contains("choose up to") == true
+
+/**
  * Split a modal spell's oracle text into its per-mode bullet strings. mtgish carries no per-mode
  * label, but the engine's `mode("…")` wants the printed bullet text, so derive it from Scryfall's
  * oracle text: drop the "Choose one —" (or "Choose up to N —") header line, then split on the `•`
@@ -1179,6 +1190,10 @@ internal fun EmitCtx.modalChooseOneSpell(card: JsonObject): List<Stmt>? {
         .firstNotNullOfOrNull { rule ->
             (rule["args"] as? JsonObject)?.takeIf { it.strField("_Actions") == "Modal_ChooseOne" }
         } ?: return null
+    // See modalChooseOneEffectExpr: a "choose up to one" card mis-encoded as bare `Modal_ChooseOne`
+    // can't render to the mandatory `modal(chooseCount = 1)` without forcing a choice the card lets the
+    // player decline. Decline -> SCAFFOLD.
+    if (oracleSaysChooseUpTo()) { reasons.add("modal-spell"); return null }
     val arms = spellActions["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
     if (arms.isEmpty()) return null
 
@@ -1267,6 +1282,12 @@ private fun EmitCtx.modalArmEffectExpr(arm: JsonObject, bullet: String): Dsl? {
  */
 internal fun EmitCtx.modalChooseOneEffectExpr(actionsNode: JsonObject): Dsl? {
     if (actionsNode.strField("_Actions") != "Modal_ChooseOne") return null
+    // mtgish encodes some "choose up to one —" cards (Biblioplex Tomekeeper) as a bare `Modal_ChooseOne`,
+    // dropping the optional "up to" (which the engine models as minChooseCount = 0 — the player may
+    // decline). `ModalEffect.chooseOne` is MANDATORY (minChooseCount = 1), so rendering it for an
+    // "up to one" card would force a choice the card lets the player skip. Decline -> SCAFFOLD rather
+    // than emit that lossy mandatory modal.
+    if (oracleSaysChooseUpTo()) { reasons.add("modal-trigger"); return null }
     val arms = actionsNode["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
     if (arms.isEmpty()) return null
 
@@ -2396,6 +2417,13 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "AtTheBeginningOfCombatDuringAPlayersTurn")) {
         if (jsonContains(trig, "_Player", "You")) return "Triggers.BeginCombat"
         if (jsonContains(trig, "_Players", "AnyPlayer")) return "Triggers.EachCombat"
+    }
+
+    // "At the beginning of your first main phase" (You) — Abstract Paintmage's mana trigger. Only the
+    // You scope has a matching Triggers.FirstMainPhase constant; any-player / opponent scopes decline
+    // -> SCAFFOLD, mirroring the upkeep/end-step/combat blocks above.
+    if (jsonContains(trig, "_Trigger", "AtTheBeginningOfAPlayersFirstMainPhase")) {
+        if (jsonContains(trig, "_Player", "You")) return "Triggers.FirstMainPhase"
     }
 
     // "Whenever a player cycles a card" (any player) — Fleeting Aven, Invigorating Boon.

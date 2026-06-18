@@ -129,10 +129,30 @@ private fun manaProduceWithRestrictionDsl(node: JsonObject, restriction: String)
         null -> null
         "ManaProduceC" -> call("Effects.AddColorlessMana", arg("1"), arg("restriction", restriction))
         "AnyManaColor" -> call("Effects.AddManaOfChoice", arg("restriction", restriction))
+        // "Add {U}{R}. Spend this mana only to cast instant and sorcery spells." (Abstract Paintmage):
+        // an And pool with a use-restriction. Render one restricted Effects.AddMana per distinct mana,
+        // composited inline — the same shape as the unrestricted manaAndDsl, threading the restriction.
+        "And" -> manaAndWithRestrictionDsl(node, restriction)
         else -> MANA_PRODUCE_COLOR[produce]?.let {
             call("Effects.AddMana", arg(it), arg("1"), arg("restriction", restriction))
         }
     }
+
+/** `And[<produce>…]` + a recovered restriction -> one restricted `Effects.AddMana(color, count,
+ *  restriction)` per distinct mana, composited inline. Null (-> SCAFFOLD) if any child is itself a
+ *  non-leaf produce (nested And / choice), so a partial pool is never emitted. */
+private fun manaAndWithRestrictionDsl(node: JsonObject, restriction: String): Dsl? {
+    val children = node["args"] as? JsonArray ?: return null
+    val produces = children.map { (it as? JsonObject)?.strField("_ManaProduce") ?: return null }
+    if (produces.any { it != "ManaProduceC" && it !in MANA_PRODUCE_COLOR }) return null
+    val counts = LinkedHashMap<String, Int>()
+    produces.forEach { counts[it] = (counts[it] ?: 0) + 1 }
+    val parts = counts.map { (p, n) ->
+        if (p == "ManaProduceC") call("Effects.AddColorlessMana", arg("$n"), arg("restriction", restriction))
+        else call("Effects.AddMana", arg(MANA_PRODUCE_COLOR.getValue(p)), arg("$n"), arg("restriction", restriction))
+    }
+    return if (parts.size == 1) parts[0] else Call("Effects.Composite", parts.map { arg(it) })
+}
 
 /**
  * `{_ManaProduce}` + a repeat [count] + a recovered restriction token -> the matching restricted mana

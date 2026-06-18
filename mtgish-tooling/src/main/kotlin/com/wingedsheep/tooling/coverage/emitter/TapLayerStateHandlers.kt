@@ -111,6 +111,14 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         call("Effects.BecomePrepared", arg(tgt))
     }
 
+    on("UnpreparePermanent") { _, args, tvar ->
+        // "<permanent> becomes unprepared" (Secrets of Strixhaven — Biblioplex Tomekeeper). The inverse
+        // of PreparePermanent; the subject ref is self (ThisPermanent) or a bound target. Renders
+        // Effects.Unprepare(target).
+        val tgt = refTarget(args, tvar) ?: return@on null
+        call("Effects.Unprepare", arg(tgt))
+    }
+
     on("PutFormerCountersOnPermanent") { _, args, tvar ->
         // "put those counters on <permanent>" — the counters that were on a just-died permanent move
         // to the target (Scolding Administrator's dies trigger). The arg is the destination permanent

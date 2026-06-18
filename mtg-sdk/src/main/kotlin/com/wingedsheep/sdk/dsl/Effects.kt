@@ -32,6 +32,7 @@ import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
 import com.wingedsheep.sdk.scripting.effects.ExploreEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.BecomePreparedEffect
+import com.wingedsheep.sdk.scripting.effects.UnprepareEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeSaddledEffect
 import com.wingedsheep.sdk.scripting.effects.EachPermanentBecomesCopyOfTargetEffect
 import com.wingedsheep.sdk.scripting.effects.SetBasePowerEffect
@@ -3158,6 +3159,14 @@ object Effects {
      */
     fun BecomePrepared(target: EffectTarget = EffectTarget.Self): Effect =
         BecomePreparedEffect(target)
+
+    /**
+     * [target] becomes unprepared (Secrets of Strixhaven) — the inverse of [BecomePrepared]. Strips
+     * the target's prepared status and removes the cast-from-exile permission for its exile
+     * prepare-spell copy. A creature that isn't prepared is unaffected. Defaults to the source.
+     */
+    fun Unprepare(target: EffectTarget = EffectTarget.Self): Effect =
+        UnprepareEffect(target)
 
     /**
      * Each permanent matching [filter] becomes a copy of [target].

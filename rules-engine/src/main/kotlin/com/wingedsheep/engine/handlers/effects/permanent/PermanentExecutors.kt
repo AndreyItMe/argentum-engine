@@ -62,6 +62,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeArtifactExe
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeCreatureExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeCreatureTypeExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomePreparedExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.types.UnprepareExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.BecomeSaddledExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.ChangeCreatureTypeTextExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.ChangeWordInTextExecutor
@@ -135,6 +136,7 @@ class PermanentExecutors(
         BecomeCreatureExecutor(),
         BecomeSaddledExecutor(),
         BecomePreparedExecutor(cardRegistry),
+        UnprepareExecutor(),
         BecomeCreatureTypeExecutor(),
         ChangeCreatureTypeTextExecutor(decisionHandler),
         ChangeWordInTextExecutor(decisionHandler),

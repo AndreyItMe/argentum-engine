@@ -190,6 +190,21 @@ data class BecomePreparedEffect(
 }
 
 /**
+ * Make [target] become unprepared (Secrets of Strixhaven) — the inverse of [BecomePreparedEffect].
+ * Strips the target's prepared status: removes its `PreparedComponent` and the cast-from-exile
+ * permission for its exile prepare-spell copy (the orphaned copy is then swept by the phantom-copy
+ * state-based action). A creature that isn't prepared is unaffected. Used by Biblioplex Tomekeeper
+ * ("Target creature becomes unprepared.").
+ */
+@SerialName("Unprepare")
+@Serializable
+data class UnprepareEffect(
+    val target: EffectTarget = EffectTarget.Self
+) : Effect {
+    override val description: String = "${target.description} becomes unprepared"
+}
+
+/**
  * Turn target creature face down.
  * "Turn target creature with a morph ability face down."
  * Used for Backslide and similar effects.
