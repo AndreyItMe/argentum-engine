@@ -2344,6 +2344,22 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
         return "Triggers.YouAttackWithFilter($filter)"
     }
 
+    // "Whenever you fully unlock a Room" — the Eerie Room half (CR 709.5h, Balemurk Leech, Optimistic
+    // Scavenger). The args are [player scope, the Room subject]. The engine's Triggers.RoomFullyUnlocked
+    // is fixed to the You scope over any Room, so only that exact shape renders: a SinglePlayer(You)
+    // scope plus an IsEnchantmentType "Room" subject. Any other player scope, or a Room subject carrying
+    // extra constraints, has no matching Triggers.* constant, so it declines -> SCAFFOLD rather than
+    // widening the trigger.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerFullyUnlocksARoom")) {
+        val argv = trig["args"].asArr ?: return null
+        val scope = castScope(argv.getOrNull(0) as? JsonObject)
+        val subject = argv.getOrNull(1) as? JsonObject
+        val bareRoomSubject = subject?.strField("_Permanents") == "IsEnchantmentType" &&
+            subject.field("args").asStr() == "Room"
+        if (scope == CastScope.YOU && bareRoomSubject) return "Triggers.RoomFullyUnlocked"
+        return null
+    }
+
     // "Whenever a [filtered] permanent enters the battlefield" (the SELF case returned above): an
     // `Other(ThisPermanent)` clause means "another …" -> OTHER binding (Elvish Vanguard's "another
     // Elf", Wretched Anurid's "another creature"); otherwise "a …" -> ANY (Wirewood Savage's "a Beast").
