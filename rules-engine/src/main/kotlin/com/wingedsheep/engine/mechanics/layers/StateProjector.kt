@@ -572,7 +572,11 @@ class StateProjector(
                             floating.controllerId
                         } else {
                             null
-                        }
+                        },
+                        // Captured controller — lets a dynamic P/T (or other controller-dependent)
+                        // effect still resolve a controller after its source has left the
+                        // battlefield (Titania's Song's until-EOT linger).
+                        controllerId = floating.controllerId
                     )
                 )
             }

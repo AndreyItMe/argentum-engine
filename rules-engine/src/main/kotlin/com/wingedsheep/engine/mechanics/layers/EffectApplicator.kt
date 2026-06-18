@@ -57,8 +57,12 @@ internal class EffectApplicator(
                 }
                 is Modification.SetPowerToughnessDynamic -> {
                     // CDA (CR 604.3): the dynamic value *is* the base P/T, set at Layer 7b.
+                    // Fall back to the effect's captured controller when the source has left the
+                    // battlefield (its ControllerComponent is gone) — Titania's Song's until-EOT
+                    // linger keeps animating after the enchantment leaves.
                     val controllerId = projectedValues[effect.sourceId]?.controllerId
                         ?: state.getEntity(effect.sourceId)?.get<ControllerComponent>()?.playerId
+                        ?: effect.controllerId
                     if (controllerId != null && "CREATURE" in values.types) {
                         val context = EffectContext(
                             sourceId = effect.sourceId,

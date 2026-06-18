@@ -96,6 +96,20 @@ sealed interface SerializableModification {
     @Serializable
     data class SetPower(val power: Int) : SerializableModification
 
+    /**
+     * Dynamic base power/toughness *setting* (characteristic-defining ability) — Layer 7b
+     * (SET_VALUES), evaluated per affected entity at projection time. Mirrors
+     * [Modification.SetPowerToughnessDynamic] for floating effects, so a one-shot animate
+     * (e.g. Titania's Song's "this effect continues until end of turn" linger) can set base
+     * P/T to a value computed from each animated permanent (its mana value, via
+     * `EntityProperty(EntityReference.AffectedEntity, EntityNumericProperty.ManaValue)`).
+     */
+    @Serializable
+    data class SetPowerToughnessDynamic(
+        val power: com.wingedsheep.sdk.scripting.values.DynamicAmount,
+        val toughness: com.wingedsheep.sdk.scripting.values.DynamicAmount
+    ) : SerializableModification
+
     @Serializable
     data class ModifyPowerToughness(val powerMod: Int, val toughnessMod: Int) : SerializableModification
 
@@ -530,6 +544,7 @@ fun GameState.imageOverrideFor(entityId: EntityId): String? =
  */
 fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.SetPowerToughness -> Modification.SetPowerToughness(power, toughness)
+    is SerializableModification.SetPowerToughnessDynamic -> Modification.SetPowerToughnessDynamic(power, toughness)
     is SerializableModification.SetPower -> Modification.SetPower(power)
     is SerializableModification.ModifyPowerToughness -> Modification.ModifyPowerToughness(powerMod, toughnessMod)
     is SerializableModification.SwitchPowerToughness -> Modification.SwitchPowerToughness(EntityId(""))

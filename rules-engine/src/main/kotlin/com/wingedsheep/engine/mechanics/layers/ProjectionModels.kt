@@ -184,7 +184,16 @@ data class ContinuousEffect(
      * rather than per-affected-entity. Evaluated after Layer 2 control is established, so it
      * tracks every flavor of control-changing effect.
      */
-    val sourceControllerGate: EntityId? = null
+    val sourceControllerGate: EntityId? = null,
+    /**
+     * Controller captured when the effect was created, used as a fallback when the source has
+     * left the battlefield (so its [ControllerComponent] is gone). Needed for floating effects
+     * that outlive their source — e.g. Titania's Song's "this effect continues until end of
+     * turn" linger, whose Layer-7b dynamic P/T must still resolve a controller for the
+     * [EffectContext] after the enchantment has left. Null for static-ability effects, which
+     * always resolve their controller from the source permanent on the battlefield.
+     */
+    val controllerId: EntityId? = null
 ) {
     val layer: Layer get() = modification.layer
     val sublayer: Sublayer? get() = modification.sublayer

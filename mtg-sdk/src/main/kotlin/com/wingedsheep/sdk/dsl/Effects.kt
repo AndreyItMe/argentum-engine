@@ -3194,6 +3194,21 @@ object Effects {
     ): Effect = AnimateLandEffect(target, power, toughness, duration)
 
     /**
+     * One-shot: animate every permanent matching [filter] into a creature for [duration], setting
+     * each one's base power and toughness to its own mana value and (by default) stripping all of
+     * its abilities. The affected set is captured once at resolution (CR 611.2c). Companion to
+     * expressing the same effect continuously via group statics — use this for the "this effect
+     * continues until end of turn" linger (Titania's Song) when the source enchantment leaves.
+     */
+    fun MassAnimateByManaValue(
+        filter: com.wingedsheep.sdk.scripting.GameObjectFilter,
+        loseAllAbilities: Boolean = true,
+        duration: Duration = Duration.EndOfTurn
+    ): Effect = com.wingedsheep.sdk.scripting.effects.MassAnimateByManaValueEffect(
+        filter, loseAllAbilities, duration
+    )
+
+    /**
      * Earthbend N (TLA keyword action) — target land becomes a 0/0 creature-land
      * with haste, get N +1/+1 counters, and gains a triggered ability:
      * "When this dies or is exiled, return it to the battlefield tapped."
