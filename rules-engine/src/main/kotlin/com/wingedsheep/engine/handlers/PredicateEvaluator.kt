@@ -654,6 +654,11 @@ class PredicateEvaluator {
                 val card = container.get<CardComponent>()
                 card?.ownerId != null && card.ownerId != context.controllerId
             }
+            ControllerPredicate.OwnedByTargetPlayer -> {
+                val card = container.get<CardComponent>()
+                val targetPlayer = context.targetPlayerId
+                card?.ownerId != null && targetPlayer != null && card.ownerId == targetPlayer
+            }
             else -> {
                 // Use projected controller if available; otherwise fall back to the base
                 // ControllerComponent or, for stack objects (spells and abilities), the

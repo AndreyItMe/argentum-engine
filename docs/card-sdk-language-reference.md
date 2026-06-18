@@ -1660,6 +1660,15 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   entity that fired the trigger — e.g. Tectonic Instability "tap all lands its controller controls").
 - `.ownedByYou()` / `.ownedByOpponent()` — owner predicates (for graveyard/exile cards without a
   controller, and "you own" battlefield wordings).
+- `.ownedByTargetPlayer()` (`ControllerPredicate.OwnedByTargetPlayer`, FQL `own:target-player`) —
+  owned by the spell/ability's **target player**, the owner-axis sibling of `.targetPlayerControls()`.
+  Matches the card's immutable owner against `context.targetPlayerId`, so it captures battlefield
+  permanents the target owns even when another player controls them (after a control change) and
+  cards in other zones with no controller. Use for "all artifacts **target player owns**" wordings
+  (Hurkyl's Recall) where the spell may target either player, so a fixed owned-by-you/opponent
+  predicate can't express it. Gather with `Patterns.Group.returnAllToHand(GroupFilter(
+  GameObjectFilter.Artifact.ownedByTargetPlayer()))` — its `BattlefieldMatching(player = Player.Each)`
+  adds no `youControl` constraint, so the filter matches purely on ownership across the battlefield.
 - `.withControllerPredicate(p)` — set any `ControllerPredicate` directly; the entry point for the
   **composed** predicates `ControllerPredicate.And(list)` / `Or(list)` / `Not(p)`, which express
   heterogeneous controller/owner relationships in one filter — e.g. "creatures you own but don't

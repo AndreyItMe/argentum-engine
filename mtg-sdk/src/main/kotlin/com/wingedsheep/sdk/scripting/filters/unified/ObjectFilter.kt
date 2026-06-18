@@ -740,6 +740,13 @@ data class GameObjectFilter(
     fun ownedByOpponent() = copy(controllerPredicate = ControllerPredicate.OwnedByOpponent)
 
     /**
+     * Must be owned by the target player (Hurkyl's Recall — "all artifacts target player owns").
+     * Matches the card's immutable owner, so it captures battlefield permanents the target owns
+     * even when another player controls them.
+     */
+    fun ownedByTargetPlayer() = copy(controllerPredicate = ControllerPredicate.OwnedByTargetPlayer)
+
+    /**
      * Must match [predicate] on the controller/owner axis. The entry point for *composed*
      * predicates ([ControllerPredicate.And] / [ControllerPredicate.Or] / [ControllerPredicate.Not])
      * — e.g. "permanents you own but don't control":
