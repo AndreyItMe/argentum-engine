@@ -1111,10 +1111,21 @@ data class GrantMayPlayFromExileEffect(
      * carries a payoff — e.g. Fires of Mount Doom ("…When you play a card this way, Fires of
      * Mount Doom deals 2 damage to each player.").
      */
-    val onPlayRider: Effect? = null
+    val onPlayRider: Effect? = null,
+    /**
+     * When true, the play permission for each exiled card is granted to that card's *owner*
+     * rather than the effect's controller, and any turn-keyed [expiry] is keyed to each owner's
+     * own turns. Cards are grouped by owner into one permission per owner. Use for "its owner may
+     * play it" wording where the exiled cards may belong to different players (Suspend Aggression:
+     * "Exile target nonland permanent and the top card of your library. For each of those cards,
+     * its owner may play it until the end of their next turn."). Defaults to controller-controls,
+     * matching impulse-draw effects where you exile and play cards you own.
+     */
+    val ownerControls: Boolean = false
 ) : Effect {
     override val description: String = buildString {
-        append("${expiry.description.replaceFirstChar { it.uppercase() }}, you may play those cards from exile")
+        val who = if (ownerControls) "its owner" else "you"
+        append("${expiry.description.replaceFirstChar { it.uppercase() }}, $who may play those cards from exile")
         if (condition != null) {
             append(" ")
             append(condition.description)

@@ -537,6 +537,14 @@ object Conditions {
         Exists(Player.You, Zone.GRAVEYARD, GameObjectFilter.Any.withSubtype(subtype))
 
     /**
+     * If there is at least one card matching [filter] in your graveyard.
+     * Compose with [All]/[Any] for multi-type checks, e.g. "an instant card and a sorcery card
+     * in your graveyard" (Flow State).
+     */
+    fun GraveyardContains(filter: GameObjectFilter): ConditionInterface =
+        Exists(Player.You, Zone.GRAVEYARD, filter)
+
+    /**
      * Delirium (ability word) — if there are [count] or more card types among cards in your
      * graveyard. The count uses the card types (artifact, battle, creature, enchantment,
      * instant, land, planeswalker, sorcery); a single card with multiple types (e.g. an

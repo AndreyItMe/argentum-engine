@@ -210,6 +210,12 @@ class DynamicAmountEvaluator(
                     amount.multiplier
                 )
 
+            is DynamicAmount.Power ->
+                GameLimits.powClamped(
+                    amount.base,
+                    evaluate(state, amount.exponent, context, projectedState)
+                )
+
             is DynamicAmount.IfPositive ->
                 max(0, evaluate(state, amount.amount, context, projectedState))
 

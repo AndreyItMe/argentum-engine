@@ -3677,6 +3677,98 @@
     ]
 }
 
+// Flow State
+{
+    "name": "Flow State",
+    "manaCost": "{1}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order. If there is an instant card and a sorcery card in your graveyard, instead put two of them into your hand and the rest on the bottom of your library in any order.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "TopOfLibrary",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 3
+                        }
+                    },
+                    "storeAs": "looked"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "looked",
+                    "selection": {
+                        "type": "ChooseExactly",
+                        "count": {
+                            "type": "Conditional",
+                            "condition": {
+                                "type": "All",
+                                "conditions": [
+                                    {
+                                        "type": "Exists",
+                                        "player": "You",
+                                        "zone": "Graveyard",
+                                        "filter": "instant"
+                                    },
+                                    {
+                                        "type": "Exists",
+                                        "player": "You",
+                                        "zone": "Graveyard",
+                                        "filter": "sorcery"
+                                    }
+                                ]
+                            },
+                            "ifTrue": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "ifFalse": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    },
+                    "storeSelected": "kept",
+                    "storeRemainder": "rest",
+                    "selectedLabel": "Put in hand",
+                    "remainderLabel": "Put on bottom"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "kept",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "rest",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Library",
+                        "placement": "Bottom"
+                    },
+                    "order": "ControllerChooses"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "49",
+        "rarity": "UNCOMMON",
+        "artist": "Genel Jumalon",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/7/47d6093b-b1b6-4956-8bfd-02cce899f832.jpg?1775937249"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Foolish Fate
 {
     "name": "Foolish Fate",
@@ -4760,6 +4852,56 @@
                 ]
             }
         }
+    ]
+}
+
+// Group Project
+{
+    "name": "Group Project",
+    "manaCost": "{1}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create a 2/2 red and white Spirit creature token.\nFlashback—Tap three untapped creatures you control. (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{0}",
+            "additionalCost": {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomTapPermanents",
+                    "count": 3,
+                    "filter": "creature"
+                }
+            }
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "power": 2,
+            "toughness": 2,
+            "colors": [
+                "RED",
+                "WHITE"
+            ],
+            "creatureTypes": [
+                "Spirit"
+            ],
+            "imageUri": "https://cards.scryfall.io/normal/front/8/7/877f7ddb-ed70-41a0-b845-d9bf8ac65f9b.jpg?1775828448"
+        }
+    },
+    "metadata": {
+        "collectorNumber": "17",
+        "rarity": "UNCOMMON",
+        "artist": "Justine Cruz",
+        "flavorText": "\"Never be afraid to ask for help. Success is much sweeter when it's shared.\"\n—Quintorius Kand",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/8/e8abc1eb-6225-4b18-8502-b5324b818aed.jpg?1775937026"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
@@ -6567,6 +6709,44 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Mathemagics
+{
+    "name": "Mathemagics",
+    "manaCost": "{X}{X}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Target player draws 2ˣ cards. (2⁰ = 1, 2¹ = 2, 2² = 4, 2³ = 8, 2⁴ = 16, 2⁵ = 32, and so on.)",
+    "script": {
+        "spellEffect": {
+            "type": "DrawCards",
+            "count": {
+                "type": "Power",
+                "base": 2,
+                "exponent": "XValue"
+            },
+            "target": {
+                "type": "BoundVariable",
+                "name": "target player"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetPlayer",
+                "id": "target player"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "58",
+        "rarity": "MYTHIC",
+        "artist": "Liiga Smilshkalne",
+        "flavorText": "\"Theory? Meet practice.\"\n—Tam, Quandrix second-year",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/d/cd3cc172-5609-4bc8-9d84-50680fed6df9.jpg?1777528360"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -12188,6 +12368,93 @@
         "imageUri": "https://cards.scryfall.io/normal/front/c/3/c35b57e4-2358-46c0-8f09-cd27c10eaf2d.jpg?1775936933"
     },
     "colorIdentityOverride": []
+}
+
+// Suspend Aggression
+{
+    "name": "Suspend Aggression",
+    "manaCost": "{1}{R}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Exile target nonland permanent and the top card of your library. For each of those cards, its owner may play it until the end of their next turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": "ChosenTargets",
+                    "storeAs": "suspendAggression_permanent"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "suspendAggression_permanent",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Exile"
+                    }
+                },
+                {
+                    "type": "GrantMayPlayFromExile",
+                    "from": "suspendAggression_permanent",
+                    "expiry": {
+                        "type": "UntilControllerStep",
+                        "step": "CLEANUP",
+                        "includeCurrentTurn": false
+                    },
+                    "ownerControls": true
+                },
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "TopOfLibrary",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeAs": "suspendAggression_top"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "suspendAggression_top",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Exile"
+                    }
+                },
+                {
+                    "type": "GrantMayPlayFromExile",
+                    "from": "suspendAggression_top",
+                    "expiry": {
+                        "type": "UntilControllerStep",
+                        "step": "CLEANUP",
+                        "includeCurrentTurn": false
+                    },
+                    "ownerControls": true
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "nonland permanent"
+                },
+                "id": "permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "236",
+        "rarity": "RARE",
+        "artist": "Andreas Zafiratos",
+        "flavorText": "\"Knowledge is your armor. Use it wisely, and it will keep you safe.\"\n—Augusta, dean of order",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/3/135c0696-d86d-4e48-988c-5c218de451fc.jpg?1775938648"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
+    ]
 }
 
 // Tackle Artist

@@ -533,6 +533,21 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * Raise a fixed [base] to the power of a dynamic [exponent] (`base^exponent`).
+     * Example: `Power(base = 2, exponent = CastX)` — "draws 2ˣ cards" (Mathemagics).
+     * A non-positive exponent yields `base^0 = 1` (since `2⁰ = 1`).
+     */
+    @SerialName("Power")
+    @Serializable
+    data class Power(val base: Int, val exponent: DynamicAmount) : DynamicAmount {
+        override val description: String = "$base^${exponent.description}"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newExponent = exponent.applyTextReplacement(replacer)
+            return if (newExponent !== exponent) copy(exponent = newExponent) else this
+        }
+    }
+
+    /**
      * Take the maximum of zero and the amount (clamp negative to zero).
      * Useful for difference calculations that should not go negative.
      * Example: IfPositive(Subtract(Count(Player.TargetOpponent, Zone.HAND), Count(Player.You, Zone.HAND)))

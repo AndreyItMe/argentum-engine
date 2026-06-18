@@ -90,6 +90,20 @@ object GameLimits {
     /** Saturating `a * b`. */
     fun mulClamped(a: Int, b: Int): Int = clampLong(a.toLong() * b.toLong())
 
+    /**
+     * Saturating `base^exponent`. A non-positive exponent yields `1` (since `x⁰ = 1`); the
+     * running product is clamped each step, so a large exponent (e.g. Mathemagics with a huge X)
+     * saturates at [MAX_QUANTITY] instead of overflowing.
+     */
+    fun powClamped(base: Int, exponent: Int): Int {
+        if (exponent <= 0) return 1
+        var result = 1L
+        repeat(exponent) {
+            result = (result * base.toLong()).coerceIn(-MAX_QUANTITY.toLong(), MAX_QUANTITY.toLong())
+        }
+        return result.toInt()
+    }
+
     private fun clampLong(value: Long): Int =
         value.coerceIn(-MAX_QUANTITY.toLong(), MAX_QUANTITY.toLong()).toInt()
 }

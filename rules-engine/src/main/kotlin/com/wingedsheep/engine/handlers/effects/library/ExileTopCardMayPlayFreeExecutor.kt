@@ -44,6 +44,7 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
     ): EffectResult {
         val controllerId = context.controllerId
         val collection = context.pipeline.storedCollections[effect.from] ?: emptyList()
+        if (collection.isEmpty()) return EffectResult.success(state)
 
         // Turn-keyed windows ("until your next turn") follow the *activating* player, not
         // necessarily the player who may play the cards. They coincide for a single-player
@@ -54,11 +55,28 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
         // cost, so it can't be read off the source's ControllerComponent).
         val activatingPlayer = context.effectControllerId ?: controllerId
         val isPermanent = effect.expiry is MayPlayExpiry.Permanent
-        val expiresAfterTurn = expiresAfterTurnFor(state, activatingPlayer, effect.expiry)
-        val expiryControllerId = if (activatingPlayer != controllerId) activatingPlayer else null
 
         var newState = state
-        if (collection.isNotEmpty()) {
+
+        // ownerControls (Suspend Aggression): each exiled card's *owner* — not the effect's
+        // controller — may play it, and any turn-keyed expiry ("until the end of their next turn")
+        // is measured against that owner's own turns. Group cards by owner and grant one permission
+        // per owner, keyed to that owner; otherwise grant a single permission to the controller.
+        val groups: Map<EntityId, List<EntityId>> = if (effect.ownerControls) {
+            collection.groupBy { cardId ->
+                newState.getEntity(cardId)?.get<CardComponent>()?.ownerId ?: controllerId
+            }
+        } else {
+            mapOf(controllerId to collection)
+        }
+
+        for ((grantee, cardIds) in groups) {
+            // Turn boundaries for an owner-controlled grant follow that owner; for the default
+            // controller grant they follow the activating player (Memory Vessel rebinding).
+            val expiryAnchor = if (effect.ownerControls) grantee else activatingPlayer
+            val expiresAfterTurn = expiresAfterTurnFor(newState, expiryAnchor, effect.expiry)
+            val expiryControllerId = if (expiryAnchor != grantee) expiryAnchor else null
+
             val (permId, stateWithPerm) = newState.newEntity()
             newState = stateWithPerm
 
@@ -88,8 +106,8 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
             newState = newState.addMayPlayPermission(
                 MayPlayPermission(
                     id = permId,
-                    cardIds = collection.toSet(),
-                    controllerId = controllerId,
+                    cardIds = cardIds.toSet(),
+                    controllerId = grantee,
                     sourceId = context.sourceId,
                     condition = effect.condition,
                     withAnyManaType = effect.withAnyManaType,
