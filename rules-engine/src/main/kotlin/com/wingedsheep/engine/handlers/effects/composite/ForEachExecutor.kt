@@ -184,6 +184,10 @@ class ForEachExecutor(
         // pile), not the original caster.
         is ForEachItem.OfPlayer -> outerContext.copy(
             controllerId = item.playerId,
+            // Capture the activating player once (the outer controller before any rebinding) and
+            // carry it through nested player loops, so sub-effects that need the original effect
+            // controller (e.g. an activating-player-relative duration) can read it.
+            effectControllerId = outerContext.effectControllerId ?: outerContext.controllerId,
             pipeline = outerContext.pipeline.copy(storedCollections = emptyMap())
         )
 

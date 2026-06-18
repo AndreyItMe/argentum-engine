@@ -88,6 +88,11 @@ internal fun BridgeBuilder.structuralEnvelopes() {
         composes = listOf("GrantToEnchantedCreatureTypeGroup"))
     envelope("CreateEachPermanentRuleEffectUntil", "envelope: continuous rule, each")
     envelope("CreatePlayerEffectUntil", "envelope: player-scoped continuous effect")
+    // "Until [expiration], each player gets [player effects]" (Memory Vessel) — a per-player,
+    // duration-scoped continuous effect created for every player. The real capability is the nested
+    // _PlayerEffect list (MayPlayExiledCards, CantPlayCardsFromHand), expressed inside a
+    // ForEachPlayer body that rebinds the controller to each player.
+    envelope("CreateEachPlayerEffectUntil", "envelope: per-player continuous effect (capability is the _PlayerEffect)")
     envelope("CreatePermanentLayerEffect", UNIVERSAL)
     // A continuous rule until end of turn. The nested `_PermanentRule` is the real capability: CantBlock /
     // CantAttack render to `CantBlockEffect` (SerialName "CantBlockTargetCreatures") / `CantAttackEffect`

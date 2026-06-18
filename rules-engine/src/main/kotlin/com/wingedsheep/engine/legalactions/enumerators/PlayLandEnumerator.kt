@@ -16,16 +16,19 @@ class PlayLandEnumerator : ActionEnumerator {
         val state = context.state
         val playerId = context.playerId
 
-        // Lands from hand
-        val hand = state.getHand(playerId)
-        for (cardId in hand) {
-            val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue
-            if (cardComponent.typeLine.isLand) {
-                result.add(LegalAction(
-                    actionType = "PlayLand",
-                    description = "Play ${cardComponent.name}",
-                    action = PlayLand(playerId, cardId)
-                ))
+        // Lands from hand — suppressed by Memory Vessel's "they can't play cards from their hand"
+        // (hand-scoped only; the graveyard/exile loops below are unaffected).
+        if (!context.cantPlayCardsFromHand) {
+            val hand = state.getHand(playerId)
+            for (cardId in hand) {
+                val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue
+                if (cardComponent.typeLine.isLand) {
+                    result.add(LegalAction(
+                        actionType = "PlayLand",
+                        description = "Play ${cardComponent.name}",
+                        action = PlayLand(playerId, cardId)
+                    ))
+                }
             }
         }
 

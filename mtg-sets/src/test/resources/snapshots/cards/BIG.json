@@ -1336,6 +1336,80 @@
     "colorIdentityOverride": []
 }
 
+// Memory Vessel
+{
+    "name": "Memory Vessel",
+    "manaCost": "{3}{R}{R}",
+    "typeLine": "Artifact",
+    "oracleText": "{T}, Exile this artifact: Each player exiles the top seven cards of their library. Until your next turn, players may play cards they exiled this way, and they can't play cards from their hand. Activate only as a sorcery.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        "CostTap",
+                        "CostExileSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "ActivePlayerFirst"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 7
+                                    }
+                                },
+                                "storeAs": "memoryVesselExiled"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "memoryVesselExiled",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile"
+                                }
+                            },
+                            {
+                                "type": "GrantMayPlayFromExile",
+                                "from": "memoryVesselExiled",
+                                "expiry": {
+                                    "type": "UntilControllerStep",
+                                    "step": "UPKEEP",
+                                    "includeCurrentTurn": false
+                                }
+                            },
+                            "CantPlayCardsFromHand"
+                        ]
+                    }
+                },
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "{T}, Exile this artifact: Each player exiles the top seven cards of their library. Until your next turn, players may play cards they exiled this way, and they can't play cards from their hand. Activate only as a sorcery."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "13",
+        "rarity": "MYTHIC",
+        "artist": "Diego Gisbert",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/e/2e37a5cd-887d-4b41-97f7-ae0bba85436b.jpg?1739804192"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Molten Duplication
 {
     "name": "Molten Duplication",

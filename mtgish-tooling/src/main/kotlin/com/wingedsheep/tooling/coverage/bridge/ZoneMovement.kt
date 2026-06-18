@@ -85,6 +85,11 @@ internal fun BridgeBuilder.zoneMovement() {
     // with a GrantMayPlayFromExile window (often `withAnyManaType`). Capability-only — the emitter
     // declines the player-targeted + may-play-with-any-mana cluster -> SCAFFOLD.
     composed("ExileTheTopNumberCardsOfPlayersLibrary", "Gather(top N of target player's library) + MoveCollection -> exile (impulse from a player's library)", composes = listOf("MoveCollection"))
+    // "Each player exiles the top N cards of their library" (Memory Vessel) — the per-player impulse
+    // exile, inside a ForEachPlayer body that rebinds the controller to each player. Gather(top N of
+    // your library) + MoveCollection -> your exile, run once per player. Capability-only — the
+    // emitter declines the surrounding per-player may-play/restriction activated-ability -> SCAFFOLD.
+    composed("ExileTheTopNumberCardsOfLibrary", "ForEachPlayer { Gather(top N of your library) + MoveCollection -> exile } (per-player impulse)", composes = listOf("MoveCollection"))
     // "Put up to N land cards from your hand onto the battlefield tapped" (The Gitrog, Ravenous Ride).
     // Gather(land cards in hand) -> ChooseUpTo(N) -> MoveCollection(hand->battlefield, tapped). Same
     // shape as PutACardFromHandOnBattlefield but bounded by a dynamic count; capability-only -> SCAFFOLD.

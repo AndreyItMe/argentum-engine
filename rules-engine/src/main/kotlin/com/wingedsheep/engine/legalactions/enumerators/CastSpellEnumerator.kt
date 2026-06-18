@@ -46,6 +46,11 @@ class CastSpellEnumerator : ActionEnumerator {
 
         val hand = state.getHand(playerId)
 
+        // Memory Vessel: "they can't play cards from their hand." Every card iterated here is in
+        // the hand zone, so a blanket skip enforces the restriction without touching exile/graveyard
+        // casts (those are enumerated by CastFromZoneEnumerator / GraveyardAbilityEnumerator).
+        if (context.cantPlayCardsFromHand) return result
+
         // --- Normal spell casting ---
         for (cardId in hand) {
             val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue

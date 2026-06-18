@@ -45,8 +45,17 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
         val controllerId = context.controllerId
         val collection = context.pipeline.storedCollections[effect.from] ?: emptyList()
 
+        // Turn-keyed windows ("until your next turn") follow the *activating* player, not
+        // necessarily the player who may play the cards. They coincide for a single-player
+        // impulse, but diverge when the grant runs inside a per-player loop that rebinds the
+        // controller to each card's owner (Memory Vessel): the effect controller is the
+        // activating player whose next turn closes the window for everyone. effectControllerId
+        // survives the per-player rebinding (the source itself may already be in exile from a
+        // cost, so it can't be read off the source's ControllerComponent).
+        val activatingPlayer = context.effectControllerId ?: controllerId
         val isPermanent = effect.expiry is MayPlayExpiry.Permanent
-        val expiresAfterTurn = expiresAfterTurnFor(state, controllerId, effect.expiry)
+        val expiresAfterTurn = expiresAfterTurnFor(state, activatingPlayer, effect.expiry)
+        val expiryControllerId = if (activatingPlayer != controllerId) activatingPlayer else null
 
         var newState = state
         if (collection.isNotEmpty()) {
@@ -88,6 +97,7 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
                     permanent = isPermanent,
                     expiresAfterTurn = expiresAfterTurn,
                     riderLinkId = riderLinkId,
+                    expiryControllerId = expiryControllerId,
                     timestamp = state.timestamp,
                 )
             )

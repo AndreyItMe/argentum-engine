@@ -65,6 +65,7 @@ import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostCo
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
+import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.player.ManaSpentOnSpellsThisTurnComponent
 import com.wingedsheep.sdk.core.CardType
@@ -191,6 +192,12 @@ class CastSpellHandler(
             zoneResolver.hasCommanderCastPermission(state, action.playerId, action.cardId)
         if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasHarmonize && !hasGraveyardCast && !hasForageFromGraveyard && !hasWarpFromGraveyard && !hasCommanderCast) {
             return "Card is not in your hand"
+        }
+
+        // Memory Vessel: "they can't play cards from their hand" — hand-scoped, so casts from
+        // exile/graveyard granted by a may-play permission still resolve.
+        if (inHand && state.getEntity(action.playerId)?.has<PlayerCantPlayFromHandComponent>() == true) {
+            return "You can't play cards from your hand"
         }
 
         // Single cast-legality chokepoint: per-turn spell limit (Yawgmoth's Agenda),

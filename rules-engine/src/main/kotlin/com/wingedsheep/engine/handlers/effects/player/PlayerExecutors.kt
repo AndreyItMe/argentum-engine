@@ -44,6 +44,7 @@ class PlayerExecutors(
         AnyPlayerMayPayExecutor(executeEffect = effectExecutor),
         CantActivateLoyaltyAbilitiesExecutor(),
         CantCastSpellsExecutor(),
+        CantPlayCardsFromHandExecutor(),
         CreateGlobalTriggeredAbilityExecutor(),
         CreatePermanentEmblemExecutor(),
         EachPlayerChoosesCreatureTypeExecutor(),

@@ -59,6 +59,18 @@ data class MayPlayPermission(
      * id. Null when the grant has no rider.
      */
     val riderLinkId: String? = null,
+    /**
+     * Whose turn ends a turn-keyed window ([expiresAfterTurn]), when that differs from
+     * [controllerId]. Defaults to null → the window keys off [controllerId] (the normal
+     * single-player impulse case, where the player who may play the cards is the same player
+     * whose "next turn" closes the window).
+     *
+     * Memory Vessel grants each player a permission to play *their own* exiled cards
+     * ([controllerId] = the card's owner) but the window lasts "until **your** next turn" — the
+     * activating player's next turn, the same for everyone. Setting this to the activating player
+     * makes the cleanup expiry key off that player's turn instead of each owner's.
+     */
+    val expiryControllerId: EntityId? = null,
     val timestamp: Long
 ) {
     init {

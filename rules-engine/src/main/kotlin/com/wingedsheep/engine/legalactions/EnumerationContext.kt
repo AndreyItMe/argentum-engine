@@ -16,6 +16,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
+import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.model.EntityId
 
@@ -95,6 +96,13 @@ class EnumerationContext(
     // Loyalty-activation restriction (Revel in Silence etc.)
     val cantActivateLoyaltyAbilities: Boolean by lazy {
         state.getEntity(playerId)?.has<CantActivateLoyaltyAbilitiesComponent>() == true
+    }
+
+    // Hand-scoped play restriction (Memory Vessel's "they can't play cards from their hand").
+    // Blocks casting spells and playing lands from the hand zone only — cards in exile/graveyard
+    // with a may-play permission are unaffected. Read by CastSpellEnumerator + PlayLandEnumerator.
+    val cantPlayCardsFromHand: Boolean by lazy {
+        state.getEntity(playerId)?.has<PlayerCantPlayFromHandComponent>() == true
     }
 
     // Whether any per-spell cast restriction (Mana Maze, PlayersCantCastSpells) is in play at all —

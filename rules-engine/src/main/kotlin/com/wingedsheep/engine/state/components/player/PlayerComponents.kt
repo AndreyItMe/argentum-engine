@@ -439,6 +439,33 @@ data class PlayerProtectionComponent(
 ) : Component
 
 /**
+ * Marks a player as unable to play cards from their **hand** (CR 601 casting and CR 305 land
+ * plays are both blocked, but only for cards in the hand zone).
+ *
+ * Applied by Memory Vessel's "they can't play cards from their hand" clause, which it pairs
+ * with an impulse-style grant so a player effectively swaps their hand for the top cards of
+ * their library for a turn. Cards in other zones (exile via a may-play permission, graveyard
+ * via Muldrotha) stay playable — the restriction is hand-scoped.
+ *
+ * Read at legal-action enumeration (CastSpellEnumerator, PlayLandEnumerator) and re-checked
+ * authoritatively in the cast/play handlers. Defaults to the
+ * [PlayerEffectRemoval.UntilYourNextTurn] lifecycle, expired in the same post-untap hook as
+ * [PlayerProtectionComponent] and floating `UntilYourNextTurn` effects.
+ *
+ * @param removeOn When this component is removed.
+ * @param expiresForPlayerId For a [PlayerEffectRemoval.UntilYourNextTurn] lifecycle, whose
+ *   "next turn" closes the window. Null → the component's own owner (the normal case). Memory
+ *   Vessel sets this to the *activating* player so every affected player's restriction lifts on
+ *   the activating player's next turn, not on each player's own next turn (which would lift an
+ *   opponent's restriction at the start of their own turn — one turn too early).
+ */
+@Serializable
+data class PlayerCantPlayFromHandComponent(
+    val removeOn: PlayerEffectRemoval = PlayerEffectRemoval.UntilYourNextTurn,
+    val expiresForPlayerId: EntityId? = null
+) : Component
+
+/**
  * Marks a player as having the city's blessing (CR 702.131 / 700.5).
  *
  * Granted by Ascend triggers when their controller controls 10+ permanents on

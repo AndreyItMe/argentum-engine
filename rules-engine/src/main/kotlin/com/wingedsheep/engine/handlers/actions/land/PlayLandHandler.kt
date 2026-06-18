@@ -17,6 +17,7 @@ import com.wingedsheep.engine.state.permissions.hasMayPlayFor
 import com.wingedsheep.engine.state.permissions.removeMayPlayPermissionsForCard
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
+import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.handlers.ConditionEvaluator
@@ -94,6 +95,12 @@ class PlayLandHandler(
             isInGraveyardWithPlayPermission(state, action.playerId, action.cardId)
         if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayPlayFromGraveyard) {
             return "Land is not in your hand"
+        }
+
+        // Memory Vessel: "they can't play cards from their hand" — hand-scoped, so a land granted
+        // a may-play permission from exile/graveyard still resolves.
+        if (inHand && state.getEntity(action.playerId)?.has<PlayerCantPlayFromHandComponent>() == true) {
+            return "You can't play cards from your hand"
         }
 
         return null

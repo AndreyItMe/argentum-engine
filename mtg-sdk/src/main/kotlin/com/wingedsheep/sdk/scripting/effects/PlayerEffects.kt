@@ -239,6 +239,32 @@ data class CantCastSpellsEffect(
 }
 
 /**
+ * Target player can't play cards from their hand for the specified [duration].
+ *
+ * Restricts both casting spells and playing lands, but only from the **hand** zone —
+ * the player may still play cards from other zones (exile via a may-play permission,
+ * graveyard via Muldrotha, etc.). This is the "they can't play cards from their hand"
+ * clause of Memory Vessel, which pairs the restriction with an impulse-style grant so a
+ * player swaps their hand for the top cards of their library for a turn.
+ *
+ * Distinct from [CantCastSpellsEffect], which forbids casting from *every* zone but
+ * leaves land plays untouched. This effect is hand-scoped and covers lands too.
+ *
+ * @param target The player who can't play cards from their hand (default: controller).
+ * @param duration How long the restriction lasts (default: until your next turn, matching
+ *   the impulse window it usually accompanies).
+ */
+@SerialName("CantPlayCardsFromHand")
+@Serializable
+data class CantPlayCardsFromHandEffect(
+    val target: EffectTarget = EffectTarget.Controller,
+    val duration: Duration = Duration.UntilYourNextTurn
+) : Effect {
+    override val description: String =
+        "${target.description.replaceFirstChar { it.uppercase() }} can't play cards from their hand ${duration.description}"
+}
+
+/**
  * Target player can't activate planeswalkers' loyalty abilities for the specified duration.
  * Sibling restriction to [CantCastSpellsEffect]; compose the two for cards that forbid both
  * (e.g. Revel in Silence: "Your opponents can't cast spells or activate planeswalkers' loyalty

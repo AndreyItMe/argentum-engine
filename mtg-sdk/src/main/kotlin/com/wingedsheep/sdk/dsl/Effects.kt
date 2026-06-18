@@ -58,6 +58,7 @@ import com.wingedsheep.sdk.scripting.effects.SetSuspectedEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantActivateLoyaltyAbilitiesEffect
 import com.wingedsheep.sdk.scripting.effects.CantCastSpellsEffect
+import com.wingedsheep.sdk.scripting.effects.CantPlayCardsFromHandEffect
 import com.wingedsheep.sdk.scripting.effects.PreventLandPlaysThisTurnEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
@@ -2660,6 +2661,17 @@ object Effects {
      */
     fun CantCastSpells(target: EffectTarget, duration: Duration = Duration.EndOfTurn): Effect =
         CantCastSpellsEffect(target, duration)
+
+    /**
+     * Target player can't play cards from their hand for the duration (default: until your
+     * next turn). Blocks both casting spells and playing lands, but only from the hand —
+     * cards in other zones (exile via a may-play permission, etc.) stay playable. The
+     * "they can't play cards from their hand" clause of Memory Vessel.
+     */
+    fun CantPlayCardsFromHand(
+        target: EffectTarget = EffectTarget.Controller,
+        duration: Duration = Duration.UntilYourNextTurn
+    ): Effect = CantPlayCardsFromHandEffect(target, duration)
 
     /**
      * A player can't play lands for the rest of this turn (sets remaining land drops to 0).

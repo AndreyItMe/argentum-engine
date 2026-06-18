@@ -765,6 +765,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   `BlockPhaseManager.validateMinBlockersRequirements`, mirroring the menace check. Used by Troll of
   Khazad-dûm (`CantBeBlockedByFewerThan(3)`).
 - `CantCastSpellsEffect(target, until?)` — target can't cast spells. Facade: `Effects.CantCastSpells(target, duration)`.
+- `CantPlayCardsFromHandEffect(target = Controller, duration = UntilYourNextTurn)` — target can't play cards (cast
+  spells **or** play lands) from their **hand** zone for the duration. Hand-scoped: cards in exile/graveyard with a
+  may-play permission stay playable. Facade: `Effects.CantPlayCardsFromHand(target, duration)`. Pairs with an impulse
+  grant (`ExilePatterns.impulse`) so a player swaps their hand for the top cards of their library for a turn
+  (Memory Vessel). Distinct from `CantCastSpells` (every zone, spells only).
 - `Effects.CantPlayLandsThisTurn(target = Controller)` (`PreventLandPlaysThisTurnEffect`) — the target player can't
   play lands for the rest of this turn (sets remaining land drops to 0). Defaults to the controller (Rock Jockey);
   pass `EffectTarget.ContextTarget(n)` for "target player can't play lands this turn" cards like Turf Wound.

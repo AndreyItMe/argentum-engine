@@ -36,6 +36,7 @@ import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.DamageBonusComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent
 import com.wingedsheep.engine.state.components.player.FlashGrantsThisTurnComponent
+import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
 import com.wingedsheep.engine.state.components.player.PlayerProtectionComponent
 import com.wingedsheep.engine.state.components.player.CardsLeftGraveyardThisTurnComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
@@ -192,6 +193,19 @@ class CleanupPhaseManager(
         val protection = result.getEntity(activePlayer)?.get<PlayerProtectionComponent>()
         if (protection?.removeOn == PlayerEffectRemoval.UntilYourNextTurn) {
             result = result.updateEntity(activePlayer) { it.without<PlayerProtectionComponent>() }
+        }
+        // Memory Vessel's "they can't play cards from their hand until your next turn" expires on
+        // the same post-untap hook. The window keys off the *activating* player (every affected
+        // player's restriction lifts on that player's next turn), so scan every player and remove
+        // the component when [activePlayer] matches its expiry player — the explicit
+        // [PlayerCantPlayFromHandComponent.expiresForPlayerId] when set, else the component owner.
+        for (playerId in result.turnOrder) {
+            val cantPlay = result.getEntity(playerId)?.get<PlayerCantPlayFromHandComponent>() ?: continue
+            if (cantPlay.removeOn != PlayerEffectRemoval.UntilYourNextTurn) continue
+            val expiryPlayer = cantPlay.expiresForPlayerId ?: playerId
+            if (expiryPlayer == activePlayer) {
+                result = result.updateEntity(playerId) { it.without<PlayerCantPlayFromHandComponent>() }
+            }
         }
         return result
     }
@@ -441,6 +455,10 @@ class CleanupPhaseManager(
                 val protection = result.get<PlayerProtectionComponent>()
                 if (protection?.removeOn == PlayerEffectRemoval.EndOfTurn) {
                     result = result.without<PlayerProtectionComponent>()
+                }
+                val cantPlayFromHand = result.get<PlayerCantPlayFromHandComponent>()
+                if (cantPlayFromHand?.removeOn == PlayerEffectRemoval.EndOfTurn) {
+                    result = result.without<PlayerCantPlayFromHandComponent>()
                 }
                 val cantCast = result.get<CantCastSpellsComponent>()
                 if (cantCast?.removeOn == PlayerEffectRemoval.EndOfTurn) {
@@ -708,7 +726,7 @@ class CleanupPhaseManager(
                     !permission.permanent && when {
                         permission.expiresAfterTurn != null ->
                             newState.turnNumber >= permission.expiresAfterTurn &&
-                                newState.activePlayerId == permission.controllerId
+                                newState.activePlayerId == (permission.expiryControllerId ?: permission.controllerId)
                         else -> true
                     }
                 }

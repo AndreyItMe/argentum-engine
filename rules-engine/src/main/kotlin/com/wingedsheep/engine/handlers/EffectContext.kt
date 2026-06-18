@@ -25,6 +25,15 @@ data class EffectContext(
     val sourceId: EntityId?,
     val controllerId: EntityId,
     /**
+     * The controller of the *overall* effect/ability, stable across per-player iteration.
+     * `ForEachEffect(IterationSpace.Players)` rebinds [controllerId] to each iterated player so
+     * `Player.You` resolves to them, but some sub-effects still need the original activating
+     * player — e.g. a "until **your** next turn" window whose "your" is the activating player for
+     * every affected player (Memory Vessel). Captured on the first Players-iteration and preserved
+     * across nested iterations. Null outside iteration; read as `effectControllerId ?: controllerId`.
+     */
+    val effectControllerId: EntityId? = null,
+    /**
      * Definition-scoped identity of the triggered/activated ability currently resolving, copied
      * from its stack component (see [com.wingedsheep.sdk.scripting.AbilityIdentity]). Lets a
      * resolution-time may-question consult the controller's persistent auto-answer yields without

@@ -169,6 +169,22 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     effect("CantActivateAbilities", "PlayersCantActivateAbilities")
     supported("AbilityOfAPermanent", "ability selector: activated abilities of permanents matching a filter")
 
+    // "Players may play cards they exiled this way" (Memory Vessel) — the nested _PlayerEffect of a
+    // CreateEachPlayerEffectUntil. Each affected player's effect grants a may-play window over the
+    // cards that player exiled this way: `GrantMayPlayFromExile` over the per-player exile
+    // collection. Capability-only — the emitter declines the per-player exile/may-play/restriction
+    // activated-ability cluster -> SCAFFOLD.
+    composed(
+        "MayPlayExiledCards",
+        "GrantMayPlayFromExile over the cards that player exiled this way",
+        composes = listOf("GrantMayPlayFromExile"),
+    )
+    // "Players can't play cards from their hand" (Memory Vessel) — the nested _PlayerEffect of a
+    // CreateEachPlayerEffectUntil. Renders to the hand-scoped player restriction
+    // `CantPlayCardsFromHand` (blocks casting spells and playing lands from the hand zone only;
+    // exile/graveyard may-play windows are unaffected).
+    effect("CantPlayCardsFromHand", "CantPlayCardsFromHand")
+
     // Rest in Peace: "exile all graveyards" (ETB) + "if a card or token would be put into a graveyard
     // from anywhere, exile it instead" (static replacement). The first composes via the Gather -> Move
     // pipeline over Player.Each graveyards; the second is the RedirectZoneChange(EXILE) replacement.
