@@ -152,6 +152,17 @@ data class GameState(
     val permanentsSacrificedThisTurn: Int = 0,
 
     /**
+     * Permanents currently being sacrificed (CR 701.17), recorded by the central sacrifice hook
+     * (`ZoneTransitionService.trackPermanentSacrifice`) just before they are moved to the graveyard.
+     * `ZoneTransitionService.moveToZone` reads this set to stamp [com.wingedsheep.engine.core.
+     * ZoneChangeEvent.wasSacrificed] (and removes each id as it processes it), so leaves/dies
+     * triggers can distinguish a sacrifice from any other death (e.g. Urza's Miter — "if it wasn't
+     * sacrificed") without every one of the dozen sacrifice call sites passing an explicit flag.
+     * Transient: it only holds ids between the sacrifice hook and the matching zone move.
+     */
+    val pendingSacrificeIds: Set<EntityId> = emptySet(),
+
+    /**
      * Players (by entity id) who have committed a crime this turn (CR 700-level Outlaws of Thunder
      * Junction rule). Populated wherever a [com.wingedsheep.engine.core.CommitCrimeEvent] is emitted
      * (spell cast, activated ability, triggered ability), and cleared at every turn boundary. Read by

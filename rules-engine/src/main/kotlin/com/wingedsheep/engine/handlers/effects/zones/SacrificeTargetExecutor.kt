@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.effects.zones
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.ZoneEntryOptions
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -85,7 +86,8 @@ class SacrificeTargetExecutor : EffectExecutor<SacrificeTargetEffect> {
 
         // Delegate zone movement to ZoneTransitionService
         val transitionResult = ZoneTransitionService.moveToZone(
-            newState, targetId, Zone.GRAVEYARD, fromZoneKey = currentZone
+            newState, targetId, Zone.GRAVEYARD, fromZoneKey = currentZone,
+            options = ZoneEntryOptions(isSacrifice = true)
         )
 
         val events = mutableListOf<GameEvent>()

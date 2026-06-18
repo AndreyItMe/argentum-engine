@@ -2025,10 +2025,16 @@ for any other (filter, binding, to/excludeTo) combination.
   widen any controller-scoped filter the same way.
 - `PutIntoGraveyardFromBattlefield` — SELF, same event shape as `Dies`; rename
   clarifies non-creature intent (artifact / enchantment going to yard).
-- `leavesBattlefield(filter, to?, excludeTo?, binding)` — factory. `to = GRAVEYARD`
-  gives a "dies" variant scoped beyond the named constants (other tribal deaths,
+- `leavesBattlefield(filter, to?, excludeTo?, binding, excludeSacrifice = false)` — factory.
+  `to = GRAVEYARD` gives a "dies" variant scoped beyond the named constants (other tribal deaths,
   any-controller deaths); `excludeTo = GRAVEYARD` gives "leaves without dying"
   (Three Tree Scribe shape); leaving both null gives "leaves to any zone."
+  `excludeSacrifice = true` adds the intervening-if "if it wasn't sacrificed" (Urza's Miter,
+  CR 701.17): the trigger fires for any battlefield exit **except** a sacrifice. The matcher reads
+  the triggering `ZoneChangeEvent.wasSacrificed` flag, which the central sacrifice hook
+  (`ZoneTransitionService.trackPermanentSacrifice` → `pendingSacrificeIds`) stamps on every
+  sacrifice — cost payment and the sacrifice effect executors alike — so ordinary destruction /
+  lethal-damage / SBA deaths leave it `false`.
 
 **Token creation**
 

@@ -207,12 +207,14 @@ object Triggers {
         to: Zone? = null,
         excludeTo: Zone? = null,
         binding: TriggerBinding = TriggerBinding.SELF,
+        excludeSacrifice: Boolean = false,
     ): TriggerSpec = TriggerSpec(
         event = ZoneChangeEvent(
             filter = filter,
             from = Zone.BATTLEFIELD,
             to = to,
             excludeTo = excludeTo,
+            excludeSacrifice = excludeSacrifice,
         ),
         binding = binding,
     )

@@ -102,7 +102,14 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
         val filter: GameObjectFilter = GameObjectFilter.Any,
         val from: Zone? = null,
         val to: Zone? = null,
-        val excludeTo: Zone? = null
+        val excludeTo: Zone? = null,
+        /**
+         * When true, the trigger fires only if the battlefield exit was **not** a sacrifice
+         * (CR 701.17) — Urza's Miter: "...is put into a graveyard from the battlefield, if it
+         * wasn't sacrificed...". Only meaningful for `from = BATTLEFIELD` patterns; the matcher
+         * reads the triggering event's sacrifice flag.
+         */
+        val excludeSacrifice: Boolean = false
     ) : EventPattern {
         override val description: String = buildString {
             append(describeObjectForEvent(filter))

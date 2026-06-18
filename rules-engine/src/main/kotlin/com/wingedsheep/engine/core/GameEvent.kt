@@ -107,7 +107,14 @@ data class ZoneChangeEvent(
      * another creature dealt damage this turn by [a source matching a filter] dies" (Shelob, Child
      * of Ungoliant) so a source that died in the same combat is still evaluated against the filter.
      */
-    val lastKnownDamageSources: Set<com.wingedsheep.engine.state.components.battlefield.DamageSourceLki> = emptySet()
+    val lastKnownDamageSources: Set<com.wingedsheep.engine.state.components.battlefield.DamageSourceLki> = emptySet(),
+    /**
+     * True when this battlefield exit was a sacrifice (CR 701.17). Lets leaves/dies triggers
+     * distinguish a sacrifice from any other way a permanent is put into the graveyard —
+     * e.g. Urza's Miter ("if it wasn't sacrificed"). Always `false` for non-battlefield exits and
+     * for non-sacrifice deaths (destruction, lethal damage, state-based actions).
+     */
+    val wasSacrificed: Boolean = false
 ) : GameEvent
 
 // =============================================================================

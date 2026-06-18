@@ -686,6 +686,8 @@ class TriggerMatcher(
         if (trigger.from != null && event.fromZone != trigger.from) return false
         if (trigger.to != null && event.toZone != trigger.to) return false
         if (trigger.excludeTo != null && event.toZone == trigger.excludeTo) return false
+        // "if it wasn't sacrificed" (Urza's Miter, CR 701.17) — reject sacrifice deaths.
+        if (trigger.excludeSacrifice && event.wasSacrificed) return false
 
         // Check binding
         when (binding) {

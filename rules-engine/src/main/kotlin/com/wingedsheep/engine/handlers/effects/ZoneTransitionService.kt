@@ -54,7 +54,14 @@ data class ZoneEntryOptions(
     val manifested: Boolean = false,
     val skipZoneChangeRedirect: Boolean = false,
     val faceDownExile: Boolean = false,
-    val lastKnownAttachedTo: EntityId? = null
+    val lastKnownAttachedTo: EntityId? = null,
+    /**
+     * True when this battlefield exit is a sacrifice (CR 701.17). Stamped onto the emitted
+     * [ZoneChangeEvent] so leaves/dies triggers can distinguish a sacrifice from any other death —
+     * e.g. Urza's Miter ("if it wasn't sacrificed"). Set by every sacrifice site (cost payment and
+     * the sacrifice effect executors); ordinary destruction / state-based death leave it `false`.
+     */
+    val isSacrifice: Boolean = false
 )
 
 /**
@@ -419,7 +426,15 @@ object ZoneTransitionService {
             }
         }
 
-        // 8. Emit ZoneChangeEvent
+        // 8. Emit ZoneChangeEvent. A battlefield exit is a sacrifice (CR 701.17) when the caller
+        // passed isSacrifice, or when the central sacrifice hook pre-marked this entity in
+        // pendingSacrificeIds (the common path — keeps the dozen sacrifice call sites flag-free).
+        // Consume the marker so a later non-sacrifice move of the same id isn't mis-tagged.
+        val wasSacrificed = leavingBattlefield &&
+            (options.isSacrifice || entityId in newState.pendingSacrificeIds)
+        if (entityId in newState.pendingSacrificeIds) {
+            newState = newState.copy(pendingSacrificeIds = newState.pendingSacrificeIds - entityId)
+        }
         events.add(
             ZoneChangeEvent(
                 entityId = entityId,
@@ -443,7 +458,8 @@ object ZoneTransitionService {
                 lastKnownCardDefinitionId = if (leavingBattlefield) cardComponent.cardDefinitionId else null,
                 lastKnownDamageDealtByPlayers = lastKnownDamageDealtByPlayers,
                 lastKnownDamageSources = lastKnownDamageSources,
-                xValue = lastKnownCastX
+                xValue = lastKnownCastX,
+                wasSacrificed = wasSacrificed
             )
         )
 
@@ -685,6 +701,9 @@ object ZoneTransitionService {
         if (permanentIds.isEmpty()) return state
         var newState = state.copy(
             permanentsSacrificedThisTurn = state.permanentsSacrificedThisTurn + permanentIds.size,
+            // Mark these as being sacrificed so the imminent moveToZone stamps wasSacrificed
+            // on each ZoneChangeEvent (CR 701.17 — read by Urza's Miter et al.).
+            pendingSacrificeIds = state.pendingSacrificeIds + permanentIds,
         )
         newState = newState.updateEntity(controllerId) { container ->
             val prior = container.get<PermanentsSacrificedThisTurnComponent>()?.count ?: 0
