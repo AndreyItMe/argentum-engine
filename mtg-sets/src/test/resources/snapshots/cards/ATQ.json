@@ -3337,6 +3337,62 @@
     "colorIdentityOverride": []
 }
 
+// The Rack
+{
+    "name": "The Rack",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "As this artifact enters, choose an opponent.\nAt the beginning of the chosen player's upkeep, this artifact deals X damage to that player, where X is 3 minus the number of cards in their hand.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP",
+                    "player": "ChosenOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Subtract",
+                        "left": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "right": {
+                            "type": "AggregateZone",
+                            "player": "ChosenOpponent",
+                            "zone": "Hand"
+                        }
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "ChosenOpponent"
+                    }
+                },
+                "descriptionOverride": "At the beginning of the chosen player's upkeep, The Rack deals damage to that player equal to 3 minus the number of cards in their hand."
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithChoice",
+                "choiceType": "OPPONENT"
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "72",
+        "rarity": "UNCOMMON",
+        "artist": "Richard Thomas",
+        "flavorText": "Invented in Mishra's earlier days, the Rack was once his most feared creation.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/c/ec0686ba-1277-4412-a397-7a6227808311.jpg?1562944784"
+    },
+    "colorIdentityOverride": []
+}
+
 // Titania's Song
 {
     "name": "Titania's Song",
