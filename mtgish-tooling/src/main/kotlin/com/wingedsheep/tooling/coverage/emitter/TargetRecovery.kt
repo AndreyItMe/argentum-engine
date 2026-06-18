@@ -1026,8 +1026,13 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // permanent on the battlefield. There is no static GroupFilter rendering for a "this way" pipeline
     // group, so decline (-> SCAFFOLD) rather than emit a confidently-wrong board-wide effect.
     if ("ThePermanentsTappedThisWay" in blob) return null
-    // "...that was dealt damage this turn" has no GroupFilter helper — decline rather than widen the group.
-    if ("WasDealtDamageThisTurn" in blob) return null
+    // "...that [was] dealt damage this turn" has no GroupFilter helper — decline rather than widen the
+    // group. Two IR spellings reach here: `WasDealtDamageThisTurn` (target/group predicate) and the
+    // bare cost-side `DealtDamageThisTurn` ("sacrifice a creature that dealt damage this turn",
+    // Treacherous Greed). The shorter form is a substring of the longer one, so this single check
+    // covers both — without it the `And(Creature, DealtDamageThisTurn)` cost filter silently collapsed
+    // to a bare Creature group, widening the sacrifice to any creature.
+    if ("DealtDamageThisTurn" in blob) return null
     // "creatures you control WITH +1/+1 counters on them" (Badgermole's trample lord): a
     // `HasACounterOfType` predicate this flat GroupFilter can't express. Dropping it would widen the
     // grant to every creature you control, so decline (-> SCAFFOLD) rather than misrender.
