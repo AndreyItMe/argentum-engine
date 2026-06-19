@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 69 / 85
+**Implemented:** 70 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -30,7 +30,7 @@
 - [ ] Reverse Polarity
 
 ### Blue
-- [ ] Drafna's Restoration
+- [x] Drafna's Restoration
 - [x] Energy Flux
 - [x] Hurkyl's Recall
 - [x] Power Artifact

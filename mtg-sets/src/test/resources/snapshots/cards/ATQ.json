@@ -1389,6 +1389,62 @@
     ]
 }
 
+// Drafna's Restoration
+{
+    "name": "Drafna's Restoration",
+    "manaCost": "{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Put any number of target artifact cards from target player's graveyard on top of their library in any order.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": "ChosenTargets",
+                    "storeAs": "drafna_cards"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "drafna_cards",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Library",
+                        "player": "TargetPlayer",
+                        "placement": "Top"
+                    },
+                    "order": "ControllerChooses"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetPlayer",
+                "id": "target player"
+            },
+            {
+                "type": "TargetObject",
+                "unlimited": true,
+                "filter": {
+                    "baseFilter": "artifact own:target-player",
+                    "zone": "Graveyard"
+                },
+                "id": "any number of target artifact cards from that player's graveyard"
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "8",
+        "artist": "Amy Weber",
+        "flavorText": "Drafna, founder of the College of Lat-Nam, could create a working model from even the smallest remnants of a newly unearthed artifact.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/b/4be2aa3b-207b-4d21-abfb-6788520c7676.jpg?1562910905"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Dragon Engine
 {
     "name": "Dragon Engine",
