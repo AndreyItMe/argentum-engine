@@ -95,6 +95,15 @@ class CastPermissionUtils(
                     tracker == null || !tracker.hasActivated(abilityId)
                 }
             }
+            is ActivationRestriction.ControlledSinceYourMostRecentTurn -> {
+                // "Controlled continuously since the beginning of your most recent turn" — the
+                // summoning-sickness condition (CR 302.6) generalized to any permanent. The engine
+                // re-stamps SummoningSicknessComponent on entry and on every control change and
+                // clears it at the controller's untap, so its absence is exactly this predicate.
+                if (sourceId == null) true
+                else state.getEntity(sourceId)
+                    ?.has<com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent>() != true
+            }
             is ActivationRestriction.All -> restriction.restrictions.all {
                 checkActivationRestriction(state, playerId, it, sourceId, abilityId)
             }
