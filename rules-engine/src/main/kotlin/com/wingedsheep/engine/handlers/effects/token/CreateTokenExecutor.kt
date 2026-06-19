@@ -153,6 +153,7 @@ class CreateTokenExecutor(
             val typeLinePrefix = buildString {
                 if (effect.legendary) append("Legendary ")
                 if (effect.artifactToken) append("Artifact ")
+                if (effect.enchantmentToken) append("Enchantment ")
                 append("Creature")
             }
             val tokenComponent = CardComponent(

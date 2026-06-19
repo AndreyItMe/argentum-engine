@@ -1476,11 +1476,14 @@ object Effects {
         controller: EffectTarget? = null,
         imageUri: String? = null,
         legendary: Boolean = false,
-        tapped: Boolean = false
+        tapped: Boolean = false,
+        artifactToken: Boolean = false,
+        enchantmentToken: Boolean = false
     ): Effect = CreateTokenEffect(
         count = DynamicAmount.Fixed(count), power = power, toughness = toughness,
         colors = colors, creatureTypes = creatureTypes, keywords = keywords,
-        controller = controller, imageUri = imageUri, legendary = legendary, tapped = tapped
+        controller = controller, imageUri = imageUri, legendary = legendary, tapped = tapped,
+        artifactToken = artifactToken, enchantmentToken = enchantmentToken
     )
 
     /**

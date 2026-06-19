@@ -89,7 +89,14 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1, dynamicCou
             //         {_TokenSubtypes [subs]}, [abilities] ]
             val a = spec["args"].asArr ?: return null
             val cardtypes = (a.getOrNull(3) as? JsonArray)?.mapNotNull { it.asStr() } ?: emptyList()
-            if (cardtypes != listOf("Creature")) return null  // only plain creature tokens
+            // Plain creature tokens render directly; an *artifact* or *enchantment* creature token
+            // (e.g. Duskmourn's "1/1 white Glimmer enchantment creature token") sets the matching
+            // `artifactToken` / `enchantmentToken` flag. Any other card-type combination (a noncreature
+            // token, a tripartite type line, …) declines -> SCAFFOLD rather than drop a type.
+            val artifactToken = "Artifact" in cardtypes
+            val enchantmentToken = "Enchantment" in cardtypes
+            val extraTypes = cardtypes.toSet() - setOf("Creature", "Artifact", "Enchantment")
+            if ("Creature" !in cardtypes || extraTypes.isNotEmpty()) return null
             val ptSpec = a.getOrNull(0) as? JsonObject ?: return null
             // A `PTX` spec is an X/X token whose X is a game number ("Create an X/X … where X is the
             // greatest power among creatures you control" — Tumbleweed Rising). Render it via
@@ -147,6 +154,9 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1, dynamicCou
             if (colors.isNotEmpty()) parts.add(arg("colors", "setOf(${colors.joinToString(", ") { "Color.$it" }})"))
             parts.add(arg("creatureTypes", "setOf(${subs.joinToString(", ") { "\"$it\"" }})"))
             if (tokenKeywords.isNotEmpty()) parts.add(arg("keywords", "setOf(${tokenKeywords.joinToString(", ") { "Keyword.$it" }})"))
+            // Artifact / enchantment creature tokens carry the matching flag (named arg on both ctors).
+            if (artifactToken) parts.add(arg("artifactToken", "true"))
+            if (enchantmentToken) parts.add(arg("enchantmentToken", "true"))
             if (tokenActivatedAbilities.isNotEmpty()) {
                 parts.add(arg("activatedAbilities", Call("listOf", tokenActivatedAbilities.map { arg(it) })))
             }
