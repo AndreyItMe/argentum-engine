@@ -61,6 +61,13 @@ data class CreateTokenEffect(
     val attacking: Boolean = false,
     val legendary: Boolean = false,
     val artifactToken: Boolean = false,
+    /**
+     * When true the token is an *enchantment* creature — its type line gains the ENCHANTMENT card
+     * type alongside CREATURE (e.g. Duskmourn's "1/1 white Glimmer enchantment creature token").
+     * The sibling of [artifactToken] for the enchantment-creature shape; both may be set at once
+     * (an artifact enchantment creature token).
+     */
+    val enchantmentToken: Boolean = false,
     val staticAbilities: List<StaticAbility> = emptyList(),
     val triggeredAbilities: List<TriggeredAbility> = emptyList(),
     /**
@@ -111,15 +118,18 @@ data class CreateTokenEffect(
             else colors.joinToString(" and ") { it.displayName.lowercase() }
         val typeWord = if (creatureTypesFromChoice != null) "the chosen type"
             else creatureTypes.joinToString(" ")
+        // "enchantment creature" — the extra card type precedes "creature". (artifactToken is
+        // intentionally not rendered here to keep existing artifact-token descriptions stable.)
+        val cardTypeWord = if (enchantmentToken) "enchantment creature" else "creature"
         append("Create ")
         when (val c = count) {
             is DynamicAmount.Fixed -> {
                 append(if (c.amount == 1) "a" else "${c.amount}")
-                append(" $pt $colorWord $typeWord creature token")
+                append(" $pt $colorWord $typeWord $cardTypeWord token")
                 if (c.amount != 1) append("s")
             }
             else -> {
-                append("${c.description} $pt $colorWord $typeWord creature tokens")
+                append("${c.description} $pt $colorWord $typeWord $cardTypeWord tokens")
             }
         }
         if (keywords.isNotEmpty()) {

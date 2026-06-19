@@ -592,7 +592,10 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 ### Tokens & emblems
 
-- `CreateToken(name, p, t, colors?, subtypes?, keywords?, count?, tapped?)` — make N creature tokens.
+- `CreateToken(p, t, colors?, creatureTypes, keywords?, count?, controller?, imageUri?, legendary?, tapped?, artifactToken?, enchantmentToken?)` — make N creature tokens.
+  `artifactToken = true` makes them **artifact** creatures and `enchantmentToken = true` makes them **enchantment**
+  creatures (both may be set at once); the extra card type is unioned onto the token's `Creature` type line (e.g.
+  Duskmourn's Glimmer cards create a "1/1 white Glimmer enchantment creature token" via `enchantmentToken = true`).
   `count` accepts an `Int` or a `DynamicAmount` (the latter for "create X tokens" wording — e.g. Verdeloth the
   Ancient passes `count = DynamicAmount.XValue` to make X Saprolings when kicked). Publishes the created token
   entity IDs to the `CREATED_TOKENS` pipeline collection, so a sibling effect in a `CompositeEffect` can address

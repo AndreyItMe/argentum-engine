@@ -1647,6 +1647,198 @@
     ]
 }
 
+// Glimmer Seeker
+{
+    "name": "Glimmer Seeker",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Survivor",
+    "oracleText": "Survival — At the beginning of your second main phase, if this creature is tapped, draw a card if you control a Glimmer creature. If you don't control a Glimmer creature, create a 1/1 white Glimmer enchantment creature token.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "POSTCOMBAT_MAIN"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "Exists",
+                            "player": "You",
+                            "zone": "Battlefield",
+                            "filter": "creature Glimmer"
+                        }
+                    },
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "otherwise": {
+                        "type": "CreateToken",
+                        "power": 1,
+                        "toughness": 1,
+                        "colors": [
+                            "WHITE"
+                        ],
+                        "creatureTypes": [
+                            "Glimmer"
+                        ],
+                        "imageUri": "https://cards.scryfall.io/normal/front/4/7/475c7449-2c95-4873-94de-68a5e06cdfb8.jpg?1754930946",
+                        "enchantmentToken": true
+                    }
+                },
+                "triggerCondition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": "tapped"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "14",
+        "rarity": "UNCOMMON",
+        "artist": "Kev Fang",
+        "flavorText": "\"Well, hello there. Want to come exploring?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/f/7f06bbb1-0c7d-4803-9b35-8a2206803eed.jpg?1726285911"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Glimmerburst
+{
+    "name": "Glimmerburst",
+    "manaCost": "{3}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Draw two cards. Create a 1/1 white Glimmer enchantment creature token.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                },
+                {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Glimmer"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/7/475c7449-2c95-4873-94de-68a5e06cdfb8.jpg?1754930946",
+                    "enchantmentToken": true
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "62",
+        "artist": "Dan Watson",
+        "flavorText": "At first Sasha felt silly fending off the cellarspawn hordes with the essence of her childhood pet hamster. But it sure beat dying alone in the dark.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/e/fe1ab8db-3994-4b6d-9eaf-75243a78b715.jpg?1726286087"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Glimmerlight
+{
+    "name": "Glimmerlight",
+    "manaCost": "{2}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "When this Equipment enters, create a 1/1 white Glimmer enchantment creature token.\nEquipped creature gets +1/+1.\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Glimmer"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/7/475c7449-2c95-4873-94de-68a5e06cdfb8.jpg?1754930946",
+                    "enchantmentToken": true
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "249",
+        "artist": "Wero Gallo",
+        "flavorText": "Hope and reliable lighting are in short supply in the House. Glimmers provide both.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/0/1071691c-5c65-42d4-ac96-d302185ca678.jpg?1726286804"
+    },
+    "colorIdentityOverride": []
+}
+
 // Gloomlake Verge
 {
     "name": "Gloomlake Verge",

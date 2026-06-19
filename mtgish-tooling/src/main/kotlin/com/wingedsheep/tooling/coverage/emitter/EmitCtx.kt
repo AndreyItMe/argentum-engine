@@ -756,6 +756,14 @@ internal fun EmitCtx.actionConditionDsl(cond: JsonObject?): String? {
                 val filter = gameObjectFilterDsl(controls["args"])
                 if (filter != null) return render(call("Conditions.YouControl", arg(Lit(filter))))
             }
+            // "if you control no <filter>" -> Conditions.YouControl(<filter>, negate = true)
+            // (Glimmer Seeker: "If you don't control a Glimmer creature, create a … token.").
+            if (controls?.strField("_Players") == "ControlsNo") {
+                val filter = gameObjectFilterDsl(controls["args"])
+                if (filter != null) return render(call(
+                    "Conditions.YouControl", arg(Lit(filter)), arg("negate", "true")
+                ))
+            }
             // "if you have no cards in hand" -> Conditions.EmptyHand. Only the exact
             // `NumCardsInHandIs(EqualTo 0)` shape renders; any other comparator/count declines.
             if (controls?.strField("_Players") == "NumCardsInHandIs") {
