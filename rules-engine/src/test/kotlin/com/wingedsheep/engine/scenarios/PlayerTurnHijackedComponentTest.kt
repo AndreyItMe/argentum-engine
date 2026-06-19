@@ -97,7 +97,7 @@ class PlayerTurnHijackedComponentTest : FunSpec({
         driver.replaceState(
             driver.state.updateEntity(opponent) { container ->
                 container
-                    .with(SkipNextTurnComponent)
+                    .with(SkipNextTurnComponent())
                     .with(
                         PlayerTurnHijackedComponent(
                             controllerId = active,

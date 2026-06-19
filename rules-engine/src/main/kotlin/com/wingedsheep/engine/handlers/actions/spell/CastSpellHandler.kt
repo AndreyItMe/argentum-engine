@@ -2584,13 +2584,21 @@ class CastSpellHandler(
         // but the trigger must still land on the stack so "whenever an ability triggers /
         // is put onto the stack" effects see it.
         val stormGrantCount = run {
+            // Source 2a: GrantedSpellKeywordsComponent — emblem-style player grants (Ral, Crackling Wit).
             val playerContainer = currentCastState.getEntity(action.playerId)
             val grants = playerContainer?.get<GrantedSpellKeywordsComponent>()?.grants ?: emptyList()
             val evalContext = PredicateContext(controllerId = action.playerId)
-            grants.count { grant ->
+            val componentGrants = grants.count { grant ->
                 grant.keyword == Keyword.STORM &&
                     predicateEvaluator.matches(currentCastState, currentCastState.projectedState, action.cardId, grant.spellFilter, evalContext)
             }
+            // Source 2b: GrantKeywordToOwnSpells static abilities on battlefield permanents the
+            // caster controls (Prismari, the Inspiration). Each matching permanent is a separate
+            // instance of storm (CR 702.40b), so count them all rather than short-circuiting.
+            val staticGrants = if (cardDef != null) {
+                grantedKeywordResolver.countGrants(currentCastState, action.playerId, cardDef, Keyword.STORM)
+            } else 0
+            componentGrants + staticGrants
         }
         val printedStormCount = if (cardDef != null && cardDef.hasKeyword(Keyword.STORM)) 1 else 0
         val stormInstanceCount = printedStormCount + stormGrantCount

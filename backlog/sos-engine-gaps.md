@@ -197,9 +197,10 @@ for consistency, but it composes existing primitives.
 10. **`Subtype.LESSON`.** ❌ The 5 Paradigm cards are `Sorcery — Lesson`. No `LESSON` subtype constant exists. Trivial
     add (no Learn mechanic in this set, so it's a plain, non-functional subtype — but the type line must parse).
 
-11. **Multi-turn skip ("skips their next X turns").** ❌ `SkipNextTurnEffect` exists but is a singleton boolean
-    component — no count, no `DynamicAmount`. Needs `SkipNextTurnComponent.turnsToSkip: Int` + a `turns: DynamicAmount`
-    parameter so Ral Zarek's ultimate ("skips their next X turns, X = heads") works. (One card, but no other path.)
+11. **Multi-turn skip ("skips their next X turns").** ✅ DONE. `SkipNextTurnEffect` now takes a `count: DynamicAmount`
+    (default `Fixed(1)`) and `SkipNextTurnComponent(turns: Int)` accumulates/decrements one per the player's turn-start.
+    Plus a new `FlipCoinsEffect(count, storeHeadsAs)` that tallies heads into the pipeline, so Ral Zarek's ultimate
+    composes `FlipCoins(5) → SkipNextTurn(count = VariableReference("heads"))`.
 
 ---
 
@@ -210,9 +211,9 @@ for consistency, but it composes existing primitives.
     cost. `AdditionalCost.DiscardCards` discards by *filter*, but there's no "same-name-as-source" card filter.
     Needs a `CardFilter.SameNameAsSource` (or `NamedLike(self)`) + the keyword's sorcery-timing activated-ability shape.
 
-13. **Ral Zarek, Guest Lecturer** ❌ (depends on §11) + ✅ coin-flip exists. *"Flip five coins. Target opponent skips
-    their next X turns, X = heads."* Coin flip and "count heads" compose today; the blocker is the multi-turn skip (§11).
-    His other abilities (Surveil, discard, reanimate MV≤3) are standard.
+13. **Ral Zarek, Guest Lecturer** ✅ DONE. Built on §11's multi-turn skip + the new `FlipCoinsEffect`. The ultimate is
+    `FlipCoins(5) then SkipNextTurn(target opponent, count = heads)`. The other abilities (Surveil 2, any-number-of-target-
+    players each discard, reanimate MV≤3) compose existing primitives.
 
 14. **Professor Dellian Fel** ✅ buildable. +2 gain life / 0 draw-and-lose-1 / −3 destroy / −6 emblem
     ("Whenever you gain life, target opponent loses that much life" — `CreatePermanentEmblemEffect` + life-gain trigger

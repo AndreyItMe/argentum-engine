@@ -869,15 +869,19 @@ data object PutCounterOnCreatureThisTurnComponent : Component
 data object WasDealtCombatDamageThisTurnComponent : Component
 
 /**
- * Marker component indicating that a player should skip their entire next turn.
- * Applied by effects like Last Chance (which gives the opponent an "extra turn"
- * by skipping the other player's turn in a 2-player game).
+ * Component indicating that a player should skip their entire next [turns] turns.
+ * Applied by effects like Last Chance (which gives the opponent an "extra turn" by skipping the
+ * other player's turn in a 2-player game) and Ral Zarek, Guest Lecturer's ultimate (skip several
+ * turns).
  *
- * This component is consumed (removed) when the turn would start, and the turn
- * is skipped instead.
+ * One skipped turn is consumed each time the affected player's turn would start: [turns] is
+ * decremented, the turn is skipped, and the component is removed once the count reaches zero.
+ * Re-applying it adds to the remaining count rather than overwriting (multiple skip effects stack).
+ *
+ * @property turns How many of the player's upcoming turns remain to be skipped (≥ 1 while present).
  */
 @Serializable
-data object SkipNextTurnComponent : Component
+data class SkipNextTurnComponent(val turns: Int = 1) : Component
 
 /**
  * Tracks a Mindslaver-style "you control target opponent during their next turn" effect.

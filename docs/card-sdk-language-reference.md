@@ -771,7 +771,8 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   card (listing goader names) — there is no separate game-log event. Used by **Glóin, Dwarf
   Emissary**: `Costs.Composite(Costs.Tap, Costs.Sacrifice(Artifact.withSubtype("Treasure"))):
   Goad(target creature)`.
-- `SkipNextTurnEffect(target)` — target skips their next turn.
+- `Effects.SkipNextTurn(target = Controller, count = Fixed(1))` (`SkipNextTurnEffect`) — target skips their next `count` turns. `count` is a `DynamicAmount`, so it can read a pipeline value (e.g. a coin-flip tally via `DynamicAmount.VariableReference`). Skips accumulate on a `SkipNextTurnComponent(turns)`, decremented one turn per the player's turn-start; a resolved count of 0 is a no-op. Used by Lethal Vapors (one turn) and **Ral Zarek, Guest Lecturer** (skip N turns where N = heads).
+- `Effects.FlipCoins(count, storeHeadsAs = "heads")` (`FlipCoinsEffect`) — flip `count` coins and store the number of heads under `storeHeadsAs` in the pipeline (`storedNumbers`) so a later sub-effect in the same composite can scale off it via `DynamicAmount.VariableReference`. The general "flip N coins, count heads" primitive (CR 705); unlike `FlipCoinEffect` (branch on win/lose) and `FlipTwoCoinsEffect` (branch on combined outcome) it only tallies. Each flip emits a `CoinFlipEvent`. **Ral Zarek, Guest Lecturer**'s ultimate composes `FlipCoins(5, "heads")` then `SkipNextTurn(target, count = VariableReference("heads"))`.
 - `Effects.SkipNextDrawStep(target = Controller)` (`SkipNextDrawStepEffect`) — target skips their next draw step. Adds a one-shot `SkipDrawStepComponent` marker consumed by `DrawPhaseManager.performDrawStep` (Elfhame Sanctuary's "you skip your draw step this turn").
 - `HijackNextTurnEffect(target)` — you control target's next turn.
 - `GrantCantBeBlockedByChosenColorEffect(target, duration)` — unblockable except by chosen color.
@@ -2887,6 +2888,19 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   alternative cost (e.g. a red evoke creature), both casts are offered and disambiguated by
   `CastSpell.alternativeCostType` (see `engine-server-interface.md`) — picking "Evoke" charges the
   evoke cost, not warp, even though warp would win a naive priority order.
+- `GrantKeywordToOwnSpells(keyword, spellFilter = Creature)` — while this permanent is on the battlefield,
+  spells its controller casts matching `spellFilter` effectively have `keyword` ("you cast" semantics). Read by
+  the cast machinery via `GrantedKeywordResolver`:
+  - **Cost-modifying keywords** (CONVOKE, DELVE) surface in the cast enumerator / alternative-payment handler —
+    e.g. **Eirdu, Carrier of Dawn** (`GrantKeywordToOwnSpells(CONVOKE, Creature)`), **Teval, Arbiter of Virtue**
+    (`DELVE`).
+  - **STORM** (and other "each instance triggers separately" cast keywords) are counted by
+    `GrantedKeywordResolver.countGrants` when `CastSpellHandler` builds the spell's storm triggers — one storm
+    instance per matching grant (CR 702.40b), added to the printed-keyword count. **Prismari, the Inspiration** =
+    `GrantKeywordToOwnSpells(STORM, InstantOrSorcery)`. Removing the granter before the spell is cast revokes the
+    grant. (Cascade-style granted keywords are instead modelled as a `youCastSpell(...)`-triggered `Effects.Cascade`
+    on the granter — see **Quandrix, the Proof** / Wildsear, Scouring Maw — since cascade is a cast trigger, not a
+    cost keyword.)
 - `MayCastWithoutPayingManaCost(controllerOnly = false, firstSpellOfTurnOnly = false, spellFilter = Any)` — a
   battlefield permission to cast a spell without paying its mana cost (CR 118.9). Composable
   gates: `controllerOnly = true` restricts the benefit to the source's controller ("you" wording);

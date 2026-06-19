@@ -575,7 +575,8 @@ object ZoneMovementUtils {
             val cid = controllerId ?: return state
             return state.getOpponents(cid).fold(state) { acc, opponentId ->
                 acc.updateEntity(opponentId) { container ->
-                    container.with(SkipNextTurnComponent)
+                    val existing = container.get<SkipNextTurnComponent>()?.turns ?: 0
+                    container.with(SkipNextTurnComponent(existing + 1))
                 }
             }
         }

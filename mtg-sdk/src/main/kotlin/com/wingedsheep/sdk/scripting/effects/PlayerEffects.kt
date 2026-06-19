@@ -193,17 +193,28 @@ data class CreateGlobalTriggeredAbilityEffect(
 }
 
 /**
- * Target player skips their next turn.
- * Used for cards like Lethal Vapors: "You skip your next turn."
+ * Target player skips their next [count] turns.
+ * Used for cards like Lethal Vapors ("You skip your next turn." → `count = Fixed(1)`) and Ral
+ * Zarek, Guest Lecturer ("Target opponent skips their next X turns." → `count` is a
+ * [DynamicAmount.VariableReference] reading a previously-stored coin-flip tally).
  *
- * @param target The player who skips their next turn (default: the controller/activating player)
+ * The count accumulates: applying this twice to the same player stacks the skipped turns
+ * (CR 720.4 — each skip is tracked independently). Resolving with `count == 0` is a no-op.
+ *
+ * @param target The player who skips turns (default: the controller/activating player)
+ * @param count How many of their upcoming turns to skip (default: one)
  */
 @SerialName("SkipNextTurn")
 @Serializable
 data class SkipNextTurnEffect(
-    val target: EffectTarget = EffectTarget.Controller
+    val target: EffectTarget = EffectTarget.Controller,
+    val count: DynamicAmount = DynamicAmount.Fixed(1)
 ) : Effect {
-    override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} skips their next turn"
+    override val description: String = buildString {
+        append(target.description.replaceFirstChar { it.uppercase() })
+        append(" skips their next ")
+        append(if (count == DynamicAmount.Fixed(1)) "turn" else "${count.description} turns")
+    }
 }
 
 /**

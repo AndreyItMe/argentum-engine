@@ -48,7 +48,8 @@ class TakeExtraTurnExecutor : EffectExecutor<TakeExtraTurnEffect> {
         }
         var newState = otherPlayerIds.fold(state) { acc, otherPlayerId ->
             acc.updateEntity(otherPlayerId) { container ->
-                container.with(SkipNextTurnComponent)
+                val existing = container.get<SkipNextTurnComponent>()?.turns ?: 0
+                container.with(SkipNextTurnComponent(existing + 1))
             }
         }
 

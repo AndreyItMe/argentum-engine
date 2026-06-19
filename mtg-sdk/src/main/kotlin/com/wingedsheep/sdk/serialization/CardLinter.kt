@@ -177,6 +177,7 @@ object CardLinter {
         put("BeholdOrPay" to "storeAs", write(Space.COLLECTION))
         put("ChooseEntity" to "storeAs", write(Space.COLLECTION))
         put("StoreNumber" to "name", write(Space.NUMBER))
+        put("FlipCoins" to "storeHeadsAs", write(Space.NUMBER))
         put("ForEachCapturedController" to "countVariable", write(Space.NUMBER))
         put("DrawUpTo" to "storeNotDrawnAs", write(Space.NUMBER))
         put("ChooseOption" to "storeAs", write(Space.CHOSEN))

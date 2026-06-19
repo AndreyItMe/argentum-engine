@@ -68,6 +68,37 @@ class GrantedKeywordResolver(
     }
 
     /**
+     * Count how many battlefield permanents controlled by [playerId] grant [keyword] to [cardDef]
+     * via [GrantKeywordToOwnSpells]. Unlike [findGrant], this does not short-circuit — each grant
+     * counts as a separate instance, which matters for "each instance triggers separately"
+     * keywords like STORM (CR 702.40b: e.g. two Prismaris grant two storm triggers).
+     */
+    fun countGrants(
+        state: GameState,
+        playerId: EntityId,
+        cardDef: CardDefinition,
+        keyword: Keyword
+    ): Int {
+        var count = 0
+        for (permanentId in state.getBattlefield()) {
+            val container = state.getEntity(permanentId) ?: continue
+            val controllerId = container.get<ControllerComponent>()?.playerId ?: continue
+            if (controllerId != playerId) continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+            val sourceDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
+            for (ability in sourceDef.script.staticAbilities) {
+                if (ability is GrantKeywordToOwnSpells &&
+                    ability.keyword == keyword &&
+                    matchesSpellFilter(ability.spellFilter, cardDef)
+                ) {
+                    count++
+                }
+            }
+        }
+        return count
+    }
+
+    /**
      * Match a spell's [cardDef] against a [GameObjectFilter] using the card's printed
      * characteristics. Only a narrow set of predicates is supported because spells being cast
      * don't yet have battlefield state — the caller knows the card, not an entity.
@@ -75,34 +106,42 @@ class GrantedKeywordResolver(
     private fun matchesSpellFilter(filter: GameObjectFilter, cardDef: CardDefinition): Boolean {
         // GameObjectFilter.Any / empty predicates match everything.
         if (filter.cardPredicates.isEmpty() && filter.controllerPredicate == null) return true
-        for (predicate in filter.cardPredicates) {
-            val matches = when (predicate) {
-                CardPredicate.IsCreature -> cardDef.typeLine.isCreature
-                CardPredicate.IsNoncreature -> !cardDef.typeLine.isCreature
-                CardPredicate.IsArtifact -> cardDef.typeLine.isArtifact
-                CardPredicate.IsEnchantment -> cardDef.typeLine.isEnchantment
-                CardPredicate.IsInstant -> cardDef.typeLine.isInstant
-                CardPredicate.IsSorcery -> cardDef.typeLine.isSorcery
-                CardPredicate.IsLand -> cardDef.typeLine.isLand
-                CardPredicate.IsNonland -> !cardDef.typeLine.isLand
-                CardPredicate.IsLegendary -> cardDef.typeLine.isLegendary
-                CardPredicate.IsNonlegendary -> !cardDef.typeLine.isLegendary
-                CardPredicate.IsPermanent -> cardDef.typeLine.isPermanent
-                CardPredicate.IsNonenchantment -> !cardDef.typeLine.isEnchantment
-                CardPredicate.IsNonartifact -> !cardDef.typeLine.isArtifact
-                CardPredicate.IsToken, CardPredicate.IsNontoken -> true
-                is CardPredicate.HasSubtype -> cardDef.typeLine.subtypes.any { it == predicate.subtype }
-                is CardPredicate.HasAnyOfSubtypes -> cardDef.typeLine.subtypes.any { predicate.subtypes.contains(it) }
-                is CardPredicate.HasColor -> cardDef.colors.contains(predicate.color)
-                CardPredicate.IsColorless -> cardDef.colors.isEmpty()
-                // Fail closed: an unhandled predicate cannot be evaluated against a
-                // CardDefinition alone, so we conservatively refuse to grant the keyword
-                // rather than silently match every spell. Add explicit handling here when
-                // a new spell-filter predicate is needed (e.g. ManaValue, NameEquals).
-                else -> false
-            }
-            if (!matches) return false
-        }
-        return true
+        return filter.cardPredicates.all { matchesPredicate(it, cardDef) }
     }
+
+    /**
+     * Evaluate a single [CardPredicate] against a [CardDefinition]. Recurses through the
+     * boolean combinators ([CardPredicate.And]/[Or]/[Not]) so combined-type filters such as
+     * [GameObjectFilter.InstantOrSorcery] (an `Or` of `IsInstant`/`IsSorcery`) resolve, which
+     * is what "instant and sorcery spells you cast have storm" needs.
+     */
+    private fun matchesPredicate(predicate: CardPredicate, cardDef: CardDefinition): Boolean =
+        when (predicate) {
+            is CardPredicate.And -> predicate.predicates.all { matchesPredicate(it, cardDef) }
+            is CardPredicate.Or -> predicate.predicates.any { matchesPredicate(it, cardDef) }
+            is CardPredicate.Not -> !matchesPredicate(predicate.predicate, cardDef)
+            CardPredicate.IsCreature -> cardDef.typeLine.isCreature
+            CardPredicate.IsNoncreature -> !cardDef.typeLine.isCreature
+            CardPredicate.IsArtifact -> cardDef.typeLine.isArtifact
+            CardPredicate.IsEnchantment -> cardDef.typeLine.isEnchantment
+            CardPredicate.IsInstant -> cardDef.typeLine.isInstant
+            CardPredicate.IsSorcery -> cardDef.typeLine.isSorcery
+            CardPredicate.IsLand -> cardDef.typeLine.isLand
+            CardPredicate.IsNonland -> !cardDef.typeLine.isLand
+            CardPredicate.IsLegendary -> cardDef.typeLine.isLegendary
+            CardPredicate.IsNonlegendary -> !cardDef.typeLine.isLegendary
+            CardPredicate.IsPermanent -> cardDef.typeLine.isPermanent
+            CardPredicate.IsNonenchantment -> !cardDef.typeLine.isEnchantment
+            CardPredicate.IsNonartifact -> !cardDef.typeLine.isArtifact
+            CardPredicate.IsToken, CardPredicate.IsNontoken -> true
+            is CardPredicate.HasSubtype -> cardDef.typeLine.subtypes.any { it == predicate.subtype }
+            is CardPredicate.HasAnyOfSubtypes -> cardDef.typeLine.subtypes.any { predicate.subtypes.contains(it) }
+            is CardPredicate.HasColor -> cardDef.colors.contains(predicate.color)
+            CardPredicate.IsColorless -> cardDef.colors.isEmpty()
+            // Fail closed: an unhandled predicate cannot be evaluated against a
+            // CardDefinition alone, so we conservatively refuse to grant the keyword
+            // rather than silently match every spell. Add explicit handling here when
+            // a new spell-filter predicate is needed (e.g. ManaValue, NameEquals).
+            else -> false
+        }
 }

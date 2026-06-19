@@ -532,8 +532,15 @@ class TurnManager(
         // individual.
         val nextTeam = cleanedState.sharedTurnTeam(nextPlayer)
         if (nextTeam.any { cleanedState.getEntity(it)?.has<SkipNextTurnComponent>() == true }) {
+            // Consume one skipped turn per affected member: decrement the remaining count and
+            // remove the component once it reaches zero (Ral Zarek can stack several). One turn
+            // is skipped per endTurn call; multi-turn skips persist across successive turns.
             for (member in nextTeam) {
-                cleanedState = cleanedState.updateEntity(member) { it.without<SkipNextTurnComponent>() }
+                cleanedState = cleanedState.updateEntity(member) { container ->
+                    val remaining = container.get<SkipNextTurnComponent>()?.turns ?: 0
+                    if (remaining > 1) container.with(SkipNextTurnComponent(remaining - 1))
+                    else container.without<SkipNextTurnComponent>()
+                }
             }
             nextPlayer = cleanedState.getNextTeam(nextPlayer)
         }

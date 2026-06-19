@@ -9931,6 +9931,78 @@
     ]
 }
 
+// Orysa, Tide Choreographer
+{
+    "name": "Orysa, Tide Choreographer",
+    "manaCost": "{4}{U}",
+    "typeLine": "Legendary Creature — Merfolk Bard",
+    "oracleText": "This spell costs {3} less to cast if creatures you control have total toughness 10 or greater.\nWhen Orysa enters, draw two cards.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                },
+                "descriptionOverride": "When Orysa enters, draw two cards."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGenericBy",
+                    "source": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                },
+                "gating": {
+                    "type": "OnlyIf",
+                    "condition": {
+                        "type": "Compare",
+                        "left": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "creature",
+                            "aggregation": "SUM",
+                            "property": "TOUGHNESS"
+                        },
+                        "operator": "GTE",
+                        "right": {
+                            "type": "Fixed",
+                            "amount": 10
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "62",
+        "rarity": "UNCOMMON",
+        "artist": "Anna Pavleeva",
+        "flavorText": "Orysa and her troupe of turtles are a staple of Summitfest's daytime celebrations.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/1/010ed379-63f5-452c-9cd4-00d51647c0e3.jpg?1775937343"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Owlin Historian
 {
     "name": "Owlin Historian",
@@ -11343,6 +11415,60 @@
     ]
 }
 
+// Prismari, the Inspiration
+{
+    "name": "Prismari, the Inspiration",
+    "manaCost": "{5}{U}{R}",
+    "typeLine": "Legendary Creature — Elder Dragon",
+    "oracleText": "Flying\nWard—Pay 5 life.\nInstant and sorcery spells you cast have storm. (Whenever you cast an instant or sorcery spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+    "creatureStats": {
+        "power": 7,
+        "toughness": 7
+    },
+    "keywords": [
+        "FLYING",
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Life",
+                "amount": 5
+            }
+        }
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantKeywordToOwnSpells",
+                "keyword": "STORM",
+                "spellFilter": {
+                    "cardPredicates": [
+                        {
+                            "type": "Or",
+                            "predicates": [
+                                "IsInstant",
+                                "IsSorcery"
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "212",
+        "rarity": "MYTHIC",
+        "artist": "Justin Gerard",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/6/767ff9fa-4e7f-421a-b911-45186b520ae1.jpg?1775938472"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
 // Procrastinate
 {
     "name": "Procrastinate",
@@ -11759,6 +11885,69 @@
     ]
 }
 
+// Quandrix, the Proof
+{
+    "name": "Quandrix, the Proof",
+    "manaCost": "{4}{G}{U}",
+    "typeLine": "Legendary Creature — Elder Dragon",
+    "oracleText": "Flying, trample\nCascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)\nInstant and sorcery spells you cast from your hand have cascade.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "FLYING",
+        "TRAMPLE",
+        "CASCADE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "CastThisSpellEvent",
+                "effect": "Cascade",
+                "descriptionOverride": "Cascade"
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    },
+                    "requires": [
+                        {
+                            "type": "SpellCastFromZone",
+                            "zone": "Hand"
+                        }
+                    ]
+                },
+                "binding": "ANY",
+                "effect": "Cascade",
+                "descriptionOverride": "Instant and sorcery spells you cast from your hand have cascade."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "218",
+        "rarity": "MYTHIC",
+        "artist": "Lucas Graciano",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/1/015afe31-af3c-4c9b-9997-d7c33b915a33.jpg?1775938517"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "BLUE"
+    ]
+}
+
 // Quill-Blade Laureate
 {
     "name": "Quill-Blade Laureate",
@@ -11902,6 +12091,209 @@
         "flavorText": "\"Let me guess, the scurrids got to you lot?\"\n—Witherbloom infirmary attendant",
         "imageUri": "https://cards.scryfall.io/normal/front/f/5/f5e67560-3135-4b27-a344-5859edf8bcd9.jpg?1775937579"
     },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Ral Zarek, Guest Lecturer
+{
+    "name": "Ral Zarek, Guest Lecturer",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Legendary Planeswalker — Ral",
+    "oracleText": "+1: Surveil 2.\n−1: Any number of target players each discard a card.\n−2: Return target creature card with mana value 3 or less from your graveyard to the battlefield.\n−7: Flip five coins. Target opponent skips their next X turns, where X is the number of coins that came up heads.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostLoyalty",
+                    "change": 1
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "surveiled"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "surveiled",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeSelected": "toGraveyard",
+                            "storeRemainder": "toTop",
+                            "selectedLabel": "Put in graveyard",
+                            "remainderLabel": "Put on top"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toTop",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Top"
+                            },
+                            "order": "ControllerChooses"
+                        }
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "isPlaneswalkerAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostLoyalty",
+                    "change": -1
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand",
+                                    "player": {
+                                        "type": "ContextPlayer",
+                                        "index": 0
+                                    }
+                                },
+                                "storeAs": "hand"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "chooser": "TargetPlayer",
+                                "storeSelected": "discarded",
+                                "prompt": "Choose 1 card to discard"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard",
+                                    "player": {
+                                        "type": "ContextPlayer",
+                                        "index": 0
+                                    }
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetPlayer",
+                        "unlimited": true
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isPlaneswalkerAbility": true
+            },
+            {
+                "id": "ability_3",
+                "cost": {
+                    "type": "CostLoyalty",
+                    "change": -2
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature"
+                    },
+                    "destination": "Battlefield",
+                    "fromZone": "Graveyard"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature mv<=3 own:you",
+                            "zone": "Graveyard"
+                        },
+                        "id": "creature"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isPlaneswalkerAbility": true
+            },
+            {
+                "id": "ability_4",
+                "cost": {
+                    "type": "CostLoyalty",
+                    "change": -7
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "FlipCoins",
+                            "count": 5
+                        },
+                        {
+                            "type": "SkipNextTurn",
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "count": {
+                                "type": "VariableReference",
+                                "variableName": "heads"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    "TargetOpponent"
+                ],
+                "timing": "SorcerySpeed",
+                "isPlaneswalkerAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "97",
+        "rarity": "MYTHIC",
+        "artist": "Billy Christian",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/f/8fbad757-4081-42f7-a460-68ac03e77510.jpg?1775937587"
+    },
+    "startingLoyalty": 3,
     "colorIdentityOverride": [
         "BLACK"
     ]
@@ -17556,5 +17948,95 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Zimone's Experiment
+{
+    "name": "Zimone's Experiment",
+    "manaCost": "{3}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Look at the top five cards of your library. You may reveal up to two creature and/or land cards from among them, then put the rest on the bottom of your library in a random order. Put all land cards revealed this way onto the battlefield tapped and put all creature cards revealed this way into your hand.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "TopOfLibrary",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 5
+                        }
+                    },
+                    "storeAs": "looked"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "looked",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "filter": "creature|land",
+                    "storeSelected": "kept",
+                    "storeRemainder": "rest",
+                    "prompt": "Reveal up to two creature and/or land cards",
+                    "showAllCards": true
+                },
+                {
+                    "type": "FilterCollection",
+                    "from": "kept",
+                    "filter": {
+                        "type": "MatchesFilter",
+                        "filter": "land"
+                    },
+                    "storeMatching": "keptLands",
+                    "storeNonMatching": "keptCreatures"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "keptLands",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Battlefield",
+                        "placement": "Tapped"
+                    },
+                    "revealed": true
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "keptCreatures",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    },
+                    "revealed": true
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "rest",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Library",
+                        "placement": "Bottom"
+                    },
+                    "order": "Random"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "169",
+        "rarity": "UNCOMMON",
+        "artist": "Izzy",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/6/a6597852-4267-4ea6-a391-f927e4833be2.jpg?1775938156"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }

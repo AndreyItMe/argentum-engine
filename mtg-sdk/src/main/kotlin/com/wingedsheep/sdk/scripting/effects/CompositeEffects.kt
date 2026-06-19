@@ -845,6 +845,32 @@ data class FlipTwoCoinsEffect(
     }
 }
 
+/**
+ * Flip [count] coins, then store the number that came up heads under [storeHeadsAs] in pipeline
+ * `storedNumbers` so a later sub-effect in the same composite can scale off it via
+ * [com.wingedsheep.sdk.scripting.values.DynamicAmount.VariableReference].
+ *
+ * The general "flip N coins and count the heads" primitive (CR 705). Unlike [FlipCoinEffect]
+ * (one coin, branch on win/lose) and [FlipTwoCoinsEffect] (two coins, branch on the combined
+ * outcome), this neither branches nor wins/loses — it just tallies heads — so it composes with
+ * any count-consuming effect. Each flip emits its own coin-flip event.
+ *
+ * Used by Ral Zarek, Guest Lecturer's ultimate ("Flip five coins. Target opponent skips their
+ * next X turns, where X is the number of coins that came up heads."):
+ * `FlipCoinsEffect(5, "heads")` then `SkipNextTurnEffect(target, count = VariableReference("heads"))`.
+ *
+ * @property count How many coins to flip.
+ * @property storeHeadsAs Pipeline `storedNumbers` key the heads tally is written to.
+ */
+@SerialName("FlipCoins")
+@Serializable
+data class FlipCoinsEffect(
+    val count: Int,
+    val storeHeadsAs: String = "heads"
+) : Effect {
+    override val description: String = "Flip $count coins"
+}
+
 // =============================================================================
 // Budget Modal (Pawprint / Season Cycle)
 // =============================================================================
