@@ -52,6 +52,12 @@ class UnattachedAurasCheck : StateBasedActionCheck {
                     events.addAll(result.events)
                 }
                 // Equipment not attached to anything is fine - stays on battlefield
+            } else if (isAura && attachedTo.targetId in state.turnOrder) {
+                // 704.5m — an "enchant player" Aura (Grievous Wound) is attached to a player, not
+                // a battlefield permanent. It stays as long as that player is still in the game;
+                // once the player leaves, PlayerLeavesGameProcessor removes them from turnOrder and
+                // the next check sends the now-unattached Aura to the graveyard.
+                continue
             } else {
                 // Check if attached target still exists on battlefield
                 if (attachedTo.targetId !in state.getBattlefield()) {

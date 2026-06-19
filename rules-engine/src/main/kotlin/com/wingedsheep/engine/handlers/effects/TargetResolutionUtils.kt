@@ -132,6 +132,7 @@ object TargetResolutionUtils {
             Player.AnOpponent -> state.getOpponents(context.controllerId).firstOrNull()
             Player.DefendingPlayer -> resolveDefendingPlayer(context, state)
             Player.ChosenOpponent -> context.sourceId?.let { state.getEntity(it)?.chosenOpponent() }
+            Player.EnchantedPlayer -> enchantedPlayer(context, state)
             is Player.OwnerOf -> context.targets.firstOrNull()?.toEntityId()
                 ?.let { state.getEntity(it)?.get<CardComponent>()?.ownerId }
             is Player.ControllerOf -> context.targets.firstOrNull()?.toEntityId()
@@ -167,6 +168,17 @@ object TargetResolutionUtils {
      * card they don't own (e.g. casting a spell from an opponent's graveyard). Falls back to the
      * [ControllerComponent] (battlefield permanents) and finally the owner.
      */
+    /**
+     * The player the source Aura is attached to (CR 303 enchant player), or `null` when the source
+     * isn't attached to a player. Reads the source's [AttachedToComponent] target and confirms it
+     * is a player (in [GameState.turnOrder]). Used to resolve [Player.EnchantedPlayer].
+     */
+    fun enchantedPlayer(context: EffectContext, state: GameState): EntityId? {
+        val sourceId = context.sourceId ?: return null
+        val targetId = state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId ?: return null
+        return targetId.takeIf { it in state.turnOrder }
+    }
+
     private fun controllerOf(state: GameState, entityId: EntityId): EntityId? {
         val entity = state.getEntity(entityId) ?: return null
         return entity.get<SpellOnStackComponent>()?.casterId

@@ -851,7 +851,7 @@ class DynamicAmountEvaluator(
             is Player.ChosenOpponent -> listOfNotNull(
                 context.sourceId?.let { state.getEntity(it)?.chosenOpponent() }
             )
-            is Player.AnOpponent, is Player.DefendingPlayer -> listOfNotNull(
+            is Player.AnOpponent, is Player.DefendingPlayer, is Player.EnchantedPlayer -> listOfNotNull(
                 TargetResolutionUtils.resolvePlayerRef(player, context, state)
             )
         }

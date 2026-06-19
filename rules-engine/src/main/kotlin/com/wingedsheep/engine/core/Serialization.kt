@@ -451,6 +451,7 @@ val engineSerializersModule = SerializersModule {
         subclass(AdditionalUpkeepStepsComponent::class)
         subclass(InAdditionalUpkeepStepComponent::class)
         subclass(CantCastSpellsComponent::class)
+        subclass(CantGainLifeComponent::class)
         subclass(CantActivateLoyaltyAbilitiesComponent::class)
         subclass(CardsLeftGraveyardThisTurnComponent::class)
         subclass(CreaturesDiedThisTurnComponent::class)

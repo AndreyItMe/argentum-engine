@@ -33,6 +33,7 @@ import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.player.AdditionalCombatPhasesComponent
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
+import com.wingedsheep.engine.state.components.player.CantGainLifeComponent
 import com.wingedsheep.engine.state.components.player.DamageBonusComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent
 import com.wingedsheep.engine.state.components.player.FlashGrantsThisTurnComponent
@@ -62,11 +63,17 @@ import com.wingedsheep.engine.state.components.player.PlayerNoMaximumHandSizeCom
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.player.SpellsCantBeCounteredComponent
 import com.wingedsheep.engine.state.components.player.PlayerTurnHijackedComponent
+import com.wingedsheep.engine.handlers.ConditionEvaluator
+import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
+import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.NoMaximumHandSize
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
+import com.wingedsheep.sdk.scripting.SetMaximumHandSize
+import com.wingedsheep.sdk.scripting.references.Player
 
 /**
  * Handles all end-of-turn cleanup: discard to hand size, damage removal,
@@ -76,6 +83,14 @@ class CleanupPhaseManager(
     private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val decisionHandler: DecisionHandler
 ) {
+
+    /** Default maximum hand size (CR 402.2), absent any effect that sets or removes it. */
+    private val defaultMaxHandSize = 7
+
+    // Stateless evaluators (default projection) used to read SetMaximumHandSize abilities and
+    // their ConditionalStaticAbility gates at cleanup time.
+    private val conditionEvaluator = ConditionEvaluator()
+    private val dynamicAmountEvaluator = DynamicAmountEvaluator(conditionEvaluator)
 
     /**
      * Perform cleanup step actions.
@@ -93,10 +108,10 @@ class CleanupPhaseManager(
         // Check if player needs to discard
         val handKey = ZoneKey(activePlayer, Zone.HAND)
         val hand = newState.getZone(handKey)
-        val maxHandSize = 7
-        val cardsToDiscard = hand.size - maxHandSize
+        val maxHandSize = maximumHandSize(newState, activePlayer)
+        val cardsToDiscard = if (maxHandSize == null) 0 else hand.size - maxHandSize
 
-        if (cardsToDiscard > 0 && !hasNoMaximumHandSize(newState, activePlayer)) {
+        if (cardsToDiscard > 0) {
             // Player needs to discard - create a decision
             events.add(DiscardRequiredEvent(activePlayer, cardsToDiscard))
 
@@ -205,6 +220,10 @@ class CleanupPhaseManager(
         if (protection?.removeOn == PlayerEffectRemoval.UntilYourNextTurn) {
             result = result.updateEntity(activePlayer) { it.without<PlayerProtectionComponent>() }
         }
+        val cantGainLife = result.getEntity(activePlayer)?.get<CantGainLifeComponent>()
+        if (cantGainLife?.removeOn == PlayerEffectRemoval.UntilYourNextTurn) {
+            result = result.updateEntity(activePlayer) { it.without<CantGainLifeComponent>() }
+        }
         // Memory Vessel's "they can't play cards from their hand until your next turn" expires on
         // the same post-untap hook. The window keys off the *activating* player (every affected
         // player's restriction lifts on that player's next turn), so scan every player and remove
@@ -302,6 +321,68 @@ class CleanupPhaseManager(
             state
         }
     }
+
+    /**
+     * The effective maximum hand size for [playerId] at cleanup, or `null` when they have no
+     * maximum (Reliquary Tower / Wisdom of Ages — [hasNoMaximumHandSize]).
+     *
+     * Starts from [defaultMaxHandSize] (CR 402.2) and applies every [SetMaximumHandSize] static
+     * ability on the battlefield whose [SetMaximumHandSize.player] scope (resolved relative to the
+     * source's controller) includes [playerId], taking the most restrictive (smallest) value. A
+     * [ConditionalStaticAbility] wrapper is unwrapped and its condition evaluated against the
+     * source's controller, so "as long as …" gates (Winter's Delirium) are honored.
+     */
+    private fun maximumHandSize(state: GameState, playerId: EntityId): Int? {
+        if (hasNoMaximumHandSize(state, playerId)) return null
+        var max = defaultMaxHandSize
+        val registry = cardRegistry
+        val projected = state.projectedState
+        for (permanentId in state.getBattlefield()) {
+            val card = state.getEntity(permanentId)?.get<CardComponent>() ?: continue
+            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.isEmpty()) continue
+            val controllerId = projected.getController(permanentId) ?: continue
+            val context = EffectContext(sourceId = permanentId, controllerId = controllerId)
+            for (raw in cardDef.script.staticAbilities) {
+                val setAbility = activeSetMaximumHandSize(state, raw, context) ?: continue
+                if (!playerScopeIncludes(setAbility.player, playerId, controllerId)) continue
+                val value = dynamicAmountEvaluator.evaluate(state, setAbility.amount, context)
+                    .coerceAtLeast(0)
+                max = minOf(max, value)
+            }
+        }
+        return max
+    }
+
+    /**
+     * Unwrap [raw] to a live [SetMaximumHandSize] if it is one (directly or behind a
+     * [ConditionalStaticAbility] whose condition holds), else `null`.
+     */
+    private fun activeSetMaximumHandSize(
+        state: GameState,
+        raw: com.wingedsheep.sdk.scripting.StaticAbility,
+        context: EffectContext
+    ): SetMaximumHandSize? = when (raw) {
+        is SetMaximumHandSize -> raw
+        is ConditionalStaticAbility -> {
+            val inner = raw.ability as? SetMaximumHandSize
+            if (inner != null && conditionEvaluator.evaluate(state, raw.condition, context)) inner else null
+        }
+        else -> null
+    }
+
+    /**
+     * Whether a [SetMaximumHandSize.player] scope, resolved relative to [controllerId] (the
+     * source's controller), includes [playerId]. Mirrors the player-scope switch in
+     * [com.wingedsheep.engine.handlers.effects.DamageUtils.isLifeGainPrevented].
+     */
+    private fun playerScopeIncludes(scope: Player, playerId: EntityId, controllerId: EntityId): Boolean =
+        when (scope) {
+            Player.You -> playerId == controllerId
+            Player.EachOpponent -> playerId != controllerId
+            Player.Each, Player.Any, Player.ActivePlayerFirst -> true
+            else -> false
+        }
 
     /**
      * Check if [playerId] has no maximum hand size — either from a permanent they control with the
@@ -474,6 +555,10 @@ class CleanupPhaseManager(
                 val cantCast = result.get<CantCastSpellsComponent>()
                 if (cantCast?.removeOn == PlayerEffectRemoval.EndOfTurn) {
                     result = result.without<CantCastSpellsComponent>()
+                }
+                val cantGainLife = result.get<CantGainLifeComponent>()
+                if (cantGainLife?.removeOn == PlayerEffectRemoval.EndOfTurn) {
+                    result = result.without<CantGainLifeComponent>()
                 }
                 val cantLoyalty = result.get<CantActivateLoyaltyAbilitiesComponent>()
                 if (cantLoyalty?.removeOn == PlayerEffectRemoval.EndOfTurn) {

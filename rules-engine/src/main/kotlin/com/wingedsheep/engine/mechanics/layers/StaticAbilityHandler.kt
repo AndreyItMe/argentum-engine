@@ -117,6 +117,7 @@ import com.wingedsheep.sdk.scripting.ModifyPlotCost
 import com.wingedsheep.sdk.scripting.ModifySpellCost
 import com.wingedsheep.sdk.scripting.ModifyUnlockCost
 import com.wingedsheep.sdk.scripting.NoMaximumHandSize
+import com.wingedsheep.sdk.scripting.SetMaximumHandSize
 import com.wingedsheep.sdk.scripting.NoncombatDamageBonus
 import com.wingedsheep.sdk.scripting.OpponentsPlayWithHandsRevealed
 import com.wingedsheep.sdk.scripting.OverrideEnchantedLandManaColor
@@ -766,6 +767,7 @@ class StaticAbilityHandler(
 
             // Turn-based actions (BeginningPhaseManager / CleanupPhaseManager):
             is NoMaximumHandSize,
+            is SetMaximumHandSize,
             is PreventManaPoolEmptying,
             is UntapDuringOtherUntapSteps,
             is UntapFilteredDuringOtherUntapSteps,

@@ -591,6 +591,40 @@ data class RemoveMaximumHandSizeEffect(
 }
 
 /**
+ * Lock [target] player's life gain — they can't gain life for [duration].
+ *
+ * Unlike the [com.wingedsheep.sdk.scripting.PreventLifeGain] replacement effect (a static that
+ * ends when its source permanent leaves the battlefield), this is a one-shot effect that tags the
+ * player directly, so the lock is independent of the source. With the default [Duration.Permanent]
+ * it lasts for the rest of the game (Screaming Nemesis: "If a player is dealt damage this way,
+ * they can't gain life for the rest of the game"); [Duration.EndOfTurn] / [Duration.UntilYourNextTurn]
+ * are also honored for turn-scoped variants.
+ *
+ * Non-player targets are a no-op — only players have a life total to lock — so this composes
+ * safely with a "deal damage to any target" rider that may hit a creature or planeswalker.
+ *
+ * @param target The player whose life gain is locked.
+ * @param duration How long the lock lasts (default: rest of game).
+ */
+@SerialName("LockLifeGain")
+@Serializable
+data class LockLifeGainEffect(
+    val target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer),
+    val duration: Duration = Duration.Permanent
+) : Effect {
+    override val description: String = buildString {
+        append(target.description.replaceFirstChar { it.uppercase() })
+        append(" can't gain life")
+        when (duration) {
+            Duration.Permanent -> append(" for the rest of the game")
+            Duration.EndOfTurn -> append(" this turn")
+            Duration.UntilYourNextTurn -> append(" until your next turn")
+            else -> {}
+        }
+    }
+}
+
+/**
  * "The Ring tempts you" (CR 701.54). The target player gets an emblem named The Ring (if they
  * don't have one) and chooses a creature they control to become their Ring-bearer. The emblem's
  * four cumulative abilities are gated by how many times that player has been tempted.

@@ -68,10 +68,13 @@ class AttachmentTriggerDetector(private val matcher: TriggerMatcher) {
     private fun getRelevantEntityIds(event: EngineGameEvent): List<com.wingedsheep.sdk.model.EntityId> {
         return when (event) {
             is DamageDealtEvent -> {
-                // Check both target (for "enchanted creature takes damage") and
-                // source (for "enchanted creature deals damage")
+                // Check both target (for "enchanted creature/player takes damage") and
+                // source (for "enchanted creature deals damage"). The target id is included
+                // even when it's a player so "whenever enchanted player is dealt damage"
+                // auras (Grievous Wound) fire — aurasByTarget only resolves to player-attached
+                // auras for that id, so non-enchant-player damage stays a no-op lookup.
                 buildList {
-                    if (!event.targetIsPlayer) add(event.targetId)
+                    add(event.targetId)
                     event.sourceId?.let { add(it) }
                 }
             }

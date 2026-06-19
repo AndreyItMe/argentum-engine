@@ -692,6 +692,17 @@ object Effects {
         com.wingedsheep.sdk.scripting.effects.RemoveMaximumHandSizeEffect(target)
 
     /**
+     * "[target] can't gain life for [duration]." A one-shot effect that tags the player directly,
+     * so the lock is independent of the source (unlike the
+     * [com.wingedsheep.sdk.scripting.PreventLifeGain] static replacement). Defaults to the rest of
+     * the game (Screaming Nemesis). Non-player targets are a no-op.
+     */
+    fun LockLifeGain(
+        target: EffectTarget = EffectTarget.PlayerRef(com.wingedsheep.sdk.scripting.references.Player.TargetPlayer),
+        duration: com.wingedsheep.sdk.scripting.Duration = com.wingedsheep.sdk.scripting.Duration.Permanent
+    ): Effect = com.wingedsheep.sdk.scripting.effects.LockLifeGainEffect(target, duration)
+
+    /**
      * "The Ring tempts you" (CR 701.54). The target player gets the Ring emblem (if they don't have
      * one), then chooses a creature they control to become their Ring-bearer. Defaults to the
      * controller. Tempting still happens even if the player controls no creatures.

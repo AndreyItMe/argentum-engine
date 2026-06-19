@@ -1056,11 +1056,14 @@ class StackResolver(
     ): Pair<GameState, List<GameEvent>> {
         val controllerId = spellComponent.casterId
 
-        // For Auras: get the target before removing TargetsComponent
+        // For Auras: get the target before removing TargetsComponent. The target is usually a
+        // permanent, but "enchant player" Auras (Grievous Wound) attach to a player — both are
+        // entities, so AttachedToComponent holds either id (CR 303.4).
         val auraTargetId = if (cardComponent?.isAura == true) {
             state.getEntity(spellId)?.get<TargetsComponent>()?.targets?.firstOrNull()?.let { target ->
                 when (target) {
                     is ChosenTarget.Permanent -> target.entityId
+                    is ChosenTarget.Player -> target.playerId
                     else -> null
                 }
             }

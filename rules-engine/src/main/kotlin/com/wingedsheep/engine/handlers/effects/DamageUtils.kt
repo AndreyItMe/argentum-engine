@@ -648,6 +648,13 @@ object DamageUtils {
      * on the battlefield (e.g., Sulfuric Vortex, Erebos).
      */
     fun isLifeGainPrevented(state: GameState, playerId: EntityId): Boolean {
+        // Durable, source-independent lock conferred directly on the player
+        // (LockLifeGainEffect — Screaming Nemesis).
+        if (state.getEntity(playerId)
+                ?.has<com.wingedsheep.engine.state.components.player.CantGainLifeComponent>() == true
+        ) {
+            return true
+        }
         for (entityId in state.getBattlefield()) {
             val container = state.getEntity(entityId) ?: continue
             val replacementComponent = container.get<ReplacementEffectSourceComponent>() ?: continue
@@ -665,6 +672,14 @@ object DamageUtils {
                     // "Your opponents can't gain life." — Gríma Wormtongue (LTR).
                     Player.EachOpponent ->
                         if (playerId != sourceControllerId) return true
+                    // "Enchanted player can't gain life." — Grievous Wound. The host is an Aura
+                    // attached to the locked player; compare against its attachment target.
+                    Player.EnchantedPlayer -> {
+                        val enchanted = container
+                            .get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()
+                            ?.targetId
+                        if (enchanted == playerId) return true
+                    }
                     else -> {}
                 }
             }

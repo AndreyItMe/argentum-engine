@@ -3035,6 +3035,61 @@
     ]
 }
 
+// Grievous Wound
+{
+    "name": "Grievous Wound",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant player\nEnchanted player can't gain life.\nWhenever enchanted player is dealt damage, they lose half their life, rounded up.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "DamageReceivedEvent",
+                "binding": "ATTACHED",
+                "effect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "Divide",
+                        "numerator": {
+                            "type": "LifeTotal",
+                            "player": "EnchantedPlayer"
+                        },
+                        "denominator": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EnchantedPlayer"
+                    }
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "PreventLifeGain",
+                "appliesTo": {
+                    "type": "LifeGainEvent",
+                    "player": "EnchantedPlayer"
+                }
+            }
+        ],
+        "auraTarget": "TargetPlayer"
+    },
+    "metadata": {
+        "collectorNumber": "102",
+        "rarity": "RARE",
+        "artist": "Martina Fačková",
+        "flavorText": "Vicky was so tired. The pain began to fade. \"You were so brave,\" said her grandmother's voice from somewhere far away. \"But it's time to rest now.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/e/6ed3dd5e-cd27-4b18-ad60-f5c4d9a811b9.jpg?1726286230"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Hardened Escort
 {
     "name": "Hardened Escort",
@@ -5315,6 +5370,67 @@
     ]
 }
 
+// Screaming Nemesis
+{
+    "name": "Screaming Nemesis",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "Haste\nWhenever this creature is dealt damage, it deals that much damage to any other target. If a player is dealt damage this way, they can't gain life for the rest of the game.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "DamageReceivedEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "ContextProperty",
+                                "key": "TRIGGER_DAMAGE_AMOUNT"
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "any other target"
+                            }
+                        },
+                        {
+                            "type": "LockLifeGain",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "any other target"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetOther",
+                    "baseRequirement": "AnyTarget",
+                    "id": "any other target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "157",
+        "rarity": "MYTHIC",
+        "artist": "Liiga Smilshkalne",
+        "flavorText": "She sees the faces of those who wronged her in everyone she encounters.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/e/ce35e6fb-ff54-44c4-a216-7ddd37f46882.jpg?1762773071"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Seized from Slumber
 {
     "name": "Seized from Slumber",
@@ -7492,6 +7608,100 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Winter, Misanthropic Guide
+{
+    "name": "Winter, Misanthropic Guide",
+    "manaCost": "{1}{B}{R}{G}",
+    "typeLine": "Legendary Creature — Human Warlock",
+    "oracleText": "Ward {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)\nAt the beginning of your upkeep, each player draws two cards.\nDelirium — As long as there are four or more card types among cards in your graveyard, each opponent's maximum hand size is equal to seven minus the number of those card types.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Mana",
+                "manaCost": "{2}"
+            }
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "Each"
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "SetMaximumHandSize",
+                    "player": "EachOpponent",
+                    "amount": {
+                        "type": "Subtract",
+                        "left": {
+                            "type": "Fixed",
+                            "amount": 7
+                        },
+                        "right": {
+                            "type": "AggregateZone",
+                            "player": "You",
+                            "zone": "Graveyard",
+                            "aggregation": "DISTINCT_TYPES"
+                        }
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "240",
+        "rarity": "RARE",
+        "artist": "Jodie Muir",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/9/e9b81421-44cb-440f-a6ac-3ddf620f1989.jpg?1726286766"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED",
+        "GREEN"
     ]
 }
 

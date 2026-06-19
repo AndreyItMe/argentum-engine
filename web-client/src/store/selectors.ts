@@ -562,7 +562,12 @@ export function useBattlefieldCards(opponentId?: EntityId | null): BattlefieldCa
       .map((id) => gameState.cards[id])
       .filter((card): card is ClientCard => card !== null && card !== undefined)
 
-    const isNotAttached = (c: ClientCard) => !c.attachedTo
+    // A card counts as "attached" only when its host is itself a battlefield card. An
+    // "enchant player" Aura (Grievous Wound) has attachedTo pointing at a player entity, which
+    // is not a battlefield card — render it standalone in its controller's row rather than
+    // dropping it (it is only ever rendered nested under a host card otherwise).
+    const cardIdSet = new Set(cards.map((c) => c.id))
+    const isNotAttached = (c: ClientCard) => !c.attachedTo || !cardIdSet.has(c.attachedTo)
     const playerCards = cards.filter((c) => c.controllerId === playerId)
     const opponentCards = opponentId
       ? cards.filter((c) => c.controllerId === opponentId)

@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
@@ -584,6 +585,56 @@ data object PreventManaPoolEmptying : StaticAbility {
 @Serializable
 data object NoMaximumHandSize : StaticAbility {
     override val description: String = "You have no maximum hand size"
+}
+
+/**
+ * Set the maximum hand size of a scoped set of players to a dynamic value.
+ *
+ * Like [NoMaximumHandSize], this is a turn-based read rather than a continuous-projection
+ * effect: the cleanup step ([com.wingedsheep.engine.core.CleanupPhaseManager]) scans the
+ * battlefield for this ability and, for each one whose [player] scope (resolved relative to
+ * the source's controller) includes the discarding player, evaluates [amount] and discards
+ * down to it. When several set-maximum abilities apply to the same player, the engine uses
+ * the most restrictive (smallest) value — a deterministic stand-in for timestamp ordering,
+ * since maximum hand size is a player value with no Rule 613 layer. A [NoMaximumHandSize]
+ * controlled by that player still wins outright (no discard at all).
+ *
+ * Gate it behind a [ConditionalStaticAbility] for "as long as …" forms — the cleanup read
+ * unwraps the conditional and evaluates its [Condition] against the source's controller.
+ *
+ * Example — Winter, Misanthropic Guide ("Delirium — As long as there are four or more card
+ * types among cards in your graveyard, each opponent's maximum hand size is equal to seven
+ * minus the number of those card types"):
+ * ```kotlin
+ * ConditionalStaticAbility(
+ *     ability = SetMaximumHandSize(
+ *         player = Player.EachOpponent,
+ *         amount = DynamicAmount.Subtract(
+ *             DynamicAmount.Fixed(7),
+ *             DynamicAmount.AggregateZone(Player.You, Zone.GRAVEYARD, GameObjectFilter.Any, Aggregation.DISTINCT_TYPES)
+ *         )
+ *     ),
+ *     condition = Conditions.Delirium()
+ * )
+ * ```
+ *
+ * @property player Whose maximum hand size is set, resolved relative to the source's
+ *   controller (`You` / `EachOpponent` / `Each` / `Any`).
+ * @property amount The dynamic maximum hand size (clamped to ≥ 0 by the engine).
+ */
+@SerialName("SetMaximumHandSize")
+@Serializable
+data class SetMaximumHandSize(
+    val player: Player = Player.You,
+    val amount: DynamicAmount
+) : StaticAbility {
+    override val description: String =
+        "${player.possessive.replaceFirstChar { it.uppercase() }} maximum hand size is ${amount.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**

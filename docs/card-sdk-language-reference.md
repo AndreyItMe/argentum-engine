@@ -40,7 +40,11 @@ section; do not let SDK additions land without a corresponding doc update.
 - `dynamicStats(source, powerOffset?, toughnessOffset?)` — sets both with optional `±` deltas.
 - `startingLoyalty: Int?` — starting loyalty for planeswalkers.
 - `colorIdentity: String?` — override (normally auto-detected). Treated as authoritative in this repo.
-- `auraTarget: TargetRequirement?` — what this Aura enchants.
+- `auraTarget: TargetRequirement?` — what this Aura enchants. Usually a permanent (`Targets.Creature`),
+  but `Targets.Player` makes it an **"enchant player"** Aura: it attaches to a player via
+  `AttachedToComponent` (players are entities too), survives state-based actions while that player is in
+  the game, and exposes the player through `Player.EnchantedPlayer` / `EventPattern.LifeGainEvent(EnchantedPlayer)`
+  and a `takesDamage(binding = ATTACHED)` "whenever enchanted player is dealt damage" trigger. (Grievous Wound.)
 - `morph: String?` — morph mana cost (cast face-down).
 - `morphCost: PayCost?` — non-mana morph cost.
 - `morphFaceUpEffect: Effect?` — effect that fires when this morph turns face up.
@@ -337,6 +341,12 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `SetLifeTotal(amount, target)` — set target's life total to N.
 - `ExchangeLifeAndPower(target)` — swap target's power with controller's life total.
 - `LoseHalfLife(roundUp, target, lifePlayer?)` — lose half of life total (round up/down).
+- `LockLifeGain(target?, duration?)` — "target player can't gain life" for `duration` (default
+  `Duration.Permanent` = rest of the game; `EndOfTurn` / `UntilYourNextTurn` also honored). A one-shot
+  effect that tags the player with `CantGainLifeComponent`, so the lock is independent of any source —
+  unlike the `PreventLifeGain` *replacement* (§11), which ends when its permanent leaves play.
+  Non-player targets are a no-op, so it composes after a "deal damage to any target" rider (Screaming
+  Nemesis). Checked by `DamageUtils.isLifeGainPrevented`.
 - `LoseGame(target, message?)` — target loses the game.
 - `RemoveMaximumHandSize(target?)` — "target has no maximum hand size for the rest of the game"
   (default target: controller). One-shot resolution effect that confers a permanent, player-scoped
@@ -1355,6 +1365,11 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
   choice flow is tracked in `backlog/multiplayer.md`. Do **not** use it where the text means
   `TargetOpponent`, `EachOpponent`, `DefendingPlayer`, or `TriggeringPlayer`.
 - `Player.ChosenOpponent` — the opponent locked into the source's `ChoiceSlot.OPPONENT` slot.
+- `Player.EnchantedPlayer` — the player the source Aura is attached to ("enchant player", CR 303),
+  read from the source's `AttachedToComponent` when its target is a player. Use it both for the payoff
+  (`DynamicAmount.LifeTotal(EnchantedPlayer)`, `EffectTarget.PlayerRef(EnchantedPlayer)`) and to scope a
+  `PreventLifeGain` (`LifeGainEvent(player = EnchantedPlayer)`). Resolves to nothing if the source isn't
+  an Aura attached to a player. (Grievous Wound.)
 - `Player.ControllerOf(desc)` / `Player.OwnerOf(desc)` — controller/owner of the first chosen target.
 - `Player.ContextPlayer(i)` / `Player.Candidate` / `Player.Any` — positional target, CR 115
   candidate during target-restriction evaluation, and "a player" matching.
@@ -2815,6 +2830,13 @@ staticAbility {
   battlefield*. (Thought Vessel, Reliquary Tower) For a one-shot resolution effect that confers a
   *permanent, player-scoped* "no maximum hand size for the rest of the game" (survives the source
   leaving play), use the effect `Effects.RemoveMaximumHandSize(target)` instead — see §4. (Wisdom of Ages)
+- `SetMaximumHandSize(player, amount)` — sets the maximum hand size of a `player` scope (`You` /
+  `EachOpponent` / `Each`, resolved relative to the source's controller) to a `DynamicAmount`, read at
+  cleanup. Most restrictive (smallest) value wins when several apply; a `NoMaximumHandSize` controlled
+  by that player still removes the cap entirely. Gate it behind a `ConditionalStaticAbility` for an "as
+  long as …" form — the cleanup read unwraps the conditional and evaluates its condition against the
+  source's controller. (Winter, Misanthropic Guide — `ConditionalStaticAbility(SetMaximumHandSize(
+  EachOpponent, Subtract(Fixed(7), AggregateZone(You, GRAVEYARD, Any, DISTINCT_TYPES))), Delirium())`.)
 - `DampLandManaProduction` — a land tapped for 2+ mana produces `{C}` instead. (Damping Sphere)
 - `RestrictSpellsCastPerTurn(maxPerTurn, eachPlayer = false)` — a per-turn cap on spells cast.
   `eachPlayer = false` (default) limits only the source's controller (Yawgmoth's Agenda: "You can't
@@ -4532,6 +4554,10 @@ replacementEffect {
   Ali from Cairo (`LifeLossFloor(floor = 1, appliesTo = LifeLossEvent(Player.You))`); Worship adds a
   `restrictions = listOf(YouControlACreature)` gate.
 - `PreventLifeGain(appliesTo)` — life gain matching the event is fully prevented (Sulfuric Vortex, Erebos).
+  The `LifeGainEvent.player` scope can be `You` / `EachOpponent` / `Each` (resolved relative to the
+  source's controller) or `EnchantedPlayer` for an "enchant player" Aura whose locked player is its
+  attachment target (Grievous Wound). For a *source-independent, rest-of-game* lock on a specific player
+  instead, use the one-shot effect `Effects.LockLifeGain` (§4).
 - Custom — implement the `ReplacementEffect` interface directly.
 
 Amount-modifying replacements expose **both** `multiplier` (×) and `modifier` (±) on the same type — do not split into

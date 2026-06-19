@@ -587,6 +587,25 @@ data class CantCastSpellsComponent(
 ) : Component
 
 /**
+ * Component indicating that a player can't gain life. Conferred directly on the player by
+ * [com.wingedsheep.sdk.scripting.effects.LockLifeGainEffect] (Screaming Nemesis), so the lock is
+ * independent of any source permanent — distinct from the
+ * [com.wingedsheep.sdk.scripting.PreventLifeGain] static replacement, which ends when its
+ * permanent leaves play.
+ *
+ * Consulted by [com.wingedsheep.engine.handlers.effects.DamageUtils.isLifeGainPrevented].
+ *
+ * @param removeOn When this component should be removed:
+ *   - [PlayerEffectRemoval.Permanent] — rest of the game (default; Screaming Nemesis)
+ *   - [PlayerEffectRemoval.EndOfTurn] — removed during end-of-turn cleanup
+ *   - [PlayerEffectRemoval.UntilYourNextTurn] — removed after that player's next untap step
+ */
+@Serializable
+data class CantGainLifeComponent(
+    val removeOn: PlayerEffectRemoval = PlayerEffectRemoval.Permanent
+) : Component
+
+/**
  * Component indicating that a player cannot activate planeswalkers' loyalty abilities for the
  * rest of this turn. Applied by effects like Revel in Silence. Sibling of [CantCastSpellsComponent].
  *

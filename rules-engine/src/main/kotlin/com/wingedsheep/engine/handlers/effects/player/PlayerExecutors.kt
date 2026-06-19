@@ -60,6 +60,7 @@ class PlayerExecutors(
         GrantPlayerProtectionExecutor(),
         GrantShroudExecutor(),
         HijackNextTurnExecutor(),
+        LockLifeGainExecutor(),
         openLifeBidExecutor,
         LoseGameExecutor(),
         WinGameExecutor(),

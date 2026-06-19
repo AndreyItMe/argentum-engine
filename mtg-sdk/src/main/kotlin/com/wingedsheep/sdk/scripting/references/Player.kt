@@ -156,6 +156,20 @@ sealed interface Player {
         override val description: String = "the chosen player"
     }
 
+    /**
+     * The player enchanted by the source Aura — read from the source's
+     * [com.wingedsheep.engine.state.components.battlefield.AttachedToComponent] target id when it
+     * is a player. Used by "enchant player" Auras (Grievous Wound) for both the payoff target
+     * ("they lose half their life") and the [com.wingedsheep.sdk.scripting.PreventLifeGain] scope
+     * ("enchanted player can't gain life"). Resolves to nothing when the source isn't an Aura
+     * attached to a player.
+     */
+    @SerialName("EnchantedPlayer")
+    @Serializable
+    data object EnchantedPlayer : Player {
+        override val description: String = "enchanted player"
+    }
+
     /** Controller of a permanent (used with EffectTarget) */
     @SerialName("ControllerOf")
     @Serializable
@@ -190,6 +204,7 @@ sealed interface Player {
             Candidate -> "that player's"
             TriggeringPlayer -> "that player's"
             ChosenOpponent -> "the chosen player's"
+            EnchantedPlayer -> "enchanted player's"
             is ControllerOf -> "its controller's"
             is OwnerOf -> "its owner's"
         }
