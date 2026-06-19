@@ -32,11 +32,19 @@ class SealedDeckGeneratorTest : FunSpec({
         metadata = ScryfallMetadata(collectorNumber = name.hashCode().toString(), rarity = rarity, inBooster = inBooster),
     )
 
-    // A pool deep enough to fill 8 standard boosters without exhausting any rarity.
+    // A pool deep enough to fill 8 standard boosters without exhausting any rarity. Small enough
+    // (28 cards) to model a bonus sheet like "The Big Score" — below the standalone size threshold.
     fun viablePool(prefix: String): List<CardDefinition> =
         (1..15).map { card("$prefix Common $it", Rarity.COMMON) } +
             (1..8).map { card("$prefix Uncommon $it", Rarity.UNCOMMON) } +
             (1..5).map { card("$prefix Rare $it", Rarity.RARE) }
+
+    // A full-size set (260 distinct cards) — above the standalone size threshold, so it is a valid
+    // random quick/AI sealed source.
+    fun largePool(prefix: String): List<CardDefinition> =
+        (1..200).map { card("$prefix Common $it", Rarity.COMMON) } +
+            (1..40).map { card("$prefix Uncommon $it", Rarity.UNCOMMON) } +
+            (1..20).map { card("$prefix Rare $it", Rarity.RARE) }
 
     fun config(code: String, cards: List<CardDefinition>, sealedSupported: Boolean, incomplete: Boolean = false) =
         BoosterGenerator.SetConfig(
@@ -64,6 +72,33 @@ class SealedDeckGeneratorTest : FunSpec({
 
         val drawn = (1..500).map { gen.randomSetCode() }.toSet()
         drawn.toList() shouldContainExactly listOf("FULL")
+    }
+
+    test("randomSetCode skips small complete sets in favour of full standalone sets") {
+        // "BIG" is a complete, sealed-supported bonus sheet (28 cards) that can't fill 8 boosters on
+        // its own; "FULL" is a full-size set. Only FULL is a valid standalone random source.
+        val gen = SealedDeckGenerator(
+            BoosterGenerator(
+                mapOf(
+                    "FULL" to config("FULL", largePool("FULL"), sealedSupported = true),
+                    "BIG" to config("BIG", viablePool("BIG"), sealedSupported = true),
+                )
+            )
+        )
+
+        val drawn = (1..500).map { gen.randomSetCode() }.toSet()
+        drawn.toList() shouldContainExactly listOf("FULL")
+    }
+
+    test("falls back to any complete set when none meet the standalone size threshold") {
+        // Only small complete sets exist — pick one rather than throw on an empty pool.
+        val gen = SealedDeckGenerator(
+            BoosterGenerator(
+                mapOf("SMALL" to config("SMALL", viablePool("SMALL"), sealedSupported = true))
+            )
+        )
+
+        gen.randomSetCode() shouldBe "SMALL"
     }
 
     test("generate(randomSetCode()) never throws even when partial sets are unviable") {

@@ -25,15 +25,19 @@ class SealedDeckGenerator(
     /**
      * Picks a random set code that can actually produce a sealed deck.
      *
-     * Only [BoosterGenerator.SetConfig.fullyImplemented] sets are eligible: a partial set
-     * (incomplete, or not curated for sealed) can have a card pool too thin for the single-set
-     * booster strategy, which then throws `No cards available for booster generation`. Random
-     * quick/AI games have no host to opt into a partial set, so they must draw from a playable one.
-     * Falls back to all available sets only if — unexpectedly — none are fully implemented.
+     * Eligible sets must be both [BoosterGenerator.SetConfig.fullyImplemented] *and* large enough to
+     * open 8 boosters on their own. A partial set, or a small supplementary set like "The Big Score"
+     * (BIG, ~30 cards), has a pool too thin for the single-set booster strategy and throws
+     * `No cards available for booster generation`. Random quick/AI games have no host to opt into a
+     * partial set, so they must draw from a full standalone set. The fallbacks widen the pool only if
+     * — unexpectedly — nothing qualifies, so this never throws on an empty pool.
      */
     fun randomSetCode(): String {
-        val playable = boosterGenerator.availableSets.values.filter { it.fullyImplemented }
-        val pool = playable.ifEmpty { boosterGenerator.availableSets.values.toList() }
+        val sets = boosterGenerator.availableSets.values
+        val standalone = sets.filter { it.fullyImplemented && it.distinctCardCount >= MIN_STANDALONE_SET_SIZE }
+        val pool = standalone
+            .ifEmpty { sets.filter { it.fullyImplemented } }
+            .ifEmpty { sets.toList() }
         return pool.random().setCode
     }
 
@@ -85,5 +89,13 @@ class SealedDeckGenerator(
 
     private companion object {
         private val logger = LoggerFactory.getLogger(SealedDeckGenerator::class.java)
+
+        /**
+         * Minimum distinct-card count for a set to be opened as a standalone sealed pool. Excludes
+         * small supplementary sets (e.g. "The Big Score", BIG, ~30 cards) that can't fill 8 boosters
+         * on their own. A full draftable set is ~250+ cards, so 200 leaves headroom while still
+         * rejecting anything too thin.
+         */
+        private const val MIN_STANDALONE_SET_SIZE = 200
     }
 }
