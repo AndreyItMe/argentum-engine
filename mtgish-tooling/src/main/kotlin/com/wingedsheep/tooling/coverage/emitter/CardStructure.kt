@@ -508,6 +508,28 @@ private fun youGainedLifeConditionDsl(condNode: JsonElement?): String? {
 }
 
 /**
+ * "if you gained N or more life this turn" — `PlayerPassesFilter(You, GainedLifeAmountThisTurn(
+ * [Comparison GreaterThanOrEqualTo Integer N]))` -> `Conditions.YouGainedLifeThisTurnAtLeast(N)`.
+ * The quantified sibling of [youGainedLifeConditionDsl]. Backs Scheming Silvertongue's second-main
+ * intervening-if ("if you gained 2 or more life this turn"). Only the You scope with a
+ * `GreaterThanOrEqualTo` comparison over a fixed integer renders; any other player scope or
+ * comparator declines -> SCAFFOLD rather than miscount.
+ */
+private fun youGainedLifeAtLeastConditionDsl(condNode: JsonElement?): String? {
+    val cond = condNode as? JsonObject ?: return null
+    if (cond.strField("_Condition") != "PlayerPassesFilter") return null
+    val args = cond["args"].asArr ?: return null
+    if ((args.getOrNull(0) as? JsonObject)?.strField("_Player") != "You") return null
+    val players = args.getOrNull(1) as? JsonObject ?: return null
+    if (players.strField("_Players") != "GainedLifeAmountThisTurn") return null
+    val comparison = players["args"] as? JsonObject ?: return null
+    if (comparison.strField("_Comparison") != "GreaterThanOrEqualTo") return null
+    val n = (comparison["args"] as? JsonObject)?.takeIf { it.strField("_GameNumber") == "Integer" }
+        ?.get("args").asInt() ?: return null
+    return "Conditions.YouGainedLifeThisTurnAtLeast($n)"
+}
+
+/**
  * "you control N or more [filter]" condition (`PlayerPassesFilter(You, ControlsNum([Comparison
  * GreaterThanOrEqualTo Integer N], <filter>))`) -> `Conditions.YouControlAtLeast(N, <filter>)`, or null
  * when the player isn't You, the comparison isn't `>= N` (a fixed integer), or the filter doesn't render
@@ -813,6 +835,9 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
             ?: youCommittedCrimeConditionDsl(cond)
             ?: sourceCounterCountAtLeastConditionDsl(cond)
             ?: deliriumConditionDsl(cond)
+            // "as long as you gained life this turn" gating a self-only buff (Ulna Alley Shopkeep's
+            // Infusion +2/+0). Same condition the EachPermanentLayerEffect lord branch already uses.
+            ?: youGainedLifeConditionDsl(cond)
             ?: run { reasons.add("If"); return null }
         val layerEffects = (innerRule["args"].asArr?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
             ?: run { reasons.add("If"); return null }
@@ -2250,6 +2275,11 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
             perms.field("args").strField("_Permanent") == "ThisPermanent"
         return if (isThisPermanent) "Conditions.SourceReceivedCounterThisTurn" else null
     }
+    // "if you gained N or more life this turn" — PlayerPassesFilter(You, GainedLifeAmountThisTurn(
+    // [Comparison GreaterThanOrEqualTo Integer N])) (Scheming Silvertongue's "if you gained 2 or more
+    // life this turn") -> Conditions.YouGainedLifeThisTurnAtLeast(N). Only the >= comparison with a
+    // fixed integer renders; any other comparator declines -> SCAFFOLD rather than miscount.
+    youGainedLifeAtLeastConditionDsl(cond)?.let { return it }
     // "if you gained life this turn" — PlayerPassesFilter(You, GainedLifeThisTurn) (Foolish Fate's
     // Infusion clause). No count/amount sub-clause, so the bare "you gained life this turn" maps to
     // Conditions.YouGainedLifeThisTurn.
@@ -2753,6 +2783,8 @@ private fun spellCastCategory(spells: JsonObject?): String? = when (spells?.strF
         else -> null
     }
     "IsNonCardtype" -> if (spells.field("args").asStr() == "Creature") "noncreature" else null
+    // "a multicolored spell" (Mage Tower Referee). Maps to GameObjectFilter.Multicolored.
+    "IsMulticolored" -> "multicolored"
     // "an instant or sorcery spell" — an Or of exactly the two cardtype clauses, nothing else.
     "Or" -> {
         val parts = spells["args"].asArr.orEmpty().map { it as? JsonObject }
@@ -2771,6 +2803,7 @@ private fun categoryFilter(category: String): String? = when (category) {
     "instantOrSorcery" -> "GameObjectFilter.InstantOrSorcery"
     "historic" -> "GameObjectFilter.Historic"
     "outlaw" -> "GameObjectFilter.Any.withAnyOfSubtypes(Subtype.OUTLAW_TYPES)"
+    "multicolored" -> "GameObjectFilter.Multicolored"
     else -> null
 }
 
@@ -2817,6 +2850,7 @@ private fun castTriggerDsl(scope: CastScope, category: String, targetsMatching: 
             "instantOrSorcery" -> "Triggers.YouCastInstantOrSorcery"
             "historic" -> "Triggers.YouCastHistoric"
             "outlaw" -> "Triggers.youCastSpell(spellFilter = ${categoryFilter("outlaw")})"
+            "multicolored" -> "Triggers.youCastSpell(spellFilter = ${categoryFilter("multicolored")})"
             else -> null
         }
         CastScope.ANY -> if (filter == null) "Triggers.AnyPlayerCastsSpell" else "Triggers.anyPlayerCasts($filter)"

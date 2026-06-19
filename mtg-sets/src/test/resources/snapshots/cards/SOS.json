@@ -6702,6 +6702,46 @@
     ]
 }
 
+// Mage Tower Referee
+{
+    "name": "Mage Tower Referee",
+    "manaCost": "{2}",
+    "typeLine": "Artifact Creature — Construct",
+    "oracleText": "Whenever you cast a multicolored spell, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsMulticolored"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "249",
+        "artist": "Nino Vecia",
+        "flavorText": "Incapable of choosing a favorite and invulnerable to the influence of magic, it is an ideal and obnoxiously accurate referee.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/c/1ceb704a-97a8-49f9-b799-30f001404144.jpg?1775938737"
+    }
+}
+
 // Magmablood Archaic
 {
     "name": "Magmablood Archaic",
@@ -10333,6 +10373,183 @@
     ]
 }
 
+// Scathing Shadelock
+{
+    "name": "Scathing Shadelock",
+    "manaCost": "{4}{B}",
+    "typeLine": "Creature — Snake Warlock",
+    "oracleText": "At the beginning of your first main phase, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 6
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "PRECOMBAT_MAIN"
+                },
+                "binding": "ANY",
+                "effect": "BecomePrepared"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "98",
+        "rarity": "UNCOMMON",
+        "artist": "Loïc Canavaggia",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/3/03e664cd-c3a6-4263-b2d8-dd99058fb8ec.jpg?1775937593"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Venomous Words",
+            "manaCost": "{B}",
+            "typeLine": "Sorcery",
+            "oracleText": "Target creature you control gets +2/+0 and gains deathtouch until end of turn.",
+            "script": {
+                "spellEffect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 0
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "DEATHTOUCH",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+// Scheming Silvertongue
+{
+    "name": "Scheming Silvertongue",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Vampire Warlock",
+    "oracleText": "Flying, lifelink\nAt the beginning of your second main phase, if you gained 2 or more life this turn, this creature becomes prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "POSTCOMBAT_MAIN"
+                },
+                "binding": "ANY",
+                "effect": "BecomePrepared",
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "LIFE_GAINED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "99",
+        "rarity": "RARE",
+        "artist": "Anna Steinbauer",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/e/fe85a124-0d8b-4a29-8df1-65888a39147f.jpg?1778165124"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "PREPARE",
+    "cardFaces": [
+        {
+            "name": "Sign in Blood",
+            "manaCost": "{B}{B}",
+            "typeLine": "Sorcery",
+            "oracleText": "Target player draws two cards and loses 2 life.",
+            "script": {
+                "spellEffect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target player"
+                            }
+                        },
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target player"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetPlayer",
+                        "id": "target player"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Scolding Administrator
 {
     "name": "Scolding Administrator",
@@ -12848,6 +13065,120 @@
     ]
 }
 
+// Tester of the Tangential
+{
+    "name": "Tester of the Tangential",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Djinn Wizard",
+    "oracleText": "Increment (Whenever you cast a spell, if the amount of mana you spent is greater than this creature's power or toughness, put a +1/+1 counter on this creature.)\nAt the beginning of combat on your turn, you may pay {X}. When you do, move X +1/+1 counters from this creature onto another target creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "INCREMENT"
+    ],
+    "keywordAbilities": [
+        "Increment"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "SpellCastEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "Any",
+                    "conditions": [
+                        {
+                            "type": "Compare",
+                            "left": {
+                                "type": "EntityProperty",
+                                "entity": "Triggering",
+                                "numericProperty": "ManaSpent"
+                            },
+                            "operator": "GT",
+                            "right": {
+                                "type": "EntityProperty",
+                                "entity": "Source",
+                                "numericProperty": "Power"
+                            }
+                        },
+                        {
+                            "type": "Compare",
+                            "left": {
+                                "type": "EntityProperty",
+                                "entity": "Triggering",
+                                "numericProperty": "ManaSpent"
+                            },
+                            "operator": "GT",
+                            "right": {
+                                "type": "EntityProperty",
+                                "entity": "Source",
+                                "numericProperty": "Toughness"
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "Increment (Whenever you cast a spell, if the amount of mana you spent is greater than this creature's power or toughness, put a +1/+1 counter on this creature.)"
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayPayX",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "SelectTarget",
+                                "requirement": {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature",
+                                        "excludeSelf": true
+                                    }
+                                },
+                                "storeAs": "moveTarget"
+                            },
+                            {
+                                "type": "MoveCounters",
+                                "counterType": "+1/+1",
+                                "amount": "XValue",
+                                "source": "Self",
+                                "destination": {
+                                    "type": "PipelineTarget",
+                                    "collectionName": "moveTarget"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "69",
+        "rarity": "UNCOMMON",
+        "artist": "Lorenzo Mastroianni",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bbd708ec-eef4-4f45-99dd-60e1cec4b991.jpg?1775937389"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Textbook Tabulator
 {
     "name": "Textbook Tabulator",
@@ -13697,6 +14028,59 @@
     "colorIdentityOverride": [
         "BLUE",
         "RED"
+    ]
+}
+
+// Ulna Alley Shopkeep
+{
+    "name": "Ulna Alley Shopkeep",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Goblin Warlock",
+    "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nInfusion — This creature gets +2/+0 as long as you gained life this turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "MENACE"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 2,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "LIFE_GAINED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "103",
+        "artist": "Inkognit",
+        "flavorText": "\"This one's from my private stock.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c25e1ae5-f17c-4eee-98f1-5681981af31c.jpg?1775937633"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 

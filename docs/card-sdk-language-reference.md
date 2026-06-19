@@ -521,6 +521,12 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `MoveChosenCountersToTarget(source, destination, drawCardOnMove?)` — Goldberry, River-Daughter (ability B) —
   player chooses how many of each kind to move from `source` onto `destination` (one `ChooseNumberDecision` per
   kind). When `drawCardOnMove` is true, the controller draws a card if any counter was moved ("if you do, draw").
+- `MoveCounters(counterType, amount, source, destination)` — Tester of the Tangential — deterministic,
+  count-carrying move of a single counter kind: moves `amount` (a `DynamicAmount`, e.g. `DynamicAmount.XValue`
+  from a may-pay-{X} reflexive) of `counterType` from `source` onto `destination`. The count is capped at the
+  number actually on `source`, and adding to `destination` honors counter-placement replacement effects
+  (Hardened Scales). No-op when source/destination missing, they're the same permanent, amount ≤ 0, or source has
+  none of that kind. The count-fixed counterpart to the interactive `MoveChosenCountersToTarget`.
 - `Counters.ANY` — wildcard counter-type string for "counters of any type" triggers/events (e.g.
   `Triggers.countersPlacedOn`); not a real placeable counter, only a matcher sentinel.
 - `DistributeCountersFromSelf(type?, count?)` — split source's counters among creatures you control.
@@ -3346,6 +3352,11 @@ answer it and would silently return `false`.
 - `APlayerLifeAtMost(n)` — *some* player in the game has ≤N life (existential over `state.turnOrder`; distinct from `LifeAtMost`, which is `Player.You`). Used by enters-tapped-unless lands like Razortrap Gorge.
 - `YouLostLife` — you lost life this turn.
 - `OpponentLostLife` — an opponent lost life this turn.
+- `YouGainedLifeThisTurn` — you gained ≥1 life this turn (intervening-if / static gate; backed by the
+  `LIFE_GAINED` turn tracker). Used by Ulna Alley Shopkeep's Infusion buff.
+- `YouGainedLifeThisTurnAtLeast(n)` — you gained ≥`n` life this turn. The threshold form of
+  `YouGainedLifeThisTurn` (`Compare(TurnTracking(You, LIFE_GAINED), GTE, n)`). Used by Scheming
+  Silvertongue's "if you gained 2 or more life this turn" prepared trigger.
 
 ### Cast / cost
 
