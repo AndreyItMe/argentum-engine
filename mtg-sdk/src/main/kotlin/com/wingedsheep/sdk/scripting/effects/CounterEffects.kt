@@ -209,6 +209,40 @@ data class MoveChosenCountersToTargetEffect(
 }
 
 /**
+ * Move a dynamic number of counters of a single kind from a [source] permanent onto a
+ * [destination] permanent.
+ *
+ * "Move X +1/+1 counters from this creature onto another target creature." (Tester of the
+ * Tangential — where X is paid via a may-pay-{X} reflexive.)
+ *
+ * The deterministic, count-carrying counterpart to the interactive [MoveChosenCountersToTargetEffect]
+ * (player chooses per kind) and the each-kind [MoveCountersEachKindMissingEffect]: this one moves a
+ * fixed-at-resolution [amount] of exactly one [counterType], so the count can come from a
+ * [DynamicAmount] (e.g. [com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue]). The executor
+ * caps the moved count at the number actually present on the source (you can't move more counters
+ * than are there), removes that many from the source, and adds them to the destination — honoring
+ * counter-placement replacement effects on the destination. No-op when source/destination is
+ * missing, they're the same permanent, the amount resolves to <= 0, or the source has none of
+ * [counterType].
+ *
+ * @property counterType The kind of counter to move (e.g. "+1/+1")
+ * @property amount How many to move (resolved at execution; capped at the source's current count)
+ * @property source The permanent counters are moved *from*
+ * @property destination The permanent counters are moved *onto*
+ */
+@SerialName("MoveCounters")
+@Serializable
+data class MoveCountersEffect(
+    val counterType: String,
+    val amount: DynamicAmount,
+    val source: EffectTarget,
+    val destination: EffectTarget
+) : Effect {
+    override val description: String =
+        "Move ${amount.description} $counterType counters from ${source.description} onto ${destination.description}"
+}
+
+/**
  * Distribute any number of counters from this creature onto other creatures.
  * "At the beginning of your upkeep, you may move any number of +1/+1 counters
  * from Forgotten Ancient onto other creatures."

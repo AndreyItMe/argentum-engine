@@ -1136,6 +1136,21 @@ object Effects {
         com.wingedsheep.sdk.scripting.effects.MoveCountersEachKindMissingEffect(source, destination)
 
     /**
+     * Move a dynamic [amount] of [counterType] counters from [source] onto [destination].
+     * Deterministic, count-carrying counterpart to [MoveChosenCountersToTarget] — the count
+     * can be a [DynamicAmount] (e.g. `DynamicAmount.XValue` from a may-pay-{X} reflexive), and
+     * is capped at the number actually on the source. Used by Tester of the Tangential's
+     * "move X +1/+1 counters from this creature onto another target creature".
+     */
+    fun MoveCounters(
+        counterType: String,
+        amount: DynamicAmount,
+        source: EffectTarget,
+        destination: EffectTarget
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.MoveCountersEffect(counterType, amount, source, destination)
+
+    /**
      * Move a player-chosen set (one or more) of counters from [source] onto [destination]
      * (one prompt per counter kind on the source). When [drawCardOnMove] is true, the
      * controller draws a card if any counter was moved. Used by Goldberry, River-Daughter's

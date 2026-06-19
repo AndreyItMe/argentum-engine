@@ -875,6 +875,13 @@ object Conditions {
         trackerAtLeast(com.wingedsheep.sdk.scripting.values.TurnTracker.LIFE_GAINED)
 
     /**
+     * If you gained [atLeast] or more life this turn.
+     * Used for Scheming Silvertongue ("if you gained 2 or more life this turn").
+     */
+    fun YouGainedLifeThisTurnAtLeast(atLeast: Int): ConditionInterface =
+        trackerAtLeast(com.wingedsheep.sdk.scripting.values.TurnTracker.LIFE_GAINED, atLeast)
+
+    /**
      * As long as you attacked with [atLeast] or more creatures matching [filter] this turn.
      * Used for cards like Deepway Navigator: "as long as you attacked with three or more
      * Merfolk this turn".
