@@ -113,6 +113,26 @@ class GlimmerClusterScenarioTest : ScenarioTestBase() {
             }
         }
 
+        context("Tunnel Surveyor") {
+            test("creates a 1/1 white Glimmer enchantment creature token when it enters") {
+                val game = scenario()
+                    .withPlayers("P1", "P2")
+                    .withCardInHand(1, "Tunnel Surveyor")
+                    .withLandsOnBattlefield(1, "Island", 3)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val cast = game.castSpell(1, "Tunnel Surveyor")
+                withClue("Casting Tunnel Surveyor should succeed: ${cast.error}") { cast.error shouldBe null }
+                game.resolveStack()
+
+                game.findPermanent("Tunnel Surveyor").shouldNotBeNull()
+                val token = game.findPermanent("Glimmer Token").shouldNotBeNull()
+                game.assertGlimmerToken(token)
+            }
+        }
+
         context("Glimmer Seeker") {
             test("creates a Glimmer token at second main if tapped and you control no Glimmer creature") {
                 val game = scenario()
