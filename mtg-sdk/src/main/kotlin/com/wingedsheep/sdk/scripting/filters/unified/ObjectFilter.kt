@@ -312,6 +312,11 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.ManaValueIsOdd
     )
 
+    /** Printed mana cost contains an {X} symbol (Paradox Surveyor). */
+    fun hasXInManaCost() = copy(
+        cardPredicates = cardPredicates + CardPredicate.HasXInManaCost
+    )
+
     /** Power equals */
     fun power(value: Int) = copy(
         cardPredicates = cardPredicates + CardPredicate.PowerEquals(value)

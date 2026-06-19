@@ -408,6 +408,18 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override val description: String = "with odd mana value"
     }
 
+    /**
+     * Matches a card whose printed mana cost contains an {X} symbol (e.g. "a card with {X} in its
+     * mana cost", Paradox Surveyor). This inspects the printed cost's `hasX` flag, not the computed
+     * mana value — so a card on the stack cast with X=0 still matches by its printed cost, and a
+     * face-down object (no mana cost) never matches.
+     */
+    @SerialName("HasXInManaCost")
+    @Serializable
+    data object HasXInManaCost : CardPredicate {
+        override val description: String = "with {X} in its mana cost"
+    }
+
     // =============================================================================
     // Power/Toughness Predicates
     // =============================================================================

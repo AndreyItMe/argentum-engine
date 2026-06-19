@@ -1006,6 +1006,8 @@ private fun cardsPredicateDsl(node: JsonElement?): String? {
             "Planeswalker" -> "CardPredicate.IsPlaneswalker"
             else -> null
         }
+        // "a card with {X} in its mana cost" (Paradox Surveyor) — inspects the printed cost's {X}.
+        "HasXInManaCost" -> "CardPredicate.HasXInManaCost"
         // Subtype filters all route through HasSubtype(Subtype("X")); use the named SDK constant when
         // one exists ("Plains" -> Subtype.PLAINS) so the output matches hand-authored convention.
         "IsCreatureType", "IsLandType", "IsArtifactType", "IsEnchantmentType" ->

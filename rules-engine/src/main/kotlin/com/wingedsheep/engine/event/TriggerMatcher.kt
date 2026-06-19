@@ -876,6 +876,9 @@ class TriggerMatcher(
                 val cmc = if (isFaceDown) 0 else cardComponent.manaValue
                 cmc % 2 != 0
             }
+            com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasXInManaCost ->
+                // Printed cost's {X} symbol, not the computed CMC. Face-down has no mana cost.
+                if (isFaceDown) false else cardComponent.manaCost.hasX
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.PowerAtLeast -> {
                 val power = if (isFaceDown) 2
                     else lastKnownPower ?: projected.getPower(entityId) ?: cardComponent.baseStats?.basePower ?: 0

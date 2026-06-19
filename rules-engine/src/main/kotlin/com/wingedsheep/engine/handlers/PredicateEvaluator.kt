@@ -329,6 +329,11 @@ class PredicateEvaluator {
                 val cmc = if (projectedValues?.isFaceDown == true) 0 else card.manaValue
                 cmc % 2 != 0
             }
+            CardPredicate.HasXInManaCost -> {
+                // Inspect the printed cost's {X} symbol, not the computed CMC. Face-down objects
+                // (Rule 708.2 — no mana cost) never match.
+                if (projectedValues?.isFaceDown == true) false else card.manaCost.hasX
+            }
 
             // Power/toughness predicates - use projected P/T
             is CardPredicate.PowerEquals -> {
@@ -1070,6 +1075,9 @@ class PredicateEvaluator {
             is CardPredicate.ManaValueAtMostDynamic -> false
             CardPredicate.ManaValueIsEven -> record.manaValue % 2 == 0
             CardPredicate.ManaValueIsOdd -> record.manaValue % 2 != 0
+            // A cast-spell record stores the resolved mana value, not the printed cost, so we
+            // cannot recover whether {X} was in the printed cost.
+            CardPredicate.HasXInManaCost -> false
 
             // Power/toughness — not meaningful for cast records
             is CardPredicate.PowerEquals, is CardPredicate.PowerAtMost, is CardPredicate.PowerAtLeast,

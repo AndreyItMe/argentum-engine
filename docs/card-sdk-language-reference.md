@@ -1630,6 +1630,11 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   matching the other entity-relative caps.
 - `.manaValueIsOdd()` / `.manaValueIsEven()` — mana-value parity (zero is even). Pair with modal
   spells whose modes ask the caster to choose a parity (e.g. *Mutinous Massacre*).
+- `.hasXInManaCost()` — the card's **printed** mana cost contains an `{X}` symbol (inspects
+  `manaCost.hasX`, not the computed mana value), so a spell cast with X=0 still matches by its
+  printed cost. Face-down objects (no mana cost) never match; the cast-record path returns `false`
+  (a record stores the resolved mana value, not the printed cost). Used by *Paradox Surveyor*
+  ("a card with {X} in its mana cost"). Underlying predicate: `CardPredicate.HasXInManaCost`.
 - `.toughnessAtMost(n)` / `.toughnessAtLeast(n)` — toughness comparator.
 - `.toughnessAtMostX()` — toughness ≤ the X chosen for the source spell/ability. Resolves
   against `PredicateContext.xValue` at evaluation time, so it works at the spell's resolution

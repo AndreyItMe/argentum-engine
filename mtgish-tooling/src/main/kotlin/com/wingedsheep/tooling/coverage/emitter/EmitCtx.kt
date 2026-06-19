@@ -829,6 +829,18 @@ internal fun EmitCtx.actionConditionDsl(cond: JsonObject?): String? {
             }
         }
     }
+    // "if this spell was cast from anywhere other than your hand" (Antiquities on the Loose) — a
+    // resolution-time gate on the resolving spell's cast-origin zone. The IR is
+    // `CastSpellPassesFilter(WasntCastFromTheirHand)`: cast from any zone but the caster's hand, which
+    // is exactly `Not(WasCastFromHand)` (true for a flashback/graveyard cast, false for a normal hand
+    // cast). Only this exact spell-origin filter renders; any other CastSpellPassesFilter shape
+    // declines (-> SCAFFOLD).
+    if (cond.strField("_Condition") == "CastSpellPassesFilter") {
+        if (cond["args"].strField("_Spells") == "WasntCastFromTheirHand") {
+            return render(call("Conditions.Not", arg("Conditions.WasCastFromHand")))
+        }
+        return null
+    }
     // "If [N] or more mana was spent to cast that spell, …" — the Opus 5+ mana tier
     // (Elemental Mascot, Expressive Firedancer, Muse Seeker). Renders a Compare over the triggering
     // spell's mana. See [spellManaSpentConditionDsl] for the exact shape constraints.
