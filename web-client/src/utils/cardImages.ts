@@ -6,6 +6,14 @@
 export const MORPH_FACE_DOWN_IMAGE_URL = 'https://cards.scryfall.io/normal/front/e/9/e9375cbe-93c0-41a5-a6e3-fb4416f54a69.jpg'
 
 /**
+ * Standard MTG manifest face-down card art from Scryfall.
+ * The official Manifest token from Duskmourn: House of Horror (TDSK #18). Manifested permanents
+ * (CR 701.40) are shown with this instead of the morph token.
+ * Source: https://scryfall.com/card/tdsk/18/manifest
+ */
+export const MANIFEST_FACE_DOWN_IMAGE_URL = 'https://cards.scryfall.io/normal/front/0/1/01104ab1-84e1-4c78-853d-637c6554bdf9.jpg'
+
+/**
  * Standard MTG card back image.
  */
 export const CARD_BACK_IMAGE_URL = 'https://backs.scryfall.io/normal/2/2/222b7a3b-2321-4d4c-af19-19338b134971.jpg?1677416389'

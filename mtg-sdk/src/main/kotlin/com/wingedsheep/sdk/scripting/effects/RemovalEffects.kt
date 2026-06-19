@@ -269,8 +269,11 @@ data class MoveToZoneEffect(
     val controllerOverride: EffectTarget? = null,
     /** When set, the move is skipped if the target is not currently in this zone. */
     val fromZone: Zone? = null,
-    /** When true and destination is BATTLEFIELD, the card enters face down (as a 2/2 morph creature). */
-    val faceDown: Boolean = false,
+    /**
+     * When non-null and destination is BATTLEFIELD, the card enters face down as a 2/2 creature.
+     * The [FaceDownMode] selects how it can later be turned face up (morph cost vs. mana cost).
+     */
+    val faceDown: FaceDownMode? = null,
     /** When true and destination is EXILE, the exiled card is linked to the source permanent via LinkedExileComponent. */
     val linkToSource: Boolean = false,
     /**
@@ -298,7 +301,7 @@ data class MoveToZoneEffect(
                 append("Shuffle ${target.description} into its owner's library")
             destination == Zone.LIBRARY && placement == ZonePlacement.Top ->
                 append("Put ${target.description} on top of its owner's library")
-            destination == Zone.BATTLEFIELD && faceDown ->
+            destination == Zone.BATTLEFIELD && faceDown != null ->
                 append("Put ${target.description} onto the battlefield face down")
             destination == Zone.BATTLEFIELD && controllerOverride != null ->
                 append("Put ${target.description} onto the battlefield under your control")

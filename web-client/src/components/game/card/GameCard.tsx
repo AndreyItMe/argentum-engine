@@ -4,7 +4,7 @@ import { useGameStore } from '@/store/gameStore.ts'
 import { useHasLegalActions } from '@/store/selectors.ts'
 import type { ClientCard, EntityId } from '@/types'
 import { Color, ColorSymbols, Keyword } from '@/types/enums'
-import { getCardImageUrl, getScryfallFallbackUrl, MORPH_FACE_DOWN_IMAGE_URL } from '@/utils/cardImages.ts'
+import { getCardImageUrl, getScryfallFallbackUrl, MANIFEST_FACE_DOWN_IMAGE_URL, MORPH_FACE_DOWN_IMAGE_URL } from '@/utils/cardImages.ts'
 import { useInteraction } from '@/hooks/useInteraction.ts'
 import { ManaCost } from '@/components/ui/ManaSymbols.tsx'
 import { HoverCardPreview } from '@/components/ui/HoverCardPreview.tsx'
@@ -409,7 +409,7 @@ function GameCardImpl({
   const isPlayable = interactive && hasLegalActions && (!isInCombatMode || !isCombatRoleCard) && !hasActiveDecision
 
   const cardImageUrl = faceDown
-    ? MORPH_FACE_DOWN_IMAGE_URL
+    ? (card.isManifested ? MANIFEST_FACE_DOWN_IMAGE_URL : MORPH_FACE_DOWN_IMAGE_URL)
     : getCardImageUrl(card.name, card.imageUri, 'normal')
 
   // Use responsive sizes, but allow override for fitting cards in hand

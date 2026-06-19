@@ -327,6 +327,9 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         (findInteger(args) as? Int)?.let { call("Patterns.Library.surveil", arg("$it")) }
     }
 
+    // "Manifest dread" -> the fixed look-top-two / manifest-one / bin-the-rest pipeline (no args).
+    simple("ManifestDread", dsl = "Patterns.Library.manifestDread()")
+
     // Inline `If{cond}[effects]` action (inside an ActionList) -> a `ConditionalEffect`. Renders only the
     // condition shapes we can express faithfully:
     //  - "if [the targeted permanent] had mana value N or less"

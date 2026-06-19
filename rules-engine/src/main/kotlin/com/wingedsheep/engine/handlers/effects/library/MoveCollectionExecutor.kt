@@ -22,6 +22,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardOrder
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
 import com.wingedsheep.sdk.scripting.effects.MoveType
@@ -189,7 +190,7 @@ class MoveCollectionExecutor(
         order: CardOrder,
         revealed: Boolean = false,
         moveType: MoveType = MoveType.Default,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         noRegenerate: Boolean = false,
         storeMovedAs: String? = null,
         underOwnersControl: Boolean = false,
@@ -326,7 +327,7 @@ class MoveCollectionExecutor(
         destPlayerId: EntityId,
         revealed: Boolean = false,
         moveType: MoveType = MoveType.Default,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         noRegenerate: Boolean = false,
         storeMovedAs: String? = null,
         underOwnersControl: Boolean = false,
@@ -591,7 +592,7 @@ class MoveCollectionExecutor(
         destPlayerId: EntityId,
         revealed: Boolean = false,
         moveType: MoveType = MoveType.Default,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         noRegenerate: Boolean = false,
         storeMovedAs: String? = null,
         underOwnersControl: Boolean = false,
@@ -648,12 +649,28 @@ class MoveCollectionExecutor(
                 else -> destPlayerId
             }
 
+            // Face-down battlefield entry (morph/manifest): derive each card's turn-up data from
+            // its identity and the mode. Per-card because manifested cards turn up for their own
+            // (differing) mana costs. Exile face-down (Hideaway) is just hidden — no turn-up data.
+            val isBattlefieldFaceDown = faceDown != null && destZone == Zone.BATTLEFIELD
+            val morphData = if (isBattlefieldFaceDown) {
+                val cardDefinitionId = newState.getEntity(cardId)?.get<CardComponent>()?.cardDefinitionId
+                if (cardDefinitionId != null) {
+                    com.wingedsheep.engine.handlers.effects.FaceDownTurnUp.dataFor(
+                        cardRegistry.getCard(cardDefinitionId), cardDefinitionId, faceDown
+                    )
+                } else null
+            } else null
+
             val entryOptions = com.wingedsheep.engine.handlers.effects.ZoneEntryOptions(
                 controllerId = actualDestPlayerId,
                 libraryPlacement = libraryPlacement,
                 tapped = destination.placement == ZonePlacement.Tapped || destination.placement == ZonePlacement.TappedAndAttacking,
                 tappedAndAttacking = destination.placement == ZonePlacement.TappedAndAttacking,
-                faceDownExile = faceDown && destZone == Zone.EXILE
+                faceDown = isBattlefieldFaceDown,
+                morphData = morphData,
+                manifested = isBattlefieldFaceDown && faceDown == FaceDownMode.MANIFEST,
+                faceDownExile = faceDown != null && destZone == Zone.EXILE
             )
 
             // Delegate to ZoneTransitionService for full cleanup + entry
@@ -668,7 +685,7 @@ class MoveCollectionExecutor(
             // battlefield from a non-stack zone (e.g., Celestial Reunion tutoring directly to
             // play, Hideaway's free-cast pile). Face-down entries skip this — morphed creatures
             // enter as 2/2 nameless with no replacement effects from their face-up identity.
-            if (destZone == Zone.BATTLEFIELD && !faceDown) {
+            if (destZone == Zone.BATTLEFIELD && faceDown == null) {
                 val (counterState, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
                     newState, cardId, actualDestPlayerId, cardRegistry
                 )

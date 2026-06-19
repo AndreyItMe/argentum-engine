@@ -225,6 +225,9 @@ export interface ClientCard {
   /** Whether this card is face-down (for morph, manifest, hidden info) */
   readonly isFaceDown: boolean
 
+  /** Whether this face-down permanent is a manifest (CR 701.40), not a morph — picks the token art. */
+  readonly isManifested?: boolean
+
   /** Whether this permanent is suspected (CR 701.60 — has menace and can't block). Battlefield only. */
   readonly isSuspected?: boolean
 

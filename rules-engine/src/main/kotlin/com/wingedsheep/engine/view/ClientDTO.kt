@@ -248,6 +248,12 @@ data class ClientCard(
     /** Whether this card is face-down (for morph, manifest, hidden info) */
     val isFaceDown: Boolean,
 
+    /**
+     * Whether this face-down permanent is a manifested permanent (CR 701.40) rather than a morph.
+     * Public information; drives which face-down token art the client renders.
+     */
+    val isManifested: Boolean = false,
+
     /** Whether this permanent is suspected (CR 701.60 — has menace and can't block). Battlefield only. */
     val isSuspected: Boolean = false,
 

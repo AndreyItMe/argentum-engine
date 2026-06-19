@@ -885,7 +885,7 @@ sealed interface KeywordAbility {
          * Hideaway N — display tag for the parameterized hideaway keyword. The
          * mechanic itself (look at top N, exile one face down linked to source,
          * bottom-randomize the rest) is composed manually as an ETB triggered
-         * ability using `MoveCollectionEffect(faceDown = true, linkToSource = true)`
+         * ability using `MoveCollectionEffect(faceDown = FaceDownMode.HIDDEN, linkToSource = true)`
          * + `CardSource.FromLinkedExile()`. This factory only provides the
          * "Hideaway 4"-style display text on the card's keyword list.
          */

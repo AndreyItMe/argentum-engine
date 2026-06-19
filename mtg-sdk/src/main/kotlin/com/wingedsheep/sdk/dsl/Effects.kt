@@ -106,6 +106,7 @@ import com.wingedsheep.sdk.scripting.effects.RemoveKeywordEffect
 import com.wingedsheep.sdk.scripting.effects.LoseLifeEffect
 import com.wingedsheep.sdk.scripting.effects.SetLifeTotalEffect
 import com.wingedsheep.sdk.scripting.effects.ModifyStatsEffect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
 import com.wingedsheep.sdk.scripting.effects.GrantSuspendEffect
 import com.wingedsheep.sdk.scripting.effects.LibraryChoicePosition
@@ -878,7 +879,7 @@ object Effects {
         destination = Zone.BATTLEFIELD,
         controllerOverride = controllerOverride,
         fromZone = fromZone,
-        faceDown = true
+        faceDown = FaceDownMode.MORPH
     )
 
     /**
@@ -2097,7 +2098,7 @@ object Effects {
         byDestruction: Boolean = false,
         controllerOverride: EffectTarget? = null,
         fromZone: Zone? = null,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         linkToSource: Boolean = false,
         positionFromTop: Int? = null
     ): Effect = MoveToZoneEffect(

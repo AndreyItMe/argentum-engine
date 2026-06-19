@@ -5261,7 +5261,7 @@
                             },
                             "order": "Random",
                             "linkToSource": true,
-                            "faceDown": true
+                            "faceDown": "HIDDEN"
                         },
                         "ShuffleLibrary"
                     ]

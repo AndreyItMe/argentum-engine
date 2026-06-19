@@ -21,6 +21,7 @@ import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.GrantMayPlayFromExileEffect
 import com.wingedsheep.sdk.scripting.effects.GrantPlayWithoutPayingCostEffect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
@@ -85,7 +86,7 @@ val MosswortBridge = card("Mosswort Bridge") {
                 MoveCollectionEffect(
                     from = "hideawayPicked",
                     destination = CardDestination.ToZone(Zone.EXILE),
-                    faceDown = true,
+                    faceDown = FaceDownMode.HIDDEN,
                     linkToSource = true
                 ),
                 MoveCollectionEffect(

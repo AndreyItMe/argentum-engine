@@ -3701,6 +3701,73 @@
     "colorIdentityOverride": []
 }
 
+// Manifest Dread
+{
+    "name": "Manifest Dread",
+    "manaCost": "{1}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "TopOfLibrary",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "storeAs": "manifestDreadLooked"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "manifestDreadLooked",
+                    "selection": {
+                        "type": "ChooseExactly",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "manifestDreadManifested",
+                    "storeRemainder": "manifestDreadGraveyard",
+                    "selectedLabel": "Manifest (put onto the battlefield face down)",
+                    "remainderLabel": "Put into your graveyard"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "manifestDreadManifested",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Battlefield"
+                    },
+                    "faceDown": "MANIFEST"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "manifestDreadGraveyard",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "189",
+        "artist": "Andrey Kuzinskiy",
+        "flavorText": "\"That's why I never travel without a flamethrower.\"\n—Rip, spawn hunter",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/6/a649265b-6c32-49e7-b6cb-6086c40d26e8.jpg?1726286570"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Midnight Mayhem
 {
     "name": "Midnight Mayhem",
@@ -5997,6 +6064,85 @@
                 ]
             }
         }
+    ]
+}
+
+// Unsettling Twins
+{
+    "name": "Unsettling Twins",
+    "manaCost": "{3}{W}",
+    "typeLine": "Creature — Human",
+    "oracleText": "When this creature enters, manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "manifestDreadLooked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "manifestDreadLooked",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "manifestDreadManifested",
+                            "storeRemainder": "manifestDreadGraveyard",
+                            "selectedLabel": "Manifest (put onto the battlefield face down)",
+                            "remainderLabel": "Put into your graveyard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadManifested",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "faceDown": "MANIFEST"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "38",
+        "artist": "Lauren K. Cannon",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/5/85da2e65-4e22-48b6-98ad-6969684d69e1.jpg?1726286000"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 

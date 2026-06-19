@@ -25,6 +25,7 @@ import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
+import com.wingedsheep.engine.state.components.identity.ManifestedComponent
 import com.wingedsheep.engine.state.components.identity.MorphDataComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.core.Color
@@ -364,9 +365,10 @@ class TurnFaceUpHandler(
             }
         }
 
-        // Turn the creature face up and add static ability components
+        // Turn the creature face up and add static ability components. A manifested permanent
+        // stops being manifested once it's face up (CR 701.40a), so drop the marker too.
         currentState = currentState.updateEntity(action.sourceId) { c ->
-            var updated = c.without<FaceDownComponent>()
+            var updated = c.without<FaceDownComponent>().without<ManifestedComponent>()
             updated = staticAbilityHandler.addContinuousEffectComponent(updated)
             updated = staticAbilityHandler.addReplacementEffectComponent(updated)
             updated

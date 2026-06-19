@@ -20,11 +20,10 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.MorphDataComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.scripting.KeywordAbility
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import java.util.UUID
@@ -90,7 +89,7 @@ class MoveToZoneEffectExecutor(
         // during stack resolution and never reach this executor, and the explicit
         // "attached to ..." effect has its own executor, so a generic move-to-battlefield of an
         // Aura is always the choose-as-it-enters case.
-        if (effect.destination == Zone.BATTLEFIELD && !effect.faceDown && cardComponent.typeLine.isAura) {
+        if (effect.destination == Zone.BATTLEFIELD && effect.faceDown == null && cardComponent.typeLine.isAura) {
             return attachAuraOnEnter(state, targetId, cardComponent, controllerId, context)
         }
 
@@ -110,7 +109,7 @@ class MoveToZoneEffectExecutor(
         // everything else. Skip face-down entries: morph creatures enter as 2/2 nameless
         // creatures with no replacement effects from their face-up identity.
         val actualDestZone = transitionResult.actualDestination
-        if (actualDestZone == Zone.BATTLEFIELD && !effect.faceDown) {
+        if (actualDestZone == Zone.BATTLEFIELD && effect.faceDown == null) {
             val (counterState, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
                 resultState, targetId, controllerId, cardRegistry
             )
@@ -259,13 +258,15 @@ class MoveToZoneEffectExecutor(
             else -> LibraryPlacement.Top
         }
 
-        // Look up morph data for face-down entry
-        val morphData = if (effect.faceDown && effect.destination == Zone.BATTLEFIELD) {
-            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
-            val morphAbility = cardDef?.keywordAbilities?.filterIsInstance<KeywordAbility.Morph>()?.firstOrNull()
-            if (morphAbility != null) {
-                MorphDataComponent(morphAbility.morphCost, cardComponent.cardDefinitionId, morphAbility.faceUpEffect)
-            } else null
+        // Derive turn-up data for a face-down battlefield entry (morph cost vs. manifest mana cost).
+        val faceDownMode = effect.faceDown
+        val isBattlefieldFaceDown = faceDownMode != null && effect.destination == Zone.BATTLEFIELD
+        val morphData = if (isBattlefieldFaceDown) {
+            com.wingedsheep.engine.handlers.effects.FaceDownTurnUp.dataFor(
+                cardRegistry.getCard(cardComponent.cardDefinitionId),
+                cardComponent.cardDefinitionId,
+                faceDownMode!!
+            )
         } else null
 
         return ZoneEntryOptions(
@@ -273,8 +274,9 @@ class MoveToZoneEffectExecutor(
             libraryPlacement = libraryPlacement,
             tapped = effect.placement == ZonePlacement.Tapped,
             tappedAndAttacking = effect.placement == ZonePlacement.TappedAndAttacking,
-            faceDown = effect.faceDown && effect.destination == Zone.BATTLEFIELD,
-            morphData = morphData
+            faceDown = isBattlefieldFaceDown,
+            morphData = morphData,
+            manifested = isBattlefieldFaceDown && faceDownMode == FaceDownMode.MANIFEST
         )
     }
 

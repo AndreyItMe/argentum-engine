@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.scripting.effects.Chooser
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.EmitScriedEventEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
@@ -86,6 +87,65 @@ object LibraryPatterns {
                 from = "rest",
                 destination = restDestination,
                 order = restOrder
+            )
+        )
+    )
+
+    /**
+     * Manifest the top [count] cards of the library (CR 701.40): each is put onto the battlefield
+     * face down as a 2/2 creature. Manifested cards are turned face up by paying their mana cost,
+     * only if the card is a creature card (the engine derives that turn-up cost at entry).
+     *
+     * Per CR 701.40e the cards are manifested one at a time — the move executor loops per card, so
+     * each becomes its own face-down permanent.
+     */
+    fun manifest(count: DynamicAmount = DynamicAmount.Fixed(1)): CompositeEffect = CompositeEffect(
+        listOf(
+            GatherCardsEffect(
+                source = CardSource.TopOfLibrary(count),
+                storeAs = "manifested",
+                revealed = false
+            ),
+            MoveCollectionEffect(
+                from = "manifested",
+                destination = CardDestination.ToZone(Zone.BATTLEFIELD),
+                faceDown = FaceDownMode.MANIFEST
+            )
+        )
+    )
+
+    /**
+     * "Manifest dread" (CR 701.62): look at the top two cards of your library, manifest one of
+     * them (your choice), then put the other into your graveyard.
+     *
+     * The player looks at both cards privately, chooses which one to manifest (it becomes a
+     * face-down 2/2), and the remainder is put into the graveyard. With fewer than two cards in
+     * the library the gather simply yields what's there (one card → manifest it, nothing to the
+     * graveyard; empty library → nothing happens).
+     */
+    fun manifestDread(): CompositeEffect = CompositeEffect(
+        listOf(
+            GatherCardsEffect(
+                source = CardSource.TopOfLibrary(DynamicAmount.Fixed(2)),
+                storeAs = "manifestDreadLooked",
+                revealed = false
+            ),
+            SelectFromCollectionEffect(
+                from = "manifestDreadLooked",
+                selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(1)),
+                storeSelected = "manifestDreadManifested",
+                storeRemainder = "manifestDreadGraveyard",
+                selectedLabel = "Manifest (put onto the battlefield face down)",
+                remainderLabel = "Put into your graveyard"
+            ),
+            MoveCollectionEffect(
+                from = "manifestDreadManifested",
+                destination = CardDestination.ToZone(Zone.BATTLEFIELD),
+                faceDown = FaceDownMode.MANIFEST
+            ),
+            MoveCollectionEffect(
+                from = "manifestDreadGraveyard",
+                destination = CardDestination.ToZone(Zone.GRAVEYARD)
             )
         )
     )

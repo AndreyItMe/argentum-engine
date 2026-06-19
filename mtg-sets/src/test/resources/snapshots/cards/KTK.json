@@ -1082,7 +1082,7 @@
                     "destination": "Battlefield",
                     "controllerOverride": "Controller",
                     "fromZone": "Graveyard",
-                    "faceDown": true
+                    "faceDown": "MORPH"
                 }
             },
             {

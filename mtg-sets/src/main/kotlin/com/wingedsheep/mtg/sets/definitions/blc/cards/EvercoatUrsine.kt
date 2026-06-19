@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.GrantMayPlayFromExileEffect
 import com.wingedsheep.sdk.scripting.effects.GrantPlayWithoutPayingCostEffect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
@@ -122,7 +123,7 @@ private fun hideawayThree(suffix: String): Effect = Effects.Composite(
         MoveCollectionEffect(
             from = "hideawayPicked$suffix",
             destination = CardDestination.ToZone(Zone.EXILE),
-            faceDown = true,
+            faceDown = FaceDownMode.HIDDEN,
             linkToSource = true
         ),
         MoveCollectionEffect(

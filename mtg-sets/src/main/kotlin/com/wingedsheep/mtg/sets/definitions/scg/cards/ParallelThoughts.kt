@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
@@ -48,7 +49,7 @@ val ParallelThoughts = card("Parallel Thoughts") {
                 destination = CardDestination.ToZone(Zone.EXILE),
                 order = CardOrder.Random,
                 linkToSource = true,
-                faceDown = true
+                faceDown = FaceDownMode.HIDDEN
             ),
             ShuffleLibraryEffect()
         ))

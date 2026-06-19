@@ -885,7 +885,11 @@ data class MoveCollectionEffect(
     val moveType: MoveType = MoveType.Default,
     val linkToSource: Boolean = false,
     val unlinkFromSource: Boolean = false,
-    val faceDown: Boolean = false,
+    /**
+     * When non-null, each moved card enters face down: to the battlefield as a 2/2 creature
+     * (morph/manifest — see [FaceDownMode]) or, for [FaceDownMode.HIDDEN], face down in exile.
+     */
+    val faceDown: FaceDownMode? = null,
     val noRegenerate: Boolean = false,
     val storeMovedAs: String? = null,
     val underOwnersControl: Boolean = false,

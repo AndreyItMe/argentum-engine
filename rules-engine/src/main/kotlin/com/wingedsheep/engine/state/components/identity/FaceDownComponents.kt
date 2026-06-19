@@ -30,3 +30,12 @@ data class MorphDataComponent(
  */
 @Serializable
 data object HasMorphAbilityComponent : Component
+
+/**
+ * Marks a face-down permanent as a *manifested* permanent (CR 701.40a), as opposed to a morphed
+ * one. Both are 2/2 face-down creatures, but which mechanic created the permanent is public
+ * information (paper Magic represents them with distinct Manifest / Morph tokens), so this drives
+ * the face-down art shown to every viewer. Present only while the permanent is face down.
+ */
+@Serializable
+data object ManifestedComponent : Component

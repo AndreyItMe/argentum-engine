@@ -223,7 +223,7 @@
                                 "zone": "Exile"
                             },
                             "linkToSource": true,
-                            "faceDown": true
+                            "faceDown": "HIDDEN"
                         },
                         {
                             "type": "MoveCollection",

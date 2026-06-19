@@ -21,6 +21,7 @@ import com.wingedsheep.sdk.scripting.effects.ForEachCapturedControllerEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.GatherSubtypesEffect
 import com.wingedsheep.sdk.scripting.effects.GatherUntilMatchEffect
+import com.wingedsheep.sdk.scripting.effects.FaceDownMode
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.MoveType
 import com.wingedsheep.sdk.scripting.effects.NoteCreatureTypeEffect
@@ -616,7 +617,7 @@ class PipelineBuilder private constructor(private val shared: Shared) {
         moveType: MoveType = MoveType.Default,
         linkToSource: Boolean = false,
         unlinkFromSource: Boolean = false,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         noRegenerate: Boolean = false,
         underOwnersControl: Boolean = false,
         addCounterType: CounterType? = null,
@@ -650,7 +651,7 @@ class PipelineBuilder private constructor(private val shared: Shared) {
         moveType: MoveType = MoveType.Default,
         linkToSource: Boolean = false,
         unlinkFromSource: Boolean = false,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         noRegenerate: Boolean = false,
         underOwnersControl: Boolean = false,
         addCounterType: CounterType? = null,
@@ -689,7 +690,7 @@ class PipelineBuilder private constructor(private val shared: Shared) {
     fun exile(
         from: CollectionSlot,
         owner: Player = Player.You,
-        faceDown: Boolean = false,
+        faceDown: FaceDownMode? = null,
         linkToSource: Boolean = false
     ) = move(
         from, CardDestination.ToZone(Zone.EXILE, owner),
