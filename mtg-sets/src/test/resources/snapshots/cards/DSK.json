@@ -1215,6 +1215,36 @@
     ]
 }
 
+// Fear of Being Hunted
+{
+    "name": "Fear of Being Hunted",
+    "manaCost": "{1}{R}{R}",
+    "typeLine": "Enchantment Creature — Nightmare",
+    "oracleText": "Haste\nThis creature must be blocked if able.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "script": {
+        "staticAbilities": [
+            "MustBeBlockedStatic"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "134",
+        "rarity": "UNCOMMON",
+        "artist": "Maxime Minard",
+        "flavorText": "It makes no effort to hide itself, savoring its prey's rising panic as the sound of its clacking skull grows closer and closer.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/0/a0a5e716-68c1-4fa0-aa08-5b08114e08d8.jpg?1726286347"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fear of Failed Tests
 {
     "name": "Fear of Failed Tests",
@@ -1250,6 +1280,39 @@
         "artist": "Jana Heidersdorf",
         "flavorText": "\"W-wait! What do you mean this quiz determines half our grade?\"\n—Zimone, muttering in her sleep",
         "imageUri": "https://cards.scryfall.io/normal/front/a/8/a87c39df-7636-454b-8485-a1cc9362fd84.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Fear of Isolation
+{
+    "name": "Fear of Isolation",
+    "manaCost": "{1}{U}",
+    "typeLine": "Enchantment Creature — Nightmare",
+    "oracleText": "As an additional cost to cast this spell, return a permanent you control to its owner's hand.\nFlying",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "additionalCosts": [
+            {
+                "type": "AdditionalAtom",
+                "atom": "AtomReturnToHand"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "58",
+        "rarity": "UNCOMMON",
+        "artist": "Irina Nordsol",
+        "flavorText": "On the second day after he'd been separated from his friends, Tino worried they'd be panicking at his absence. By the fourth, he was certain they'd never cared for him at all.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/9/69aa6054-8c59-4bbc-a283-adb453639786.jpg?1726286073"
     },
     "colorIdentityOverride": [
         "BLUE"
@@ -1334,6 +1397,63 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Fear of the Dark
+{
+    "name": "Fear of the Dark",
+    "manaCost": "{4}{B}",
+    "typeLine": "Enchantment Creature — Nightmare",
+    "oracleText": "Whenever this creature attacks, if defending player controls no Glimmer creatures, it gains menace and deathtouch until end of turn. (A creature with menace can't be blocked except by two or more creatures.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "MENACE",
+                            "target": "Self"
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "DEATHTOUCH",
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "DefendingPlayer",
+                        "filter": "creature Glimmer"
+                    },
+                    "operator": "EQ",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 0
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "98",
+        "artist": "Sam Wolfe Connelly",
+        "flavorText": "The first thing it kills is the light.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/7/8700eb8d-1cc0-45ff-b769-c875ee6500ea.jpg?1726286215"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 

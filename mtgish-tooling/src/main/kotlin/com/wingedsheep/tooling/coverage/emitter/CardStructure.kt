@@ -427,9 +427,40 @@ private fun EmitCtx.additionalCostLine(rule: JsonObject): String? {
     val node = rule["args"] as? JsonObject ?: return null
     if (node.strField("_CastEffect") != "AdditionalCastingCost") return null
     val cost = node["args"] as? JsonObject ?: return null
-    if (cost.strField("_Cost") != "SacrificeAPermanent") return null
-    val filter = gameObjectFilterDsl(cost["args"]) ?: return null
-    return "    additionalCost(Costs.additional.SacrificePermanent($filter))"
+    return when (cost.strField("_Cost")) {
+        "SacrificeAPermanent" -> {
+            val filter = gameObjectFilterDsl(cost["args"]) ?: return null
+            "    additionalCost(Costs.additional.SacrificePermanent($filter))"
+        }
+        // "As an additional cost to cast this spell, return a permanent you control to its owner's
+        // hand" (Fear of Isolation): `PutAPermanentIntoItsOwnersHand(ControlledByAPlayer(You))`. Only
+        // the bare "any permanent you control" shape renders — the controller scope is implicit in the
+        // cost (it always returns one the caster controls), so the filter is GameObjectFilter.Any. A
+        // typed/restricted return (e.g. "return a creature you control") would need a real filter and
+        // declines (-> SCAFFOLD) rather than silently widening to any permanent.
+        "PutAPermanentIntoItsOwnersHand" -> {
+            if (!isAnyPermanentYouControl(cost["args"])) return null
+            "    additionalCost(Costs.additional.ReturnToHand())"
+        }
+        else -> null
+    }
+}
+
+/** True iff [node] is exactly "any permanent you control" — `ControlledByAPlayer(SinglePlayer(You))`
+ *  with no type/subtype/other restriction. Used to keep the return-a-permanent additional cost render
+ *  to the bare shape (a restricted return declines rather than drop the restriction). */
+private fun isAnyPermanentYouControl(node: JsonElement?): Boolean {
+    val obj = node as? JsonObject ?: return false
+    if (obj.strField("_Permanents") != "ControlledByAPlayer") return false
+    if (!jsonContains(obj, "_Player", "You")) return false
+    // No type / subtype / colour / state restriction may ride alongside the controller clause.
+    val blob = compact(obj)
+    val restrictions = listOf(
+        "IsCardtype", "IsCreatureType", "IsLandType", "IsArtifactType", "IsEnchantmentType",
+        "IsColor", "IsNonColor", "IsTapped", "IsUntapped", "PowerIs", "ToughnessIs",
+        "ManaValueIs", "HasAbility", "HasACounterOfType", "Other", "IsAnOutlaw", "IsNonOutlaw",
+    )
+    return restrictions.none { it in blob }
 }
 
 private fun EmitCtx.castRestrictionLines(rules: List<JsonObject>): List<String>? {
@@ -476,6 +507,31 @@ private fun EmitCtx.youControlConditionDsl(condNode: JsonElement?): String? {
     if (controls.strField("_Players") != "ControlsA") return null
     val filter = gameObjectFilterDsl(controls["args"]) ?: return null
     return render(call("Conditions.YouControl", arg(Lit(filter))))
+}
+
+/**
+ * "if defending player controls no [filter]" — `PlayerPassesFilter(Trigger_DefendingPlayer,
+ * ControlsNo(<filter>))` -> `Conditions.CompareAmounts(DynamicAmount.AggregateBattlefield(
+ * Player.DefendingPlayer, <filter>), ComparisonOperator.EQ, DynamicAmount.Fixed(0))`. "Controls no"
+ * is the defending player's count of matching permanents being exactly zero. Renders only the
+ * Trigger_DefendingPlayer player with a `ControlsNo` filter the strict [gameObjectFilterDsl] can
+ * express exactly; anything else (another player ref, a non-ControlsNo clause, an unrenderable filter)
+ * declines -> SCAFFOLD rather than drop or widen the constraint. (Fear of the Dark.)
+ */
+private fun EmitCtx.defendingPlayerControlsNoDsl(condNode: JsonElement?): String? {
+    val cond = condNode as? JsonObject ?: return null
+    if (cond.strField("_Condition") != "PlayerPassesFilter") return null
+    val args = cond["args"].asArr ?: return null
+    if ((args.getOrNull(0) as? JsonObject)?.strField("_Player") != "Trigger_DefendingPlayer") return null
+    val controls = args.getOrNull(1) as? JsonObject ?: return null
+    if (controls.strField("_Players") != "ControlsNo") return null
+    val filter = gameObjectFilterDsl(controls["args"]) ?: return null
+    return render(call(
+        "Conditions.CompareAmounts",
+        arg(call("DynamicAmount.AggregateBattlefield", arg("Player.DefendingPlayer"), arg(Lit(filter)))),
+        arg("ComparisonOperator.EQ"),
+        arg(call("DynamicAmount.Fixed", arg("0"))),
+    ))
 }
 
 /**
@@ -2271,6 +2327,14 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
     // "any spell" count with a `>= N` comparison maps to Conditions.YouCastSpellsThisTurn(N); a
     // filtered spell set or any other comparison (exactly N, fewer than N) declines -> SCAFFOLD.
     youCastNumSpellsThisTurnDsl(cond)?.let { return it }
+    // "if defending player controls no [filter]" — PlayerPassesFilter(Trigger_DefendingPlayer,
+    // ControlsNo(<filter>)) (Fear of the Dark: "if defending player controls no Glimmer creatures").
+    // The defending player controlling zero matching permanents is a count-equals-zero comparison over
+    // their battlefield: Conditions.CompareAmounts(AggregateBattlefield(Player.DefendingPlayer, <filter>),
+    // EQ, Fixed(0)). Player.DefendingPlayer resolves through the attacking source's combat assignment, so
+    // this belongs on a `Whenever this creature attacks` (TriggerI) trigger. Only the bare ControlsNo over
+    // a filter gameObjectFilterDsl can render exactly is recognised; anything else declines -> SCAFFOLD.
+    defendingPlayerControlsNoDsl(cond)?.let { return it }
     // "you control another outlaw" — ControlsA over And(Other(ThatEnteringPermanent), IsAnOutlaw). The
     // entering permanent is itself an outlaw, so this is exactly "two or more outlaws you control".
     youControlAnotherOutlawDsl(cond)?.let { return it }

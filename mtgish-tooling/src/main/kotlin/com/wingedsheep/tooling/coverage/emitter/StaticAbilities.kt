@@ -531,6 +531,9 @@ internal fun EmitCtx.staticAbilityExpr(ruleName: String, ruleNode: JsonObject): 
             return call("CantAttackUnless", arg(call("Conditions.OpponentControlsLandType", arg("\"${subs[0]}\""))))
         }
         "MustBlockAttacker" -> return call("MustBlock")
+        // "This creature must be blocked if able" (Fear of Being Hunted) — the unconditional
+        // MustBeBlocked static (allCreatures = false: at least one able blocker must block it).
+        "MustBeBlocked" -> return call("MustBeBlocked")
         "MustAttackPlayer" -> return call("MustAttack")
         // "This creature attacks each combat if able" (Dauthi Slayer, Juggernaut) — the unfiltered
         // self MustAttack, distinct from MustAttackPlayer which carries a forced defender.

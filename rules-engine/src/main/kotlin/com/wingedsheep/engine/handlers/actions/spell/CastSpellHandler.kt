@@ -1157,8 +1157,32 @@ class CastSpellHandler(
                             return "Not enough life to pay ${atom.amount} life"
                         }
                     }
-                    // Mana / return / reveal are not produced as spell additional costs today.
-                    is CostAtom.Mana, is CostAtom.ReturnToHand, is CostAtom.RevealFromHand -> {}
+                    is CostAtom.ReturnToHand -> {
+                        val bounced = action.additionalCostPayment?.bouncedPermanents ?: emptyList()
+                        if (bounced.size < atom.count) {
+                            return "You must return ${atom.count} ${atom.filter.description}(s) you control to its owner's hand to cast this spell"
+                        }
+                        val context = PredicateContext(controllerId = action.playerId)
+                        for (permId in bounced) {
+                            val permContainer = state.getEntity(permId)
+                                ?: return "Returned permanent not found: $permId"
+                            val permCard = permContainer.get<CardComponent>()
+                                ?: return "Returned entity is not a card: $permId"
+                            val permController = projected.getController(permId)
+                            if (permController != action.playerId) {
+                                return "You can only return permanents you control"
+                            }
+                            if (permId !in state.getBattlefield()) {
+                                return "Returned permanent is not on the battlefield: $permId"
+                            }
+                            val matches = predicateEvaluator.matches(state, projected, permId, atom.filter, context)
+                            if (!matches) {
+                                return "${permCard.name} doesn't match the required filter: ${atom.filter.description}"
+                            }
+                        }
+                    }
+                    // Mana / reveal are not produced as spell additional costs today.
+                    is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
                 }
                 is AdditionalCost.ExileVariableCards -> {
                     val exiled = action.additionalCostPayment?.exiledCards ?: emptyList()
@@ -1857,8 +1881,19 @@ class CastSpellHandler(
                                 }
                             }
                         }
-                        // PayLife is auto-paid in the loop above; mana / return / reveal aren't spell additional costs.
-                        is CostAtom.PayLife, is CostAtom.Mana, is CostAtom.ReturnToHand, is CostAtom.RevealFromHand -> {}
+                        is CostAtom.ReturnToHand -> {
+                            // Return permanents you control to their owner's hand as an additional
+                            // cost (e.g., Fear of Isolation). ZoneTransitionService.moveToZone
+                            // handles attached auras/equipment and tokens ceasing to exist.
+                            for (permId in action.additionalCostPayment.bouncedPermanents) {
+                                val tr = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+                                    .moveToZone(currentState, permId, Zone.HAND)
+                                currentState = tr.state
+                                events.addAll(tr.events)
+                            }
+                        }
+                        // PayLife is auto-paid in the loop above; mana / reveal aren't spell additional costs.
+                        is CostAtom.PayLife, is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
                     }
                     is AdditionalCost.ExileVariableCards -> {
                         val exiledCards = action.additionalCostPayment.exiledCards
@@ -2971,8 +3006,8 @@ class CastSpellHandler(
      * [CastSpellAdditionalCostContinuation] for the re-entry contract.
      *
      * - Only the *selection* atoms need a player choice (Sacrifice / Discard / ExileFrom /
-     *   TapPermanents). PayLife / mana / reveal-from-hand are auto-paid downstream and need no
-     *   prompt, so they're ignored here.
+     *   TapPermanents / ReturnToHand). PayLife / mana / reveal-from-hand are auto-paid downstream
+     *   and need no prompt, so they're ignored here.
      * - A cost already satisfied by the action's payment (the normal client-cast path, which is
      *   gated by `validate()`) is skipped — so this never fires for a normal cast.
      * - If a mandatory cost can't be paid at all (fewer legal options than the count required),
@@ -3016,6 +3051,12 @@ class CastSpellHandler(
                     costEnumerationUtils.findAbilityTapTargets(state, action.playerId, atom.filter)
                         .let { if (atom.excludeSelf) it.filter { id -> id != action.cardId } else it }
                 )
+                is CostAtom.ReturnToHand -> Triple(
+                    AdditionalCostSelectionKind.RETURN_TO_HAND,
+                    atom.count,
+                    costEnumerationUtils.findAbilityBounceTargets(state, action.playerId, atom.filter)
+                        .filter { id -> id != action.cardId }
+                )
                 else -> continue
             }
             if (count <= 0) continue
@@ -3025,6 +3066,7 @@ class CastSpellHandler(
                 AdditionalCostSelectionKind.DISCARD -> payment?.discardedCards?.size ?: 0
                 AdditionalCostSelectionKind.EXILE -> payment?.exiledCards?.size ?: 0
                 AdditionalCostSelectionKind.TAP -> payment?.tappedPermanents?.size ?: 0
+                AdditionalCostSelectionKind.RETURN_TO_HAND -> payment?.bouncedPermanents?.size ?: 0
             }
             if (alreadyPaid >= count) continue // supplied by the caller (normal cast) — nothing to choose
 
@@ -3047,11 +3089,13 @@ class CastSpellHandler(
                 AdditionalCostSelectionKind.DISCARD -> "discard"
                 AdditionalCostSelectionKind.EXILE -> "exile"
                 AdditionalCostSelectionKind.TAP -> "tap"
+                AdditionalCostSelectionKind.RETURN_TO_HAND -> "return to hand"
             }
             val prompt = "Choose $count ${if (count > 1) "cards" else "card"} to $verb for $cardName"
             // Permanents you control are chosen on the battlefield; hidden/zone cards via overlay.
             val useTargetingUI = kind == AdditionalCostSelectionKind.SACRIFICE ||
-                kind == AdditionalCostSelectionKind.TAP
+                kind == AdditionalCostSelectionKind.TAP ||
+                kind == AdditionalCostSelectionKind.RETURN_TO_HAND
             val decision = SelectCardsDecision(
                 id = decisionId,
                 playerId = action.playerId,
@@ -3113,6 +3157,8 @@ class CastSpellHandler(
                 payment.copy(exiledCards = payment.exiledCards + chosen)
             AdditionalCostSelectionKind.TAP ->
                 payment.copy(tappedPermanents = payment.tappedPermanents + chosen)
+            AdditionalCostSelectionKind.RETURN_TO_HAND ->
+                payment.copy(bouncedPermanents = payment.bouncedPermanents + chosen)
         }
         return base.copy(additionalCostPayment = merged)
     }

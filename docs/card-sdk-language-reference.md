@@ -230,6 +230,12 @@ excluded.
 **`Costs.additional.*`** (wraps `AdditionalCost`) — extra costs paid alongside the mana cost. Card
 definitions construct these through the facade, e.g. `Costs.additional.SacrificePermanent(Filters.Creature)`.
 
+- `Costs.additional.ReturnToHand(filter = Filters.Any, count = 1)` — "as an additional cost to cast
+  this spell, return [count] permanent(s) you control to its owner's hand" (Fear of Isolation). Paid
+  as the spell is cast (CR 601.2f) via `additionalCostPayment.bouncedPermanents`; the enumerator
+  surfaces the returnable permanents (a `costType = "ReturnToHand"` cost) and the client picks them
+  on the battlefield. The bounce goes through `ZoneTransitionService.moveToZone(…, Zone.HAND)`, so
+  attached Auras fall off and tokens cease to exist. Mirrors the sacrifice/tap additional-cost path.
 - `Costs.additional.BlightVariable` — "as you cast, you may pay X life" (Blight X); X exposed via
   `DynamicAmount.AdditionalCostBlightAmount`.
 - `Costs.additional.PayXLife(minCount = 0)` — "as an additional cost to cast this spell, pay X life."

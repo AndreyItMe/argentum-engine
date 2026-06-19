@@ -134,6 +134,8 @@ class CastSpellEnumerator : ActionEnumerator {
             var exileMinCount = 0
             var discardTargets = emptyList<EntityId>()
             var discardCount = 0
+            var bounceTargets = emptyList<EntityId>()
+            var bounceCount = 0
             var beholdTargets = emptyList<EntityId>()
             var beholdCount = 0
             var blightOrPayCost: AdditionalCost.BlightOrPay? = null
@@ -185,7 +187,19 @@ class CastSpellEnumerator : ActionEnumerator {
                             discardTargets = validDiscards
                             discardCount = atom.count
                         }
-                        // Mana / tap / return / reveal aren't produced as spell additional costs today.
+                        is CostAtom.ReturnToHand -> {
+                            // "As an additional cost to cast this spell, return [count]
+                            // permanent(s) matching [filter] you control to its owner's hand."
+                            // Mirrors the TapPermanents selection model (permanents you control,
+                            // no destruction), but the payment bounces instead of tapping.
+                            val validBounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, atom.filter)
+                            if (validBounceTargets.size < atom.count) {
+                                canPayAdditionalCosts = false
+                            }
+                            bounceTargets = validBounceTargets
+                            bounceCount = atom.count
+                        }
+                        // Mana / tap / reveal aren't produced as spell additional costs today.
                         else -> {}
                     }
                     is AdditionalCost.SacrificeCreaturesForCostReduction -> {
@@ -467,6 +481,7 @@ class CastSpellEnumerator : ActionEnumerator {
             val costInfo = buildAdditionalCostData(
                 additionalCosts, sacrificeTargets, variableSacrificeTargets,
                 exileTargets, exileMinCount, discardTargets, discardCount,
+                bounceTargets, bounceCount,
                 beholdTargets, beholdCount,
                 blightVariableCost, blightVariableCreatures, blightVariableMaxX,
                 payXLifeCost, payXLifeMaxX
@@ -1625,6 +1640,8 @@ class CastSpellEnumerator : ActionEnumerator {
         exileMinCount: Int,
         discardTargets: List<EntityId>,
         discardCount: Int,
+        bounceTargets: List<EntityId> = emptyList(),
+        bounceCount: Int = 0,
         beholdTargets: List<EntityId> = emptyList(),
         beholdCount: Int = 0,
         blightVariableCost: AdditionalCost.BlightVariable? = null,
@@ -1686,6 +1703,14 @@ class CastSpellEnumerator : ActionEnumerator {
                 costType = "DiscardCard",
                 validDiscardTargets = discardTargets,
                 discardCount = discardCount
+            )
+        } else if (bounceTargets.isNotEmpty()) {
+            val bounceCost = additionalCosts.firstNotNullOfOrNull { (it as? AdditionalCost.Atom)?.atom as? CostAtom.ReturnToHand }
+            AdditionalCostData(
+                description = bounceCost?.description?.replaceFirstChar { it.uppercase() } ?: "Return a permanent you control to its owner's hand",
+                costType = "ReturnToHand",
+                validBounceTargets = bounceTargets,
+                bounceCount = bounceCount
             )
         } else if (beholdTargets.isNotEmpty()) {
             val flatCosts = additionalCosts.flatMap { if (it is AdditionalCost.Composite) it.steps else listOf(it) }

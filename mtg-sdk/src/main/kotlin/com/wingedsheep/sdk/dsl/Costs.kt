@@ -327,6 +327,14 @@ object Costs {
         fun SacrificePermanent(filter: GameObjectFilter = GameObjectFilter.Any, count: Int = 1): AdditionalCost =
             AdditionalCost.Atom(CostAtom.Sacrifice(filter, count))
 
+        /**
+         * Return [count] permanents matching [filter] you control to their owner's hand
+         * (Fear of Isolation — "As an additional cost to cast this spell, return a permanent
+         * you control to its owner's hand").
+         */
+        fun ReturnToHand(filter: GameObjectFilter = GameObjectFilter.Any, count: Int = 1): AdditionalCost =
+            AdditionalCost.Atom(CostAtom.ReturnToHand(filter, count))
+
         /** Discard [count] cards matching [filter] (Force of Will). */
         fun DiscardCards(count: Int = 1, filter: GameObjectFilter = GameObjectFilter.Any): AdditionalCost =
             AdditionalCost.Atom(CostAtom.Discard(count, filter))
