@@ -390,6 +390,11 @@ class PredicateEvaluator {
                 val toughness = projectedValues?.toughness ?: card.baseStats?.baseToughness ?: 0
                 power >= predicate.min || toughness >= predicate.min
             }
+            is CardPredicate.PowerOrToughnessAtMost -> {
+                val power = projectedValues?.power ?: card.baseStats?.basePower ?: 0
+                val toughness = projectedValues?.toughness ?: card.baseStats?.baseToughness ?: 0
+                power <= predicate.max || toughness <= predicate.max
+            }
             is CardPredicate.TotalPowerAndToughnessAtMost -> {
                 val power = projectedValues?.power ?: card.baseStats?.basePower ?: 0
                 val toughness = projectedValues?.toughness ?: card.baseStats?.baseToughness ?: 0
@@ -1099,6 +1104,7 @@ class PredicateEvaluator {
             is CardPredicate.ToughnessEquals, is CardPredicate.ToughnessAtMost, is CardPredicate.ToughnessAtLeast,
             CardPredicate.ToughnessAtMostX,
             is CardPredicate.PowerOrToughnessAtLeast,
+            is CardPredicate.PowerOrToughnessAtMost,
             is CardPredicate.TotalPowerAndToughnessAtMost,
             is CardPredicate.PowerGreaterThanEntity,
             is CardPredicate.PowerAtMostEntity,
