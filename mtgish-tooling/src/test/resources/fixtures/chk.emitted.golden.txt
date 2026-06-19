@@ -5730,7 +5730,7 @@ val MoonringMirror = card("Moonring Mirror") {
     colorIdentity = ""
     typeLine = "Artifact"
     oracleText = "Whenever you draw a card, exile the top card of your library face down.\nAt the beginning of your upkeep, you may exile all cards from your hand face down. If you do, put all other cards you own exiled with this artifact into your hand."
-    // STRUCTURE needs human wiring: trigger-shape
+    // STRUCTURE needs human wiring: ExileTopCardOfLibraryFaceDown
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "262"

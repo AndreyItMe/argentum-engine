@@ -894,6 +894,10 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
             // "as long as you gained life this turn" gating a self-only buff (Ulna Alley Shopkeep's
             // Infusion +2/+0). Same condition the EachPermanentLayerEffect lord branch already uses.
             ?: youGainedLifeConditionDsl(cond)
+            // "during your turn, this creature has <keyword>" (Razorkin Needlehead's first strike) —
+            // the same SELF gated-static shape with an IsPlayersTurn(You) gate. The projected-state read
+            // drops the grant the moment it stops being the controller's turn.
+            ?: isYourTurnConditionDsl(cond)
             ?: run { reasons.add("If"); return null }
         val layerEffects = (innerRule["args"].asArr?.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
             ?: run { reasons.add("If"); return null }
@@ -2570,6 +2574,20 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenAPlayerCyclesACard") && jsonContains(trig, "_Players", "AnyPlayer"))
         return "Triggers.AnyPlayerCycles"
 
+    // "Whenever an opponent draws a card" (Razorkin Needlehead, Consecrated Sphinx) / "whenever you
+    // draw a card" (A-Queza). The plain draw trigger fires once per card drawn (CR 121.2), with no
+    // draw-step exemption — the sibling `WhenAPlayerDrawsACardExceptTheFirstCardDuringTheirDrawStep`
+    // (Orcish Bowmasters) carries that exemption and is a *different* IR tag, so we never conflate
+    // them. Only the Opponent and You scopes have matching Triggers.* constants; an AnyPlayer scope
+    // (Ob Nixilis) has no plain constant yet, so it declines -> SCAFFOLD rather than guess a binding.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerDrawsACard")) {
+        val scope = trig["args"] as? JsonObject
+        if (scope?.strField("_Players") == "Opponent") return "Triggers.OpponentDraws"
+        if (scope?.strField("_Players") == "SinglePlayer" &&
+            jsonContains(scope["args"], "_Player", "You")
+        ) return "Triggers.YouDraw"
+    }
+
     // "Whenever you gain life" (You) — Pest Mascot, Essence Channeler. Only the You scope maps to
     // Triggers.YouGainLife; an any-player / opponent scope has no calibrated card yet, so it
     // declines -> SCAFFOLD rather than guess a binding.
@@ -3158,6 +3176,31 @@ internal fun EmitCtx.asEntersBlock(rule: JsonObject, condition: String? = null):
                     val amt = dynamicAmountExpr(a.getOrNull(0)) ?: run { reasons.add("AsPermanentEnters"); return null }
                     call("EntersWithDynamicCounters", arg("count", amt))
                 }
+            }
+            // "~ enters with a +1/+1 counter on it IF <condition>" (Cackling Slasher) — the IR nests an
+            // `If(<condition>, [<inner replacement(s)>])` inside the AsPermanentEnters replacement list.
+            // Recurse over the inner replacement(s) with the condition threaded onto the EntersWithCounters
+            // replacement, reusing every per-replacement renderer above. Only the conditions
+            // [singleInterveningIfDsl] maps exactly render; anything else declines -> SCAFFOLD rather than
+            // drop the gate. An outer condition combined with an inner If would need AND-composition we
+            // don't model, so that declines too.
+            "If" -> {
+                if (condition != null) { reasons.add("AsPermanentEnters"); return null }
+                val ifArgs = rep["args"].asArr ?: run { reasons.add("AsPermanentEnters"); return null }
+                val cond = ifArgs.getOrNull(0) as? JsonObject ?: run { reasons.add("AsPermanentEnters"); return null }
+                val innerReps = ifArgs.getOrNull(1) as? JsonArray ?: run { reasons.add("AsPermanentEnters"); return null }
+                val condDsl = singleInterveningIfDsl(cond) ?: run { reasons.add("AsPermanentEnters"); return null }
+                // Rebuild an AsPermanentEnters node carrying the inner replacements, preserving the same
+                // scope permanent (first arg), and render it with the recovered condition.
+                val scopePermanent = rule["args"].asArr?.getOrNull(0) as? JsonElement
+                    ?: run { reasons.add("AsPermanentEnters"); return null }
+                val synthetic = buildJsonObject {
+                    put("_Rule", JsonPrimitive("AsPermanentEnters"))
+                    put("args", JsonArray(listOf(scopePermanent, innerReps)))
+                }
+                val inner = asEntersBlock(synthetic, condition = condDsl) ?: return null
+                stmts.addAll(inner)
+                continue
             }
             else -> { reasons.add("AsPermanentEnters"); return null }
         }

@@ -648,6 +648,40 @@
     ]
 }
 
+// Cackling Slasher
+{
+    "name": "Cackling Slasher",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Human Assassin",
+    "oracleText": "Deathtouch\nThis creature enters with a +1/+1 counter on it if a creature died this turn.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "DEATHTOUCH"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "count": 1,
+                "selfOnly": true,
+                "condition": "CreatureDiedThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "85",
+        "artist": "Johann Bodin",
+        "flavorText": "Every death was funnier than the last, until his howling laughter drowned out his victims' screams.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/1/b1269ccf-febf-42b0-8c20-21ccb731a3ec.jpg?1726286167"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Cautious Survivor
 {
     "name": "Cautious Survivor",
@@ -3277,6 +3311,67 @@
     ]
 }
 
+// Razorkin Needlehead
+{
+    "name": "Razorkin Needlehead",
+    "manaCost": "{R}{R}",
+    "typeLine": "Creature — Human Assassin",
+    "oracleText": "This creature has first strike during your turn.\nWhenever an opponent draws a card, this creature deals 1 damage to them.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DrawEvent",
+                    "player": "EachOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "TriggeringPlayer"
+                    },
+                    "damageSource": "Self"
+                },
+                "descriptionOverride": "Whenever an opponent draws a card, this creature deals 1 damage to them."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE",
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "IsYourTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "153",
+        "rarity": "RARE",
+        "artist": "Riccardo Federici",
+        "flavorText": "\"Stitch your eyes, stitch your skin, stitch your mouth into a grin.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/c/bc73b963-23c0-46d2-853a-34a8b463994e.jpg?1726286422"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Razortrap Gorge
 {
     "name": "Razortrap Gorge",
@@ -3638,6 +3733,150 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Skullsnap Nuisance
+{
+    "name": "Skullsnap Nuisance",
+    "manaCost": "{U}{B}",
+    "typeLine": "Creature — Insect Skeleton",
+    "oracleText": "Flying\nEerie — Whenever an enchantment you control enters and whenever you fully unlock a Room, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING",
+        "EERIE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "enchantment ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeAs": "surveiled"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "surveiled",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "toGraveyard",
+                            "storeRemainder": "toTop",
+                            "selectedLabel": "Put in graveyard",
+                            "remainderLabel": "Put on top"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toTop",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Top"
+                            },
+                            "order": "ControllerChooses"
+                        }
+                    ]
+                },
+                "descriptionOverride": "Eerie — Whenever an enchantment you control enters, surveil 1."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "RoomFullyUnlockedEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeAs": "surveiled"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "surveiled",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "toGraveyard",
+                            "storeRemainder": "toTop",
+                            "selectedLabel": "Put in graveyard",
+                            "remainderLabel": "Put on top"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "toTop",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Top"
+                            },
+                            "order": "ControllerChooses"
+                        }
+                    ]
+                },
+                "descriptionOverride": "Eerie — Whenever you fully unlock a Room, surveil 1."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "234",
+        "rarity": "UNCOMMON",
+        "artist": "Allen Douglas",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/f/0fdcdfd0-8c66-4767-a894-58cf0c6d7e07.jpg?1726286742"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
     ]
 }
 
