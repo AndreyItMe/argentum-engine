@@ -3392,6 +3392,51 @@
     ]
 }
 
+// Inquisitive Glimmer
+{
+    "name": "Inquisitive Glimmer",
+    "manaCost": "{W}{U}",
+    "typeLine": "Enchantment Creature — Fox Glimmer",
+    "oracleText": "Enchantment spells you cast cost {1} less to cast.\nUnlock costs you pay cost {1} less.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCast",
+                    "filter": "enchantment"
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 1
+                }
+            },
+            {
+                "type": "ModifyUnlockCost",
+                "target": "YouUnlock",
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 1
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "217",
+        "rarity": "UNCOMMON",
+        "artist": "Julie Dillon",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/1/f1f66e3e-9f1f-4601-aa30-30b66805a5a8.jpg?1726286675"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
 // Insidious Fungus
 {
     "name": "Insidious Fungus",
@@ -4707,6 +4752,51 @@
         "artist": "Kaitlyn McCulley",
         "flavorText": "\"You tried to throw me away, Henry. I don't like that at all.\"",
         "imageUri": "https://cards.scryfall.io/normal/front/0/0/000499a4-3f39-4d25-a2a2-b2f014e30754.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Rampaging Soulrager
+{
+    "name": "Rampaging Soulrager",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "This creature gets +3/+0 as long as there are two or more unlocked doors among Rooms you control.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 3,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": "UnlockedDoors",
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "151",
+        "artist": "Slawomir Maniak",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/6/569c914b-95af-428f-a142-6f20e418bc59.jpg?1726286414"
     },
     "colorIdentityOverride": [
         "RED"

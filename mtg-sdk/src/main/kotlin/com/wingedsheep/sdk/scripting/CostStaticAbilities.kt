@@ -699,3 +699,61 @@ sealed interface PlotCostTarget {
     @Serializable
     data object YouPlotFromHand : PlotCostTarget
 }
+
+/**
+ * Static ability that modifies the cost of the **door-unlock** special action (CR 709.5e).
+ *
+ * Unlocking a door is not a spell or the Plot action, so neither [ModifySpellCost] nor
+ * [ModifyPlotCost] touches it; this is its dedicated cost modifier. The engine's
+ * `UnlockCostReducer` scans the battlefield for these and reduces the unlock cost paid by
+ * `UnlockRoomDoorEnumerator` (affordability) and `UnlockRoomDoorHandler` (validate + pay),
+ * keeping the two in lockstep — mirroring the [ModifyPlotCost]/`PlotCostReducer` pair.
+ *
+ * Used for Inquisitive Glimmer ("Unlock costs you pay cost {1} less") via
+ * `ModifyUnlockCost(UnlockCostTarget.YouUnlock, CostModification.ReduceGeneric(1))`. Only
+ * generic [CostModification] reductions/increases are meaningful — the printed unlock cost is
+ * a flat mana cost.
+ *
+ * @property target Whose unlock actions the modifier applies to.
+ * @property modification How the cost is changed (reuses the spell-cost [CostModification]
+ *           vocabulary; only generic adjustments apply to unlocking).
+ */
+@SerialName("ModifyUnlockCost")
+@Serializable
+data class ModifyUnlockCost(
+    val target: UnlockCostTarget,
+    val modification: CostModification,
+) : StaticAbility {
+    override val description: String = buildString {
+        append(
+            when (target) {
+                UnlockCostTarget.YouUnlock -> "Unlock costs you pay"
+            }
+        )
+        append(
+            when (val m = modification) {
+                is CostModification.ReduceGeneric -> " cost {${m.amount}} less"
+                is CostModification.IncreaseGeneric -> " cost {${m.amount}} more"
+                else -> " have a modified cost"
+            }
+        )
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newModification = modification.applyTextReplacement(replacer)
+        return if (newModification !== modification) copy(modification = newModification) else this
+    }
+}
+
+/**
+ * Whose door-unlock actions a [ModifyUnlockCost] applies to. Modeled as a sealed interface so a
+ * future "opponents' unlock costs" tax slots in as a new variant without changing the
+ * static-ability shape.
+ */
+@Serializable
+sealed interface UnlockCostTarget {
+    /** Door-unlock special actions performed by the source's controller ("unlock costs you pay"). */
+    @SerialName("YouUnlock")
+    @Serializable
+    data object YouUnlock : UnlockCostTarget
+}

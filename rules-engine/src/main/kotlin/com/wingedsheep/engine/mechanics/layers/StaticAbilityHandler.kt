@@ -115,6 +115,7 @@ import com.wingedsheep.sdk.scripting.MayPlayLandsFromGraveyard
 import com.wingedsheep.sdk.scripting.MayPlayPermanentsFromGraveyard
 import com.wingedsheep.sdk.scripting.ModifyPlotCost
 import com.wingedsheep.sdk.scripting.ModifySpellCost
+import com.wingedsheep.sdk.scripting.ModifyUnlockCost
 import com.wingedsheep.sdk.scripting.NoMaximumHandSize
 import com.wingedsheep.sdk.scripting.NoncombatDamageBonus
 import com.wingedsheep.sdk.scripting.OpponentsPlayWithHandsRevealed
@@ -740,6 +741,10 @@ class StaticAbilityHandler(
 
             // Plot special-action cost (PlotCostReducer / PlotEnumerator / PlotCardHandler):
             is ModifyPlotCost,
+
+            // Door-unlock special-action cost (UnlockCostReducer / UnlockRoomDoorEnumerator /
+            // UnlockRoomDoorHandler):
+            is ModifyUnlockCost,
 
             // Spells on the stack (StackResolver / GrantedKeywordResolver):
             is GrantCantBeCountered,

@@ -691,6 +691,34 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * The number of unlocked doors among Rooms controlled by [player] (CR 709.5). A Room
+     * permanent contributes one per unlocked door face, so a Room with both doors unlocked
+     * counts as two.
+     *
+     * With [distinctNames] = true, counts the distinct printed names among those unlocked
+     * door faces instead of the raw total — the "different names among unlocked doors" shape
+     * (Promising Stairs). This reads per-face door state, which no entity-level aggregate
+     * ([AggregateBattlefield]/[Count]) can see, since a single Room entity carries two faces.
+     *
+     * Feeds the standard [Compare] machinery: pair with `ComparisonOperator.GTE` for
+     * "two or more unlocked doors" gating (Rampaging Soulrager) or a [WinGameEffect]-gated
+     * "eight or more different names" (Promising Stairs), and use it directly as a count
+     * (Misty Salon's X/X token).
+     */
+    @SerialName("UnlockedDoors")
+    @Serializable
+    data class UnlockedDoors(
+        val player: Player = Player.You,
+        val distinctNames: Boolean = false,
+    ) : DynamicAmount {
+        override val description: String = buildString {
+            append("the number of ")
+            append(if (distinctNames) "different names among unlocked doors of Rooms " else "unlocked doors among Rooms ")
+            append(if (player == Player.You) "you control" else "${player.description} controls")
+        }
+    }
+
+    /**
      * Generic battlefield aggregation primitive.
      * Queries permanents on the battlefield, filters them, optionally maps to a numeric
      * property, and applies an aggregation function.

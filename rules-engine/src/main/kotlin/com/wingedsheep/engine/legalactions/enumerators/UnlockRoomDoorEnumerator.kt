@@ -26,7 +26,7 @@ class UnlockRoomDoorEnumerator : ActionEnumerator {
             val room = container.get<RoomComponent>() ?: continue
 
             for (face in room.lockedFaces) {
-                val cost = face.manaCost
+                val cost = context.unlockCostReducer.effectiveUnlockCost(state, playerId, face.manaCost)
                 if (!context.manaSolver.canPay(state, playerId, cost, precomputedSources = context.availableManaSources)) {
                     continue
                 }

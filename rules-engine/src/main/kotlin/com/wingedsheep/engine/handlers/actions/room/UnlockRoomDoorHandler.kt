@@ -16,6 +16,7 @@ import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.mana.ManaAbilitySideEffectExecutor
 import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
+import com.wingedsheep.engine.mechanics.mana.UnlockCostReducer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -43,8 +44,13 @@ class UnlockRoomDoorHandler(
     private val triggerDetector: TriggerDetector,
     private val triggerProcessor: TriggerProcessor,
     private val manaAbilitySideEffectExecutor: ManaAbilitySideEffectExecutor,
+    cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
 ) : ActionHandler<UnlockRoomDoor> {
     override val actionType: KClass<UnlockRoomDoor> = UnlockRoomDoor::class
+
+    // Inquisitive-Glimmer-style "Unlock costs you pay cost {N} less" reductions. The enumerator
+    // applies the same reducer so affordability and payment agree (CR 709.5e).
+    private val unlockCostReducer = UnlockCostReducer(cardRegistry)
 
     override fun validate(state: GameState, action: UnlockRoomDoor): String? {
         if (state.priorityPlayerId != action.playerId) {
@@ -82,7 +88,7 @@ class UnlockRoomDoorHandler(
             return "This door is already unlocked"
         }
 
-        val cost = face.manaCost
+        val cost = unlockCostReducer.effectiveUnlockCost(state, action.playerId, face.manaCost)
         when (action.paymentStrategy) {
             is PaymentStrategy.AutoPay -> {
                 if (!manaSolver.canPay(state, action.playerId, cost, 0)) {
@@ -137,7 +143,9 @@ class UnlockRoomDoorHandler(
         val face = room.faces.find { it.id == action.faceId }
             ?: return ExecutionResult.error(state, "Unknown face")
 
-        // Pay the face's mana cost (the unlock cost, per CR 709.5e).
+        // Pay the face's mana cost (the unlock cost, per CR 709.5e), after any
+        // "Unlock costs you pay cost {N} less" reductions (Inquisitive Glimmer).
+        val cost = unlockCostReducer.effectiveUnlockCost(currentState, action.playerId, face.manaCost)
         when (action.paymentStrategy) {
             is PaymentStrategy.FromPool -> {
                 val poolComponent = currentState.getEntity(action.playerId)?.get<ManaPoolComponent>()
@@ -150,7 +158,7 @@ class UnlockRoomDoorHandler(
                     green = poolComponent.green,
                     colorless = poolComponent.colorless
                 )
-                val newPool = costHandler.payManaCost(pool, face.manaCost)
+                val newPool = costHandler.payManaCost(pool, cost)
                     ?: return ExecutionResult.error(currentState, "Insufficient mana in pool")
                 currentState = currentState.updateEntity(action.playerId) { c ->
                     c.with(
@@ -188,7 +196,7 @@ class UnlockRoomDoorHandler(
                     green = poolComponent.green,
                     colorless = poolComponent.colorless
                 )
-                val partialResult = pool.payPartial(face.manaCost)
+                val partialResult = pool.payPartial(cost)
                 val poolAfterPayment = partialResult.newPool
                 val remainingCost = partialResult.remainingCost
                 val manaSpentFromPool = partialResult.manaSpent
@@ -318,6 +326,7 @@ class UnlockRoomDoorHandler(
                 triggerDetector = services.triggerDetector,
                 triggerProcessor = services.triggerProcessor,
                 manaAbilitySideEffectExecutor = services.manaAbilitySideEffectExecutor,
+                cardRegistry = services.cardRegistry,
             )
     }
 }

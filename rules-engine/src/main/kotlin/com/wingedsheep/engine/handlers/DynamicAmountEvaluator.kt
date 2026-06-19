@@ -16,6 +16,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.PlayerComponent
+import com.wingedsheep.engine.state.components.identity.RoomComponent
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Subtype
@@ -156,6 +157,26 @@ class DynamicAmountEvaluator(
                 val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
                 val playerId = playerIds.firstOrNull() ?: return 0
                 state.getEntity(playerId)?.get<PlayerComponent>()?.startingLifeTotal ?: 20
+            }
+
+            // Unlocked doors among Rooms the player controls (CR 709.5). Reads per-face door
+            // state off each Room's RoomComponent — a single Room entity can contribute two
+            // doors, so this can't go through the entity-level AggregateBattlefield. Controller
+            // is read from projection so control-changing effects move a Room's doors with it.
+            is DynamicAmount.UnlockedDoors -> {
+                val playerIds = resolveUnifiedPlayerIds(state, amount.player, context).toSet()
+                val projection = resolveProjection(state, projectedState)
+                val rooms = state.getBattlefield().mapNotNull { entityId ->
+                    val room = state.getEntity(entityId)?.get<RoomComponent>() ?: return@mapNotNull null
+                    if (controllerOf(state, projection, entityId) in playerIds) room else null
+                }
+                if (amount.distinctNames) {
+                    rooms.flatMapTo(mutableSetOf()) { room ->
+                        room.faces.filter { it.id in room.unlocked }.map { it.name }
+                    }.size
+                } else {
+                    rooms.sumOf { it.unlocked.size }
+                }
             }
 
             is DynamicAmount.VariableReference -> {

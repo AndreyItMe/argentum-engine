@@ -229,6 +229,19 @@ object Conditions {
         )
 
     /**
+     * If [count] or more unlocked doors are among Rooms [player] controls (CR 709.5).
+     * A Room with both doors unlocked counts as two. Evaluates under both resolution and
+     * projection, so it gates "as long as" static buffs (Rampaging Soulrager: +3/+0 while two
+     * or more unlocked doors).
+     */
+    fun UnlockedDoorsAtLeast(count: Int, player: Player = Player.You): ConditionInterface =
+        Compare(
+            DynamicAmount.UnlockedDoors(player),
+            ComparisonOperator.GTE,
+            DynamicAmount.Fixed(count)
+        )
+
+    /**
      * Domain threshold: if [count] or more basic land types are among lands you control.
      * Reads via projected state, so type-changed lands and dual lands count.
      */

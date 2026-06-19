@@ -179,6 +179,22 @@ object DynamicAmounts {
     fun differentlyNamedLandsYouControl(player: Player = Player.You): DynamicAmount =
         DynamicAmount.AggregateBattlefield(player, GameObjectFilter.Land, Aggregation.DISTINCT_NAMES)
 
+    /**
+     * The number of unlocked doors among Rooms [player] controls (CR 709.5). A Room with both
+     * doors unlocked counts as two. Used for Misty Salon's X/X token and Rampaging Soulrager's
+     * "two or more unlocked doors" gate (via [Conditions]).
+     */
+    fun unlockedDoors(player: Player = Player.You): DynamicAmount =
+        DynamicAmount.UnlockedDoors(player)
+
+    /**
+     * The number of distinct printed names among unlocked door faces of Rooms [player] controls.
+     * The per-face analogue of [differentlyNamedLandsYouControl] — distinct over door faces, not
+     * whole Room entities. Feeds Promising Stairs' "eight or more different names" alt-win.
+     */
+    fun distinctUnlockedDoorNames(player: Player = Player.You): DynamicAmount =
+        DynamicAmount.UnlockedDoors(player, distinctNames = true)
+
     fun attackingCreaturesYouControl(): DynamicAmount =
         battlefield(Player.You, GameObjectFilter.Creature.attacking()).count()
 

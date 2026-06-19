@@ -2748,6 +2748,31 @@ staticAbility {
   mana cost; generic is floored at {0} and colored pips are never reduced. Doc Aurlock, Grizzled
   Genius: "Plotting cards from your hand costs {2} less" = `ReduceGeneric(2)`.
 
+**Door-unlock cost statics — `ModifyUnlockCost`**
+
+Unlocking a Room door (CR 709.5e) is a *special action*, so neither `ModifySpellCost` nor
+`ModifyPlotCost` touches it. `ModifyUnlockCost(target, modification)` is its dedicated cost modifier,
+evaluated by the engine's `UnlockCostReducer` (consulted by both the unlock legal-action enumerator
+and `UnlockRoomDoorHandler` so affordability and payment stay in lockstep — the same lockstep pattern
+as `ModifyPlotCost`).
+
+```kotlin
+staticAbility {
+    ability = ModifyUnlockCost(
+        target = UnlockCostTarget.YouUnlock,
+        modification = CostModification.ReduceGeneric(1),
+    )
+}
+```
+
+- `target: UnlockCostTarget` — currently `YouUnlock` (unlock actions performed by the source's
+  controller; a future "opponents' unlock costs" tax slots in as a new variant without changing call
+  sites).
+- `modification: CostModification` — like plot, only the flat generic shapes are meaningful (printed
+  unlock cost is a flat mana cost); generic is floored at {0}, colored pips untouched. Inquisitive
+  Glimmer: "Unlock costs you pay cost {1} less" = `ReduceGeneric(1)` (its "Enchantment spells you cast
+  cost {1} less" half is a plain `ModifySpellCost(YouCast(GameObjectFilter.Enchantment), ...)`).
+
 **Global denial statics** (no `filter`/`duration` block — they're singleton-style)
 
 - `PreventCycling` — "Players can't cycle cards." (Stabilizer)
@@ -3782,6 +3807,15 @@ Numbers computed at resolution time.
   `CastRecordComponent` afterward), so it reads correctly both at resolution and as the permanent enters
   (the common use: feeding `EntersWithDynamicCounters`). Facade: `DynamicAmounts.colorsOfManaSpent()`.
   A permanent put onto the battlefield without being cast spent no mana, so this is 0 for it.
+- `UnlockedDoors(player = You, distinctNames = false)` — the number of unlocked doors among Rooms
+  `player` controls (CR 709.5). Reads per-face door state, so a single Room with **both** doors
+  unlocked counts as **two** — an entity-level `AggregateBattlefield`/`Count` cannot see this. With
+  `distinctNames = true`, counts the distinct printed names among those unlocked door faces instead
+  (two Rooms sharing an unlocked face name count once). Controller read via projected state.
+  Facades: `DynamicAmounts.unlockedDoors(player)` and `DynamicAmounts.distinctUnlockedDoorNames(player)`;
+  condition facade `Conditions.UnlockedDoorsAtLeast(count, player)`. Feeds the standard `Compare`
+  machinery — Rampaging Soulrager ("+3/+0 while two or more unlocked doors"), Misty Salon's X/X token,
+  Promising Stairs' "eight or more different names among unlocked doors" alt-win.
 - `Add(a, b)` — `a + b`.
 - `Subtract(a, b)` — `a − b`.
 - `Multiply(a, b)` — `a × b`.
