@@ -1,27 +1,28 @@
 # Secrets of Strixhaven — Engine Gap Analysis
 
 Cross-reference of the **271 unique SOS cards** against the engine's actual capabilities (SDK reference +
-source verification, June 2026). Generated to scope what must be built before the set can be completed.
+source verification, June 2026). Originally generated to scope what had to be built before the set could be
+completed; now a historical log of the features that work shipped.
 
-**Status:** 0 / 271 implemented (0%). The set has no `definitions/sos/` folder yet — this is a forward-looking
-scope of the engine work required.
+**Status:** complete — **271 / 271 implemented**, no remaining engine blockers. Every card in
+`definitions/sos/` ships. All seven new mechanics landed; the ❌ markers below are preserved from the original
+scoping pass and annotated with how each gap was actually resolved.
 Card list pulled from Scryfall (`set:sos`, expansion, 368 printings → 271 unique cards). Oracle text quoted
 from Scryfall. Sibling sets (`soa` Mystical Archive, `soc` Commander, `ysos` Alchemy) are out of scope here.
 
 ## Bottom line
 
 SOS is a **spellslinger / "Strixhaven mage school"** set built around **seven new mechanics**, all of which
-need engine work. None are supported today. The mechanic with by far the most leverage is **Prepared** (38 cards
-— a brand-new double-faced layout). After that the set is mostly standard spellslinger material (instants/sorceries,
-small creatures with spell-cast triggers, dual lands, planeswalkers) that is buildable once the shared primitives
-land.
+needed engine work — and all of which shipped. The mechanic with by far the most leverage was **Prepared**
+(38 cards — a brand-new double-faced layout). The rest is standard spellslinger material (instants/sorceries,
+small creatures with spell-cast triggers, dual lands, planeswalkers) built on the shared primitives below.
 
-The genuine gaps cluster into three buckets:
+The original gaps clustered into three buckets, all now closed:
 
-1. **One new DFC layout + permanent status** (Prepared) — the headline lift, touches casting, projection, server DTO, client.
+1. **One new DFC layout + permanent status** (Prepared) — the headline lift, touched casting, projection, server DTO, client.
 2. **Three new spell-cast trigger / dynamic-amount primitives** (Repartee target-predicate, Opus mana-spent payoff,
    Converge color-count) — small SDK additions, each unlocking ~10 cards.
-3. **A scatter of one-offs** (Paradigm recurring free-cast, Grandeur keyword, multi-turn skip, Lesson subtype).
+3. **A scatter of one-offs** (Paradigm recurring free-cast, Grandeur, multi-turn skip, Lesson subtype).
 
 ### Already supported — no new engine work
 
@@ -92,16 +93,16 @@ Omen (card shuffles), and MDFC (choose a face at cast time).
 This is the one item that warrants the full add-feature treatment (SDK type designed for the *next* prepared card,
 not just one).
 
-### 2. Repartee (12 cards) — ❌ spell-cast trigger gated on "targets a creature"
+### 2. Repartee (12 cards) — ✅ **DONE** (spell-cast trigger gated on "targets a creature")
 
-*"Whenever you cast an instant or sorcery spell **that targets a creature**, …"* The engine has the
-`YouCastInstantOrSorcery` trigger and the `SpellCastPredicate` sealed interface, but **no predicate inspects the
-cast spell's targets** — `SpellCastEvent` carries only `targetNames` (display strings), not target entities/types.
+> **Implemented.** A `SpellCastPredicate` that inspects the cast spell's targets now exists; the trigger reads
+> the spell's targeted entities and matches the creature filter, composed inline per card (no dedicated builder —
+> the shape is a plain `youCastSpell(...)` requirement). Cards: Graduation Day, Informed Inkwright,
+> Inkshape Demonstrator, Rehearsed Debater, Stirring Hopesinger, Scolding Administrator, Lecturing Scornmage, …
 
-**Gap:** add a `SpellCastPredicate.TargetsMatch(GameObjectFilter)` (matcher reads the spell's `TargetsComponent`
-and evaluates the filter against the targeted entities), then `flurry`-style `repartee { … }` builder that wires
-`youCastSpell(instantOrSorcery, requires = TargetsMatch(Creature))` + the reminder-text prefix.
-→ Graduation Day, Informed Inkwright, Inkshape Demonstrator, Rehearsed Debater, Stirring Hopesinger, …
+*"Whenever you cast an instant or sorcery spell **that targets a creature**, …"* The original gap: the engine had
+the `YouCastInstantOrSorcery` trigger and the `SpellCastPredicate` sealed interface, but **no predicate inspected
+the cast spell's targets** — `SpellCastEvent` carried only `targetNames` (display strings), not target entities/types.
 
 ### 3. Opus (10 cards) — ✅ **DONE** (mana-spent payoff tier on a spell-cast trigger)
 
@@ -119,18 +120,18 @@ spent on **this** (the source's own) spell, not on the **triggering** spell. The
 the payoff is plain `ConditionalEffect(Compare(…, GTE, 5), big, small)`. Add an `opus { … }` builder + reminder text.
 → Deluge Virtuoso, Exhibition Tidecaller, Muse Seeker, Expressive Firedancer, Molten-Core Maestro, …
 
-### 4. Converge (9 cards) — ❌ count of distinct colors of mana spent
+### 4. Converge (9 cards) — ✅ **DONE** (count of distinct colors of mana spent)
+
+> **Implemented.** `DynamicAmount.DistinctColorsManaSpent` (count of the five color buckets that are non-zero) +
+> evaluator feed `EntersWithDynamicCounters` directly; the exile-by-color-count variant uses the sibling
+> `ManaValueAtMostColorsSpent` card predicate, both via a shared `ManaSpentReader`. A `convergeEntersWithCounters()`
+> builder exists in `ConvergeDsl` (ability word — no keyword). Cards: Rancorous/Sundering/Transcendent/Magmablood
+> Archaic, Together as One, Arcane Omens, …
 
 *"…with a +1/+1 counter on it for each **color of mana spent to cast it**"* and *"…mana value less than or equal
-to the **number of colors of mana spent** to cast this creature."* All colors actually spent are tracked
-(`SpellOnStackComponent.manaSpent{W/U/B/R/G/C}` → `CastRecordComponent`), and `EntersWithDynamicCounters` already
-takes a `DynamicAmount`. **What's missing is the count primitive** (Sunburst, classically).
-
-**Gap:** add `DynamicAmount.DistinctColorsManaSpent` (count of the five color buckets that are non-zero), evaluated
-in `DynamicAmountEvaluator`. Feeds `EntersWithDynamicCounters` directly. For the exile-by-color-count variant, add a
-sibling card predicate `ManaValueAtMostColorsSpent` (the existing `ManaValueAtMostEntityManaSpent` compares total
-mana, not color count). Then a `converge { … }` builder.
-→ Rancorous Archaic, Sundering Archaic, Transcendent Archaic, Magmablood Archaic, Together as One, Arcane Omens, …
+to the **number of colors of mana spent** to cast this creature."* All colors spent were already tracked
+(`SpellOnStackComponent.manaSpent{W/U/B/R/G/C}` → `CastRecordComponent`) and `EntersWithDynamicCounters` already
+took a `DynamicAmount`; the only missing piece was the count primitive (Sunburst, classically).
 
 ### 5. Increment (9 cards) — ✅ **DONE** (self-growing-by-mana-spent keyword)
 
@@ -153,22 +154,17 @@ trigger-condition + `AddCounters(+1/+1)`.
 
 *(§3 + §5 share one new primitive: the triggering spell's total mana spent. Build it once.)*
 
-### 6. Paradigm (5 cards — Lessons) — ❌ recurring free-cast from exile, keyed to spell name
+### 6. Paradigm (5 cards — Lessons) — ✅ **DONE** (recurring free-cast from exile, keyed to spell name)
+
+> **Implemented.** Suspend-shaped exile recurrence via `spell { paradigm() }` (`sdk/scripting/Paradigm.kt` +
+> `Keyword.PARADIGM`): a marker → a synthesized `activeZone=EXILE` precombat-main trigger casts a free *copy* of
+> the spell each first main phase, reusing the copy-and-cast-for-free pipeline. No new executor was needed.
+> Cards: Restoration Seminar, Echocasting Symposium, Decorum Dissertation, Improvisation Capstone, Germination
+> Practicum. (Lesson subtype — §10 below — also shipped.)
 
 *"Then exile this spell. After you first resolve a spell with this name, you may cast a **copy** of it from exile
 without paying its mana cost at the beginning of each of your **first main phases**."* A recurring per-turn impulse
-of a self-exiled spell. The copy-and-cast-for-free pipeline exists; the gaps are the recurrence + the name gate:
-
-**Gaps:**
-- **Self-exile-on-resolution** that installs a persistent per-player permission (composable, but no existing
-  "exile this spell + remember it" Paradigm shape).
-- **A recurring (non-one-shot) "at the beginning of your first main phase each turn" trigger.** `DelayedTriggerTiming`
-  has `NEXT_END_STEP` / `NEXT_TURN` but **no recurring first-main-phase timing**, and no "precombat-only" distinction.
-- **"After you first resolve a spell with this name" gate** — there is no per-name spell tracking
-  (`spellsCastThisTurn` is a global int). Needs a name-keyed "have I resolved a Paradigm spell with this name"
-  marker so the recurring permission only switches on after the first resolution and the copy is cast per turn.
-→ Restoration Seminar, Echocasting Symposium, Decorum Dissertation, Improvisation Capstone, Germination Practicum.
-*(Also: add `Subtype.LESSON` — see Tier 2 §10. No Learn cards in the set, so Lesson is a plain subtype.)*
+of a self-exiled spell, modeled on Suspend's exile-and-recur shape.
 
 ### 7. Infusion (12 cards) — ✅ **buildable today** (no new engine work)
 
@@ -190,12 +186,12 @@ for consistency, but it composes existing primitives.
    resolves inside an intervening-if (`TriggerMatcher.filterByTriggerCondition` populates it), so it works in both
    the resolving-effect and trigger-condition paths. One primitive, two mechanics.
 
-9. **Distinct-colors-of-mana-spent dynamic amount.** ❌ For **Converge (§4)**. `DynamicAmount.DistinctColorsManaSpent`
-   + evaluator + (optional) `ManaValueAtMostColorsSpent` card predicate. (Sunburst-shaped; the per-permanent
-   `Aggregation.DISTINCT_COLORS` analog for spell-cast mana.)
+9. **Distinct-colors-of-mana-spent dynamic amount.** ✅ **DONE.** For **Converge (§4)**.
+   `DynamicAmount.DistinctColorsManaSpent` + evaluator + the `ManaValueAtMostColorsSpent` card predicate (both via a
+   shared `ManaSpentReader`). (Sunburst-shaped; the per-permanent `Aggregation.DISTINCT_COLORS` analog for spell-cast mana.)
 
-10. **`Subtype.LESSON`.** ❌ The 5 Paradigm cards are `Sorcery — Lesson`. No `LESSON` subtype constant exists. Trivial
-    add (no Learn mechanic in this set, so it's a plain, non-functional subtype — but the type line must parse).
+10. **`Subtype.LESSON`.** ✅ **DONE.** Added to `Subtype.kt` so `Sorcery — Lesson` type lines parse (no Learn mechanic
+    in this set, so it's a plain, non-functional subtype).
 
 11. **Multi-turn skip ("skips their next X turns").** ✅ DONE. `SkipNextTurnEffect` now takes a `count: DynamicAmount`
     (default `Fixed(1)`) and `SkipNextTurnComponent(turns: Int)` accumulates/decrements one per the player's turn-start.
@@ -206,10 +202,11 @@ for consistency, but it composes existing primitives.
 
 ## Tier 3 — One-off complex cards
 
-12. **Grandeur keyword.** ❌ Page, Loose Leaf — *"Grandeur — Discard another card named Page, Loose Leaf: <effect>.
-    Activate only as a sorcery."* No `GRANDEUR` keyword and no "discard another card **with this card's name**" ability
-    cost. `AdditionalCost.DiscardCards` discards by *filter*, but there's no "same-name-as-source" card filter.
-    Needs a `CardFilter.SameNameAsSource` (or `NamedLike(self)`) + the keyword's sorcery-timing activated-ability shape.
+12. **Grandeur keyword.** ✅ **DONE.** Page, Loose Leaf — *"Grandeur — Discard another card named Page, Loose Leaf:
+    <effect>."* Grandeur (CR 207.2c) is an ability word — flavor only — so no `GRANDEUR` keyword was needed: it's a
+    plain activated ability whose cost is `Costs.Discard(GameObjectFilter.Any.named("Page, Loose Leaf"))`. The discard
+    draws from hand and the source on the battlefield is never a candidate, so "another" is satisfied automatically —
+    no `SameNameAsSource` filter required. Effect composes `GatherUntilMatchEffect` + reveal + two filtered moves.
 
 13. **Ral Zarek, Guest Lecturer** ✅ DONE. Built on §11's multi-turn skip + the new `FlipCoinsEffect`. The ultimate is
     `FlipCoins(5) then SkipNextTurn(target opponent, count = heads)`. The other abilities (Surveil 2, any-number-of-target-
@@ -232,15 +229,14 @@ for consistency, but it composes existing primitives.
 
 ---
 
-## Recommended build order
+## Build order (all complete)
 
-1. **Infusion** (✅ today) + **Lesson subtype** (§10) — warm-up; unlocks 12+ cards with zero or trivial engine work.
-2. ✅ **Triggering-spell mana-spent value (§8)** → unlocks **Opus (§3)** and **Increment (§5)** together (~19 cards). **Done.**
-3. **Distinct-colors-spent (§9)** → **Converge (§4)** (~9 cards). **Repartee target-predicate (§2)** (~12 cards) in
-   parallel — both are isolated SDK additions.
-4. ✅ **Prepared (§1)** — the big cross-layer feature (38 cards). **Done** (SDK→engine→DTO→client + tests).
-5. **Paradigm (§6)** — recurring free-cast + name gate (5 Lessons).
-6. **Tier-3 one-offs** (multi-turn skip §11, Grandeur §12) as Ral / Page come up.
+1. ✅ **Infusion** + **Lesson subtype** (§10) — warm-up; unlocked 12+ cards with zero or trivial engine work.
+2. ✅ **Triggering-spell mana-spent value (§8)** → unlocked **Opus (§3)** and **Increment (§5)** together (~19 cards).
+3. ✅ **Distinct-colors-spent (§9)** → **Converge (§4)** (~9 cards) and **Repartee target-predicate (§2)** (~12 cards).
+4. ✅ **Prepared (§1)** — the big cross-layer feature (38 cards) (SDK→engine→DTO→client + tests).
+5. ✅ **Paradigm (§6)** — recurring free-cast + name gate (5 Lessons).
+6. ✅ **Tier-3 one-offs** (multi-turn skip §11, Grandeur §12, Ral Zarek, Professor Dellian Fel, Wisdom of Ages).
 
-Prepared alone is ~14% of the set; the four spell-cast/mana primitives (§2, §8/§3, §5, §9/§4) cover another ~40 cards.
-Once those land, the remaining ~150 cards are standard spellslinger material buildable with today's SDK.
+All 271 cards ship. Prepared alone is ~14% of the set; the four spell-cast/mana primitives (§2, §8/§3, §5, §9/§4)
+covered another ~40 cards; the remaining ~150 are standard spellslinger material built on today's SDK.

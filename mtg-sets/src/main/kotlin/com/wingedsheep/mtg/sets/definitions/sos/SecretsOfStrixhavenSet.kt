@@ -19,8 +19,7 @@ object SecretsOfStrixhavenSet : MtgSet {
     override val code = "SOS"
     override val displayName = "Secrets of Strixhaven"
     override val releaseDate = "2026-04-24"
-    override val sealedSupported = false
-    override val incomplete = true
+    override val sealedSupported = true
 
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)
