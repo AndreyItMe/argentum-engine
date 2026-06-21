@@ -74,6 +74,33 @@ internal fun EmitCtx.createTokenDsl(spec: JsonObject, count: Int = 1, dynamicCou
         // A fixed count uses the `Int` overload; a dynamic count uses the `DynamicAmount` overload
         // (Goldvein Hydra's "tapped Treasure tokens equal to its power"). `tapped = true` renders the
         // tapped flag.
+        // `NamedToken` is a predefined named token. We render ONLY the exact Everywhere token
+        // (Overlord of the Hauntwoods): "a colorless land token named Everywhere that is every basic
+        // land type." Its spec is `["Everywhere", {Colorless}, [], ["Land"], {AllBasicLandTypes}, []]` —
+        // a colorless Land with `AllBasicLandTypes` subtypes and no abilities — and it maps to the
+        // `Effects.CreateEverywhere(...)` facade (the predefined PredefinedTokens.Everywhere token, which
+        // has all five basic land subtypes and taps for any color, per the Scryfall ruling). Any other
+        // NamedToken (a different name, a coloured/non-Land token, a token with abilities) declines ->
+        // SCAFFOLD rather than misrender an unknown predefined token.
+        "NamedToken" -> {
+            val a = spec["args"].asArr ?: return null
+            val name = a.getOrNull(0).asStr() ?: return null
+            if (name != "Everywhere") return null
+            if (count != 1 || dynamicCount != null || controller != null) return null
+            // Colorless.
+            if ((a.getOrNull(1) as? JsonObject)?.strField("_TokenColorList") != "Colorless") return null
+            // Land card type, no supertypes.
+            if ((a.getOrNull(2) as? JsonArray)?.isNotEmpty() == true) return null
+            val cardtypes = (a.getOrNull(3) as? JsonArray)?.mapNotNull { it.asStr() } ?: emptyList()
+            if (cardtypes != listOf("Land")) return null
+            // Every basic land type.
+            if ((a.getOrNull(4) as? JsonObject)?.strField("_TokenSubtypes") != "AllBasicLandTypes") return null
+            // No granted abilities (the predefined token carries the mana ability itself).
+            if ((a.getOrNull(5) as? JsonArray)?.isNotEmpty() == true) return null
+            val parts = mutableListOf<com.wingedsheep.tooling.coverage.Arg>()
+            if (tapped) parts.add(arg("tapped", "true"))
+            return Call("Effects.CreateEverywhere", parts)
+        }
         "TreasureToken" -> {
             if (controller != null) return null
             val parts = mutableListOf<com.wingedsheep.tooling.coverage.Arg>()

@@ -396,6 +396,30 @@ object PredefinedTokens {
     }
 
     /**
+     * Everywhere — a colorless land token created by Overlord of the Hauntwoods.
+     * "This land is a Plains, Island, Swamp, Mountain, and Forest." Per the Scryfall
+     * ruling it has the land types Plains/Island/Swamp/Mountain/Forest and the mana
+     * ability of each basic land type (so {T} adds {W}, {U}, {B}, {R}, or {G}); it does
+     * NOT have the basic supertype. Modeled with all five basic land subtypes on the type
+     * line and a single tap-for-any-color mana ability — functionally identical to having
+     * each basic land's mana ability.
+     */
+    val Everywhere = card("Everywhere") {
+        typeLine = "Token Land — Plains Island Swamp Mountain Forest"
+
+        activatedAbility {
+            cost = Costs.Tap
+            effect = Effects.AddAnyColorMana(1)
+            manaAbility = true
+            timing = TimingRule.ManaAbility
+        }
+
+        metadata {
+            imageUri = "https://cards.scryfall.io/normal/front/6/b/6b76b7a4-f398-4bb4-833e-97ec0d4e581a.jpg?1726236906"
+        }
+    }
+
+    /**
      * Munitions — a colorless artifact token created by Weapons Manufacturing with:
      * "When this token leaves the battlefield, it deals 2 damage to any target."
      */
@@ -433,6 +457,7 @@ object PredefinedTokens {
         SorcererRole,
         Incubator,
         Drone,
+        Everywhere,
         Munitions
     )
 }

@@ -265,6 +265,15 @@ object Emitter {
                 // "firebending X (X = its power)" carries an XValue node -> findInteger returns "X" ->
                 // `as? Int` is null -> scaffold, rather than guessing.
                 rname == "Firebending" -> block = (findInteger(rule["args"]) as? Int)?.let { listOf(Eval(call("firebending", arg("$it")))) }
+                // Impending N—[cost] (CR 702.176, Duskmourn) — a self-alternative-cost keyword whose
+                // count rides as a `_GameNumber: Integer` and whose cost is a `_Cost: PayMana`, both in
+                // a 2-element args array. The whole mechanic (alt cost + time counters + "not a creature
+                // while it has a time counter" static + end-step countdown trigger) is composed by the
+                // `impending(n, cost)` CardBuilder helper, so render the builder call directly (like
+                // `firebending(n)` / `station()`), NOT a bare keywordAbility (which would print the keyword
+                // but drop the alt cost and the counter machinery). Pure-mana cost only; a non-mana or
+                // missing cost / non-Int count declines -> scaffold rather than emit an inexact cost.
+                rname == "Impending" -> block = ctx.impendingLine(rule)
                 // Ward—<cost> (CR 702.21) carries a `_Cost` arg. `wardKeywordLine` renders the cost
                 // shapes the SDK exposes — mana (`Ward {x}`), discard-a-card, pay-N-life, sacrifice-a-
                 // <filter>; compound/dynamic costs return null -> scaffold rather than drop the cost. A

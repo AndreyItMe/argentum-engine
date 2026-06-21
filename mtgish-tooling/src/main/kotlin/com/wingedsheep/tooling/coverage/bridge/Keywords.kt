@@ -34,6 +34,14 @@ internal fun BridgeBuilder.keywords() {
     // the integer case auto-renders, while "firebending X (X = its power)" carries an XValue node and
     // the emitter declines it (-> SCAFFOLD). This entry only marks the capability covered.
     supported("Firebending", "keyword ability: Firebending N -> keywordAbility(KeywordAbility.firebending(N)) (CR 702.189)")
+    // Impending N—[cost] (CR 702.176, Duskmourn) — a PARAMETERIZED self-alternative-cost keyword whose
+    // whole mechanic (alt cost + N time counters + "not a creature while it has a time counter" static +
+    // end-step countdown trigger) is composed by the `impending(n, cost)` CardBuilder helper. Must be
+    // `supported`, not a bare `keyword`: a plain `keywords(Keyword.IMPENDING)` would drop both the count
+    // and the cost and lose the counter machinery. The emitter's `rname == "Impending"` branch renders
+    // the `impending(N, "{cost}")` builder call (pure-mana cost + fixed Int count only; otherwise it
+    // declines -> SCAFFOLD). This entry only marks the capability covered (never blocking).
+    supported("Impending", "keyword ability: Impending N—[cost] -> impending(N, \"{cost}\") builder (CR 702.176)")
     // Increment (Secrets of Strixhaven) — a keyword whose whole mechanic is composed by the
     // `increment()` CardBuilder helper: the display keyword plus a "whenever you cast a spell, if the
     // mana you spent exceeds this creature's power or toughness, put a +1/+1 counter on it" triggered

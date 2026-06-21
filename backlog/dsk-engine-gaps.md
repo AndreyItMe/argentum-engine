@@ -28,8 +28,9 @@ on the scale of the headline keywords.
 ### Already supported — no new engine work
 
 - **Impending N** — `impending(n, cost)` DSL + `KeywordAbility.Impending`; time-counter alt-cost,
-  not a creature while counters remain, end-step countdown. (The four remaining Overlords:
-  Boilerbilges, Floodpits, Hauntwoods, Mistmoors.)
+  not a creature while counters remain, end-step countdown. (Overlords of the Boilerbilges, Floodpits,
+  and Hauntwoods implemented; the white **Overlord of the Mistmoors** remains. mtgish now renders the
+  whole Impending + "enters or attacks" Overlord shape at AUTO tier — all five cycle members draft whole.)
 - **Eerie** — ability word (no keyword); triggers on "an enchantment you control enters" or "you
   fully unlock a Room." Payoffs are plain triggered abilities.
 - **Survival** — ability word modeled as an intervening-if trigger: "at the beginning of your second
@@ -156,12 +157,12 @@ to a **player** that have no home yet.
 
 ## Small / content-tier items (not subsystem gaps)
 
-- **"Everywhere" / all-basic-land-type land token.** `CreateTokenEffect` models only creature tokens;
-  noncreature tokens go through `CreatePredefinedTokenEffect` against a registered `CardDefinition`
-  (Treasure, Lander, Mutavault). The all-basic-land-type token is most likely a new **predefined-token
-  CardDefinition** (content, not SDK) — *verify* that "is every basic land type" with all five intrinsic
-  mana abilities round-trips as a token definition; if it doesn't, it becomes a real gap.
-  → **Overlord of the Hauntwoods** (the "Everywhere" token), **Overgrown Zealot**.
+- **"Everywhere" / all-basic-land-type land token.** ✅ Done (content, not SDK): added the predefined
+  `PredefinedTokens.Everywhere` `CardDefinition` — a colorless Land with all five basic land subtypes
+  (Plains/Island/Swamp/Mountain/Forest) and a single tap-for-any-color mana ability (functionally the
+  mana ability of each basic land type; no basic supertype, per the Scryfall ruling) — plus the
+  `Effects.CreateEverywhere(count?, tapped?, controller?)` facade over `CreatePredefinedTokenEffect`.
+  → **Overlord of the Hauntwoods** (the "Everywhere" token) implemented. Still open: **Overgrown Zealot**.
 - **`ManaRestriction` "spend only to turn permanents face up."** Same shape as the existing
   `InstantOrSorceryOnly` / creature-spell-only restrictions — a one-member addition to the sealed
   interface + a solver branch, not a new subsystem.

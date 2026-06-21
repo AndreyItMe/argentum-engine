@@ -5308,6 +5308,495 @@
     ]
 }
 
+// Overlord of the Boilerbilges
+{
+    "name": "Overlord of the Boilerbilges",
+    "manaCost": "{4}{R}{R}",
+    "typeLine": "Enchantment Creature — Avatar Horror",
+    "oracleText": "Impending 4—{2}{R}{R} (If you cast this spell for its impending cost, it enters with four time counters and isn't a creature until the last is removed. At the beginning of your end step, remove a time counter from it.)\nWhenever this permanent enters or attacks, it deals 4 damage to any target.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "IMPENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Impending",
+            "time": 4,
+            "cost": "{2}{R}{R}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "RemoveCounters",
+                    "counterType": "time",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "At the beginning of your end step, remove a time counter from this permanent."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    },
+                    "damageSource": "Self"
+                },
+                "targetRequirement": "AnyTarget",
+                "descriptionOverride": "Whenever this permanent enters, it deals 4 damage to any target."
+            },
+            {
+                "id": "ability_3",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    },
+                    "damageSource": "Self"
+                },
+                "targetRequirement": "AnyTarget",
+                "descriptionOverride": "Whenever this permanent attacks, it deals 4 damage to any target."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "RemoveCardType",
+                    "cardType": "CREATURE"
+                },
+                "condition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "146",
+        "rarity": "MYTHIC",
+        "artist": "Helge C. Balzer",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d58d3545-043a-457a-8324-facc3c2363ec.jpg?1726286391",
+        "rulings": [
+            {
+                "date": "2024-09-20",
+                "text": "If you choose to pay the impending cost rather than the mana cost, you're still casting the spell. It goes on the stack and can be responded to, countered, and so on."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If an object enters as a copy of a permanent that was cast with its impending cost, it won't enter with time counters, and it will be a creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Overlord of the Floodpits
+{
+    "name": "Overlord of the Floodpits",
+    "manaCost": "{3}{U}{U}",
+    "typeLine": "Enchantment Creature — Avatar Horror",
+    "oracleText": "Impending 4—{1}{U}{U} (If you cast this spell for its impending cost, it enters with four time counters and isn't a creature until the last is removed. At the beginning of your end step, remove a time counter from it.)\nFlying\nWhenever this permanent enters or attacks, draw two cards, then discard a card.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "IMPENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Impending",
+            "time": 4,
+            "cost": "{1}{U}{U}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "RemoveCounters",
+                    "counterType": "time",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "At the beginning of your end step, remove a time counter from this permanent."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Hand"
+                                    },
+                                    "storeAs": "hand"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "hand",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "discarded",
+                                    "prompt": "Choose 1 card to discard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "discarded",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    },
+                                    "moveType": "Discard"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever this permanent enters, draw two cards, then discard a card."
+            },
+            {
+                "id": "ability_3",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Hand"
+                                    },
+                                    "storeAs": "hand"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "hand",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "discarded",
+                                    "prompt": "Choose 1 card to discard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "discarded",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    },
+                                    "moveType": "Discard"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever this permanent attacks, draw two cards, then discard a card."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "RemoveCardType",
+                    "cardType": "CREATURE"
+                },
+                "condition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "68",
+        "rarity": "MYTHIC",
+        "artist": "Abz J Harding",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/f/5fca5de8-9cda-4370-9f72-4462f8cfd696.jpg?1726286108",
+        "rulings": [
+            {
+                "date": "2024-09-20",
+                "text": "If you choose to pay the impending cost rather than the mana cost, you're still casting the spell. It goes on the stack and can be responded to, countered, and so on."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If an object enters as a copy of a permanent that was cast with its impending cost, it won't enter with time counters, and it will be a creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Overlord of the Hauntwoods
+{
+    "name": "Overlord of the Hauntwoods",
+    "manaCost": "{3}{G}{G}",
+    "typeLine": "Enchantment Creature — Avatar Horror",
+    "oracleText": "Impending 4—{1}{G}{G} (If you cast this spell for its impending cost, it enters with four time counters and isn't a creature until the last is removed. At the beginning of your end step, remove a time counter from it.)\nWhenever this permanent enters or attacks, create a tapped colorless land token named Everywhere that is every basic land type.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 5
+    },
+    "keywords": [
+        "IMPENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Impending",
+            "time": 4,
+            "cost": "{1}{G}{G}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "RemoveCounters",
+                    "counterType": "time",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "At the beginning of your end step, remove a time counter from this permanent."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Everywhere",
+                    "tapped": true
+                },
+                "descriptionOverride": "Whenever this permanent enters, create a tapped colorless land token named Everywhere that is every basic land type."
+            },
+            {
+                "id": "ability_3",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Everywhere",
+                    "tapped": true
+                },
+                "descriptionOverride": "Whenever this permanent attacks, create a tapped colorless land token named Everywhere that is every basic land type."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "RemoveCardType",
+                    "cardType": "CREATURE"
+                },
+                "condition": {
+                    "type": "All",
+                    "conditions": [
+                        "SourceCastForImpending",
+                        {
+                            "type": "EntityMatches",
+                            "entity": "Self",
+                            "filter": {
+                                "statePredicates": [
+                                    {
+                                        "type": "HasCounter",
+                                        "counterType": "TIME"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "194",
+        "rarity": "MYTHIC",
+        "artist": "Tiffany Turrill",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/5/05d08ff1-edcc-4c76-96e0-683b3da36ebb.jpg?1726286590",
+        "rulings": [
+            {
+                "date": "2024-09-20",
+                "text": "The Everywhere token created by this card's last ability has the land types Plains, Island, Swamp, Mountain, and Forest. It also has the mana ability of each basic land type (for example, Forests have \"{T}: Add {G}\"). It does not have the basic supertype."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If you choose to pay the impending cost rather than the mana cost, you're still casting the spell. It goes on the stack and can be responded to, countered, and so on."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If an object enters as a copy of a permanent that was cast with its impending cost, it won't enter with time counters, and it will be a creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Patchwork Beastie
 {
     "name": "Patchwork Beastie",

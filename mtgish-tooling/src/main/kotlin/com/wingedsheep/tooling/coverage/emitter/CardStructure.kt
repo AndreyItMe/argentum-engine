@@ -3126,6 +3126,21 @@ internal fun EmitCtx.wardKeywordLine(rule: JsonObject): List<Stmt>? {
     return listOf(Eval(call("keywordAbility", arg(ability))))
 }
 
+/** Impending N—[cost] (CR 702.176) -> the `impending(n, cost)` CardBuilder helper. The rule's args are
+ *  a 2-element array `[ _GameNumber:Integer N, _Cost:PayMana <cost> ]`. The count is dug out with
+ *  [findInteger] (it rides as a nested game number, like Saddle/Firebending). Only a pure-mana cost and a
+ *  fixed integer count render; a non-mana cost, an empty cost, or a non-Int count (e.g. an X count, none
+ *  printed today) declines -> SCAFFOLD rather than emit an inexact alternative cost. */
+internal fun EmitCtx.impendingLine(rule: JsonObject): List<Stmt>? {
+    val args = rule["args"] as? JsonArray ?: return null
+    val n = (findInteger(args.getOrNull(0)) as? Int) ?: return null
+    val costNode = args.getOrNull(1) as? JsonObject ?: return null
+    if (costNode.strField("_Cost") != "PayMana") return null
+    val mana = renderMana(costNode.field("args"))
+    if (mana.isEmpty()) return null
+    return listOf(Eval(call("impending", arg("$n"), arg("\"$mana\""))))
+}
+
 /** True when a trigger's subject IS this permanent — ThisPermanent present, but NOT merely as the
  *  reference inside an `Other(ThisPermanent)` "another permanent" exclusion clause. */
 private fun isSelf(trig: JsonObject): Boolean {

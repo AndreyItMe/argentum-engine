@@ -1857,6 +1857,19 @@ object Effects {
     fun CreateMunitionsToken(count: Int = 1): Effect =
         CreatePredefinedTokenEffect("Munitions", count)
 
+    /**
+     * Create Everywhere land tokens (Overlord of the Hauntwoods).
+     * "A colorless land token named Everywhere that is every basic land type."
+     * The token has all five basic land subtypes and taps for any color (the mana
+     * ability of each basic land type); it does not have the basic supertype.
+     *
+     * @param count Number of tokens to create
+     * @param tapped Whether the tokens enter the battlefield tapped
+     * @param controller Who controls the tokens (null = spell controller)
+     */
+    fun CreateEverywhere(count: Int = 1, tapped: Boolean = false, controller: EffectTarget? = null): Effect =
+        CreatePredefinedTokenEffect("Everywhere", count, controller, tapped)
+
     // =========================================================================
     // Protection Effects
     // =========================================================================
