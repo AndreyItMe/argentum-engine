@@ -1173,6 +1173,10 @@ internal fun EmitCtx.gameObjectFilterExpr(filterNode: JsonElement?): Dsl? {
     // GameObjectFilter.Creature.blocking(), the same helper TargetFilter.BlockingCreature uses).
     FilterPredicates.blocking(filterNode)?.let { node = node.dot(it) }
     FilterPredicates.nontoken(filterNode)?.let { node = node.dot(it) }
+    // "a face-down permanent you control" (IsFaceDown) — Cryptid Inspector's "whenever a face-down
+    // permanent you control enters". Backed by GameObjectFilter.faceDown(); dropping it would widen
+    // the trigger to every permanent entering, so it's a real predicate here.
+    if ("IsFaceDown" in blob) node = node.dot("faceDown")
     // "creatures that saddled/crewed it this turn" (SaddledPermanentThisTurn / CrewedPermanentThisTurn,
     // bound to the trigger's permanent — Rambling Possum's "return any number of creatures that saddled
     // it this turn"). Source-relative; composes via .crewedOrSaddledSourceThisTurn() onto the creature

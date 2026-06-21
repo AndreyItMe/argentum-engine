@@ -111,6 +111,18 @@ class EmitCtx(val keywords: Set<String>, val oracleText: String? = null) {
     var triggeringEntityIsSpell: Boolean = false
 
     /**
+     * True while rendering the effect of a "whenever you turn a permanent face up" trigger
+     * (`WhenAPlayerTurnsAPermanentFaceUp`). In that context the IR's "that permanent"
+     * (`Trigger_ThatPermanent`) is the permanent that was turned face up — the *triggering* entity,
+     * not the source — so a "put a +1/+1 counter on it" effect must resolve to
+     * `EffectTarget.TriggeringEntity` (Growing Dread), overriding the default [SELF_REFS] mapping of
+     * `Trigger_ThatPermanent` to `EffectTarget.Self` (which is calibrated for dies-triggers, where
+     * "that permanent" is the source itself via last-known information). Set/cleared only by
+     * [triggerBlock]; default false on every other path.
+     */
+    var triggeringEntityIsTurnedUpPermanent: Boolean = false
+
+    /**
      * True while rendering the effect of an activated ability whose cost sacrifices or exiles the
      * source itself. In that context the source's counters are wiped at cost-payment time
      * (CR 122.2), so "for each counter on this creature" must read the pre-cost count as last-known
@@ -795,6 +807,10 @@ internal fun EmitCtx.refTargetFromRef(ref: String?, tvar: String?): String? {
         // means the first target of that kind. A genuinely ambiguous case (no first-of-kind) declines.
         return targetRefVars[ref] ?: targetRefVarsByKind[ref]?.firstOrNull()
     }
+    // In a "whenever you turn a permanent face up" trigger, "that permanent" is the turned-up
+    // permanent (the triggering entity), not the source — override the SELF_REFS default below.
+    if (ref == "Trigger_ThatPermanent" && triggeringEntityIsTurnedUpPermanent)
+        return "EffectTarget.TriggeringEntity"
     if (ref in SELF_REFS) return "EffectTarget.Self"
     // "the tokens created this way" / "the created tokens" — the tokens a preceding CreateTokens action
     // in this same action list just made (Fractal Tender: "create a 0/0 Fractal … and put three +1/+1
