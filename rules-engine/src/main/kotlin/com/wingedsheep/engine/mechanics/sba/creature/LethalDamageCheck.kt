@@ -23,13 +23,21 @@ class LethalDamageCheck : StateBasedActionCheck {
     override fun check(state: GameState): ExecutionResult {
         var newState = state
         val events = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
+        // CR 704.3: state-based actions are checked, then all applicable ones are performed
+        // simultaneously as a single event. The lethal-damage DETERMINATION must therefore be
+        // made against a single projection taken from the original `state` before any creature
+        // is moved — never re-projected off the progressively-mutated `newState`, which would
+        // make the result depend on battlefield iteration order (e.g. an anti-lord giving
+        // other creatures -2/-2 leaving before the small creature it was keeping lethal).
+        // Mutation (regeneration / remove-damage shields / graveyard moves) still flows through
+        // `newState`. Mirrors ZeroToughnessCheck.
+        val projected = state.projectedState
 
         for (entityId in state.getBattlefield().toList()) {
-            val container = newState.getEntity(entityId) ?: continue
+            val container = state.getEntity(entityId) ?: continue
             val cardComponent = container.get<CardComponent>() ?: continue
             val damageComponent = container.get<DamageComponent>() ?: continue
 
-            val projected = newState.projectedState
             if (!projected.isCreature(entityId)) continue
 
             if (projected.hasKeyword(entityId, Keyword.INDESTRUCTIBLE)) continue
