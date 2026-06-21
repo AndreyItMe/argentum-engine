@@ -316,7 +316,10 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
     }
 
     on("SacrificePermanent") { _, args, _ ->  // "sacrifice ~" (Blistering Firecat's end-step sacrifice)
-        if (jsonContains(args, "_Permanent", "ThisPermanent")) Lit("SacrificeSelfEffect") else null
+        // The subject is a self-reference: `ThisPermanent`, or the trigger-bound `Trigger_ThatCreature`
+        // ("sacrifice it" on a SELF attack trigger — Attack-in-the-Box). Both denote the source, so both
+        // render to the source sacrifice; any non-self permanent declines (-> SCAFFOLD).
+        if (findRef(args) in SELF_REFS) Lit("SacrificeSelfEffect") else null
     }
     on("SacrificeAPermanent") { _, args, _ ->
         // "sacrifice a <filter>" by the resolving player (Accursed Centaur's ETB "sacrifice a creature").
