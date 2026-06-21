@@ -669,6 +669,7 @@ export const PASSIVE_COUNTER_TYPES: readonly CounterType[] = [
   CounterType.WIND,
   CounterType.NEST,
   CounterType.PAGE,
+  CounterType.REV,
 ]
 
 /**

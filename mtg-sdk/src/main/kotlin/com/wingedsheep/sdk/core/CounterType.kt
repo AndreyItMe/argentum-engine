@@ -52,7 +52,8 @@ enum class CounterType {
     LOOT,
     WIND,
     NEST,
-    PAGE
+    PAGE,
+    REV
 }
 
 /**
@@ -158,6 +159,13 @@ object Counters {
      * count to reduce an activated ability's cost. No inherent rule.
      */
     const val PAGE = "page"
+
+    /**
+     * Rev counter (DSK — Chainsaw). Passive storage counter with no inherent rule; the card's own
+     * abilities accumulate it (a "whenever one or more creatures die" trigger adds one) and read
+     * the count to scale the equipped creature's power bonus (+X/+0). No inherent rule.
+     */
+    const val REV = "rev"
 
     /**
      * Wildcard sentinel for triggers/events that fire on counters of *any* type, e.g.

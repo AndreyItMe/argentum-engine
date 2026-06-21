@@ -1535,6 +1535,21 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    /**
+     * Whenever one or more creatures die — any player's creatures, regardless of who controls them.
+     * Same batched death trigger as [OneOrMoreCreaturesYouControlDie] with the controller scope
+     * widened to every player ([ControllerPredicate.ControlledByAny]); fires at most once per death
+     * batch regardless of how many creatures died (CR 603.3b), so a board wipe fires it once, not
+     * once per creature. Example: "Whenever one or more creatures die, put a rev counter on this
+     * Equipment." (Chainsaw).
+     */
+    fun OneOrMoreCreaturesDie(
+        filter: GameObjectFilter = GameObjectFilter.Creature
+    ): TriggerSpec = TriggerSpec(
+        event = CreaturesYouControlDiedEvent(filter = filter.anyController()),
+        binding = TriggerBinding.ANY
+    )
+
     // =========================================================================
     // Enter Battlefield Batch Triggers
     // =========================================================================

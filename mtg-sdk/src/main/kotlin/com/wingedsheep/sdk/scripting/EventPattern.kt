@@ -1683,6 +1683,8 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
                 when (filter.controllerPredicate) {
                     com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByOpponent ->
                         " an opponent controls die"
+                    com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByAny ->
+                        " die"
                     else -> " you control die"
                 }
             )

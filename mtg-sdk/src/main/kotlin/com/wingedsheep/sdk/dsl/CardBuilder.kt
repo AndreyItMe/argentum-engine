@@ -1315,6 +1315,14 @@ class ActivatedAbilityBuilder {
     var effect: Effect? = null
     var target: TargetRequirement? = null
     var manaAbility: Boolean = false
+    /**
+     * When true, this is an equip ability (CR 702.6): it attaches an Equipment to a creature and
+     * participates in equip-specific rules — sorcery-speed by default, eligible for equip-cost
+     * reductions, and able to be activated at instant speed when an effect allows it. Set this for
+     * an "Equip—<non-mana cost>" ability (e.g. "Equip—Sacrifice a creature"); the simple mana
+     * `equipAbility(cost)` helper already sets it.
+     */
+    var isEquipAbility: Boolean = false
     var timing: TimingRule = TimingRule.InstantSpeed
     var restrictions: List<ActivationRestriction> = emptyList()
     var activateFromZone: Zone = Zone.BATTLEFIELD
@@ -1363,6 +1371,7 @@ class ActivatedAbilityBuilder {
             effect = effect!!,
             targetRequirements = targetRequirements,
             isManaAbility = manaAbility,
+            isEquipAbility = isEquipAbility,
             timing = timing,
             restrictions = restrictions,
             activateFromZone = activateFromZone,

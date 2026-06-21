@@ -1937,6 +1937,12 @@ for any other (filter, binding, to/excludeTo) combination.
   "Whenever one or more creatures your opponents control die, …" (Spiteful Banditry). A per-creature
   `leavesBattlefield(binding = ANY)` would create a separate trigger per death, and simultaneous
   deaths each fire before the once-per-turn marker is set, so the batched form is required here.
+- `OneOrMoreCreaturesDie(filter = Creature)` — the unscoped variant: "Whenever one or more creatures
+  die, …" (any player's creatures, regardless of controller — Chainsaw). Sugar for
+  `OneOrMoreCreaturesYouControlDie(filter.anyController())`; same batched once-per-death-batch
+  semantics. The filter carries `ControllerPredicate.ControlledByAny`, which `TriggerDetector`
+  treats as "every controller's deaths count". Use `.anyController()` on a `GameObjectFilter` to
+  widen any controller-scoped filter the same way.
 - `PutIntoGraveyardFromBattlefield` — SELF, same event shape as `Dies`; rename
   clarifies non-creature intent (artifact / enchantment going to yard).
 - `leavesBattlefield(filter, to?, excludeTo?, binding)` — factory. `to = GRAVEYARD`
@@ -3426,7 +3432,12 @@ composite abilities).
   enumerator gates affordability on the cheapest reachable cost (largest reduction over the
   currently-legal targets) since the target isn't chosen until activation. The synthesized ability
   carries `ActivatedAbility.isEquipAbility = true`, which the engine keys off for the equip-timing
-  and free-first-equip permissions below.
+  and free-first-equip permissions below. For a **non-mana equip cost** ("Equip—Sacrifice a
+  creature" — Dissection Tools) the `equipAbility(cost)` helper doesn't apply (it only parses a mana
+  cost); author the ability by hand as `activatedAbility { cost = Costs.Sacrifice(...); isEquipAbility
+  = true; timing = TimingRule.SorcerySpeed; … }`. The `activatedAbility { }` builder exposes
+  `isEquipAbility` so a hand-rolled equip ability still participates in equip-specific rules
+  (sorcery-speed default, equip-cost reductions, instant-speed-equip permissions).
 - `Fortify(cost)` — Aura-like attach cost on lands.
 
 ```kotlin
@@ -4778,7 +4789,10 @@ substitution.
   and whose `{5},{T}: draw` ability reads the count via `genericCostReduction` to cost `{1}` less per counter.
   Pure passive counters with no inherent rule; the cards that use them accumulate/spend them via their own
   abilities and read the count via `DynamicAmounts.countersOnSelf(CounterTypeFilter.Named(Counters.X))` — or, when a
-  self-sacrifice/exile cost wipes them first, `DynamicAmounts.lastKnownSourceCounters(...)` (CR 112.7a; see §13).)
+  self-sacrifice/exile cost wipes them first, `DynamicAmounts.lastKnownSourceCounters(...)` (CR 112.7a; see §13).
+  `rev` (`Counters.REV`): DSK — Chainsaw, whose "whenever one or more creatures die" batched trigger accumulates one
+  per death batch and whose `+X/+0` static reads the count via `DynamicAmounts.countersOnSelf(...)` applied to the
+  equipped creature — another pure passive counter with no inherent rule.)
 - `stun` — CR 122.1d, a built-in replacement: "If a permanent with a stun counter on it would become untapped,
   instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
   which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the

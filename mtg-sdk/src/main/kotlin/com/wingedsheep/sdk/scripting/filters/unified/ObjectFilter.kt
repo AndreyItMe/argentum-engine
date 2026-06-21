@@ -702,6 +702,9 @@ data class GameObjectFilter(
     /** Must be controlled by an opponent */
     fun opponentControls() = copy(controllerPredicate = ControllerPredicate.ControlledByOpponent)
 
+    /** Controlled by any player (no controller scope) */
+    fun anyController() = copy(controllerPredicate = ControllerPredicate.ControlledByAny)
+
     /** Must be controlled by the active player (the player whose turn it is) */
     fun controlledByActivePlayer() = copy(controllerPredicate = ControllerPredicate.ControlledByActivePlayer)
 

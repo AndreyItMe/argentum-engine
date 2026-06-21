@@ -2353,6 +2353,19 @@ internal fun EmitCtx.interveningIfDsl(cond: JsonObject?): String? {
 
 /** One non-And intervening-if condition node -> its `Conditions.*` DSL, or null (-> SCAFFOLD). */
 private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
+    // "if you cast it from your hand" — EnteringPermanentPassesFilter(CastByPlayerFromHand(You, You)):
+    // the entering permanent was cast from its controller's hand (Patched Plaything's "enters with two
+    // -1/-1 counters on it if you cast it from your hand"). Maps to Conditions.WasCastFromHand. Only the
+    // You/You scope renders; any other player scope has no calibrated DSL, so it declines -> SCAFFOLD.
+    if (cond.strField("_Condition") == "EnteringPermanentPassesFilter") {
+        val filter = cond["args"] as? JsonObject
+        if (filter?.strField("_Permanents") == "CastByPlayerFromHand") {
+            val players = filter["args"].asArr
+            val p0 = (players?.getOrNull(0) as? JsonObject)?.strField("_Player")
+            val p1 = (players?.getOrNull(1) as? JsonObject)?.strField("_Player")
+            if (p0 == "You" && p1 == "You") return "Conditions.WasCastFromHand"
+        }
+    }
     // "if it had counters on it" — DeadPermanentPassesFilter(HasACounter): the just-died permanent
     // (the triggering entity of a dies trigger) had at least one counter of any kind on it (Scolding
     // Administrator's "When this creature dies, if it had counters on it, …"). Maps to
@@ -3383,23 +3396,36 @@ internal fun EmitCtx.asEntersBlock(rule: JsonObject, condition: String? = null):
                 Call("EntersWithCounters", ewArgs)
             }
             "EntersWithNumberCounters" -> {
-                // "enters with N +1/+1 counters". A FIXED count (Integer) renders the static
+                // "enters with N +1/+1 (or -1/-1) counters". A FIXED count (Integer) renders the static
                 // EntersWithCounters(count = N); a dynamic count (Stag Beetle: number of other creatures —
                 // as it enters, self isn't on the battlefield, so the plain count IS "other") renders
-                // EntersWithDynamicCounters. Only the ±1/±1 counter with a recoverable amount renders.
+                // EntersWithDynamicCounters. Only the +1/+1 or -1/-1 counter with a recoverable amount
+                // renders; any other PTCounter ratio declines -> SCAFFOLD.
                 val a = rep["args"].asArr ?: run { reasons.add("AsPermanentEnters"); return null }
                 val counter = a.getOrNull(1) as? JsonObject
                 val pt = counter?.get("args").asArr
-                if (counter?.strField("_CounterType") != "PTCounter" || pt?.getOrNull(0).asInt() != 1 || pt?.getOrNull(1).asInt() != 1) {
-                    reasons.add("AsPermanentEnters"); return null
+                val px = pt?.getOrNull(0).asInt()
+                val py = pt?.getOrNull(1).asInt()
+                val counterTypeArg: Arg? = when {
+                    counter?.strField("_CounterType") != "PTCounter" -> { reasons.add("AsPermanentEnters"); return null }
+                    // +1/+1 -> default-filter EntersWithCounters (the PlusOnePlusOne default), no explicit arg.
+                    px == 1 && py == 1 -> null
+                    // -1/-1 (Patched Plaything) -> explicit MinusOneMinusOne filter.
+                    px == -1 && py == -1 -> arg("counterType", "CounterTypeFilter.MinusOneMinusOne")
+                    else -> { reasons.add("AsPermanentEnters"); return null }
                 }
                 val countNode = a.getOrNull(0) as? JsonObject
                 if (countNode?.strField("_GameNumber") == "Integer") {
                     val n = countNode["args"].asInt() ?: run { reasons.add("AsPermanentEnters"); return null }
-                    val ewArgs = mutableListOf(arg("count", "$n"), arg("selfOnly", "true"))
+                    val ewArgs = mutableListOf<Arg>()
+                    if (counterTypeArg != null) ewArgs.add(counterTypeArg)
+                    ewArgs.add(arg("count", "$n"))
+                    ewArgs.add(arg("selfOnly", "true"))
                     if (condition != null) ewArgs.add(arg("condition", condition))
                     Call("EntersWithCounters", ewArgs)
                 } else {
+                    // Dynamic count: only the +1/+1 default renders (no counterType param on the dynamic form).
+                    if (counterTypeArg != null) { reasons.add("AsPermanentEnters"); return null }
                     if (condition != null) { reasons.add("AsPermanentEnters"); return null } // no condition param on dynamic form
                     val amt = dynamicAmountExpr(a.getOrNull(0)) ?: run { reasons.add("AsPermanentEnters"); return null }
                     call("EntersWithDynamicCounters", arg("count", amt))

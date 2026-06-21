@@ -2099,6 +2099,8 @@ class TriggerDetector(
                 deathControllerId == controllerId
             com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByOpponent ->
                 deathControllerId in state.getOpponents(controllerId)
+            // "whenever one or more creatures die" — any controller's creatures count (Chainsaw).
+            com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByAny -> true
             else -> controllerPredicate.evaluateWith { leaf ->
                 when (leaf) {
                     com.wingedsheep.sdk.scripting.predicates.ControllerPredicate.ControlledByYou ->

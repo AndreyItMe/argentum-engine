@@ -1251,6 +1251,122 @@
     ]
 }
 
+// Chainsaw
+{
+    "name": "Chainsaw",
+    "manaCost": "{1}{R}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "When this Equipment enters, it deals 3 damage to up to one target creature.\nWhenever one or more creatures die, put a rev counter on this Equipment.\nEquipped creature gets +X/+0, where X is the number of rev counters on this Equipment.\nEquip {3}",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "up to one target creature"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "up to one target creature"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "CreaturesYouControlDiedEvent",
+                    "filter": "creature ctrl:any"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "rev",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_3",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantDynamicStats",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                },
+                "powerBonus": {
+                    "type": "EntityProperty",
+                    "entity": "Source",
+                    "numericProperty": {
+                        "type": "CounterCount",
+                        "counterType": {
+                            "type": "Named",
+                            "name": "rev"
+                        }
+                    }
+                },
+                "toughnessBonus": {
+                    "type": "Fixed",
+                    "amount": 0
+                }
+            }
+        ]
+    },
+    "equipCost": "{3}",
+    "metadata": {
+        "collectorNumber": "128",
+        "rarity": "RARE",
+        "artist": "J.P. Targete",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/4/54e0c2cd-fa5f-427d-8e15-6066f002a8e3.jpg?1726286325"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Clammy Prowler
 {
     "name": "Clammy Prowler",
@@ -2238,6 +2354,137 @@
     "colorIdentityOverride": [
         "BLACK"
     ]
+}
+
+// Dissection Tools
+{
+    "name": "Dissection Tools",
+    "manaCost": "{5}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "When this Equipment enters, manifest dread, then attach this Equipment to that creature.\nEquipped creature gets +2/+2 and has deathtouch and lifelink.\nEquip—Sacrifice a creature.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "storeAs": "manifestDreadLooked"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "manifestDreadLooked",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "manifestDreadManifested",
+                                    "storeRemainder": "manifestDreadGraveyard",
+                                    "selectedLabel": "Manifest (put onto the battlefield face down)",
+                                    "remainderLabel": "Put into your graveyard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadManifested",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "faceDown": "MANIFEST"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadGraveyard",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "AttachEquipment",
+                            "target": {
+                                "type": "PipelineTarget",
+                                "collectionName": "manifestDreadManifested"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 2,
+                "toughnessBonus": 2
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "DEATHTOUCH"
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "LIFELINK"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "245",
+        "rarity": "RARE",
+        "artist": "Diana Franco",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/4/048bb2c6-91bd-4d6a-a070-c73d8277c264.jpg?1726301876"
+    },
+    "colorIdentityOverride": []
 }
 
 // Disturbing Mirth
@@ -5294,6 +5541,131 @@
     ]
 }
 
+// Killer's Mask
+{
+    "name": "Killer's Mask",
+    "manaCost": "{2}{B}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "When this Equipment enters, manifest dread, then attach this Equipment to that creature. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)\nEquipped creature has menace.\nEquip {2}",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "storeAs": "manifestDreadLooked"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "manifestDreadLooked",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "manifestDreadManifested",
+                                    "storeRemainder": "manifestDreadGraveyard",
+                                    "selectedLabel": "Manifest (put onto the battlefield face down)",
+                                    "remainderLabel": "Put into your graveyard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadManifested",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "faceDown": "MANIFEST"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadGraveyard",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "AttachEquipment",
+                            "target": {
+                                "type": "PipelineTarget",
+                                "collectionName": "manifestDreadManifested"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "MENACE"
+            }
+        ]
+    },
+    "equipCost": "{2}",
+    "metadata": {
+        "collectorNumber": "104",
+        "rarity": "UNCOMMON",
+        "artist": "Wero Gallo",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/1/f1fc02ae-77b8-4e5e-94b4-22ecf7ae40ae.jpg?1726286237"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Leyline of Hope
 {
     "name": "Leyline of Hope",
@@ -6748,6 +7120,42 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Patched Plaything
+{
+    "name": "Patched Plaything",
+    "manaCost": "{2}{W}",
+    "typeLine": "Artifact Creature — Toy",
+    "oracleText": "Double strike\nThis creature enters with two -1/-1 counters on it if you cast it from your hand.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "DOUBLE_STRIKE"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "counterType": "MinusOneMinusOne",
+                "count": 2,
+                "selfOnly": true,
+                "condition": "WasCastFromHand"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "24",
+        "rarity": "UNCOMMON",
+        "artist": "Domenico Cava",
+        "flavorText": "When it ripped, its owner attempted to fix it. Something went... wrong.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/1/513da431-4f3a-4f4a-8be4-7e162dd93307.jpg?1726285949"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
