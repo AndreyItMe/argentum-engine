@@ -367,6 +367,19 @@ private fun EmitCtx.targetPermanentCostReductionLines(rule: JsonObject): List<St
  *
  * Any other condition, or a colored/dynamic reduction, declines -> SCAFFOLD rather than widening.
  */
+/**
+ * Extract the delirium threshold M from a `NumCardTypesInGraveyardIs` predicate's
+ * `Comparison(GreaterThanOrEqualTo, Integer M)` argument. Only a plain `>= M` renders the
+ * standard delirium gate ([Conditions.Delirium]); any other comparison returns null (decline).
+ */
+private fun deliriumThreshold(args: JsonElement?): Int? {
+    val cmp = args as? JsonObject ?: return null
+    if (cmp.strField("_Comparison") != "GreaterThanOrEqualTo") return null
+    val number = cmp["args"] as? JsonObject ?: return null
+    if (number.strField("_GameNumber") != "Integer") return null
+    return number["args"].asInt()
+}
+
 private fun EmitCtx.costReductionStaticLines(rule: JsonObject): List<String>? {
     val node = rule["args"] as? JsonObject ?: return null
     if (node.strField("_CastEffect") != "ReduceCastingCostIf") return null
@@ -399,6 +412,18 @@ private fun EmitCtx.costReductionStaticLines(rule: JsonObject): List<String>? {
             arg("modification", call("CostModification.ReduceGeneric", arg("$amount"))),
             arg("gating", call("CostGating.OnlyIf", arg("Conditions.YouCommittedCrimeThisTurn"))),
         )
+        // Delirium — "costs {N} less if there are M or more card types among cards in your graveyard"
+        // (Drag to the Roots). The threshold M lives in a GTE comparison; render the standard
+        // delirium-gated fixed reduction. Only a plain `>= M` renders; any other comparison declines.
+        "NumCardTypesInGraveyardIs" -> {
+            val threshold = deliriumThreshold(predicate["args"]) ?: return null
+            call(
+                "ModifySpellCost",
+                arg("target", Lit("SpellCostTarget.SelfCast")),
+                arg("modification", call("CostModification.ReduceGeneric", arg("$amount"))),
+                arg("gating", call("CostGating.OnlyIf", arg(call("Conditions.Delirium", arg("$threshold"))))),
+            )
+        }
         else -> return null
     }
     return renderBlock(Block("staticAbility", listOf(Assign("ability", ability))), "    ")
@@ -1965,7 +1990,15 @@ internal fun EmitCtx.triggerBlock(
     // (ControllerOfTriggeringEntity), not the triggering player — see [EmitCtx.triggeringEntityIsSpell].
     val prevTriggeringSpell = triggeringEntityIsSpell
     triggeringEntityIsSpell = jsonContains(effRule["args"].asArr?.firstOrNull(), "_Trigger", "WhenAPlayerCastsASpell")
-    val edsl = renderEffectList(lifted?.second ?: effectActions, tvar).also { triggeringEntityIsSpell = prevTriggeringSpell } ?: return null
+    // In a "whenever you turn a permanent face up" trigger, "that permanent" is the triggering entity
+    // (the turned-up permanent), so a counter effect targets EffectTarget.TriggeringEntity, not Self.
+    val prevTurnedUp = triggeringEntityIsTurnedUpPermanent
+    triggeringEntityIsTurnedUpPermanent =
+        jsonContains(effRule["args"].asArr?.firstOrNull(), "_Trigger", "WhenAPlayerTurnsAPermanentFaceUp")
+    val edsl = renderEffectList(lifted?.second ?: effectActions, tvar).also {
+        triggeringEntityIsSpell = prevTriggeringSpell
+        triggeringEntityIsTurnedUpPermanent = prevTurnedUp
+    } ?: return null
 
     val stmts = mutableListOf<Stmt>(Assign("trigger", Lit(spec)))
     val triggerCond = effTriggerCondition ?: condFromIf
@@ -2743,6 +2776,36 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     // in the once-per-turn semantics. Only the You scope renders.
     if (jsonContains(trig, "_Trigger", "WhenAPlayerGainsLifeForTheFirstTimeEachTurn") && jsonContains(trig, "_Player", "You"))
         return "Triggers.YouGainLifeFirstTimeEachTurn"
+
+    // "Whenever you turn a permanent face up" (You, AnyPermanent) — Growing Dread. The IR scopes the
+    // turner to a player and the permanent to a group; only the You scope over an unfiltered
+    // AnyPermanent maps to Triggers.CreatureTurnedFaceUp() (in Duskmourn every face-up turn is a
+    // manifested creature). A non-You turner or a filtered permanent group has no calibrated card yet,
+    // so it declines -> SCAFFOLD. The "that permanent" subject of the effect is the turned-up permanent
+    // (the triggering entity) — see [EmitCtx.triggeringEntityIsTurnedUpPermanent], set in triggerBlock.
+    if (jsonContains(trig, "_Trigger", "WhenAPlayerTurnsAPermanentFaceUp")) {
+        val targs = trig["args"].asArr ?: return null
+        val player = targs.getOrNull(0) as? JsonObject
+        val perms = targs.getOrNull(1) as? JsonObject
+        val youScoped = player?.strField("_Players") == "SinglePlayer" &&
+            jsonContains(player["args"], "_Player", "You")
+        if (youScoped && perms?.strField("_Permanents") == "AnyPermanent")
+            return "Triggers.CreatureTurnedFaceUp()"
+    }
+
+    // "Whenever this creature or another permanent you control is turned face up" — the permanent-
+    // scoped face-up trigger (Cryptid Inspector, an arm of its Or-union). The subject is
+    // `Or(ThisPermanent, And(Other(ThisPermanent), ControlledByAPlayer(You)))` = any permanent you
+    // control (self included) turned face up, which is exactly Triggers.CreatureTurnedFaceUp(You).
+    // Only that self-or-other-you-control shape renders; a foreign or filtered subject declines.
+    if (jsonContains(trig, "_Trigger", "WhenAPermanentIsTurnedFaceUp")) {
+        val subj = trig["args"] as? JsonObject
+        val selfOrYours = subj?.strField("_Permanents") == "Or" &&
+            jsonContains(subj["args"], "_Permanent", "ThisPermanent") &&
+            jsonContains(subj["args"], "_Permanents", "ControlledByAPlayer") &&
+            jsonContains(subj["args"], "_Player", "You")
+        if (selfOrYours) return "Triggers.CreatureTurnedFaceUp()"
+    }
 
     // "Whenever this creature becomes the target of a spell or ability an opponent controls"
     // (Cactarantula). The trigger's args is a 2-tuple [subject, spell/ability-filter]; the subject must

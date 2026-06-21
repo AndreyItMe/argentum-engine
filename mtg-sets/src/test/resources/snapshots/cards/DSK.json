@@ -1614,6 +1614,60 @@
     ]
 }
 
+// Cryptid Inspector
+{
+    "name": "Cryptid Inspector",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Elf Warrior",
+    "oracleText": "Vigilance\nWhenever a face-down permanent you control enters and whenever this creature or another permanent you control is turned face up, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "permanent facedown ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "CreatureTurnedFaceUpEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "174",
+        "artist": "Kim Sokol",
+        "flavorText": "\"Please be dead, please be dead, please be dead.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/2/820c2932-2e23-4f67-92d0-a630aec6f1b4.jpg?1726286509"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Cult Healer
 {
     "name": "Cult Healer",
@@ -1817,6 +1871,122 @@
     ]
 }
 
+// Disturbing Mirth
+{
+    "name": "Disturbing Mirth",
+    "manaCost": "{B}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "When this enchantment enters, you may sacrifice another enchantment or creature. If you do, draw two cards.\nWhen you sacrifice this enchantment, manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ReflexiveTrigger",
+                    "action": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "SelectTarget",
+                                "requirement": {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature|enchantment ctrl:you",
+                                        "excludeSelf": true
+                                    }
+                                },
+                                "storeAs": "permanentToSacrifice"
+                            },
+                            {
+                                "type": "SacrificeTarget",
+                                "target": {
+                                    "type": "PipelineTarget",
+                                    "collectionName": "permanentToSacrifice"
+                                }
+                            }
+                        ]
+                    },
+                    "reflexiveEffect": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "descriptionOverride": "You may sacrifice another enchantment or creature. If you do, draw two cards."
+                },
+                "descriptionOverride": "When this enchantment enters, you may sacrifice another enchantment or creature. If you do, draw two cards."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "PermanentsSacrificedEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "manifestDreadLooked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "manifestDreadLooked",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "manifestDreadManifested",
+                            "storeRemainder": "manifestDreadGraveyard",
+                            "selectedLabel": "Manifest (put onto the battlefield face down)",
+                            "remainderLabel": "Put into your graveyard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadManifested",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "faceDown": "MANIFEST"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "212",
+        "rarity": "UNCOMMON",
+        "artist": "Nino Vecia",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/7/f79b0c5d-6823-439c-a011-8b9bf424bdad.jpg?1726286660"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED"
+    ]
+}
+
 // Diversion Specialist
 {
     "name": "Diversion Specialist",
@@ -1934,6 +2104,72 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Drag to the Roots
+{
+    "name": "Drag to the Roots",
+    "manaCost": "{2}{B}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Delirium — This spell costs {2} less to cast as long as there are four or more card types among cards in your graveyard.\nDestroy target nonland permanent.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target nonland permanent"
+            },
+            "destination": "Graveyard",
+            "byDestruction": true
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "nonland permanent"
+                },
+                "id": "target nonland permanent"
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 2
+                },
+                "gating": {
+                    "type": "OnlyIf",
+                    "condition": {
+                        "type": "Compare",
+                        "left": {
+                            "type": "AggregateZone",
+                            "player": "You",
+                            "zone": "Graveyard",
+                            "aggregation": "DISTINCT_TYPES"
+                        },
+                        "operator": "GTE",
+                        "right": {
+                            "type": "Fixed",
+                            "amount": 4
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "213",
+        "rarity": "UNCOMMON",
+        "artist": "Deruchenko Alexander",
+        "flavorText": "\"Valgavoth commands us to feed the trees. Let our blood be their mulch, our flesh their soil.\"\n—Victor, Valgavoth's seneschal",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/6/46f46095-6479-46b0-9e59-194d83f86a46.jpg?1726286661"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
     ]
 }
 
@@ -3884,6 +4120,97 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Growing Dread
+{
+    "name": "Growing Dread",
+    "manaCost": "{G}{U}",
+    "typeLine": "Enchantment",
+    "oracleText": "Flash\nWhen this enchantment enters, manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)\nWhenever you turn a permanent face up, put a +1/+1 counter on it.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "manifestDreadLooked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "manifestDreadLooked",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "manifestDreadManifested",
+                            "storeRemainder": "manifestDreadGraveyard",
+                            "selectedLabel": "Manifest (put onto the battlefield face down)",
+                            "remainderLabel": "Put into your graveyard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadManifested",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "faceDown": "MANIFEST"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "CreatureTurnedFaceUpEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "TriggeringEntity"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "216",
+        "rarity": "UNCOMMON",
+        "artist": "Maxime Minard",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/4/5479ac50-8335-4c6a-be99-750a44e24f25.jpg?1726286675"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "GREEN"
     ]
 }
 
