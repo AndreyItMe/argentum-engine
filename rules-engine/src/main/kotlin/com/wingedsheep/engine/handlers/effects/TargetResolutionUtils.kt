@@ -35,6 +35,8 @@ object TargetResolutionUtils {
             is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()
             is EffectTarget.SpecificEntity -> effectTarget.entityId
             is EffectTarget.TriggeringEntity -> context.triggeringEntityId
+            is EffectTarget.DiscardedAsCost ->
+                context.discardedAsCostCards.getOrNull(effectTarget.index)
             is EffectTarget.PipelineTarget ->
                 context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
             else -> null

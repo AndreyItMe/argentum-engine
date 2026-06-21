@@ -43,6 +43,14 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         } else null
     }
 
+    // NOTE: there is deliberately no `ShuffleEachGraveyardCardIntoLibrary` sibling here. `ForEachTargetEffect`
+    // iterates EVERY spell target indiscriminately (IterationSpace.Targets), which is faithful only when the
+    // graveyard cards are the spell's ONLY targets (as with Pull from the Grave above). Cathartic Parting
+    // mixes a battlefield-permanent target with the up-to-four graveyard targets and shuffles each group to a
+    // different library, so a per-target ForEach would also re-move the permanent — a lossy render. Per the
+    // fidelity policy we decline that whole shape to SCAFFOLD rather than emit it wrong; the hand-authored
+    // card shuffles each graveyard target by index instead.
+
     on("AttachPermanentToPermanent", "AttachPermanentToAPermanent") { _, args, tvar ->
         // "attach it to target …" — an Equipment/Aura attaching ITSELF to a chosen permanent. The
         // engine idiom is `Effects.AttachEquipment(target)`, which always attaches the source. So this
@@ -55,7 +63,13 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         val arr = args.asArr ?: return@on null
         val subjectRef = findRef(arr.getOrNull(0)) ?: return@on null
         if (subjectRef !in SELF_REFS) return@on null
-        val tgt = createdTokensTarget(arr.getOrNull(1)) ?: refTargetFromRef(findRef(arr.getOrNull(1)), tvar) ?: return@on null
+        // The recipient may be the just-manifested creature ("manifest dread, then attach this
+        // Equipment to that creature", Conductive Machete) — the manifest-dread pattern publishes its
+        // chosen creature under the MANIFESTED_CREATURE pipeline slot, so the attach addresses it.
+        val tgt = manifestedCreatureTarget(arr.getOrNull(1))
+            ?: createdTokensTarget(arr.getOrNull(1))
+            ?: refTargetFromRef(findRef(arr.getOrNull(1)), tvar)
+            ?: return@on null
         call("Effects.AttachEquipment", arg(Lit(tgt)))
     }
 

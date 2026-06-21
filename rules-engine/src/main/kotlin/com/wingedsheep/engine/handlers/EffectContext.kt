@@ -97,6 +97,14 @@ data class EffectContext(
      * has left the battlefield.
      */
     val sacrificedPermanents: List<PermanentSnapshot> = emptyList(),
+    /**
+     * Entity ids of cards discarded to pay this spell's additional discard cost
+     * (`Costs.additional.DiscardCards(...)`). By resolution these cards live in their owner's
+     * graveyard (CR 608.2), so [EffectTarget.DiscardedAsCost] resolves to the id and an
+     * `EntityMatches` reads the card's graveyard characteristics (Grab the Prize). Empty when the
+     * spell carried no discard cost.
+     */
+    val discardedAsCostCards: List<EntityId> = emptyList(),
     /** Pre-chosen damage distribution for DividedDamageEffect spells (target ID -> damage amount) */
     val damageDistribution: Map<EntityId, Int>? = null,
     /**

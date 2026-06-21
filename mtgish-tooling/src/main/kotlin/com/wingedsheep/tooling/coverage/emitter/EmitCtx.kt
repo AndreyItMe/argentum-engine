@@ -154,6 +154,21 @@ internal fun createdTokensTarget(node: JsonElement?): String? {
         CREATED_TOKENS_TARGET else null
 }
 
+/** mtgish refs naming "the permanent a `ManifestDread` action just put onto the battlefield". The
+ *  manifest-dread pattern ([Patterns.Library.manifestDread]) stores the manifested creature under this
+ *  pipeline collection key, so a follow-up "attach to that creature" addresses that slot. */
+internal val MANIFESTED_CREATURE_REFS = setOf("ThePermanentPutOnTheBattlefieldThisWay")
+
+/** The EffectTarget DSL addressing the manifest-dread output collection (Patterns.Library.manifestDread). */
+internal const val MANIFESTED_CREATURE_TARGET = "EffectTarget.PipelineTarget(\"manifestDreadManifested\")"
+
+/** [MANIFESTED_CREATURE_TARGET] if [node] is the "permanent put onto the battlefield this way" ref a
+ *  ManifestDread action publishes (under `_Permanent`), else null. */
+internal fun manifestedCreatureTarget(node: JsonElement?): String? {
+    val o = node as? JsonObject ?: return null
+    return if (o.strField("_Permanent") in MANIFESTED_CREATURE_REFS) MANIFESTED_CREATURE_TARGET else null
+}
+
 // ---------------------------------------------------------------------------
 // Dispatch + effect-list assembly.
 // ---------------------------------------------------------------------------

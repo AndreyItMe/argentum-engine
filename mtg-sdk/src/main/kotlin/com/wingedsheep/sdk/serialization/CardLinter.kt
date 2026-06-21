@@ -659,6 +659,7 @@ object CardLinter {
         "EquippedCreature",
         "ContextTarget",
         "TriggeringEntity",
+        "DiscardedAsCost",
     )
 
     /** Records this node's dataflow accesses and target references (not its children). */

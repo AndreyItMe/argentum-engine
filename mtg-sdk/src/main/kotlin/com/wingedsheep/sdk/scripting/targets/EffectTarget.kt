@@ -213,6 +213,27 @@ sealed interface EffectTarget {
     }
 
     /**
+     * DISCARDED AS COST: a card discarded to pay this spell/ability's additional cost, by index.
+     * Mirrors the cost-referencing roles [com.wingedsheep.sdk.scripting.values.EntityReference.Sacrificed]
+     * / [com.wingedsheep.sdk.scripting.values.EntityReference.TappedAsCost], but for the discard
+     * cost (`Costs.additional.DiscardCards(...)`). Resolves to the discarded card's entity id —
+     * the card is in its owner's graveyard by resolution (CR 608.2), so an
+     * [com.wingedsheep.sdk.scripting.conditions.EntityMatches] reads that card's graveyard
+     * characteristics (land vs nonland, type, color, …).
+     *
+     * **Resolution-only** (no projection meaning). Used by Grab the Prize: "Draw two cards. If the
+     * discarded card wasn't a land card, ~ deals 2 damage to each opponent" — built via
+     * `Conditions.DiscardedCardMatches(filter)`.
+     *
+     * @property index Which discarded card to reference (defaults to the first/only one).
+     */
+    @SerialName("DiscardedAsCost")
+    @Serializable
+    data class DiscardedAsCost(val index: Int = 0) : EffectTarget {
+        override val description: String = "the discarded card"
+    }
+
+    /**
      * CONTROLLER OF DAMAGE SOURCE: the controller of the source dealing the damage
      * currently being processed. Only meaningful inside a damage replacement
      * (e.g. [com.wingedsheep.sdk.scripting.RedirectDamage]); resolved by the damage

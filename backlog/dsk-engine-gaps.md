@@ -170,9 +170,12 @@ to a **player** that have no home yet.
 ## Buildable-but-complex — flag for careful authoring (not gaps)
 
 - **Manifest-then-attach equipment** — "manifest dread, then attach this Equipment to that creature."
-  Buildable only if the manifest pipeline exposes the just-created face-down creature as a referenceable
-  attach target within the same resolution. Confirm the manifest result is capturable before starting.
-  → **Conductive Machete, Cursed Windbreaker, Dissection Tools, Chainsaw, Killer's Mask**.
+  RESOLVED for the base shape: `Patterns.Library.manifestDread()` publishes the chosen face-down creature
+  under the `"manifestDreadManifested"` pipeline collection, so a follow-up
+  `Effects.AttachEquipment(EffectTarget.PipelineTarget("manifestDreadManifested"))` attaches to it within
+  the same resolution. Implemented on **Conductive Machete** (and rendered AUTO by mtgish via the
+  `AttachPermanentToPermanent` recipient = `ThePermanentPutOnTheBattlefieldThisWay`).
+  → still to author: **Cursed Windbreaker, Dissection Tools, Chainsaw, Killer's Mask** (same pattern).
   (Chainsaw's "rev" counter is cosmetic — reuse an existing counter type feeding `ModifyStats`.)
 - **Manifest dread directed at another player's library** — "its controller manifests dread" must
   target a *non-controller* player's library, with the face-down creature controlled by that player.

@@ -475,7 +475,30 @@ class ConditionEvaluator(
             (ctx as? Resolution)?.let {
                 evaluateTriggeringSpellFilterMatch(state, condition.filter, it.effectContext)
             } ?: false
+        is EffectTarget.DiscardedAsCost ->
+            (ctx as? Resolution)?.let {
+                evaluateDiscardedCardFilterMatch(state, condition.filter, entity.index, it.effectContext)
+            } ?: false
         else -> false
+    }
+
+    /**
+     * Match the card discarded to pay this spell's additional discard cost
+     * ([EffectTarget.DiscardedAsCost]) against [filter]. The discarded card is in its owner's
+     * graveyard by resolution (CR 608.2), so this reads its graveyard characteristics — exactly
+     * the right "land vs nonland" answer for Grab the Prize. Resolution-only; returns false when
+     * no card was discarded at that index (e.g. the spell carried no discard cost).
+     */
+    private fun evaluateDiscardedCardFilterMatch(
+        state: GameState,
+        filter: GameObjectFilter,
+        index: Int,
+        context: EffectContext
+    ): Boolean {
+        val cardId = context.discardedAsCostCards.getOrNull(index) ?: return false
+        val predicateEvaluator = PredicateEvaluator()
+        val predicateContext = PredicateContext.fromEffectContext(context)
+        return predicateEvaluator.matches(state, state.projectedState, cardId, filter, predicateContext)
     }
 
     private fun evaluateSourceFilterMatch(

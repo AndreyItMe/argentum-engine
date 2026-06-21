@@ -1344,6 +1344,12 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
 - `EffectTarget.Controller` — controller of the source ability.
 - `EffectTarget.Self` — the source permanent.
 - `EffectTarget.TriggeringEntity` — the entity that caused the trigger to fire.
+- `EffectTarget.DiscardedAsCost(index = 0)` — a card discarded to pay this spell's additional discard
+  cost (`Costs.additional.DiscardCards(...)`). The discarded card is in its owner's graveyard by
+  resolution (CR 608.2), so this resolves to that card's id; pair it with an `EntityMatches` (facade
+  `Conditions.DiscardedCardMatches(filter)`) to test the discarded card's graveyard characteristics —
+  the cost-referencing sibling of `EntityReference.Sacrificed` / `TappedAsCost`. Resolution-only. Used
+  by Grab the Prize ("if the discarded card wasn't a land card, …").
 - `EffectTarget.PlayerRef(...)` — a player slot; see the `Player` reference list below.
 
 **`Player` references** (multiplayer-safe vocabulary — there is deliberately no bare
@@ -3373,10 +3379,11 @@ helper over it:
 | `Conditions.EnchantedPermanentMatches(f)` | `EntityMatches(EffectTarget.EnchantedPermanent, f)` |
 | `Conditions.TargetMatchesFilter(f, i)` | `EntityMatches(EffectTarget.ContextTarget(i), f)` |
 | `Conditions.TriggeringSpellMatches(f)` | `EntityMatches(EffectTarget.TriggeringEntity, f)` |
+| `Conditions.DiscardedCardMatches(f, i = 0)` | `EntityMatches(EffectTarget.DiscardedAsCost(i), f)` |
 
 The entity role fixes *when* the condition can be answered: `Self` and the enchanted/equipped
-attachment roles evaluate in both resolution and static-ability projection; `ContextTarget` and
-`TriggeringEntity` are resolution-only (false under projection). Use `Conditions.EntityMatches`
+attachment roles evaluate in both resolution and static-ability projection; `ContextTarget`,
+`TriggeringEntity`, and `DiscardedAsCost` are resolution-only (false under projection). Use `Conditions.EntityMatches`
 directly only for a role the helpers don't name (e.g. the equipped creature). It is deliberately
 *not* a player check (`TargetIsPlayer`) nor a numeric/tracker check (`Compare`). Any other
 `EffectTarget` role is rejected by the `CardLinter` at card load (§21) — the evaluator can't
@@ -3659,6 +3666,12 @@ default to "you" so card authors don't need to pass it explicitly.
   matches `filter`. Reads the triggering entity's static card characteristics (so it stays correct
   after the spell leaves the stack). General "whenever you cast a spell, if it's a/an X ..." gate.
   Backed by `EntityMatches(EffectTarget.TriggeringEntity, filter)`.
+- `DiscardedCardMatches(filter, index = 0)` — the card discarded to pay this spell's additional
+  discard cost (`Costs.additional.DiscardCards(...)`) matches `filter`. The discarded card is in its
+  owner's graveyard by resolution (CR 608.2), so the filter checks the graveyard card's
+  characteristics. Resolution-only; backed by `EntityMatches(EffectTarget.DiscardedAsCost(index),
+  filter)`. Wrap in `Not` for "wasn't a [type]" — e.g. Grab the Prize: "if the discarded card wasn't
+  a land card, ~ deals 2 damage to each opponent" = `Not(DiscardedCardMatches(GameObjectFilter.Land))`.
 - `YouCastFirstSpellOfTypeThisTurn(filter)` — true when the triggering spell is the *first* spell
   matching `filter` you've cast this turn. Pure composition, no bespoke counting:
   `All(TriggeringSpellMatches(filter), Not(YouCastSpellsThisTurn(atLeast = 2, filter)))`. The

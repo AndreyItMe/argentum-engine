@@ -35,6 +35,9 @@ import kotlinx.serialization.Serializable
  * - [EffectTarget.TriggeringEntity] — the triggering spell; **resolution-only**, matched by its
  *   static cast characteristics (CR 603.4 re-check) so the answer stays correct even after the
  *   spell has left the stack.
+ * - [EffectTarget.DiscardedAsCost] — a card discarded to pay this spell's additional discard cost;
+ *   **resolution-only**, matched against that card's graveyard characteristics (CR 608.2), where it
+ *   lives by the time the spell resolves (Grab the Prize, via `Conditions.DiscardedCardMatches`).
  *
  * Deliberately **not**: a player check (use `Conditions.TargetIsPlayer`) nor a numeric/tracker
  * check (use `Compare` over a `DynamicAmount`). Entity roles other than those listed above are
@@ -58,6 +61,8 @@ data class EntityMatches(
             "if ${entity.description} is ${filter.description}"
         is EffectTarget.TriggeringEntity ->
             "if it's ${filter.description.ifEmpty { "a matching" }} spell"
+        is EffectTarget.DiscardedAsCost ->
+            "if the discarded card is ${filter.description}"
         else -> "if ${entity.description} matches ${filter.description}"
     }
 

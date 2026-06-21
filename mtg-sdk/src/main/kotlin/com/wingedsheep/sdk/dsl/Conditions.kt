@@ -1270,6 +1270,23 @@ object Conditions {
         EntityMatches(EffectTarget.TriggeringEntity, filter)
 
     /**
+     * If the card discarded to pay this spell/ability's additional discard cost
+     * (`Costs.additional.DiscardCards(...)`) matches [filter]. The discarded card is in its
+     * owner's graveyard by resolution (CR 608.2), so the filter is checked against that card's
+     * graveyard characteristics. Resolution-only.
+     *
+     * Wrap in [Not] for "wasn't a [type]" wordings — e.g. Grab the Prize: "If the discarded card
+     * wasn't a land card, ~ deals 2 damage to each opponent" → `Not(DiscardedCardMatches(Land))`.
+     *
+     * @param index Which discarded card to test (defaults to the first/only one).
+     */
+    fun DiscardedCardMatches(
+        filter: com.wingedsheep.sdk.scripting.GameObjectFilter,
+        index: Int = 0
+    ): ConditionInterface =
+        EntityMatches(EffectTarget.DiscardedAsCost(index), filter)
+
+    /**
      * If the spell that triggered this ability is the first spell matching [filter] you've cast
      * this turn. True iff the triggering spell matches [filter] and no second matching spell has
      * been cast yet. Composed from [TriggeringSpellMatches] + the [YouCastSpellsThisTurn] count

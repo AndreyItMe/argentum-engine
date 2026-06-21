@@ -49,6 +49,14 @@ data class SpellOnStackComponent(
     val sneakAttackDefenderId: EntityId? = null,
     val beheldCards: List<EntityId> = emptyList(),  // Cards chosen via Behold (stored in pipeline as named collection)
     /**
+     * Entity ids of cards discarded to pay this spell's additional discard cost
+     * (`Costs.additional.DiscardCards(...)`). Read at resolution via
+     * [com.wingedsheep.sdk.scripting.targets.EffectTarget.DiscardedAsCost] so a condition can
+     * test the discarded card (now in the graveyard) — e.g. Grab the Prize's "if the discarded
+     * card wasn't a land card". Empty when the spell carried no discard cost.
+     */
+    val discardedAsCostCards: List<EntityId> = emptyList(),
+    /**
      * Last-known-info snapshots (Rule 112.7a) for entities chosen at cost-pay time
      * that may later leave the battlefield before the spell resolves. Populated
      * when an [com.wingedsheep.sdk.scripting.AdditionalCost.ChooseEntity] step

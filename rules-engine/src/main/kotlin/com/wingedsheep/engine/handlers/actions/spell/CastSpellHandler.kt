@@ -1745,6 +1745,9 @@ class CastSpellHandler(
         val sacrificedSnapshots = mutableListOf<PermanentSnapshot>()
         var exiledCardCount = 0
         val beheldCards = mutableListOf<EntityId>()
+        // Cards discarded to pay an additional discard cost — threaded to the spell on the stack so
+        // a resolution-time condition can test the discarded card (EffectTarget.DiscardedAsCost).
+        val discardedAsCostCards = mutableListOf<EntityId>()
         /**
          * LKI snapshots for entities chosen via [AdditionalCost.ChooseEntity] when
          * `captureSnapshot = true`. Captured at cost-pay time so downstream effects
@@ -1875,6 +1878,7 @@ class CastSpellHandler(
                         }
                         is CostAtom.Discard -> {
                             val discardedCards = action.additionalCostPayment.discardedCards
+                            discardedAsCostCards.addAll(discardedCards)
                             for (cardId in discardedCards) {
                                 val cardContainer = currentState.getEntity(cardId) ?: continue
                                 val card = cardContainer.get<CardComponent>() ?: continue
@@ -2600,6 +2604,7 @@ class CastSpellHandler(
             modeDamageDistribution = action.modeDamageDistribution,
             totalManaSpent = manaSpentThisCast,
             beheldCards = beheldCards,
+            discardedAsCostCards = discardedAsCostCards,
             chosenEntitySnapshots = chosenEntitySnapshots,
             manaSpentWhite = manaSpentEvent?.white ?: 0,
             manaSpentBlue = manaSpentEvent?.blue ?: 0,
