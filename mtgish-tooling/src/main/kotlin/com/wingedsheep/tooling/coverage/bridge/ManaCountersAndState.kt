@@ -31,6 +31,13 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // "becomes the creature type of your choice" — a ChooseACreatureType + an AddCreatureTypeVariable
     // layer effect collapse to one BecomeCreatureTypeEffect (Mistform cycle, Imagecrafter).
     effect("AddCreatureTypeVariable", "BecomeCreatureType", UNIVERSAL)
+    // Layer effects carried by an enters-with rider (Ghost Vacuum's "each of them is a 1/1 Spirit in
+    // addition to its other types"): set base power/toughness (Layer 7b) and add a creature subtype
+    // (Layer 4). Both map to standing SDK effects with Duration.Permanent. Capability-only — the
+    // EntersWithLayerEffect/PutEachExiledCardOntoTheBattlefield host shape is card-specific, so the
+    // emitter declines -> SCAFFOLD.
+    effect("SetPT", "SetBasePowerToughness", "set base power/toughness via an enters-with layer effect (Ghost Vacuum)")
+    effect("AddCreatureType", "AddCreatureType", "add a creature subtype in addition to other types (Ghost Vacuum)")
     effects("PutACounterOfTypeOnPermanent", "PutNumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
     // "put those counters on <permanent>" — the counters a just-died permanent had move to the target
     // (Scolding Administrator's dies trigger). Maps to MoveAllLastKnownCounters, which moves every
@@ -40,6 +47,19 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // recovered group filter (Bounding Felidar's "each other creature you control").
     composed("PutACounterOfTypeOnEachPermanent", "ForEachInGroup(AddCounters) over a group filter",
         composes = listOf("AddCounters"))
+    // "Distribute N +1/+1 counters among one or two target creatures" — the counter analogue of
+    // distributed damage; the `TargetedDistributed` envelope's `DistributeNumberAmongTargets`
+    // distribution drives a DistributeDecision over the chosen targets, then this action places the
+    // counters (Omnivorous Flytrap, Abzan Charm shape). The emitter declines whole-card rendering of
+    // the distributed *triggered* shape (the distribution/double-on-each tail is card-specific), so
+    // this is capability-only -> SCAFFOLD.
+    effect("PutDistributedCounters", "DistributeCountersAmongTargets",
+        "distribute N +1/+1 counters among one or two target creatures (Omnivorous Flytrap)")
+    // "Double the number of +1/+1 counters on each of those creatures" — applied to the just-targeted
+    // permanents. Lowered to ForEach(IterationSpace.Targets) over Effects.DoubleCounters; capability-only
+    // (the per-target iteration + the ≥6-types intervening-if tail is card-specific) -> SCAFFOLD.
+    effect("DoubleCountersOfTypeOnEachPermanent", "DoubleCounters",
+        "double the +1/+1 counters on the chosen creatures (Omnivorous Flytrap)")
     // "Until end of turn, if you would put one or more +1/+1 counters on a creature you control, put
     // that many plus N +1/+1 counters on it instead." (Prairie Dog) — the duration-/controller-scoped
     // analogue of Hardened Scales' static ModifyCounterPlacement, lowered to

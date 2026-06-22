@@ -48,6 +48,16 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("PutACardFromHandOnBattlefield", "Patterns.Hand.putFromHand -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
     composed("PutTopOfLibraryInHand", "look-top pipeline -> MoveCollection (library->hand)", composes = listOf("MoveCollection", "MoveToZone"))
     composed("PutTopOfLibraryInGraveyard", "look-top pipeline -> MoveCollection (library->graveyard)", composes = listOf("MoveCollection", "MoveToZone"))
+    // "Look at the top card of your library" — the leading reveal of a look-top pipeline (Wickerfolk
+    // Thresher's delirium attack trigger). It's a GatherCards(TopOfLibrary) that the rest of the
+    // pipeline consumes; on its own it's a no-op informational peek, so capability-only.
+    composed("LookAtTopOfLibrary", "look-top pipeline -> GatherCards(TopOfLibrary)", composes = listOf("MoveCollection"))
+    // "(If it's a land card,) you may put it onto the battlefield" — the optional play-the-revealed-land
+    // half of Wickerfolk Thresher's look-top pipeline, a MayCost whose payment is the put-onto-battlefield.
+    // Expressed as FilterCollection(Land) -> SelectFromCollection(ChooseUpTo) -> MoveCollection(->battlefield);
+    // capability-only (the surrounding look-top/else-hand shape is card-specific) -> SCAFFOLD.
+    composed("PutTopCardOfLibraryOfTypeOnBattlefield", "look-top pipeline -> FilterCollection + SelectFromCollection + MoveCollection (library->battlefield)",
+        composes = listOf("MoveCollection", "MoveToZone"))
 
     composed("PutPermanentIntoItsOwnersHand", "bounce: MoveToZone / Gather-Select-MoveCollection pipeline", composes = listOf("MoveToZone"))
     // "Return a <filter> you control to its owner's hand" — the controller CHOOSES the permanent (not a

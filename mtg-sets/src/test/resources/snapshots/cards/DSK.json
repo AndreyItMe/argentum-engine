@@ -4597,6 +4597,114 @@
     ]
 }
 
+// Ghost Vacuum
+{
+    "name": "Ghost Vacuum",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "{T}: Exile target card from a graveyard.\n{6}, {T}, Sacrifice this artifact: Put each creature card exiled with this artifact onto the battlefield under your control with a flying counter on it. Each of them is a 1/1 Spirit in addition to its other types. Activate only as a sorcery.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target card in a graveyard"
+                    },
+                    "destination": "Exile",
+                    "linkToSource": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {},
+                            "zone": "Graveyard"
+                        },
+                        "id": "target card in a graveyard"
+                    }
+                ],
+                "descriptionOverride": "Exile target card from a graveyard."
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{6}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": "FromLinkedExile",
+                            "storeAs": "exiledPile"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "exiledPile",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "storeMovedAs": "spirits",
+                            "addCounterType": "FLYING",
+                            "filter": "creature"
+                        },
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Collection",
+                                "collection": "spirits"
+                            },
+                            "body": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "SetBasePowerToughness",
+                                        "target": "Self",
+                                        "power": 1,
+                                        "toughness": 1
+                                    },
+                                    {
+                                        "type": "AddCreatureType",
+                                        "subtype": "Spirit"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "SacrificeTarget",
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "Put each creature card exiled with this artifact onto the battlefield under your control with a flying counter on it. Each of them is a 1/1 Spirit in addition to its other types. Activate only as a sorcery."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "248",
+        "rarity": "RARE",
+        "artist": "David Szabo",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/a/8ac39c01-127f-4471-bc74-11a90c48e306.jpg?1726286797"
+    },
+    "colorIdentityOverride": []
+}
+
 // Give In to Violence
 {
     "name": "Give In to Violence",
@@ -7026,6 +7134,154 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Omnivorous Flytrap
+{
+    "name": "Omnivorous Flytrap",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Plant",
+    "oracleText": "Delirium — Whenever this creature enters or attacks, if there are four or more card types among cards in your graveyard, distribute two +1/+1 counters among one or two target creatures. Then if there are six or more card types among cards in your graveyard, double the number of +1/+1 counters on those creatures.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DistributeCountersAmongTargets",
+                            "totalCounters": 2
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "AggregateZone",
+                                        "player": "You",
+                                        "zone": "Graveyard",
+                                        "aggregation": "DISTINCT_TYPES"
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 6
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "ForEach",
+                                "space": "IterationSpace.Targets",
+                                "body": "DoubleCounters"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "count": 2,
+                    "minCount": 1,
+                    "filter": {
+                        "baseFilter": "creature"
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DistributeCountersAmongTargets",
+                            "totalCounters": 2
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "AggregateZone",
+                                        "player": "You",
+                                        "zone": "Graveyard",
+                                        "aggregation": "DISTINCT_TYPES"
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 6
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "ForEach",
+                                "space": "IterationSpace.Targets",
+                                "body": "DoubleCounters"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "count": 2,
+                    "minCount": 1,
+                    "filter": {
+                        "baseFilter": "creature"
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "192",
+        "rarity": "RARE",
+        "artist": "Antonio José Manzanedo",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/3/4370a197-68cc-46dd-bf0a-e9dab4ff6638.jpg?1726286582"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
