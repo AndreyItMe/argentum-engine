@@ -206,6 +206,7 @@ internal fun EmitCtx.renderEffectList(actions: List<JsonObject>, tvar: String?):
     counterUnlessPaysEffect(actions)?.let { return it }
     counterUnlessPaysWithRiderEffect(actions)?.let { return it }
     mayCostReflexiveDamageEffect(actions)?.let { return it }
+    mayCostDiscardAnyNumberReflexiveModifyStatsEffect(actions)?.let { return it }
     mayCostReflexiveDestroyRoomEffect(actions)?.let { return it }
     erodeDestroyControllerFetchEffect(actions)?.let { return it }
     heatedArgumentExileRiderEffect(actions)?.let { return it }

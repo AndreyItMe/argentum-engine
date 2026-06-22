@@ -6672,6 +6672,109 @@
     ]
 }
 
+// Miasma Demon
+{
+    "name": "Miasma Demon",
+    "manaCost": "{4}{B}{B}",
+    "typeLine": "Creature — Demon",
+    "oracleText": "Flying\nWhen this creature enters, you may discard any number of cards. When you do, up to that many target creatures each get -2/-2 until end of turn.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ReflexiveTrigger",
+                    "action": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "discarded_candidates"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "discarded_candidates",
+                                "selection": "ChooseAnyNumber",
+                                "storeSelected": "discarded",
+                                "prompt": "Choose any number of cards to discard"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    },
+                    "optional": false,
+                    "reflexiveEffect": {
+                        "type": "ForEach",
+                        "space": "IterationSpace.Targets",
+                        "body": {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": -2
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": -2
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            }
+                        }
+                    },
+                    "reflexiveTargetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "optional": true,
+                            "filter": {
+                                "baseFilter": "creature"
+                            },
+                            "dynamicMaxCount": {
+                                "type": "VariableReference",
+                                "variableName": "discarded_count"
+                            }
+                        }
+                    ],
+                    "descriptionOverride": "You may discard any number of cards. When you do, up to that many target creatures each get -2/-2 until end of turn."
+                },
+                "descriptionOverride": "When this creature enters, you may discard any number of cards. When you do, up to that many target creatures each get -2/-2 until end of turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "109",
+        "rarity": "UNCOMMON",
+        "artist": "Mathias Kollros",
+        "flavorText": "\"Hush, little ants. I can rid you of your troubles with a breath. All I ask in return is a drop of blood... and a promise.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/d/6d167c00-75ff-4301-855a-8319b89e3689.jpg?1726286255"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Midnight Mayhem
 {
     "name": "Midnight Mayhem",
@@ -8766,6 +8869,89 @@
     "colorIdentityOverride": [
         "WHITE",
         "BLACK"
+    ]
+}
+
+// Roaring Furnace // Steaming Sauna
+{
+    "name": "Roaring Furnace // Steaming Sauna",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "When you unlock this door, this Room deals damage equal to the number of cards in your hand to target creature an opponent controls.\n//\nYou have no maximum hand size.\nAt the beginning of your end step, draw a card.",
+    "metadata": {
+        "collectorNumber": "230",
+        "rarity": "RARE",
+        "artist": "Miklós Ligeti",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/4/94352ffb-d716-484d-b018-4e1c033ef2f3.jpg?1726867698"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Roaring Furnace",
+            "manaCost": "{1}{R}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, this Room deals damage equal to the number of cards in your hand to target creature an opponent controls.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Count",
+                                "player": "You",
+                                "zone": "Hand"
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            }
+                        },
+                        "targetRequirement": {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature ctrl:opponent"
+                            }
+                        },
+                        "descriptionOverride": "When you unlock this door, this Room deals damage equal to the number of cards in your hand to target creature an opponent controls."
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Steaming Sauna",
+            "manaCost": "{3}{U}{U}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "You have no maximum hand size.\nAt the beginning of your end step, draw a card.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": {
+                            "type": "StepEvent",
+                            "step": "END"
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "descriptionOverride": "At the beginning of your end step, draw a card."
+                    }
+                ],
+                "staticAbilities": [
+                    "NoMaximumHandSize"
+                ]
+            }
+        }
     ]
 }
 

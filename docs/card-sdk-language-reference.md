@@ -1102,6 +1102,14 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   there (and use them whenever the inference is wrong). Wrap with `MayEffect` for the optional
   "You may [action]. If you do, [effect]" shape.
 - `ReflexiveTriggerEffect(action, reflexive, optional)` — same shape but the reflexive effect goes on the stack.
+  Targets in `reflexiveTargetRequirements` are chosen *after* `action` resolves, against the resolving
+  ability's live pipeline. A `TargetObject.dynamicMaxCount` on a reflexive requirement is therefore
+  resolved against that pipeline — so "up to **that many** target …" can read a count a preceding action
+  stored, e.g. `dynamicMaxCount = DynamicAmount.VariableReference("discarded_count")` paired with
+  `Patterns.Hand.discardAnyNumber()` (Miasma Demon: "you may discard any number of cards. When you do, up
+  to that many target creatures each get -2/-2"). This differs from the cast-time path
+  (`TargetValidator.effectiveMaxCount`), where the pipeline isn't live yet — pipeline-linked caps only
+  work on reflexive/resolution-time targets.
 - **Branching on gathered properties** — "reveal/look, if it's a [type] do X, otherwise Y" needs no
   bespoke effect type; it is the partition + collection-gate composition:
   1. **Partition:** `FilterCollection(from, CollectionFilter.MatchesFilter(filter), storeMatching,
@@ -1197,6 +1205,12 @@ one-off pipeline belongs inline in the card file via `Effects.Pipeline { }` (§5
 - `discardCardsUnlessMatching(count, unlessFilter, target?, reducedCount?, requiredMatches?)` /
   `Effects.DiscardUnlessMatching(...)` — one-step "discard N cards unless you discard a matching card" selection;
   a lower-count selection is valid only when it includes enough cards matching `unlessFilter`.
+- `discardAnyNumber(target?, filter?, storeAs?, prompt?)` — "discard any number of cards": the
+  controller chooses any subset of their hand (including none) to discard, via
+  `SelectionMode.ChooseAnyNumber`. The selected set is stored under `storeAs` (default `"discarded"`),
+  so the count is readable downstream as `DynamicAmount.VariableReference("${storeAs}_count")` — e.g.
+  Miasma Demon wires this as the `ReflexiveTriggerEffect` action and reads `discarded_count` as the
+  reflexive targets' `dynamicMaxCount` ("up to that many target creatures").
 - `discardRandom(count, target)` — random discards.
 - `discardHand(target)` — discard entire hand.
 - `eachOpponentDiscards(count, controllerDrawsPerDiscard?)` — Mind Twist-style.

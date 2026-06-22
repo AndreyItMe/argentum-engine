@@ -138,6 +138,48 @@ object HandPatterns {
     }
 
     /**
+     * "Discard any number of cards" — the controller chooses any subset of their hand (including
+     * none) to discard. The selected cards are stored under [storeAs], so the count is readable
+     * downstream as `DynamicAmount.VariableReference("${storeAs}_count")` — e.g. Miasma Demon's
+     * "you may discard any number of cards. When you do, up to that many target creatures each get
+     * -2/-2" wires this as the [com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect]
+     * action and reads `discarded_count` as the reflexive targets' `dynamicMaxCount`.
+     *
+     * Same Gather → Select → Move pipeline as the fixed-count [discardCards], but with
+     * [SelectionMode.ChooseAnyNumber] (no minimum). [filter] restricts which hand cards are
+     * eligible to discard.
+     */
+    fun discardAnyNumber(
+        target: EffectTarget = EffectTarget.Controller,
+        filter: GameObjectFilter = GameObjectFilter.Any,
+        storeAs: String = "discarded",
+        prompt: String = "Choose any number of cards to discard",
+    ): CompositeEffect {
+        val player = effectTargetToPlayer(target)
+        val chooser = effectTargetToChooser(target)
+        return CompositeEffect(
+            listOf(
+                GatherCardsEffect(
+                    source = CardSource.FromZone(Zone.HAND, player, filter),
+                    storeAs = "${storeAs}_candidates"
+                ),
+                SelectFromCollectionEffect(
+                    from = "${storeAs}_candidates",
+                    selection = SelectionMode.ChooseAnyNumber,
+                    chooser = chooser,
+                    storeSelected = storeAs,
+                    prompt = prompt
+                ),
+                MoveCollectionEffect(
+                    from = storeAs,
+                    destination = CardDestination.ToZone(Zone.GRAVEYARD, player),
+                    moveType = MoveType.Discard
+                )
+            )
+        )
+    }
+
+    /**
      * Discard [count] cards, or satisfy the instruction by discarding fewer cards if
      * the selection includes [requiredMatches] cards matching [unlessFilter].
      *
