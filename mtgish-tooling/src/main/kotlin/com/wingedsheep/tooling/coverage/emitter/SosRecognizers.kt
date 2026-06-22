@@ -12,6 +12,7 @@ import com.wingedsheep.tooling.coverage.Sub
 import com.wingedsheep.tooling.coverage.arg
 import com.wingedsheep.tooling.coverage.argWordsTagged
 import com.wingedsheep.tooling.coverage.asArr
+import com.wingedsheep.tooling.coverage.asInt
 import com.wingedsheep.tooling.coverage.asStr
 import com.wingedsheep.tooling.coverage.call
 import com.wingedsheep.tooling.coverage.compact
@@ -636,6 +637,97 @@ internal fun EmitCtx.mayCostReflexiveDamageEffect(actions: List<JsonObject>): Ds
             arg("damageSource", Lit("EffectTarget.Self")),
         )),
         arg("reflexiveTargetRequirements", call("listOf", arg(reflexiveTarget))),
+    )
+}
+
+/**
+ * Miasma Demon — "you may discard any number of cards. When you do, up to that many target creatures
+ * each get -2/-2 until end of turn." The pipeline-count-linked reflexive sibling of
+ * [mayCostReflexiveDamageEffect]. mtgish models it as:
+ *
+ * `[ MayCost(DiscardAnyNumberOfCards),
+ *    If(CostWasPaid)[ ReflexiveTrigger(Targeted(
+ *        [UptoNumberTargetPermanents(NumCardsDiscardedThisWay, IsCardtype Creature)],
+ *        ActionList[ CreateEachPermanentLayerEffectUntil(Ref_TargetPermanents, [AdjustPT(-2,-2)], UntilEndOfTurn) ])) ] ]`
+ * →
+ * ```
+ * ReflexiveTriggerEffect(
+ *     action = Patterns.Hand.discardAnyNumber(),
+ *     optional = false,
+ *     reflexiveEffect = ForEachTargetEffect(listOf(Effects.ModifyStats(-2, -2, EffectTarget.ContextTarget(0)))),
+ *     reflexiveTargetRequirements = listOf(TargetCreature(
+ *         optional = true, dynamicMaxCount = DynamicAmount.VariableReference("discarded_count"))))
+ * ```
+ *
+ * "Discard any number of cards" stores the discarded set as `discarded`, so the reflexive target's
+ * `dynamicMaxCount` reads `discarded_count` ("up to **that many**"); the engine resolves it against the
+ * resolving ability's live pipeline (see `ReflexiveTriggerEffect` in the SDK reference). The payoff is a
+ * per-target AdjustPT layer effect until end of turn (modeled as ModifyStats under ForEachTarget). Renders
+ * ONLY this exact shape — discard-any-number cost, a CostWasPaid-gated single reflexive trigger targeting
+ * up-to-that-many creatures with a fixed ±P/±T until end of turn — and declines (→ SCAFFOLD) for any other
+ * cost, count source, filter, or payoff.
+ */
+internal fun EmitCtx.mayCostDiscardAnyNumberReflexiveModifyStatsEffect(actions: List<JsonObject>): Dsl? {
+    if (actions.size != 2) return null
+    val (mayCost, ifPaid) = actions
+    if (mayCost.strField("_Action") != "MayCost") return null
+    val cost = mayCost["args"] as? JsonObject ?: return null
+    if (cost.strField("_Cost") != "DiscardAnyNumberOfCards") return null
+
+    // The gate must be exactly If(CostWasPaid)[ ReflexiveTrigger(...) ] — no else-branch.
+    if (ifPaid.strField("_Action") != "If") return null
+    val ifArgs = ifPaid["args"].asArr ?: return null
+    if (!jsonContains(ifArgs.getOrNull(0), "_Condition", "CostWasPaid") || ifArgs.getOrNull(2) != null) return null
+    val reflexive = (ifArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
+        ?.singleOrNull()?.takeIf { it.strField("_Action") == "ReflexiveTrigger" } ?: return null
+
+    // The reflexive Targeted envelope: a single "up to that many target creatures" target.
+    val (rTargets, rActions) = extractEnvelope(reflexive)
+    val target = rTargets?.singleOrNull() ?: return null
+    if (target.strField("_Target") != "UptoNumberTargetPermanents") return null
+    val targetArgs = target["args"].asArr ?: return null
+    // The count source must be the discarded-this-way count ("that many"); anything else declines.
+    if ((targetArgs.getOrNull(0) as? JsonObject)?.strField("_GameNumber") != "NumCardsDiscardedThisWay") return null
+    // The target filter must be exactly "creature" (IsCardtype Creature, no extra clauses).
+    val filterNode = targetArgs.getOrNull(1) as? JsonObject ?: return null
+    if (filterNode.strField("_Permanents") != "IsCardtype" || filterNode["args"].asStr() != "Creature") return null
+    if (compact(target).let { "ControlledByAPlayer" in it || "IsCreatureType" in it }) return null
+
+    // The payoff: each targeted creature gets a fixed ±P/±T until end of turn (AdjustPT layer effect).
+    val layer = rActions?.singleOrNull()?.takeIf { it.strField("_Action") == "CreateEachPermanentLayerEffectUntil" } ?: return null
+    val layerArgs = layer["args"].asArr ?: return null
+    if (!jsonContains(layerArgs.getOrNull(0), "_Permanents", "Ref_TargetPermanents")) return null
+    if (!jsonContains(layerArgs.getOrNull(2), "_Expiration", "UntilEndOfTurn")) return null
+    val pt = (layerArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
+        ?.singleOrNull()?.takeIf { it.strField("_LayerEffect") == "AdjustPT" } ?: return null
+    val ptArgs = pt["args"].asArr ?: return null
+    val dPow = ptArgs.getOrNull(0).asInt() ?: return null
+    val dTou = ptArgs.getOrNull(1).asInt() ?: return null
+
+    return call(
+        "ReflexiveTriggerEffect",
+        arg("action", Lit("Patterns.Hand.discardAnyNumber()")),
+        arg("optional", Lit("false")),
+        arg("reflexiveEffect", call(
+            "ForEachTargetEffect",
+            arg(call(
+                "listOf",
+                arg(call(
+                    "Effects.ModifyStats",
+                    arg("$dPow"),
+                    arg("$dTou"),
+                    arg(Lit("EffectTarget.ContextTarget(0)")),
+                )),
+            )),
+        )),
+        arg("reflexiveTargetRequirements", call(
+            "listOf",
+            arg(call(
+                "TargetCreature",
+                arg("optional", Lit("true")),
+                arg("dynamicMaxCount", Lit("DynamicAmount.VariableReference(\"discarded_count\")")),
+            )),
+        )),
     )
 }
 

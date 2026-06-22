@@ -297,13 +297,18 @@ class ReflexiveTriggerEffectExecutor(
             }
         }
 
-        // Create target requirement infos for the decision
+        // Create target requirement infos for the decision. A reflexive requirement's
+        // dynamicMaxCount ("up to that many target …") is resolved here against the resolving
+        // ability's pipeline context — so "that many" reads the count a preceding action stored
+        // (e.g. Miasma Demon's discard count via VariableReference("discarded_count")). Unlike the
+        // cast-time path (TargetValidator.effectiveMaxCount), the pipeline is live in `context`
+        // because the action already ran, so the variable resolves to the real selection size.
         val requirementInfos = targetRequirements.mapIndexed { index, req ->
             TargetRequirementInfo(
                 index = index,
                 description = req.description,
                 minTargets = req.effectiveMinCount,
-                maxTargets = req.count
+                maxTargets = resolveReflexiveMaxCount(state, req, context)
             )
         }
 
@@ -345,6 +350,29 @@ class ReflexiveTriggerEffectExecutor(
             decisionResult.pendingDecision,
             priorEvents + decisionResult.events.toList()
         )
+    }
+
+    /**
+     * Resolve the maximum number of targets a reflexive requirement allows. When the requirement
+     * carries a [com.wingedsheep.sdk.scripting.targets.TargetObject.dynamicMaxCount] ("up to that
+     * many target …"), evaluate it against the resolving ability's [context] — which holds the
+     * pipeline state the preceding action stored — so a pipeline count variable
+     * (`DynamicAmount.VariableReference("<name>_count")`) caps the count to what actually happened.
+     * Falls back to the static `count` when there's no dynamic cap or it can't be evaluated.
+     */
+    private fun resolveReflexiveMaxCount(
+        state: GameState,
+        req: TargetRequirement,
+        context: EffectContext
+    ): Int {
+        if (req.unlimited) return Int.MAX_VALUE
+        val dyn = (req as? com.wingedsheep.sdk.scripting.targets.TargetObject)?.dynamicMaxCount
+            ?: return req.count
+        return try {
+            amountEvaluator.evaluate(state, dyn, context).coerceAtLeast(0)
+        } catch (_: Exception) {
+            req.count
+        }
     }
 
     /**
