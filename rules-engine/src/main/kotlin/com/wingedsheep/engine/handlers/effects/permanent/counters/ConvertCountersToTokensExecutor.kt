@@ -1,11 +1,9 @@
 package com.wingedsheep.engine.handlers.effects.permanent.counters
 
 import com.wingedsheep.engine.core.ConvertCountersToTokensContinuation
-import com.wingedsheep.engine.core.DecisionContext
 import com.wingedsheep.engine.core.DecisionPhase
-import com.wingedsheep.engine.core.DecisionRequestedEvent
 import com.wingedsheep.engine.core.EffectResult
-import com.wingedsheep.engine.core.ChooseNumberDecision
+import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
@@ -13,7 +11,6 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.scripting.effects.ConvertCountersToTokensEffect
-import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
@@ -24,7 +21,9 @@ import kotlin.reflect.KClass
  * a [ConvertCountersToTokensContinuation]; the resumer removes the chosen number of counters and
  * mints that many tokens from the factory. No-op (no prompt) when the source has no such counters.
  */
-class ConvertCountersToTokensExecutor : EffectExecutor<ConvertCountersToTokensEffect> {
+class ConvertCountersToTokensExecutor(
+    private val decisionHandler: DecisionHandler = DecisionHandler()
+) : EffectExecutor<ConvertCountersToTokensEffect> {
 
     override val effectType: KClass<ConvertCountersToTokensEffect> = ConvertCountersToTokensEffect::class
 
@@ -41,40 +40,32 @@ class ConvertCountersToTokensExecutor : EffectExecutor<ConvertCountersToTokensEf
         if (available <= 0) return EffectResult.success(state)
 
         val sourceName = sourceEntity.get<CardComponent>()?.name ?: "this permanent"
-        val decisionId = UUID.randomUUID().toString()
-        val decision = ChooseNumberDecision(
-            id = decisionId,
+
+        val decisionResult = decisionHandler.createNumberDecision(
+            state = state,
             playerId = context.controllerId,
+            sourceId = sourceId,
+            sourceName = sourceName,
             prompt = "Remove how many ${effect.counterType.description} counters from $sourceName? (0-$available)",
-            context = DecisionContext(
-                sourceId = sourceId,
-                sourceName = sourceName,
-                phase = DecisionPhase.RESOLUTION
-            ),
             minValue = 0,
-            maxValue = available
+            maxValue = available,
+            phase = DecisionPhase.RESOLUTION
         )
 
+        val decision = decisionResult.pendingDecision!!
+
         val continuation = ConvertCountersToTokensContinuation(
-            decisionId = decisionId,
+            decisionId = decision.id,
             sourceId = sourceId,
             controllerId = context.controllerId,
             counterType = effect.counterType,
             tokenFactory = effect.tokenFactory
         )
 
-        val newState = state.withPendingDecision(decision).pushContinuation(continuation)
         return EffectResult.paused(
-            newState,
+            decisionResult.state.pushContinuation(continuation),
             decision,
-            listOf(
-                DecisionRequestedEvent(
-                    decisionId = decisionId,
-                    playerId = context.controllerId,
-                    decisionType = "CHOOSE_NUMBER",
-                    prompt = decision.prompt
-                )
-            )
+            decisionResult.events
         )
     }
 }

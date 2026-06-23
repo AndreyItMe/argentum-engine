@@ -178,6 +178,69 @@ class CounterTokenProvenanceScenarioTest : ScenarioTestBase() {
                     projected.getToughness(prov) shouldBe 4
                 }
             }
+
+            // The whole reason CreatedBySource exists over "tokens you control named X": with two
+            // sources minting the SAME-named token, a source may only reabsorb the tokens IT made.
+            test("a second source cannot reabsorb the first source's same-named tokens") {
+                val game = scenario()
+                    .withPlayers("Player", "Opponent")
+                    .withCardInHand(1, "Test Provenator")
+                    .withCardInHand(1, "Test Provenator")
+                    .withLandsOnBattlefield(1, "Mountain", 12)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Source A enters and converts all 3 of its counters into 3 Provenite tokens.
+                game.castSpell(1, "Test Provenator").error shouldBe null
+                game.resolveStack()
+                val provA = game.findPermanent("Test Provenator")!!
+                val convert = cardRegistry.getCard("Test Provenator")!!.script.activatedAbilities[0]
+                game.execute(ActivateAbility(playerId = game.player1Id, sourceId = provA, abilityId = convert.id))
+                game.resolveStack()
+                game.chooseNumber(3)
+                game.resolveStack()
+                withClue("source A: 0 counters, 3 tokens stamped by A") {
+                    plusOne(game, provA) shouldBe 0
+                }
+
+                // Source B enters with its own 3 counters. A's 3 Provenite tokens are on the
+                // battlefield and B's controller controls them too — but B did not create them.
+                game.castSpell(1, "Test Provenator").error shouldBe null
+                game.resolveStack()
+                val provB = game.findPermanents("Test Provenator").first { it != provA }
+                withClue("source B enters with 3 counters") { plusOne(game, provB) shouldBe 3 }
+
+                val tokensCreatedByA = game.state.getBattlefield().filter {
+                    game.state.getEntity(it)
+                        ?.get<com.wingedsheep.engine.state.components.identity.CreatedByComponent>()?.creatorId == provA
+                }
+                withClue("A's 3 tokens are present and controlled by the same player as B") {
+                    tokensCreatedByA.size shouldBe 3
+                }
+
+                // B activates its reabsorb. Its gather is createdBySource(B), so none of A's tokens
+                // qualify even though they are same-named and under the same controller.
+                val reabsorb = cardRegistry.getCard("Test Provenator")!!.script.activatedAbilities[1]
+                game.execute(ActivateAbility(playerId = game.player1Id, sourceId = provB, abilityId = reabsorb.id)).error shouldBe null
+                game.resolveStack()
+                // If B is prompted at all, the only eligible set is empty — selecting nothing.
+                if (game.getPendingDecision() is com.wingedsheep.engine.core.SelectCardsDecision) {
+                    game.selectCards(emptyList())
+                    game.resolveStack()
+                }
+
+                withClue("B gained no counters — it could not see A's tokens") {
+                    plusOne(game, provB) shouldBe 3
+                }
+                withClue("A's tokens are untouched (not exiled by B)") {
+                    val stillThere = game.state.getBattlefield().filter {
+                        game.state.getEntity(it)
+                            ?.get<com.wingedsheep.engine.state.components.identity.CreatedByComponent>()?.creatorId == provA
+                    }
+                    stillThere.size shouldBe 3
+                }
+            }
         }
     }
 }

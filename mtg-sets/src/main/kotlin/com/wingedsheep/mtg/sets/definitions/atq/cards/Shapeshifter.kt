@@ -46,7 +46,10 @@ val Shapeshifter = card("Shapeshifter") {
     // resolved before the permanent is on the battlefield.
     replacementEffect(EntersWithChoice(choiceType = ChoiceType.NUMBER, minValue = 0, maxValue = 7))
 
-    // At the beginning of your upkeep, you MAY choose a number (declining keeps the last choice).
+    // At the beginning of your upkeep, you MAY choose a number. `optional = true` records the
+    // printed "you may"; for this no-target/no-else trigger it raises no separate decline prompt,
+    // and none is needed — re-choosing the current number is equivalent to declining (the CDA reads
+    // the last choice either way), so the prior P/T is retained.
     triggeredAbility {
         trigger = Triggers.YourUpkeep
         optional = true
