@@ -261,7 +261,7 @@ object DamageUtils {
             lifeLossAmount = applyLifeLossFloors(newState, targetId, currentLife, lifeLossAmount)
             val newLife = currentLife - lifeLossAmount
             newState = newState.withLifeTotal(targetId, newLife)
-            newState = trackDamageReceivedByPlayer(newState, targetId, effectiveAmount)
+            newState = trackDamageReceivedByPlayer(newState, targetId, effectiveAmount, sourceId)
             events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
         } else if (projected.isPlaneswalker(targetId)) {
             // It's a planeswalker - remove loyalty counters equal to damage dealt
@@ -386,13 +386,33 @@ object DamageUtils {
      * Used for Final Punishment: "Target player loses life equal to the damage
      * already dealt to that player this turn."
      */
-    fun trackDamageReceivedByPlayer(state: GameState, playerId: EntityId, amount: Int): GameState {
+    fun trackDamageReceivedByPlayer(state: GameState, playerId: EntityId, amount: Int, sourceId: EntityId? = null): GameState {
         if (amount <= 0) return state
+        // Is the source an artifact at the moment it dealt the damage? For a source still on the
+        // battlefield, its projected types are authoritative (a continuous effect may have added or
+        // stripped artifact-ness). Only for a source that has already left do we fall back to its
+        // base card types as last-known information. Powers the artifact-source damage accumulator
+        // (Reverse Polarity).
+        val sourceIsArtifact = sourceId?.let { sid ->
+            if (sid in state.getBattlefield()) {
+                state.projectedState.hasType(sid, "ARTIFACT")
+            } else {
+                state.getEntity(sid)?.get<CardComponent>()?.typeLine?.isArtifact == true
+            }
+        } ?: false
         return state.updateEntity(playerId) { container ->
             val existing = container.get<com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent>()
                 ?: com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent()
-            container.with(com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent(existing.amount + amount))
+            var updated = container.with(com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent(existing.amount + amount))
                 .with(com.wingedsheep.engine.state.components.player.LifeLostThisTurnComponent)
+            if (sourceIsArtifact) {
+                val existingArtifact = container.get<com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent>()
+                    ?: com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent()
+                updated = updated.with(
+                    com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent(existingArtifact.amount + amount)
+                )
+            }
+            updated
         }
     }
 

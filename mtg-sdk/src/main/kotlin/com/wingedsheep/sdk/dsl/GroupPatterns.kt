@@ -90,6 +90,31 @@ object GroupPatterns {
     ))
 
     /**
+     * "Each permanent matching [filter] is sacrificed by its controller." Gather → move via
+     * [MoveType.Sacrifice] (emits `PermanentsSacrificedEvent`, routes to each card's owner
+     * graveyard — CR 701.21). [excludeTriggering] excludes the source/triggering entity, for the
+     * "except for ~" wording (Golgothian Sylex sparing itself).
+     */
+    fun sacrificeAllPipeline(
+        filter: GameObjectFilter,
+        excludeTriggering: Boolean = false
+    ): CompositeEffect = CompositeEffect(listOf(
+        GatherCardsEffect(
+            source = CardSource.BattlefieldMatching(
+                filter = filter,
+                excludeSelf = excludeTriggering,
+                excludeTriggering = excludeTriggering
+            ),
+            storeAs = "sacrificeAll_gathered"
+        ),
+        MoveCollectionEffect(
+            from = "sacrificeAll_gathered",
+            destination = CardDestination.ToZone(Zone.GRAVEYARD),
+            moveType = MoveType.Sacrifice
+        )
+    ))
+
+    /**
      * "Destroy the creature with the least power" (Drop of Honey). Gathers every creature tied
      * for the global minimum power, lets the controller pick one (auto-selected when there's a
      * single minimum, a choice on a tie — CR: "if two or more are tied, you choose"), and

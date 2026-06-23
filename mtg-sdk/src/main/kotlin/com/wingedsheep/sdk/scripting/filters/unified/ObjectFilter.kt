@@ -416,6 +416,15 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.IsNontoken
     )
 
+    /**
+     * Must be *originally printed* in the given set (canonical set code, case-insensitive) —
+     * reprints still match their original set. Models "a name originally printed in the [set]
+     * expansion" (Golgothian Sylex → "ATQ"; City in a Bottle → "ARN").
+     */
+    fun originallyPrintedInSet(setCode: String) = copy(
+        cardPredicates = cardPredicates + CardPredicate.OriginallyPrintedInSet(setCode)
+    )
+
     /** Must be a token */
     fun token() = copy(
         cardPredicates = cardPredicates + CardPredicate.IsToken

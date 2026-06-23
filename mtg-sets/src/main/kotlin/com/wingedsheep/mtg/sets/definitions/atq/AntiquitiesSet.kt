@@ -25,7 +25,11 @@ object AntiquitiesSet : MtgSet {
     override val incomplete = true
 
     override val cards: List<CardDefinition> by lazy {
-        CardDiscovery.findIn(CARDS_PACKAGE)
+        // Self-stamp [code] onto every card, honouring the MtgSet contract that `cards` is already
+        // set-stamped. This makes `CardDefinition.setCode` a reliable "originally printed in ATQ"
+        // signal for every consumer (engine tests included), not only the game-server load path —
+        // which is what Golgothian Sylex's OriginallyPrintedInSet("ATQ") predicate reads.
+        CardDiscovery.findIn(CARDS_PACKAGE).map { if (it.setCode == null) it.copy(setCode = code) else it }
     }
 
     override val printings: List<Printing> by lazy {

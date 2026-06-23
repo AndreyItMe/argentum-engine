@@ -541,6 +541,23 @@ object Effects {
     ): Effect = GroupPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs, excludeTriggering)
 
     /**
+     * Each permanent matching [filter] is *sacrificed by its controller* (CR 701.21) — emits
+     * `PermanentsSacrificedEvent` (so sacrifice triggers fire) and routes each card to its owner's
+     * graveyard. Symmetric to [DestroyAll] but for the "is sacrificed" wording, which ignores
+     * regeneration and indestructibility. Used by Golgothian Sylex ("Each nontoken permanent with
+     * a name originally printed in the Antiquities expansion is sacrificed by its controller").
+     *
+     * @param filter Which permanents are sacrificed
+     * @param excludeTriggering If true, the triggering/source entity is excluded (e.g. "except for
+     *   Golgothian Sylex" — pass a `filter` that already excludes self, or set this for trigger-based
+     *   "each other" wording).
+     */
+    fun SacrificeAll(
+        filter: GameObjectFilter,
+        excludeTriggering: Boolean = false
+    ): Effect = GroupPatterns.sacrificeAllPipeline(filter, excludeTriggering)
+
+    /**
      * Destroy all permanents matching [filter] and all permanents attached to them.
      * Used by End Hostilities-style board wipes.
      */

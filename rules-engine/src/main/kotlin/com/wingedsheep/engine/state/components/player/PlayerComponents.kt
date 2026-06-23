@@ -673,6 +673,20 @@ data class DamageReceivedThisTurnComponent(
 ) : Component
 
 /**
+ * Tracks the total damage dealt to a player this turn *by artifact sources* (a source that is an
+ * artifact when it deals the damage — CR 109.5 / 702.16-style source typing). Both combat and
+ * non-combat artifact damage counts; prevented damage does not (the accumulator is only incremented
+ * for damage that is actually dealt). Cleared at end of turn alongside [DamageReceivedThisTurnComponent].
+ *
+ * Used by Reverse Polarity: "You gain X life, where X is twice the damage dealt to you so far this
+ * turn by artifacts." Read via `DynamicAmount.TurnTracking(player, TurnTracker.DAMAGE_RECEIVED_FROM_ARTIFACTS)`.
+ */
+@Serializable
+data class DamageReceivedFromArtifactsThisTurnComponent(
+    val amount: Int = 0
+) : Component
+
+/**
  * Tracks the total mana spent on casting spells during the current turn.
  *
  * Used by the Expend mechanic (Bloomburrow): "Whenever you expend N" triggers

@@ -915,6 +915,9 @@ class CostCalculator(
             is CardPredicate.HasBasicLandType -> typeLine.hasSubtype(Subtype(predicate.landType))
             is CardPredicate.NameEquals -> cardDef.name == predicate.name
 
+            is CardPredicate.OriginallyPrintedInSet ->
+                cardDef.setCode?.equals(predicate.setCode, ignoreCase = true) == true
+
             is CardPredicate.HasKeyword -> predicate.keyword in cardDef.keywords
             is CardPredicate.NotKeyword -> predicate.keyword !in cardDef.keywords
 

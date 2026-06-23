@@ -31,6 +31,8 @@ enum class TurnTracker {
     OPPONENTS_WHO_LOST_LIFE,
     /** Total damage received by the player this turn. */
     DAMAGE_RECEIVED,
+    /** Total damage dealt to the player this turn by artifact sources (Reverse Polarity). */
+    DAMAGE_RECEIVED_FROM_ARTIFACTS,
     /** Total amount of life the player has gained this turn. */
     LIFE_GAINED,
     /**
@@ -94,6 +96,7 @@ enum class TurnTracker {
         OPPONENT_CREATURES_EXILED -> "the number of creatures that were exiled under your opponents' control this turn"
         OPPONENTS_WHO_LOST_LIFE -> "the number of opponents who lost life this turn"
         DAMAGE_RECEIVED -> "the damage already dealt to that player this turn"
+        DAMAGE_RECEIVED_FROM_ARTIFACTS -> "the damage dealt to ${player.description} so far this turn by artifacts"
         LIFE_GAINED -> "the amount of life ${player.possessive} gained this turn"
         LIFE_LOST -> "whether ${player.description} lost life this turn"
         PLAYER_ATTACKED -> "whether ${player.description} attacked this turn"

@@ -574,6 +574,9 @@ class PredicateEvaluator {
                 card.name.equals(chosenName, ignoreCase = true)
             }
 
+            is CardPredicate.OriginallyPrintedInSet ->
+                card.originalSetCode?.equals(predicate.setCode, ignoreCase = true) == true
+
             is CardPredicate.HasSubtypeFromVariable -> {
                 val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
                 val entitySubtypes = projectedValues?.subtypes ?: card.typeLine.subtypes.map { it.value }.toSet()
@@ -1127,9 +1130,10 @@ class PredicateEvaluator {
             is CardPredicate.PowerLessThanEntity,
             CardPredicate.ToughnessGreaterThanPower -> false
 
-            // Name predicates — not stored in record
+            // Name / printing predicates — not stored in record
             is CardPredicate.NameEquals -> false
             is CardPredicate.NameEqualsChosen -> false
+            is CardPredicate.OriginallyPrintedInSet -> false
 
             // Keyword predicates — not stored in record
             is CardPredicate.HasKeyword, is CardPredicate.NotKeyword -> false

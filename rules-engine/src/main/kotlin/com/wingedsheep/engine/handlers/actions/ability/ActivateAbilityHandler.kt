@@ -216,7 +216,10 @@ class ActivateAbilityHandler(
             state, action.sourceId,
             castPermissionUtils.applyFreeFirstEquipDiscount(
                 castPermissionUtils.applyEquipCostReduction(
-                    applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
+                    castPermissionUtils.applyActivatedAbilityCostReduction(
+                        applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
+                        state, action.sourceId
+                    ),
                     ability, state, action.playerId
                 ),
                 ability, state, action.playerId
@@ -460,7 +463,10 @@ class ActivateAbilityHandler(
             state, action.sourceId,
             castPermissionUtils.applyFreeFirstEquipDiscount(
                 castPermissionUtils.applyEquipCostReduction(
-                    applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
+                    castPermissionUtils.applyActivatedAbilityCostReduction(
+                        applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
+                        state, action.sourceId
+                    ),
                     ability, state, action.playerId
                 ),
                 ability, state, action.playerId

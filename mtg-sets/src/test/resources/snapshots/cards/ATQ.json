@@ -42,6 +42,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "36",
         "artist": "Margaret Organ-Kean",
@@ -100,6 +101,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "1",
         "rarity": "RARE",
@@ -151,6 +153,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "2",
         "artist": "Kerstin Kaman",
@@ -198,6 +201,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "29",
         "artist": "Amy Weber",
@@ -234,6 +238,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "30",
         "artist": "Amy Weber",
@@ -264,6 +269,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "22",
         "artist": "Mark Poole",
@@ -321,6 +327,7 @@
             }
         }
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "15",
         "artist": "Christopher Rush",
@@ -361,6 +368,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "38",
         "rarity": "UNCOMMON",
@@ -428,6 +436,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "39",
         "rarity": "UNCOMMON",
@@ -490,6 +499,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "40",
         "rarity": "UNCOMMON",
@@ -537,6 +547,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "23",
         "artist": "Jesper Myrfors",
@@ -595,6 +606,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "43",
         "rarity": "RARE",
@@ -638,6 +650,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "31",
         "rarity": "UNCOMMON",
@@ -678,6 +691,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "44",
         "artist": "Jesper Myrfors",
@@ -735,6 +749,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "46",
         "rarity": "RARE",
@@ -802,6 +817,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "47",
         "rarity": "RARE",
@@ -863,6 +879,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "32",
         "artist": "Jesper Myrfors",
@@ -898,6 +915,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "48",
         "rarity": "UNCOMMON",
@@ -923,6 +941,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "5",
         "rarity": "UNCOMMON",
@@ -988,6 +1007,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "24",
         "rarity": "UNCOMMON",
@@ -1035,6 +1055,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "49",
         "artist": "Anson Maddocks",
@@ -1104,6 +1125,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "25",
         "rarity": "UNCOMMON",
@@ -1158,6 +1180,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "50",
         "rarity": "UNCOMMON",
@@ -1194,6 +1217,7 @@
             "offset": 1
         }
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "33",
         "rarity": "RARE",
@@ -1257,6 +1281,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "16",
         "rarity": "UNCOMMON",
@@ -1267,6 +1292,77 @@
     "colorIdentityOverride": [
         "BLACK"
     ]
+}
+
+// Golgothian Sylex
+{
+    "name": "Golgothian Sylex",
+    "manaCost": "{4}",
+    "typeLine": "Artifact",
+    "oracleText": "{1}, {T}: Each nontoken permanent with a name originally printed in the Antiquities expansion is sacrificed by its controller.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "BattlefieldMatching",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsPermanent",
+                                        "IsNontoken",
+                                        {
+                                            "type": "OriginallyPrintedInSet",
+                                            "setCode": "ATQ"
+                                        }
+                                    ]
+                                },
+                                "excludeSelf": true,
+                                "excludeTriggering": true
+                            },
+                            "storeAs": "sacrificeAll_gathered"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "sacrificeAll_gathered",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            },
+                            "moveType": "Sacrifice"
+                        }
+                    ]
+                },
+                "descriptionOverride": "{1}, {T}: Each nontoken permanent with a name originally printed in the Antiquities expansion is sacrificed by its controller."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "51",
+        "rarity": "RARE",
+        "artist": "Kerstin Kaman",
+        "flavorText": "From their earliest educations, the brothers had known that no human contrivance could stand against the true masters of Dominia.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/5/856be1dd-a20b-49c2-be9d-7db76c7efd8b.jpg?1666943891"
+    },
+    "colorIdentityOverride": []
 }
 
 // Grapeshot Catapult
@@ -1307,6 +1403,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "52",
         "artist": "Dan Frazier",
@@ -1363,6 +1460,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "17",
         "rarity": "UNCOMMON",
@@ -1410,6 +1508,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "10",
         "rarity": "RARE",
@@ -1459,6 +1558,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "53",
         "rarity": "UNCOMMON",
@@ -1542,6 +1642,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "54",
         "rarity": "UNCOMMON",
@@ -1570,6 +1671,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "55",
         "rarity": "UNCOMMON",
@@ -1645,6 +1747,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "56",
         "rarity": "UNCOMMON",
@@ -1683,6 +1786,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "81",
         "rarity": "RARE",
@@ -1748,6 +1852,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "58",
         "rarity": "RARE",
@@ -1787,6 +1892,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "59",
         "rarity": "UNCOMMON",
@@ -1845,6 +1951,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "27",
         "artist": "Pete Venters",
@@ -1868,6 +1975,7 @@
     "keywords": [
         "FLYING"
     ],
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "60",
         "artist": "Amy Weber",
@@ -1932,6 +2040,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "18",
         "artist": "Amy Weber",
@@ -1939,6 +2048,43 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Power Artifact
+{
+    "name": "Power Artifact",
+    "manaCost": "{U}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant artifact\nEnchanted artifact's activated abilities cost {2} less to activate. This effect can't reduce the mana in that cost to less than one mana.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ReduceActivatedAbilityCost",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                },
+                "amount": 2,
+                "manaFloor": 1
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "artifact"
+            }
+        }
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "11",
+        "rarity": "UNCOMMON",
+        "artist": "Douglas Shuler",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/4/e48bc89e-6da5-43da-b4e0-60d5f850199c.jpg?1562943281"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -1984,6 +2130,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "34",
         "rarity": "UNCOMMON",
@@ -2036,6 +2183,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "19",
         "artist": "Mark Tedin",
@@ -2169,6 +2317,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "61",
         "rarity": "UNCOMMON",
@@ -2230,6 +2379,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "62",
         "rarity": "UNCOMMON",
@@ -2266,6 +2416,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "12",
         "artist": "Anson Maddocks",
@@ -2274,6 +2425,37 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Reverse Polarity
+{
+    "name": "Reverse Polarity",
+    "manaCost": "{W}{W}",
+    "typeLine": "Instant",
+    "oracleText": "You gain X life, where X is twice the damage dealt to you so far this turn by artifacts.",
+    "script": {
+        "spellEffect": {
+            "type": "GainLife",
+            "amount": {
+                "type": "Multiply",
+                "amount": {
+                    "type": "TurnTracking",
+                    "player": "You",
+                    "tracker": "DAMAGE_RECEIVED_FROM_ARTIFACTS"
+                },
+                "multiplier": 2
+            }
+        }
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "7",
+        "artist": "Justin Hampton",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/a/da7ed8ba-3886-4779-a9b3-6892a7ed3527.jpg?1562941146"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
@@ -2314,6 +2496,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "13",
         "artist": "Pete Venters",
@@ -2378,6 +2561,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "64",
         "rarity": "RARE",
@@ -2419,6 +2603,7 @@
             ]
         }
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "28",
         "rarity": "RARE",
@@ -2482,6 +2667,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "65",
         "artist": "Mark Poole",
@@ -2543,6 +2729,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "82a",
         "rarity": "UNCOMMON",
@@ -2583,6 +2770,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "66",
         "rarity": "UNCOMMON",
@@ -2630,6 +2818,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "67",
         "artist": "Christopher Rush",
@@ -2683,6 +2872,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "69",
         "rarity": "UNCOMMON",
@@ -2750,6 +2940,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "70",
         "rarity": "UNCOMMON",
@@ -2870,6 +3061,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "71",
         "rarity": "RARE",
@@ -2925,6 +3117,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "73",
         "rarity": "RARE",
@@ -2976,6 +3169,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "75",
         "artist": "Jeff A. Menges",
@@ -3039,6 +3233,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "83c",
         "artist": "Anson Maddocks",
@@ -3102,6 +3297,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "84a",
         "artist": "Mark Tedin",
@@ -3165,6 +3361,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "85a",
         "artist": "Mark Poole",
@@ -3188,6 +3385,7 @@
         "DEFENDER",
         "FIRST_STRIKE"
     ],
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "77",
         "rarity": "UNCOMMON",
@@ -3216,6 +3414,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "78",
         "rarity": "UNCOMMON",
@@ -3275,6 +3474,7 @@
             }
         ]
     },
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "21",
         "rarity": "RARE",
@@ -3299,6 +3499,7 @@
     "keywords": [
         "VIGILANCE"
     ],
+    "setCode": "ATQ",
     "metadata": {
         "collectorNumber": "79",
         "artist": "Christopher Rush",

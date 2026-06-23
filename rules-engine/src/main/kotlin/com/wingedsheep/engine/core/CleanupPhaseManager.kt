@@ -36,6 +36,7 @@ import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbiliti
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.CantGainLifeComponent
 import com.wingedsheep.engine.state.components.player.DamageBonusComponent
+import com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent
 import com.wingedsheep.engine.state.components.player.FlashGrantsThisTurnComponent
 import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
@@ -593,6 +594,9 @@ class CleanupPhaseManager(
                 }
                 if (result.has<DamageReceivedThisTurnComponent>()) {
                     result = result.without<DamageReceivedThisTurnComponent>()
+                }
+                if (result.has<DamageReceivedFromArtifactsThisTurnComponent>()) {
+                    result = result.without<DamageReceivedFromArtifactsThisTurnComponent>()
                 }
                 if (result.has<NonTokenCreaturesDiedThisTurnComponent>()) {
                     result = result.without<NonTokenCreaturesDiedThisTurnComponent>()

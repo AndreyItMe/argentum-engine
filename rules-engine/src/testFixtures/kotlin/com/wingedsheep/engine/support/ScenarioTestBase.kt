@@ -402,6 +402,7 @@ abstract class ScenarioTestBase : FunSpec() {
                 spellEffect = cardDef.spellEffect,
                 imageUri = cardDef.metadata.imageUri,
                 hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+                originalSetCode = cardDef.setCode,
             )
 
             var container = ComponentContainer.of(

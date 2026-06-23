@@ -282,6 +282,22 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override val description: String = "with the chosen name"
     }
 
+    /**
+     * Matches cards *originally printed* in the given set — i.e. whose canonical
+     * [com.wingedsheep.sdk.model.CardDefinition.setCode] equals [setCode] (case-insensitive),
+     * regardless of which printing is actually in play. This is the card's first/canonical set, so
+     * a later reprint still matches its original set. Models "a name originally printed in the
+     * [set] expansion" (Golgothian Sylex → ATQ; ARN City in a Bottle → ARN).
+     *
+     * The engine reads the entity's `CardComponent.originalSetCode`, populated from the canonical
+     * definition at entity creation; tokens (no set) never match.
+     */
+    @SerialName("OriginallyPrintedInSet")
+    @Serializable
+    data class OriginallyPrintedInSet(val setCode: String) : CardPredicate {
+        override val description: String = "originally printed in $setCode"
+    }
+
     // =============================================================================
     // Keyword Predicates
     // =============================================================================

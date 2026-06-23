@@ -874,7 +874,7 @@ internal class CombatDamageManager(
         lifeLossAmount = DamageUtils.applyLifeLossFloors(newState, targetId, currentLife, lifeLossAmount)
         val newLife = currentLife - lifeLossAmount
         newState = newState.withLifeTotal(targetId, newLife)
-        newState = DamageUtils.trackDamageReceivedByPlayer(newState, targetId, effectiveAmount)
+        newState = DamageUtils.trackDamageReceivedByPlayer(newState, targetId, effectiveAmount, sourceId)
 
         // Track combat damage: source dealt damage + dealt combat damage to player
         if (sourceId in newState.getBattlefield()) {
@@ -1019,7 +1019,7 @@ internal class CombatDamageManager(
             val currentLife = newState.lifeTotal(targetId)
             val newLife = currentLife - amount
             newState = newState.withLifeTotal(targetId, newLife)
-            newState = DamageUtils.trackDamageReceivedByPlayer(newState, targetId, amount)
+            newState = DamageUtils.trackDamageReceivedByPlayer(newState, targetId, amount, sourceId)
             // Track combat damage: source dealt damage + dealt combat damage to player
             if (sourceId in newState.getBattlefield()) {
                 newState = newState.updateEntity(sourceId) { container ->
@@ -1182,7 +1182,7 @@ internal class CombatDamageManager(
         val attackerControllerLife = state.lifeTotal(attackerController)
         val newLife = attackerControllerLife - originalAmount
         var newState = state.withLifeTotal(attackerController, newLife)
-        newState = DamageUtils.trackDamageReceivedByPlayer(newState, attackerController, originalAmount)
+        newState = DamageUtils.trackDamageReceivedByPlayer(newState, attackerController, originalAmount, sourceId)
         val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
         events.add(DamageDealtEvent(sourceId, attackerController, originalAmount, true,
             sourceName = sourceName, targetName = "Player", targetIsPlayer = true))

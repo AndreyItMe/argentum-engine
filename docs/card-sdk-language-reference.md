@@ -404,6 +404,10 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   save the ID list for follow-up. `excludeTriggering = true` spares the triggering entity, for "destroy all
   *other* … with it" triggers (Spreading Plague).
 - `DestroyAllAndAttached(filter, noRegenerate?)` — also destroys auras/equipment on the matching permanents.
+- `SacrificeAll(filter, excludeTriggering?)` — each matching permanent is *sacrificed by its controller*
+  (CR 701.21): emits `PermanentsSacrificedEvent` (sacrifice triggers fire), routes each card to its owner's
+  graveyard, and ignores regeneration/indestructibility. The "is sacrificed" sibling of `DestroyAll`.
+  `excludeTriggering = true` spares the source ("except for ~", Golgothian Sylex).
 - `DestroyLeastPowerCreature(noRegenerate?)` — destroy the creature with the least power among **all**
   creatures on the battlefield (global, both players). On a tie for least power the controller chooses which
   one dies (Drop of Honey). Backed by the `GameObjectFilter.Creature.hasLeastPowerAmongAllCreatures()` filter
@@ -1730,6 +1734,11 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   evaluated. Pair with `replacementEffect(EntersWithChoice(ChoiceType.CARD_NAME))`. Fails closed (no match) before
   a name is chosen. Used by name-keyed static abilities (Petrified Hamlet — "sources with the chosen name … /
   Lands with the chosen name …").
+- `.originallyPrintedInSet(setCode)` — `CardPredicate.OriginallyPrintedInSet`: matches a card whose
+  *canonical* set code equals `setCode` (case-insensitive), i.e. the set it was *originally printed* in —
+  reprints still match their original set, regardless of the printing in play. Reads the entity's
+  `CardComponent.originalSetCode` (populated from the canonical `CardDefinition.setCode`); tokens never
+  match. Used by Golgothian Sylex (`"ATQ"`) and ARN City in a Bottle (`"ARN"`).
 - `.power(n)` / `.minPower(n)` / `.maxPower(n)` — P/T comparator.
 - `.manaValue(n)` / `.manaValueAtMost(n)` / `.manaValueAtLeast(n)` — mana-value comparator.
 - `.manaValueAtMostX()` — mana value ≤ the X chosen for the source spell/ability.
@@ -3125,6 +3134,20 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   `ActivateAbilityHandler` (paid cost), keyed on `ActivatedAbility.isEquipAbility` and applied before
   the `FreeFirstEquipEachTurn` discount. Wrap in a `ConditionalStaticAbility` for a "during your
   turn"-style gate.
+- `ReduceActivatedAbilityCost(filter, amount, manaFloor = 0)` — the activated abilities of permanents
+  matching `filter` cost `{amount}` generic mana less to activate, with the mana in each cost floored
+  at `manaFloor` *total* mana (generic + colored). The activated-ability sibling of `ReduceEquipCost`,
+  generalized over a `GroupFilter`: `GroupFilter.attachedCreature()` keys it to an Aura's enchanted
+  permanent (Power Artifact: "Enchanted artifact's activated abilities cost {2} less to activate. This
+  effect can't reduce the mana in that cost to less than one mana." → `ReduceActivatedAbilityCost(
+  GroupFilter.attachedCreature(), amount = 2, manaFloor = 1)`); `GroupFilter.source()` for "this
+  permanent's abilities"; a battlefield filter for a group lord. Generic-only (colored/hybrid pips
+  untouched, CR 118.7); with `manaFloor = 1` a `{1}` ability stays `{1}`, `{3}`→`{1}`, `{2}{U}`→`{U}`.
+  `manaFloor = 0` (default) floors at `{0}`. Reductions stack additively; the most restrictive
+  (largest) `manaFloor` wins. Consulted by `CastPermissionUtils.applyActivatedAbilityCostReduction`
+  from both the enumerator (displayed cost) and `ActivateAbilityHandler` (paid cost), keyed on the
+  ability's source permanent; non-mana costs (`{T}`, sacrifice) and abilities with no mana cost are
+  unaffected. Backed by `ManaCost.reduceGenericWithManaFloor(amount, minTotalMana)`.
 - `MayCastFromGraveyard(filter, lifeCost = 0, duringYourTurnOnly = false)` — cast spells matching
   `filter` from your graveyard following normal timing, optionally paying `lifeCost` life. Free for
   Yawgmoth's Agenda (`MayCastFromGraveyard(Nonland)`); `lifeCost = 1, duringYourTurnOnly = true` for
@@ -4514,6 +4537,10 @@ of `AddMana`. The engine empties pools at end of turn, so:
 - `OPPONENT_CREATURES_EXILED` — opponent creatures you exiled.
 - `OPPONENTS_WHO_LOST_LIFE` — count of opponents who lost life.
 - `DAMAGE_RECEIVED` — damage received by player.
+- `DAMAGE_RECEIVED_FROM_ARTIFACTS` — damage dealt to the player this turn by artifact sources
+  (a source that is an artifact when it deals the damage). Combat and non-combat both count;
+  prevented damage does not. Powers Reverse Polarity ("twice the damage dealt to you so far this
+  turn by artifacts") via `Multiply(TurnTracking(You, DAMAGE_RECEIVED_FROM_ARTIFACTS), 2)`.
 - `LIFE_GAINED` — life gained this turn (Bre of Clan Stoutarm).
 - `LIFE_LOST` — life lost this turn.
 - `PLAYER_ATTACKED` — whether/how many times you attacked.

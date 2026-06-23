@@ -58,6 +58,33 @@ data class ManaCost(val symbols: List<ManaSymbol>) {
     }
 
     /**
+     * Reduce the generic portion by [amount], but never below a *total* of [minTotalMana] mana
+     * (generic + every other mana symbol). Colored/hybrid/phyrexian/colorless symbols are never
+     * removed; only generic mana is reduced, and only down to the point where the whole cost still
+     * has at least [minTotalMana] mana symbols' worth.
+     *
+     * Power Artifact's "this effect can't reduce the mana in that cost to less than one mana"
+     * (`minTotalMana = 1`): `{2}` → `{1}`, `{1}` → `{1}` (unchanged), `{3}{U}` → `{1}{U}`,
+     * `{2}{U}` → `{U}` (already one mana), `{U}` → `{U}`. With `minTotalMana = 0` this is exactly
+     * [reduceGeneric].
+     */
+    fun reduceGenericWithManaFloor(amount: Int, minTotalMana: Int): ManaCost {
+        if (amount <= 0) return this
+        if (minTotalMana <= 0) return reduceGeneric(amount)
+        val nonGeneric = symbols.filter { it !is ManaSymbol.Generic }
+        // Mana value contributed by the kept (non-generic) symbols — colored/hybrid/etc. each ≥ 1.
+        val nonGenericMana = nonGeneric.sumOf { it.cmc }
+        // Generic may drop to whatever keeps total mana >= minTotalMana, but not below 0.
+        val genericFloor = (minTotalMana - nonGenericMana).coerceAtLeast(0)
+        val newGenericAmount = (genericAmount - amount).coerceAtLeast(genericFloor)
+        return if (newGenericAmount > 0) {
+            ManaCost(listOf(ManaSymbol.Generic(newGenericAmount)) + nonGeneric)
+        } else {
+            ManaCost(nonGeneric)
+        }
+    }
+
+    /**
      * Reduce this cost by the maximum convoke contribution from the given creatures.
      * Each creature pays for one colored symbol matching its color, or one generic mana.
      * Colored symbols are matched greedily first, then remaining creatures pay generic.

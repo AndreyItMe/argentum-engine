@@ -611,6 +611,8 @@ internal class AffectsFilterResolver {
         CardPredicate.ManaValueIsOdd -> card.manaValue % 2 != 0
         CardPredicate.HasXInManaCost -> if (isFaceDown) false else card.manaCost.hasX
         is CardPredicate.NameEquals -> card.name == predicate.name
+        is CardPredicate.OriginallyPrintedInSet ->
+            card.originalSetCode?.equals(predicate.setCode, ignoreCase = true) == true
         is CardPredicate.HasBasicLandType -> if (isFaceDown) false else subtypes.any { it.equals(predicate.landType, ignoreCase = true) }
         is CardPredicate.And -> predicate.predicates.all { matchesCardPredicateForProjection(it, card, container, projected, types, subtypes, colors, keywords, isFaceDown) }
         is CardPredicate.Or -> predicate.predicates.any { matchesCardPredicateForProjection(it, card, container, projected, types, subtypes, colors, keywords, isFaceDown) }

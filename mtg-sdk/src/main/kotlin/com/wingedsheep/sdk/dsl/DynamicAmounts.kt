@@ -367,6 +367,13 @@ object DynamicAmounts {
     // Turn-based tracking
     // =========================================================================
 
+    /**
+     * Damage dealt to [player] so far this turn by artifact sources (Reverse Polarity).
+     * Combat and non-combat artifact damage both count; prevented damage does not.
+     */
+    fun damageReceivedFromArtifactsThisTurn(player: Player = Player.You): DynamicAmount =
+        DynamicAmount.TurnTracking(player, TurnTracker.DAMAGE_RECEIVED_FROM_ARTIFACTS)
+
     fun nonTokenCreaturesDiedThisTurn(player: Player = Player.You): DynamicAmount =
         DynamicAmount.TurnTracking(player, TurnTracker.NONTOKEN_CREATURES_DIED)
 

@@ -38,6 +38,13 @@ data class CardComponent(
      * by other continuous effects are not counted here.
      */
     val hasNonManaActivatedAbility: Boolean = false,
+    /**
+     * The set this card was *originally printed* in (the canonical [CardDefinition.setCode], not the
+     * specific printing the player owns). Read by `CardPredicate.OriginallyPrintedInSet` to model
+     * "permanent with a name originally printed in [set]" (Golgothian Sylex, ARN City in a Bottle).
+     * Null for tokens and any card whose definition carries no set code.
+     */
+    val originalSetCode: String? = null,
 ) : Component {
     // Convenience accessors
     val isCreature: Boolean get() = typeLine.isCreature
