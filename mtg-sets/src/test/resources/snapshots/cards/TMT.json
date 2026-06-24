@@ -842,6 +842,73 @@
     ]
 }
 
+// Broadcast Takeover
+{
+    "name": "Broadcast Takeover",
+    "manaCost": "{2}{R}{R}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Gain control of all artifacts your opponents control until end of turn. Untap them. They gain haste until end of turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "artifact ctrl:opponent"
+                        }
+                    },
+                    "body": {
+                        "type": "TapUntap",
+                        "target": "Self",
+                        "tap": false
+                    }
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "artifact ctrl:opponent"
+                        }
+                    },
+                    "body": {
+                        "type": "GrantKeyword",
+                        "keyword": "HASTE",
+                        "target": "Self"
+                    }
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "artifact ctrl:opponent"
+                        }
+                    },
+                    "body": {
+                        "type": "GainControl",
+                        "target": "Self",
+                        "duration": "EndOfTurn"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "86",
+        "rarity": "MYTHIC",
+        "artist": "Hokyoung Kim",
+        "flavorText": "The power of the Foot is its ability to infiltrate every system from the shadows.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/6/e640e930-0907-40f2-9015-88f8c1e8ee5c.jpg?1769005852"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Buzz Bots
 {
     "name": "Buzz Bots",
