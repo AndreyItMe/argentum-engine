@@ -8271,6 +8271,106 @@
     }
 }
 
+// West Wind Avatar
+{
+    "name": "West Wind Avatar",
+    "manaCost": "{5}{G}{G}",
+    "typeLine": "Creature — Cat Spirit Avatar",
+    "oracleText": "Trample\nWhenever this creature enters or attacks, you may sacrifice a token or a land. If you do, you gain 3 life.\nDisappear — At the beginning of your end step, if a permanent left the battlefield under your control this turn, draw a card.",
+    "creatureStats": {
+        "power": 7,
+        "toughness": 7
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForceSacrifice",
+                                "filter": "token|land",
+                                "target": "Controller"
+                            },
+                            {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            }
+                        ]
+                    }
+                },
+                "descriptionOverride": "Whenever this creature enters, you may sacrifice a token or a land. If you do, you gain 3 life."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForceSacrifice",
+                                "filter": "token|land",
+                                "target": "Controller"
+                            },
+                            {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            }
+                        ]
+                    }
+                },
+                "descriptionOverride": "Whenever this creature attacks, you may sacrifice a token or a land. If you do, you gain 3 life."
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "triggerCondition": "PermanentLeftBattlefieldThisTurn",
+                "descriptionOverride": "Disappear — At the beginning of your end step, if a permanent left the battlefield under your control this turn, draw a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "137",
+        "rarity": "UNCOMMON",
+        "artist": "Oriana Menendez",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/4/f4b8f7e6-9bff-430b-b2f5-4308d57d1194.jpg?1771586987"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Wingnut, Bat on the Belfry
 {
     "name": "Wingnut, Bat on the Belfry",
