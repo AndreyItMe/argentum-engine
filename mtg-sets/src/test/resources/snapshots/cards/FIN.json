@@ -718,6 +718,61 @@
     ]
 }
 
+// Cactuar
+{
+    "name": "Cactuar",
+    "manaCost": "{G}",
+    "typeLine": "Creature — Plant",
+    "oracleText": "Trample\nAt the beginning of your end step, if this creature didn't enter the battlefield this turn, return it to its owner's hand.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": "Self",
+                    "destination": "Hand"
+                },
+                "triggerCondition": {
+                    "type": "Not",
+                    "condition": {
+                        "type": "EntityMatches",
+                        "entity": "Self",
+                        "filter": {
+                            "statePredicates": [
+                                "EnteredThisTurn"
+                            ]
+                        }
+                    }
+                },
+                "descriptionOverride": "At the beginning of your end step, if this creature didn't enter the battlefield this turn, return it to its owner's hand."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "177",
+        "rarity": "UNCOMMON",
+        "artist": "Kevin Sidharta",
+        "flavorText": "A cactus with legs that loves to run hither and thither. Watch out for its thorns!",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d5273db4-6214-41e4-825a-612fca8bbe03.jpg?1748706421"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Call the Mountain Chocobo
 {
     "name": "Call the Mountain Chocobo",
@@ -1547,6 +1602,68 @@
     ]
 }
 
+// Coeurl
+{
+    "name": "Coeurl",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Cat Beast",
+    "oracleText": "{1}{W}, {T}: Tap target nonenchantment creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}{W}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "TapUntap",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    "IsNonenchantment"
+                                ]
+                            }
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "12",
+        "artist": "Miho Midorikawa",
+        "flavorText": "A lean and limber predator whose whiskers acquire charge from naturally-occurring electric particles in the atmosphere.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/6/7604b534-5480-42fa-bc36-bbae730f8582.jpg?1748705798"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Coliseum Behemoth
 {
     "name": "Coliseum Behemoth",
@@ -2312,6 +2429,110 @@
     ]
 }
 
+// Gaelicat
+{
+    "name": "Gaelicat",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Cat",
+    "oracleText": "Flying, vigilance\nAs long as you control two or more artifacts, this creature gets +2/+0.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "VIGILANCE"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 2,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "artifact"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "22",
+        "artist": "Narendra Bintara Adi",
+        "flavorText": "\"That's the ticket! Now, let's get moving to North Mountain!\"\n—Galuf Baldesion",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/9/29606c49-e1a4-49c3-883b-9122c08bbbc7.jpg?1748705839"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Gigantoad
+{
+    "name": "Gigantoad",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Frog",
+    "oracleText": "As long as you control seven or more lands, this creature gets +2/+2.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 2,
+                    "toughnessBonus": 2,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "land"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 7
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "187",
+        "artist": "Hristo D. Chukov",
+        "flavorText": "The gigantoad is known to venture outside of its comfort zone during downpours—much to the surprise of unsuspecting hikers.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/c/bc10d648-4053-460f-bc52-9c20477bf6de.jpg?1748706462"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Gladiolus Amicitia
 {
     "name": "Gladiolus Amicitia",
@@ -2728,6 +2949,46 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Hill Gigas
+{
+    "name": "Hill Gigas",
+    "manaCost": "{4}{R}{R}",
+    "typeLine": "Creature — Giant",
+    "oracleText": "Trample, haste\nMountaincycling {2} ({2}, Discard this card: Search your library for a Mountain card, reveal it, put it into your hand, then shuffle.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 4
+    },
+    "keywords": [
+        "TRAMPLE",
+        "HASTE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Cycling",
+            "cost": "{2}",
+            "searchFilter": {
+                "cardPredicates": [
+                    {
+                        "type": "HasSubtype",
+                        "subtype": "Mountain"
+                    }
+                ]
+            },
+            "displayPrefix": "Mountaincycling"
+        }
+    ],
+    "metadata": {
+        "collectorNumber": "141",
+        "artist": "Heonhwa",
+        "flavorText": "\"This place is dangerous! Be careful!\"\n—Zozo resident",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/a/2a8b3e1e-5c10-4360-ac1c-83b2e026278c.jpg?1748706292"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
