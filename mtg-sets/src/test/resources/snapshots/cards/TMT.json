@@ -4895,6 +4895,109 @@
     ]
 }
 
+// Michelangelo, Mutant BFF
+{
+    "name": "Michelangelo, Mutant BFF",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Legendary Creature — Mutant Ninja Turtle",
+    "oracleText": "Each creature you control with a counter on it can't be blocked by more than one creature.\nWhenever Michelangelo enters or attacks, create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Mutagen"
+                },
+                "descriptionOverride": "Whenever Michelangelo enters, create a Mutagen token."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Mutagen"
+                },
+                "descriptionOverride": "Whenever Michelangelo attacks, create a Mutagen token."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "CantBeBlockedByMoreThan",
+                "maxBlockers": 1,
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            "HasAnyCounter"
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "120",
+        "rarity": "UNCOMMON",
+        "artist": "Narendra Bintara Adi",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/2/02f7281f-b50c-4a1c-a2fc-3caeb6ab7d41.jpg?1771502715"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Michelangelo, Weirdness to 11
+{
+    "name": "Michelangelo, Weirdness to 11",
+    "manaCost": "{1}{G}",
+    "typeLine": "Legendary Creature — Mutant Ninja Turtle",
+    "oracleText": "When Michelangelo enters, create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")\nIf one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Mutagen"
+                },
+                "descriptionOverride": "When Michelangelo enters, create a Mutagen token."
+            }
+        ],
+        "replacementEffects": [
+            "ModifyCounterPlacement"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "121",
+        "rarity": "RARE",
+        "artist": "Jason Kiantoro",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/8/18477047-218d-4b2a-a086-37431b6a3025.jpg?1769006195"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Mighty Mutanimals
 {
     "name": "Mighty Mutanimals",
@@ -7170,6 +7273,50 @@
         "artist": "Yuhong Ding",
         "flavorText": "\"You guys don't get sick during time travel, do you?\"",
         "imageUri": "https://cards.scryfall.io/normal/front/2/a/2ae30766-c858-4f4e-a042-14af55698cb2.jpg?1769005718"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Return to the Sewers
+{
+    "name": "Return to the Sewers",
+    "manaCost": "{3}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature's owner puts it on their choice of the top or bottom of their library. You create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "PutOnLibraryPositionOfChoice",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    }
+                },
+                {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Mutagen"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "52",
+        "artist": "Miklós Ligeti",
+        "flavorText": "\"We strike hard and fade away into the night.\"\n—Leonardo",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/52e99505-17dc-4051-99f6-e23559fc6c95.jpg?1771586826"
     },
     "colorIdentityOverride": [
         "BLUE"

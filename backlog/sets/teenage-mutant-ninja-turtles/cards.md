@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 148 / 190
+**Implemented:** 151 / 190
 ---
 
 - [x] Action News Crew
@@ -93,8 +93,8 @@
 - [ ] Michelangelo's Technique
 - [x] Michelangelo, Game Master
 - [x] Michelangelo, Improviser
-- [ ] Michelangelo, Mutant BFF
-- [ ] Michelangelo, Weirdness to 11
+- [x] Michelangelo, Mutant BFF
+- [x] Michelangelo, Weirdness to 11
 - [x] Mighty Mutanimals
 - [ ] Mikey & Don, Party Planners
 - [x] Mikey & Leo, Chaos & Order
@@ -143,7 +143,7 @@
 - [ ] Ray Fillet, Man Ray
 - [x] Renet, Temporal Apprentice
 - [ ] Retro-Mutation
-- [ ] Return to the Sewers
+- [x] Return to the Sewers
 - [x] Rock Soldiers
 - [x] Rocksteady, Crash Courser
 - [x] Sally Pride, Lioness Leader
