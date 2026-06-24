@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 113 / 190
+**Implemented:** 119 / 190
 ---
 
 - [x] Action News Crew
@@ -27,7 +27,7 @@
 - [ ] Courier of Comestibles
 - [x] Cowabunga!
 - [ ] Crustacean Commando
-- [ ] Dark Leo & Shredder
+- [x] Dark Leo & Shredder
 - [x] Death in the Family
 - [x] Dimension X
 - [x] Dimensional Exile
@@ -68,8 +68,8 @@
 - [x] Jennika's Technique
 - [x] Jennika, Bad Apple Big Sister
 - [x] Karai's Technique
-- [ ] Karai, Future of the Foot
-- [ ] Kitsune's Technique
+- [x] Karai, Future of the Foot
+- [x] Kitsune's Technique
 - [ ] Kitsune, Dragon's Daughter
 - [ ] Koya, Death from Above
 - [ ] Krang & Shredder
@@ -92,7 +92,7 @@
 - [x] Metalhead
 - [ ] Michelangelo's Technique
 - [ ] Michelangelo, Game Master
-- [ ] Michelangelo, Improviser
+- [x] Michelangelo, Improviser
 - [ ] Michelangelo, Mutant BFF
 - [ ] Michelangelo, Weirdness to 11
 - [x] Mighty Mutanimals
@@ -133,7 +133,7 @@
 - [x] Ragamuffin Raptor
 - [x] Raph & Leo, Sibling Rivals
 - [x] Raph & Mikey, Troublemakers
-- [ ] Raphael's Technique
+- [x] Raphael's Technique
 - [ ] Raphael, Most Attitude
 - [ ] Raphael, Ninja Destroyer
 - [x] Raphael, the Nightwatcher
@@ -150,7 +150,7 @@
 - [x] Savanti Romero, Time's Exile
 - [x] Saved by the Shell
 - [ ] Sewer-veillance Cam
-- [ ] Shark Shredder, Killer Clone
+- [x] Shark Shredder, Killer Clone
 - [x] Shredder's Armor
 - [x] Shredder's Revenge
 - [x] Shredder's Technique

@@ -6,8 +6,7 @@
 Counts below are cards in the set that use the mechanic. A card may appear under
 multiple entries (e.g. a creature with Flying + Sneak).
 
-**Implementation progress (96 / 190).** Mechanics now exercised end-to-end on
-`tmt-scaffolding`:
+**Implementation progress (119 / 190).** Mechanics now exercised end-to-end:
 
 Evergreen keywords — Flying, Vigilance, Trample, Haste, Flash, Deathtouch,
 Menace, Reach (granted and printed), Indestructible, Ward, Equip, Double strike,
@@ -145,19 +144,31 @@ Cross-card combinators landed since the previous progress note:
   needs the "Mill X. When you do, …" sub-trigger (Gap AA) plus an
   "attacks alone this turn" trigger condition (Gap NN).
 
-**Still not exercised** — the three new TMT mechanics' canonical pieces still
-missing (Sneak alt-cost pipeline, Disappear's per-controller permanent-left
-tracking, the display markers for Alliance / Channel / Disappear), Class
-enchantments, the Mutagen token, and the remaining bespoke Gap M / N–NN
-shapes catalogued in `TODO.md`. (Sagas and Vehicles/Crew are wired at the
-SDK level; only adjacent gaps stop the specific TMT cards from shipping.)
+**Sneak — RESOLVED.** The full alternative-cost pipeline shipped: SDK
+`Keyword.SNEAK` / `KeywordAbility.Sneak(cost)` / `sneak("{cost}")` DSL helper /
+`ChoiceSlot.SNEAK` flag / `Conditions.SneakCostWasPaid`, plus the engine pieces
+(`SneakWindow` declare-blockers payment, `SneakCastEnumerator`, and wiring in
+`CastSpellHandler` / `StackResolver` / `ConditionEvaluator` so a permanent cast
+for Sneak enters tapped and attacking and carries the "sneak cost was paid"
+fact). Proven by `SneakTest` and per-card scenario tests. 23 of 26 Sneak cards
+shipped (incl. all four sneak-was-paid riders); the remaining 3 each carry a
+second engine gap beyond Sneak (see `TODO.md` Gap A).
+
+**Still not exercised** — Disappear's per-controller permanent-left tracking,
+the display markers for Alliance / Channel / Disappear, Class enchantments, the
+Mutagen token, and the remaining bespoke Gap M / N–NN shapes catalogued in
+`TODO.md`. (Sagas and Vehicles/Crew are wired at the SDK level; only adjacent
+gaps stop the specific TMT cards from shipping.)
 
 ---
 
 ## New mechanics in TMT
 
-### Sneak — 26 cards
-Alternative cost keyword. Reminder text:
+### Sneak — 26 cards — IMPLEMENTED (23/26 cards shipped)
+Alternative cost keyword. Fully wired in the SDK and engine (`Keyword.SNEAK`,
+`KeywordAbility.Sneak`, the `sneak("{cost}")` DSL helper, `SneakWindow`,
+`SneakCastEnumerator`, and `Conditions.SneakCostWasPaid`); the 3 unimplemented
+Sneak cards each carry a second engine gap beyond Sneak. Reminder text:
 
 > Sneak {cost} (You may cast this spell for {cost} if you also return an
 > unblocked attacker you control to hand during the declare blockers step.
