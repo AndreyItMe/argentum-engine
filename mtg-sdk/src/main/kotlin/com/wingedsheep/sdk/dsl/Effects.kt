@@ -3380,6 +3380,40 @@ object Effects {
     )
 
     /**
+     * [target] becomes a creature whose base power and toughness are each equal to **its own mana
+     * value**, recomputed continuously at projection (Layer 7b dynamic). The single-target,
+     * configurable-duration companion to [MassAnimate].
+     *
+     * Used by Xenic Poltergeist: "Until your next upkeep, target noncreature artifact becomes an
+     * artifact creature with power and toughness each equal to its mana value" —
+     * `addTypes = setOf("ARTIFACT")`, `duration = Duration.UntilYourNextUpkeep`. The animated
+     * permanent keeps its existing types (the artifact stays an artifact); CREATURE is always added.
+     */
+    fun BecomeCreatureWithManaValueStats(
+        target: EffectTarget,
+        addTypes: Set<String> = emptySet(),
+        keywords: Set<Keyword> = emptySet(),
+        creatureTypes: Set<String> = emptySet(),
+        duration: Duration = Duration.EndOfTurn
+    ): Effect {
+        val manaValue = DynamicAmount.EntityProperty(
+            entity = com.wingedsheep.sdk.scripting.values.EntityReference.AffectedEntity,
+            numericProperty = com.wingedsheep.sdk.scripting.values.EntityNumericProperty.ManaValue
+        )
+        return BecomeCreatureEffect(
+            target = target,
+            power = DynamicAmount.Fixed(0),
+            toughness = DynamicAmount.Fixed(0),
+            keywords = keywords,
+            creatureTypes = creatureTypes,
+            addTypes = addTypes,
+            duration = duration,
+            dynamicPower = manaValue,
+            dynamicToughness = manaValue
+        )
+    }
+
+    /**
      * Target permanent becomes saddled until end of turn (CR 702.171b) — the resolving effect of
      * a Saddle ability. Defaults to the source, since Saddle always saddles its own permanent.
      */

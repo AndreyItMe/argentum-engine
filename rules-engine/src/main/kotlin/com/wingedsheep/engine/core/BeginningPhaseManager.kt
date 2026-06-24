@@ -462,6 +462,7 @@ class BeginningPhaseManager(
         StatePredicate.IsSaddled,
         StatePredicate.CrewedOrSaddledSourceThisTurn,
         StatePredicate.IsWarpExiled,
+        StatePredicate.NotTargetedByAbilityFromSameNamedSource,
         StatePredicate.WasCastForWarp -> true
         is StatePredicate.AttachedToCardType -> true
     }

@@ -841,6 +841,40 @@ class PredicateEvaluator {
                         ?.creatorId == sourceId
             }
 
+            // Goblin Artisans: the candidate object isn't the target of an ability on the stack whose
+            // source is another battlefield permanent sharing the effect source's name.
+            StatePredicate.NotTargetedByAbilityFromSameNamedSource -> {
+                val sourceId = context?.sourceId
+                val sourceName = sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name }
+                if (sourceId == null || sourceName == null) {
+                    true
+                } else {
+                    val battlefield = state.getBattlefield()
+                    val targetedByOtherSameNamed = state.stack.any { stackId ->
+                        val stackContainer = state.getEntity(stackId) ?: return@any false
+                        // Only abilities (not spells) count — "an ability from another creature named …".
+                        val abilitySourceId = stackContainer.get<ActivatedAbilityOnStackComponent>()?.sourceId
+                            ?: stackContainer.get<TriggeredAbilityOnStackComponent>()?.sourceId
+                            ?: return@any false
+                        if (abilitySourceId == sourceId) return@any false // not "another" source
+                        if (abilitySourceId !in battlefield) return@any false
+                        val otherName = state.getEntity(abilitySourceId)?.get<CardComponent>()?.name
+                        if (otherName != sourceName) return@any false
+                        // Does this ability target the candidate object?
+                        val targets = stackContainer.get<TargetsComponent>()?.targets ?: emptyList()
+                        targets.any { t ->
+                            when (t) {
+                                is ChosenTarget.Spell -> t.spellEntityId == entityId
+                                is ChosenTarget.Permanent -> t.entityId == entityId
+                                is ChosenTarget.Card -> t.cardId == entityId
+                                else -> false
+                            }
+                        }
+                    }
+                    !targetedByOtherSameNamed
+                }
+            }
+
             // Crewed/saddled the effect's source permanent this turn (CR 702.122 / 702.171).
             // Source-relative: reads the source's CrewSaddleContributorsComponent and checks
             // membership. Inert with no source context.

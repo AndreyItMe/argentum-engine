@@ -94,15 +94,24 @@ class TargetValidator {
             // Get targets for this requirement (handle multi-target requirements)
             val targetCount = effectiveMaxCount(requirement)
             val startIdx = requirements.take(index).sumOf { effectiveMaxCount(it) }
-            val endIdx = startIdx + targetCount
+            // Use Long for the end index so an unlimited requirement (targetCount = Int.MAX_VALUE)
+            // doesn't overflow to a negative value and make subList throw.
+            val endIdx = (startIdx.toLong() + targetCount.toLong())
+                .coerceAtMost(targets.size.toLong()).toInt()
             val targetsForReq = targets.subList(
                 startIdx.coerceAtMost(targets.size),
-                endIdx.coerceAtMost(targets.size)
+                endIdx
             )
 
-            // Reject if too many targets were declared for this requirement
-            if (targets.size > requirements.sumOf { effectiveMaxCount(it) }) {
-                return "Too many targets for ${requirement.description}"
+            // Reject if too many targets were declared. When any requirement is unlimited
+            // ("any number of target ...", Drafna's Restoration) there is no upper bound, so
+            // skip this check — summing Int.MAX_VALUE would overflow to a negative cap and
+            // spuriously reject a legal cast.
+            if (requirements.none { it.unlimited }) {
+                val totalMax = requirements.sumOf { effectiveMaxCount(it) }
+                if (targets.size > totalMax) {
+                    return "Too many targets for ${requirement.description}"
+                }
             }
 
             // Check minimum targets
@@ -112,7 +121,7 @@ class TargetValidator {
 
             // Validate each target against the requirement
             for (target in targetsForReq) {
-                val error = validateSingleTarget(state, target, requirement, casterId, sourceColors, sourceSubtypes, sourceId, xValue)
+                val error = validateSingleTarget(state, target, requirement, casterId, sourceColors, sourceSubtypes, sourceId, xValue, targets)
                 if (error != null) return error
             }
 
@@ -177,8 +186,14 @@ class TargetValidator {
         sourceColors: Set<Color> = emptySet(),
         sourceSubtypes: Set<String> = emptySet(),
         sourceId: EntityId? = null,
-        xValue: Int? = null
+        xValue: Int? = null,
+        allTargets: List<ChosenTarget> = emptyList()
     ): String? {
+        // A separately-chosen player target (target index 0 for "target player's graveyard"
+        // spells) — lets a later requirement's filter resolve `OwnedByTargetPlayer` /
+        // `ControlledByTargetPlayer` against the player already chosen for this same cast
+        // (Drafna's Restoration, Hurkyl's-Recall-family relational predicates).
+        val chosenPlayerTarget = allTargets.firstNotNullOfOrNull { (it as? ChosenTarget.Player)?.playerId }
         val error = when (requirement) {
             is TargetPlayer -> validatePlayerTarget(state, target, requirement, casterId, sourceId)
             is TargetOpponent -> validateOpponentTarget(state, target, requirement, casterId, sourceId)
@@ -188,8 +203,8 @@ class TargetValidator {
             is TargetPlayerOrPlaneswalker -> validatePlayerOrPlaneswalkerTarget(state, target, casterId)
             is TargetCreatureOrPlaneswalker -> validateCreatureOrPlaneswalkerTarget(state, target)
             is TargetSpellOrPermanent -> validateSpellOrPermanentTarget(state, target, requirement, casterId, sourceId, xValue)
-            is TargetObject -> validateObjectTarget(state, target, requirement.filter, casterId, sourceId, xValue)
-            is TargetOther -> validateSingleTarget(state, target, requirement.baseRequirement, casterId, sourceColors, sourceSubtypes, sourceId, xValue)
+            is TargetObject -> validateObjectTarget(state, target, requirement.filter, casterId, sourceId, xValue, chosenPlayerTarget)
+            is TargetOther -> validateSingleTarget(state, target, requirement.baseRequirement, casterId, sourceColors, sourceSubtypes, sourceId, xValue, allTargets)
         }
         if (error != null) return error
 
@@ -660,7 +675,8 @@ class TargetValidator {
         filter: TargetFilter,
         casterId: EntityId,
         sourceId: EntityId? = null,
-        xValue: Int? = null
+        xValue: Int? = null,
+        targetPlayerId: EntityId? = null
     ): String? {
         if (target !is ChosenTarget.Card) {
             return "Target must be a card in a graveyard"
@@ -678,8 +694,10 @@ class TargetValidator {
             return "Target must be another card"
         }
 
-        // Use unified filter - OwnedByYou predicate handles "your graveyard" restriction
-        val predicateContext = PredicateContext(controllerId = casterId, ownerId = target.ownerId, sourceId = sourceId, xValue = xValue)
+        // Use unified filter - OwnedByYou predicate handles "your graveyard" restriction; a
+        // separately-chosen player target (Drafna's Restoration) flows in via targetPlayerId so
+        // OwnedByTargetPlayer matches "cards in target player's graveyard".
+        val predicateContext = PredicateContext(controllerId = casterId, ownerId = target.ownerId, sourceId = sourceId, xValue = xValue, targetPlayerId = targetPlayerId)
         val matches = predicateEvaluator.matches(state, state.projectedState, target.cardId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
@@ -692,7 +710,8 @@ class TargetValidator {
         target: ChosenTarget,
         filter: TargetFilter,
         casterId: EntityId,
-        xValue: Int? = null
+        xValue: Int? = null,
+        sourceId: EntityId? = null
     ): String? {
         if (target !is ChosenTarget.Spell) {
             return "Target must be a spell on the stack"
@@ -701,8 +720,10 @@ class TargetValidator {
             return "Target spell not on the stack"
         }
 
-        // Use unified filter with projected state (face-down spells need projection to be seen as creatures)
-        val predicateContext = PredicateContext(controllerId = casterId, xValue = xValue)
+        // Use unified filter with projected state (face-down spells need projection to be seen as
+        // creatures); sourceId lets source-relative predicates evaluate (Goblin Artisans'
+        // NotTargetedByAbilityFromSameNamedSource).
+        val predicateContext = PredicateContext(controllerId = casterId, sourceId = sourceId, xValue = xValue)
         val matches = predicateEvaluator.matches(state, state.projectedState, target.spellEntityId, filter.baseFilter, predicateContext)
         if (!matches) {
             return "Target does not match filter: ${filter.description}"
@@ -719,12 +740,13 @@ class TargetValidator {
         filter: TargetFilter,
         casterId: EntityId,
         sourceId: EntityId? = null,
-        xValue: Int? = null
+        xValue: Int? = null,
+        targetPlayerId: EntityId? = null
     ): String? {
         return when (filter.zone) {
-            Zone.GRAVEYARD -> validateGraveyardTarget(state, target, filter, casterId, sourceId, xValue)
+            Zone.GRAVEYARD -> validateGraveyardTarget(state, target, filter, casterId, sourceId, xValue, targetPlayerId)
             Zone.BATTLEFIELD -> validatePermanentTarget(state, target, filter, casterId, sourceId, xValue)
-            Zone.STACK -> validateSpellTarget(state, target, filter, casterId, xValue)
+            Zone.STACK -> validateSpellTarget(state, target, filter, casterId, xValue, sourceId)
             else -> validateCardInZoneTarget(state, target, filter, casterId, xValue)
         }
     }

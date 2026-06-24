@@ -317,6 +317,11 @@ class TurnManager(
             }
 
             Step.UPKEEP -> {
+                // Expire "until your next upkeep" effects controlled by the active player at the
+                // beginning of their upkeep (before upkeep triggers resolve, so a re-applying
+                // upkeep trigger like Erhnam Djinn's re-grants afterward). Xenic Poltergeist's
+                // dynamic animate reverts here.
+                newState = cleanupPhaseManager.expireUntilYourNextUpkeepEffects(newState, activePlayer)
                 newState = newState.withPriority(activePlayer)
             }
 

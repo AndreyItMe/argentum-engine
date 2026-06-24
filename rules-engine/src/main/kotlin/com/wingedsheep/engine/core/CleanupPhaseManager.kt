@@ -244,6 +244,38 @@ class CleanupPhaseManager(
     }
 
     /**
+     * Expire UntilYourNextUpkeep floating effects (and globally-granted triggered abilities) at the
+     * beginning of the controller's next upkeep step. Mirrors [expireUntilYourNextTurnEffects] but is
+     * keyed to the upkeep step rather than post-untap, and is invoked when the upkeep step begins
+     * (TurnManager Step.UPKEEP). Used by e.g. Xenic Poltergeist ("Until your next upkeep, target
+     * noncreature artifact becomes an artifact creature …") and Erhnam Djinn's granted forestwalk.
+     *
+     * Note: a card that *re-applies* the effect every upkeep (Erhnam Djinn) does so via its own
+     * upkeep-triggered ability, which resolves after this expiry; the freshly granted effect then
+     * carries the new turn's timestamp and survives this same-step expiry on the following turn.
+     */
+    fun expireUntilYourNextUpkeepEffects(state: GameState, activePlayer: EntityId): GameState {
+        val remainingFloating = state.floatingEffects.filter { floatingEffect ->
+            !(floatingEffect.duration is Duration.UntilYourNextUpkeep &&
+                floatingEffect.controllerId == activePlayer)
+        }
+        val remainingGlobal = state.globalGrantedTriggeredAbilities.filter { grant ->
+            !(grant.duration is Duration.UntilYourNextUpkeep &&
+                grant.controllerId == activePlayer)
+        }
+        val floatingChanged = remainingFloating.size != state.floatingEffects.size
+        val globalChanged = remainingGlobal.size != state.globalGrantedTriggeredAbilities.size
+        return if (floatingChanged || globalChanged) {
+            state.copy(
+                floatingEffects = if (floatingChanged) remainingFloating else state.floatingEffects,
+                globalGrantedTriggeredAbilities = if (globalChanged) remainingGlobal else state.globalGrantedTriggeredAbilities
+            )
+        } else {
+            state
+        }
+    }
+
+    /**
      * Expire goaded designations (CR 701.15a) for which [activePlayer] is a goader.
      * Runs alongside [expireUntilYourNextTurnEffects] so all "until your next turn"
      * semantics share the same hook (post-untap of the goader's next turn). Removes

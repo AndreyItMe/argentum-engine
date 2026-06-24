@@ -382,6 +382,10 @@ internal class AffectsFilterResolver {
         // in group-static projection. Only meaningful in target/gather-filter contexts via
         // PredicateEvaluator. Never match here.
         StatePredicate.CreatedBySource -> false
+        // Source-relative + stack-aware: "isn't the target of an ability from another same-named
+        // source" only matters when validating/choosing a target via PredicateEvaluator. Group-static
+        // projection has no source permanent and no candidate target on the stack — never match here.
+        StatePredicate.NotTargetedByAbilityFromSameNamedSource -> false
         // Source-relative: "dealt combat damage to the source's controller this turn" needs the
         // ability's source permanent, absent in group-static projection. Only meaningful in
         // target/edict-filter contexts via PredicateEvaluator. Never match here.

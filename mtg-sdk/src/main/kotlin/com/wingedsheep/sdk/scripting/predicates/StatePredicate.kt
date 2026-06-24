@@ -117,6 +117,28 @@ sealed interface StatePredicate {
         override val description: String = "created with this creature"
     }
 
+    /**
+     * The candidate object (a spell or permanent) is **not** currently the target of an ability on
+     * the stack whose source is *another* permanent sharing the effect source's name. Source-relative:
+     * reads `context.sourceId`'s name and excludes any stack ability targeting the candidate whose
+     * source is a different battlefield permanent with the same name.
+     *
+     * Backs Goblin Artisans' self-referential targeting restriction: "counter target artifact spell
+     * you control **that isn't the target of an ability from another creature named Goblin Artisans**"
+     * — so two Goblin Artisans can't both lock onto the same artifact spell. Inert (always true) with
+     * no source context.
+     *
+     * Name comparison reads the base `CardComponent.name`, not the Layer-1 projected name, so a
+     * permanent that *copies* the source's name (Clone, Spy Kit) is not recognized as same-named —
+     * an accepted edge for these self-referential restrictions.
+     */
+    @SerialName("NotTargetedByAbilityFromSameNamedSource")
+    @Serializable
+    data object NotTargetedByAbilityFromSameNamedSource : Entity {
+        override val description: String =
+            "that isn't the target of an ability from another source with the same name"
+    }
+
     // =============================================================================
     // Summoning Sickness (Entity)
     // =============================================================================

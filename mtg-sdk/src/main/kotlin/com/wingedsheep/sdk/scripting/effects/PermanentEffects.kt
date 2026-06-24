@@ -94,10 +94,23 @@ data class BecomeCreatureEffect(
     val addTypes: Set<String> = emptySet(),
     val colors: Set<String>? = null,
     val imageUri: String? = null,
-    val duration: Duration = Duration.EndOfTurn
+    val duration: Duration = Duration.EndOfTurn,
+    /**
+     * Optional dynamic base power. When non-null, the Layer 7b base-P/T floating effect uses
+     * [SerializableModification.SetPowerToughnessDynamic] with this amount instead of the fixed
+     * [power], recomputed continuously at projection. Use `DynamicAmount.EntityProperty(
+     * EntityReference.AffectedEntity, EntityNumericProperty.ManaValue)` for "power equal to its
+     * mana value" (Xenic Poltergeist). Both [dynamicPower] and [dynamicToughness] must be supplied
+     * together; the fixed [power]/[toughness] then serve only as the rules-text display.
+     */
+    val dynamicPower: DynamicAmount? = null,
+    /** Optional dynamic base toughness — see [dynamicPower]. */
+    val dynamicToughness: DynamicAmount? = null
 ) : Effect {
     override val description: String = buildString {
-        append("${target.description} becomes a ${power.description}/${toughness.description} ")
+        val ptText = if (dynamicPower != null && dynamicToughness != null) "*/*"
+            else "${power.description}/${toughness.description}"
+        append("${target.description} becomes a $ptText ")
         if (addTypes.isNotEmpty()) append("${addTypes.joinToString(" ") { it.lowercase() }} ")
         append("creature")
         if (creatureTypes.isNotEmpty()) append(" ${creatureTypes.joinToString("/")}")

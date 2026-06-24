@@ -607,6 +607,15 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.CreatedBySource
     )
 
+    /**
+     * Not the target of an ability on the stack from another permanent sharing the effect source's
+     * name. Goblin Artisans: "counter target artifact spell you control that isn't the target of an
+     * ability from another creature named Goblin Artisans."
+     */
+    fun notTargetedByAbilityFromSameNamedSource() = copy(
+        statePredicates = statePredicates + StatePredicate.NotTargetedByAbilityFromSameNamedSource
+    )
+
     /** Must be attacking or blocking */
     fun attackingOrBlocking() = copy(
         statePredicates = statePredicates + StatePredicate.Or(

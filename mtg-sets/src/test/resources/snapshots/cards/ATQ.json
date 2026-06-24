@@ -1389,6 +1389,62 @@
     ]
 }
 
+// Drafna's Restoration
+{
+    "name": "Drafna's Restoration",
+    "manaCost": "{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Put any number of target artifact cards from target player's graveyard on top of their library in any order.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": "ChosenTargets",
+                    "storeAs": "drafna_cards"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "drafna_cards",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Library",
+                        "player": "TargetPlayer",
+                        "placement": "Top"
+                    },
+                    "order": "ControllerChooses"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetPlayer",
+                "id": "target player"
+            },
+            {
+                "type": "TargetObject",
+                "unlimited": true,
+                "filter": {
+                    "baseFilter": "artifact own:target-player",
+                    "zone": "Graveyard"
+                },
+                "id": "any number of target artifact cards from that player's graveyard"
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "8",
+        "artist": "Amy Weber",
+        "flavorText": "Drafna, founder of the College of Lat-Nam, could create a working model from even the smallest remnants of a newly unearthed artifact.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/b/4be2aa3b-207b-4d21-abfb-6788520c7676.jpg?1562910905"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Dragon Engine
 {
     "name": "Dragon Engine",
@@ -1711,6 +1767,70 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Goblin Artisans
+{
+    "name": "Goblin Artisans",
+    "manaCost": "{R}",
+    "typeLine": "Creature — Goblin Artificer",
+    "oracleText": "{T}: Flip a coin. If you win the flip, draw a card. If you lose the flip, counter target artifact spell you control that isn't the target of an ability from another creature named Goblin Artisans.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "FlipCoin",
+                    "wonEffect": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": {
+                            "type": "PlayerRef",
+                            "player": "You"
+                        }
+                    },
+                    "lostEffect": "Counter"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsArtifact"
+                                ],
+                                "statePredicates": [
+                                    "NotTargetedByAbilityFromSameNamedSource"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            },
+                            "zone": "Stack"
+                        },
+                        "id": "target artifact spell you control"
+                    }
+                ],
+                "descriptionOverride": "{T}: Flip a coin. If you win the flip, draw a card. If you lose the flip, counter target artifact spell you control that isn't the target of an ability from another creature named Goblin Artisans."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "26",
+        "rarity": "UNCOMMON",
+        "artist": "Julie Baroh",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/6/6669d96e-9a7b-4427-a477-f4e76831f593.jpg?1562916423"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -4678,6 +4798,83 @@
         "imageUri": "https://cards.scryfall.io/normal/front/4/6/46adf48f-99d2-440e-9129-794584c1ea21.jpg?1562909619"
     },
     "colorIdentityOverride": []
+}
+
+// Xenic Poltergeist
+{
+    "name": "Xenic Poltergeist",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "{T}: Until your next upkeep, target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "BecomeCreature",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target noncreature artifact"
+                    },
+                    "power": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "toughness": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "addTypes": [
+                        "ARTIFACT"
+                    ],
+                    "duration": "UntilYourNextUpkeep",
+                    "dynamicPower": {
+                        "type": "EntityProperty",
+                        "entity": "AffectedEntity",
+                        "numericProperty": "ManaValue"
+                    },
+                    "dynamicToughness": {
+                        "type": "EntityProperty",
+                        "entity": "AffectedEntity",
+                        "numericProperty": "ManaValue"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsArtifact",
+                                    {
+                                        "type": "Not",
+                                        "predicate": "IsCreature"
+                                    }
+                                ]
+                            }
+                        },
+                        "id": "target noncreature artifact"
+                    }
+                ],
+                "descriptionOverride": "{T}: Until your next upkeep, target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "20",
+        "rarity": "UNCOMMON",
+        "artist": "Dan Frazier",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/1/5149ffff-d38f-458e-bcfa-a4b6b332a0b4.jpg?1562911994"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
 }
 
 // Yawgmoth Demon

@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 68 / 85
+**Implemented:** 84 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -23,28 +23,28 @@
 ### White
 - [x] Argivian Archaeologist
 - [x] Argivian Blacksmith
-- [ ] Artifact Ward
+- [x] Artifact Ward
 - [x] Circle of Protection: Artifacts
-- [ ] Damping Field
+- [x] Damping Field
 - [x] Martyrs of Korlis
-- [ ] Reverse Polarity
+- [x] Reverse Polarity
 
 ### Blue
-- [ ] Drafna's Restoration
+- [x] Drafna's Restoration
 - [x] Energy Flux
 - [x] Hurkyl's Recall
 - [x] Power Artifact
 - [x] Reconstruction
 - [x] Sage of Lat-Nam
-- [ ] Transmute Artifact
+- [x] Transmute Artifact
 
 ### Black
 - [x] Artifact Possession
 - [x] Gate to Phyrexia
 - [x] Haunting Wind
-- [ ] Phyrexian Gremlins
+- [x] Phyrexian Gremlins
 - [x] Priest of Yawgmoth
-- [ ] Xenic Poltergeist
+- [x] Xenic Poltergeist
 - [x] Yawgmoth Demon
 
 ### Red
@@ -52,7 +52,7 @@
 - [x] Atog
 - [x] Detonate
 - [x] Dwarven Weaponsmith
-- [ ] Goblin Artisans
+- [x] Goblin Artisans
 - [x] Orcish Mechanics
 - [x] Shatterstorm
 
@@ -69,19 +69,19 @@
 - [x] Amulet of Kroog
 - [x] Armageddon Clock
 - [x] Ashnod's Altar
-- [ ] Ashnod's Battle Gear
+- [x] Ashnod's Battle Gear
 - [x] Ashnod's Transmogrant
-- [ ] Battering Ram
+- [x] Battering Ram
 - [ ] Bronze Tablet
 - [x] Candelabra of Tawnos
 - [x] Clay Statue
 - [x] Clockwork Avian
-- [ ] Colossus of Sardia
+- [x] Colossus of Sardia
 - [x] Coral Helm
 - [x] Cursed Rack
 - [x] Dragon Engine
 - [x] Feldon's Cane
-- [ ] Golgothian Sylex
+- [x] Golgothian Sylex
 - [x] Grapeshot Catapult
 - [x] Ivory Tower
 - [x] Jalum Tome
@@ -100,19 +100,19 @@
 - [x] Tablet of Epityr
 - [x] Tawnos's Coffin
 - [x] Tawnos's Wand
-- [ ] Tawnos's Weaponry
+- [x] Tawnos's Weaponry
 - [x] Tetravus
-- [ ] The Rack
+- [x] The Rack
 - [x] Triskelion
 - [x] Urza's Avenger
 - [x] Urza's Chalice
-- [ ] Urza's Miter
+- [x] Urza's Miter
 - [x] Wall of Spears
 - [x] Weakstone
 - [x] Yotian Soldier
 
 ### Lands
-- [ ] Mishra's Factory
+- [x] Mishra's Factory
 - [x] Mishra's Workshop
 - [x] Strip Mine
 - [x] Urza's Mine

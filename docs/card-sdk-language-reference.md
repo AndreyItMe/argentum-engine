@@ -934,7 +934,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 - `PreventDamageEffect(amount, direction, scope, sourceFilter, onPrevented, gainLifeFromColors, duration, nextInstanceOnly)` — prevention shield. `amount = null` prevents all. `sourceFilter` can be `ChosenSource` (player picks any source on resolution), `ChosenColoredSource` (player picks a source on resolution, but only colored sources are offered — "a source of your choice that shares a color with the mana spent"; a colorless source qualifies for nothing, so it's never offered — Protective Sphere), or `ChosenSourceMatching(filter)` (player picks a source, but only sources matching the `GameObjectFilter` are offered — the parameterized "a [quality] source of your choice" form; `ChosenSourceMatching(GameObjectFilter.Artifact)` is Circle of Protection: Artifacts, and a future "an enchantment/red/… source of your choice" Circle reuses the same variant with a different filter). `nextInstanceOnly` (default false) is **orthogonal to the eligibility filter**: with `amount = null`, `true` prevents only the *next whole damage instance* from the chosen source then consumes the shield (the Circle of Protection family), while `false` prevents *all* damage from that source for the `duration` (Samite Ministration). Facade `Effects.PreventNextDamageFromChosenArtifactSource(target)` sets `ChosenSourceMatching(Artifact)` + `nextInstanceOnly = true`. `onPrevented: Effect?` is an **arbitrary follow-up effect** run when a single-instance `ChosenSource` shield prevents an instance of damage (see below). `gainLifeFromColors: Set<Color>` makes the shield's controller gain that much life whenever it prevents damage from a source of one of those colors (Samite Ministration). Facades: `Effects.PreventNextDamage`, `Effects.PreventNextDamageFromChosenSource(amount, target)`, `Effects.PreventNextDamageFromChosenSource(onPrevented)`, `Effects.PreventNextDamageFromChosenArtifactSource(target)`, `Effects.PreventAllDamageFromChosenSource(target, gainLifeFromColors)`, `Effects.PreventAllDamageFromChosenColoredSource(target)`, `Effects.DeflectNextDamageFromChosenSource()`, `Effects.ReflectNextDamageFromChosenSourceToController()`. The `preventDamage` flag (default true) — when **false**, the chosen-source shield does NOT prevent the damage (it still hits in full) but still fires its `onPrevented` reaction with the captured amount; this is the "instead it still deals that damage to you AND deals that much to its controller" shape (Eye for an Eye), as opposed to the deflect/prevent shape (Deflecting Palm).
   - **Prevent-and-react (`onPrevented`)** — instead of a bespoke reaction type, the chosen-source shield runs **any composed effect** when it fires, as a real triggered ability on the stack ("When damage is prevented this way, …", CR-faithful — opponents get priority and can respond). Mechanically: on resolution the shield is created **and** a linked event-based delayed triggered ability (`CreateDelayedTriggerEffect`-style) whose `effect` is `onPrevented`; when the shield prevents an instance it emits an internal `DamagePreventedEvent` that fires only that delayed trigger (matched by id). Inside the trigger the prevented amount is `DynamicAmounts.preventedDamage()` ("that much"/"that many") and the prevented source's controller is `EffectTarget.ControllerOfTriggeringEntity` ("that source's controller") — the same pair Tephraderm uses. So Deflecting Palm's `onPrevented` = `DealDamage(ControllerOfTriggeringEntity, preventedDamage())`; New Way Forward's = `Composite(DealDamage(ControllerOfTriggeringEntity, preventedDamage()), DrawCards(preventedDamage()))`. Because the payoff is a normal stack ability, it may be interactive (targets, replacements) like any other.
-- `Effects.BecomeCreature(target, power, toughness, keywords, creatureTypes, removeTypes, addTypes, colors, imageUri, duration)`
+- `Effects.BecomeCreature(target, power, toughness, keywords, creatureTypes, removeTypes, addTypes, colors, imageUri, duration, dynamicPower = null, dynamicToughness = null)`
   (`BecomeCreatureEffect`) — animate / "becomes a creature." Adds CREATURE (Layer 4, keeping the permanent's
   existing types — so "it's still a land"), *sets* creature subtypes to `creatureTypes` (replacing all others),
   removes `removeTypes`, grants additional card types via `addTypes` (e.g. `setOf("ARTIFACT")` for **Mishra's
@@ -946,10 +946,17 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   animated permanent while the effect lasts (e.g. a token's art for "becomes a Fractal") — it changes
   no characteristic (stored as a `SerializableModification.OverrideImage` floating effect that maps to
   `NoOp`, read directly by `ClientStateTransformer` via `GameState.imageOverrideFor`) and reverts with
-  the rest of the animate at cleanup; `null` keeps the permanent's own art. Sarkhan's "4/4 Dragon"
-  (fixed); Fractalize's "green and blue Fractal with base power and toughness each equal to X plus 1,
-  losing all other colors and creature types" (`power = toughness = Add(XValue, Fixed(1))`,
-  `creatureTypes = {"Fractal"}`, `colors = {GREEN, BLUE}`, `imageUri =` the Fractal token's Scryfall art).
+  the rest of the animate at cleanup; `null` keeps the permanent's own art. The optional
+  `dynamicPower`/`dynamicToughness` (`DynamicAmount`, supplied together) instead make the Layer 7b base-P/T a
+  *dynamic* `SetPowerToughnessDynamic` recomputed at projection rather than locked in at resolution — the
+  single-target companion to `MassAnimateEffect`. Facade
+  `Effects.BecomeCreatureWithManaValueStats(target, addTypes, keywords, creatureTypes, duration)` wires P/T = the
+  animated permanent's own mana value (`EntityProperty(AffectedEntity, ManaValue)`) for **Xenic Poltergeist**
+  ("Until your next upkeep, target noncreature artifact becomes an artifact creature with power and toughness
+  each equal to its mana value"). Sarkhan's "4/4 Dragon" (fixed); Fractalize's "green and blue Fractal with base
+  power and toughness each equal to X plus 1, losing all other colors and creature types"
+  (`power = toughness = Add(XValue, Fixed(1))`, `creatureTypes = {"Fractal"}`, `colors = {GREEN, BLUE}`,
+  `imageUri =` the Fractal token's Scryfall art).
 - `BecomeArtifactEffect(target, cardTypes = {"ARTIFACT"}, subtypes, colors = emptySet(), loseAllAbilities = true, grantedAbility?, duration = Permanent)` — the general "becomes a Treasure/Food/Clue/artifact" transform: stacks continuous floating effects on `target` — Layer 4 `SetCardTypes` (replaces *all* card types) + `SetAllSubtypes` (replaces *all* subtypes), Layer 5 color (`emptySet()` = colorless), Layer 6 `RemoveAllAbilities` when `loseAllAbilities` — plus an optional single `grantedAbility` recorded durably in `grantedActivatedAbilities` (so it survives the ability wipe; the enumerators read it after the projected `lostAllAbilities` check). `Duration.Permanent` ends only when the permanent leaves the battlefield. Differs from `BecomeCreatureEffect` (which *adds* CREATURE + sets P/T): this fully replaces types/subtypes so the result is exactly the named artifact. (Vraska, the Silencer: a dead opponent's creature returns as a bare colorless Treasure with the sac-for-mana ability.)
 - `BecomeSaddledEffect(target = Self)` (facade `Effects.BecomeSaddled()`) — target permanent becomes saddled until end of turn (CR 702.171b). The resolving half of a Saddle ability: stamps the transient `SaddledComponent` marker (cleared at end of turn / on leaving the battlefield; not copiable) and emits `BecameSaddledEvent`. No P/T or type change — read the marker with `Conditions.SourceIsSaddled` / `.saddled()`.
 - `BecomePreparedEffect(target = Self)` (facade `Effects.BecomePrepared()`) — target permanent becomes prepared (Secrets of Strixhaven). The target must be a `CardLayout.PREPARE` permanent on the battlefield; becoming prepared creates a castable copy of its prepare spell in exile (shared `PreparationLogic.makePrepared`, the same path used when a `Keyword.PREPARED` creature enters prepared). A creature already prepared, not on the battlefield, or not a preparation card does nothing. Used by Leech Collector ("Whenever you gain life for the first time each turn, this creature becomes prepared").
@@ -1696,6 +1703,15 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   predicate can't express it. Gather with `Patterns.Group.returnAllToHand(GroupFilter(
   GameObjectFilter.Artifact.ownedByTargetPlayer()))` — its `BattlefieldMatching(player = Player.Each)`
   adds no `youControl` constraint, so the filter matches purely on ownership across the battlefield.
+  Also works **at target-validation time** in a *graveyard* zone for a separately-targeted player:
+  `TargetValidator` threads the chosen player target (target index 0) into graveyard-card validation,
+  so a `TargetObject(unlimited = true, filter = TargetFilter(GameObjectFilter.Artifact.ownedByTargetPlayer(),
+  zone = Zone.GRAVEYARD))` legally selects "any number of target artifact cards from **target player's**
+  graveyard" — **Drafna's Restoration**. (An `unlimited` requirement combined with a bounded one is now
+  overflow-safe in the validator's per-cast target-count cap.) Pair with `GatherCardsEffect(CardSource.
+  ChosenTargets)` → `MoveCollectionEffect(destination = ToZone(LIBRARY, player = Player.TargetPlayer,
+  placement = Top), order = CardOrder.ControllerChooses)` to put the chosen cards on top of *their*
+  (the target player's) library in a player-chosen order.
 - `.withControllerPredicate(p)` — set any `ControllerPredicate` directly; the entry point for the
   **composed** predicates `ControllerPredicate.And(list)` / `Or(list)` / `Not(p)`, which express
   heterogeneous controller/owner relationships in one filter — e.g. "creatures you own but don't
@@ -1904,6 +1920,16 @@ work for abilities-on-stack (which carry no `CardComponent`).
   `stampCreator = true`. Backs "tokens created with this creature" (Tetravus reabsorbing its own Tetravite
   tokens), which `"{filter} tokens you control"` can't express when several sources mint the same token.
   Yields false for non-tokens / unstamped tokens / no source context.
+- `NotTargetedByAbilityFromSameNamedSource` (filter builder
+  `notTargetedByAbilityFromSameNamedSource()`) — source-relative + stack-aware: the candidate object
+  (a spell or permanent) is **not** currently the target of an *ability* on the stack whose source is
+  *another* battlefield permanent sharing the effect source's (`PredicateContext.sourceId`) name.
+  Backs Goblin Artisans' self-referential targeting restriction ("counter target artifact spell you
+  control that isn't the target of an ability from another creature named Goblin Artisans") so two
+  Goblin Artisans can't both lock onto the same spell. Evaluated in target validation/choice via
+  `PredicateEvaluator`; the spell-target validation path now passes the activating ability's
+  `sourceId` so it can resolve. Inert (true) with no source context, and in group-static projection
+  (no source / no candidate-on-stack).
 - `CrewedOrSaddledSourceThisTurn` (filter builder `crewedOrSaddledSourceThisTurn()`) —
   source-relative (CR 702.122 / 702.171): matches a creature that crewed or saddled the effect's
   source permanent this turn (i.e. one tapped to pay that permanent's Crew/Saddle cost). Resolves

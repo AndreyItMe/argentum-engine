@@ -6,9 +6,10 @@
 > (`MagicCompRules_20260417.pdf` / `.txt`, repo root) in full, including edge cases, timing,
 > and interactions. A card is not done until its scenario test proves rules-correct behavior.
 
-**Set:** Antiquities (ATQ), 85 cards, released 1994-03-04. **Implemented: 48 / 85** — all 45
-no-engine-work (List A) cards plus the 3 pre-existing reprints (Jalum Tome, Sage of Lat-Nam,
-Wall of Spears). The remaining 37 are List B (need engine work). Verify with
+**Set:** Antiquities (ATQ), 85 cards, released 1994-03-04. **Implemented: 84 / 85** — every
+card except **Bronze Tablet** (postponed: ante, no engine support — consistent with the ARN
+ante stance). All 36 List B cards (those that needed engine work) are now implemented; the
+engine features they required are listed by group below. Verify with
 `scripts/card-status --set ATQ`.
 
 The set's mechanics are catalogued in [`MECHANICS.md`](MECHANICS.md); the checklist is
@@ -18,11 +19,12 @@ mechanic named).
 
 ## Scaffolding status
 
-**Scaffolded; all List A cards implemented.** `mtg-sets/.../definitions/atq/AntiquitiesSet.kt`
+**Complete — all 84 implementable cards done.** `mtg-sets/.../definitions/atq/AntiquitiesSet.kt`
 exists (auto-discovered via `CardDiscovery`, with `basicLandsFallback = PortalSet`), and every
-List A card has a full `CardDefinition` under `definitions/atq/cards/` with one commit each.
-The 37 List B cards remain — each needs the engine feature named in its group below
-(`add-feature` territory), to be built in separate PRs.
+card except Bronze Tablet has a full `CardDefinition` under `definitions/atq/cards/` with one
+commit each plus a scenario test. The List B engine features named in the groups below were all
+built (`add-feature`) and are documented in `docs/card-sdk-language-reference.md`. Only Bronze
+Tablet (ante) remains postponed.
 
 ## Data sources — do NOT hit the network
 
