@@ -481,6 +481,65 @@
     ]
 }
 
+// Bebop & Rocksteady
+{
+    "name": "Bebop & Rocksteady",
+    "manaCost": "{1}{B/G}{B/G}",
+    "typeLine": "Legendary Creature — Boar Rhino Mutant",
+    "oracleText": "Whenever Bebop & Rocksteady attack or block, sacrifice a permanent unless you discard a card.",
+    "creatureStats": {
+        "power": 7,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "PayOrSuffer",
+                    "cost": {
+                        "type": "PayAtom",
+                        "atom": "AtomDiscard"
+                    },
+                    "suffer": {
+                        "type": "Sacrifice",
+                        "filter": {}
+                    }
+                },
+                "descriptionOverride": "Whenever Bebop & Rocksteady attack, sacrifice a permanent unless you discard a card."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "BlockEvent",
+                "effect": {
+                    "type": "PayOrSuffer",
+                    "cost": {
+                        "type": "PayAtom",
+                        "atom": "AtomDiscard"
+                    },
+                    "suffer": {
+                        "type": "Sacrifice",
+                        "filter": {}
+                    }
+                },
+                "descriptionOverride": "Whenever Bebop & Rocksteady block, sacrifice a permanent unless you discard a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "140",
+        "rarity": "RARE",
+        "artist": "Néstor Ossandón Leal",
+        "flavorText": "\"They'll beat you with fists, with a bat, with a knife. / So don't try to stop them, just run for your life! / Get set and get ready, / For Bebop and Rocksteady!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/3/535461bd-f763-408b-816f-64b7bfb9210d.jpg?1760102796"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
+
 // Bebop, Warthog Warrior
 {
     "name": "Bebop, Warthog Warrior",

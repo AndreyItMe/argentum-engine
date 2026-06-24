@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 151 / 190
+**Implemented:** 152 / 190
 ---
 
 - [x] Action News Crew
@@ -13,7 +13,7 @@
 - [x] April, Reporter of the Weird
 - [x] Armaggon, Future Shark
 - [x] Baxter Stockman
-- [ ] Bebop & Rocksteady
+- [x] Bebop & Rocksteady
 - [x] Bebop, Warthog Warrior
 - [x] Bespoke Bō
 - [x] Bot Bashing Time
