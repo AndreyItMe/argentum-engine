@@ -10,12 +10,19 @@ Verify status anytime with: `scripts/card-status --set TMT` (and `--list --set T
 
 ## Status
 
-96 / 190 implemented (basics excluded — handled by `basicLandsFallback`). See
-`cards.md` for the full checklist; the per-card commits on `tmt-scaffolding`
-all carry `flavorText` in metadata.
+113 / 190 implemented (basics excluded — handled by `basicLandsFallback`). See
+`cards.md` for the full checklist (the authoritative status); the per-card
+commits all carry `flavorText` in metadata.
 
-The remaining 94 cards mostly cluster on a handful of unresolved gaps:
-- **Sneak** — 26 cards (Gap A — unresolved)
+The remaining 77 cards mostly cluster on a handful of unresolved gaps:
+- **Sneak** — RESOLVED (Gap A). The keyword, alt-cost plumbing, and
+  "sneak cost was paid" flag are fully wired; 17 of 26 Sneak cards have
+  shipped. The 9 still-pending Sneak cards carry no *other* recorded blocker —
+  they are unblocked at the mechanic level and simply await implementation
+  (`Dark Leo & Shredder`, `Karai, Future of the Foot`, `Kitsune's Technique`,
+  `Leonardo's Technique`, `Leonardo, Sewer Samurai`, `Michelangelo's
+  Technique`, `Michelangelo, Improviser`, `Raphael's Technique`,
+  `Shark Shredder, Killer Clone`).
 - **Disappear** — 9 cards (Gap B — unresolved)
 - **Alliance** — 4 cards left (Gap C — partly cleared; 6 shipped composably,
   the remaining 4 each have an *additional* unresolved blocker beyond Alliance
@@ -35,6 +42,19 @@ The remaining 94 cards mostly cluster on a handful of unresolved gaps:
 - Plus various one-offs from Gaps M and N–NN
 
 Gaps **resolved across the runs so far**:
+- **Gap A — Sneak — RESOLVED**: the full alternative-cost pipeline shipped.
+  SDK: `Keyword.SNEAK`, `KeywordAbility.Sneak(cost)`, the `sneak("{cost}")`
+  DSL helper on `CardBuilder`, the `ChoiceSlot.SNEAK` flag, and the
+  `Conditions.SneakCostWasPaid` predicate. Engine: `SneakWindow` (the
+  declare-blockers payment window that bounces an unblocked attacker),
+  `SneakCastEnumerator` (surfaces "cast for Sneak" only at the right step),
+  plus wiring in `CastSpellHandler`, `StackResolver`, and `ConditionEvaluator`
+  so a permanent cast for Sneak enters tapped and attacking and carries the
+  "sneak cost was paid" fact durably. Proven by `SneakTest` and per-card
+  scenario tests. 17 of 26 Sneak cards have shipped (incl. all four
+  sneak-was-paid riders: `Leonardo, Leader in Blue`, `Turncoat Kunoichi`,
+  `The Last Ronin's Technique`, and the Karai rider). The remaining 9 carry
+  no separate blocker and are pending implementation only.
 - **Gap C — Alliance (partly cleared)**: 6 of the 10 Alliance cards (`East
   Wind Avatar`, `EPF Point Squad`, `Mighty Mutanimals`, `Mutant Town
   Musicians`, `Raphael, Tough Turtle`, `Slash, Reptile Rampager`) shipped by
@@ -173,40 +193,48 @@ Composable cards (no engine change needed) can land directly on `main`, one comm
 Each gap is its own PR. A card with more than one gap is listed under its dominant one
 with the secondary noted inline. Quotes are from the card's oracle text in `tmt_full.json`.
 
-### Gap A — Sneak (alternative cost) — 26 cards
-**Engine change:** new keyword `SNEAK` + `KeywordAbility.Sneak(cost)` + alternative-cost
-plumbing that branches on a non-mana, mid-combat condition.
+### Gap A — Sneak (alternative cost) — RESOLVED — 17 of 26 cards shipped
+**Status:** the keyword + alternative-cost pipeline is fully implemented and tested.
+All four required pieces below landed; what remains is purely per-card authoring for
+the 9 unimplemented Sneak cards (none of which carry a *separate* engine blocker).
 
 > Sneak {cost} (You may cast this spell for {cost} if you also return an unblocked
 > attacker you control to hand during the declare blockers step.
 > [He/She/It enters tapped and attacking.])
 
-Required pieces:
-1. **Alt-cost gate at declare-blockers.** Today's alt-cost pipeline (`Flashback`,
-   `Harmonize`, `Impending`) all resolve at cast time. Sneak's payment piece — returning
-   an unblocked attacker you control to hand — happens during the declare-blockers step
-   *of the same turn the spell is cast*. The action enumerator must surface "cast for
-   Sneak" only when (a) it's the declare-blockers step of your combat, (b) you control
-   an unblocked attacker, and (c) the spell is castable at the current speed. Casting
-   for Sneak also queues the bounce-an-unblocked-attacker as an additional payment.
-2. **Permanent spells enter tapped and attacking.** When a creature/artifact-creature
-   spell resolves having paid its sneak cost, the permanent enters tapped and joins the
-   attack. This already exists for cascade/mobilize tokens (CreateTokenEffect with
-   `tappedAndAttacking`) — reuse the same `attackingState` plumbing for cast permanents.
-3. **Per-spell "sneak-was-paid" flag.** 4 cards (`Leonardo, Leader in Blue`,
-   `Turncoat Kunoichi`, `Karai, Future of the Foot`, `The Last Ronin's Technique`) read
-   "if [its] sneak cost was paid" later — at resolution, at ETB, or as a turn-long
-   rider on a damage trigger. Stash the flag on the spell-cast event (cast-time) and
-   on the resulting permanent's component (post-resolution), and expose it as a
-   `Condition.SneakCostWasPaid(source)` predicate.
-4. **DSL helper.** `sneak("{1}{W}") { ... }` on `CardBuilder`, mirroring `harmonize`
-   and `impending`.
+Delivered pieces:
+1. **Alt-cost gate at declare-blockers — DONE.** `SneakCastEnumerator`
+   (`rules-engine/.../legalactions/enumerators/`) surfaces "cast for Sneak" only when
+   it's the declare-blockers step of your combat, you control an unblocked attacker, and
+   the spell is castable. `SneakWindow` (`rules-engine/.../mechanics/`) drives the
+   bounce-an-unblocked-attacker payment.
+2. **Permanent spells enter tapped and attacking — DONE.** Cast permanents that paid
+   their sneak cost reuse the `attackingState` plumbing (wired through `CastSpellHandler`
+   and `StackResolver`).
+3. **Per-spell "sneak-was-paid" flag — DONE.** The fact rides the spell-cast context and
+   the resulting permanent via `ChoiceSlot.SNEAK`, and is read back through
+   `Conditions.SneakCostWasPaid` (`SourceConditions.kt`). Exercised by the four rider
+   cards: `Leonardo, Leader in Blue`, `Turncoat Kunoichi`, `The Last Ronin's Technique`,
+   and the Karai rider.
+4. **DSL helper — DONE.** `sneak("{1}{W}")` on `CardBuilder`, mirroring `harmonize` /
+   `impending`.
 
-Cards: `Action News Crew`? — _no, Channel_. Sneak cards (26):
-`The Last Ronin's Technique`, `Leonardo, Leader in Blue`, `Leonardo, Big Brother`,
-`Leonardo, Cutting Edge`, `Leonardo, Sewer Samurai`, `Leonardo's Technique`,
-`Turncoat Kunoichi`, `Karai, Future of the Foot`, plus the remaining 18 — full list
-is the cards with `"Sneak"` in their `keywords` array in `tmt_full.json`.
+Tests: `SneakTest` plus per-card scenario tests (`JennikasTechniqueTest`,
+`DonatellosTechniqueTest`, `ShreddersTechniqueTest`, `SplintersTechniqueTest`,
+`TurncoatKunoichiTest`, `LeonardoLeaderInBlueTest`, `TheLastRoninsTechniqueTest`,
+`KaraisTechniqueTest`, `NewGenerationsTechniqueTest`, `FootNinjasTest`).
+
+Shipped (17): `Donatello's Technique`, `Donatello, Gadget Master`, `Foot Ninjas`,
+`Jennika's Technique`, `Karai's Technique`, `Leonardo, Big Brother`,
+`Leonardo, Cutting Edge`, `Leonardo, Leader in Blue`, `New Generation's Technique`,
+`Oroku Saki, Shredder Rising`, `Raphael, the Nightwatcher`, `Shredder's Technique`,
+`Shredder, Unrelenting`, `Splinter's Technique`, `Splinter, Hamato Yoshi`,
+`The Last Ronin's Technique`, `Turncoat Kunoichi`.
+
+Still to author (9, mechanic-unblocked): `Dark Leo & Shredder`,
+`Karai, Future of the Foot`, `Kitsune's Technique`, `Leonardo's Technique`,
+`Leonardo, Sewer Samurai`, `Michelangelo's Technique`, `Michelangelo, Improviser`,
+`Raphael's Technique`, `Shark Shredder, Killer Clone`.
 
 ### Gap B — Disappear (ability-word trigger with "a permanent left the battlefield under your control this turn" condition) — 9 cards
 **Engine change:** generalize the existing `nonlandPermanentLeftBattlefieldThisTurn`
@@ -612,8 +640,9 @@ implemented, with the underlying blocker. Gaps reference the sections above
 "Composable — deferred" have all landed and been removed. Likewise, cards
 that subsequently landed in later runs (the six Alliance composables,
 Action News Crew, Casey Jones Vigilante, Escape Tunnel, Manhole Missile,
-Wingnut) have been removed from the table — see the "Gaps resolved" list at
-the top of the Status section for what closed those.
+Wingnut, and the 17 shipped Sneak cards once Gap A resolved) have been removed
+from the table — see the "Gaps resolved" list at the top of the Status section
+for what closed those.
 
 | Card                                  | Blocker / Gap                               |
 |---------------------------------------|---------------------------------------------|
@@ -624,16 +653,13 @@ the top of the Status section for what closed those.
 | Cool but Rude                         | Gap U (Class)                               |
 | Courier of Comestibles                | Gap V (search-or-fail-then-token)           |
 | Crustacean Commando                   | Gap W (Mutagen token)                       |
-| Dark Leo & Shredder                   | Gap A (Sneak)                               |
+| Dark Leo & Shredder                   | Gap A RESOLVED — pending authoring (no other blocker) |
 | Does Machines                         | Gap U (Class)                               |
 | Don & Leo, Problem Solvers            | Gap X (paired flicker)                      |
 | Don & Raph, Hard Science              | Gap Y (grant Affinity to next spell)        |
-| Donatello's Technique                 | Gap A (Sneak)                               |
-| Donatello, Gadget Master              | Gap A (Sneak) + token-with-overrides        |
 | Donatello, Mutant Mechanic            | Gap M (Pizza-Face-style type-grant)         |
 | Everything Pizza                      | Pentacolored sac activation that also draws + makes each opponent discard — bespoke |
 | Foot Mystic                           | Gap B (Disappear)                           |
-| Foot Ninjas                           | Gap A (Sneak)                               |
 | Fugitive Droid                        | Gap Z (artifact-ETB-this-turn + sac-counter)|
 | General Traag, Heart of Stone         | Gap AA (when-you-do sub-trigger)            |
 | Genghis Frog                          | Gap W (Mutagen token)                       |
@@ -641,26 +667,21 @@ the top of the Status section for what closed those.
 | Groundchuck & Dirtbag                 | Gap CC (tap-land-for-mana trigger)          |
 | Grounded for Life                     | Gap DD (cost reduction if target tapped)    |
 | Insectoid Exterminator                | Gap B (Disappear)                           |
-| Jennika's Technique                   | Gap A (Sneak)                               |
-| Karai's Technique                     | Gap A (Sneak)                               |
-| Karai, Future of the Foot             | Gap A (Sneak)                               |
-| Kitsune's Technique                   | Gap A (Sneak)                               |
+| Karai, Future of the Foot             | Gap A RESOLVED — pending authoring (no other blocker) |
+| Kitsune's Technique                   | Gap A RESOLVED — pending authoring (no other blocker) |
 | Kitsune, Dragon's Daughter            | "Exchange control of two creatures controlled by different players" — bespoke |
 | Koya, Death from Above                | Delayed end-step "you may pay; if not, return that card" conditional — bespoke |
 | Krang & Shredder                      | Gap B (Disappear) + Gap M (cast-from-exile-without-paying chain) |
 | Leader's Talent                       | Gap U (Class)                               |
 | Leatherhead, Swamp Stalker            | Hexproof counter + "may remove a counter; when you do, …" (Gap AA shape) |
-| Leonardo's Technique                  | Gap A (Sneak)                               |
-| Leonardo, Big Brother                 | Gap A (Sneak)                               |
-| Leonardo, Cutting Edge                | Gap A (Sneak)                               |
-| Leonardo, Leader in Blue              | Gap A (Sneak) + sneak-was-paid rider        |
-| Leonardo, Sewer Samurai               | Gap A (Sneak)                               |
+| Leonardo's Technique                  | Gap A RESOLVED — pending authoring (no other blocker) |
+| Leonardo, Sewer Samurai               | Gap A RESOLVED — pending authoring (no other blocker) |
 | Lita, Little Orphan Amphibian         | Gap C (Alliance) + Gap E (mode-not-yet-chosen) |
 | Lord Dregg, Insect Invader            | Gap B (Disappear) + Gap M (Sacrifice-a-token cost) |
 | Madame Null, Power Broker             | Gap GG (may-pay-dynamic-life)               |
-| Michelangelo's Technique              | Gap A (Sneak)                               |
+| Michelangelo's Technique              | Gap A RESOLVED — pending authoring (no other blocker) |
 | Michelangelo, Game Master             | Gap B (Disappear)                           |
-| Michelangelo, Improviser              | Gap A (Sneak)                               |
+| Michelangelo, Improviser              | Gap A RESOLVED — pending authoring (no other blocker) |
 | Michelangelo, Mutant BFF              | Gap W (Mutagen) + counter-doubling replacement |
 | Michelangelo, Weirdness to 11         | Gap W (Mutagen) + counter-doubling replacement |
 | Mikey & Don, Party Planners           | Play-from-top + cast-Mutant/Ninja/Turtle-from-top — bespoke |
@@ -668,42 +689,33 @@ the top of the Status section for what closed those.
 | Mondo Gecko                           | Discard-to-grant-color + hexproof-from-color combat trigger — bespoke |
 | Mutagen Man, Living Ooze              | Gap W (Mutagen) + activated-ability-cost-reduction static |
 | Mutant Chain Reaction                 | Gap W (Mutagen)                             |
-| New Generation's Technique            | Gap A (Sneak)                               |
 | Ninja Teen                            | Gap U (Class)                               |
 | North Wind Avatar                     | "Put a card you own from outside the game into your hand" (wishboard) |
 | Northampton Farm                      | Custom land with linked-exile mechanic — bespoke |
 | Novel Nunchaku                        | "When you do, equipped creature fights" sub-trigger (Gap AA shape) |
 | Ooze Spill                            | Gap W (Mutagen)                             |
-| Oroku Saki, Shredder Rising           | Gap A (Sneak)                               |
 | Paramecia Coloniex                    | Dies → "may exile; when you do …" sub-trigger (Gap AA shape) |
 | Party Dude                            | Gap U (Class)                               |
 | Pizza Face, Gastromancer              | Gap B (Disappear) + Gap M (type-grant on non-creature) |
 | Prehistoric Pet                       | Gap HH (can't-be-blocked-by-greater-power)  |
 | Purple Dragon Punks                   | Gap KK (artifact-spell-or-any-ability mana restriction) |
 | Putrid Pals                           | Gap B (Disappear)                           |
-| Raphael's Technique                   | Gap A (Sneak)                               |
+| Raphael's Technique                   | Gap A RESOLVED — pending authoring (no other blocker) |
 | Raphael, Most Attitude                | Gap C (Alliance)                            |
 | Raphael, Ninja Destroyer              | Gap F (Enrage) + Gap G (persistent mana)    |
-| Raphael, the Nightwatcher             | Gap A (Sneak)                               |
 | Rat King, Verminister                 | Gap B (Disappear) + Gap M (same-name reanimate) |
 | Ray Fillet, Man Ray                   | Gap W (Mutagen)                             |
 | Retro-Mutation                        | Type-overriding Aura + "loses all abilities" UEOT |
 | Return to the Sewers                  | Owner-chooses-top-or-bottom + Gap W (Mutagen) |
 | Sewer-veillance Cam                   | Gap II (tap-or-untap controller-chooses)    |
-| Shark Shredder, Killer Clone          | Gap A (Sneak)                               |
-| Shredder's Technique                  | Gap A (Sneak)                               |
-| Shredder, Unrelenting                 | Gap A (Sneak)                               |
+| Shark Shredder, Killer Clone          | Gap A RESOLVED — pending authoring (no other blocker) |
 | Slithering Cryptid                    | Gap W (Mutagen)                             |
-| Splinter's Technique                  | Gap A (Sneak)                               |
-| Splinter, Hamato Yoshi                | Gap A (Sneak)                               |
 | Technodrome                           | "Can't attack or block unless its power is 6 or greater" — Gap O-shape on self |
 | The Cloning of Shredder               | Gap MM (addedSubtypes on CreateTokenCopy)   |
 | The Last Ronin                        | Gap AA (Mill-X-then-when-you-do) + Gap NN (attacks-alone trigger) |
-| The Last Ronin's Technique            | Gap A (Sneak) + sneak-was-paid token rider  |
 | The Neutrinos                         | Gap C (Alliance)                            |
 | The Ooze                              | Gap W (Mutagen) + dies-with-counter trigger |
 | Tokka & Rahzar, Terrible Twos         | "Can't be countered" + mana-spent-less-than-MV trigger — bespoke |
-| Turncoat Kunoichi                     | Gap A (Sneak) + sneak-was-paid ETB rider    |
 | Turtle Lair                           | Gap JJ (multi-subtype mana restriction)     |
 | Turtle Van                            | Gap LL (crewed-this-turn filter)            |
 | Turtles Forever                       | Wishboard tutor (outside-the-game search)   |
