@@ -10453,6 +10453,82 @@
     ]
 }
 
+// Venus, Torn Between Worlds
+{
+    "name": "Venus, Torn Between Worlds",
+    "manaCost": "{4}{G}",
+    "typeLine": "Legendary Creature — Mutant Frog Turtle",
+    "oracleText": "Whenever Venus is dealt damage, put that many +1/+1 counters on her. (She must survive the damage to get the counters.)\nWhenever a creature you control with a counter on it deals combat damage to a player, you may pay {U}. If you do, draw a card.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "DamageReceivedEvent",
+                "effect": {
+                    "type": "AddDynamicCounters",
+                    "counterType": "+1/+1",
+                    "amount": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_DAMAGE_AMOUNT"
+                    },
+                    "target": "Self"
+                },
+                "descriptionOverride": "Whenever Venus is dealt damage, put that many +1/+1 counters on her."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer",
+                    "sourceFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            "HasAnyCounter"
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayManaCost",
+                            "cost": "{U}"
+                        }
+                    },
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                },
+                "descriptionOverride": "Whenever a creature you control with a counter on it deals combat damage to a player, you may pay {U}. If you do, draw a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "136",
+        "rarity": "UNCOMMON",
+        "artist": "April Prime",
+        "flavorText": "Built from scraps. Defined by self.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/c/fcb59b16-3d76-478e-9306-969dd2cb1b5a.jpg?1771586980"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Weather Maker
 {
     "name": "Weather Maker",
