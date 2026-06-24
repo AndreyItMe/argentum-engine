@@ -3752,6 +3752,59 @@
     }
 }
 
+// Leonardo's Technique
+{
+    "name": "Leonardo's Technique",
+    "manaCost": "{3}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Sneak {1}{W} (You may cast this spell for {1}{W} if you also return an unblocked attacker you control to hand during the declare blockers step.)\nReturn one or two target creature cards each with mana value 3 or less from your graveyard to the battlefield.",
+    "keywords": [
+        "SNEAK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Sneak",
+            "cost": "{1}{W}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                },
+                "destination": "Battlefield",
+                "fromZone": "Graveyard"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "count": 2,
+                "minCount": 1,
+                "filter": {
+                    "baseFilter": "creature mv<=3 own:you",
+                    "zone": "Graveyard"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "18",
+        "rarity": "RARE",
+        "artist": "Andreas Zafiratos",
+        "flavorText": "\"That's right. Eyes on me.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/0/405e4057-e26c-4882-89a9-706868548c37.jpg?1769005546"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Leonardo, Big Brother
 {
     "name": "Leonardo, Big Brother",
