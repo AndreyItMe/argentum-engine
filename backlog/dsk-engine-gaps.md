@@ -25,6 +25,29 @@ What remains are **~12 genuine gaps** — almost all one-off rares/uncommons —
 (Rooms door-state exposure) that unlocks several cards at once. None require a new mechanic subsystem
 on the scale of the headline keywords.
 
+### Marquee mythics (held out of autonomous scope — scoped June 2026)
+
+The five headline mythics were deliberately kept out of autonomous card-authoring scope on the
+expectation they need engine work. Verified against source, the picture is narrower than feared —
+four are small, isolated SDK additions; only **Marina Vendrell** reshapes a subsystem. Each maps to
+the numbered gaps below:
+
+| Card | Engine gap(s) | Lift |
+|------|---------------|------|
+| **Zimone, All-Questioning** | prime/numeric-predicate condition (#12) | XS |
+| **Kaito, Bane of Nightmares** | "source has ≥1 loyalty counter" condition (#15) | S |
+| **Meathook Massacre II** | opponent-decides-or-you-steal death-trigger flow (#16) | M |
+| **Valgavoth, Terror Eater** | linked-exile from a *replacement* effect (#17) + dynamic pay-life-=-MV alt-cost (#18) + `Ward—Sacrifice` count param (#19) | M |
+| **Marina Vendrell** | Rooms door-state model: lock/unlock *effect* + re-lock transition + events (#1b, below) | **L** |
+
+Notes that correct earlier optimism: Valgavoth and Marina-the-creature were previously filed under
+"buildable-but-complex pure compositions" — that's wrong. Valgavoth's linked-exile pile is populated by
+a *replacement* redirect, which does **not** link to the source today (#17); and Marina the creature
+(distinct from *Marina Vendrell's Grimoire*, a separate card) needs door **re-locking**, which the
+grow-only door model cannot represent (#1b). Kaito's Ninjutsu is already built — it ships as the
+**"Sneak"** keyword (from TMNT), and the engine already permits sneak-attacking a planeswalker, so
+planeswalker-as-ninja is covered.
+
 ### Already supported — no new engine work
 
 - **Impending N** — `impending(n, cost)` DSL + `KeywordAbility.Impending`; time-counter alt-cost,
@@ -81,6 +104,20 @@ blocked only by this. One cohesive feature closes all of them.
    route the unlock handler through the cost calculator.
    → **Inquisitive Glimmer** ("unlock costs you pay cost {1} less"; its enchantment-spell discount is
      already buildable via `ModifySpellCost`).
+
+### 1b — Door lock/unlock as an *effect*, and re-locking (heavier — a model change, not exposure)
+
+Distinct from the exposure cluster above: this changes the door-state *model*. Today unlock is a
+player **special action** only (`UnlockRoomDoorHandler`, CR 709.5e) — there is no `Effect` that
+unlocks a door, and `RoomComponent.unlocked` is a **grow-only** `Set<RoomFaceId>` ("locked" = "not in
+the set"), with only a `DoorUnlockedEvent`. There is no way to remove a face from the set, no
+`DoorLockedEvent`, and no lock-vs-unlock choice. Closing this needs: (a) a door-state model that can
+represent the unlocked→locked transition, (b) a `LockOrUnlockDoor` effect that targets a Room you
+control and carries the lock/unlock choice (and the per-door choice), and (c) `DoorLocked` /
+`DoorUnlocked` events so triggers stay consistent. This is `add-feature` work on the Rooms subsystem.
+   → **Marina Vendrell** (`{T}: Lock or unlock a door of target Room you control. Activate only as a
+     sorcery.` — the ETB reveal-7/enchantments-to-hand/rest-to-bottom-random half is a pure
+     composition, and sorcery-speed timing already exists via `TimingRule.SorcerySpeed`).
 
 ---
 
@@ -166,6 +203,43 @@ to a **player** that have no home yet.
       those creatures"). Skipped during the DSK spells batch (substituted **Come Back Wrong**)
       rather than approximated — `add-feature` territory.
 
+15. **"Source has one or more loyalty counters" condition.** `ConditionalStaticAbility` +
+    `BecomeCreatureEffect` already express "becomes a 3/4 Ninja with hexproof," and a "during your
+    turn" gate exists — but `SourceConditions` has no loyalty-counter test. Add
+    `SourceHasCounter(CounterType.LOYALTY)` (or `…GreaterThan(LOYALTY, 0)`) so the conditional
+    planeswalker-animation can be gated. (Worth a combat sanity test that the conditionally-animated
+    planeswalker deals/takes damage correctly; the parts are otherwise proven.)
+    → **Kaito, Bane of Nightmares** (everything else exists: Ninjutsu = the **Sneak** keyword, emblem
+      with a `Ninjas get +1/+1` static, `Surveil 2`, draw-per-`TurnTracker.OPPONENTS_WHO_LOST_LIFE`,
+      tap + two `STUN` counters).
+
+16. **Opponent-decides-or-you-steal death trigger.** `PayOrSuffer` routes its decision to the
+    *source's* controller; here the decision belongs to the **dying creature's controller** and the
+    consequence is *you* reanimating their card under your control with a finality counter. Needs the
+    pay/suffer decision routed to a non-source player with a theft (controller-override return)
+    consequence. (The `you`-side half — "your creature dies, you may pay 3 life, return it under your
+    control with a finality counter" — composes from `TriggeringEntity` + `MoveToZoneEffect(controllerOverride)`
+    + entering finality counter, but is untested end-to-end and should get a scenario test. `{X}{X}`
+    → X-driven `each player sacrifices X`, and `CounterType.FINALITY`, all exist.)
+    → **Meathook Massacre II**.
+
+17. **Linked exile populated by a *replacement* effect.** `RedirectZoneChange` can send "a card you
+    didn't control that would hit an opponent's graveyard" to exile (Anafenza precedent with an
+    `OwnedByOpponent` filter) — but it does **not** record those cards in the source's
+    `LinkedExileComponent`, which is what `GrantMayCastFromLinkedExile(duringYourTurnOnly=true)` reads.
+    The explicit exile effects (`ExileLinkedToSource`, `ExileUntilLeaves`) link; the replacement path
+    does not. Needs a redirect-and-link variant (or a linking hook on the redirect).
+    → **Valgavoth, Terror Eater** ("play cards exiled with Valgavoth").
+
+18. **Pay-life alt-cost equal to the spell's mana value.** `SelfAlternativeCost` + `AdditionalCost.PayLife`
+    support "pay life instead of mana," but only a hard-coded amount; needs the life amount to read a
+    `DynamicAmount` = the spell's mana value.
+    → **Valgavoth, Terror Eater** ("pay life equal to its mana value rather than pay its mana cost").
+
+19. **`Ward—Sacrifice N` count parameter.** `WardCost.Sacrifice(filter)` exists (Ygra) but takes no
+    count; add a `count` param (or compose three via `WardCost.Composite`).
+    → **Valgavoth, Terror Eater** ("Ward—Sacrifice three nonland permanents").
+
 ---
 
 ## Small / content-tier items (not subsystem gaps)
@@ -199,9 +273,12 @@ to a **player** that have no home yet.
   `ForEachExecutor.resolvePlayers` resolves single-player refs like `ControllerOf` instead of
   falling back to all active players.
   → **Fear of Impostors** (DONE), **Unwanted Remake** (same shape).
-- **The Mindskinner / Valgavoth, Terror Eater / Marina Vendrell's Grimoire** — deep but pure
-  compositions (prevent-damage→mill, Ward—Sacrifice + opponents'-cards-to-exile + pay-life-to-cast,
-  no-max-hand + gain/lose-life draw/discard engine).
+- **The Mindskinner / Marina Vendrell's Grimoire** — deep but pure compositions (prevent-damage→mill;
+  no-max-hand + gain/lose-life draw/discard engine). NB: *Marina Vendrell's Grimoire* (artifact) is a
+  pure composition; **Marina Vendrell** (the legendary creature) is **not** — its door lock/unlock
+  ability is a Rooms-model gap (see §1b). **Valgavoth, Terror Eater** is **not** a pure composition
+  either — its play-from-exile relies on a replacement-populated linked-exile pile (#16) plus a
+  dynamic pay-life-=-MV alt-cost (#18) and a `Ward—Sacrifice N` count (#19).
 
 ---
 
@@ -217,6 +294,11 @@ to a **player** that have no home yet.
    (Screaming Nemesis), dynamic max-hand-size (Winter).
 4. **Tier 3 one-offs** as the relevant legendaries/rares come up (Marvin, Leyline of Transformation,
    Doomsday Excruciator, Rip, Toby, Zimone, Trial of Agony).
+5. **Marquee mythics** — order them cheapest-first to unblock authoring: Zimone (#12) and Kaito (#15)
+   are XS/S condition additions; Meathook Massacre II (#16) and Valgavoth (#17–19) are one real gap
+   each plus small companions; **Marina Vendrell (§1b)** is the only `add-feature`-scale item (Rooms
+   door-state model) and should be designed deliberately.
 
 The five headline mechanics already being done means the structural risk for DSK is low: most of the
-set is authoring work, and the gaps above are narrow, mostly-isolated additions.
+set is authoring work, and the gaps above are narrow, mostly-isolated additions. Among the marquee
+mythics, only Marina Vendrell reshapes a subsystem; the other four are small, isolated SDK additions.
