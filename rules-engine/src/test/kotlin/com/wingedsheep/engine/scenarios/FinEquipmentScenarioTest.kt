@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.core.SelectCardsDecision
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.ScenarioTestBase
@@ -42,10 +43,12 @@ class FinEquipmentScenarioTest : ScenarioTestBase() {
                 script = CardScript(spellEffect = Effects.DrawCards(1))
             )
         )
+        // A sorcery with mana value 6 — above the 5 combat damage in the free-cast test, so it
+        // must be filtered out of the "mana value ≤ that damage" free-cast pool.
         cardRegistry.register(
             CardDefinition.sorcery(
                 name = "Expensive Draw",
-                manaCost = ManaCost.parse("{4}{U}"),
+                manaCost = ManaCost.parse("{5}{U}"),
                 oracleText = "Draw a card.",
                 script = CardScript(spellEffect = Effects.DrawCards(1))
             )
@@ -87,6 +90,7 @@ class FinEquipmentScenarioTest : ScenarioTestBase() {
                 .withCardOnBattlefield(1, "Buster Sword")
                 .withLandsOnBattlefield(1, "Plains", 2)
                 .withCardInHand(1, "Cheap Draw")           // MV 1 <= 5 -> free-castable after the draw
+                .withCardInHand(1, "Expensive Draw")       // MV 6 > 5 -> excluded from the free-cast pool
                 .withCardInLibrary(1, "Plains")            // the card drawn by the trigger
                 .withCardInLibrary(1, "Forest")            // resolves the free-cast Cheap Draw's own draw
                 .withCardInLibrary(2, "Island")
@@ -122,9 +126,25 @@ class FinEquipmentScenarioTest : ScenarioTestBase() {
             // Buster Sword: "draw a card, then you may cast a spell..." The draw resolves as part of
             // the trigger, then the player chooses one castable spell (Cheap Draw) to free-cast.
             val cheapDraw = game.findCardsInHand(1, "Cheap Draw")
+            val expensiveDraw = game.findCardsInHand(1, "Expensive Draw")
             withClue("Cheap Draw should still be in hand, awaiting the free-cast selection") {
                 cheapDraw.isNotEmpty() shouldBe true
             }
+
+            // The "mana value <= that damage" cap is the load-bearing filter: with 5 combat damage,
+            // Cheap Draw (MV 1) is offered but Expensive Draw (MV 6) must be excluded from the pool.
+            val selection = game.getPendingDecision()
+            withClue("A free-cast selection should be pending after combat damage") {
+                (selection is SelectCardsDecision) shouldBe true
+            }
+            val offered = (selection as SelectCardsDecision).options
+            withClue("Cheap Draw (MV 1 <= 5) should be offered for free-cast") {
+                offered.containsAll(cheapDraw) shouldBe true
+            }
+            withClue("Expensive Draw (MV 6 > 5) must be excluded from the free-cast pool") {
+                offered.any { it in expensiveDraw } shouldBe false
+            }
+
             game.selectCards(cheapDraw)
             game.resolveStack()
 
