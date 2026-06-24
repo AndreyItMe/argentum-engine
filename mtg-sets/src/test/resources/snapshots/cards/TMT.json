@@ -2998,6 +2998,48 @@
     ]
 }
 
+// Groundchuck & Dirtbag
+{
+    "name": "Groundchuck & Dirtbag",
+    "manaCost": "{4}{G}{G}",
+    "typeLine": "Legendary Creature — Ox Mole Mutant",
+    "oracleText": "Trample\nWhenever you tap a land for mana, add {G}.",
+    "creatureStats": {
+        "power": 8,
+        "toughness": 8
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "LandTappedForMana",
+                    "player": "You"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "descriptionOverride": "Whenever you tap a land for mana, add {G}."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "115",
+        "rarity": "RARE",
+        "artist": "Nicholas Gregory",
+        "flavorText": "\"Whatever my lil' man D.B. here can't dig under, I can just about bust through. Ain't no one caging us ever again.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/5/1563592e-0f21-4488-a3ec-ca766386e423.jpg?1769006182"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Guac & Marshmallow Pizza
 {
     "name": "Guac & Marshmallow Pizza",
