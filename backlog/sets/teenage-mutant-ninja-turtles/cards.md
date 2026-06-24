@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 162 / 190
+**Implemented:** 163 / 190
 ---
 
 - [x] Action News Crew
@@ -55,7 +55,7 @@
 - [x] Genghis Frog
 - [x] Go Ninja Go
 - [x] Groundchuck & Dirtbag
-- [ ] Grounded for Life
+- [x] Grounded for Life
 - [x] Guac & Marshmallow Pizza
 - [x] Hamato Guardian Stance
 - [x] Hard-Won Jitte

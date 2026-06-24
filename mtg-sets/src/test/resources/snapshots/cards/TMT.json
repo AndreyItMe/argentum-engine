@@ -3228,6 +3228,57 @@
     ]
 }
 
+// Grounded for Life
+{
+    "name": "Grounded for Life",
+    "manaCost": "{4}{W}",
+    "typeLine": "Instant",
+    "oracleText": "This spell costs {3} less to cast if it targets a tapped creature.\nDestroy target creature.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature"
+            },
+            "destination": "Graveyard",
+            "byDestruction": true
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGenericBy",
+                    "source": {
+                        "type": "FixedIfAnyTargetMatches",
+                        "amount": 3,
+                        "filter": "creature tapped"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "7",
+        "artist": "Andrea Tentori Montalto",
+        "flavorText": "\"Of course I know what you did! You always do precisely what I told you not to do!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/2/72388199-85fa-4eba-9a9c-c2904e6da9ed.jpg?1771502482"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Guac & Marshmallow Pizza
 {
     "name": "Guac & Marshmallow Pizza",
