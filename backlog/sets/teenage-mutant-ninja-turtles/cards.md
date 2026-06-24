@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 141 / 190
+**Implemented:** 142 / 190
 ---
 
 - [x] Action News Crew
@@ -174,7 +174,7 @@
 - [ ] The Cloning of Shredder
 - [ ] The Last Ronin
 - [x] The Last Ronin's Technique
-- [ ] The Neutrinos
+- [x] The Neutrinos
 - [x] The Ooze
 - [ ] Tokka & Rahzar, Terrible Twos
 - [x] Transdimensional Bovine
