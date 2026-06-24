@@ -153,6 +153,19 @@ to a **player** that have no home yet.
     one of these N targeted objects; route effect A to it, effect B to the rest" decision.
     → **Trial of Agony**.
 
+14. **Repeat-an-effect-N-times (dynamic count) with cross-iteration entity accumulation.** No
+    iteration space repeats a body a *counted* number of times: `IterationSpace` covers
+    targets/players/collection/group/colors, and `RepeatWhileEffect` is a do-while gated by a
+    player choice or a `Condition` — neither runs a body exactly *X* times where X is a chosen
+    cast-time value. The card also needs each iteration's manifested creature accumulated into one
+    collection so the follow-up "put X +1/+1 counters on **each of those creatures**" can target
+    exactly the set just created (`AddCountersToCollection` with `DynamicAmount.XValue`). Needs an
+    `IterationSpace.Count(DynamicAmount)` (or a `RepeatNTimes`) plus an accumulating
+    `storeMovedAs`-style sink that survives across iterations.
+    → **Valgavoth's Onslaught** ("Manifest dread X times, then put X +1/+1 counters on each of
+      those creatures"). Skipped during the DSK spells batch (substituted **Come Back Wrong**)
+      rather than approximated — `add-feature` territory.
+
 ---
 
 ## Small / content-tier items (not subsystem gaps)
