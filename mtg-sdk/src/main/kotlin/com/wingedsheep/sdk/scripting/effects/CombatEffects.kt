@@ -57,6 +57,17 @@ sealed interface PreventionSourceFilter {
     @SerialName("ChosenColoredSource") @Serializable data object ChosenColoredSource : PreventionSourceFilter
     /** Uses the chosen creature type from the source permanent's component. */
     @SerialName("ChosenCreatureType") @Serializable data object ChosenCreatureType : PreventionSourceFilter
+    /**
+     * Player chooses a damage source on resolution, but only sources matching [filter] are
+     * eligible — e.g. "an artifact source of your choice" (Circle of Protection: Artifacts) with
+     * `GameObjectFilter.Artifact`. This is the parameterized form of the "a [quality] source of
+     * your choice" family: the next "an enchantment/red/… source of your choice" card needs only a
+     * filter, not a new variant. Pair with [PreventDamageEffect.nextInstanceOnly] = true for the
+     * Circle of Protection single-next-instance shield; leave it false for an all-damage-from-the-
+     * chosen-source shield.
+     */
+    @SerialName("ChosenSourceMatching") @Serializable
+    data class ChosenSourceMatching(val filter: GameObjectFilter) : PreventionSourceFilter
     /** Only damage from creatures matching a group filter. */
     @SerialName("FromGroup") @Serializable data class FromGroup(val filter: GroupFilter) : PreventionSourceFilter
 }
@@ -109,7 +120,16 @@ data class PreventDamageEffect(
      * and ~ deals that much to its controller" (Eye for an Eye). Only meaningful with a
      * `ChosenSource` filter + an [onPrevented] reaction; defaults to true (ordinary prevention).
      */
-    val preventDamage: Boolean = true
+    val preventDamage: Boolean = true,
+    /**
+     * When true and [amount] is null, a chosen-source shield prevents only the **next instance**
+     * of damage from the chosen source (the Circle of Protection family: "the next time … would
+     * deal damage to you this turn, prevent that damage"), then is consumed. When false (default),
+     * an amount-less chosen-source shield prevents **all** damage from that source for its
+     * [duration] (Samite Ministration). This is orthogonal to which sources are eligible
+     * ([sourceFilter]) — set it explicitly rather than inferring it from the filter.
+     */
+    val nextInstanceOnly: Boolean = false
 ) : Effect {
     override val description: String = buildString {
         append("Prevent ")
@@ -134,6 +154,11 @@ data class PreventDamageEffect(
             PreventionSourceFilter.ChosenColoredSource ->
                 append(" by a source of your choice that shares a color with the mana spent")
             PreventionSourceFilter.ChosenCreatureType -> append(" by a creature of the chosen type")
+            is PreventionSourceFilter.ChosenSourceMatching -> {
+                val quality = sourceFilter.filter.description.replaceFirstChar { it.lowercase() }
+                val article = if (quality.firstOrNull()?.lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an" else "a"
+                append(" by $article $quality source of your choice")
+            }
             is PreventionSourceFilter.FromGroup ->
                 append(" by ${sourceFilter.filter.description.replaceFirstChar { it.lowercase() }}")
         }
@@ -157,6 +182,10 @@ data class PreventDamageEffect(
             is PreventionSourceFilter.FromGroup -> {
                 val newGroupFilter = sourceFilter.filter.applyTextReplacement(replacer)
                 if (newGroupFilter !== sourceFilter.filter) PreventionSourceFilter.FromGroup(newGroupFilter) else sourceFilter
+            }
+            is PreventionSourceFilter.ChosenSourceMatching -> {
+                val newObjFilter = sourceFilter.filter.applyTextReplacement(replacer)
+                if (newObjFilter !== sourceFilter.filter) PreventionSourceFilter.ChosenSourceMatching(newObjFilter) else sourceFilter
             }
             else -> sourceFilter
         }

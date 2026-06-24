@@ -819,6 +819,47 @@
     "colorIdentityOverride": []
 }
 
+// Circle of Protection: Artifacts
+{
+    "name": "Circle of Protection: Artifacts",
+    "manaCost": "{1}{W}",
+    "typeLine": "Enchantment",
+    "oracleText": "{2}: The next time an artifact source of your choice would deal damage to you this turn, prevent that damage.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "PreventDamageShield",
+                    "sourceFilter": {
+                        "type": "ChosenSourceMatching",
+                        "filter": "artifact"
+                    },
+                    "nextInstanceOnly": true
+                },
+                "descriptionOverride": "{2}: The next time an artifact source of your choice would deal damage to you this turn, prevent that damage."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "UNCOMMON",
+        "artist": "Pete Venters",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/2/22ebd5a3-fef8-4097-b038-89a6cb38227d.jpg?1562902368"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Citanul Druid
 {
     "name": "Citanul Druid",
@@ -2032,6 +2073,49 @@
     "colorIdentityOverride": []
 }
 
+// Martyrs of Korlis
+{
+    "name": "Martyrs of Korlis",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Creature — Human",
+    "oracleText": "As long as this creature is untapped, all damage that would be dealt to you by artifacts is dealt to this creature instead.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 6
+    },
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "RedirectDamage",
+                "redirectTo": "Self",
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "recipient": "You",
+                    "source": {
+                        "type": "SourceMatching",
+                        "filter": "artifact"
+                    }
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": "untapped"
+                }
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "6",
+        "rarity": "UNCOMMON",
+        "artist": "Margaret Organ-Kean",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/d/bde037b9-4947-4ff7-8ea4-e9f1a7e4ab88.jpg?1562935113"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Mightstone
 {
     "name": "Mightstone",
@@ -2989,6 +3073,73 @@
     "colorIdentityOverride": [
         "WHITE"
     ]
+}
+
+// Rocket Launcher
+{
+    "name": "Rocket Launcher",
+    "manaCost": "{4}",
+    "typeLine": "Artifact",
+    "oracleText": "{2}: This artifact deals 1 damage to any target. Destroy this artifact at the beginning of the next end step. Activate only if you've controlled this artifact continuously since the beginning of your most recent turn.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "any target"
+                            }
+                        },
+                        {
+                            "type": "CreateDelayedTrigger",
+                            "step": "END",
+                            "effect": {
+                                "type": "MoveToZone",
+                                "target": "Self",
+                                "destination": "Graveyard",
+                                "byDestruction": true
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "AnyTarget",
+                        "id": "any target"
+                    }
+                ],
+                "restrictions": [
+                    "ControlledSinceYourMostRecentTurn"
+                ],
+                "descriptionOverride": "{2}: Rocket Launcher deals 1 damage to any target. Destroy it at the beginning of the next end step. Activate only if you've controlled it continuously since your most recent turn began."
+            }
+        ]
+    },
+    "setCode": "ATQ",
+    "metadata": {
+        "collectorNumber": "63",
+        "rarity": "UNCOMMON",
+        "artist": "Pete Venters",
+        "flavorText": "What these devices lacked in subtlety, they made up in strength.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d5bb2093-78a8-4a6c-abe7-9a5afc181ec5.jpg?1750264519"
+    },
+    "colorIdentityOverride": []
 }
 
 // Sage of Lat-Nam

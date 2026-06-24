@@ -503,6 +503,21 @@ sealed interface SerializableModification {
     ) : SerializableModification
 
     /**
+     * Single-instance prevention shield tied to a chosen source: the next time [damageSourceId]
+     * would deal damage to the affected entities this turn, prevent that damage (the whole
+     * instance, any amount), then the shield is consumed. The Circle of Protection family —
+     * "the next time a [quality] source of your choice would deal damage to you this turn, prevent
+     * that damage" (Circle of Protection: Artifacts). Distinct from [PreventAllDamageFromSource]
+     * (persists all turn) and from [PreventNextDamage] (caps a fixed amount across instances).
+     *
+     * @property damageSourceId The chosen source whose next damage instance is prevented
+     */
+    @Serializable
+    data class PreventNextDamageInstanceFromSource(
+        val damageSourceId: EntityId
+    ) : SerializableModification
+
+    /**
      * Turn-duration noncombat-damage amplification (CR 616): every source the effect's controller
      * controls deals [bonus] additional noncombat damage to any permanent or player this turn.
      * Combat damage is unaffected; there is no opponent restriction. Read directly during damage
@@ -621,6 +636,8 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.PreventNextDamageFromChosenSourceShield -> Modification.NoOp
     // PreventAllDamageFromSource doesn't map to a layer modification - it's checked during damage resolution directly
     is SerializableModification.PreventAllDamageFromSource -> Modification.NoOp
+    // PreventNextDamageInstanceFromSource is checked during damage resolution directly (no layer mod)
+    is SerializableModification.PreventNextDamageInstanceFromSource -> Modification.NoOp
     // AmplifyNoncombatDamage doesn't map to a layer modification - it's read during damage resolution directly
     is SerializableModification.AmplifyNoncombatDamage -> Modification.NoOp
     // OverrideImage is display-only - it changes no characteristic, read directly by ClientStateTransformer

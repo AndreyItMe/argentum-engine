@@ -88,6 +88,21 @@ sealed interface ActivationRestriction {
     data object AnyPlayerMay : ActivationRestriction
 
     /**
+     * Restrict activation to when the source has been under the activating player's control
+     * continuously since the beginning of their most recent turn — i.e. the "summoning sickness"
+     * condition (CR 302.6) applied to a noncreature permanent. Reuses the engine's
+     * summoning-sickness tracking (set on entry and on any control change, cleared at the
+     * controller's untap), so a control change since their last turn re-imposes it — unlike
+     * `SourceEnteredThisTurn`, which ignores control changes.
+     *
+     * Example: Rocket Launcher — "Activate only if you've controlled this artifact continuously
+     * since the beginning of your most recent turn."
+     */
+    @SerialName("ControlledSinceYourMostRecentTurn")
+    @Serializable
+    data object ControlledSinceYourMostRecentTurn : ActivationRestriction
+
+    /**
      * Composite restriction requiring multiple conditions.
      * Example: "Activate only during your turn, before attackers are declared."
      */

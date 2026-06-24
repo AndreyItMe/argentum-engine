@@ -430,10 +430,20 @@ data class PreventDamage(
 @Serializable
 data class RedirectDamage(
     val redirectTo: EffectTarget,
-    override val appliesTo: EventPattern
+    override val appliesTo: EventPattern,
+    /**
+     * Optional gate evaluated against the *replacement source* at the moment damage
+     * would be redirected. When non-null, the redirect applies only while the condition
+     * holds — e.g. `SourceIsUntapped` for Martyrs of Korlis ("As long as this creature
+     * is untapped, …"). A `null` condition means the redirect always applies (Harsh
+     * Judgment, Pariah).
+     */
+    val condition: Condition? = null
 ) : ReplacementEffect {
-    override val description: String =
-        "If ${appliesTo.description}, that damage is dealt to ${redirectTo.description} instead"
+    override val description: String = buildString {
+        append("If ${appliesTo.description}, that damage is dealt to ${redirectTo.description} instead")
+        condition?.let { append(" (${it.description})") }
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
         val newAppliesTo = appliesTo.applyTextReplacement(replacer)

@@ -1822,6 +1822,12 @@ class ActivateAbilityHandler(
                     "This ability can only be activated once"
                 } else null
             }
+            is ActivationRestriction.ControlledSinceYourMostRecentTurn -> {
+                if (state.getEntity(sourceId)
+                        ?.has<com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent>() == true
+                ) "You must have controlled this permanent continuously since your most recent turn began"
+                else null
+            }
             is ActivationRestriction.All -> {
                 restriction.restrictions.firstNotNullOfOrNull {
                     checkActivationRestriction(state, playerId, sourceId, abilityId, it)

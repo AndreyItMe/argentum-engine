@@ -2,7 +2,7 @@
 
 **Set Size:** 85 cards
 **Release Date:** March 4, 1994
-**Implemented:** 63 / 85
+**Implemented:** 68 / 85
 | Color       | Count |
 |-------------|-------|
 | White       | 7     |
@@ -24,9 +24,9 @@
 - [x] Argivian Archaeologist
 - [x] Argivian Blacksmith
 - [ ] Artifact Ward
-- [ ] Circle of Protection: Artifacts
+- [x] Circle of Protection: Artifacts
 - [ ] Damping Field
-- [ ] Martyrs of Korlis
+- [x] Martyrs of Korlis
 - [ ] Reverse Polarity
 
 ### Blue
@@ -75,7 +75,7 @@
 - [ ] Bronze Tablet
 - [x] Candelabra of Tawnos
 - [x] Clay Statue
-- [ ] Clockwork Avian
+- [x] Clockwork Avian
 - [ ] Colossus of Sardia
 - [x] Coral Helm
 - [x] Cursed Rack
@@ -87,13 +87,13 @@
 - [x] Jalum Tome
 - [x] Mightstone
 - [x] Millstone
-- [ ] Mishra's War Machine
+- [x] Mishra's War Machine
 - [x] Obelisk of Undoing
 - [x] Onulet
 - [x] Ornithopter
 - [x] Primal Clay
 - [x] Rakalite
-- [ ] Rocket Launcher
+- [x] Rocket Launcher
 - [x] Shapeshifter
 - [x] Staff of Zegon
 - [x] Su-Chi

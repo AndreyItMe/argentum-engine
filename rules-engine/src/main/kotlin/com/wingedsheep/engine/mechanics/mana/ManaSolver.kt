@@ -1281,6 +1281,9 @@ class ManaSolver(
             val tracker = state.getEntity(sourceId)?.get<AbilityActivatedEverComponent>()
             tracker == null || !tracker.hasActivated(ability.id)
         }
+        is ActivationRestriction.ControlledSinceYourMostRecentTurn ->
+            state.getEntity(sourceId)
+                ?.has<com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent>() != true
         is ActivationRestriction.All -> restriction.restrictions.all {
             checkActivationRestriction(state, playerId, sourceId, ability, it)
         }

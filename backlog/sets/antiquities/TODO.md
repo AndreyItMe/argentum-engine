@@ -214,16 +214,6 @@ suppression, or untap-count restriction primitive exists.
 - **Mishra's War Machine** — needs an "if it dealt damage to you this way, [then] tap it" gate: a
   conditional keyed on whether the sub-effect's damage was actually dealt (vs. prevented/replaced).
   `IfYouDo`/`SuccessCriterion` has no "damage was dealt" criterion.
-- **Rocket Launcher** — needs an activation restriction "controlled continuously since the
-  beginning of your most recent turn" (artifact summoning-sickness). No `ActivationRestriction` /
-  `Condition` exposes it; `SourceEnteredThisTurn` is not equivalent (ignores control changes).
-- **Circle of Protection: Artifacts** — needs a "choose an **artifact** source, prevent its next
-  damage" prevention filter. `PreventionSourceFilter` has `ChosenSource` / `ChosenColoredSource` /
-  `ChosenCreatureType` but no `ChosenArtifactSource`; the executor only supports a `coloredOnly`
-  constraint. `ChosenSource` alone would silently drop the artifact restriction.
-- **Martyrs of Korlis** — `RedirectDamage` (and `EventPattern.DamageEvent`) has no condition slot,
-  so the redirect can't be gated on "as long as this creature is **untapped**." Needs a
-  conditional/restricted replacement effect.
 - **Xenic Poltergeist** — needs `BecomeCreature` with **dynamic** P/T equal to the target's own
   mana value. `BecomeCreatureEffect` takes only fixed `Int` P/T; `SetBasePowerEffect` is dynamic
   but power-only and doesn't add the creature type. No dynamic-P/T animate primitive.

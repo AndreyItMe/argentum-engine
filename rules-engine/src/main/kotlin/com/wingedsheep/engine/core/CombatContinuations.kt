@@ -141,5 +141,11 @@ data class PreventDamageFromChosenSourceContinuation(
     val amount: Int?,
     val gainLifeFromColors: Set<String> = emptySet(),
     val sourceId: EntityId?,
-    val sourceName: String?
+    val sourceName: String?,
+    /**
+     * When true and [amount] is null, install a single-instance "prevent the next time that source
+     * would deal damage" shield (Circle of Protection family) rather than the all-damage-from-source
+     * shield. Ignored when [amount] is non-null.
+     */
+    val nextInstanceOnly: Boolean = false
 ) : ContinuationFrame
