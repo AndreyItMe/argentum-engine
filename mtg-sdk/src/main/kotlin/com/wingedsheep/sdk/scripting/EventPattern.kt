@@ -574,6 +574,26 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
+     * When one or more creatures attack a player who is an opponent of the trigger's controller.
+     * The "your opponents are attacked" counterpart of [CreaturesAttackYouEvent]: fires once per
+     * [com.wingedsheep.engine.core.AttackersDeclaredEvent] when at least [minAttackers] declared
+     * attackers have one of the controller's opponents as their defender. As with the "you" side,
+     * only attackers declared against an opponent *player* count (not against a planeswalker the
+     * opponent controls). Party Dude level 3.
+     */
+    @SerialName("CreaturesAttackYourOpponentEvent")
+    @Serializable
+    data class CreaturesAttackYourOpponentEvent(
+        val minAttackers: Int = 1
+    ) : EventPattern {
+        override val description: String = if (minAttackers <= 1) {
+            "one or more of your opponents are attacked"
+        } else {
+            "$minAttackers or more creatures attack your opponents"
+        }
+    }
+
+    /**
      * When a creature blocks.
      * Binding SELF = "when this creature blocks".
      * Binding ANY + filter = "whenever a [filter] blocks" — fires once per matching blocker.

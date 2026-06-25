@@ -154,6 +154,19 @@ class TriggerMatcher(
                 }
                 attackingThisPlayer >= trigger.minAttackers
             }
+            is EventPattern.CreaturesAttackYourOpponentEvent -> {
+                if (event !is AttackersDeclaredEvent) return false
+                // Count attackers declared against an opponent *player* of the controller (not the
+                // controller, and not a planeswalker — opponent ids are players). Party Dude L3.
+                val opponents = state.getOpponents(controllerId).toSet()
+                val attackingAnOpponent = event.attackers.count { attackerId ->
+                    val defenderId = state.getEntity(attackerId)
+                        ?.get<com.wingedsheep.engine.state.components.combat.AttackingComponent>()
+                        ?.defenderId
+                    defenderId != null && defenderId in opponents
+                }
+                attackingAnOpponent >= trigger.minAttackers
+            }
             is EventPattern.BlockEvent -> {
                 event is BlockersDeclaredEvent &&
                     (binding != TriggerBinding.SELF || event.blockers.keys.contains(sourceId))

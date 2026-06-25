@@ -2373,6 +2373,11 @@ sealed set for attack-time facts beyond the basics.
   not per attacker. Excludes creatures attacking a planeswalker you control
   (CR 509.1b). Pair with `DynamicAmounts.creaturesAttackingYou()` for
   attacker-count payoffs (e.g., Orim's Prayer).
+- `CreaturesAttackYourOpponent` — the "your opponents are attacked" counterpart of
+  `CreaturesAttackYou`; fires once per `AttackersDeclaredEvent` when one or more declared
+  attackers have one of the controller's opponents (a player, via `state.getOpponents`) as
+  their defender. Like the "you" side, attacks against an opponent's planeswalker don't count.
+  Party Dude level 3.
 
 **Blocks**
 
