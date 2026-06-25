@@ -1229,6 +1229,14 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.SourcePlottedOnPriorTurn
 
     /**
+     * If it's the first end step of the turn (not an extra end step inserted by
+     * [Effects.AddAdditionalEndSteps]). The loop guard for "there is an additional end step
+     * after this step" riders — see Y'shtola Rhul.
+     */
+    val IsFirstEndStepOfTurn: ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.IsFirstEndStepOfTurn
+
+    /**
      * If it's your turn.
      */
     val IsYourTurn: ConditionInterface =

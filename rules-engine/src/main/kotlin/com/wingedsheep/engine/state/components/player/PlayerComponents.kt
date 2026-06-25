@@ -305,6 +305,34 @@ data class AdditionalUpkeepStepsComponent(
 data object InAdditionalUpkeepStepComponent : Component
 
 /**
+ * Component tracking additional end steps to be inserted into the current turn (Y'shtola Rhul).
+ * Per CR 500.9, adding a step after a step inserts it directly after that step; if several are
+ * created after the same step the most recently created occurs first. Each is a full end step
+ * (CR 513) — the active player gets priority and "at the beginning of the end step" abilities
+ * trigger again.
+ *
+ * The TurnManager drains this when advancing out of the end step, redirecting back into a fresh
+ * end step instead of proceeding to the cleanup step, decrementing the count each time. Always
+ * added to the active player's own turn (CR 500.10a).
+ *
+ * @param count Number of additional end steps remaining to insert
+ */
+@Serializable
+data class AdditionalEndStepsComponent(
+    val count: Int = 1
+) : Component
+
+/**
+ * Marker placed on the active player once at least one [AdditionalEndStepsComponent] end step has
+ * begun this turn. It distinguishes an *extra* end step from the turn's first (natural) end step,
+ * which is what [com.wingedsheep.sdk.scripting.conditions.IsFirstEndStepOfTurn] reads to keep
+ * "there is an additional end step after this step" riders from looping. Cleared at end-of-turn
+ * cleanup so the next turn's first end step is "first" again.
+ */
+@Serializable
+data object InAdditionalEndStepComponent : Component
+
+/**
  * Marker component indicating that a player should skip all combat phases
  * during their next turn. Applied by effects like False Peace.
  *

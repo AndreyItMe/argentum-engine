@@ -119,6 +119,30 @@ data class AddAdditionalUpkeepStepsEffect(
 }
 
 /**
+ * Insert additional end step(s) directly after the current end step (Y'shtola Rhul:
+ * "there is an additional end step after this step").
+ *
+ * Per CR 500.9, an effect that adds a step inserts it directly after the specified step; if several
+ * are created after the same step, the most recently created occurs first. The extra end step is a
+ * full end step (CR 513) — the active player gets priority and every "at the beginning of the end
+ * step" ability triggers again (CR 513.1a) — followed eventually by the single cleanup step.
+ *
+ * The steps are always added to the controller's own turn (CR 500.10a — "there is an additional end
+ * step" riders only ever trigger on the controller's end step). Cards that must not loop guard the
+ * effect behind [com.wingedsheep.sdk.scripting.conditions.IsFirstEndStepOfTurn] so only the first
+ * end step spawns the extra one.
+ *
+ * @param amount The number of additional end steps to insert (usually a single one).
+ */
+@SerialName("AddAdditionalEndSteps")
+@Serializable
+data class AddAdditionalEndStepsEffect(
+    val amount: DynamicAmount
+) : Effect {
+    override val description: String = "There ${if (amount.description == "1") "is" else "are"} ${amount.description} additional end step(s) after this step"
+}
+
+/**
  * Take an extra turn after this one, with a consequence at end of turn.
  * Used for Last Chance: "Take an extra turn after this one. At the beginning of that turn's end step, you lose the game."
  *

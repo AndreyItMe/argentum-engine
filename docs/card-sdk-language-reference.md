@@ -1017,6 +1017,17 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   (after the additional-combat-phase check), each remaining count redirecting into a fresh upkeep
   step in the beginning phase. Read "that many" from the triggering combat damage with
   `DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_DAMAGE_AMOUNT)`.
+- `Effects.AddAdditionalEndSteps(amount)` (`amount: DynamicAmount` or `Int`, default `1`) — insert
+  `amount` additional end step(s) directly after the current end step (Y'shtola Rhul: "there is an
+  additional end step after this step"). Per CR 500.9 a step is inserted directly after the
+  specified step; each added step is a full end step (CR 513) where the active player gets priority
+  and every "at the beginning of the end step" ability triggers again. Steps are always added to the
+  controller's own turn (CR 500.10a). Implemented by accumulating an `AdditionalEndStepsComponent`
+  count on the active player, drained by `TurnManager.advanceStep` when leaving the end step — each
+  remaining count redirects back into a fresh end step instead of advancing to the cleanup step. A
+  rider that adds an end step *and re-triggers in it* must guard against looping with
+  `Conditions.IsFirstEndStepOfTurn` (see Conditions below) — Y'shtola only spawns the extra end step
+  during the turn's first (natural) end step.
 - `GatedEffect(gate, then, otherwise?, decisionMaker?)` — **the unified resolution frame for the
   optional / gated-effect cluster** (phase-rs Lesson 1). A `Gate` decides whether `then` runs; if it
   fails, `otherwise` runs. One executor + one continuation/resumer own the canonical unwind order, so
@@ -4003,6 +4014,12 @@ that works in both resolution and static-ability (projection) contexts.
   (reads `state.step` + active player), so it evaluates identically at resolution and under projection,
   making it usable as a `ConditionalStaticAbility` gate. `yoursOnly` requires it to be the controller's
   turn ("during your end step"). Used by Zurgo, Thunder's Decree.
+- `IsFirstEndStepOfTurn` — it's the turn's first (natural) end step, i.e. *not* an extra end step
+  inserted by `Effects.AddAdditionalEndSteps`. Board-derived (reads `state.step` + the active
+  player's "in an inserted end step" marker), so it evaluates identically at resolution and under
+  projection. The loop guard for "there is an additional end step after this step" riders: gate the
+  `Effects.AddAdditionalEndSteps` call on it so the spawned end step doesn't spawn another (Y'shtola
+  Rhul).
 - `ControllerTurnsTakenAtMost(n)` — the controller has taken at most N turns so far
   (1-indexed once they're partway through their first turn). Reads
   `PlayerTurnsTakenComponent` set by `TurnManager.startTurn`. Used by Starting Town

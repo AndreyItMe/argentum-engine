@@ -2972,6 +2972,21 @@ object Effects {
     fun AddAdditionalUpkeepSteps(amount: Int): Effect =
         com.wingedsheep.sdk.scripting.effects.AddAdditionalUpkeepStepsEffect(DynamicAmount.Fixed(amount))
 
+    /**
+     * Insert [amount] additional end step(s) directly after the current end step (Y'shtola Rhul:
+     * "there is an additional end step after this step"). Each is a full end step — priority and
+     * "at the beginning of the end step" triggers fire again (CR 500.9 / 513). Always added to the
+     * controller's own turn (CR 500.10a). Guard with [Conditions.IsFirstEndStepOfTurn] to avoid looping.
+     */
+    fun AddAdditionalEndSteps(amount: DynamicAmount): Effect =
+        com.wingedsheep.sdk.scripting.effects.AddAdditionalEndStepsEffect(amount)
+
+    /**
+     * Insert a fixed number of additional end steps directly after the current end step.
+     */
+    fun AddAdditionalEndSteps(amount: Int = 1): Effect =
+        com.wingedsheep.sdk.scripting.effects.AddAdditionalEndStepsEffect(DynamicAmount.Fixed(amount))
+
     // -------------------------------------------------------------------------
     // Damage Prevention (unified via PreventDamageEffect)
     // -------------------------------------------------------------------------

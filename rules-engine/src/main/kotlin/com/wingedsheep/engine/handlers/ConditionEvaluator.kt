@@ -34,12 +34,14 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.RingBearerComponent
+import com.wingedsheep.engine.state.components.player.InAdditionalEndStepComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.player.PlayerTurnsTakenComponent
 import com.wingedsheep.engine.state.components.player.WasDealtCombatDamageThisTurnComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
@@ -60,6 +62,7 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.conditions.Exists
 import com.wingedsheep.sdk.scripting.conditions.IsInPhase
 import com.wingedsheep.sdk.scripting.conditions.IsInStep
+import com.wingedsheep.sdk.scripting.conditions.IsFirstEndStepOfTurn
 import com.wingedsheep.sdk.scripting.conditions.IsNotYourTurn
 import com.wingedsheep.sdk.scripting.conditions.IsYourTurn
 import com.wingedsheep.sdk.scripting.conditions.NotCondition
@@ -189,6 +192,16 @@ class ConditionEvaluator(
                 val notYourTurn = cid == null || !state.isActiveTurnFor(cid)
                 if (condition.yoursOnly && notYourTurn) false
                 else state.step in condition.steps
+            }
+
+            // True while we're in the turn's *natural* end step — i.e. an end step the active player
+            // hasn't yet marked as an inserted extra (AddAdditionalEndStepsEffect). Board-derived, so
+            // it reads the same at resolution and under projection. The loop guard for Y'shtola Rhul.
+            is IsFirstEndStepOfTurn -> {
+                state.step == Step.END &&
+                    state.activePlayerId?.let {
+                        state.getEntity(it)?.has<InAdditionalEndStepComponent>()
+                    } != true
             }
 
             // Reads the controller's PlayerTurnsTakenComponent (incremented in

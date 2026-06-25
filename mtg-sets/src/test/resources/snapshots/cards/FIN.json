@@ -8546,6 +8546,82 @@
     "colorIdentityOverride": []
 }
 
+// Y'shtola Rhul
+{
+    "name": "Y'shtola Rhul",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Legendary Creature — Cat Druid",
+    "oracleText": "At the beginning of your end step, exile target creature you control, then return it to the battlefield under its owner's control. Then if it's the first end step of the turn, there is an additional end step after this step.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "creature you control"
+                            },
+                            "destination": "Exile"
+                        },
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "creature you control"
+                            },
+                            "destination": "Battlefield"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": "IsFirstEndStepOfTurn"
+                            },
+                            "then": {
+                                "type": "AddAdditionalEndSteps",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "creature you control"
+                },
+                "descriptionOverride": "At the beginning of your end step, exile target creature you control, then return it to the battlefield under its owner's control. Then if it's the first end step of the turn, there is an additional end step after this step."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "86",
+        "rarity": "MYTHIC",
+        "artist": "Immanuela Crovius",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/e/aef218fa-13a4-4653-95d6-6b3ef1b33a92.jpg?1748706086"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Zanarkand, Ancient Metropolis
 {
     "name": "Zanarkand, Ancient Metropolis",

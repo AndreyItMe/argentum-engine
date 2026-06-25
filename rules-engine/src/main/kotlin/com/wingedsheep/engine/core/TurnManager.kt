@@ -14,6 +14,8 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.player.AdditionalCombatPhasesComponent
 import com.wingedsheep.engine.state.components.player.AdditionalUpkeepStepsComponent
 import com.wingedsheep.engine.state.components.player.InAdditionalUpkeepStepComponent
+import com.wingedsheep.engine.state.components.player.AdditionalEndStepsComponent
+import com.wingedsheep.engine.state.components.player.InAdditionalEndStepComponent
 import com.wingedsheep.engine.state.components.player.CardsDrawnThisTurnComponent
 import com.wingedsheep.engine.state.components.player.CardsPutIntoExileThisTurnComponent
 import com.wingedsheep.engine.state.components.player.EquipActivationsThisTurnComponent
@@ -271,6 +273,41 @@ class TurnManager(
                     StepChangedEvent(Step.UPKEEP)
                 )
 
+                redirectedState = redirectedState.withPriority(activePlayer)
+                return ExecutionResult.success(redirectedState, events)
+            }
+        }
+
+        // Drain any additional end steps (Y'shtola Rhul). Per CR 500.9 an "additional end step
+        // after this step" is inserted directly after the current end step; each is a full end step
+        // (CR 513) where the active player gets priority and "at the beginning of the end step"
+        // abilities trigger again. So instead of advancing from the end step to the cleanup step, we
+        // re-enter a fresh end step, decrementing the count, until it's exhausted. The
+        // InAdditionalEndStepComponent marker (set on the first redirect, cleared at end-of-turn
+        // cleanup) lets IsFirstEndStepOfTurn distinguish these extra steps from the natural one, so
+        // the rider that created them doesn't loop.
+        if (currentStep == Step.END) {
+            val additionalEndSteps = state.getEntity(activePlayer)?.get<AdditionalEndStepsComponent>()
+            if (additionalEndSteps != null && additionalEndSteps.count > 0) {
+                var redirectedState = if (additionalEndSteps.count <= 1) {
+                    state.updateEntity(activePlayer) { it.without<AdditionalEndStepsComponent>() }
+                } else {
+                    state.updateEntity(activePlayer) { container ->
+                        container.with(AdditionalEndStepsComponent(additionalEndSteps.count - 1))
+                    }
+                }
+
+                redirectedState = redirectedState
+                    .updateEntity(activePlayer) { it.with(InAdditionalEndStepComponent) }
+                    .copy(
+                        step = Step.END,
+                        phase = Phase.ENDING,
+                        priorityPassedBy = emptySet()
+                    )
+
+                // Phase is unchanged (END and CLEANUP both live in the ending phase), so only the
+                // step-changed event is emitted — that re-fires the end-step triggers.
+                val events = mutableListOf<GameEvent>(StepChangedEvent(Step.END))
                 redirectedState = redirectedState.withPriority(activePlayer)
                 return ExecutionResult.success(redirectedState, events)
             }

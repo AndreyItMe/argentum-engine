@@ -76,6 +76,23 @@ data class IsInStep(
     }
 }
 
+/**
+ * Condition: "If it's the first end step of the turn."
+ *
+ * True while the active player is in an end step that is *not* an extra end step inserted by
+ * [com.wingedsheep.sdk.scripting.effects.AddAdditionalEndStepsEffect]. This is the loop guard for
+ * "there is an additional end step after this step" riders (Y'shtola Rhul): the rider only adds an
+ * extra end step during the first one, so the additional end step it spawns doesn't spawn another.
+ *
+ * Board-derived (reads `state.step` and the active player's "in an additional end step" marker), so
+ * it evaluates identically at resolution and under projection.
+ */
+@SerialName("IsFirstEndStepOfTurn")
+@Serializable
+data object IsFirstEndStepOfTurn : Condition {
+    override val description: String = "if it's the first end step of the turn"
+}
+
 // =============================================================================
 // Combat Conditions
 // =============================================================================

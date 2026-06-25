@@ -32,6 +32,8 @@ import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostCom
 import com.wingedsheep.engine.state.components.identity.RevertCopyAtEndOfTurnComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.player.AdditionalCombatPhasesComponent
+import com.wingedsheep.engine.state.components.player.AdditionalEndStepsComponent
+import com.wingedsheep.engine.state.components.player.InAdditionalEndStepComponent
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.CantGainLifeComponent
@@ -572,6 +574,16 @@ class CleanupPhaseManager(
                 var result = container
                 if (result.has<AdditionalCombatPhasesComponent>()) {
                     result = result.without<AdditionalCombatPhasesComponent>()
+                }
+                // Clear any leftover additional-end-step state. The count is normally drained by the
+                // TurnManager, but a turn could end with the marker still set (it persists across the
+                // extra end steps so IsFirstEndStepOfTurn keeps reading false); reset both so the next
+                // turn's first end step is genuinely "first" again.
+                if (result.has<AdditionalEndStepsComponent>()) {
+                    result = result.without<AdditionalEndStepsComponent>()
+                }
+                if (result.has<InAdditionalEndStepComponent>()) {
+                    result = result.without<InAdditionalEndStepComponent>()
                 }
                 // Drop a Mindslaver-style hijack at end of the controlled turn (ACTIVE state).
                 // Scheduled hijacks (SCHEDULED) survive cleanup so they fire on the player's
