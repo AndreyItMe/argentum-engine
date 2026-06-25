@@ -5193,6 +5193,68 @@
     ]
 }
 
+// Lita, Little Orphan Amphibian
+{
+    "name": "Lita, Little Orphan Amphibian",
+    "manaCost": "{1}{W}",
+    "typeLine": "Legendary Creature — Mutant Ninja Turtle",
+    "oracleText": "Alliance — Whenever another creature you control enters, choose one that hasn't been chosen this turn.\n• Put a +1/+1 counter on Lita.\n• Create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\n• Scry 1.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        },
+                        {
+                            "effect": {
+                                "type": "CreatePredefinedToken",
+                                "tokenType": "Food"
+                            }
+                        },
+                        {
+                            "effect": {
+                                "type": "Scry",
+                                "count": 1
+                            }
+                        }
+                    ],
+                    "excludePreviouslyChosenModes": true,
+                    "countsAsModalSpell": false
+                },
+                "descriptionOverride": "Alliance — Whenever another creature you control enters, choose one that hasn't been chosen this turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "19",
+        "rarity": "UNCOMMON",
+        "artist": "Anna Pavleeva",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/f/9fbaabb5-e981-4cbf-888c-46449412711f.jpg?1771424706"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Lord Dregg, Insect Invader
 {
     "name": "Lord Dregg, Insect Invader",

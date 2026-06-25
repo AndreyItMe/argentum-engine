@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 172 / 190
+**Implemented:** 173 / 190
 ---
 
 - [x] Action News Crew
@@ -83,7 +83,7 @@
 - [x] Leonardo, Leader in Blue
 - [ ] Leonardo, Sewer Samurai
 - [x] Lessons from Life
-- [ ] Lita, Little Orphan Amphibian
+- [x] Lita, Little Orphan Amphibian
 - [x] Lord Dregg, Insect Invader
 - [x] Madame Null, Power Broker
 - [x] Make Your Move
