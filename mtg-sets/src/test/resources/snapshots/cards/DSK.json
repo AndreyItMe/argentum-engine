@@ -611,7 +611,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             }
@@ -1099,7 +1100,8 @@
                                     "type": "ToZone",
                                     "zone": "Graveyard"
                                 }
-                            }
+                            },
+                            "EmitManifestedDreadEvent"
                         ]
                     },
                     "description": "Manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)"
@@ -1814,7 +1816,8 @@
                                         "type": "ToZone",
                                         "zone": "Graveyard"
                                     }
-                                }
+                                },
+                                "EmitManifestedDreadEvent"
                             ]
                         },
                         {
@@ -2608,7 +2611,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 },
                 "triggerCondition": {
@@ -2803,7 +2807,8 @@
                                         "type": "ToZone",
                                         "zone": "Graveyard"
                                     }
-                                }
+                                },
+                                "EmitManifestedDreadEvent"
                             ]
                         },
                         {
@@ -2970,7 +2975,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             }
@@ -4123,7 +4129,8 @@
                                             "type": "ToZone",
                                             "zone": "Graveyard"
                                         }
-                                    }
+                                    },
+                                    "EmitManifestedDreadEvent"
                                 ]
                             }
                         }
@@ -5603,7 +5610,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             },
@@ -5967,7 +5975,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             }
@@ -6485,7 +6494,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             }
@@ -6975,7 +6985,8 @@
                                         "type": "ToZone",
                                         "zone": "Graveyard"
                                     }
-                                }
+                                },
+                                "EmitManifestedDreadEvent"
                             ]
                         },
                         {
@@ -7420,7 +7431,8 @@
                         "type": "ToZone",
                         "zone": "Graveyard"
                     }
-                }
+                },
+                "EmitManifestedDreadEvent"
             ]
         }
     },
@@ -9151,6 +9163,45 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Paranormal Analyst
+{
+    "name": "Paranormal Analyst",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Detective",
+    "oracleText": "Whenever you manifest dread, put a card you put into your graveyard this way into your hand.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "ManifestedDreadEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "MoveCollection",
+                    "from": "trigger.captured",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "69",
+        "rarity": "UNCOMMON",
+        "artist": "James Ryman",
+        "flavorText": "\"If I've done this right, it should immobilize all spirits in the area. If I've done this wrong... you know what, let's just hope I did it right.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/0/60cf954a-5503-460c-8720-8960842eea47.jpg?1726286109"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -11834,7 +11885,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             },
@@ -12172,7 +12224,8 @@
                                     "type": "ToZone",
                                     "zone": "Graveyard"
                                 }
-                            }
+                            },
+                            "EmitManifestedDreadEvent"
                         ]
                     },
                     "trigger": {
@@ -12279,7 +12332,8 @@
                                     "type": "ToZone",
                                     "zone": "Graveyard"
                                 }
-                            }
+                            },
+                            "EmitManifestedDreadEvent"
                         ]
                     },
                     "description": "Manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)"
@@ -12627,7 +12681,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 },
                 {
@@ -12865,7 +12920,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             ]
@@ -12955,7 +13011,8 @@
                                 "type": "ToZone",
                                 "zone": "Graveyard"
                             }
-                        }
+                        },
+                        "EmitManifestedDreadEvent"
                     ]
                 }
             }
@@ -13414,7 +13471,8 @@
                                     "type": "ToZone",
                                     "zone": "Graveyard"
                                 }
-                            }
+                            },
+                            "EmitManifestedDreadEvent"
                         ]
                     }
                 },
