@@ -195,6 +195,18 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 if (state.getEntity(sourceId) != null) listOf(sourceId) else emptyList()
             }
 
+            is CardSource.TriggeringEntity -> {
+                // The entity that fired the trigger ("it"); single-element when still in play.
+                // Mirrors EffectTarget.TriggeringEntity for non-targeted gather → move pipelines
+                // (Norin, Swift Survivalist: exile the just-blocked creature you control).
+                val triggeringId = context.triggeringEntityId
+                if (triggeringId != null && state.getEntity(triggeringId) != null) {
+                    listOf(triggeringId)
+                } else {
+                    emptyList()
+                }
+            }
+
             is CardSource.LastKnownCombatPairedWithSource -> {
                 // CR 509 combat pairing captured when the source left the battlefield. Restrict
                 // to creatures still on the battlefield — a creature that already left can't be

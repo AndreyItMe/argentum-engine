@@ -201,6 +201,23 @@ sealed interface CardSource {
     }
 
     /**
+     * The entity that caused the trigger to fire (`EffectContext.triggeringEntityId`) — the
+     * gatherable counterpart of [com.wingedsheep.sdk.scripting.targets.EffectTarget.TriggeringEntity].
+     * Yields a single-element collection when that entity is still in play, so a non-targeted "it"
+     * reference (the blocked creature, the dying permanent, …) can feed a gather → move → grant
+     * pipeline. Restricted to entities that still exist; an entity that already left yields nothing.
+     *
+     * Backs "whenever a creature you control becomes blocked, you may exile it. You may play that
+     * card from exile this turn" (Norin, Swift Survivalist): `GatherCards(TriggeringEntity)` →
+     * `MoveCollection(EXILE)` → `GrantMayPlayFromExile(EndOfTurn)`.
+     */
+    @SerialName("TriggeringEntity")
+    @Serializable
+    data object TriggeringEntity : CardSource {
+        override val description: String = "it"
+    }
+
+    /**
      * The creatures that were blocking, or blocked by, the effect's source at the moment the
      * source last left the battlefield (CR 509 combat pairing, captured as last-known
      * information). Resolves to those creatures that are still on the battlefield.

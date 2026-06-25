@@ -1456,6 +1456,12 @@ effect = Effects.Pipeline {
 **Special `gather` sources** (component-backed, no zone scan):
 
 - `CardSource.Self` — the ability's own source card, in whatever zone it currently sits.
+- `CardSource.TriggeringEntity` — the entity that fired the trigger (`EffectContext.triggeringEntityId`),
+  the gatherable counterpart of `EffectTarget.TriggeringEntity`. Yields a single-element collection while
+  that entity still exists (empty once it has left), so a non-targeted "it" reference can feed a
+  gather → move → grant pipeline. Backs "whenever a creature you control becomes blocked, you may exile it.
+  You may play that card from exile this turn" (Norin, Swift Survivalist): `gather(TriggeringEntity)` →
+  `exile(...)` → `GrantMayPlayFromExile(EndOfTurn)`.
 - `CardSource.TappedAsCost` — the permanents tapped to pay the activation cost.
 - `CardSource.ChosenTargets` — the spell/ability's already-resolved targets.
 - `CardSource.FromLinkedExile(count?)` — the cards in the source's linked-exile pile.

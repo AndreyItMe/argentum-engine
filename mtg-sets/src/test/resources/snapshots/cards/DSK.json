@@ -7785,6 +7785,69 @@
     ]
 }
 
+// Norin, Swift Survivalist
+{
+    "name": "Norin, Swift Survivalist",
+    "manaCost": "{R}",
+    "typeLine": "Legendary Creature — Human Coward",
+    "oracleText": "Norin can't block.\nWhenever a creature you control becomes blocked, you may exile it. You may play that card from exile this turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "BecomesBlockedEvent",
+                    "filter": "creature ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": "TriggeringEntity",
+                                "storeAs": "exiledBlockedCreature"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "exiledBlockedCreature",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile"
+                                }
+                            },
+                            {
+                                "type": "GrantMayPlayFromExile",
+                                "from": "exiledBlockedCreature"
+                            }
+                        ]
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            "CantBlock"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "145",
+        "rarity": "UNCOMMON",
+        "artist": "Yigit Koroglu",
+        "flavorText": "\"I don't know what it was! Why would I stick around to find out?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/9/49f0fdf4-3881-4327-924f-2c1b67ccda93.jpg?1726286390"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Nowhere to Run
 {
     "name": "Nowhere to Run",
