@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 175 / 190
+**Implemented:** 176 / 190
 ---
 
 - [x] Action News Crew
@@ -176,7 +176,7 @@
 - [x] The Last Ronin's Technique
 - [x] The Neutrinos
 - [x] The Ooze
-- [ ] Tokka & Rahzar, Terrible Twos
+- [x] Tokka & Rahzar, Terrible Twos
 - [x] Transdimensional Bovine
 - [x] Triceraton Commander
 - [x] Tunnel Rats

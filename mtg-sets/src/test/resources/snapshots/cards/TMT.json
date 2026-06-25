@@ -11087,6 +11087,70 @@
     }
 }
 
+// Tokka & Rahzar, Terrible Twos
+{
+    "name": "Tokka & Rahzar, Terrible Twos",
+    "manaCost": "{B/R}{B/R}",
+    "typeLine": "Legendary Creature — Turtle Wolf Mutant",
+    "oracleText": "This spell can't be countered.\nMenace\nWhenever a player casts a spell, if the amount of mana spent to cast it was less than its mana value, Tokka & Rahzar deal 3 damage to that player.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "MENACE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "TriggeringPlayer"
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "EntityProperty",
+                        "entity": "Triggering",
+                        "numericProperty": "ManaSpent"
+                    },
+                    "operator": "LT",
+                    "right": {
+                        "type": "EntityProperty",
+                        "entity": "Triggering",
+                        "numericProperty": "ManaValue"
+                    }
+                },
+                "descriptionOverride": "Whenever a player casts a spell, if the amount of mana spent to cast it was less than its mana value, Tokka & Rahzar deal 3 damage to that player."
+            }
+        ],
+        "cantBeCountered": true
+    },
+    "metadata": {
+        "collectorNumber": "171",
+        "rarity": "RARE",
+        "artist": "Yuhong Ding",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/8/284f9012-a58d-41da-be7c-962dca052711.jpg?1769006390"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED"
+    ]
+}
+
 // Transdimensional Bovine
 {
     "name": "Transdimensional Bovine",
