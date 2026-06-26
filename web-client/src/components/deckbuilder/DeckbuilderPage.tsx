@@ -1309,16 +1309,17 @@ export function DeckbuilderPage() {
               pinnedPrintings={pinnedPrintings}
               pinnedPrintingArt={pinnedPrintingArt}
               onOpenPicker={handleOpenPicker}
+              rowDragSource="deck"
             />
 
             <SideboardPanel
               sideboardCards={sideboardCards}
-              catalog={catalog}
               catalogIndex={catalogIndex}
               activeFormat={activeFormat}
               isCommanderFormat={isCommanderFormat}
               onAdd={addToSideboard}
               onRemove={removeFromSideboard}
+              onMoveFromDeck={removeCard}
             />
 
             <div className={styles.deckSummaryWrap}>
@@ -1384,12 +1385,12 @@ export function DeckbuilderPage() {
 
           <SideboardPanel
             sideboardCards={sideboardCards}
-            catalog={catalog}
             catalogIndex={catalogIndex}
             activeFormat={activeFormat}
             isCommanderFormat={isCommanderFormat}
             onAdd={addToSideboard}
             onRemove={removeFromSideboard}
+            onMoveFromDeck={removeCard}
           />
 
           <DeckCentricFooter
@@ -3630,6 +3631,8 @@ const CardTile = memo(function CardTile({
     <div
       ref={ref}
       className={styles.cardTile}
+      draggable
+      onDragStart={(e) => setCardDragData(e, card.name, 'catalog')}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       onMouseEnter={() => onHover(card)}
@@ -3811,6 +3814,7 @@ function DeckListPanel({
   pinnedPrintingArt,
   onOpenPicker,
   hideBasicLandHelpers = false,
+  rowDragSource,
 }: {
   deckCards: Record<string, number>
   catalog: Record<string, CardSummary>
@@ -3828,6 +3832,9 @@ function DeckListPanel({
   onOpenPicker: (name: string) => void
   // Sideboard use: suppress the "Suggest basic lands" button and the 0-count basic placeholders.
   hideBasicLandHelpers?: boolean
+  // When set, rows are draggable with this source tag (the main deck uses 'deck' so rows can be
+  // dragged into the sideboard). Omitted for the sideboard's own list.
+  rowDragSource?: CardDragSource
 }) {
   const grouped = useMemo(
     () => groupForDeckList(deckCards, catalog, commander, hideBasicLandHelpers),
@@ -3924,6 +3931,7 @@ function DeckListPanel({
               onLeave={handleLeave}
               pinnedPrinting={pinnedPrintings[entry.name]}
               onOpenPicker={onOpenPicker}
+              {...(rowDragSource ? { dragSource: rowDragSource } : {})}
             />
           ))}
         </div>
@@ -3958,41 +3966,88 @@ const SB_NO_VIOLATIONS: Map<string, Set<string>> = new Map()
 const SB_NO_PRINTINGS: Record<string, PrintingRef> = {}
 const SB_NO_PRINTING_ART: Record<string, { imageUri: string | null; backFaceImageUri: string | null }> = {}
 
+// Drag payload shared by the card grid, deck rows, and the sideboard drop zone. We carry both a
+// custom MIME (so we can tag where the drag started) and `text/plain` (so the drag still has a
+// sane fallback). `source` lets the sideboard treat a card dragged out of the main deck as a
+// *move* (remove one there, add one here) versus a catalog drag as a plain add.
+const CARD_DRAG_MIME = 'application/x-argentum-card'
+type CardDragSource = 'catalog' | 'deck'
+
+function setCardDragData(e: React.DragEvent, name: string, source: CardDragSource) {
+  e.dataTransfer.setData(CARD_DRAG_MIME, JSON.stringify({ name, source }))
+  e.dataTransfer.setData('text/plain', name)
+  e.dataTransfer.effectAllowed = 'copyMove'
+}
+
+function readCardDragData(e: React.DragEvent): { name: string; source: CardDragSource } | null {
+  const raw = e.dataTransfer.getData(CARD_DRAG_MIME)
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as { name: string; source: CardDragSource }
+      if (parsed.name) return parsed
+    } catch {
+      // fall through to the text/plain fallback
+    }
+  }
+  const name = e.dataTransfer.getData('text/plain')
+  return name ? { name, source: 'catalog' } : null
+}
+
 function SideboardPanel({
   sideboardCards,
-  catalog,
   catalogIndex,
   activeFormat,
   isCommanderFormat,
   onAdd,
   onRemove,
+  onMoveFromDeck,
 }: {
   sideboardCards: Record<string, number>
-  catalog: CardSummary[]
   catalogIndex: Record<string, CardSummary>
   activeFormat: string | null
   isCommanderFormat: boolean
   onAdd: (card: CardSummary) => void
   onRemove: (name: string) => void
+  // Move one copy out of the main deck (used when a deck row is dragged into the sideboard).
+  onMoveFromDeck: (name: string) => void
 }) {
   const total = Object.values(sideboardCards).reduce((a, b) => a + b, 0)
+  const [dragActive, setDragActive] = useState(false)
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    const payload = readCardDragData(e)
+    if (!payload) return
+    const card = catalogIndex[payload.name]
+    if (!card) return
+    // Dragged out of the main deck → move it (the combined 4-of cap means a plain add could
+    // otherwise be a silent no-op when the deck already holds the max).
+    if (payload.source === 'deck') onMoveFromDeck(payload.name)
+    onAdd(card)
+  }
+
   return (
-    <section className={styles.sideboardPanel} aria-label="Sideboard">
+    <section
+      className={`${styles.sideboardPanel} ${dragActive ? styles.sideboardPanelDrop : ''}`}
+      aria-label="Sideboard"
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'copy'
+        if (!dragActive) setDragActive(true)
+      }}
+      onDragLeave={(e) => {
+        // Only clear when the pointer actually leaves the panel, not when crossing child elements.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragActive(false)
+      }}
+      onDrop={handleDrop}
+    >
       <div className={styles.sideboardHeader}>
         <h3 className={styles.sideboardTitle}>Sideboard{total > 0 ? ` (${total})` : ''}</h3>
         <span className={styles.sideboardHint}>
-          Cards “outside the game” — wishes (Burning Wish…) fetch from here.
+          Cards kept alongside your deck. Drag cards here from the grid or your deck list.
         </span>
       </div>
-      <AddCardSearch
-        catalog={catalog}
-        deckCards={sideboardCards}
-        isCommanderFormat={isCommanderFormat}
-        onAdd={onAdd}
-        onSuggestBasics={SB_NOOP}
-        hideSuggestBasics
-        placeholder="Find and add cards to your sideboard…"
-      />
       {total > 0 ? (
         <DeckListPanel
           deckCards={sideboardCards}
@@ -4013,7 +4068,7 @@ function SideboardPanel({
         />
       ) : (
         <p className={styles.sideboardEmpty}>
-          Search above to add cards your wishes can fetch. Optional — most decks leave this empty.
+          Drag cards here to set them aside. Optional — most decks leave this empty.
         </p>
       )}
     </section>
@@ -4045,6 +4100,7 @@ const DeckRow = memo(function DeckRow({
   onLeave,
   pinnedPrinting,
   onOpenPicker,
+  dragSource,
 }: {
   entry: { name: string; count: number; card: CardSummary | undefined }
   activeFormat: string | null
@@ -4059,6 +4115,8 @@ const DeckRow = memo(function DeckRow({
   onLeave: () => void
   pinnedPrinting: PrintingRef | undefined
   onOpenPicker: (name: string) => void
+  // When set, the row can be dragged (e.g. into the sideboard) carrying this source tag.
+  dragSource?: CardDragSource
 }) {
   const illegal =
     activeFormat !== null &&
@@ -4134,6 +4192,12 @@ const DeckRow = memo(function DeckRow({
     <div
       className={rowClasses}
       title={rowTitle}
+      {...(dragSource
+        ? {
+            draggable: true,
+            onDragStart: (e: React.DragEvent) => setCardDragData(e, entry.name, dragSource),
+          }
+        : {})}
       onMouseEnter={() => onEnter(entry)}
       onMouseLeave={onLeave}
     >
@@ -4244,16 +4308,12 @@ function AddCardSearch({
   isCommanderFormat,
   onAdd,
   onSuggestBasics,
-  hideSuggestBasics = false,
-  placeholder = 'Find and add cards to your deck…',
 }: {
   catalog: CardSummary[]
   deckCards: Record<string, number>
   isCommanderFormat: boolean
   onAdd: (card: CardSummary) => void
   onSuggestBasics: () => void
-  hideSuggestBasics?: boolean
-  placeholder?: string
 }) {
   const [text, setText] = useState('')
   const [open, setOpen] = useState(false)
@@ -4336,20 +4396,18 @@ function AddCardSearch({
             handleAdd(matches[0]!)
           }
         }}
-        placeholder={placeholder}
-        aria-label={placeholder}
+        placeholder="Find and add cards to your deck…"
+        aria-label="Find and add cards to your deck"
       />
-      {!hideSuggestBasics && (
-        <button
-          type="button"
-          className={styles.addCardBasicsButton}
-          onClick={onSuggestBasics}
-          disabled={Object.keys(deckCards).length === 0}
-          title="Auto-fill basic lands (Plains, Island, Swamp, Mountain, Forest) from your deck's mana curve and color requirements"
-        >
-          Suggest basic lands
-        </button>
-      )}
+      <button
+        type="button"
+        className={styles.addCardBasicsButton}
+        onClick={onSuggestBasics}
+        disabled={Object.keys(deckCards).length === 0}
+        title="Auto-fill basic lands (Plains, Island, Swamp, Mountain, Forest) from your deck's mana curve and color requirements"
+      >
+        Suggest basic lands
+      </button>
       {open && matches.length > 0 && (
         <div className={styles.addCardDropdown} role="listbox">
           {matches.map((card) => {
@@ -4474,6 +4532,7 @@ function DeckCentricView({
                 onLeave={onHoverLeave}
                 pinnedPrinting={pinnedPrintings[entry.name]}
                 onOpenPicker={onOpenPicker}
+                dragSource="deck"
               />
             ))}
           </div>

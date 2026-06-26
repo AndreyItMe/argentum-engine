@@ -1701,7 +1701,8 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Sideboard ("outside the game") panel — the wish target. Sits below the deck list. */
+/* Sideboard panel — cards kept alongside the deck. Sits below the deck list and is a drop
+   target: drag cards from the catalog grid or the deck list onto it. */
 .sideboardPanel {
   display: flex;
   flex-direction: column;
@@ -1709,6 +1710,13 @@
   padding: var(--space-3);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(106, 163, 255, 0.04);
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Active drop state while a card is dragged over the panel. */
+.sideboardPanelDrop {
+  background: rgba(106, 163, 255, 0.14);
+  box-shadow: inset 0 0 0 2px var(--accent-primary, #6aa3ff);
 }
 
 .sideboardHeader {
