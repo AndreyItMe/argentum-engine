@@ -133,6 +133,12 @@ sealed interface ClientMessage {
         val cardEntries: List<DeckEntryDTO>? = null,
         /** Optional pinned printing for [commander]. Ignored when [commander] is null. */
         val commanderPrinting: PrintingRef? = null,
+        /**
+         * Constructed sideboard ("outside the game", CR 100.4a), card name → count. Used for
+         * constructed/premade lobbies; ignored for Limited lobbies, which derive the sideboard as
+         * pool − maindeck server-side (CR 100.4b).
+         */
+        val sideboard: Map<String, Int> = emptyMap(),
     ) : ClientMessage
 
     // =========================================================================

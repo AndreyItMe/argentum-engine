@@ -56,6 +56,14 @@ export interface SavedDeck {
    * in sync so legacy code paths (counts, summaries) keep working unchanged.
    */
   entries?: readonly SavedDeckEntry[]
+  /**
+   * Optional — the constructed sideboard ("outside the game", CR 100.4a), card name → count.
+   * Reachable in-game only by wish effects (Burning Wish, …). Sent over the wire as `sideboard`
+   * and seeded into the engine's SIDEBOARD zone. Absent/empty for almost every deck. (Limited
+   * decks don't store this — their sideboard is the pool − maindeck complement, derived
+   * server-side, CR 100.4b.)
+   */
+  sideboard?: Record<string, number>
   updatedAt: number
 }
 
@@ -247,6 +255,9 @@ export const useDeckLibrary = create<DeckLibraryState>((set, get) => ({
       ...(input.commander !== undefined ? { commander: input.commander } : {}),
       ...(input.commanderPrinting !== undefined ? { commanderPrinting: input.commanderPrinting } : {}),
       ...(input.entries !== undefined ? { entries: input.entries } : {}),
+      ...(input.sideboard !== undefined && Object.keys(input.sideboard).length > 0
+        ? { sideboard: input.sideboard }
+        : {}),
       updatedAt: now,
     }
     const decks = existing

@@ -53,7 +53,11 @@ export interface DeckPickerProps {
    * Game / Premade-Decks tournament flows pass it through to the server so commander-shape
    * formats can wire the engine into Format.Commander.
    */
-  onDeckChange: (deckList: Record<string, number>, commander?: string | null) => void
+  onDeckChange: (
+    deckList: Record<string, number>,
+    commander?: string | null,
+    sideboard?: Record<string, number>,
+  ) => void
   onValidityChange?: (isValid: boolean) => void
   /**
    * Optional set selection callback for the "Random" tab. When the picker is on Random and
@@ -283,6 +287,18 @@ export function DeckPicker({
     return null
   }, [tab, decks, selectedSavedId, pasteCommander])
 
+  // The constructed sideboard ("outside the game", CR 100.4a) the wish effects fetch from. Only
+  // saved decks carry one (the deckbuilder persists it); paste/random/examples have none. The
+  // server ignores it for Limited lobbies (those derive pool − maindeck) and uses it for
+  // constructed/premade ones.
+  const currentSideboard: Record<string, number> = useMemo(() => {
+    if (tab === 'saved') {
+      const saved = decks.find((d) => d.id === selectedSavedId)
+      return saved?.sideboard ?? {}
+    }
+    return {}
+  }, [tab, decks, selectedSavedId])
+
   // Strip the commander out of `currentDeck` before crossing the network boundary. `currentDeck`
   // keeps the commander baked in so the totalCards display reads "100 cards" for a Commander
   // deck, but the server's `Deck.cards` is documented as the library only (CR 903.6a) — the
@@ -300,8 +316,8 @@ export function DeckPicker({
   // On the Random tab `{}` *is* the chosen deck (server generates a random pool), so emit it.
   useEffect(() => {
     if (tab !== 'random' && Object.keys(currentDeck).length === 0) return
-    onDeckChange(deckListForServer, currentCommander)
-  }, [tab, currentDeck, deckListForServer, currentCommander, onDeckChange])
+    onDeckChange(deckListForServer, currentCommander, currentSideboard)
+  }, [tab, currentDeck, deckListForServer, currentCommander, currentSideboard, onDeckChange])
 
   // Server-side validation when the deck is non-empty.
   useEffect(() => {

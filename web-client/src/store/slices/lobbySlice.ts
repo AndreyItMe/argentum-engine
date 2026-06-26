@@ -53,7 +53,11 @@ export interface LobbySliceActions {
    * Submit a deck directly from the lobby (Premade Decks tournament format).
    * For Sealed/Draft, players use the dedicated deckbuilder instead via `submitSealedDeck`.
    */
-  submitLobbyDeck: (deckList: Record<string, number>, commander?: string | null) => void
+  submitLobbyDeck: (
+    deckList: Record<string, number>,
+    commander?: string | null,
+    sideboard?: Record<string, number>,
+  ) => void
   /** Unsubmit (and re-edit) a previously submitted lobby deck. */
   unsubmitLobbyDeck: () => void
 }
@@ -146,12 +150,12 @@ export const createLobbySlice: SliceCreator<LobbySlice> = (set, get) => ({
     set({ spectatingState: state })
   },
 
-  submitLobbyDeck: (deckList, commander) => {
+  submitLobbyDeck: (deckList, commander, sideboard) => {
     trackEvent('premade_deck_submitted', {
       deck_size: Object.values(deckList).reduce((a, b) => a + b, 0),
       has_commander: !!commander,
     })
-    getWebSocket()?.send(createSubmitSealedDeckMessage(deckList, commander))
+    getWebSocket()?.send(createSubmitSealedDeckMessage(deckList, commander, undefined, undefined, sideboard))
   },
 
   unsubmitLobbyDeck: () => {

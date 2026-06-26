@@ -1824,6 +1824,8 @@ export interface CreateGameMessage {
   readonly setCode?: string
   /** Rich entries with optional pinned printings. See [DeckEntry]. */
   readonly cardEntries?: readonly DeckEntry[]
+  /** Constructed sideboard ("outside the game", CR 100.4a), card name → count. Wish target. */
+  readonly sideboard?: Record<string, number>
 }
 
 /**
@@ -1834,6 +1836,8 @@ export interface JoinGameMessage {
   readonly sessionId: string
   readonly deckList: Record<string, number>
   readonly cardEntries?: readonly DeckEntry[]
+  /** Constructed sideboard, card name → count. See [CreateGameMessage.sideboard]. */
+  readonly sideboard?: Record<string, number>
 }
 
 /**
@@ -1914,6 +1918,12 @@ export interface SubmitSealedDeckMessage {
   readonly cardEntries?: readonly DeckEntry[]
   /** Optional pinned printing for the commander. Ignored when `commander` is null. */
   readonly commanderPrinting?: PrintingRef
+  /**
+   * Constructed sideboard ("outside the game", CR 100.4a), card name → count. Used for
+   * constructed/premade lobbies; ignored for Limited lobbies, which derive the sideboard as
+   * pool − maindeck server-side (CR 100.4b).
+   */
+  readonly sideboard?: Record<string, number>
 }
 
 // ============================================================================
@@ -2002,6 +2012,7 @@ export function createCreateGameMessage(
   vsAi?: boolean,
   setCode?: string,
   cardEntries?: readonly DeckEntry[],
+  sideboard?: Record<string, number>,
 ): CreateGameMessage {
   const msg: CreateGameMessage = {
     type: 'createGame',
@@ -2009,6 +2020,7 @@ export function createCreateGameMessage(
     ...(vsAi ? { vsAi } : {}),
     ...(setCode ? { setCode } : {}),
     ...(cardEntries && cardEntries.length > 0 ? { cardEntries } : {}),
+    ...(sideboard && Object.keys(sideboard).length > 0 ? { sideboard } : {}),
   }
   return msg
 }
@@ -2017,12 +2029,14 @@ export function createJoinGameMessage(
   sessionId: string,
   deckList: Record<string, number>,
   cardEntries?: readonly DeckEntry[],
+  sideboard?: Record<string, number>,
 ): JoinGameMessage {
   return {
     type: 'joinGame',
     sessionId,
     deckList,
     ...(cardEntries && cardEntries.length > 0 ? { cardEntries } : {}),
+    ...(sideboard && Object.keys(sideboard).length > 0 ? { sideboard } : {}),
   }
 }
 
@@ -2064,6 +2078,7 @@ export function createSubmitSealedDeckMessage(
   commander?: string | null,
   cardEntries?: readonly DeckEntry[],
   commanderPrinting?: PrintingRef,
+  sideboard?: Record<string, number>,
 ): SubmitSealedDeckMessage {
   return {
     type: 'submitSealedDeck',
@@ -2071,6 +2086,7 @@ export function createSubmitSealedDeckMessage(
     ...(commander ? { commander } : {}),
     ...(cardEntries && cardEntries.length > 0 ? { cardEntries } : {}),
     ...(commanderPrinting ? { commanderPrinting } : {}),
+    ...(sideboard && Object.keys(sideboard).length > 0 ? { sideboard } : {}),
   }
 }
 

@@ -1676,12 +1676,14 @@ function PremadeDeckPickerPanel({ lobbyState }: { lobbyState: LobbyState }) {
 
   const [pendingDeck, setPendingDeck] = useState<Record<string, number>>({})
   const [pendingCommander, setPendingCommander] = useState<string | null>(null)
+  const [pendingSideboard, setPendingSideboard] = useState<Record<string, number>>({})
   const [isValid, setIsValid] = useState(false)
 
   const handleDeckChange = useCallback(
-    (deck: Record<string, number>, commander?: string | null) => {
+    (deck: Record<string, number>, commander?: string | null, sideboard?: Record<string, number>) => {
       setPendingDeck(deck)
       setPendingCommander(commander ?? null)
+      setPendingSideboard(sideboard ?? {})
     },
     [],
   )
@@ -1733,7 +1735,7 @@ function PremadeDeckPickerPanel({ lobbyState }: { lobbyState: LobbyState }) {
           format={deckFormat ?? null}
         />
         <button
-          onClick={() => submitLobbyDeck(pendingDeck, isCommanderShape ? pendingCommander : null)}
+          onClick={() => submitLobbyDeck(pendingDeck, isCommanderShape ? pendingCommander : null, pendingSideboard)}
           disabled={!canSubmit}
           title={submitTitle}
           className={styles.startButton}

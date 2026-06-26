@@ -886,7 +886,11 @@ export type GameStore = {
   kickPlayer: (playerId: string) => void
   leaveTournament: () => void
   /** Submit a deck directly from the lobby (Premade Decks tournament format). */
-  submitLobbyDeck: (deckList: Record<string, number>, commander?: string | null) => void
+  submitLobbyDeck: (
+    deckList: Record<string, number>,
+    commander?: string | null,
+    sideboard?: Record<string, number>,
+  ) => void
   unsubmitLobbyDeck: () => void
 
   // Quick Game Lobby slice
