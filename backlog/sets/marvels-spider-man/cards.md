@@ -2,16 +2,16 @@
 
 **Set Size:** 188 booster cards (excluding basic lands and tokens)
 **Release Date:** September 26, 2025
-**Implemented:** 28 / 189
+**Implemented:** 87 / 189
 - [x] Agent Venom
 - [x] Angry Rabble
 - [x] Amazing Acrobatics
 - [ ] Anti-Venom, Horrifying Healer
 - [ ] Arachne, Psionic Weaver
 - [ ] Araña, Heart of the Spider
-- [ ] Aunt May
-- [ ] Bagel and Schmear
-- [ ] Beetle, Legacy Criminal
+- [x] Aunt May
+- [x] Bagel and Schmear
+- [x] Beetle, Legacy Criminal
 - [ ] Behold the Sinister Six!
 - [ ] Biorganic Carapace
 - [ ] Black Cat, Cunning Thief
@@ -19,28 +19,28 @@
 - [ ] Chameleon, Master of Disguise
 - [ ] Cheering Crowd
 - [ ] City Pigeon
-- [ ] Common Crook
-- [ ] Cosmic Spider-Man
+- [x] Common Crook
+- [x] Cosmic Spider-Man
 - [ ] Costume Closet
-- [ ] Daily Bugle Building
+- [x] Daily Bugle Building
 - [ ] Daily Bugle Reporters
 - [ ] Damage Control Crew
 - [ ] Doc Ock's Henchmen
-- [ ] Doc Ock's Tentacles
-- [ ] Doc Ock, Sinister Scientist
+- [x] Doc Ock's Tentacles
+- [x] Doc Ock, Sinister Scientist
 - [ ] Doctor Octopus, Master Planner
 - [ ] Eddie Brock // Venom, Lethal Protector
 - [ ] Eerie Gravestone
 - [ ] Electro's Bolt
 - [ ] Electro, Assaulting Battery
-- [ ] Ezekiel Sims, Spider-Totem
+- [x] Ezekiel Sims, Spider-Totem
 - [ ] Flash Thompson, Spider-Fan
-- [ ] Flying Octobot
+- [x] Flying Octobot
 - [ ] Friendly Neighborhood
-- [ ] Gallant Citizen
+- [x] Gallant Citizen
 - [ ] Green Goblin, Revenant
-- [ ] Grow Extra Arms
-- [ ] Guy in the Chair
+- [x] Grow Extra Arms
+- [x] Guy in the Chair
 - [ ] Gwen Stacy // Ghost-Spider
 - [ ] Gwenom, Remorseless
 - [ ] Heroes' Hangout
@@ -49,7 +49,7 @@
 - [x] Hot Dog Cart
 - [ ] Hydro-Man, Fluid Felon
 - [x] Impostor Syndrome
-- [ ] Inner Demons Gangsters
+- [x] Inner Demons Gangsters
 - [x] Interdimensional Web Watch
 - [x] Iron Spider, Stark Upgrade
 - [x] J. Jonah Jameson
@@ -62,28 +62,28 @@
 - [ ] Lady Octopus, Inspired Inventor
 - [x] Living Brain, Mechanical Marvel
 - [ ] Lizard, Connors's Curse
-- [ ] Lurking Lizards
+- [x] Lurking Lizards
 - [ ] Madame Web, Clairvoyant
-- [ ] Mary Jane Watson
-- [ ] Masked Meower
+- [x] Mary Jane Watson
+- [x] Masked Meower
 - [ ] Maximum Carnage
 - [ ] Mechanical Mobster
-- [ ] Merciless Enforcers
+- [x] Merciless Enforcers
 - [ ] Miles Morales // Ultimate Spider-Man
 - [ ] Mister Negative
 - [ ] Mob Lookout
 - [ ] Molten Man, Inferno Incarnate
-- [ ] Morbius the Living Vampire
-- [ ] Morlun, Devourer of Spiders
+- [x] Morbius the Living Vampire
+- [x] Morlun, Devourer of Spiders
 - [ ] Multiversal Passage
-- [ ] Mysterio's Phantasm
+- [x] Mysterio's Phantasm
 - [ ] Mysterio, Master of Illusion
-- [ ] News Helicopter
+- [x] News Helicopter
 - [ ] Norman Osborn // Green Goblin
-- [ ] Ominous Asylum
+- [x] Ominous Asylum
 - [x] Origin of Spider-Man
 - [ ] Oscorp Industries
-- [ ] Oscorp Research Team
+- [x] Oscorp Research Team
 - [ ] Parker Luck
 - [ ] Passenger Ferry
 - [ ] Peter Parker // Amazing Spider-Man
@@ -93,7 +93,7 @@
 - [x] Professional Wrestler
 - [x] Prowler, Clawed Thief
 - [ ] Pumpkin Bombardment
-- [ ] Radioactive Spider
+- [x] Radioactive Spider
 - [ ] Raging Goblinoids
 - [x] Rent Is Due
 - [ ] Rhino's Rampage
@@ -107,30 +107,30 @@
 - [ ] SP//dr, Piloted by Peni
 - [ ] Sandman's Quicksand
 - [ ] Sandman, Shifting Scoundrel
-- [ ] Savage Mansion
+- [x] Savage Mansion
 - [ ] Scarlet Spider, Ben Reilly
 - [ ] Scarlet Spider, Kaine
-- [ ] School Daze
+- [x] School Daze
 - [x] Scorpion's Sting
 - [x] Scorpion, Seething Striker
 - [ ] Scout the City
 - [ ] Secret Identity
 - [ ] Selfless Police Captain
 - [ ] Shadow of the Goblin
-- [ ] Shock
+- [x] Shock
 - [ ] Shocker, Unshakable
 - [ ] Shriek, Treblemaker
 - [ ] Silk, Web Weaver
-- [ ] Silver Sable, Mercenary Leader
-- [ ] Sinister Hideout
+- [x] Silver Sable, Mercenary Leader
+- [x] Sinister Hideout
 - [x] Skyward Spider
-- [ ] Spectacular Spider-Man
-- [ ] Spectacular Tactics
-- [ ] Spider Manifestation
-- [ ] Spider-Bot
-- [ ] Spider-Byte, Web Warden
+- [x] Spectacular Spider-Man
+- [x] Spectacular Tactics
+- [x] Spider Manifestation
+- [x] Spider-Bot
+- [x] Spider-Byte, Web Warden
 - [ ] Spider-Girl, Legacy Hero
-- [ ] Spider-Gwen, Free Spirit
+- [x] Spider-Gwen, Free Spirit
 - [ ] Spider-Ham, Peter Porker
 - [ ] Spider-Islanders
 - [ ] Spider-Man 2099
@@ -139,56 +139,56 @@
 - [ ] Spider-Man Noir
 - [ ] Spider-Man, Brooklyn Visionary
 - [ ] Spider-Man, Web-Slinger
-- [ ] Spider-Mobile
+- [x] Spider-Mobile
 - [ ] Spider-Punk
-- [ ] Spider-Rex, Daring Dino
+- [x] Spider-Rex, Daring Dino
 - [ ] Spider-Sense
 - [ ] Spider-Slayer, Hatred Honed
-- [ ] Spider-Suit
+- [x] Spider-Suit
 - [ ] Spider-UK
 - [ ] Spider-Verse
 - [ ] Spider-Woman, Stunning Savior
 - [ ] Spiders-Man, Heroic Horde
 - [ ] Spinneret and Spiderling
-- [ ] Starling, Aerial Ally
+- [x] Starling, Aerial Ally
 - [ ] Steel Wrecking Ball
 - [ ] Stegron the Dinosaur Man
 - [ ] Strength of Will
-- [ ] Suburban Sanctuary
-- [ ] Subway Train
-- [ ] Sudden Strike
+- [x] Suburban Sanctuary
+- [x] Subway Train
+- [x] Sudden Strike
 - [ ] Sun-Spider, Nimble Webber
 - [ ] Superior Foes of Spider-Man
 - [x] Superior Spider-Man
 - [ ] Supportive Parents
 - [ ] Swarm, Being of Bees
 - [ ] Symbiote Spider-Man
-- [ ] Taxi Driver
+- [x] Taxi Driver
 - [ ] Terrific Team-Up
 - [ ] The Clone Saga
 - [ ] The Death of Gwen Stacy
 - [ ] The Soul Stone
 - [ ] The Spot's Portal
 - [ ] The Spot, Living Portal
-- [ ] Thwip!
-- [ ] Tombstone, Career Criminal
+- [x] Thwip!
+- [x] Tombstone, Career Criminal
 - [ ] Ultimate Green Goblin
-- [ ] University Campus
+- [x] University Campus
 - [ ] Unstable Experiment
 - [ ] Urban Retreat
-- [ ] Venom's Hunger
-- [ ] Venom, Evil Unleashed
-- [ ] Venomized Cat
-- [ ] Vibrant Cityscape
-- [ ] Villainous Wrath
-- [ ] Vulture, Scheming Scavenger
+- [x] Venom's Hunger
+- [x] Venom, Evil Unleashed
+- [x] Venomized Cat
+- [x] Vibrant Cityscape
+- [x] Villainous Wrath
+- [x] Vulture, Scheming Scavenger
 - [ ] Wall Crawl
-- [ ] Web Up
+- [x] Web Up
 - [ ] Web of Life and Destiny
-- [ ] Web-Shooters
-- [ ] Web-Warriors
+- [x] Web-Shooters
+- [x] Web-Warriors
 - [ ] Whoosh!
-- [ ] Wild Pack Squad
-- [ ] Wisecrack
+- [x] Wild Pack Squad
+- [x] Wisecrack
 - [ ] With Great Power . . .
-- [ ] Wraith, Vicious Vigilante
+- [x] Wraith, Vicious Vigilante
