@@ -4262,6 +4262,59 @@
     ]
 }
 
+// Item Shopkeep
+{
+    "name": "Item Shopkeep",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Citizen",
+    "oracleText": "Whenever you attack, target attacking equipped creature gains menace until end of turn. (It can't be blocked except by two or more creatures.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "YouAttackEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "GrantKeyword",
+                    "keyword": "MENACE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "attacking equipped creature"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature"
+                            ],
+                            "statePredicates": [
+                                "IsAttacking",
+                                "IsEquipped"
+                            ]
+                        }
+                    },
+                    "id": "attacking equipped creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "142",
+        "artist": "IWAO",
+        "flavorText": "\"What can I do for you?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/d/bd2db3f5-fd0d-4817-af90-6bea1f07e16b.jpg?1748706293"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Jecht, Reluctant Guardian
 {
     "name": "Jecht, Reluctant Guardian",
@@ -5288,6 +5341,98 @@
     ]
 }
 
+// Magitek Infantry
+{
+    "name": "Magitek Infantry",
+    "manaCost": "{W}",
+    "typeLine": "Artifact Creature — Robot Soldier",
+    "oracleText": "This creature gets +1/+0 as long as you control another artifact.\n{2}{W}: Search your library for a card named Magitek Infantry, put it onto the battlefield tapped, then shuffle.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}{W}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library",
+                                "filter": "name:Magitek Infantry"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield",
+                                "placement": "Tapped"
+                            }
+                        },
+                        "ShuffleLibrary"
+                    ]
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 1,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "artifact",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "25",
+        "artist": "John Tyler Christopher",
+        "flavorText": "These cybersoldiers were specifically engineered to excel in combat, and serve as the powerhouse of the imperial infantry.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/6/b64dc6d7-dd01-4e66-9099-4c90865448df.jpg?1748705847"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Midgar, City of Mako
 {
     "name": "Midgar, City of Mako",
@@ -5545,6 +5690,86 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Namazu Trader
+{
+    "name": "Namazu Trader",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Fish Citizen",
+    "oracleText": "When this creature enters, you lose 1 life and create a Treasure token.\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, surveil 2. (Look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Controller"
+                        },
+                        {
+                            "type": "CreatePredefinedToken",
+                            "tokenType": "Treasure"
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "SacrificeTarget",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "another creature or artifact"
+                                }
+                            },
+                            {
+                                "type": "Surveil",
+                                "count": 2
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature|artifact ctrl:you",
+                        "excludeSelf": true
+                    },
+                    "id": "another creature or artifact"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "107",
+        "artist": "Andrea Tentori Montalto",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/9/f9d25b34-990d-416c-aef7-1b5a73f19dd4.jpg?1748962390"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
