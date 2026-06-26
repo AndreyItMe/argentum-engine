@@ -422,7 +422,8 @@ object LibraryPatterns {
         filter: GameObjectFilter = GameObjectFilter.Any,
         count: Int = 1,
         destination: SearchDestination = SearchDestination.BATTLEFIELD,
-        entersTapped: Boolean = false
+        entersTapped: Boolean = false,
+        reveal: Boolean = false
     ): CompositeEffect {
         val effects = mutableListOf<Effect>()
 
@@ -452,7 +453,8 @@ object LibraryPatterns {
         effects.add(
             MoveCollectionEffect(
                 from = "found",
-                destination = CardDestination.ToZone(zone, placement = placement)
+                destination = CardDestination.ToZone(zone, placement = placement),
+                revealed = reveal
             )
         )
 

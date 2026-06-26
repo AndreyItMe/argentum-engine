@@ -1270,7 +1270,7 @@ one-off pipeline belongs inline in the card file via `Effects.Pipeline { }` (§5
 **Library search & reveal**
 
 - `searchLibrary(filter, destination?, tapped?, shuffle?)` — search library, pick matching, move, shuffle.
-- `searchMultipleZones(filters, ...)` — search multiple zones in one effect.
+- `searchMultipleZones(zones, filter, count?, destination?, tapped?, reveal?)` — search several zones (e.g. library and/or graveyard) in one effect; shuffles automatically if `LIBRARY` is among the zones. Pass `reveal = true` for "reveal it" tutors (Delivery Moogle).
 
 **Top-deck manipulation**
 
