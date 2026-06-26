@@ -203,10 +203,13 @@ so a land // spell Adventure offers *both* "play the land" (PlayLandEnumerator) 
    `DynamicAmounts.devotionTo(vararg colors)`; the evaluator counts colored mana symbols (incl. hybrid / monocolored
    hybrid / Phyrexian) on controlled permanents, read via projected controller. → Clive, Ifrit's Dominant (ETB).
 
-8. **"First combat phase of the turn" condition + additional-combat rider** — ❌ GAP. `AddCombatPhaseEffect` exists,
-   but nothing tests *"if it's the first combat phase of the turn"* to gate the extra phase (and untap-the-attacker
-   rider). → Genji Glove, Balthier and Fran, Sidequest: Play Blitzball. Add an `is-first-combat-phase` condition +
-   the untap-and-add-phase composition.
+8. **"First combat phase of the turn" condition + additional-combat rider** — ⚠️ PARTIAL. `AddCombatPhaseEffect`
+   exists, but nothing tests *"if it's the first combat phase of the turn"* to gate the extra phase. Genji Glove ships
+   using the accepted `oncePerTurn = true` anti-infinite-loop approximation (same precedent as Raph & Leo / Éomer —
+   composes `Triggers.attacks(binding = ATTACHED)` + untap the equipped creature + `Effects.AddCombatPhase`); the two
+   diverge only when another source of additional combat exists *and* the equipped creature first attacks in combat #2.
+   Still desirable: a faithful `Conditions.IsFirstCombatPhase` primitive to swap in for `oncePerTurn`. → Genji Glove
+   (DONE via approximation), Balthier and Fran, Sidequest: Play Blitzball.
 
 9. **Additional end step** — ❌ GAP. No `AddEndStepEffect` analogous to `AddCombatPhaseEffect` /
    `AddAdditionalUpkeepStepsEffect`. → Y'shtola Rhul ("there is an additional end step after this step"). One new

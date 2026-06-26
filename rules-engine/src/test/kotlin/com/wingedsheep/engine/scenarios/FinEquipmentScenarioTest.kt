@@ -3,6 +3,9 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.core.ActivateAbility
 import com.wingedsheep.engine.core.SelectCardsDecision
 import com.wingedsheep.engine.mechanics.layers.StateProjector
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.player.AdditionalPhasesComponent
+import com.wingedsheep.engine.state.components.player.ExtraPhaseKind
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.sdk.core.Keyword
@@ -225,6 +228,165 @@ class FinEquipmentScenarioTest : ScenarioTestBase() {
 
             withClue("Opponent took 3 (Bolt) + 1 (granted ability) = 4 damage") {
                 game.getLifeTotal(2) shouldBe oppLifeBefore - 4
+            }
+        }
+
+        val aettirEquipId by lazy {
+            cardRegistry.requireCard("Aettir and Priwen").activatedAbilities[0].id
+        }
+
+        val genjiEquipId by lazy {
+            cardRegistry.requireCard("Genji Glove").activatedAbilities[0].id
+        }
+
+        test("Genji Glove: equipped creature has double strike; attacking untaps it and adds a combat phase") {
+            val game = scenario()
+                .withPlayers()
+                .withCardOnBattlefield(1, "Grizzly Bears")
+                .withCardOnBattlefield(1, "Genji Glove")
+                .withLandsOnBattlefield(1, "Plains", 3) // pay Equip {3}
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            val bears = game.findPermanent("Grizzly Bears")!!
+            val glove = game.findPermanent("Genji Glove")!!
+
+            game.execute(
+                ActivateAbility(
+                    playerId = game.player1Id,
+                    sourceId = glove,
+                    abilityId = genjiEquipId,
+                    targets = listOf(ChosenTarget.Permanent(bears))
+                )
+            ).error shouldBe null
+            game.resolveStack()
+
+            withClue("Equipped creature has double strike") {
+                stateProjector.project(game.state).hasKeyword(bears, Keyword.DOUBLE_STRIKE) shouldBe true
+            }
+
+            game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+            game.declareAttackers(mapOf("Grizzly Bears" to 2))
+            // Attacking taps it...
+            withClue("Bears is tapped right after declaring it as an attacker") {
+                game.state.getEntity(bears)?.has<TappedComponent>() shouldBe true
+            }
+            // ...the Genji Glove attack trigger resolves: untap it + queue an additional combat phase.
+            game.passPriority()
+            game.resolveStack()
+
+            withClue("Genji Glove's trigger untapped the attacking equipped creature") {
+                game.state.getEntity(bears)?.has<TappedComponent>() shouldBe false
+            }
+            withClue("An additional combat phase was queued for the active player") {
+                val extra = game.state.getEntity(game.player1Id)?.get<AdditionalPhasesComponent>()
+                (extra?.phases?.contains(ExtraPhaseKind.COMBAT)) shouldBe true
+            }
+        }
+
+        test("Aettir and Priwen: equipped creature has base power/toughness = controller's life total") {
+            // Life set to 13 — distinct from both the printed 2/2 and the default 20, so the
+            // assertion proves the CDA *sets* base P/T to the controller's life total.
+            val game = scenario()
+                .withPlayers()
+                .withLifeTotal(1, 13)
+                .withCardOnBattlefield(1, "Grizzly Bears") // 2/2 base — overwritten by the CDA
+                .withCardOnBattlefield(1, "Aettir and Priwen")
+                .withLandsOnBattlefield(1, "Plains", 5)    // pay Equip {5}
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            val bears = game.findPermanent("Grizzly Bears")!!
+            val equip = game.findPermanent("Aettir and Priwen")!!
+
+            game.execute(
+                ActivateAbility(
+                    playerId = game.player1Id,
+                    sourceId = equip,
+                    abilityId = aettirEquipId,
+                    targets = listOf(ChosenTarget.Permanent(bears))
+                )
+            ).error shouldBe null
+            game.resolveStack()
+
+            val projected = stateProjector.project(game.state)
+            withClue("Base P/T is *set* to controller's life total (13), overwriting the printed 2/2") {
+                projected.getPower(bears) shouldBe 13
+                projected.getToughness(bears) shouldBe 13
+            }
+        }
+
+        test("Bard's Bow: +2/+2, reach, and Bard (job select)") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Bard's Bow")
+                .withLandsOnBattlefield(1, "Forest", 3)
+                .withCardInLibrary(1, "Plains")
+                .withCardInLibrary(2, "Island")
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            game.castSpell(1, "Bard's Bow").error shouldBe null
+            if (game.hasPendingDecision()) game.submitManaSourcesAutoPay()
+            game.resolveStack()
+
+            val hero = game.findPermanent("Hero Token")!!
+            val projected = stateProjector.project(game.state)
+            withClue("Equipped Hero token should be 3/3 (1/1 base + 2/+2)") {
+                projected.getPower(hero) shouldBe 3
+                projected.getToughness(hero) shouldBe 3
+            }
+            withClue("Equipped Hero token should have reach") {
+                projected.hasKeyword(hero, Keyword.REACH) shouldBe true
+            }
+            withClue("Equipped Hero token should be a Bard in addition to its other types") {
+                projected.hasSubtype(hero, "Bard") shouldBe true
+            }
+        }
+
+        test("Thief's Knife: +1/+1, granted 'combat damage to a player -> draw', and Rogue (job select)") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Thief's Knife")
+                .withLandsOnBattlefield(1, "Island", 3)
+                .withCardInLibrary(1, "Plains") // drawn by the granted trigger
+                .withCardInLibrary(2, "Forest")
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            game.castSpell(1, "Thief's Knife").error shouldBe null
+            if (game.hasPendingDecision()) game.submitManaSourcesAutoPay()
+            game.resolveStack()
+
+            val hero = game.findPermanent("Hero Token")!!
+            run {
+                val projected = stateProjector.project(game.state)
+                withClue("Equipped Hero token should be 2/2 (1/1 base + 1/+1)") {
+                    projected.getPower(hero) shouldBe 2
+                    projected.getToughness(hero) shouldBe 2
+                }
+                withClue("Equipped Hero token should be a Rogue in addition to its other types") {
+                    projected.hasSubtype(hero, "Rogue") shouldBe true
+                }
+            }
+
+            val handBefore = game.handSize(1)
+            game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+            game.declareAttackers(mapOf("Hero Token" to 2))
+            game.passUntilPhase(Phase.COMBAT, Step.DECLARE_BLOCKERS)
+            game.declareNoBlockers()
+            game.passUntilPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
+            game.passPriority()
+            game.resolveStack()
+
+            withClue("Opponent took 2 combat damage from the equipped Hero token") {
+                game.getLifeTotal(2) shouldBe 18
+            }
+            withClue("Dealing combat damage to a player drew a card") {
+                game.handSize(1) shouldBe handBefore + 1
             }
         }
 
