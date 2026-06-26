@@ -49,6 +49,102 @@
     ]
 }
 
+// Abhorrent Oculus
+{
+    "name": "Abhorrent Oculus",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Eye",
+    "oracleText": "As an additional cost to cast this spell, exile six cards from your graveyard.\nFlying\nAt the beginning of each opponent's upkeep, manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP",
+                    "player": "EachOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "manifestDreadLooked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "manifestDreadLooked",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "manifestDreadManifested",
+                            "storeRemainder": "manifestDreadGraveyard",
+                            "selectedLabel": "Manifest (put onto the battlefield face down)",
+                            "remainderLabel": "Put into your graveyard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadManifested",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "faceDown": "MANIFEST"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "manifestDreadGraveyard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        },
+                        "EmitManifestedDreadEvent"
+                    ]
+                }
+            }
+        ],
+        "additionalCosts": [
+            {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomExileFrom",
+                    "zone": "Graveyard",
+                    "count": 6
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "42",
+        "rarity": "MYTHIC",
+        "artist": "Bryan Sola",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/2/d2705b43-a94a-44c0-8740-82e0b296820c.jpg?1726286015"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Acrobatic Cheerleader
 {
     "name": "Acrobatic Cheerleader",
@@ -4884,6 +4980,126 @@
     ]
 }
 
+// Fear of Missing Out
+{
+    "name": "Fear of Missing Out",
+    "manaCost": "{1}{R}",
+    "typeLine": "Enchantment Creature — Nightmare",
+    "oracleText": "When this creature enters, discard a card, then draw a card.\nDelirium — Whenever this creature attacks for the first time each turn, if there are four or more card types among cards in your graveyard, untap target creature. After this phase, there is an additional combat phase.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Hand"
+                            },
+                            "storeAs": "hand"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "hand",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "discarded",
+                            "prompt": "Choose 1 card to discard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "discarded",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            },
+                            "moveType": "Discard"
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this creature enters, discard a card, then draw a card."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "AttackEvent",
+                    "requires": [
+                        "AttacksFirstTimeEachTurn"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "TapUntap",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "creature"
+                            },
+                            "tap": false
+                        },
+                        "AddCombatPhase"
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "creature"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                },
+                "descriptionOverride": "Delirium — Whenever this creature attacks for the first time each turn, if there are four or more card types among cards in your graveyard, untap target creature. After this phase, there is an additional combat phase."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "136",
+        "rarity": "RARE",
+        "artist": "John Stanko",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9d48aaff-46ab-411b-9456-171d4709f951.jpg?1726286354"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fear of Surveillance
 {
     "name": "Fear of Surveillance",
@@ -5617,6 +5833,158 @@
         "imageUri": "https://cards.scryfall.io/normal/front/8/a/8ac39c01-127f-4471-bc74-11a90c48e306.jpg?1726286797"
     },
     "colorIdentityOverride": []
+}
+
+// Ghostly Dancers
+{
+    "name": "Ghostly Dancers",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "Flying\nWhen this creature enters, return an enchantment card from your graveyard to your hand or unlock a locked door of a Room you control.\nEerie — Whenever an enchantment you control enters and whenever you fully unlock a Room, create a 3/1 white Spirit creature token with flying.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "EERIE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "FromZone",
+                                            "zone": "Graveyard",
+                                            "filter": "enchantment"
+                                        },
+                                        "storeAs": "ghostlyDancersReturnable"
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "ghostlyDancersReturnable",
+                                        "selection": {
+                                            "type": "ChooseExactly",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeSelected": "ghostlyDancersToReturn",
+                                        "prompt": "Return an enchantment card from your graveyard to your hand",
+                                        "selectedLabel": "Return to hand",
+                                        "showAllCards": true
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "ghostlyDancersToReturn",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Hand"
+                                        }
+                                    }
+                                ]
+                            },
+                            "description": "Return an enchantment card from your graveyard to your hand"
+                        },
+                        {
+                            "effect": "UnlockDoor",
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "optional": true,
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                {
+                                                    "type": "HasSubtype",
+                                                    "subtype": "Room"
+                                                }
+                                            ],
+                                            "statePredicates": [
+                                                "HasLockedDoor"
+                                            ],
+                                            "controllerPredicate": "ControlledByYou"
+                                        }
+                                    }
+                                }
+                            ],
+                            "description": "Unlock a locked door of a Room you control"
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this creature enters, return an enchantment card from your graveyard to your hand or unlock a locked door of a Room you control."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "enchantment ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Spirit"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/b/4b7697e3-b3fb-481c-a90f-1ae08d8a9880.jpg?1726236503"
+                },
+                "descriptionOverride": "Eerie — Whenever an enchantment you control enters, create a 3/1 white Spirit creature token with flying."
+            },
+            {
+                "id": "ability_3",
+                "trigger": "RoomFullyUnlockedEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 3,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Spirit"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/b/4b7697e3-b3fb-481c-a90f-1ae08d8a9880.jpg?1726236503"
+                },
+                "descriptionOverride": "Eerie — Whenever you fully unlock a Room, create a 3/1 white Spirit creature token with flying."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "13",
+        "rarity": "RARE",
+        "artist": "Josh Newton",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/b/ab38adb5-8f16-4a4a-8dbc-f6ec14ca6c9f.jpg?1726285905"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
 }
 
 // Ghostly Keybearer
