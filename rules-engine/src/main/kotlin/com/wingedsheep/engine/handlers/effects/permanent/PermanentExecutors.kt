@@ -54,6 +54,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.phasing.PhaseOutExecuto
 import com.wingedsheep.engine.handlers.effects.permanent.phasing.PhaseOutUntilLeavesExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.phasing.PhaseInLinkedToSourceExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.tapping.TapUntapCollectionExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.room.LockDoorExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.room.UnlockDoorExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.tapping.TapUntapExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.types.AddCardTypeExecutor
@@ -194,6 +195,7 @@ class PermanentExecutors(
         TapUntapCollectionExecutor(),
         // rooms / doors
         UnlockDoorExecutor(staticAbilityHandler),
+        LockDoorExecutor(staticAbilityHandler),
         // phasing
         PhaseOutExecutor(),
         PhaseOutUntilLeavesExecutor(),

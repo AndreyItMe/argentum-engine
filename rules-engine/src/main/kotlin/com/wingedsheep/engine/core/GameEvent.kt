@@ -1451,3 +1451,20 @@ data class DoorUnlockedEvent(
      */
     val becameFullyUnlocked: Boolean
 ) : GameEvent
+
+/**
+ * A door of a Room lost its "unlocked" designation — it was locked (CR 709.5g). The twin of
+ * [DoorUnlockedEvent], emitted by the resolution-time "lock a door" effect (`LockDoorEffect`, e.g.
+ * Keys to the House). Locking is not a trigger source in the rules and can never fully unlock a
+ * Room, so unlike unlocking there is no companion event — this is purely informational (game log /
+ * animation). The locked half's name, mana cost, and rules text turn off via projection.
+ */
+@Serializable
+@SerialName("DoorLockedEvent")
+data class DoorLockedEvent(
+    val roomId: EntityId,
+    val roomName: String,
+    val faceId: com.wingedsheep.engine.state.components.identity.RoomFaceId,
+    val faceName: String,
+    val controllerId: EntityId
+) : GameEvent

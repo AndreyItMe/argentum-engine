@@ -53,4 +53,7 @@ data class RoomComponent(
 
     /** Faces whose doors are currently locked (the unlock action targets these). */
     val lockedFaces: List<RoomFace> get() = faces.filter { it.id !in unlocked }
+
+    /** Faces whose doors are currently unlocked (the "lock a door" effect targets these). */
+    val unlockedFaces: List<RoomFace> get() = faces.filter { it.id in unlocked }
 }

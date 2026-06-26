@@ -1035,8 +1035,23 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   Room restricted to one with a locked door —
   `TargetObject(optional = true, filter = TargetFilter(GameObjectFilter.Any.withSubtype(Subtype.ROOM).youControl()).hasLockedDoor())`
   — so a fully-unlocked Room is never a legal target and the controller may choose no target. If the Room has
-  more than one locked door (it entered without being cast, CR 709.5d), its first locked door is unlocked.
-  Used by Ghostly Keybearer.
+  more than one locked door (it entered without being cast, CR 709.5d), the controller is prompted for which
+  door to unlock (CR 709.5f). Used by Ghostly Keybearer.
+- `LockDoorEffect(target = ContextTarget(0))` — facade `Effects.LockDoor(target)`. The resolution-time
+  **"lock a door"** instruction (CR 709.5g), the twin of `UnlockDoorEffect`: removes a chosen unlocked half's
+  "unlocked" designation, turning that half's name/cost/text off via projection. Unlike unlocking, locking is
+  **not a trigger source** (there is no "when you lock this door" ability) and can never *fully unlock* a Room —
+  so it emits only a `DoorLockedEvent` (game-log/animation), never the `DoorUnlockedEvent`/`RoomFullyUnlockedEvent`
+  family. (That asymmetry is why lock and unlock are two separate effects, not one `lock: Boolean` flag.) When the
+  targeted Room has more than one unlocked door (a fully-unlocked Room) the controller is prompted for which door
+  to lock; with one it is locked directly; with none it is a harmless no-op. Both door effects share
+  `RoomDoorResolution`, which raises the door-choice `ChooseOptionDecision` only when more than one door is eligible.
+- `Effects.LockOrUnlockDoor(target = ContextTarget(0))` — **"lock or unlock a door of target Room"**
+  (Keys to the House). A resolution-time `ModalEffect.chooseOne(LockDoor, UnlockDoor, countsAsModalSpell = false)`
+  (modeled exactly like `Effects.Endure` — no new modal machinery, not a printed modal spell): the controller
+  chooses lock or unlock as it resolves, then the chosen door effect runs against the same outer `target`. Pair
+  with a single **"target Room you control"** `TargetObject` (no locked/unlocked restriction — either choice can
+  always do something on a Room you control).
 - `PhaseOutEffect(target = Self)` — phase the target permanent out (Rule 702.26); facade `Effects.PhaseOut(target)`. While phased out it's treated as though it doesn't exist (excluded from `getBattlefield`, so from projection, triggers, combat, targeting, and SBAs) and phases back in before its controller's next untap step. Indirect phasing (attached Auras/Equipment) is handled automatically. Used as the `suffer` branch of a pay-or-phase trigger (Vaporous Djinn: "phases out unless you pay {U}{U}" = `PayOrSufferEffect(Costs.pay.Mana(...), Effects.PhaseOut())`), or as the reaction of a "becomes the target of a spell, it phases out" trigger (King of the Oathbreakers = `Triggers.BecomesTargetOfSpell(...)` + `Effects.PhaseOut(EffectTarget.TriggeringEntity)`). The matching phase-in moment is the `Triggers.PhasesIn(filter?)` trigger (see Triggers below).
 - `PhaseOutUntilLeavesEffect(target, tapOnPhaseIn)` / `Effects.PhaseOutUntilLeaves(target, tapOnPhaseIn)` — phase the target out **indefinitely, linked to the effect's source** (the phasing analogue of `ExileUntilLeaves`): it skips its untap-step phase-in and stays out until the source leaves the battlefield. Pair with `Effects.PhaseInLinkedToSource()` on the source's `LeavesBattlefield` trigger, which phases everything the source phased out this way back in (tapping those flagged `tapOnPhaseIn`). The link lives on the phased-out permanent (`PhasedOutComponent.phaseInOnSourceLeaves`); indirect phasing carries Auras/Equipment out with the creature. This is Oubliette (ETB phase-out + leaves-trigger phase-in, tapped).
 - `MarkExileOnDeathEffect(target)` — replace next "to graveyard" with "to exile".

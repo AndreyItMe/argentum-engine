@@ -2765,6 +2765,32 @@ object Effects {
         com.wingedsheep.sdk.scripting.effects.UnlockDoorEffect(target)
 
     /**
+     * Lock an unlocked door of a target Room (CR 709.5g) — the resolution-time "lock" instruction,
+     * the twin of [UnlockDoor]. Removes the chosen unlocked half's "unlocked" designation, turning
+     * that half's text off. When the Room has more than one unlocked door the controller chooses
+     * which to lock at resolution. Emits only a `DoorLockedEvent` — locking is never a trigger
+     * source and can't fully unlock a Room (see `LockDoorEffect`).
+     */
+    fun LockDoor(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
+        com.wingedsheep.sdk.scripting.effects.LockDoorEffect(target)
+
+    /**
+     * "Lock or unlock a door of [target] Room" (Keys to the House). The controller chooses lock or
+     * unlock as this resolves — a resolution-time [ModalEffect.chooseOne] of [LockDoor] and
+     * [UnlockDoor], modeled as data exactly like [Endure] (no new modal machinery, not a printed
+     * modal spell so `countsAsModalSpell = false`). Both modes reference the same outer [target], so
+     * pair this with a single "target Room you control" `TargetObject` on the ability; the chosen
+     * mode then locks/unlocks one of that Room's doors, prompting for which door if the choice is
+     * ambiguous.
+     */
+    fun LockOrUnlockDoor(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
+        ModalEffect.chooseOne(
+            Mode.noTarget(LockDoor(target), "Lock a door"),
+            Mode.noTarget(UnlockDoor(target), "Unlock a door"),
+            countsAsModalSpell = false
+        )
+
+    /**
      * Tap every creature/permanent chosen as a target ("tap up to N target creatures").
      *
      * Composes [ForEachTargetEffect] over [Effects.Tap], so the number of targets is owned

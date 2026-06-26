@@ -671,6 +671,21 @@ sealed interface ClientEvent {
             null -> "$roomName is fully unlocked"
         }
     ) : ClientEvent
+
+    @Serializable
+    @SerialName("doorLocked")
+    data class DoorLocked(
+        val roomId: EntityId,
+        val roomName: String,
+        val faceName: String,
+        val controllerId: EntityId,
+        val isYours: Boolean? = null,
+        override val description: String = when (isYours) {
+            true -> "You locked $faceName"
+            false -> "Opponent locked $faceName"
+            null -> "Locked $faceName"
+        }
+    ) : ClientEvent
 }
 
 /**
@@ -1205,6 +1220,14 @@ is PermanentsSacrificedEvent -> {
                 faceName = event.faceName,
                 controllerId = event.controllerId,
                 becameFullyUnlocked = event.becameFullyUnlocked,
+                isYours = event.controllerId == viewingPlayerId
+            )
+
+            is DoorLockedEvent -> ClientEvent.DoorLocked(
+                roomId = event.roomId,
+                roomName = event.roomName,
+                faceName = event.faceName,
+                controllerId = event.controllerId,
                 isYours = event.controllerId == viewingPlayerId
             )
 
