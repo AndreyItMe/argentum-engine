@@ -3948,6 +3948,69 @@
     ]
 }
 
+// Enduring Curiosity
+{
+    "name": "Enduring Curiosity",
+    "manaCost": "{2}{U}{U}",
+    "typeLine": "Enchantment Creature — Cat Glimmer",
+    "oracleText": "Flash\nWhenever a creature you control deals combat damage to a player, draw a card.\nWhen Enduring Curiosity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLASH",
+        "ENDURING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer",
+                    "sourceFilter": "creature ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "TransformPermanent",
+                    "setCardTypes": [
+                        "ENCHANTMENT"
+                    ],
+                    "clearSubtypes": true,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "SourceReturnedAsEnchantment"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "51",
+        "rarity": "RARE",
+        "artist": "Julie Dillon",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/6/8616629e-08f9-41ad-bfec-f86c8096f1cb.jpg?1726286044"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Enduring Innocence
 {
     "name": "Enduring Innocence",
@@ -4008,6 +4071,123 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Enduring Tenacity
+{
+    "name": "Enduring Tenacity",
+    "manaCost": "{2}{B}{B}",
+    "typeLine": "Enchantment Creature — Snake Glimmer",
+    "oracleText": "Whenever you gain life, target opponent loses that much life.\nWhen Enduring Tenacity dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "ENDURING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_LIFE_GAINED"
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                "targetRequirement": "TargetOpponent"
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "TransformPermanent",
+                    "setCardTypes": [
+                        "ENCHANTMENT"
+                    ],
+                    "clearSubtypes": true,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "SourceReturnedAsEnchantment"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "95",
+        "rarity": "RARE",
+        "artist": "Isis",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d5756d4b-3068-412c-8643-880d3459151e.jpg?1726286203"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Enduring Vitality
+{
+    "name": "Enduring Vitality",
+    "manaCost": "{1}{G}{G}",
+    "typeLine": "Enchantment Creature — Elk Glimmer",
+    "oracleText": "Vigilance\nCreatures you control have \"{T}: Add one mana of any color.\"\nWhen Enduring Vitality dies, if it was a creature, return it to the battlefield under its owner's control. It's an enchantment. (It's not a creature.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "VIGILANCE",
+        "ENDURING"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "TransformPermanent",
+                    "setCardTypes": [
+                        "ENCHANTMENT"
+                    ],
+                    "clearSubtypes": true,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "SourceReturnedAsEnchantment"
+            },
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_1",
+                    "cost": "CostTap",
+                    "effect": "AddManaOfChoice"
+                },
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "176",
+        "rarity": "RARE",
+        "artist": "Valera Lutfullina",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9d76a30c-0431-4334-892a-9822dda9671a.jpg?1726286517"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
