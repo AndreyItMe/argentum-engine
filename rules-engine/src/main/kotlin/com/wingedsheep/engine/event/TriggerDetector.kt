@@ -1491,32 +1491,37 @@ class TriggerDetector(
                 val controllerId = entry.controllerId
                 val ownerEvents = libToGravByOwner[controllerId] ?: continue
 
-                // Check if any of the milled cards match the filter
-                val hasMatch = ownerEvents.any { event ->
-                    if (trigger.filter == GameObjectFilter.Any) return@any true
-                    val entity = state.getEntity(event.entityId)
-                    val cardComponent = entity?.get<CardComponent>()
-                    if (cardComponent != null) {
-                        trigger.filter.cardPredicates.all { predicate ->
-                            when (predicate) {
-                                is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature ->
-                                    cardComponent.typeLine.isCreature
-                                is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
-                                    cardComponent.typeLine.hasSubtype(predicate.subtype)
-                                else -> true
-                            }
+                // The milled cards matching the filter. These "caused" the trigger and are exposed
+                // to the payoff via TRIGGER_CAPTURED_COLLECTION (a single trigger event fires once
+                // for the whole batch, CR 603.2c) so an effect can act on exactly them — e.g. Hedge
+                // Shredder's "put them onto the battlefield tapped".
+                val matchingIds = ownerEvents.filter { event ->
+                    if (trigger.filter == GameObjectFilter.Any) return@filter true
+                    val cardComponent = state.getEntity(event.entityId)?.get<CardComponent>()
+                        ?: return@filter false
+                    trigger.filter.cardPredicates.all { predicate ->
+                        when (predicate) {
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature ->
+                                cardComponent.typeLine.isCreature
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsLand ->
+                                cardComponent.typeLine.isLand
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNonland ->
+                                !cardComponent.typeLine.isLand
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
+                                cardComponent.typeLine.hasSubtype(predicate.subtype)
+                            else -> true
                         }
-                    } else false
-                }
+                    }
+                }.map { it.entityId }
 
-                if (hasMatch) {
+                if (matchingIds.isNotEmpty()) {
                     triggers.add(
                         PendingTrigger(
                             ability = ability,
                             sourceId = entry.entityId,
                             sourceName = entry.cardComponent.name,
                             controllerId = controllerId,
-                            triggerContext = TriggerContext()
+                            triggerContext = TriggerContext(capturedEntityIds = matchingIds)
                         )
                     )
                 }

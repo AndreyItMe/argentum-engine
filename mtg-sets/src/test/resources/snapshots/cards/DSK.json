@@ -2564,6 +2564,132 @@
     ]
 }
 
+// Cursed Windbreaker
+{
+    "name": "Cursed Windbreaker",
+    "manaCost": "{2}{U}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "When this Equipment enters, manifest dread, then attach this Equipment to that creature. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)\nEquipped creature has flying.\nEquip {3}",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "storeAs": "manifestDreadLooked"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "manifestDreadLooked",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "manifestDreadManifested",
+                                    "storeRemainder": "manifestDreadGraveyard",
+                                    "selectedLabel": "Manifest (put onto the battlefield face down)",
+                                    "remainderLabel": "Put into your graveyard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadManifested",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "faceDown": "MANIFEST"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadGraveyard",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                },
+                                "EmitManifestedDreadEvent"
+                            ]
+                        },
+                        {
+                            "type": "AttachEquipment",
+                            "target": {
+                                "type": "PipelineTarget",
+                                "collectionName": "manifestDreadManifested"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "FLYING"
+            }
+        ]
+    },
+    "equipCost": "{3}",
+    "metadata": {
+        "collectorNumber": "47",
+        "rarity": "UNCOMMON",
+        "artist": "Nino Vecia",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/6/f651e216-f9da-4696-8a1d-6d674e9044c0.jpg?1726286030"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Cynical Loner
 {
     "name": "Cynical Loner",
@@ -5131,6 +5257,59 @@
     ]
 }
 
+// Found Footage
+{
+    "name": "Found Footage",
+    "manaCost": "{1}",
+    "typeLine": "Artifact — Clue",
+    "oracleText": "You may look at face-down creatures your opponents control any time.\n{2}, Sacrifice this artifact: Surveil 2, then draw a card. (To surveil 2, look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Surveil",
+                            "count": 2
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "staticAbilities": [
+            "LookAtFaceDownCreatures"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "246",
+        "artist": "Jarel Threat",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/1/b12eb087-762e-4e7d-a6e0-f48df603b7c7.jpg?1726286790"
+    },
+    "colorIdentityOverride": []
+}
+
 // Frantic Strength
 {
     "name": "Frantic Strength",
@@ -6536,6 +6715,87 @@
         "rarity": "MYTHIC",
         "artist": "John Tedrick",
         "imageUri": "https://cards.scryfall.io/normal/front/7/4/744ef0bc-9973-450e-a0c4-056d8244f357.jpg?1726286542"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Hedge Shredder
+{
+    "name": "Hedge Shredder",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "Whenever this Vehicle attacks, you may mill two cards.\nWhenever one or more land cards are put into your graveyard from your library, put them onto the battlefield tapped.\nCrew 1 (Tap any number of creatures you control with total power 1 or more: This Vehicle becomes an artifact creature until end of turn.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 1
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                },
+                "optional": true
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "CardsPutIntoGraveyardFromLibraryEvent",
+                    "filter": "land"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "MoveCollection",
+                    "from": "trigger.captured",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Battlefield",
+                        "placement": "Tapped"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "183",
+        "rarity": "RARE",
+        "artist": "Cristi Balanescu",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/9/39e83502-2ffd-4169-94e3-116701323ed5.jpg?1726286545"
     },
     "colorIdentityOverride": [
         "GREEN"

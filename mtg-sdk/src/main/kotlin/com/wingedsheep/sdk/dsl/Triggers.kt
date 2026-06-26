@@ -668,6 +668,20 @@ object Triggers {
     )
 
     /**
+     * Whenever one or more land cards are put into your graveyard from your library.
+     * Batching trigger — fires at most once per event batch regardless of how many lands were
+     * milled. The matching land cards are captured into the resolving ability's pipeline under
+     * `TRIGGER_CAPTURED_COLLECTION`, so a payoff can act on exactly the lands that caused it (e.g.
+     * Hedge Shredder's "put them onto the battlefield tapped").
+     */
+    val LandsPutIntoGraveyardFromLibrary: TriggerSpec = TriggerSpec(
+        event = CardsPutIntoGraveyardFromLibraryEvent(
+            filter = GameObjectFilter.Land
+        ),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever one or more cards matching [filter] are put into your graveyard from anywhere.
      * Batching trigger — fires at most once per event batch regardless of how many cards entered,
      * and regardless of which source zone they came from.

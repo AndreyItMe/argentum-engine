@@ -2412,6 +2412,13 @@ in the repo today):
 - `CardsPutIntoYourGraveyard(filter?)` — when matching cards enter your yard.
 - `PermanentCardsPutIntoYourGraveyard` — only permanent cards.
 - `CreaturesPutIntoGraveyardFromLibrary` — mill-trigger shape.
+- `LandsPutIntoGraveyardFromLibrary` — batching mill-trigger filtered to land cards. The matching
+  land cards are captured into the resolving ability's pipeline under
+  `IterationSpace.TRIGGER_CAPTURED_COLLECTION`, so a `MoveCollectionEffect(from = …, destination =
+  ToZone(BATTLEFIELD, placement = Tapped))` payoff can put exactly those lands onto the battlefield
+  (Hedge Shredder). Like `CreaturesPutIntoGraveyardFromLibrary`, both wrap
+  `CardsPutIntoGraveyardFromLibraryEvent(filter)`; the batch detector matches `IsCreature` /
+  `IsLand` / `IsNonland` / `HasSubtype` predicates and captures the matching cards.
 - `CardsLeaveYourGraveyard(filter?)` — batching trigger; fires once per event batch when one
   or more matching cards **leave** your graveyard (cast/exiled/reanimated/returned to hand,
   etc.), regardless of how many or where they went. For the common "leave your graveyard
