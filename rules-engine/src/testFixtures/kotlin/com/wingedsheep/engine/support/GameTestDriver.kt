@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
 import com.wingedsheep.engine.state.components.combat.BlockersDeclaredThisCombatComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.PlayerComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
@@ -506,11 +507,17 @@ class GameTestDriver {
 
     /**
      * Find a card by name on a player's battlefield.
+     *
+     * Face-down permanents (morph/manifest) are skipped: per CR 708.2 a face-down permanent has
+     * no name, so a name lookup must not match one even though its hidden [CardComponent] still
+     * carries the underlying card's name. (Without this, a card shuffled away and then re-manifested
+     * face-down — e.g. via manifest dread off the top of the library — would spuriously match.)
      */
     fun findPermanent(playerId: EntityId, cardName: String): EntityId? {
         val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
         return state.getZone(battlefieldZone).find { entityId ->
-            state.getEntity(entityId)?.get<CardComponent>()?.name == cardName
+            val entity = state.getEntity(entityId) ?: return@find false
+            !entity.has<FaceDownComponent>() && entity.get<CardComponent>()?.name == cardName
         }
     }
 
