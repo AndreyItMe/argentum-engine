@@ -6979,6 +6979,113 @@
     ]
 }
 
+// Greenhouse // Rickety Gazebo
+{
+    "name": "Greenhouse // Rickety Gazebo",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"\n//\nWhen you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.",
+    "metadata": {
+        "collectorNumber": "181",
+        "rarity": "UNCOMMON",
+        "artist": "John Di Giovanni",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a22e8038-0706-47ec-bfda-f421a4912774.jpg?1726780671"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Greenhouse",
+            "manaCost": "{2}{G}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"",
+            "script": {
+                "staticAbilities": [
+                    {
+                        "type": "GrantActivatedAbility",
+                        "ability": {
+                            "id": "ability_1",
+                            "cost": "CostTap",
+                            "effect": "AddManaOfChoice",
+                            "timing": "ManaAbility",
+                            "isManaAbility": true
+                        },
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Rickety Gazebo",
+            "manaCost": "{3}{G}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 4
+                                        }
+                                    },
+                                    "storeAs": "milled"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "milled",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "milled",
+                                    "selection": {
+                                        "type": "ChooseUpTo",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "filter": "permanent",
+                                    "storeSelected": "selected",
+                                    "prompt": "Return up to two permanent cards to your hand",
+                                    "selectedLabel": "Return to hand",
+                                    "remainderLabel": "Leave in graveyard",
+                                    "showAllCards": true
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "selected",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Hand"
+                                    }
+                                }
+                            ]
+                        },
+                        "descriptionOverride": "When you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand."
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Gremlin Tamer
 {
     "name": "Gremlin Tamer",
