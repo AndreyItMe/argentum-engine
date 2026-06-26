@@ -34,6 +34,54 @@
     ]
 }
 
+// Adelbert Steiner
+{
+    "name": "Adelbert Steiner",
+    "manaCost": "{1}{W}",
+    "typeLine": "Legendary Creature — Human Knight",
+    "oracleText": "Lifelink\nAdelbert Steiner gets +1/+1 for each Equipment you control.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantDynamicStats",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "Self"
+                },
+                "powerBonus": {
+                    "type": "Count",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "artifact Equipment ctrl:you"
+                },
+                "toughnessBonus": {
+                    "type": "Count",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "artifact Equipment ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "rarity": "UNCOMMON",
+        "artist": "Lorenzo Mastroianni",
+        "flavorText": "\"Chivalry requires a knight to look after his comrades-in-arms. I will not abandon you!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1a67a991-1e52-4676-a2e3-2bc7aa943ab3.jpg?1748705765"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Adventurer's Airship
 {
     "name": "Adventurer's Airship",
@@ -219,6 +267,70 @@
         "artist": "Kevin Sidharta",
         "flavorText": "\"The Wrath of Dark has nearly reached its zenith! No one can stop it! Least of all you!\"",
         "imageUri": "https://cards.scryfall.io/normal/front/1/6/162a415c-5465-497e-8f4e-c6f09681641d.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Al Bhed Salvagers
+{
+    "name": "Al Bhed Salvagers",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Human Artificer Warrior",
+    "oracleText": "Whenever this creature or another creature or artifact you control dies, target opponent loses 1 life and you gain 1 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature|artifact ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target opponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetOpponent",
+                    "id": "target opponent"
+                },
+                "descriptionOverride": "Whenever this creature or another creature or artifact you control dies, target opponent loses 1 life and you gain 1 life."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "88",
+        "rarity": "UNCOMMON",
+        "artist": "Masateru Ikeda",
+        "flavorText": "\"We found the airship! The records were right.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/8/58ccdcfc-a669-480f-bded-4273cfaf2045.jpg?1748706093"
     },
     "colorIdentityOverride": [
         "BLACK"
@@ -464,6 +576,63 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Balamb T-Rexaur
+{
+    "name": "Balamb T-Rexaur",
+    "manaCost": "{4}{G}{G}",
+    "typeLine": "Creature — Dinosaur",
+    "oracleText": "Trample\nWhen this creature enters, you gain 3 life.\nForestcycling {2} ({2}, Discard this card: Search your library for a Forest card, reveal it, put it into your hand, then shuffle.)",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Cycling",
+            "cost": "{2}",
+            "searchFilter": {
+                "cardPredicates": [
+                    {
+                        "type": "HasSubtype",
+                        "subtype": "Forest"
+                    }
+                ]
+            },
+            "displayPrefix": "Forestcycling"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "173",
+        "artist": "Fang Xinyu",
+        "flavorText": "\"Sometimes it's better to run!\"\n—Quistis Trepe",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/5/e5857b1b-73bc-458e-b26b-7ed8bef785f3.jpg?1748706407"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
@@ -1183,6 +1352,62 @@
         "imageUri": "https://cards.scryfall.io/normal/front/f/7/f73ce8ec-c916-48eb-ae20-c0d6d03d7145.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Cargo Ship
+{
+    "name": "Cargo Ship",
+    "manaCost": "{1}{U}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "Flying, vigilance\n{T}: Add {C}. Spend this mana only to cast an artifact spell or activate an ability of an artifact source.\nCrew 1 (Tap any number of creatures you control with total power 1 or more: This Vehicle becomes an artifact creature until end of turn.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "VIGILANCE",
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 1
+        }
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddColorlessMana",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "restriction": {
+                        "type": "CardTypeSpellsOrAbilitiesOnly",
+                        "cardType": "ARTIFACT",
+                        "allowAbilities": true
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true,
+                "descriptionOverride": "{T}: Add {C}. Spend this mana only to cast an artifact spell or activate an ability of an artifact source."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "47",
+        "rarity": "UNCOMMON",
+        "artist": "Thanh Tuấn",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/3/932b865c-bfe7-4bb7-82e9-2403cf0e0522.jpg?1748705931"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
 }
 
 // Cecil, Dark Knight
