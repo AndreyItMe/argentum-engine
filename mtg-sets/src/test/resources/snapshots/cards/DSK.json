@@ -2998,6 +2998,85 @@
     ]
 }
 
+// Defiled Crypt // Cadaver Lab
+{
+    "name": "Defiled Crypt // Cadaver Lab",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Whenever one or more cards leave your graveyard, create a 2/2 black Horror enchantment creature token. This ability triggers only once each turn.\n//\nWhen you unlock this door, return target creature card from your graveyard to your hand.",
+    "metadata": {
+        "collectorNumber": "91",
+        "rarity": "UNCOMMON",
+        "artist": "Martin de Diego Sádaba",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/9/d94fb4da-0d3f-4d84-966b-914b84b23289.jpg?1726780590"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Defiled Crypt",
+            "manaCost": "{3}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever one or more cards leave your graveyard, create a 2/2 black Horror enchantment creature token. This ability triggers only once each turn.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": "CardsLeftYourGraveyardEvent",
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "CreateToken",
+                            "power": 2,
+                            "toughness": 2,
+                            "colors": [
+                                "BLACK"
+                            ],
+                            "creatureTypes": [
+                                "Horror"
+                            ],
+                            "imageUri": "https://cards.scryfall.io/normal/front/3/6/36bb6907-e7d7-4f99-966a-ab09ca130fb8.jpg?1754931076",
+                            "enchantmentToken": true
+                        },
+                        "oncePerTurn": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Cadaver Lab",
+            "manaCost": "{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, return target creature card from your graveyard to your hand.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target creature card from your graveyard"
+                            },
+                            "destination": "Hand"
+                        },
+                        "targetRequirement": {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature own:you",
+                                "zone": "Graveyard"
+                            },
+                            "id": "target creature card from your graveyard"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Demonic Counsel
 {
     "name": "Demonic Counsel",
