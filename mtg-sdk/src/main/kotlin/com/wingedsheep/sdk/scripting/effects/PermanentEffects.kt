@@ -363,6 +363,24 @@ data class AttachTargetEquipmentToCreatureEffect(
 }
 
 /**
+ * Unattach an Aura/Equipment from its host without moving it to another zone (CR 701.3d). Removes
+ * the [target] attachment's `AttachedToComponent` and drops it from the host's attachment list; a
+ * no-op if [target] isn't currently attached to anything. The inverse of [AttachEquipmentEffect] /
+ * [AttachTargetEquipmentToCreatureEffect] — used for "unattach it" riders such as Stolen Uniform's
+ * reflexive "when you lose control of that Equipment, … unattach it".
+ *
+ * @property target The attachment to unattach (e.g. [EffectTarget.TriggeringEntity] for "that
+ *   Equipment" inside a delayed trigger, or [EffectTarget.Self] when a permanent unattaches itself).
+ */
+@SerialName("UnattachEquipment")
+@Serializable
+data class UnattachEquipmentEffect(
+    val target: EffectTarget = EffectTarget.Self
+) : Effect {
+    override val description: String = "Unattach ${target.description}"
+}
+
+/**
  * Put a targeted Aura or Equipment card onto the battlefield **attached to a permanent the
  * effect's controller chooses** at resolution. The card is the [target] (e.g. a targeted
  * Aura/Equipment in a graveyard); the host is chosen as the effect resolves and is therefore

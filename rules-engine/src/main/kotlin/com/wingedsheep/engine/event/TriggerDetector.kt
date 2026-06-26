@@ -869,6 +869,23 @@ class TriggerDetector(
                     matcher.matchesZoneChangeTrigger(specEvent, spec.binding, event, sourceId, controllerId, state)
                 }
             }
+            // Entity-scoped control-change delayed trigger ("when you lose control of *that*
+            // permanent this turn", Stolen Uniform). The watched entity is the permanent; the
+            // [com.wingedsheep.sdk.scripting.ControlChangeDirection] selects which side of the
+            // change relative to this trigger's controller:
+            //  - LOST: fires when the *old* controller was this trigger's controller.
+            //  - GAINED: fires when the *new* controller is this trigger's controller.
+            is com.wingedsheep.sdk.scripting.EventPattern.ControlChangeEvent -> {
+                if (event !is com.wingedsheep.engine.core.ControlChangedEvent) return false
+                if (event.oldControllerId == event.newControllerId) return false
+                if (watchedEntityId != null && event.permanentId != watchedEntityId) return false
+                when (specEvent.direction) {
+                    com.wingedsheep.sdk.scripting.ControlChangeDirection.LOST ->
+                        event.oldControllerId == controllerId
+                    com.wingedsheep.sdk.scripting.ControlChangeDirection.GAINED ->
+                        event.newControllerId == controllerId
+                }
+            }
             else -> false
         }
     }
@@ -2777,7 +2794,14 @@ class TriggerDetector(
         val abilities = abilityResolver.getTriggeredAbilities(entityId, cardComponent.cardDefinitionId, state)
 
         for (ability in abilities) {
-            if (ability.trigger is EventPattern.ControlChangeEvent && ability.binding == TriggerBinding.SELF) {
+            val controlTrigger = ability.trigger as? EventPattern.ControlChangeEvent
+            // Resident "when you gain control of this" self-trigger (Risky Move): only the GAINED
+            // direction fires here, where the *new* controller controls the ability. A LOST-shaped
+            // ControlChangeEvent is exclusively an entity-scoped delayed trigger (Stolen Uniform).
+            if (controlTrigger != null &&
+                controlTrigger.direction == com.wingedsheep.sdk.scripting.ControlChangeDirection.GAINED &&
+                ability.binding == TriggerBinding.SELF
+            ) {
                 // The new controller controls this triggered ability
                 triggers.add(
                     PendingTrigger(

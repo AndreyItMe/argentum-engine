@@ -79,6 +79,7 @@ val engineSerializersModule = SerializersModule {
         subclass(TappedEvent::class)
         subclass(BecameSaddledEvent::class)
         subclass(PermanentAttachedEvent::class)
+        subclass(PermanentUnattachedEvent::class)
         subclass(UntappedEvent::class)
         subclass(LandTappedForManaEvent::class)
         subclass(PhasedOutEvent::class)

@@ -1212,6 +1212,10 @@ is PermanentsSacrificedEvent -> {
             // reflected by the attachment's zone-change/move animation, so no separate client event.
             is PermanentAttachedEvent -> null
 
+            // Internal: the unattach is reflected by the attachment re-rendering loose on the
+            // battlefield, so no separate client event.
+            is PermanentUnattachedEvent -> null
+
             is TurnHijackedEvent,
             is CommitCrimeEvent,
             is CardPlayedFromPermissionEvent,

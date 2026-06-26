@@ -467,5 +467,6 @@ class BeginningPhaseManager(
         StatePredicate.IsAttachedToBySource,
         StatePredicate.WasCastForWarp -> true
         is StatePredicate.AttachedToCardType -> true
+        is StatePredicate.AttachedTo -> true
     }
 }

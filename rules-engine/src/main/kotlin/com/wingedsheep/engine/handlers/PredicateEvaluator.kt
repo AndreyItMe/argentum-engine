@@ -1016,6 +1016,21 @@ class PredicateEvaluator {
                 state.projectedState.hasType(attached.targetId, predicate.cardType.name)
             }
 
+            // General attachment match — entity is attached to a host that matches the nested
+            // filter, evaluated against projected battlefield state so the host's control ("a
+            // creature you control"), card type, keywords, P/T all compose (Stolen Uniform's
+            // "attached to a creature you control"). The "you" of any controller predicate is the
+            // controllerId carried in this evaluation context.
+            is StatePredicate.AttachedTo -> {
+                val attached = container.get<AttachedToComponent>() ?: return false
+                // A controller predicate in the nested filter needs a "you"; without an evaluation
+                // context fall back to the host's actual controller so the match can still run.
+                val ctx = context ?: PredicateContext(
+                    controllerId = state.projectedState.getController(attached.targetId) ?: return false
+                )
+                matches(state, state.projectedState, attached.targetId, predicate.filter, ctx)
+            }
+
             // Source-relative — the candidate is the permanent the effect's source is attached
             // to (its enchanted/equipped creature). Read the source's AttachedToComponent and
             // compare its targetId to the candidate. False with no source or an unattached source.

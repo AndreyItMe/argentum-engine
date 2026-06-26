@@ -996,7 +996,16 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `MassAnimateEffect(filter, power, toughness, loseAllAbilities = true, duration = EndOfTurn)` — facade `Effects.MassAnimate(filter, power, toughness, loseAllAbilities, duration)`. One-shot: animate **every** permanent matching `filter` into a creature for `duration`, setting each one's base power and toughness to the `power`/`toughness` **`DynamicAmount`s** — resolved per affected permanent (Layer 7b `SetPowerToughnessDynamic`), so `EntityProperty(AffectedEntity, ManaValue)` gives "each equal to its own mana value" — and, when `loseAllAbilities`, stripping all of its abilities (Layer 6 `RemoveAllAbilities`); Layer 4 `AddType("CREATURE")` makes them creatures. The affected set is captured **once** at resolution against the current battlefield (CR 611.2c) and locked in for the duration. This is the fixed-set, one-shot companion to expressing the same effect *continuously* via the `GrantCardType` + `LoseAllAbilities` + `SetBasePowerToughnessDynamicStatic` group statics on a permanent (which take the same `DynamicAmount` P/T) — use the statics for the while-on-battlefield behavior and this effect for the "this effect continues until end of turn" linger when the generating permanent leaves. Used by **Titania's Song** ("Each noncreature artifact loses all abilities and becomes an artifact creature with power and toughness each equal to its mana value. If this enchantment leaves the battlefield, this effect continues until end of turn.") — a `LeavesBattlefield(SELF)` trigger replays the static set as until-EOT floating effects with `power = toughness = EntityProperty(AffectedEntity, ManaValue)`. The dynamic-P/T floating effect resolves its controller from the effect's captured controller (`ContinuousEffect.controllerId`) when the source has already left the battlefield.
 - `ExploreEffect(target)` — Explore mechanic (reveal top; land → battlefield, else hand + counter).
 - `MakePreparedEffect(target = Self)` — facade `Effects.MakePrepared(target)`. The target permanent **becomes prepared** (Prepare — Secrets of Strixhaven): gains the prepared status and gets a castable copy of its card's prepare spell (`cardFaces[0]`) in its controller's exile (same machinery as entering prepared, shared via `PreparedService.makePrepared`). No-op if already prepared, or the card has no prepare face. Use for cards that *become* prepared mid-game (e.g. Joined Researchers' end-step trigger); cards that "enter prepared" use `Keyword.PREPARED` on a `PREPARE`-layout card instead.
-- `AttachEquipmentEffect(equip, target)` — attach an Equipment.
+- `AttachEquipmentEffect(equip, target)` — attach an Equipment. Facade `Effects.AttachEquipment(...)`.
+  `Effects.AttachTargetEquipmentToCreature(equipmentTarget, creatureTarget)` force-attaches one
+  *targeted* Equipment to one *targeted* creature (both are explicit targets, not the source) — used
+  by Stolen Uniform's "Attach it to the chosen creature".
+- `UnattachEquipmentEffect(target = Self)` — facade `Effects.UnattachEquipment(target)`. The inverse of
+  the attach effects: **unattach** an Aura/Equipment from its host *without moving zones* (CR 701.3d) —
+  clears the attachment's `AttachedToComponent` and drops it from the host's attachment list, emitting
+  `PermanentUnattachedEvent`. A no-op (no event) when `target` isn't currently attached to anything.
+  `target` is usually `EffectTarget.TriggeringEntity` ("that Equipment" inside a delayed trigger) or
+  `EffectTarget.Self`. Used by Stolen Uniform's "when you lose control of that Equipment … unattach it".
 - `TapUntapEffect(target, isTap)` — tap or untap. Facade: `Effects.Tap` / `Effects.Untap`.
 - `Effects.TapEachTarget()` — "tap up to N target creatures": taps every object chosen as a target.
   Composes `ForEachTargetEffect` over `Effects.Tap(ContextTarget(0))`, so the count lives only on the
@@ -2095,6 +2104,15 @@ work for abilities-on-stack (which carry no `CardComponent`).
   to a creature". Reads the attached-to permanent's projected types, so a land animated
   into a creature still matches `LAND` and additionally matches `CREATURE`. False for
   entities with no `AttachedToComponent`.
+- `AttachedTo(filter)` (filter builder `attachedTo(hostFilter)`) — the **general** form of
+  `AttachedToCardType`: Aura/Equipment whose `AttachedToComponent` host matches an arbitrary nested
+  `GameObjectFilter`, evaluated against **projected** battlefield state, so the host's control (`a
+  creature you control`), card type, keywords, P/T, etc. all compose. The "you" of any controller
+  predicate in the nested filter resolves to the controller supplied in the evaluation context (the
+  ability's controller). False if not attached to anything; in group-static projection (which has no
+  ability controller) it never matches — it is only meaningful in target/condition contexts. Used by
+  Stolen Uniform's "if it's attached to a creature you control" guard
+  (`Conditions.EntityMatches(EffectTarget.TriggeringEntity, GameObjectFilter.Any.attachedTo(GameObjectFilter.Creature.youControl()))`).
 - `IsWarpExiled` (filter builder `warpExiled()`) — card in exile via warp's
   end-of-turn delayed trigger (CR 702.185b).
 - `WasCastForWarp` (filter builder `castForWarp()`) — battlefield permanent that
@@ -2594,7 +2612,16 @@ Triggers.youCastSpell(
 
 - `TurnedFaceUp` — source turns face up. Use `turnedFaceUp(binding)` for the ATTACHED-binding aura variant (Fatal Mutation).
 - `CreatureTurnedFaceUp(player?)` — when a creature you control turns face up.
-- `GainControlOfSelf` — you gain control of source.
+- `GainControlOfSelf` — you gain control of source. Built on `ControlChangeEvent(ControlChangeDirection.GAINED)`
+  + `TriggerBinding.SELF` — the resident "when you gain control of this" self-trigger (Risky Move).
+- `LoseControlOfWatched` — `ControlChangeEvent(ControlChangeDirection.LOST)` + `TriggerBinding.SELF`,
+  used as the `trigger` of an **event-based delayed trigger** scoped to a watched permanent
+  (`CreateDelayedTriggerEffect(trigger = Triggers.LoseControlOfWatched, watchedTarget = …)`): "when you
+  lose control of [that permanent] this turn …". It fires on any mid-turn control change of the watched
+  permanent *away from* the trigger's controller (the old controller was you). Stolen Uniform pairs it
+  with `DelayedTriggerExpiry.EndOfTurn` + `fireOnce`. `EventPattern.ControlChangeEvent(direction)` is the
+  underlying primitive: `direction` (`ControlChangeDirection.GAINED` default / `LOST`) selects which side
+  of the control change — relative to the ability's controller — the ability watches.
 - `BecomesTarget(filter?)` — source becomes target of spell/ability. The engine emits the
   underlying `BecomesTargetEvent` for both permanent targets and spell targets on the stack, but the
   trigger matches **permanent targets only** by default — "a creature you control" is a battlefield

@@ -438,6 +438,11 @@ internal class AffectsFilterResolver {
             }
         }
         StatePredicate.IsModified -> com.wingedsheep.engine.handlers.predicates.isModified(state, entityId)
+        // A general "attached to <filter>" host constraint whose nested filter may carry a controller
+        // predicate ("a creature you control"). Group-static projection has no ability controller to
+        // resolve that "you", so this predicate is only meaningful in target/condition contexts via
+        // PredicateEvaluator (where the controllerId is supplied). Never match in projection.
+        is StatePredicate.AttachedTo -> false
         is StatePredicate.AttachedToCardType -> {
             val attached = container.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()
             attached != null &&

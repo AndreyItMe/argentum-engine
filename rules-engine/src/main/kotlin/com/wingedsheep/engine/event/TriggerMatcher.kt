@@ -1637,6 +1637,7 @@ class TriggerMatcher(
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttachedToBySource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasCastForWarp,
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedToCardType -> true
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedTo -> true
         // Counter predicates require last-known-info to evaluate a creature that has already left
         // the battlefield; the zone-change path ([matchesStatePredicateForZoneChangeTrigger])
         // handles them against the event's captured counters. This entity-only fallback has no LKI,

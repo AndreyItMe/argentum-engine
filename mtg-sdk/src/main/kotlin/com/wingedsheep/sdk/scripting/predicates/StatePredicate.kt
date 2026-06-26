@@ -388,6 +388,23 @@ sealed interface StatePredicate {
         override val description: String = "attached to a ${cardType.displayName.lowercase()}"
     }
 
+    /**
+     * Attached to a permanent that matches [filter]. Reads the entity's `AttachedToComponent` and
+     * evaluates [filter] against the host using projected battlefield state — so card type, control
+     * ("a creature you control"), keywords, P/T, etc. all compose. This is the general form of
+     * [AttachedToCardType] (which only checks the host's top-level type): use it whenever the host
+     * constraint needs a controller predicate or any card/state predicate, e.g. Stolen Uniform's
+     * "if it's attached to a creature you control".
+     *
+     * The "you" of any controller predicate in [filter] is the controller supplied in the
+     * evaluation context (the ability's controller). False if the entity isn't attached to anything.
+     */
+    @SerialName("IsAttachedTo")
+    @Serializable
+    data class AttachedTo(val filter: com.wingedsheep.sdk.scripting.GameObjectFilter) : Entity {
+        override val description: String = "attached to ${filter.description}"
+    }
+
     // =============================================================================
     // Rooms (Entity)
     // =============================================================================

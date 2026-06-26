@@ -3273,6 +3273,13 @@ object Effects {
     )
 
     /**
+     * Unattach an Aura/Equipment from its host without moving zones (CR 701.3d). No-op if [target]
+     * isn't currently attached. Inverse of [AttachEquipment] — e.g. Stolen Uniform's "unattach it".
+     */
+    fun UnattachEquipment(target: EffectTarget = EffectTarget.Self): Effect =
+        com.wingedsheep.sdk.scripting.effects.UnattachEquipmentEffect(target)
+
+    /**
      * Put a targeted Aura or Equipment card onto the battlefield attached to a permanent the
      * controller chooses at resolution (default: a creature you control). Works for both
      * Auras and Equipment; the host is chosen, not targeted (One Last Job).

@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.scripting.ControlChangeDirection
 import com.wingedsheep.sdk.scripting.EventPattern.*
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
@@ -648,7 +649,18 @@ object Triggers {
      * Used by Risky Move.
      */
     val GainControlOfSelf: TriggerSpec = TriggerSpec(
-        event = ControlChangeEvent,
+        event = ControlChangeEvent(ControlChangeDirection.GAINED),
+        binding = TriggerBinding.SELF
+    )
+
+    /**
+     * "When you lose control of [the watched permanent] …" — the reflexive delayed trigger on
+     * Stolen Uniform. Use as the [com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect.trigger]
+     * of an event-based delayed trigger scoped to a watched permanent (via `watchedTarget`); it then
+     * fires whenever control of that permanent moves away from the trigger's controller this turn.
+     */
+    val LoseControlOfWatched: TriggerSpec = TriggerSpec(
+        event = ControlChangeEvent(ControlChangeDirection.LOST),
         binding = TriggerBinding.SELF
     )
 

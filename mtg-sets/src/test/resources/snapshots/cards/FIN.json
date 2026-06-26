@@ -8575,6 +8575,101 @@
     "colorIdentityOverride": []
 }
 
+// Stolen Uniform
+{
+    "name": "Stolen Uniform",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "Choose target creature you control and target Equipment. Gain control of that Equipment until end of turn. Attach it to the chosen creature. When you lose control of that Equipment this turn, if it's attached to a creature you control, unattach it.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GainControl",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target Equipment"
+                    },
+                    "duration": "EndOfTurn"
+                },
+                {
+                    "type": "AttachTargetEquipmentToCreature",
+                    "equipmentTarget": {
+                        "type": "BoundVariable",
+                        "name": "target Equipment"
+                    },
+                    "creatureTarget": {
+                        "type": "BoundVariable",
+                        "name": "target creature you control"
+                    }
+                },
+                {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "Gated",
+                        "gate": {
+                            "type": "Gate.WhenCondition",
+                            "condition": {
+                                "type": "EntityMatches",
+                                "entity": "TriggeringEntity",
+                                "filter": {
+                                    "statePredicates": [
+                                        {
+                                            "type": "IsAttachedTo",
+                                            "filter": "creature ctrl:you"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "then": {
+                            "type": "UnattachEquipment",
+                            "target": "TriggeringEntity"
+                        }
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "ControlChangeEvent",
+                            "direction": "LOST"
+                        }
+                    },
+                    "watchedTarget": {
+                        "type": "BoundVariable",
+                        "name": "target Equipment"
+                    },
+                    "fireOnce": true
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target creature you control"
+            },
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "artifact Equipment"
+                },
+                "id": "target Equipment"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "75",
+        "rarity": "UNCOMMON",
+        "artist": "Chris Rallis",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/d/0d80c511-2f4d-4f77-8143-7b49b2b19fae.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Summon: Anima
 {
     "name": "Summon: Anima",

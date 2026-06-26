@@ -568,7 +568,24 @@ class ConditionEvaluator(
             } ?: false
         is EffectTarget.TriggeringEntity ->
             (ctx as? Resolution)?.let {
-                evaluateTriggeringSpellFilterMatch(state, condition.filter, it.effectContext)
+                val triggeringId = it.effectContext.triggeringEntityId
+                if (triggeringId != null && state.getBattlefield().contains(triggeringId)) {
+                    // The triggering object is a battlefield permanent (e.g. a delayed trigger
+                    // watching "that Equipment"). Match against projected state so state predicates
+                    // (attachment) and the controller predicate ("a creature you control") resolve;
+                    // "you" is the ability's controller carried in the effect context.
+                    PredicateEvaluator().matches(
+                        state,
+                        state.projectedState,
+                        triggeringId,
+                        condition.filter,
+                        PredicateContext.fromEffectContext(it.effectContext)
+                    )
+                } else {
+                    // Stack / non-battlefield triggering object (the spell-cast case): match the
+                    // spell's static card characteristics.
+                    evaluateTriggeringSpellFilterMatch(state, condition.filter, it.effectContext)
+                }
             } ?: false
         is EffectTarget.DiscardedAsCost ->
             (ctx as? Resolution)?.let {

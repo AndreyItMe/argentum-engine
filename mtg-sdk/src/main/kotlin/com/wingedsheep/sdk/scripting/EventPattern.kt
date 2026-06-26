@@ -18,6 +18,19 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
+ * Which side of a control change an [EventPattern.ControlChangeEvent] ability watches, relative to
+ * the ability's controller.
+ */
+@Serializable
+enum class ControlChangeDirection {
+    /** "When you **gain** control …": the ability's controller is the *new* controller. */
+    GAINED,
+
+    /** "When you **lose** control …": the ability's controller was the *old* controller. */
+    LOST
+}
+
+/**
  * Represents a game event type used by both replacement effects and triggered abilities.
  *
  * This is compositional - events are specified by combining an event type
@@ -1305,13 +1318,32 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
-     * When control of a permanent changes.
-     * Binding SELF = "when you gain control of this from another player".
+     * When control of a permanent changes, in a given [direction] relative to the ability's
+     * controller (CR 800.4 / 720). The [direction] selects which side of the control change the
+     * ability watches:
+     *  - [ControlChangeDirection.GAINED] (default): "when you **gain** control of this from another
+     *    player" — the new controller is the ability's controller. With [TriggerBinding.SELF] this
+     *    is the resident self-trigger (Risky Move). For an event-based **delayed** trigger scoped to
+     *    a watched permanent, it fires when that permanent's controller becomes the trigger's
+     *    controller.
+     *  - [ControlChangeDirection.LOST]: "when you **lose** control of [the watched permanent]" — the
+     *    *old* controller was the ability's controller. Used as the reflexive delayed trigger on
+     *    Stolen Uniform ("When you lose control of that Equipment this turn …"). A delayed trigger
+     *    of this shape fires on any mid-turn control change away from you (e.g. another player steals
+     *    the permanent).
+     *
+     * The default is [ControlChangeDirection.GAINED] so existing GAIN-control self-triggers keep
+     * their meaning.
      */
     @SerialName("ControlChangeEvent")
     @Serializable
-    data object ControlChangeEvent : EventPattern {
-        override val description: String = "control of this permanent changes"
+    data class ControlChangeEvent(
+        val direction: ControlChangeDirection = ControlChangeDirection.GAINED
+    ) : EventPattern {
+        override val description: String = when (direction) {
+            ControlChangeDirection.GAINED -> "you gain control of this permanent"
+            ControlChangeDirection.LOST -> "you lose control of this permanent"
+        }
     }
 
     // ---- Counter Triggers ----

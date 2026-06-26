@@ -833,6 +833,22 @@ data class PermanentAttachedEvent(
 ) : GameEvent
 
 /**
+ * An Aura/Equipment became unattached from its host without moving zones (CR 701.3d). Emitted by
+ * [com.wingedsheep.engine.handlers.effects.permanent.attachments.UnattachEquipmentExecutor] so
+ * "becomes unattached" reactions and animations can fire.
+ *
+ * @property attachmentId the aura/equipment that became unattached.
+ * @property attachedToId the permanent it was attached to (its former host).
+ */
+@Serializable
+@SerialName("PermanentUnattachedEvent")
+data class PermanentUnattachedEvent(
+    val attachmentId: EntityId,
+    val attachmentName: String,
+    val attachedToId: EntityId,
+) : GameEvent
+
+/**
  * A player tapped a land for mana (a land's mana ability resolved).
  *
  * Drives the "Whenever a player taps a land for mana" trigger family

@@ -20,6 +20,7 @@ import com.wingedsheep.engine.handlers.effects.permanent.abilities.RemoveAllAbil
 import com.wingedsheep.engine.handlers.effects.permanent.abilities.RemoveKeywordExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.attachments.AttachEquipmentExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.attachments.AttachTargetEquipmentToCreatureExecutor
+import com.wingedsheep.engine.handlers.effects.permanent.attachments.UnattachEquipmentExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.attachments.GrantExileOnLeaveExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.ExchangeControlExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.control.GainControlByActivePlayerExecutor
@@ -169,6 +170,7 @@ class PermanentExecutors(
         // attachments
         AttachEquipmentExecutor(),
         AttachTargetEquipmentToCreatureExecutor(),
+        UnattachEquipmentExecutor(),
         GrantExileOnLeaveExecutor(),
         // stats
         ModifyStatsExecutor(amountEvaluator),

@@ -646,6 +646,15 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.Not(StatePredicate.IsAttachedToBySource)
     )
 
+    /**
+     * Must be attached to a permanent matching [hostFilter] (general form of attachment matching —
+     * the host filter may carry a controller predicate, e.g. "a creature you control"). Used by
+     * Stolen Uniform's reflexive "if it's attached to a creature you control" guard.
+     */
+    fun attachedTo(hostFilter: GameObjectFilter) = copy(
+        statePredicates = statePredicates + StatePredicate.AttachedTo(hostFilter)
+    )
+
     /** Must be attacking or blocking */
     fun attackingOrBlocking() = copy(
         statePredicates = statePredicates + StatePredicate.Or(
