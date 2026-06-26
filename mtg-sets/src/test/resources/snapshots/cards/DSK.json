@@ -6176,6 +6176,106 @@
     "colorIdentityOverride": []
 }
 
+// Funeral Room // Awakening Hall
+{
+    "name": "Funeral Room // Awakening Hall",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.\n//\nWhen you unlock this door, return all creature cards from your graveyard to the battlefield.",
+    "metadata": {
+        "collectorNumber": "100",
+        "rarity": "MYTHIC",
+        "artist": "Miklós Ligeti",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/8/48237c98-5067-47a8-af74-7b9bce57c6a4.jpg?1726867790"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Funeral Room",
+            "manaCost": "{2}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": {
+                            "type": "ZoneChangeEvent",
+                            "filter": "creature ctrl:you",
+                            "from": "Battlefield",
+                            "to": "Graveyard"
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "LoseLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "target": {
+                                        "type": "PlayerRef",
+                                        "player": "EachOpponent"
+                                    }
+                                },
+                                {
+                                    "type": "GainLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Awakening Hall",
+            "manaCost": "{6}{B}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, return all creature cards from your graveyard to the battlefield.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Graveyard",
+                                        "filter": "creature"
+                                    },
+                                    "storeAs": "graveyardCreatures"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "graveyardCreatures",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "underOwnersControl": true
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Get Out
 {
     "name": "Get Out",
@@ -6976,6 +7076,113 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Greenhouse // Rickety Gazebo
+{
+    "name": "Greenhouse // Rickety Gazebo",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"\n//\nWhen you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.",
+    "metadata": {
+        "collectorNumber": "181",
+        "rarity": "UNCOMMON",
+        "artist": "John Di Giovanni",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a22e8038-0706-47ec-bfda-f421a4912774.jpg?1726780671"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Greenhouse",
+            "manaCost": "{2}{G}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Lands you control have \"{T}: Add one mana of any color.\"",
+            "script": {
+                "staticAbilities": [
+                    {
+                        "type": "GrantActivatedAbility",
+                        "ability": {
+                            "id": "ability_1",
+                            "cost": "CostTap",
+                            "effect": "AddManaOfChoice",
+                            "timing": "ManaAbility",
+                            "isManaAbility": true
+                        },
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Rickety Gazebo",
+            "manaCost": "{3}{G}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 4
+                                        }
+                                    },
+                                    "storeAs": "milled"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "milled",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "milled",
+                                    "selection": {
+                                        "type": "ChooseUpTo",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "filter": "permanent",
+                                    "storeSelected": "selected",
+                                    "prompt": "Return up to two permanent cards to your hand",
+                                    "selectedLabel": "Return to hand",
+                                    "remainderLabel": "Leave in graveyard",
+                                    "showAllCards": true
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "selected",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Hand"
+                                    }
+                                }
+                            ]
+                        },
+                        "descriptionOverride": "When you unlock this door, mill four cards, then return up to two permanent cards from among them to your hand."
+                    }
+                ]
+            }
+        }
     ]
 }
 
@@ -13906,6 +14113,125 @@
     ]
 }
 
+// Stay Hidden, Stay Silent
+{
+    "name": "Stay Hidden, Stay Silent",
+    "manaCost": "{1}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step.\n{4}{U}{U}: Shuffle enchanted creature into its owner's library, then manifest dread. Activate only as a sorcery.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "TapUntap",
+                    "target": "EnchantedCreature"
+                },
+                "descriptionOverride": "When this Aura enters, tap enchanted creature."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{4}{U}{U}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": "EnchantedCreature",
+                            "destination": "Library",
+                            "placement": "Shuffled"
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "storeAs": "manifestDreadLooked"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "manifestDreadLooked",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "manifestDreadManifested",
+                                    "storeRemainder": "manifestDreadGraveyard",
+                                    "selectedLabel": "Manifest (put onto the battlefield face down)",
+                                    "remainderLabel": "Put into your graveyard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadManifested",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "faceDown": "MANIFEST"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "manifestDreadGraveyard",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                },
+                                "EmitManifestedDreadEvent"
+                            ]
+                        }
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "{4}{U}{U}: Shuffle enchanted creature into its owner's library, then manifest dread. Activate only as a sorcery."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "DOESNT_UNTAP"
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "74",
+        "rarity": "UNCOMMON",
+        "artist": "Josu Hernaiz",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/6/b661ffe7-4f58-43fe-a1f1-dd7a6d4d28a7.jpg?1726286129"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Strangled Cemetery
 {
     "name": "Strangled Cemetery",
@@ -14032,6 +14358,135 @@
     "colorIdentityOverride": [
         "WHITE",
         "RED"
+    ]
+}
+
+// The Swarmweaver
+{
+    "name": "The Swarmweaver",
+    "manaCost": "{2}{B}{G}",
+    "typeLine": "Legendary Artifact Creature — Scarecrow",
+    "oracleText": "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying.\nDelirium — As long as there are four or more card types among cards in your graveyard, Insects and Spiders you control get +1/+1 and have deathtouch.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK",
+                        "GREEN"
+                    ],
+                    "creatureTypes": [
+                        "Insect"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/3/7/377f1a20-b270-4b07-9892-7170cd0bee38.jpg?1726236771"
+                },
+                "descriptionOverride": "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 1,
+                    "toughnessBonus": 1,
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "HasAnyOfSubtypes",
+                                    "subtypes": [
+                                        "Insect",
+                                        "Spider"
+                                    ]
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            },
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "DEATHTOUCH",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "HasAnyOfSubtypes",
+                                    "subtypes": [
+                                        "Insect",
+                                        "Spider"
+                                    ]
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "236",
+        "rarity": "RARE",
+        "artist": "Helge C. Balzer",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/c/dcf3b17b-f2f6-4702-864d-8c96100b0563.jpg?1726286750"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
     ]
 }
 

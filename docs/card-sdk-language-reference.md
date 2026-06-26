@@ -84,6 +84,16 @@ section; do not let SDK additions land without a corresponding doc update.
   cast independently via `CastSpell.faceIndex`; only the chosen half goes on the stack (CR 709.4). A non-permanent half
   carries its effect in a `face("Name") { spell { … } }` block (with its own `target(...)` requirements); a permanent
   half (Room) carries triggered/activated/static abilities instead.
+  - **Room face abilities are door-gated (CR 709.5).** A Room face's abilities function only while that door is
+    unlocked. Triggered abilities are scoped to the unlocked face in `TriggerDetector`; **static** abilities —
+    continuous effects, `GrantActivatedAbility` (incl. granted mana abilities), and `NoMaximumHandSize` — are folded
+    in by the engine helper `RoomFaceStatics.activeStaticAbilities(container, cardDef)`, the single source of truth
+    every battlefield static-ability scan reads (continuous-effect projection, clickable granted abilities, the mana
+    auto-payer, no-maximum-hand-size). So a static printed on a Room face (e.g. Greenhouse's "Lands you control have
+    '{T}: Add one mana of any color.'") works exactly like the same static on a normal permanent, but only once its
+    door is unlocked. The baked continuous-effect component is refreshed when a door unlocks (via `RoomDoorUnlocker`),
+    the same way a transform re-bakes it. (Replacement effects on a Room face are not yet door-gated — no current card
+    needs one.)
 - `ADVENTURE` — primary face is a permanent (usually a creature; **may also be a land** — FIN Towns), `cardFaces[0]`
   is an instant/sorcery Adventure (CR 715). Resolving the Adventure exiles the card and grants permission to play
   the primary face from exile — *cast* the creature, or *play* the land for a **land // spell** Adventure
@@ -1687,6 +1697,31 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
 `subfilter` — `CardPredicate.TargetsMatching`; e.g. `GameObjectFilter.InstantOrSorcery.targetsMatching(GameObjectFilter.Creature)`
 for "an instant or sorcery spell that targets a creature" — Forum Necroscribe, Lecturing Scornmage);
 plus `TargetFilter.excludeSelf` to exclude the source.
+
+### Cross-zone union targets (`TargetFilter.or` / `TargetFilter.anyOf`)
+
+A **single** target whose legal objects can come from more than one zone, each with its own predicate —
+the cross-zone "or" wording. `TargetFilter` carries `alternatives: List<TargetFilter>`, additional
+zone-scoped clauses unioned with the primary one; build it with `clauseA.or(clauseB)` or
+`TargetFilter.anyOf(clauseA, clauseB, …)`. The legal-target set is the union over every clause and a
+chosen target is legal iff it satisfies *any* clause. This is **not** a multi-target requirement (still
+one target), and it is distinct from the player/permanent unions (`TargetSpellOrPermanent`,
+`TargetCreatureOrPlayer`). `GameObjectFilter.anyOf` is the same idea *within one zone*; this lifts it
+across zones, which the flat `baseFilter` can't express because each zone needs its own predicate and
+the engine dispatches target-finding/validation per `TargetFilter.zone`.
+
+```kotlin
+// Sorceress's Schemes — "instant or sorcery card from your graveyard or exiled card with flashback you own"
+val union = TargetFilter.InstantOrSorceryInGraveyard.ownedByYou()
+    .or(TargetFilter(GameObjectFilter.Any).withKeyword(Keyword.FLASHBACK).ownedByYou().inZone(Zone.EXILE))
+val t = target("…", TargetObject(filter = union))
+effect = Effects.Composite(Effects.ReturnToHand(t), Effects.AddMana(Color.RED))
+```
+
+"Card with flashback" is just `withKeyword(Keyword.FLASHBACK)`: a flashback ability adds
+`Keyword.FLASHBACK` to the card's base keywords, so the predicate matches even on a card sitting in
+exile (no projection needed). The client routes a union to its cross-zone card picker, grouping the
+valid targets into per-(owner, zone) tabs — "Your Graveyard", "Your Exile", etc.
 
 ### Named multi-target binding
 

@@ -743,6 +743,18 @@ class TargetValidator {
         xValue: Int? = null,
         targetPlayerId: EntityId? = null
     ): String? {
+        // Cross-zone union: the target is legal if it satisfies *any* clause. Validate against each
+        // single-zone clause; succeed on the first that accepts, otherwise report that clause's
+        // error (the most informative — the target type matched a clause's zone but failed its
+        // filter). Each clause has no alternatives, so this recursion terminates.
+        if (filter.isUnion) {
+            val clauseErrors = filter.clauses().map { clause ->
+                validateObjectTarget(state, target, clause, casterId, sourceId, xValue, targetPlayerId)
+            }
+            if (clauseErrors.any { it == null }) return null
+            return clauseErrors.firstOrNull { it != null }
+                ?: "Target does not match filter: ${filter.description}"
+        }
         return when (filter.zone) {
             Zone.GRAVEYARD -> validateGraveyardTarget(state, target, filter, casterId, sourceId, xValue, targetPlayerId)
             Zone.BATTLEFIELD -> validatePermanentTarget(state, target, filter, casterId, sourceId, xValue)

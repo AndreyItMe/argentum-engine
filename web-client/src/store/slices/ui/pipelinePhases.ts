@@ -23,6 +23,13 @@ import type {
   DamageDistributionState,
 } from '../types'
 
+/**
+ * Non-battlefield, non-stack zones a targeted card can live in. A target whose card is in one of
+ * these is sent to the server as a `Card` target tagged with its zone, so a cross-zone union
+ * requirement (Sorceress's Schemes: graveyard ∪ exile) matches it to the correct clause.
+ */
+const CARD_TARGET_ZONES = new Set(['Graveyard', 'Exile', 'Hand', 'Library', 'Command'])
+
 // ---------------------------------------------------------------------------
 // Store method interface (decouples pure logic from Zustand)
 // ---------------------------------------------------------------------------
@@ -458,16 +465,19 @@ export function mergeResult(
           return { type: 'Player' as const, playerId: targetId }
         }
         const card = gameState.cards[targetId]
-        if (card && card.zone?.zoneType === 'Graveyard') {
+        const zoneType = card?.zone?.zoneType
+        if (card && zoneType === 'Stack') {
+          return { type: 'Spell' as const, spellEntityId: targetId }
+        }
+        // Card target in a non-battlefield zone — carry its actual zone so the server matches it
+        // to the right clause (a cross-zone union like Sorceress's Schemes spans graveyard ∪ exile).
+        if (card && zoneType && CARD_TARGET_ZONES.has(zoneType)) {
           return {
             type: 'Card' as const,
             cardId: targetId,
-            ownerId: card.zone.ownerId,
-            zone: 'Graveyard' as const,
+            ownerId: card.zone!.ownerId,
+            zone: zoneType,
           }
-        }
-        if (card && card.zone?.zoneType === 'Stack') {
-          return { type: 'Spell' as const, spellEntityId: targetId }
         }
         return { type: 'Permanent' as const, entityId: targetId }
       })

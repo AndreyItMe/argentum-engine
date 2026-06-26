@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.effects.permanent.room
 import com.wingedsheep.engine.core.EffectResult
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.sdk.scripting.effects.LockDoorEffect
 import kotlin.reflect.KClass
@@ -18,7 +19,9 @@ import kotlin.reflect.KClass
  * unlocked door resolves as a harmless no-op. Locking fires no triggers and never fully unlocks a
  * Room (see [LockDoorEffect]).
  */
-class LockDoorExecutor : EffectExecutor<LockDoorEffect> {
+class LockDoorExecutor(
+    private val staticAbilityHandler: StaticAbilityHandler,
+) : EffectExecutor<LockDoorEffect> {
 
     override val effectType: KClass<LockDoorEffect> = LockDoorEffect::class
 
@@ -29,6 +32,6 @@ class LockDoorExecutor : EffectExecutor<LockDoorEffect> {
     ): EffectResult {
         val roomId = context.resolveTarget(effect.target, state)
             ?: return EffectResult.success(state, emptyList())
-        return RoomDoorResolution.resolve(state, roomId, context.controllerId, lock = true)
+        return RoomDoorResolution.resolve(state, roomId, context.controllerId, lock = true, staticAbilityHandler)
     }
 }

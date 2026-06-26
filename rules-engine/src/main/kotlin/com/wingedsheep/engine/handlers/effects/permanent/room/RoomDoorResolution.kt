@@ -9,6 +9,7 @@ import com.wingedsheep.engine.core.EffectResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.handlers.actions.room.RoomDoorLocker
 import com.wingedsheep.engine.handlers.actions.room.RoomDoorUnlocker
+import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
@@ -40,6 +41,7 @@ object RoomDoorResolution {
         roomId: EntityId,
         effectControllerId: EntityId,
         lock: Boolean,
+        staticAbilityHandler: StaticAbilityHandler,
     ): EffectResult {
         val container = state.getEntity(roomId) ?: return EffectResult.success(state, emptyList())
         val room = container.get<RoomComponent>() ?: return EffectResult.success(state, emptyList())
@@ -55,7 +57,7 @@ object RoomDoorResolution {
 
             // Exactly one eligible door — no real choice, apply it directly.
             candidates.size == 1 -> {
-                val (newState, events) = apply(state, roomId, candidates.single().id, controllerId, lock)
+                val (newState, events) = apply(state, roomId, candidates.single().id, controllerId, lock, staticAbilityHandler)
                 EffectResult.success(newState, events)
             }
 
@@ -71,9 +73,10 @@ object RoomDoorResolution {
         faceId: RoomFaceId,
         controllerId: EntityId,
         lock: Boolean,
+        staticAbilityHandler: StaticAbilityHandler,
     ): Pair<GameState, List<GameEvent>> =
-        if (lock) RoomDoorLocker.lock(state, roomId, faceId, controllerId)
-        else RoomDoorUnlocker.unlock(state, roomId, faceId, controllerId)
+        if (lock) RoomDoorLocker.lock(state, roomId, faceId, controllerId, staticAbilityHandler)
+        else RoomDoorUnlocker.unlock(state, roomId, faceId, controllerId, staticAbilityHandler)
 
     private fun pauseForDoorChoice(
         state: GameState,

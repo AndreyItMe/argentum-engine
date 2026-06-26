@@ -46,12 +46,47 @@ data class TargetFilter(
      * triggering entity (e.g., the creature that became the target of an opponent's spell),
      * not the source of the ability.
      */
-    val excludeTriggeringEntity: Boolean = false
+    val excludeTriggeringEntity: Boolean = false,
+    /**
+     * Additional zone-scoped clauses unioned with this one, for a single target that may be
+     * chosen from several zones each with its own predicate — the cross-zone "or" wording
+     * (Sorceress's Schemes: "instant or sorcery card from your graveyard *or* exiled card with
+     * flashback you own"). The legal-target set is the union over [clauses] (this filter plus all
+     * [alternatives]), and a chosen target is legal iff it satisfies *any* clause. Each alternative
+     * carries its own [zone]/[baseFilter], so the clauses can span graveyard, exile, the
+     * battlefield, etc.
+     *
+     * This is *not* a multi-target requirement — it is still a single target. Build it through
+     * [or] / [anyOf]; the common single-zone filter leaves this empty. `GameObjectFilter.anyOf`
+     * is the same idea *within one zone*; this lifts it across zones, which the flat `baseFilter`
+     * can't express because each zone needs its own predicate.
+     */
+    val alternatives: List<TargetFilter> = emptyList()
 ) : TextReplaceable<TargetFilter> {
     val description: String
         get() = buildDescription()
 
-    private fun buildDescription(): String = buildString {
+    /** True when this filter is a cross-zone union (has at least one [alternatives] clause). */
+    val isUnion: Boolean get() = alternatives.isNotEmpty()
+
+    /**
+     * Flatten this filter into its single-zone clauses: this filter (with [alternatives] stripped)
+     * followed by every alternative's own clauses. Each returned filter has an empty [alternatives],
+     * so dispatch sites can branch on [zone] without re-checking for unions. A non-union filter
+     * returns just itself.
+     */
+    fun clauses(): List<TargetFilter> =
+        listOf(if (alternatives.isEmpty()) this else copy(alternatives = emptyList())) +
+            alternatives.flatMap { it.clauses() }
+
+    /** Union this filter with [other] — adds [other] as an alternative clause. */
+    fun or(other: TargetFilter): TargetFilter = copy(alternatives = alternatives + other)
+
+    private fun buildDescription(): String =
+        if (alternatives.isEmpty()) describeClause()
+        else clauses().joinToString(" or ") { it.describeClause() }
+
+    private fun describeClause(): String = buildString {
         if (excludeSelf) append("other ")
         append(baseFilter.description)
         if (zone != Zone.BATTLEFIELD) {
@@ -65,6 +100,14 @@ data class TargetFilter(
     // =============================================================================
 
     companion object {
+        /**
+         * A cross-zone union target: a single target chosen from any of the given clauses, each
+         * with its own zone/predicate (Sorceress's Schemes). The first clause's zone is treated as
+         * the primary one for display/zone purposes. See [alternatives].
+         */
+        fun anyOf(first: TargetFilter, vararg rest: TargetFilter): TargetFilter =
+            first.copy(alternatives = first.alternatives + rest.toList())
+
         /** Target any creature */
         val Creature = TargetFilter(GameObjectFilter.Companion.Creature)
 
@@ -380,6 +423,10 @@ data class TargetFilter(
 
     override fun applyTextReplacement(replacer: TextReplacer): TargetFilter {
         val newBase = baseFilter.applyTextReplacement(replacer)
-        return if (newBase !== baseFilter) copy(baseFilter = newBase) else this
+        val newAlternatives = alternatives.map { it.applyTextReplacement(replacer) }
+        val alternativesChanged = newAlternatives.indices.any { newAlternatives[it] !== alternatives[it] }
+        return if (newBase !== baseFilter || alternativesChanged) {
+            copy(baseFilter = newBase, alternatives = newAlternatives)
+        } else this
     }
 }

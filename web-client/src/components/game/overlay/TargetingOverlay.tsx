@@ -11,11 +11,13 @@ import { TARGET_COLOR, TARGET_COLOR_BRIGHT } from '@/styles/targetingColors.ts'
 import { CraftMaterialOverlay } from '@/components/decisions/CraftMaterialOverlay'
 
 /**
- * Graveyard targeting overlay - shows when targeting mode requires selecting cards from graveyards.
- * Similar to GraveyardTargetingUI in DecisionUI but for client-side spell casting targeting.
+ * Cross-zone card targeting overlay — shows when targeting mode requires selecting card(s) from a
+ * card zone (graveyard or exile), possibly a union of both (Sorceress's Schemes). Cards are grouped
+ * into tabs by (owner, zone) so e.g. "Your Graveyard" and "Your Exile" are distinct, browsable
+ * piles. Similar to GraveyardTargetingUI in DecisionUI but for client-side spell casting targeting.
  */
-function GraveyardTargetingOverlay({
-  graveyardCards,
+function ZoneCardTargetingOverlay({
+  zoneCards,
   targetingState,
   responsive,
   onSelect,
@@ -23,7 +25,7 @@ function GraveyardTargetingOverlay({
   onConfirm,
   onCancel,
 }: {
-  graveyardCards: ClientCard[]
+  zoneCards: ClientCard[]
   targetingState: { selectedTargets: readonly EntityId[]; minTargets: number; maxTargets: number; targetDescription?: string; currentRequirementIndex?: number; totalRequirements?: number; sourceCardName?: string }
   responsive: ResponsiveSizes
   onSelect: (cardId: EntityId) => void
@@ -42,32 +44,39 @@ function GraveyardTargetingOverlay({
   const hasEnoughTargets = selectedCount >= minTargets
   const hasMaxTargets = selectedCount >= maxTargets
 
-  // Group cards by graveyard owner
-  const cardsByOwner = React.useMemo(() => {
-    const grouped = new Map<EntityId, ClientCard[]>()
-    for (const card of graveyardCards) {
-      const ownerId = card.zone?.ownerId ?? card.ownerId
-      if (!grouped.has(ownerId)) {
-        grouped.set(ownerId, [])
+  // A group key combines the owning player and the card's zone, so graveyard and exile piles for
+  // the same player are separate tabs. Zone defaults to Graveyard when the card carries none.
+  const groupKeyOf = (card: ClientCard): string =>
+    `${card.zone?.ownerId ?? card.ownerId}|${card.zone?.zoneType ?? 'Graveyard'}`
+
+  // Group cards by (owner, zone)
+  const cardsByGroup = React.useMemo(() => {
+    const grouped = new Map<string, ClientCard[]>()
+    for (const card of zoneCards) {
+      const key = groupKeyOf(card)
+      if (!grouped.has(key)) {
+        grouped.set(key, [])
       }
-      grouped.get(ownerId)!.push(card)
+      grouped.get(key)!.push(card)
     }
     return grouped
-  }, [graveyardCards])
+  }, [zoneCards])
 
-  // Get owner IDs sorted (viewer's graveyard first)
-  const ownerIds = React.useMemo(() => {
-    const ids = Array.from(cardsByOwner.keys())
+  // Get group keys sorted (viewer's piles first)
+  const groupKeys = React.useMemo(() => {
+    const ids = Array.from(cardsByGroup.keys())
     return ids.sort((a, b) => {
-      if (a === viewingPlayerId) return -1
-      if (b === viewingPlayerId) return 1
-      return 0
+      const aMine = a.startsWith(`${viewingPlayerId}|`)
+      const bMine = b.startsWith(`${viewingPlayerId}|`)
+      if (aMine && !bMine) return -1
+      if (bMine && !aMine) return 1
+      return a.localeCompare(b)
     })
-  }, [cardsByOwner, viewingPlayerId])
+  }, [cardsByGroup, viewingPlayerId])
 
-  const [selectedOwnerId, setSelectedOwnerId] = React.useState<EntityId | null>(() => ownerIds[0] ?? null)
-  const currentOwnerId = selectedOwnerId && ownerIds.includes(selectedOwnerId) ? selectedOwnerId : ownerIds[0] ?? null
-  const currentCards = currentOwnerId ? (cardsByOwner.get(currentOwnerId) ?? []) : []
+  const [selectedGroupKey, setSelectedGroupKey] = React.useState<string | null>(() => groupKeys[0] ?? null)
+  const currentGroupKey = selectedGroupKey && groupKeys.includes(selectedGroupKey) ? selectedGroupKey : groupKeys[0] ?? null
+  const currentCards = currentGroupKey ? (cardsByGroup.get(currentGroupKey) ?? []) : []
 
   // Sort cards by type then name
   const sortedCards = React.useMemo(() => {
@@ -87,10 +96,12 @@ function GraveyardTargetingOverlay({
     })
   }, [currentCards])
 
-  const getPlayerLabel = (ownerId: EntityId): string => {
-    if (ownerId === viewingPlayerId) return 'Your Graveyard'
+  const getGroupLabel = (groupKey: string): string => {
+    const [ownerId, zoneType = 'Graveyard'] = groupKey.split('|')
+    const zoneLabel = zoneType === 'Exile' ? 'Exile' : 'Graveyard'
+    if (ownerId === viewingPlayerId) return `Your ${zoneLabel}`
     const player = gameState?.players.find((p) => p.playerId === ownerId)
-    return player ? `${player.name}'s Graveyard` : "Opponent's Graveyard"
+    return player ? `${player.name}'s ${zoneLabel}` : `Opponent's ${zoneLabel}`
   }
 
   const toggleCard = (cardId: EntityId) => {
@@ -133,7 +144,7 @@ function GraveyardTargetingOverlay({
           zIndex: 100,
         }}
       >
-        ↑ Return to Graveyard Selection
+        ↑ Return to Card Selection
       </button>
     )
   }
@@ -182,7 +193,7 @@ function GraveyardTargetingOverlay({
         >
           {targetingState.targetDescription
             ? `Select ${targetingState.targetDescription}`
-            : 'Choose Target from Graveyard'}
+            : 'Choose Target'}
         </h2>
         {targetingState.sourceCardName && (
           <p
@@ -209,8 +220,8 @@ function GraveyardTargetingOverlay({
         </p>
       </div>
 
-      {/* Graveyard tabs (if multiple graveyards) */}
-      {ownerIds.length > 1 && (
+      {/* Zone tabs (if multiple graveyard/exile piles) */}
+      {groupKeys.length > 1 && (
         <div
           style={{
             display: 'flex',
@@ -220,24 +231,24 @@ function GraveyardTargetingOverlay({
             borderRadius: 8,
           }}
         >
-          {ownerIds.map((ownerId) => {
-            const isActive = ownerId === currentOwnerId
-            const ownerCards = cardsByOwner.get(ownerId) ?? []
-            const cardCount = ownerCards.length
-            // Count how many cards are selected from this graveyard
-            const selectedFromThisGraveyard = ownerCards.filter((c) =>
+          {groupKeys.map((groupKey) => {
+            const isActive = groupKey === currentGroupKey
+            const groupCards = cardsByGroup.get(groupKey) ?? []
+            const cardCount = groupCards.length
+            // Count how many cards are selected from this pile
+            const selectedFromThisGroup = groupCards.filter((c) =>
               targetingState.selectedTargets.includes(c.id)
             ).length
             return (
               <button
-                key={ownerId}
-                onClick={() => setSelectedOwnerId(ownerId)}
+                key={groupKey}
+                onClick={() => setSelectedGroupKey(groupKey)}
                 style={{
                   padding: responsive.isMobile ? '8px 16px' : '10px 24px',
                   fontSize: responsive.fontSize.normal,
                   backgroundColor: isActive ? '#4a5568' : 'transparent',
                   color: isActive ? 'white' : '#888',
-                  border: selectedFromThisGraveyard > 0 && !isActive ? '2px solid #fbbf24' : 'none',
+                  border: selectedFromThisGroup > 0 && !isActive ? '2px solid #fbbf24' : 'none',
                   borderRadius: 6,
                   cursor: 'pointer',
                   fontWeight: isActive ? 600 : 400,
@@ -245,8 +256,8 @@ function GraveyardTargetingOverlay({
                   position: 'relative',
                 }}
               >
-                {getPlayerLabel(ownerId)} ({cardCount})
-                {selectedFromThisGraveyard > 0 && (
+                {getGroupLabel(groupKey)} ({cardCount})
+                {selectedFromThisGroup > 0 && (
                   <span
                     style={{
                       position: 'absolute',
@@ -264,7 +275,7 @@ function GraveyardTargetingOverlay({
                       fontWeight: 'bold',
                     }}
                   >
-                    {selectedFromThisGraveyard}
+                    {selectedFromThisGroup}
                   </span>
                 )}
               </button>
@@ -377,7 +388,7 @@ function GraveyardTargetingOverlay({
       {/* No cards message */}
       {sortedCards.length === 0 && (
         <p style={{ color: '#666', fontSize: responsive.fontSize.normal }}>
-          No valid targets in this graveyard.
+          No valid targets here.
         </p>
       )}
 
@@ -473,40 +484,34 @@ export function TargetingOverlay() {
   const isReveal = targetingState.isRevealSelection
   const isBehold = targetingState.isBeholdSelection
 
-  // Check if targets are graveyard cards — use explicit targetZone when available,
-  // fall back to inspecting gameState.cards for backward compatibility
-  const graveyardCards: ClientCard[] = []
-  const isGraveyardTargeting = targetingState.targetZone === 'Graveyard'
-  if (isGraveyardTargeting) {
-    // Server told us this is a graveyard targeting requirement — collect cards
-    for (const targetId of targetingState.validTargets) {
-      const card = gameState?.cards[targetId]
-      if (card) {
-        graveyardCards.push(card)
-      }
-    }
-  } else {
-    // Fallback: check if all valid targets happen to be graveyard cards
-    let allTargetsAreGraveyard = targetingState.validTargets.length > 0
-    for (const targetId of targetingState.validTargets) {
-      const card = gameState?.cards[targetId]
-      if (card && card.zone?.zoneType === 'Graveyard') {
-        graveyardCards.push(card)
-      } else {
-        allTargetsAreGraveyard = false
-        break
-      }
-    }
-    if (!allTargetsAreGraveyard) {
-      graveyardCards.length = 0
+  // Collect valid-target cards that live in a selectable card zone (graveyard or exile). These
+  // route to the cross-zone card picker rather than on-battlefield clicking — the picker shows
+  // the actual cards (a graveyard/exile pile isn't individually clickable on the board). This
+  // covers single-zone graveyard targeting (the common case), exile targeting (Blade of the
+  // Swarm), and cross-zone unions (Sorceress's Schemes: graveyard ∪ exile). `targetZone` is the
+  // server's single-zone hint when present; when absent (single-target or union) we detect from
+  // the valid-target set, requiring *every* valid target to be a card-zone card so we don't
+  // hijack mixed battlefield/player targeting.
+  const CARD_ZONES = new Set(['Graveyard', 'Exile'])
+  const zoneCards: ClientCard[] = []
+  let allTargetsAreZoneCards = targetingState.validTargets.length > 0
+  for (const targetId of targetingState.validTargets) {
+    const card = gameState?.cards[targetId]
+    const zoneType = card?.zone?.zoneType
+    if (card && (zoneType ? CARD_ZONES.has(zoneType) : targetingState.targetZone === 'Graveyard')) {
+      zoneCards.push(card)
+    } else {
+      allTargetsAreZoneCards = false
     }
   }
+  const useCardPicker =
+    (targetingState.targetZone === 'Graveyard' || allTargetsAreZoneCards) && zoneCards.length > 0
 
-  // If targets are graveyard cards, show graveyard selection UI
-  if (graveyardCards.length > 0) {
+  // If targets are graveyard/exile cards, show the cross-zone card selection UI
+  if (useCardPicker) {
     return (
-      <GraveyardTargetingOverlay
-        graveyardCards={graveyardCards}
+      <ZoneCardTargetingOverlay
+        zoneCards={zoneCards}
         targetingState={targetingState}
         responsive={responsive}
         onSelect={addTarget}

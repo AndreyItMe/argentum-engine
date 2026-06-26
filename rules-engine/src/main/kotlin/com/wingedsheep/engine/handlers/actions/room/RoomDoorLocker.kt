@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers.actions.room
 
 import com.wingedsheep.engine.core.DoorLockedEvent
 import com.wingedsheep.engine.core.GameEvent
+import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.RoomComponent
@@ -23,12 +24,19 @@ object RoomDoorLocker {
      * Lock [faceId] of the Room [roomId] controlled by [controllerId]. Returns the new state with
      * that face's "unlocked" designation removed, plus a [DoorLockedEvent]. If the face is already
      * locked or the entity isn't a Room, returns the state unchanged with no events.
+     *
+     * Locking a half turns its static abilities *off* (CR 709.5), the mirror of [RoomDoorUnlocker];
+     * so we re-bake the Room's cached
+     * [com.wingedsheep.engine.state.components.battlefield.ContinuousEffectSourceComponent] via
+     * [staticAbilityHandler], the same refresh unlocking and transforming do, to drop the now-locked
+     * half's continuous statics.
      */
     fun lock(
         state: GameState,
         roomId: EntityId,
         faceId: RoomFaceId,
         controllerId: EntityId,
+        staticAbilityHandler: StaticAbilityHandler,
     ): Pair<GameState, List<GameEvent>> {
         val container = state.getEntity(roomId) ?: return state to emptyList()
         val room = container.get<RoomComponent>() ?: return state to emptyList()
@@ -37,7 +45,9 @@ object RoomDoorLocker {
 
         val roomName = container.get<CardComponent>()?.name ?: face.name
         val updatedRoom = room.copy(unlocked = room.unlocked - faceId)
-        val newState = state.updateEntity(roomId) { c -> c.with(updatedRoom) }
+        val newState = state.updateEntity(roomId) { c ->
+            staticAbilityHandler.addContinuousEffectComponent(c.with(updatedRoom))
+        }
 
         val event = DoorLockedEvent(
             roomId = roomId,

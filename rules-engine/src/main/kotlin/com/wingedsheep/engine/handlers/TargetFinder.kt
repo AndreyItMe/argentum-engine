@@ -488,6 +488,15 @@ class TargetFinder(
         pipelineContext: PredicateContext? = null
     ): List<EntityId> {
         val filter = requirement.filter
+        // Cross-zone union ("from your graveyard or exiled card with flashback"): the legal set is
+        // the union over each single-zone clause. Recurse per clause (each has no alternatives, so
+        // this terminates) and dedupe — a single object can't legally match two clauses anyway, but
+        // distinct() guards against overlapping filters.
+        if (filter.isUnion) {
+            return filter.clauses().flatMap { clause ->
+                findObjectTargets(state, requirement.copy(filter = clause), controllerId, sourceId, ignoreTargetingRestrictions, targetingSourceType, triggeringEntityId, pipelineContext)
+            }.distinct()
+        }
         return when (filter.zone) {
             Zone.BATTLEFIELD -> findPermanentTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions, targetingSourceType, triggeringEntityId, pipelineContext)
             Zone.GRAVEYARD -> findGraveyardTargets(state, filter, controllerId, sourceId, pipelineContext)

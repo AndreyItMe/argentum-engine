@@ -177,6 +177,13 @@ class TargetEnumerationUtils(
         filter: TargetFilter,
         sourceId: EntityId? = null
     ): List<EntityId> {
+        // Cross-zone union: surface the union of legal targets across each single-zone clause
+        // (Sorceress's Schemes offers both graveyard instants/sorceries and exiled flashback cards).
+        if (filter.isUnion) {
+            return filter.clauses().flatMap { clause ->
+                findValidObjectTargets(state, playerId, clause, sourceId)
+            }.distinct()
+        }
         return when (filter.zone) {
             Zone.BATTLEFIELD -> findValidPermanentTargets(state, playerId, filter, sourceId)
             Zone.GRAVEYARD -> findValidGraveyardTargets(state, playerId, filter, sourceId)
@@ -230,7 +237,11 @@ class TargetEnumerationUtils(
 
     fun getTargetZone(requirement: TargetRequirement): String? {
         return when (requirement) {
-            is TargetObject -> requirement.filter.zone.takeIf { it != Zone.BATTLEFIELD }?.let {
+            // A cross-zone union spans several card zones, so no single zone label applies; the
+            // client detects card-zone targets from the valid-target set itself and shows the
+            // cross-zone card picker.
+            is TargetObject -> if (requirement.filter.isUnion) null else
+                requirement.filter.zone.takeIf { it != Zone.BATTLEFIELD }?.let {
                 when (requirement.filter.zone) {
                     Zone.GRAVEYARD -> "Graveyard"
                     Zone.STACK -> "Stack"
