@@ -214,6 +214,99 @@
     "colorIdentityOverride": []
 }
 
+// Aerith Gainsborough
+{
+    "name": "Aerith Gainsborough",
+    "manaCost": "{2}{W}",
+    "typeLine": "Legendary Creature — Human Cleric",
+    "oracleText": "Lifelink\nWhenever you gain life, put a +1/+1 counter on Aerith Gainsborough.\nWhen Aerith Gainsborough dies, put X +1/+1 counters on each legendary creature you control, where X is the number of +1/+1 counters on Aerith Gainsborough.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "BattlefieldMatching",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        "IsLegendary"
+                                    ],
+                                    "controllerPredicate": "ControlledByYou"
+                                }
+                            },
+                            "storeAs": "legendaryCreatures"
+                        },
+                        {
+                            "type": "AddCountersToCollection",
+                            "collectionName": "legendaryCreatures",
+                            "counterType": "+1/+1",
+                            "amount": {
+                                "type": "ContextProperty",
+                                "key": "LAST_KNOWN_PLUS_ONE_COUNTER_COUNT"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "RARE",
+        "artist": "Nakamura8",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/8/e86328b6-ded2-41df-8b6e-4a770e7b171e.jpg?1748705770",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "If Aerith Gainsborough is dealt lethal damage at the same time that you gain life, it will die before its second ability would resolve. Its last ability will use the number of counters that were on it when it was last on the battlefield."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "In the rare case where enough -1/-1 counters are put on Aerith Gainsborough at the same time to make its toughness 0 or less, the number of +1/+1 counters on it before it got those -1/-1 counters will be used to determine the value of X in its third ability."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "Aerith Gainsborough's second ability triggers just once for each life-gaining event, no matter how much life was gained."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "Each creature with lifelink dealing combat damage causes a separate life-gaining event, so Aerith's second ability triggers once per such event."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Aettir and Priwen
 {
     "name": "Aettir and Priwen",
@@ -908,6 +1001,57 @@
     },
     "colorIdentityOverride": [
         "BLUE",
+        "RED"
+    ]
+}
+
+// Barret Wallace
+{
+    "name": "Barret Wallace",
+    "manaCost": "{3}{R}",
+    "typeLine": "Legendary Creature — Human Rebel",
+    "oracleText": "Reach\nWhenever Barret Wallace attacks, it deals damage equal to the number of equipped creatures you control to defending player.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": {
+                            "cardPredicates": [
+                                "IsCreature"
+                            ],
+                            "statePredicates": [
+                                "IsEquipped"
+                            ]
+                        }
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "DefendingPlayer"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "129",
+        "rarity": "UNCOMMON",
+        "artist": "Patrik Hell",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1a504dff-5857-4a61-ab99-616d5df7cf5a.jpg?1748706246"
+    },
+    "colorIdentityOverride": [
         "RED"
     ]
 }
@@ -6511,6 +6655,56 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Prompto Argentum
+{
+    "name": "Prompto Argentum",
+    "manaCost": "{1}{R}",
+    "typeLine": "Legendary Creature — Human Scout",
+    "oracleText": "Haste\nSelfie Shot — Whenever you cast a noncreature spell, if at least four mana was spent to cast it, create a Treasure token.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                },
+                "triggerCondition": {
+                    "type": "TriggeringSpellManaSpentAtLeast",
+                    "amount": 4
+                },
+                "descriptionOverride": "Selfie Shot — Whenever you cast a noncreature spell, if at least four mana was spent to cast it, create a Treasure token."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "148",
+        "rarity": "UNCOMMON",
+        "artist": "Billy Christian",
+        "flavorText": "\"Look out world, here we come!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/c/4c617bcd-05f8-40c2-bb38-489bc863ce6b.jpg?1748706313"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
