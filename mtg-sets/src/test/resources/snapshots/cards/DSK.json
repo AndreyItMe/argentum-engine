@@ -6176,6 +6176,106 @@
     "colorIdentityOverride": []
 }
 
+// Funeral Room // Awakening Hall
+{
+    "name": "Funeral Room // Awakening Hall",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.\n//\nWhen you unlock this door, return all creature cards from your graveyard to the battlefield.",
+    "metadata": {
+        "collectorNumber": "100",
+        "rarity": "MYTHIC",
+        "artist": "Miklós Ligeti",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/8/48237c98-5067-47a8-af74-7b9bce57c6a4.jpg?1726867790"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Funeral Room",
+            "manaCost": "{2}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": {
+                            "type": "ZoneChangeEvent",
+                            "filter": "creature ctrl:you",
+                            "from": "Battlefield",
+                            "to": "Graveyard"
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "LoseLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "target": {
+                                        "type": "PlayerRef",
+                                        "player": "EachOpponent"
+                                    }
+                                },
+                                {
+                                    "type": "GainLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Awakening Hall",
+            "manaCost": "{6}{B}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, return all creature cards from your graveyard to the battlefield.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Graveyard",
+                                        "filter": "creature"
+                                    },
+                                    "storeAs": "graveyardCreatures"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "graveyardCreatures",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Battlefield"
+                                    },
+                                    "underOwnersControl": true
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Get Out
 {
     "name": "Get Out",
@@ -14036,6 +14136,135 @@
     "colorIdentityOverride": [
         "WHITE",
         "RED"
+    ]
+}
+
+// The Swarmweaver
+{
+    "name": "The Swarmweaver",
+    "manaCost": "{2}{B}{G}",
+    "typeLine": "Legendary Artifact Creature — Scarecrow",
+    "oracleText": "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying.\nDelirium — As long as there are four or more card types among cards in your graveyard, Insects and Spiders you control get +1/+1 and have deathtouch.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK",
+                        "GREEN"
+                    ],
+                    "creatureTypes": [
+                        "Insect"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/3/7/377f1a20-b270-4b07-9892-7170cd0bee38.jpg?1726236771"
+                },
+                "descriptionOverride": "When The Swarmweaver enters, create two 1/1 black and green Insect creature tokens with flying."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 1,
+                    "toughnessBonus": 1,
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "HasAnyOfSubtypes",
+                                    "subtypes": [
+                                        "Insect",
+                                        "Spider"
+                                    ]
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            },
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "DEATHTOUCH",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "HasAnyOfSubtypes",
+                                    "subtypes": [
+                                        "Insect",
+                                        "Spider"
+                                    ]
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "236",
+        "rarity": "RARE",
+        "artist": "Helge C. Balzer",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/c/dcf3b17b-f2f6-4702-864d-8c96100b0563.jpg?1726286750"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
     ]
 }
 
