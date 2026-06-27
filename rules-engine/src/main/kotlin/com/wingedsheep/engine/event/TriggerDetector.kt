@@ -1236,6 +1236,17 @@ class TriggerDetector(
                 val container = state.getEntity(entityId) ?: continue
                 val cardComponent = container.get<CardComponent>() ?: continue
 
+                // The card's OWN battlefield-exit (its death / leaving) is owned by the dedicated
+                // death and leaves-battlefield detectors below, which resolve the dying entity's
+                // abilities regardless of activeZone. Skipping it here prevents a graveyard-active
+                // dies trigger (triggerZone = GRAVEYARD, e.g. Paramecia Coloniex) from being
+                // detected twice — once here, because the dead card already sits in the graveyard
+                // and its trigger pattern matches its own death event, and once in
+                // detectDeathTriggers. Other graveyard-resident reactions (another creature dying,
+                // entering, etc.) still fall through to the matcher below.
+                if (event is ZoneChangeEvent && event.fromZone == Zone.BATTLEFIELD &&
+                    event.entityId == entityId) continue
+
                 val abilities = abilityResolver.getTriggeredAbilities(entityId, cardComponent.cardDefinitionId, state)
 
                 for (ability in abilities) {

@@ -92,6 +92,23 @@ class TriggerDetectorBatchTriggerTest : FunSpec({
         }
     }
 
+    // A dies trigger that functions from the graveyard (triggerZone = GRAVEYARD), the shape
+    // Paramecia Coloniex uses so its effect can reference Self after the creature has died and
+    // is sitting in the graveyard. Its activeZone is GRAVEYARD, which made the graveyard-resident
+    // trigger scan match its own death event in addition to the dedicated death detector — the
+    // double-fire this test guards against.
+    val graveyardActiveDiesWatcher = card("Graveyard Active Dies Watcher") {
+        manaCost = "{1}{B}"
+        typeLine = "Creature — Zombie"
+        power = 2
+        toughness = 2
+        triggeredAbility {
+            trigger = Triggers.Dies
+            triggerZone = Zone.GRAVEYARD
+            effect = LoseLifeEffect(1, EffectTarget.PlayerRef(Player.You))
+        }
+    }
+
     fun createDriver(vararg extras: CardDefinition): GameTestDriver {
         val driver = GameTestDriver()
         driver.registerCards(TestCards.all + extras.toList())
@@ -600,6 +617,51 @@ class TriggerDetectorBatchTriggerTest : FunSpec({
             // Grizzly Bears has no GainControlOfSelf trigger either way; this just
             // exercises the early-exit branch in detectControlChangeTriggers.
             triggers.shouldBeEmpty()
+        }
+    }
+
+    // --- graveyard-active dies trigger dedupe (Paramecia Coloniex shape) ---------
+
+    context("graveyard-active dies trigger (Paramecia Coloniex shape)") {
+
+        test("a dies trigger with triggerZone = GRAVEYARD fires exactly once on its own death") {
+            val driver = createDriver(graveyardActiveDiesWatcher)
+            // The creature has already moved to the graveyard by the time triggers are detected,
+            // which is exactly the condition that made the graveyard-resident scan match its own
+            // death event a second time.
+            val died = driver.putCardInGraveyard(driver.player1, "Graveyard Active Dies Watcher")
+            val event = ZoneChangeEvent(
+                entityId = died,
+                entityName = "Graveyard Active Dies Watcher",
+                fromZone = Zone.BATTLEFIELD,
+                toZone = Zone.GRAVEYARD,
+                ownerId = driver.player1
+            )
+
+            val triggers = detectorFor(driver).detectTriggers(driver.state, listOf(event))
+
+            // Exactly one — not two (graveyard-resident scan + dedicated death detector).
+            val own = triggers.filter { it.sourceId == died }
+            own shouldHaveSize 1
+            own[0].ability.trigger.shouldBeInstanceOf<EventPattern.ZoneChangeEvent>()
+            own[0].controllerId shouldBe driver.player1
+        }
+
+        test("a dies trigger with triggerZone = GRAVEYARD still fires on its own death") {
+            // Companion to the dedupe test: the guard removes the duplicate, not the trigger.
+            val driver = createDriver(graveyardActiveDiesWatcher)
+            val died = driver.putCardInGraveyard(driver.player1, "Graveyard Active Dies Watcher")
+            val event = ZoneChangeEvent(
+                entityId = died,
+                entityName = "Graveyard Active Dies Watcher",
+                fromZone = Zone.BATTLEFIELD,
+                toZone = Zone.GRAVEYARD,
+                ownerId = driver.player1
+            )
+
+            val triggers = detectorFor(driver).detectTriggers(driver.state, listOf(event))
+
+            triggers.filter { it.sourceId == died }.shouldHaveSize(1)
         }
     }
 })
