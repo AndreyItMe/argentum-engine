@@ -117,6 +117,7 @@ data class GameState(
 
     /** Pending "next spell can't be countered" riders — stamp the next matching spell cast (e.g., Mistrise Village) */
     val pendingUncounterableSpells: List<PendingUncounterableSpell> = emptyList(),
+    val pendingNextSpellAffinities: List<PendingNextSpellAffinity> = emptyList(),
 
     /** Whether a spell was warped this turn (for Void condition: "a spell was warped this turn") */
     val spellWarpedThisTurn: Boolean = false,

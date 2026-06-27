@@ -62,4 +62,51 @@ object SneakWindow {
                 projected.getController(entityId) == playerId
         }
     }
+
+    /**
+     * The granted sneak cost from any active `GraveyardCreaturesHaveSneak` static the player
+     * controls (Ninja Teen level 3: "Creature cards in your graveyard have sneak {3}{B}"), or null.
+     * Read from each permanent's active class-level static abilities so an inactive class level
+     * doesn't grant it.
+     */
+    fun graveyardSneakGrantCost(
+        state: GameState,
+        playerId: EntityId,
+        cardRegistry: com.wingedsheep.engine.registry.CardRegistry
+    ): com.wingedsheep.sdk.core.ManaCost? {
+        for (permId in state.getBattlefield()) {
+            val container = state.getEntity(permId) ?: continue
+            // Projected controller — a control-changing effect on the granting permanent must move
+            // the grant with it (CR 613), consistent with unblockedAttackers above.
+            if (state.projectedState.getController(permId) != playerId) continue
+            val defId = container.get<com.wingedsheep.engine.state.components.identity.CardComponent>()?.cardDefinitionId ?: continue
+            val def = cardRegistry.getCard(defId) ?: continue
+            val classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
+            def.script.effectiveStaticAbilities(classLevel)
+                .filterIsInstance<com.wingedsheep.sdk.scripting.GraveyardCreaturesHaveSneak>()
+                .firstOrNull()?.let { return it.cost }
+        }
+        return null
+    }
+
+    /**
+     * The effective sneak cost for casting [cardId] (definition [cardDef]) by [playerId]: the
+     * printed Sneak cost, or — for a creature card in the player's graveyard while they control an
+     * active `GraveyardCreaturesHaveSneak` grant — the granted cost. Null when no sneak applies.
+     */
+    fun effectiveSneakCost(
+        state: GameState,
+        cardDef: com.wingedsheep.sdk.model.CardDefinition,
+        cardId: EntityId,
+        playerId: EntityId,
+        cardRegistry: com.wingedsheep.engine.registry.CardRegistry
+    ): com.wingedsheep.sdk.core.ManaCost? {
+        cardDef.keywordAbilities
+            .filterIsInstance<com.wingedsheep.sdk.scripting.KeywordAbility.Sneak>()
+            .firstOrNull()?.let { return it.cost }
+        if (cardDef.typeLine.isCreature && cardId in state.getGraveyard(playerId)) {
+            return graveyardSneakGrantCost(state, playerId, cardRegistry)
+        }
+        return null
+    }
 }

@@ -288,6 +288,28 @@ data class MayCastFromGraveyard(
 }
 
 /**
+ * "Creature cards in your graveyard have sneak [cost]. You may cast creature spells from your
+ * graveyard using their sneak abilities." (Ninja Teen level 3.)
+ *
+ * Read by `SneakCastEnumerator` (an additive graveyard loop) and the sneak branch of
+ * `CastSpellHandler`: while the controller has this grant active, their graveyard creature cards
+ * may be cast for [cost] (plus the normal sneak cost of returning an unblocked attacker you
+ * control to hand) during the declare-blockers sneak window — just as if they had the printed
+ * Sneak keyword, but cast-from-graveyard. A creature cast this way simply enters the battlefield
+ * (no exile-on-resolution, unlike flashback).
+ *
+ * @property cost The granted sneak mana cost (Ninja Teen: {3}{B}).
+ */
+@SerialName("GraveyardCreaturesHaveSneak")
+@Serializable
+data class GraveyardCreaturesHaveSneak(
+    val cost: com.wingedsheep.sdk.core.ManaCost
+) : StaticAbility {
+    override val description: String = "Creature cards in your graveyard have sneak ${cost}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * A per-turn cap on how many spells a player can cast, scoped along a single who-axis:
  *
  *  - [eachPlayer] = false (default) — the cap applies only to the permanent's **controller**

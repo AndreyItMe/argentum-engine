@@ -2,7 +2,7 @@
 
 **Set Size:** 190 cards (excluding basic lands)
 **Release Date:** March 6, 2026
-**Implemented:** 181 / 190
+**Implemented:** 188 / 190
 ---
 
 - [x] Action News Crew
@@ -33,7 +33,7 @@
 - [x] Dimensional Exile
 - [x] Does Machines
 - [x] Don & Leo, Problem Solvers
-- [ ] Don & Raph, Hard Science
+- [x] Don & Raph, Hard Science
 - [x] Donatello's Technique
 - [x] Donatello, Gadget Master
 - [x] Donatello, Mutant Mechanic
@@ -96,7 +96,7 @@
 - [x] Michelangelo, Mutant BFF
 - [x] Michelangelo, Weirdness to 11
 - [x] Mighty Mutanimals
-- [ ] Mikey & Don, Party Planners
+- [x] Mikey & Don, Party Planners
 - [x] Mikey & Leo, Chaos & Order
 - [x] Mind Transfer Protocol
 - [x] Mona Lisa, Science Geek
@@ -110,7 +110,7 @@
 - [x] Mutant Town Musicians
 - [x] Negate
 - [x] New Generation's Technique
-- [ ] Ninja Teen
+- [x] Ninja Teen
 - [x] Nobody
 - [ ] North Wind Avatar
 - [x] Northampton Farm
@@ -122,7 +122,7 @@
 - [x] Oroku Saki, Shredder Rising
 - [x] Pain 101
 - [x] Paramecia Coloniex
-- [ ] Party Dude
+- [x] Party Dude
 - [x] Pizza Face, Gastromancer
 - [x] Prehistoric Pet
 - [x] Primordial Pachyderm
@@ -138,7 +138,7 @@
 - [x] Raphael, Ninja Destroyer
 - [x] Raphael, the Nightwatcher
 - [x] Raphael, Tough Turtle
-- [ ] Rat King, Verminister
+- [x] Rat King, Verminister
 - [x] Ravenous Robots
 - [x] Ray Fillet, Man Ray
 - [x] Renet, Temporal Apprentice
@@ -171,8 +171,8 @@
 - [x] TCRI Building
 - [x] Technodrome
 - [x] Tenderize
-- [ ] The Cloning of Shredder
-- [ ] The Last Ronin
+- [x] The Cloning of Shredder
+- [x] The Last Ronin
 - [x] The Last Ronin's Technique
 - [x] The Neutrinos
 - [x] The Ooze

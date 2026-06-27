@@ -316,6 +316,15 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    /**
+     * "Whenever one or more of your opponents are attacked, ..." (Party Dude level 3). The
+     * opponent-side counterpart of [CreaturesAttackYou].
+     */
+    val CreaturesAttackYourOpponent: TriggerSpec = TriggerSpec(
+        event = CreaturesAttackYourOpponentEvent(minAttackers = 1),
+        binding = TriggerBinding.ANY
+    )
+
     // -------------------------------------------------------------------------
     // Blocks / becomes blocked
     //

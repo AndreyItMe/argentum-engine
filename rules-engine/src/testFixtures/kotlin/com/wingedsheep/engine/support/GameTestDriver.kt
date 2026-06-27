@@ -813,7 +813,7 @@ class GameTestDriver {
      * Put a non-creature permanent directly onto the battlefield (test helper).
      * Works for enchantments, artifacts, and other non-creature permanents.
      */
-    fun putPermanentOnBattlefield(playerId: EntityId, cardName: String): EntityId {
+    fun putPermanentOnBattlefield(playerId: EntityId, cardName: String, classLevel: Int? = null): EntityId {
         val cardDef = cardRegistry.requireCard(cardName)
         val cardId = EntityId.generate()
 
@@ -849,6 +849,14 @@ class GameTestDriver {
                     backCardDefinitionId = cardDef.backFace!!.name,
                     currentFace = com.wingedsheep.engine.state.components.identity.DoubleFacedComponent.Face.FRONT
                 )
+            )
+        }
+
+        // Class enchantments: set the level BEFORE static/replacement effects so level-gated
+        // statics (e.g. Ninja Teen level 3) are active.
+        if (classLevel != null) {
+            container = container.with(
+                com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent(currentLevel = classLevel)
             )
         }
 

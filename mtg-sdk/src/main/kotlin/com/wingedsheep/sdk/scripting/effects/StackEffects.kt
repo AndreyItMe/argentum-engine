@@ -750,6 +750,30 @@ data class MakeNextSpellUncounterableEffect(
         copy(spellFilter = spellFilter.applyTextReplacement(replacer))
 }
 
+/**
+ * Grant the next [spellFilter] spell the controller casts this turn affinity for [forType] —
+ * the same one-shot pending-rider shape as [MakeNextSpellUncounterableEffect], but the matched
+ * spell costs {1} less to cast for each permanent of [forType] the controller has *at cast time*
+ * (the reduction is dynamic, read by the cost calculator when the spell is cast).
+ *
+ * Don & Raph, Hard Science: "the next noncreature spell you cast this turn has affinity for artifacts."
+ *
+ * @property spellFilter Which spell the rider waits for (Don & Raph: noncreature spells).
+ * @property forType The card type whose permanents reduce the cost (artifacts).
+ */
+@SerialName("GrantNextSpellAffinity")
+@Serializable
+data class GrantNextSpellAffinityEffect(
+    val spellFilter: GameObjectFilter = GameObjectFilter.Noncreature,
+    val forType: com.wingedsheep.sdk.core.CardType = com.wingedsheep.sdk.core.CardType.ARTIFACT
+) : Effect {
+    override val description: String =
+        "The next ${spellFilter.description} spell you cast this turn has affinity for ${forType.displayName.lowercase()}s"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect =
+        copy(spellFilter = spellFilter.applyTextReplacement(replacer))
+}
+
 // =============================================================================
 // Stack Effects — Mark for Exile-After-Resolve with Counters
 // =============================================================================

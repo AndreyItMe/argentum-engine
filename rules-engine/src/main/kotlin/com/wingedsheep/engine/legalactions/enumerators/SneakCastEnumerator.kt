@@ -115,6 +115,76 @@ class SneakCastEnumerator : ActionEnumerator {
             )
         }
 
+        // Granted graveyard sneak (Ninja Teen level 3): while the player controls an active
+        // "creature cards in your graveyard have sneak {cost}" grant, their graveyard creature
+        // cards are castable for that granted cost. Purely additive — the hand loop above (printed
+        // Sneak) is unchanged.
+        val graveyardSneakCost = SneakWindow.graveyardSneakGrantCost(state, playerId, context.cardRegistry)
+        if (graveyardSneakCost != null) {
+            for (cardId in state.getGraveyard(playerId)) {
+                val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue
+                if (!cardComponent.typeLine.isCreature) continue
+                if (context.cantCastSpell(cardId)) continue
+
+                val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
+                if (!context.castPermissionUtils.checkCastRestrictions(
+                        state, playerId, cardDef.script.castRestrictions
+                    )
+                ) continue
+
+                val sneakMana = context.costCalculator.calculateEffectiveCostWithAlternativeBase(
+                    state, cardDef, graveyardSneakCost, playerId
+                )
+                if (!context.manaSolver.canPay(state, playerId, sneakMana, precomputedSources = cachedSources)) continue
+
+                val targetReqs = buildList {
+                    addAll(cardDef.script.targetRequirements)
+                    cardDef.script.auraTarget?.let { add(it) }
+                }
+                val targetReqInfos = if (targetReqs.isEmpty()) {
+                    emptyList()
+                } else {
+                    context.targetUtils.buildTargetInfos(state, playerId, targetReqs, cardId)
+                }
+                if (targetReqInfos.isNotEmpty() && !context.targetUtils.allRequirementsSatisfied(targetReqInfos)) continue
+
+                val firstReq = targetReqs.firstOrNull()
+                val firstReqInfo = targetReqInfos.firstOrNull()
+                val autoTapPreview = if (context.skipAutoTapPreview) null else {
+                    context.manaSolver.solve(state, playerId, sneakMana, precomputedSources = cachedSources)
+                        ?.sources?.map { it.entityId }
+                }
+                val bounceCostInfo = AdditionalCostData(
+                    description = "an unblocked attacker you control to return to its owner's hand",
+                    costType = "BouncePermanent",
+                    validBounceTargets = bounceTargets,
+                    bounceCount = 1
+                )
+
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithAlternativeCost",
+                        description = "Sneak ${cardComponent.name} from your graveyard ($sneakMana)",
+                        action = CastSpell(
+                            playerId = playerId,
+                            cardId = cardId,
+                            useAlternativeCost = true,
+                            alternativeCostType = AlternativeCostType.SNEAK
+                        ),
+                        validTargets = firstReqInfo?.validTargets,
+                        requiresTargets = firstReq != null,
+                        targetCount = firstReq?.count ?: 1,
+                        minTargets = firstReq?.effectiveMinCount ?: (firstReq?.count ?: 1),
+                        targetDescription = firstReq?.description,
+                        targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                        manaCostString = sneakMana.toString(),
+                        additionalCostInfo = bounceCostInfo,
+                        autoTapPreview = autoTapPreview
+                    )
+                )
+            }
+        }
+
         return result
     }
 }

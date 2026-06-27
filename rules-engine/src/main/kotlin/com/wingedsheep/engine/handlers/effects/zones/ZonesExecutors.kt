@@ -24,6 +24,7 @@ class ZonesExecutors(
         SacrificeSelfExecutor(),
         SacrificeTargetExecutor(),
         ReturnCreaturesPutInGraveyardThisTurnExecutor(),
+        ReturnSameNamedFromGraveyardExecutor(),
         ReturnSelfToBattlefieldAttachedExecutor(cardRegistry),
         PutOntoBattlefieldAttachedToChosenExecutor(cardRegistry, targetFinder),
         ExileOpponentsGraveyardsExecutor(),

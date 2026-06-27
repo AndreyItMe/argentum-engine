@@ -200,6 +200,7 @@ class TriggerIndex(
                 is SdkGameEvent.AttackEvent -> listOf(TriggerCategory.ATTACKERS_DECLARED)
                 is SdkGameEvent.YouAttackEvent -> listOf(TriggerCategory.ATTACKERS_DECLARED)
                 is SdkGameEvent.CreaturesAttackYouEvent -> listOf(TriggerCategory.ATTACKERS_DECLARED)
+                is SdkGameEvent.CreaturesAttackYourOpponentEvent -> listOf(TriggerCategory.ATTACKERS_DECLARED)
                 is SdkGameEvent.BlockEvent -> listOf(TriggerCategory.BLOCKERS_DECLARED)
                 is SdkGameEvent.BecomesBlockedEvent -> listOf(TriggerCategory.BLOCKERS_DECLARED)
                 is SdkGameEvent.BecomesUnblockedEvent -> listOf(TriggerCategory.BLOCKERS_DECLARED)

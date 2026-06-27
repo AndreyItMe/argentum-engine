@@ -102,6 +102,15 @@ class CostCalculator(
             }
         }
 
+        // Granted "your next spell this turn has affinity for X" riders (Don & Raph). Each matching
+        // rider reduces this spell by the caster's count of its card type at cast time; the rider is
+        // consumed by CastSpellHandler when the spell is actually cast.
+        for (rider in state.pendingNextSpellAffinities) {
+            if (rider.controllerId != casterId) continue
+            if (!matchesCardDefinition(cardDef, rider.spellFilter, null, state, state.projectedState)) continue
+            totalReduction += countPermanentsOfType(state, casterId, rider.forType)
+        }
+
         // Battlefield-sourced ModifySpellCost abilities.
         for ((sourceId, ability) in scanBattlefieldModifySpellCost(state)) {
             if (!targetMatchesSpell(ability.target, cardDef, casterId, sourceId, state, chosenTargets, fromZone)) continue

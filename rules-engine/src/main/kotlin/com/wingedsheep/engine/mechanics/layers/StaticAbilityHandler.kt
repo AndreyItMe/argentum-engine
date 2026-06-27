@@ -761,6 +761,7 @@ class StaticAbilityHandler(
             is GrantWarpToCardsInHand,
             is GrantMiracleToCardsInHand,
             is MayCastFromGraveyard,
+            is com.wingedsheep.sdk.scripting.GraveyardCreaturesHaveSneak,
             is MayCastSelfFromZones,
             is MayCastWithoutPayingManaCost,
             is MayPlayLandsFromGraveyard,

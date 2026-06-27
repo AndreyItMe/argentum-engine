@@ -191,7 +191,14 @@ class CastSpellHandler(
             zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)
         val hasCommanderCast = !inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasHarmonize && !hasGraveyardCast && !hasForageFromGraveyard && !hasWarpFromGraveyard &&
             zoneResolver.hasCommanderCastPermission(state, action.playerId, action.cardId)
-        if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasHarmonize && !hasGraveyardCast && !hasForageFromGraveyard && !hasWarpFromGraveyard && !hasCommanderCast) {
+        // Granted graveyard sneak (Ninja Teen): a creature card in the player's graveyard while they
+        // control an active "creature cards in your graveyard have sneak {cost}" grant.
+        val hasGraveyardSneak = !inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasHarmonize && !hasGraveyardCast && !hasForageFromGraveyard && !hasWarpFromGraveyard && !hasCommanderCast &&
+            action.useAlternativeCost && action.altAllows(AlternativeCostType.SNEAK) &&
+            cardComponent.typeLine.isCreature &&
+            action.cardId in state.getGraveyard(action.playerId) &&
+            SneakWindow.graveyardSneakGrantCost(state, action.playerId, cardRegistry) != null
+        if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasHarmonize && !hasGraveyardCast && !hasForageFromGraveyard && !hasWarpFromGraveyard && !hasCommanderCast && !hasGraveyardSneak) {
             return "Card is not in your hand"
         }
 
@@ -235,7 +242,8 @@ class CastSpellHandler(
         // player's declare blockers step — bypassing the normal sorcery-speed timing.
         val castingForSneak = action.useAlternativeCost &&
             action.altAllows(AlternativeCostType.SNEAK) &&
-            cardDef?.keywordAbilities?.any { it is KeywordAbility.Sneak } == true
+            cardDef != null &&
+            SneakWindow.effectiveSneakCost(state, cardDef, action.cardId, action.playerId, cardRegistry) != null
         if (!effectiveTypeLine.isInstant) {
             val hasFlash = cardDef?.keywords?.contains(Keyword.FLASH) == true
             val grantedFlash = hasFlash || zoneResolver.hasGrantedFlash(state, action.cardId)
@@ -431,12 +439,14 @@ class CastSpellHandler(
                 if (action.altAllows(AlternativeCostType.WARP) && warpAbility != null && zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)) {
                     costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, warpAbility.cost, action.playerId)
                 } else {
-                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately)
-                    val sneakAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Sneak>().firstOrNull()
+                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately).
+                    // The effective sneak cost is the printed Sneak, or a granted graveyard sneak
+                    // (Ninja Teen: "creature cards in your graveyard have sneak {3}{B}").
+                    val sneakCost = SneakWindow.effectiveSneakCost(state, cardDef, action.cardId, action.playerId, cardRegistry)
                     // Check evoke cost
                     val evokeAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Evoke>().firstOrNull()
-                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakAbility != null) {
-                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, sneakAbility.cost, action.playerId)
+                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakCost != null) {
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, sneakCost, action.playerId)
                     } else if (action.altAllows(AlternativeCostType.EVOKE) && evokeAbility != null) {
                         costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, evokeAbility.cost, action.playerId)
                     } else {
@@ -1614,12 +1624,13 @@ class CastSpellHandler(
                 if (action.altAllows(AlternativeCostType.WARP) && warpAbility != null && zoneResolver.hasWarpPermission(currentState, action.playerId, action.cardId)) {
                     costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, warpAbility.cost, action.playerId)
                 } else {
-                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately)
-                    val sneakAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Sneak>().firstOrNull()
+                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately).
+                    // Printed Sneak, or a granted graveyard sneak (Ninja Teen).
+                    val sneakCost = SneakWindow.effectiveSneakCost(currentState, cardDef, action.cardId, action.playerId, cardRegistry)
                     // Check evoke cost
                     val evokeAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Evoke>().firstOrNull()
-                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakAbility != null) {
-                        costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, sneakAbility.cost, action.playerId)
+                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakCost != null) {
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, sneakCost, action.playerId)
                     } else if (action.altAllows(AlternativeCostType.EVOKE) && evokeAbility != null) {
                         costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, evokeAbility.cost, action.playerId)
                     } else {
@@ -2442,9 +2453,13 @@ class CastSpellHandler(
         // hand" portion of the cost. The {cost} mana was paid by the standard payment pipeline
         // above. Capture the defender the returned creature was attacking first, so a resolving
         // permanent spell can enter attacking the same player/planeswalker (CR 702.190b).
+        // Printed Sneak, or a granted graveyard sneak (Ninja Teen). The card may already be on the
+        // stack here, so detect the grant via the player's battlefield (zone-independent) rather
+        // than the card's current zone.
         val wasSneaked = action.useAlternativeCost && cardDef != null &&
             action.altAllows(AlternativeCostType.SNEAK) &&
-            cardDef.keywordAbilities.any { it is KeywordAbility.Sneak }
+            (cardDef.keywordAbilities.any { it is KeywordAbility.Sneak } ||
+                SneakWindow.graveyardSneakGrantCost(currentState, action.playerId, cardRegistry) != null)
         var sneakAttackDefenderId: EntityId? = null
         if (wasSneaked) {
             val bounceId = action.additionalCostPayment?.bouncedPermanents?.firstOrNull()
@@ -2863,6 +2878,25 @@ class CastSpellHandler(
                 currentCastState = currentCastState
                     .copy(pendingUncounterableSpells = remainingRiders)
                     .updateEntity(action.cardId) { c -> c.with(CantBeCounteredComponent) }
+            }
+        }
+
+        // Consume any matching "next spell has affinity for X" riders (Don & Raph). The cost
+        // reduction was already applied by the cost calculator while these riders were present;
+        // here we just remove the riders that matched the spell just cast, so only the *next*
+        // matching spell is affected.
+        run {
+            val affinityEvalContext = PredicateContext(controllerId = action.playerId)
+            val matchingAffinityRiders = currentCastState.pendingNextSpellAffinities.filter { pending ->
+                pending.controllerId == action.playerId &&
+                    predicateEvaluator.matches(
+                        currentCastState, currentCastState.projectedState, action.cardId, pending.spellFilter, affinityEvalContext
+                    )
+            }
+            if (matchingAffinityRiders.isNotEmpty()) {
+                currentCastState = currentCastState.copy(
+                    pendingNextSpellAffinities = currentCastState.pendingNextSpellAffinities.filter { it !in matchingAffinityRiders }
+                )
             }
         }
 

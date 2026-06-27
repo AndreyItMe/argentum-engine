@@ -772,6 +772,44 @@ class TriggerDetector(
                 if (delayed.fireOnce && delayed.id in firedOnceIds) continue
                 val spec = delayed.trigger ?: continue
                 if (!matchesEventForWatchedEntity(spec, event, delayed.watchedEntityId, delayed.watchedRecipientId, delayed.id, delayed.sourceId, delayed.controllerId, state)) continue
+
+                // A filter-scoped attack delayed trigger ("this turn, whenever a creature you control
+                // attacks alone, do X to it" — The Last Ronin III) must fan out one trigger per
+                // declared attacker so EffectTarget.TriggeringEntity resolves to each attacker.
+                // AttackersDeclaredEvent carries no single triggering entity (fromEvent returns none),
+                // so mirror the non-delayed per-attacker path (Rule 603.2c).
+                val specEvent = spec.event
+                if (specEvent is com.wingedsheep.sdk.scripting.EventPattern.AttackEvent &&
+                    event is AttackersDeclaredEvent && delayed.watchedEntityId == null
+                ) {
+                    val attackFilter = specEvent.filter
+                    for (attackerId in event.attackers) {
+                        if (attackFilter != null && !predicateEvaluator.matches(
+                                state, state.projectedState, attackerId, attackFilter,
+                                PredicateContext(controllerId = delayed.controllerId, sourceId = delayed.sourceId)
+                            )
+                        ) continue
+                        if (delayed.fireOnce && delayed.id in firedOnceIds) continue
+                        if (delayed.fireOnce) firedOnceIds.add(delayed.id)
+                        triggers.add(
+                            PendingTrigger(
+                                ability = TriggeredAbility.create(
+                                    trigger = spec.event,
+                                    binding = spec.binding,
+                                    effect = delayed.effect,
+                                    targetRequirement = delayed.targetRequirement
+                                ),
+                                sourceId = delayed.sourceId,
+                                sourceName = delayed.sourceName,
+                                controllerId = delayed.controllerId,
+                                triggerContext = TriggerContext.fromEvent(event).copy(triggeringEntityId = attackerId),
+                                consumesDelayedTriggerId = if (delayed.fireOnce) delayed.id else null
+                            )
+                        )
+                    }
+                    continue
+                }
+
                 if (delayed.fireOnce) firedOnceIds.add(delayed.id)
                 triggers.add(
                     PendingTrigger(

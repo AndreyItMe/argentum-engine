@@ -10,9 +10,28 @@ Verify status anytime with: `scripts/card-status --set TMT` (and `--list --set T
 
 ## Status
 
-179 / 190 implemented (basics excluded — handled by `basicLandsFallback`). See
+188 / 190 implemented (basics excluded — handled by `basicLandsFallback`). See
 `cards.md` for the full checklist (the authoritative status); the per-card
 commits all carry `flavorText` in metadata.
+
+> **Final state of the 2026-06-24/25 sweep: 188/190 (98.9%).** The 2 remaining cards are
+> *inherently infeasible*, not authoring gaps:
+> - **North Wind Avatar** + **Turtles Forever** — both need a "from outside the game" / wishboard
+>   zone this single-game engine has no concept of (Zone = LIBRARY/HAND/BATTLEFIELD/GRAVEYARD/
+>   STACK/EXILE/COMMAND). Implementing them means adding an entire sideboard/wishboard zone — out
+>   of scope for this content sweep.
+>
+> Ninja Teen (the set's hardest card) shipped as the 11th feature: `GraveyardCreaturesHaveSneak`
+> (cast graveyard creatures via a granted Sneak alt-cost), built additively over the printed-Sneak
+> path with the full Sneak suite as a regression net.
+>
+> Engine features built this sweep (each with a scenario/unit test): Mutagen token, dynamic
+> pay-life (`PayDynamicLife`), distinct-card-types-cast amount, any-ability mana
+> (`ManaRestriction.AbilityActivationOnly`), non-self `EntersWithCounters` condition fix,
+> `CastFromLibraryComponent`/`WasCastFromZone(LIBRARY)`, delayed attack-trigger per-attacker fan-out,
+> `ReturnSameNamedFromGraveyard`, `GrantNextSpellAffinity`, the `CreaturesAttackYourOpponent`
+> trigger, and `GraveyardCreaturesHaveSneak`. Everything else was composed from existing primitives
+> (≈50 supposed "gaps" debunked).
 
 > **2026-06-25 second sweep — eight more "feature-gated" cards were composable.**
 > Debunked: **Leatherhead** (Slumbering Walker's reflexive remove-a-counter +
@@ -42,7 +61,20 @@ commits all carry `flavorText` in metadata.
 >   `selfOnly = true` (a card's own replacement, Hundred-Battle Veteran). Fix: make non-self
 >   `EntersWithCounters` evaluate its `condition` against the affected/entering entity, OR add an
 >   `entersWithCounter` field to `MayCastFromGraveyard` wired through the graveyard-cast path.
-> - **Ninja Teen L3** — grant Sneak to graveyard creature cards + cast them from GY via Sneak.
+> - **Ninja Teen L3** — the set's hardest card; a focused, reviewable feature (mapped, not built).
+>   L1 ("creature you control leaves → each opponent loses 1") and L2 (+1/+0 and menace lord)
+>   compose. L3 ("creature cards in your graveyard have Sneak {3}{B}; you may cast them from your
+>   graveyard via Sneak") needs: (1) a new `GraveyardCreaturesHaveSneak(cost)` static (mirror
+>   `MayCastFromGraveyard`); (2) an ADDITIVE graveyard loop in `SneakCastEnumerator` (after the
+>   `state.getHand` loop) that, when the controller has the grant, enumerates graveyard creature
+>   cards as sneak-castable at the granted cost — `CastSpell(useAlternativeCost, SNEAK)` (castFromZone
+>   resolves to GRAVEYARD automatically); (3) **`CastSpellHandler` changes** — the cast validation
+>   (`castingForSneak = … cardDef.keywordAbilities.any { Sneak }`) and the sneak cost-calc both read
+>   *printed* Sneak, so they must additively accept a *granted* graveyard sneak and use the granted
+>   cost, consistently with the enumerator. Sneak from GY needs NO exile-on-resolution (the creature
+>   just enters the battlefield). Risk is in the central cast path + threading the granted cost across
+>   three sites consistently, and regression across the 26 existing hand-Sneak cards — hence deferred
+>   to a focused session with the full Sneak test suite as the safety net.
 > - **Mikey & Don** — cast Mutant/Ninja/Turtle from top of library; creatures cast this way
 >   enter with a +1/+1 counter (no cast-from-top counter rider).
 > - **Party Dude L3** — "whenever one or more of your opponents are attacked" trigger
@@ -53,7 +85,10 @@ commits all carry `flavorText` in metadata.
 > - **Don & Raph** — grant the next noncreature spell you cast affinity for artifacts.
 > - **Purple Dragon Punks** — "spend only to cast an artifact spell or activate **any**
 >   ability" mana (`CardTypeSpellsOrAbilitiesOnly` ties abilities to the card type).
-> - **North Wind Avatar** + **Turtles Forever** — wishboard (cards from outside the game).
+> - **North Wind Avatar** + **Turtles Forever** — **inherently deferred**: both need a "from
+>   outside the game" / wishboard zone, which this single-game engine has no concept of (Zone =
+>   LIBRARY/HAND/BATTLEFIELD/GRAVEYARD/STACK/EXILE/COMMAND only; no sideboard). Faithful support
+>   needs a whole new zone + deck-construction integration; the clause can't be silently dropped.
 
 > **2026-06-25 sweep — six more "feature-gated" cards were actually composable.**
 > Re-verifying each supposed gap against real primitives debunked: **Turtle Van**
@@ -93,11 +128,27 @@ commits all carry `flavorText` in metadata.
 > - **Raphael, Ninja Destroyer** — Enrage mana that persists past step/phase cleanup.
 > - **Rat King** — return target creature card + all same-named cards from your graveyard.
 > - **Leonardo, Sewer Samurai** — cast creatures from GY (static), entering with a finality counter.
-> - **Ninja Teen L3** — grant Sneak to graveyard creature cards + cast them from GY via Sneak.
+> - **Ninja Teen L3** — the set's hardest card; a focused, reviewable feature (mapped, not built).
+>   L1 ("creature you control leaves → each opponent loses 1") and L2 (+1/+0 and menace lord)
+>   compose. L3 ("creature cards in your graveyard have Sneak {3}{B}; you may cast them from your
+>   graveyard via Sneak") needs: (1) a new `GraveyardCreaturesHaveSneak(cost)` static (mirror
+>   `MayCastFromGraveyard`); (2) an ADDITIVE graveyard loop in `SneakCastEnumerator` (after the
+>   `state.getHand` loop) that, when the controller has the grant, enumerates graveyard creature
+>   cards as sneak-castable at the granted cost — `CastSpell(useAlternativeCost, SNEAK)` (castFromZone
+>   resolves to GRAVEYARD automatically); (3) **`CastSpellHandler` changes** — the cast validation
+>   (`castingForSneak = … cardDef.keywordAbilities.any { Sneak }`) and the sneak cost-calc both read
+>   *printed* Sneak, so they must additively accept a *granted* graveyard sneak and use the granted
+>   cost, consistently with the enumerator. Sneak from GY needs NO exile-on-resolution (the creature
+>   just enters the battlefield). Risk is in the central cast path + threading the granted cost across
+>   three sites consistently, and regression across the 26 existing hand-Sneak cards — hence deferred
+>   to a focused session with the full Sneak test suite as the safety net.
 > - **Mikey & Don** — cast from top of library; creatures cast this way enter with a +1/+1 counter.
 > - **The Cloning of Shredder** — token copy of a card in this Saga's linked exile.
 > - **Don & Raph** — grant the next noncreature spell you cast affinity for artifacts.
-> - **North Wind Avatar** + **Turtles Forever** — wishboard (cards from outside the game).
+> - **North Wind Avatar** + **Turtles Forever** — **inherently deferred**: both need a "from
+>   outside the game" / wishboard zone, which this single-game engine has no concept of (Zone =
+>   LIBRARY/HAND/BATTLEFIELD/GRAVEYARD/STACK/EXILE/COMMAND only; no sideboard). Faithful support
+>   needs a whole new zone + deck-construction integration; the clause can't be silently dropped.
 > - **Turtles in Time** — each-player-MAY Timetwister (per-player shuffle-hand+gy / draw 7).
 
 > **2026-06-24 run — the gap list below was badly overestimated.** A sweep added
