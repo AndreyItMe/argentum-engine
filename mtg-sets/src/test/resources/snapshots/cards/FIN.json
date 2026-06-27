@@ -8203,6 +8203,97 @@
     ]
 }
 
+// Qutrub Forayer
+{
+    "name": "Qutrub Forayer",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Zombie Horror",
+    "oracleText": "When this creature enters, choose one —\n• Destroy target creature that was dealt damage this turn.\n• Exile up to two target cards from a single graveyard.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "destination": "Graveyard",
+                                "byDestruction": true
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "statePredicates": [
+                                                "WasDealtDamageThisTurn"
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "description": "Destroy target creature that was dealt damage this turn"
+                        },
+                        {
+                            "effect": {
+                                "type": "ForEach",
+                                "space": "IterationSpace.Targets",
+                                "body": {
+                                    "type": "MoveToZone",
+                                    "target": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "destination": "Exile"
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "count": 2,
+                                    "optional": true,
+                                    "filter": {
+                                        "baseFilter": {},
+                                        "zone": "Graveyard"
+                                    },
+                                    "sameOwner": true
+                                }
+                            ],
+                            "description": "Exile up to two target cards from a single graveyard"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "112",
+        "artist": "Lordigan",
+        "flavorText": "They willfully attain an undead existence to serve their foul mistresses for eternity.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/4/7475ecf6-23f5-45af-9ef0-ac7923bbc9cb.jpg?1748706179"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Rabanastre, Royal City
 {
     "name": "Rabanastre, Royal City",
@@ -12465,6 +12556,82 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Vayne's Treachery
+{
+    "name": "Vayne's Treachery",
+    "manaCost": "{1}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Kicker—Sacrifice an artifact or creature. (You may sacrifice an artifact or creature in addition to any other costs as you cast this spell.)\nTarget creature gets -2/-2 until end of turn. If this spell was kicked, that creature gets -6/-6 until end of turn instead.",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "additionalCost": {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomSacrifice",
+                    "filter": "creature|artifact"
+                }
+            }
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "WasKicked"
+            },
+            "then": {
+                "type": "ModifyStats",
+                "powerModifier": {
+                    "type": "Fixed",
+                    "amount": -6
+                },
+                "toughnessModifier": {
+                    "type": "Fixed",
+                    "amount": -6
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                }
+            },
+            "otherwise": {
+                "type": "ModifyStats",
+                "powerModifier": {
+                    "type": "Fixed",
+                    "amount": -2
+                },
+                "toughnessModifier": {
+                    "type": "Fixed",
+                    "amount": -2
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                }
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "artist": "Touge369",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/d/6de6d23b-7d42-41c1-be1c-010fe43ee586.jpg?1748706226"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
