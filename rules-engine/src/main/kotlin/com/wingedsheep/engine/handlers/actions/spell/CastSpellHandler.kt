@@ -101,9 +101,9 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils.toEntityId
 import com.wingedsheep.engine.state.components.player.GrantedSpellKeywordsComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
-import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
+import com.wingedsheep.engine.state.components.stack.EntitySnapshot
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
-import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
+import com.wingedsheep.engine.state.components.stack.captureEntitySnapshots
 import kotlin.reflect.KClass
 
 /**
@@ -1746,7 +1746,7 @@ class CastSpellHandler(
         }
 
         // Process additional costs (sacrifice, exile, etc.)
-        val sacrificedSnapshots = mutableListOf<PermanentSnapshot>()
+        val sacrificedSnapshots = mutableListOf<EntitySnapshot>()
         var exiledCardCount = 0
         val beheldCards = mutableListOf<EntityId>()
         // Cards discarded to pay an additional discard cost — threaded to the spell on the stack so
@@ -1758,7 +1758,7 @@ class CastSpellHandler(
          * (e.g. `EntityProperty(FromCostStorage(...), Power)`) can read "power as it
          * last existed on the battlefield" if the chosen entity leaves before resolution.
          */
-        val chosenEntitySnapshots = mutableListOf<PermanentSnapshot>()
+        val chosenEntitySnapshots = mutableListOf<EntitySnapshot>()
         /** Pipeline storage populated by Behold, consumed by ExileFromStorage */
         val costPipelineCollections = mutableMapOf<String, List<EntityId>>()
 
@@ -1855,7 +1855,7 @@ class CastSpellHandler(
                             // (Rule 112.7a / 608.2h — "as it last existed on the battlefield")
                             val projectedBeforeSacrifice = currentState.projectedState
                             sacrificedSnapshots.addAll(
-                                capturePermanentSnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
+                                captureEntitySnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
                             )
                             for (permId in action.additionalCostPayment.sacrificedPermanents) {
                                 val permContainer = currentState.getEntity(permId) ?: continue
@@ -1973,7 +1973,7 @@ class CastSpellHandler(
                         // Process sacrifices for cost reduction (e.g., Torgaar)
                         val projectedBeforeSacrifice = currentState.projectedState
                         sacrificedSnapshots.addAll(
-                            capturePermanentSnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
+                            captureEntitySnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
                         )
                         for (permId in action.additionalCostPayment.sacrificedPermanents) {
                             val permContainer = currentState.getEntity(permId) ?: continue
@@ -2214,7 +2214,7 @@ class CastSpellHandler(
                                 val battlefieldChosen = chosen.filter { it in currentState.getBattlefield() }
                                 if (battlefieldChosen.isNotEmpty()) {
                                     chosenEntitySnapshots.addAll(
-                                        capturePermanentSnapshots(battlefieldChosen, currentState.projectedState)
+                                        captureEntitySnapshots(battlefieldChosen, currentState.projectedState)
                                     )
                                 }
                             }
@@ -2242,7 +2242,7 @@ class CastSpellHandler(
         // triggers and the "cards leave your graveyard" family see the move.
         action.casualtyCreature?.let { permId ->
             val projectedBeforeSacrifice = currentState.projectedState
-            sacrificedSnapshots.addAll(capturePermanentSnapshots(listOf(permId), projectedBeforeSacrifice))
+            sacrificedSnapshots.addAll(captureEntitySnapshots(listOf(permId), projectedBeforeSacrifice))
             val permContainer = currentState.getEntity(permId)
             val permCard = permContainer?.get<CardComponent>()
             if (permContainer != null && permCard != null) {
@@ -2908,7 +2908,7 @@ class CastSpellHandler(
         currentState: GameState,
         action: CastSpell,
         source: com.wingedsheep.sdk.model.CastTimeCreatureTypeSource,
-        sacrificedSnapshots: List<PermanentSnapshot>,
+        sacrificedSnapshots: List<EntitySnapshot>,
         spellTargetRequirements: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>,
         priorEvents: List<GameEvent>
     ): ExecutionResult? {

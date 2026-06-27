@@ -13,7 +13,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.CopyOfComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
-import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
+import com.wingedsheep.engine.state.components.stack.EntitySnapshot
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.TypeLine
@@ -106,7 +106,7 @@ class StormCopyInheritsAllDecisionsTest : FunSpec({
             wasWarped = true,
             wasEvoked = true,
             sacrificedPermanents = listOf(
-                PermanentSnapshot(entityId = sacrificedCreature, subtypes = setOf("Goblin"))
+                EntitySnapshot(entityId = sacrificedCreature, subtypes = setOf("Goblin"))
             ),
             damageDistribution = mapOf(damageTarget to 3),
             chosenCreatureType = "Elf",
@@ -131,7 +131,7 @@ class StormCopyInheritsAllDecisionsTest : FunSpec({
         copy.wasWarped shouldBe true
         copy.wasEvoked shouldBe true
         copy.sacrificedPermanents shouldBe listOf(
-            PermanentSnapshot(entityId = sacrificedCreature, subtypes = setOf("Goblin"))
+            EntitySnapshot(entityId = sacrificedCreature, subtypes = setOf("Goblin"))
         )
         copy.damageDistribution shouldBe mapOf(damageTarget to 3)
         copy.chosenCreatureType shouldBe "Elf"
@@ -169,7 +169,7 @@ class StormCopyInheritsAllDecisionsTest : FunSpec({
             casterId = p1,
             manaSpentRed = 2,
             manaSpentGreen = 1,
-            sacrificedPermanents = listOf(PermanentSnapshot(entityId = EntityId.generate()))
+            sacrificedPermanents = listOf(EntitySnapshot(entityId = EntityId.generate()))
         )
 
         val result = runStorm(buildState(p1, spellEntity, source), spellEntity, p1)

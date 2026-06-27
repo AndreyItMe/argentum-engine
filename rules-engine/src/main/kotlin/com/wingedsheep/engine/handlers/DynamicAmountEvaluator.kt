@@ -383,7 +383,7 @@ class DynamicAmountEvaluator(
                 if (amount.entity is EntityReference.TappedAsCost &&
                     entityId !in state.getBattlefield()
                 ) {
-                    val snapshot = context.tappedPermanentSnapshots.firstOrNull { it.entityId == entityId }
+                    val snapshot = context.tappedEntitySnapshots.firstOrNull { it.entityId == entityId }
                     when (amount.numericProperty) {
                         is EntityNumericProperty.Power -> snapshot?.power?.let { return it }
                         is EntityNumericProperty.Toughness -> snapshot?.toughness?.let { return it }
@@ -401,7 +401,7 @@ class DynamicAmountEvaluator(
             // confines the substitution to station abilities.
             is DynamicAmount.StationCharge -> {
                 val entityId = context.tappedPermanents.firstOrNull() ?: return 0
-                val snapshot = context.tappedPermanentSnapshots.firstOrNull { it.entityId == entityId }
+                val snapshot = context.tappedEntitySnapshots.firstOrNull { it.entityId == entityId }
                 val useSnapshot = snapshot != null && entityId !in state.getBattlefield()
                 val power = if (useSnapshot) snapshot.power ?: 0
                     else resolveNumericProperty(state, entityId, EntityNumericProperty.Power, context, useProjected = true, explicitProjected = projectedState)

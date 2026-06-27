@@ -401,7 +401,7 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
      * @property storeAs Pipeline-storage key under which the chosen entity ID
      *   is exposed at resolution time.
      * @property captureSnapshot When true and the chosen entity is on the
-     *   battlefield at cost-pay time, capture a [PermanentSnapshot] so power /
+     *   battlefield at cost-pay time, capture a [EntitySnapshot] so power /
      *   toughness / subtypes / controller can still be read after the entity
      *   leaves between cost-pay and resolution (Rule 112.7a; ruling on Close
      *   Encounter).

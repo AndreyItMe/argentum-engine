@@ -1,7 +1,7 @@
 package com.wingedsheep.engine.core
 
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
+import com.wingedsheep.engine.state.components.stack.EntitySnapshot
 import com.wingedsheep.sdk.model.EntityId
 
 /**
@@ -32,7 +32,7 @@ data class EffectResult(
      * sacrificed permanent's characteristics as it last existed (Rule 608.2h). Mirrors
      * the cost-sacrifice path, which captures the same snapshots at cost-payment time.
      */
-    val updatedSacrificedPermanents: List<PermanentSnapshot> = emptyList()
+    val updatedSacrificedPermanents: List<EntitySnapshot> = emptyList()
 ) {
     val isSuccess: Boolean get() = error == null && pendingDecision == null
     val isPaused: Boolean get() = pendingDecision != null

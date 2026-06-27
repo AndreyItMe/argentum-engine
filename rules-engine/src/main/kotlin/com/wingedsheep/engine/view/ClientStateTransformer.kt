@@ -1506,7 +1506,7 @@ class ClientStateTransformer(
             xValue = activated.xValue,
             sacrificedPermanents = activated.sacrificedPermanents,
             tappedPermanents = activated.tappedPermanents,
-            tappedPermanentSnapshots = activated.tappedPermanentSnapshots
+            tappedEntitySnapshots = activated.tappedEntitySnapshots
         )
         return runtimeAbilityText(state, activated.effect, context)
     }

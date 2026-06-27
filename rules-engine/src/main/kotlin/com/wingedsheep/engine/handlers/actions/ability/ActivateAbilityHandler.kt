@@ -43,7 +43,7 @@ import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
-import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
+import com.wingedsheep.engine.state.components.stack.captureEntitySnapshots
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
@@ -822,12 +822,12 @@ class ActivateAbilityHandler(
         // Snapshot projected subtypes and P/T of sacrifice targets before zone change
         // (Rule 112.7a / 608.2h — "as it last existed on the battlefield")
         val sacrificeTargetIds = action.costPayment?.sacrificedPermanents ?: emptyList()
-        val sacrificedSnapshots = capturePermanentSnapshots(sacrificeTargetIds, currentState.projectedState)
+        val sacrificedSnapshots = captureEntitySnapshots(sacrificeTargetIds, currentState.projectedState)
 
         // Mirror sacrifice snapshots for tapped-as-cost permanents — they may leave the
         // battlefield in response while the ability is on the stack.
         val tappedTargetIds = firstTapSlice
-        val tappedSnapshots = capturePermanentSnapshots(tappedTargetIds, currentState.projectedState)
+        val tappedSnapshots = captureEntitySnapshots(tappedTargetIds, currentState.projectedState)
 
         // Snapshot the source's counters before a self-exile / self-sacrifice cost wipes them
         // (CR 112.7a / 122.2), so the effect can read the pre-cost count via
@@ -849,9 +849,9 @@ class ActivateAbilityHandler(
         // "Sacrifice this creature: it deals damage equal to its power" (Ghitu Fire-Eater, Cinder
         // Shade, Blazing Bomb's Blow Up) — sees the pre-sacrifice power rather than zero. Mirrors
         // lastKnownSourceCounters above.
-        val lastKnownSourceSnapshot: com.wingedsheep.engine.state.components.stack.PermanentSnapshot? =
+        val lastKnownSourceSnapshot: com.wingedsheep.engine.state.components.stack.EntitySnapshot? =
             if (costExilesOrSacrificesSelf(effectiveCost)) {
-                capturePermanentSnapshots(listOf(action.sourceId), currentState.projectedState).firstOrNull()
+                captureEntitySnapshots(listOf(action.sourceId), currentState.projectedState).firstOrNull()
             } else null
 
         // When using Explicit payment, mana sources were already tapped above —
@@ -1305,7 +1305,7 @@ class ActivateAbilityHandler(
             sacrificedPermanents = sacrificedSnapshots,
             xValue = action.xValue,
             tappedPermanents = firstTapSlice,
-            tappedPermanentSnapshots = tappedSnapshots,
+            tappedEntitySnapshots = tappedSnapshots,
             lastKnownSourceCounters = lastKnownSourceCounters,
             lastKnownSourceSnapshot = lastKnownSourceSnapshot,
             descriptionOverride = ability.descriptionOverride,
@@ -1359,7 +1359,7 @@ class ActivateAbilityHandler(
                 // mana as before. Snapshot the creature before it's tapped (Rule 112.7a) so
                 // DynamicAmount.StationCharge reads its power off this instance's own snapshot.
                 val repeatTapSlice = if (isTapBatch) listOf(action.costPayment!!.tappedPermanents[i - 1]) else emptyList()
-                val repeatTapSnapshots = capturePermanentSnapshots(repeatTapSlice, currentState.projectedState)
+                val repeatTapSnapshots = captureEntitySnapshots(repeatTapSlice, currentState.projectedState)
 
                 // Pay the cost
                 val repeatCostResult = costHandler.payAbilityCost(
@@ -1392,7 +1392,7 @@ class ActivateAbilityHandler(
                     sacrificedPermanents = emptyList(),
                     xValue = action.xValue,
                     tappedPermanents = repeatTapSlice,
-                    tappedPermanentSnapshots = repeatTapSnapshots,
+                    tappedEntitySnapshots = repeatTapSnapshots,
                     descriptionOverride = ability.descriptionOverride,
                     abilityIdentity = com.wingedsheep.sdk.scripting.AbilityIdentity(
                         cardComponent.cardDefinitionId, ability.id

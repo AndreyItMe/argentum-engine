@@ -27,7 +27,7 @@ data class SpellOnStackComponent(
     val modeTargetRequirements: Map<Int, List<TargetRequirement>> = emptyMap(),  // Per-mode TargetRequirements for 608.2b re-validation at resolution
     val modeDamageDistribution: Map<Int, Map<EntityId, Int>> = emptyMap(),  // Per-mode DividedDamageEffect allocations (future)
     /** Snapshots of permanents sacrificed as additional cost (Rule 112.7a — last known info). */
-    val sacrificedPermanents: List<PermanentSnapshot> = emptyList(),
+    val sacrificedPermanents: List<EntitySnapshot> = emptyList(),
     val castFaceDown: Boolean = false,  // For morph - creature enters face-down
     val damageDistribution: Map<EntityId, Int>? = null,  // For DividedDamageEffect - pre-chosen damage allocation
     val chosenCreatureType: String? = null,  // For spells that choose a creature type during casting (e.g., Aphetto Dredging)
@@ -65,7 +65,7 @@ data class SpellOnStackComponent(
      * `DynamicAmount.EntityProperty(EntityReference.FromCostStorage(…), …)`)
      * can read "values as they last existed on the battlefield" at resolution.
      */
-    val chosenEntitySnapshots: List<PermanentSnapshot> = emptyList(),
+    val chosenEntitySnapshots: List<EntitySnapshot> = emptyList(),
     val manaSpentWhite: Int = 0,  // Mana colors spent for mana-spent-gated triggers
     val manaSpentBlue: Int = 0,
     val manaSpentBlack: Int = 0,
@@ -187,11 +187,11 @@ data class ActivatedAbilityOnStackComponent(
     val controllerId: EntityId,
     val effect: Effect,
     /** Snapshots of permanents sacrificed as additional cost (Rule 112.7a — last known info). */
-    val sacrificedPermanents: List<PermanentSnapshot> = emptyList(),
+    val sacrificedPermanents: List<EntitySnapshot> = emptyList(),
     val xValue: Int? = null,
     val tappedPermanents: List<EntityId> = emptyList(),
     /** LKI snapshots for [tappedPermanents] — see [sacrificedPermanents]. */
-    val tappedPermanentSnapshots: List<PermanentSnapshot> = emptyList(),
+    val tappedEntitySnapshots: List<EntitySnapshot> = emptyList(),
     /**
      * Counters (counter-type-string → count) the source had the moment a self-exile /
      * self-sacrifice cost was paid (CR 112.7a). Captured before the cost wipes them so the
@@ -206,7 +206,7 @@ data class ActivatedAbilityOnStackComponent(
      * `EntityProperty(Source, Power)` read (Ghitu Fire-Eater / Blazing Bomb's Blow Up) sees the
      * pre-sacrifice power. Null when the cost did not sacrifice/exile the source.
      */
-    val lastKnownSourceSnapshot: PermanentSnapshot? = null,
+    val lastKnownSourceSnapshot: EntitySnapshot? = null,
     /** Optional human-readable description from `ActivatedAbility.descriptionOverride`,
      *  used when displaying the ability on the stack instead of the auto-generated effect text. */
     val descriptionOverride: String? = null,

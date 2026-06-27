@@ -3,7 +3,7 @@ package com.wingedsheep.engine.handlers
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
-import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
+import com.wingedsheep.engine.state.components.stack.EntitySnapshot
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -96,7 +96,7 @@ data class EffectContext(
      * so downstream effects can read power, toughness, and subtypes after the permanent
      * has left the battlefield.
      */
-    val sacrificedPermanents: List<PermanentSnapshot> = emptyList(),
+    val sacrificedPermanents: List<EntitySnapshot> = emptyList(),
     /**
      * Entity ids of cards discarded to pay this spell's additional discard cost
      * (`Costs.additional.DiscardCards(...)`). By resolution these cards live in their owner's
@@ -122,8 +122,8 @@ data class EffectContext(
     val additionalCostBlightAmount: Int = 0,
     /** Permanents tapped as part of an activated ability's cost (e.g., Cryptic Gateway) */
     val tappedPermanents: List<EntityId> = emptyList(),
-    /** LKI snapshots for [tappedPermanents] (Rule 112.7a). See [PermanentSnapshot]. */
-    val tappedPermanentSnapshots: List<PermanentSnapshot> = emptyList(),
+    /** LKI snapshots for [tappedPermanents] (Rule 112.7a). See [EntitySnapshot]. */
+    val tappedEntitySnapshots: List<EntitySnapshot> = emptyList(),
     /**
      * Counters (counter-type-string → count) the source had the moment a self-exile /
      * self-sacrifice cost wiped them (CR 112.7a). Read by
@@ -141,7 +141,7 @@ data class EffectContext(
      * pre-sacrifice power rather than zero (Blazing Bomb's Blow Up, Cinder Shade, Ghitu Fire-Eater).
      * Null when the cost did not sacrifice/exile the source.
      */
-    val lastKnownSourceSnapshot: PermanentSnapshot? = null,
+    val lastKnownSourceSnapshot: EntitySnapshot? = null,
     /**
      * LKI snapshots (Rule 112.7a) for entities chosen via an additional cost
      * step like [com.wingedsheep.sdk.scripting.AdditionalCost.ChooseEntity]
@@ -150,7 +150,7 @@ data class EffectContext(
      * [DynamicAmountEvaluator] when the `EntityProperty` path resolves an
      * [com.wingedsheep.sdk.scripting.values.EntityReference.FromCostStorage].
      */
-    val chosenEntitySnapshots: List<PermanentSnapshot> = emptyList(),
+    val chosenEntitySnapshots: List<EntitySnapshot> = emptyList(),
     // --- Trigger state ---
     /** Amount of damage from a trigger context (e.g., "Whenever ~ is dealt damage") */
     val triggerDamageAmount: Int? = null,

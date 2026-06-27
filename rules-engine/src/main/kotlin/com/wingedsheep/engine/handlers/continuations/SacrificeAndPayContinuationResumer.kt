@@ -58,7 +58,7 @@ class SacrificeAndPayContinuationResumer(
         // sacrificed permanents' supertypes / subtypes / controllers (Rise of the Witch-king
         // "if you sacrificed a creature this way…" rider).
         val snapshots = if (selectedPermanents.isNotEmpty()) {
-            com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots(
+            com.wingedsheep.engine.state.components.stack.captureEntitySnapshots(
                 selectedPermanents, newState.projectedState
             )
         } else {

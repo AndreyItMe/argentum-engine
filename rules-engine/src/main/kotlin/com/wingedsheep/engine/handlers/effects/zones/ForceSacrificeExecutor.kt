@@ -9,8 +9,8 @@ import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.stack.PermanentSnapshot
-import com.wingedsheep.engine.state.components.stack.capturePermanentSnapshots
+import com.wingedsheep.engine.state.components.stack.EntitySnapshot
+import com.wingedsheep.engine.state.components.stack.captureEntitySnapshots
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -78,7 +78,7 @@ class ForceSacrificeExecutor(
 
         var currentState = state
         val allEvents = mutableListOf<GameEvent>()
-        val allSnapshots = mutableListOf<PermanentSnapshot>()
+        val allSnapshots = mutableListOf<EntitySnapshot>()
 
         for ((index, playerId) in playerIds.withIndex()) {
             val validPermanents = findValidPermanents(currentState, playerId, filter, sourceId)
@@ -198,7 +198,7 @@ class ForceSacrificeExecutor(
         // (Rise of the Witch-king's "if you sacrificed a creature this way…", Nasty End-style
         // "was legendary?" gates). Mirrors SacrificeExecutor's capture path.
         val snapshots = if (permanentIds.isNotEmpty()) {
-            capturePermanentSnapshots(permanentIds, newState.projectedState)
+            captureEntitySnapshots(permanentIds, newState.projectedState)
         } else {
             emptyList()
         }

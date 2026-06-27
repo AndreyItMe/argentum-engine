@@ -16,7 +16,7 @@ import io.kotest.matchers.shouldBe
  * Rise of the Witch-king (LTR).
  *
  * Symmetric "each player sacrifices a creature of their choice" — both `ForceSacrifice`
- * legs capture a `PermanentSnapshot` and inject it into the underlying `EffectContinuation`
+ * legs capture a `EntitySnapshot` and inject it into the underlying `EffectContinuation`
  * (the snapshot-threading hook), so the `YouSacrificedThisWay` rider can gate on whether
  * the cast's controller actually sacrificed. The rider's reanimation is *not* a target —
  * the oracle has no "target" word — so the player picks a permanent card from their

@@ -225,7 +225,7 @@ data class CastWithCreatureTypeContinuation(
     val casterId: EntityId,
     val targets: List<ChosenTarget> = emptyList(),
     val xValue: Int? = null,
-    val sacrificedPermanents: List<com.wingedsheep.engine.state.components.stack.PermanentSnapshot> = emptyList(),
+    val sacrificedPermanents: List<com.wingedsheep.engine.state.components.stack.EntitySnapshot> = emptyList(),
     val targetRequirements: List<TargetRequirement> = emptyList(),
     val count: Int,
     val creatureTypes: List<String>
