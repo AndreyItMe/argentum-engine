@@ -3086,6 +3086,54 @@
     ]
 }
 
+// Dazzling Theater // Prop Room
+{
+    "name": "Dazzling Theater // Prop Room",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Creature spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's color.)\n//\nUntap each creature you control during each other player's untap step.",
+    "metadata": {
+        "collectorNumber": "3",
+        "rarity": "RARE",
+        "artist": "Henry Peters",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/e/8e2fae80-60af-44cf-95b4-177837435d1a.jpg?1770639004"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Dazzling Theater",
+            "manaCost": "{3}{W}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Creature spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's color.)",
+            "script": {
+                "staticAbilities": [
+                    {
+                        "type": "GrantKeywordToOwnSpells",
+                        "keyword": "CONVOKE"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Prop Room",
+            "manaCost": "{2}{W}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Untap each creature you control during each other player's untap step.",
+            "script": {
+                "staticAbilities": [
+                    {
+                        "type": "UntapFilteredDuringOtherUntapSteps",
+                        "filter": "creature"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Defiant Survivor
 {
     "name": "Defiant Survivor",
@@ -3785,6 +3833,93 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Dollmaker's Shop // Porcelain Gallery
+{
+    "name": "Dollmaker's Shop // Porcelain Gallery",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "Whenever one or more non-Toy creatures you control attack a player, create a 1/1 white Toy artifact creature token.\n//\nCreatures you control have base power and toughness each equal to the number of creatures you control.",
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "MYTHIC",
+        "artist": "Chris Cold",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/5/c5ee6651-9946-4bae-b21e-6cf28fa77b13.jpg?1726867800"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Dollmaker's Shop",
+            "manaCost": "{1}{W}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever one or more non-Toy creatures you control attack a player, create a 1/1 white Toy artifact creature token.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": {
+                            "type": "YouAttackEvent",
+                            "attackerFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    {
+                                        "type": "NotSubtype",
+                                        "subtype": "Toy"
+                                    }
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "CreateToken",
+                            "power": 1,
+                            "toughness": 1,
+                            "colors": [
+                                "WHITE"
+                            ],
+                            "creatureTypes": [
+                                "Toy"
+                            ],
+                            "imageUri": "https://cards.scryfall.io/normal/front/5/e/5e6d479d-c30d-4048-b250-5233358a174c.jpg?1726236536",
+                            "artifactToken": true
+                        },
+                        "descriptionOverride": "Whenever one or more non-Toy creatures you control attack a player, create a 1/1 white Toy artifact creature token."
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Porcelain Gallery",
+            "manaCost": "{4}{W}{W}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Creatures you control have base power and toughness each equal to the number of creatures you control.",
+            "script": {
+                "staticAbilities": [
+                    {
+                        "type": "SetBasePowerToughnessDynamicStatic",
+                        "power": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "creature"
+                        },
+                        "toughness": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "creature"
+                        },
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    }
+                ]
+            }
+        }
     ]
 }
 
@@ -15231,6 +15366,98 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Smoky Lounge // Misty Salon
+{
+    "name": "Smoky Lounge // Misty Salon",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "At the beginning of your first main phase, add {R}{R}. Spend this mana only to cast Room spells and unlock doors.\n//\nWhen you unlock this door, create an X/X blue Spirit creature token with flying, where X is the number of unlocked doors among Rooms you control.",
+    "metadata": {
+        "collectorNumber": "235",
+        "rarity": "UNCOMMON",
+        "artist": "Marco Gorlei",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/7/4700987d-fc55-44eb-bc9f-0e0316ca65e2.jpg?1726780766"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Smoky Lounge",
+            "manaCost": "{2}{R}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "At the beginning of your first main phase, add {R}{R}. Spend this mana only to cast Room spells and unlock doors.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": {
+                            "type": "StepEvent",
+                            "step": "PRECOMBAT_MAIN"
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "AddMana",
+                            "color": "RED",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "restriction": {
+                                "type": "AnyOf",
+                                "restrictions": [
+                                    {
+                                        "type": "SubtypeSpellsOnly",
+                                        "subtypes": [
+                                            "Room"
+                                        ]
+                                    },
+                                    "UnlockDoorOnly"
+                                ]
+                            }
+                        },
+                        "descriptionOverride": "At the beginning of your first main phase, add {R}{R}. Spend this mana only to cast Room spells and unlock doors."
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Misty Salon",
+            "manaCost": "{3}{U}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, create an X/X blue Spirit creature token with flying, where X is the number of unlocked doors among Rooms you control.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "CreateToken",
+                            "power": 0,
+                            "toughness": 0,
+                            "colors": [
+                                "BLUE"
+                            ],
+                            "creatureTypes": [
+                                "Spirit"
+                            ],
+                            "keywords": [
+                                "FLYING"
+                            ],
+                            "imageUri": "https://cards.scryfall.io/normal/front/9/0/90f6d606-55ca-4431-ae61-5d4f05259403.jpg?1726236595",
+                            "dynamicPower": "UnlockedDoors",
+                            "dynamicToughness": "UnlockedDoors"
+                        },
+                        "descriptionOverride": "When you unlock this door, create an X/X blue Spirit creature token with flying, where X is the number of unlocked doors among Rooms you control."
+                    }
+                ]
+            }
+        }
     ]
 }
 
