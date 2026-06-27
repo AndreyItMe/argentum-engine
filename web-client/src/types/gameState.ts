@@ -238,6 +238,11 @@ export interface ClientCard {
    * prepare spell sits castable in its controller's exile. Battlefield only. */
   readonly isPrepared?: boolean
 
+  /** Whether this exiled card is the prepare-spell copy of a prepared permanent (Secrets of
+   * Strixhaven). It appears as a castable ghost card in the controller's hand; drives the
+   * "Prepared" badge that links it back to the prepared creature. Exile only. */
+  readonly isPreparedSpell?: boolean
+
   /** Whether this permanent was cast for its warp cost (CR 702.185, Edge of Eternities): it will be
    * exiled at the next end step, then can be recast from exile. Drives the cosmic warp cue. Battlefield only. */
   readonly isWarped?: boolean

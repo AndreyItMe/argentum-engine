@@ -264,6 +264,11 @@ data class ClientCard(
      * prepare spell sits castable in its controller's exile until cast. Battlefield only. */
     val isPrepared: Boolean = false,
 
+    /** Whether this exiled card is the prepare-spell copy of a prepared permanent (Secrets of
+     * Strixhaven). It shows up as a castable ghost card in its controller's hand; this flag lets the
+     * client badge it so the player sees it originates from a prepared creature. Exile only. */
+    val isPreparedSpell: Boolean = false,
+
     /** Whether this permanent was cast for its warp cost (CR 702.185, Edge of Eternities): it will be
      * exiled at the beginning of the next end step, after which it can be recast from exile. Drives the
      * cosmic "warped" cue on the battlefield. Battlefield only. */
