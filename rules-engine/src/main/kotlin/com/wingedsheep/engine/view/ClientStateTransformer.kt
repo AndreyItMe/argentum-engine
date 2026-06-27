@@ -1075,6 +1075,12 @@ class ClientStateTransformer(
         val isPrepared = zoneKey.zoneType == Zone.BATTLEFIELD &&
             container.has<com.wingedsheep.engine.state.components.battlefield.PreparedComponent>()
 
+        // The exiled prepare-spell copy carries a PreparedSpellCopyComponent. It surfaces as a castable
+        // ghost card in the controller's hand; flag it so the client can badge it as coming from a
+        // prepared creature (rather than reading like a generic impulse-draw exile card).
+        val isPreparedSpell = zoneKey.zoneType == Zone.EXILE &&
+            container.has<com.wingedsheep.engine.state.components.battlefield.PreparedSpellCopyComponent>()
+
         // Warped permanents (CR 702.185, Edge of Eternities) carry a WarpedComponent until they're
         // exiled at the next end step; surface a flag so the client can show the cosmic warp cue.
         val isWarped = zoneKey.zoneType == Zone.BATTLEFIELD &&
@@ -1142,6 +1148,7 @@ class ClientStateTransformer(
             isSuspected = projectedValues?.isSuspected == true,
             isPlotted = isPlotted,
             isPrepared = isPrepared,
+            isPreparedSpell = isPreparedSpell,
             isWarped = isWarped,
             morphCost = if (isFaceDown && morphData != null) morphData.morphCost.description else null,
             targets = targets,

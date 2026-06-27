@@ -1080,6 +1080,14 @@ function GameCardImpl({
     // Orange highlight for valid planeswalker attack targets
     borderStyle = '2px solid #ff8800'
     boxShadow = '0 0 12px rgba(255, 136, 0, 0.5), 0 0 24px rgba(255, 136, 0, 0.3)'
+  } else if (isGhost && card.isPreparedSpell && isHovered) {
+    // Prepared spell copy (Secrets of Strixhaven): brighter lavender rim matching its creature's
+    // "Prepared" badge, so the hand ghost card clearly reads as coming from a prepared creature.
+    borderStyle = '3px solid #cdb8ff'
+    boxShadow = '0 0 20px rgba(143, 111, 224, 0.95), 0 0 40px rgba(143, 111, 224, 0.5)'
+  } else if (isGhost && card.isPreparedSpell) {
+    borderStyle = '2px solid #a98bff'
+    boxShadow = '0 0 12px rgba(143, 111, 224, 0.7), 0 0 24px rgba(143, 111, 224, 0.35)'
   } else if (isPlayable && isGhost && isHovered) {
     // Bright purple highlight when hovering over a playable ghost card
     borderStyle = '3px solid #aa77ee'
@@ -1175,7 +1183,7 @@ function GameCardImpl({
         boxShadow: card.isCommander && !faceDown
           ? `${boxShadow}, 0 0 6px 2px rgba(212, 175, 55, 0.6), 0 0 14px 4px rgba(212, 175, 55, 0.3)`
           : boxShadow,
-        opacity: isPhasedOut ? 0.4 : isBeingDragged ? 0.6 : isGhost ? 0.55 : isBystanderAttacker ? 0.45 : (inHand && isInTargetingMode && !isValidTarget && !isBeingCast) ? 0.35 : 1,
+        opacity: isPhasedOut ? 0.4 : isBeingDragged ? 0.6 : (isGhost && card.isPreparedSpell) ? 0.82 : isGhost ? 0.55 : isBystanderAttacker ? 0.45 : (inHand && isInTargetingMode && !isValidTarget && !isBeingCast) ? 0.35 : 1,
         // Phased-out permanents (Rule 702.26) are treated as though they don't exist —
         // desaturate so they read as "not really there" while still showing the board slot.
         ...(isPhasedOut ? { filter: 'grayscale(0.7)' } : {}),
@@ -1453,6 +1461,14 @@ function GameCardImpl({
       {card.isPrepared && (
         <div style={styles.preparedBadge} title="Prepared (Secrets of Strixhaven) — cast a copy of its spell from exile; doing so unprepares it">
           Prepared
+        </div>
+      )}
+
+      {/* Prepared spell copy (Secrets of Strixhaven): the castable exile copy shown as a ghost card in
+          hand. Same lavender badge as the creature's "Prepared" cue so the link is obvious. */}
+      {card.isPreparedSpell && (
+        <div style={styles.preparedBadge} title="Prepared spell (Secrets of Strixhaven) — a copy from your prepared creature; casting it unprepares that creature">
+          ✦ Prepared
         </div>
       )}
 
