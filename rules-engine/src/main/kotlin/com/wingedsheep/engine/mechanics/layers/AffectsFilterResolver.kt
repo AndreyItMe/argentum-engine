@@ -633,6 +633,9 @@ internal class AffectsFilterResolver {
         CardPredicate.ManaValueIsOdd -> card.manaValue % 2 != 0
         CardPredicate.HasXInManaCost -> if (isFaceDown) false else card.manaCost.hasX
         is CardPredicate.NameEquals -> card.name == predicate.name
+        // Room-name distinctness is a resolution-time search filter, not a continuous/static
+        // affects-filter concern.
+        CardPredicate.NameNotSharedWithControlledRoom -> false
         is CardPredicate.OriginallyPrintedInSet ->
             card.originalSetCode?.equals(predicate.setCode, ignoreCase = true) == true
         is CardPredicate.HasBasicLandType -> if (isFaceDown) false else subtypes.any { it.equals(predicate.landType, ignoreCase = true) }

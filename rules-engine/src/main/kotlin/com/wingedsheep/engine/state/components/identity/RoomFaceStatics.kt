@@ -3,6 +3,7 @@ package com.wingedsheep.engine.state.components.identity
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.sdk.model.CardDefinition
+import com.wingedsheep.sdk.scripting.StateTriggeredAbility
 import com.wingedsheep.sdk.scripting.StaticAbility
 
 /**
@@ -53,5 +54,26 @@ object RoomFaceStatics {
             .filter { RoomFaceId(it.name) in room.unlocked }
             .flatMap { it.script.effectiveStaticAbilities() }
         return if (faceStatics.isEmpty()) base else base + faceStatics
+    }
+
+    /**
+     * State-triggered abilities (CR 603.8) functioning on [container]'s permanent given its
+     * [cardDef]: its top-level script's state triggers, plus those of every currently-unlocked
+     * Room face. Mirrors [activeStaticAbilities] so a locked door's state trigger stays inert and
+     * unlocking it turns the trigger on (Promising Stairs' "you win the game if …").
+     */
+    fun activeStateTriggeredAbilities(
+        container: ComponentContainer,
+        cardDef: CardDefinition,
+    ): List<StateTriggeredAbility> {
+        val base = cardDef.script.stateTriggeredAbilities
+
+        val room = container.get<RoomComponent>() ?: return base
+        if (room.unlocked.isEmpty() || cardDef.cardFaces.isEmpty()) return base
+
+        val faceAbilities = cardDef.cardFaces
+            .filter { RoomFaceId(it.name) in room.unlocked }
+            .flatMap { it.script.stateTriggeredAbilities }
+        return if (faceAbilities.isEmpty()) base else base + faceAbilities
     }
 }

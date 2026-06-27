@@ -281,6 +281,15 @@ data class GameObjectFilter(
     )
 
     /**
+     * Match Room cards whose name isn't shared with a Room the evaluating player controls
+     * (CR 709, by unlocked door names) — "a Room card that doesn't have the same name as a
+     * Room you control" (Central Elevator).
+     */
+    fun nameNotSharedWithControlledRoom() = copy(
+        cardPredicates = cardPredicates + CardPredicate.NameNotSharedWithControlledRoom
+    )
+
+    /**
      * Match cards whose name equals the name durably chosen by the *source permanent* as it
      * entered (its [com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent] under
      * [slot]). Static-projection / activation-legality safe — use this in static-ability filters

@@ -915,6 +915,8 @@ class CostCalculator(
             is CardPredicate.HasAnyOfSubtypes -> predicate.subtypes.any { typeLine.hasSubtype(it) }
             is CardPredicate.HasBasicLandType -> typeLine.hasSubtype(Subtype(predicate.landType))
             is CardPredicate.NameEquals -> cardDef.name == predicate.name
+            // Room-name distinctness is a resolution-time search filter, not a cost concern.
+            CardPredicate.NameNotSharedWithControlledRoom -> false
 
             is CardPredicate.OriginallyPrintedInSet ->
                 cardDef.setCode?.equals(predicate.setCode, ignoreCase = true) == true
@@ -1144,15 +1146,20 @@ class CostCalculator(
     fun hasFreeCastPermission(
         state: GameState,
         casterId: EntityId,
-        spellCardDef: CardDefinition? = null
+        spellCardDef: CardDefinition? = null,
+        castFromZone: com.wingedsheep.sdk.core.Zone? = null
     ): Boolean {
         for (entityId in state.getBattlefield()) {
             val container = state.getEntity(entityId) ?: continue
             val card = container.get<CardComponent>() ?: continue
             val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            val classLevel = container.get<ClassLevelComponent>()?.currentLevel
-            for (ability in permanentDef.script.effectiveStaticAbilities(classLevel)) {
+            // Fold in unlocked Room-face statics (CR 709.5) so a face-level Warped Space is seen.
+            for (ability in com.wingedsheep.engine.state.components.identity.RoomFaceStatics.activeStaticAbilities(container, permanentDef)) {
                 if (ability !is MayCastWithoutPayingManaCost) continue
+                // `fromExileOnly` (Warped Space) frees only spells cast from exile. When the cast
+                // zone is unknown (a coarse "any free-cast source?" probe), such a source doesn't
+                // count toward a hand cast — require an explicit EXILE zone.
+                if (ability.fromExileOnly && castFromZone != com.wingedsheep.sdk.core.Zone.EXILE) continue
                 if (ability.controllerOnly) {
                     val controllerId = state.projectedState.getController(entityId) ?: continue
                     if (controllerId != casterId) continue
@@ -1190,16 +1197,20 @@ class CostCalculator(
     fun oncePerTurnFreeCastSourceToConsume(
         state: GameState,
         casterId: EntityId,
-        spellCardDef: CardDefinition?
+        spellCardDef: CardDefinition?,
+        castFromZone: com.wingedsheep.sdk.core.Zone? = null
     ): EntityId? {
         var oncePerTurnCandidate: EntityId? = null
         for (entityId in state.getBattlefield()) {
             val container = state.getEntity(entityId) ?: continue
             val card = container.get<CardComponent>() ?: continue
             val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            val classLevel = container.get<ClassLevelComponent>()?.currentLevel
-            for (ability in permanentDef.script.effectiveStaticAbilities(classLevel)) {
+            // Fold in unlocked Room-face statics (CR 709.5) so a face-level Warped Space is seen.
+            for (ability in com.wingedsheep.engine.state.components.identity.RoomFaceStatics.activeStaticAbilities(container, permanentDef)) {
                 if (ability !is MayCastWithoutPayingManaCost) continue
+                // A `fromExileOnly` source (Warped Space) is only a candidate for an exile cast, so
+                // it isn't burned by a free hand cast granted by a different source.
+                if (ability.fromExileOnly && castFromZone != com.wingedsheep.sdk.core.Zone.EXILE) continue
                 if (ability.controllerOnly) {
                     val controllerId = state.projectedState.getController(entityId) ?: continue
                     if (controllerId != casterId) continue

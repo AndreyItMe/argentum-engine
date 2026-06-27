@@ -57,7 +57,10 @@ class StateTriggerPoller(
             if (container.has<FaceDownComponent>()) continue
             val controllerId = projected.getController(permanentId) ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            val abilities = cardDef.script.stateTriggeredAbilities
+            // Fold in unlocked Room-face state triggers (CR 709.5) so a locked door's state
+            // trigger stays inert until its door is unlocked (Promising Stairs).
+            val abilities = com.wingedsheep.engine.state.components.identity.RoomFaceStatics
+                .activeStateTriggeredAbilities(container, cardDef)
             if (abilities.isEmpty()) continue
 
             val effectContext = EffectContext(

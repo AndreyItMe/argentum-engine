@@ -283,6 +283,23 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
     }
 
     /**
+     * Matches a card whose name is **not** shared with any Room the evaluating player controls
+     * (CR 709). Per the Central Elevator ruling, only the names of a Room's *unlocked* doors
+     * count: a Room with no unlocked doors contributes neither of its names, and a split Room
+     * card shares a name if **either** of its door names matches a controlled Room's unlocked
+     * door name. Models "a Room card that doesn't have the same name as a Room you control".
+     *
+     * Evaluated against the evaluating player ([com.wingedsheep.engine.handlers.PredicateContext.controllerId]).
+     * Fails open (matches) when no controller is in scope, and matches every Room card when the
+     * controller has no unlocked doors. Pair with a `Room` subtype filter at the search site.
+     */
+    @SerialName("NameNotSharedWithControlledRoom")
+    @Serializable
+    data object NameNotSharedWithControlledRoom : CardPredicate {
+        override val description: String = "that doesn't have the same name as a Room you control"
+    }
+
+    /**
      * Matches cards *originally printed* in the given set — i.e. whose canonical
      * [com.wingedsheep.sdk.model.CardDefinition.setCode] equals [setCode] (case-insensitive),
      * regardless of which printing is actually in play. This is the card's first/canonical set, so

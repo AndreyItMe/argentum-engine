@@ -396,13 +396,23 @@ data class MayCastWithoutPayingManaCost(
      * `MayCastWithoutPayingManaCost(controllerOnly = true, oncePerTurn = true,
      * spellFilter = GameObjectFilter.InstantOrSorcery)`.
      */
-    val oncePerTurn: Boolean = false
+    val oncePerTurn: Boolean = false,
+    /**
+     * When true, the permission applies only to spells **cast from exile** — the free cast is
+     * offered on the cast-from-exile path and withheld from hand / graveyard / other casts. Warped
+     * Space (Charred Foyer // Warped Space): "Once each turn, you may pay {0} rather than pay the
+     * mana cost for a spell you cast from exile" → `MayCastWithoutPayingManaCost(controllerOnly =
+     * true, oncePerTurn = true, fromExileOnly = true)`. The engine gates this on the cast's source
+     * zone in `CostCalculator.hasFreeCastPermission` / `oncePerTurnFreeCastSourceToConsume`.
+     */
+    val fromExileOnly: Boolean = false
 ) : StaticAbility {
     override val description: String = buildString {
         val noun = if (spellFilter == GameObjectFilter.Any) "spells" else "${spellFilter.description} spells"
         val singular = if (spellFilter == GameObjectFilter.Any) "spell" else "${spellFilter.description} spell"
+        val fromExile = if (fromExileOnly) " from exile" else ""
         if (oncePerTurn) {
-            append("Once during each of your turns, you may cast a $singular without paying its mana cost")
+            append("Once during each of your turns, you may cast a $singular$fromExile without paying its mana cost")
         } else if (firstSpellOfTurnOnly) {
             if (controllerOnly) append("The first spell you cast each turn may be cast without paying its mana cost")
             else append("The first spell each player casts during each of their turns may be cast without paying its mana cost")

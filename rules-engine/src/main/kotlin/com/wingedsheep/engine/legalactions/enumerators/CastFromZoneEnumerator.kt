@@ -452,6 +452,15 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         blightCreatures.isNotEmpty() &&
                         !playForFree
 
+                    // A battlefield `MayCastWithoutPayingManaCost(fromExileOnly = true)` source
+                    // (Warped Space) lets this exile spell be cast for {0}. Offered as its own
+                    // variant (CR 118.9a) alongside the pay path; X is treated as 0 (CR 107.3b).
+                    // Excludes prepare-spell copies and cards already granted a free play.
+                    val freeCastFromExile = !playForFree &&
+                        prepareCopyFaceIndex == null &&
+                        hasCorrectTiming && meetsRestrictions && canPayAdditionalCost &&
+                        context.freeCastPermissionFor(cardId, Zone.EXILE)
+
                     if (hasCorrectTiming && meetsRestrictions && canAfford && canPayAdditionalCost) {
                         val targetReqs = buildList {
                             addAll(effectiveScript?.targetRequirements ?: emptyList())
@@ -546,8 +555,9 @@ class CastFromZoneEnumerator : ActionEnumerator {
                                 )
                             }
                         }
-                    } else {
-                        // Can't cast right now — show as unaffordable
+                    } else if (!freeCastFromExile) {
+                        // Can't cast right now — show as unaffordable (unless a free-from-exile
+                        // cast is available below, which is the affordable path the player wants).
                         result.add(
                             LegalAction(
                                 actionType = "CastSpell",
@@ -560,6 +570,47 @@ class CastFromZoneEnumerator : ActionEnumerator {
                                 sourceZone = sourceZoneLabel
                             )
                         )
+                    }
+
+                    // Warped Space: emit the {0} free-from-exile variant (its own action so the
+                    // player chooses it over the pay path — CR 118.9a).
+                    if (freeCastFromExile) {
+                        val freeTargetReqs = buildList {
+                            addAll(effectiveScript?.targetRequirements ?: emptyList())
+                            effectiveScript?.auraTarget?.let { add(it) }
+                        }
+                        if (freeTargetReqs.isNotEmpty()) {
+                            val freeTargetInfos = context.targetUtils.buildTargetInfos(state, playerId, freeTargetReqs)
+                            if (context.targetUtils.allRequirementsSatisfied(freeTargetInfos)) {
+                                val firstReq = freeTargetReqs.first()
+                                val firstInfo = freeTargetInfos.first()
+                                result.add(
+                                    LegalAction(
+                                        actionType = "CastSpell",
+                                        description = "Cast ${cardComponent.name} (Free)",
+                                        action = CastSpell(playerId, cardId, faceIndex = prepareCopyFaceIndex, useWithoutPayingManaCost = true),
+                                        validTargets = firstInfo.validTargets,
+                                        requiresTargets = true,
+                                        targetCount = firstReq.count,
+                                        minTargets = firstReq.effectiveMinCount,
+                                        targetDescription = firstReq.description,
+                                        targetRequirements = if (freeTargetInfos.size > 1) freeTargetInfos else null,
+                                        manaCostString = "{0}",
+                                        sourceZone = sourceZoneLabel
+                                    )
+                                )
+                            }
+                        } else {
+                            result.add(
+                                LegalAction(
+                                    actionType = "CastSpell",
+                                    description = "Cast ${cardComponent.name} (Free)",
+                                    action = CastSpell(playerId, cardId, faceIndex = prepareCopyFaceIndex, useWithoutPayingManaCost = true),
+                                    manaCostString = "{0}",
+                                    sourceZone = sourceZoneLabel
+                                )
+                            )
+                        }
                     }
                 }
             }

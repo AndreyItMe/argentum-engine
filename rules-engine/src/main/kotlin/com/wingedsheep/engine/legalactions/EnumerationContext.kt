@@ -143,12 +143,15 @@ class EnumerationContext(
      * "any free-cast source exists?" probe), this honors a source's spell filter — e.g.
      * Dracogenesis only frees Dragon spells.
      */
-    fun freeCastPermissionFor(cardId: EntityId): Boolean {
+    fun freeCastPermissionFor(
+        cardId: EntityId,
+        castFromZone: com.wingedsheep.sdk.core.Zone = com.wingedsheep.sdk.core.Zone.HAND
+    ): Boolean {
         val cardDef = state.getEntity(cardId)
             ?.get<com.wingedsheep.engine.state.components.identity.CardComponent>()
             ?.let { cardRegistry.getCard(it.cardDefinitionId) }
-            ?: return freeCastPermissionAvailable
-        return costCalculator.hasFreeCastPermission(state, playerId, cardDef)
+            ?: return costCalculator.hasFreeCastPermission(state, playerId, null, castFromZone)
+        return costCalculator.hasFreeCastPermission(state, playerId, cardDef, castFromZone)
     }
 
     // Alternative casting costs from battlefield permanents (e.g., Jodah's WUBRG).

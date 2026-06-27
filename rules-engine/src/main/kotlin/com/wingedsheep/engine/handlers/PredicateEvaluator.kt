@@ -270,6 +270,27 @@ class PredicateEvaluator {
             // Name predicates
             is CardPredicate.NameEquals -> card.name == predicate.name
 
+            // CR 709 + Central Elevator ruling: a Room card may be found only if none of its
+            // door names matches an *unlocked* door name of a Room the searcher controls. A Room
+            // with no unlocked doors contributes neither of its names; a split Room card carries
+            // both door names and is excluded if either matches. Fails open with no controller.
+            is CardPredicate.NameNotSharedWithControlledRoom -> {
+                val controllerId = context?.controllerId
+                if (controllerId == null) {
+                    true
+                } else {
+                    val controlledDoorNames = state.getBattlefield().flatMapTo(mutableSetOf<String>()) { id ->
+                        val room = state.getEntity(id)?.get<RoomComponent>()
+                        if (room == null || projected.getController(id) != controllerId) {
+                            emptyList()
+                        } else {
+                            room.faces.filter { it.id in room.unlocked }.map { it.name }
+                        }
+                    }
+                    card.name.split(" // ").map { it.trim() }.none { it in controlledDoorNames }
+                }
+            }
+
             // Keyword predicates - use projected keywords
             is CardPredicate.HasKeyword -> predicate.keyword.name in keywords
             is CardPredicate.NotKeyword -> predicate.keyword.name !in keywords
@@ -1213,6 +1234,7 @@ class PredicateEvaluator {
             // Name / printing predicates — not stored in record
             is CardPredicate.NameEquals -> false
             is CardPredicate.NameEqualsChosen -> false
+            CardPredicate.NameNotSharedWithControlledRoom -> false
             is CardPredicate.OriginallyPrintedInSet -> false
 
             // Keyword predicates — not stored in record

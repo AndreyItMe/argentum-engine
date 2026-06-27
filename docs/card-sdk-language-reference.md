@@ -2006,6 +2006,14 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   reprints still match their original set, regardless of the printing in play. Reads the entity's
   `CardComponent.originalSetCode` (populated from the canonical `CardDefinition.setCode`); tokens never
   match. Used by Golgothian Sylex (`"ATQ"`) and ARN City in a Bottle (`"ARN"`).
+- `.nameNotSharedWithControlledRoom()` — `CardPredicate.NameNotSharedWithControlledRoom`: matches a Room card
+  whose name isn't shared with any Room the evaluating player controls (CR 709). Per the Central Elevator
+  ruling, only the names of a controlled Room's **unlocked** doors count (a Room with no unlocked doors
+  contributes neither name), and a split Room card is excluded if **either** of its door names matches. Keyed
+  off the predicate context's `controllerId`; fails **open** (matches) with no controller in scope and matches
+  every Room card when the controller has no unlocked doors. Pair with `.withSubtype(Subtype.ROOM)` at a search
+  site. Used by Central Elevator ("search your library for a Room card that doesn't have the same name as a
+  Room you control").
 - `.power(n)` / `.minPower(n)` / `.maxPower(n)` — P/T comparator.
 - `.manaValue(n)` / `.manaValueAtMost(n)` / `.manaValueAtLeast(n)` — mana-value comparator.
 - `.manaValueAtMostX()` — mana value ≤ the X chosen for the source spell/ability.
@@ -3039,6 +3047,14 @@ creature"), and similar "static cleanup" wording in early sets. Differs from an
 intervening-if triggered ability — there is no event to gate on; the engine watches the
 condition itself.
 
+`stateTriggeredAbility { }` is also available **inside a `face { }` block** of a split/Room
+card. The poller folds in the state triggers of every currently-**unlocked** Room face
+(`RoomFaceStatics.activeStateTriggeredAbilities`), so a locked door's state trigger stays inert
+until its door is unlocked — Promising Stairs (Central Elevator // Promising Stairs): "You win the
+game if there are eight or more different names among unlocked doors of Rooms you control"
+(`condition = Compare(DynamicAmount.UnlockedDoors(Player.You, distinctNames = true),
+ComparisonOperator.GTE, DynamicAmount.Fixed(8))`, `effect = Effects.WinGame(...)`).
+
 ---
 
 ## 9. Static abilities
@@ -3580,7 +3596,7 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
     grant. (Cascade-style granted keywords are instead modelled as a `youCastSpell(...)`-triggered `Effects.Cascade`
     on the granter — see **Quandrix, the Proof** / Wildsear, Scouring Maw — since cascade is a cast trigger, not a
     cost keyword.)
-- `MayCastWithoutPayingManaCost(controllerOnly = false, firstSpellOfTurnOnly = false, spellFilter = Any, oncePerTurn = false)` — a
+- `MayCastWithoutPayingManaCost(controllerOnly = false, firstSpellOfTurnOnly = false, spellFilter = Any, oncePerTurn = false, fromExileOnly = false)` — a
   battlefield permission to cast a spell without paying its mana cost (CR 118.9). Composable
   gates: `controllerOnly = true` restricts the benefit to the source's controller ("you" wording);
   `firstSpellOfTurnOnly = true` requires the caster to be the active player and to have cast
@@ -3589,16 +3605,23 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   `firstSpellOfTurnOnly`, the caster may cast other spells before using it; each source tracks its
   own use via `MayCastWithoutPayingCostUsedThisTurnComponent`, cleared at end of turn; `spellFilter`
   restricts *which* spells may be cast for free (card predicates, matched in any zone — default
-  `GameObjectFilter.Any` = every spell). The free-cast permission is only ever offered for cards in
-  hand. Weftwalking is `MayCastWithoutPayingManaCost(firstSpellOfTurnOnly = true)`; Zaffai and the
+  `GameObjectFilter.Any` = every spell). `fromExileOnly = true` restricts the permission to spells
+  cast **from exile** (offered on the cast-from-exile path, withheld from hand/graveyard casts) —
+  Warped Space (Charred Foyer // Warped Space): "Once each turn, you may pay {0} rather than pay the
+  mana cost for a spell you cast from exile" → `MayCastWithoutPayingManaCost(controllerOnly = true,
+  oncePerTurn = true, fromExileOnly = true)`. The free-cast permission is offered for cards in hand
+  (default) and, when `fromExileOnly = true`, for cards being cast from exile. Weftwalking is
+  `MayCastWithoutPayingManaCost(firstSpellOfTurnOnly = true)`; Zaffai and the
   Tempests is `MayCastWithoutPayingManaCost(controllerOnly = true, oncePerTurn = true, spellFilter =
   GameObjectFilter.InstantOrSorcery)` ("Once during each of your turns, you may cast an instant or
   sorcery spell from your hand without paying its mana cost"); Dracogenesis is
   `MayCastWithoutPayingManaCost(controllerOnly = true, spellFilter = GameObjectFilter.Any.withSubtype("Dragon"))`
   ("You may cast Dragon spells without paying their mana costs"); a future "you may cast the first
-  spell you cast each turn …" composes via both gates true. The filter is enforced per-spell in
-  `CostCalculator.hasFreeCastPermission(state, casterId, spellCardDef)` (the enumerator threads the
-  card being cast through `EnumerationContext.freeCastPermissionFor(cardId)`).
+  spell you cast each turn …" composes via both gates true. The filter and zone gate are enforced
+  per-spell in `CostCalculator.hasFreeCastPermission(state, casterId, spellCardDef, castFromZone)`
+  (the enumerator threads the card being cast and its zone through
+  `EnumerationContext.freeCastPermissionFor(cardId, castFromZone)` — `Zone.HAND` on the hand path,
+  `Zone.EXILE` on the cast-from-exile path).
   Cast-legality is checked by `CostCalculator.hasFreeCastPermission`. Surfaced as a dedicated
   `CastWithoutPayingManaCost` `LegalAction` variant routed through
   `CastSpell.useWithoutPayingManaCost = true` — emitted **alongside** Jodah-style

@@ -390,7 +390,9 @@ class CastSpellHandler(
             if (action.useAlternativeCost) {
                 return "Cannot combine 'without paying its mana cost' with another alternative cost"
             }
-            if (!costCalculator.hasFreeCastPermission(state, action.playerId, cardDef)) {
+            // Pass the spell's origin zone so a `fromExileOnly` source (Warped Space) validates an
+            // exile cast while staying withheld from hand casts.
+            if (!costCalculator.hasFreeCastPermission(state, action.playerId, cardDef, castSourceZone(state, action.cardId))) {
                 return "'Without paying its mana cost' is not available (gate closed or no source on the battlefield)"
             }
         }
@@ -2653,7 +2655,11 @@ class CastSpellHandler(
         // `MayCastWithoutPayingManaCost(oncePerTurn = true)` source consumes a use, and only when
         // no unlimited free-cast source could have paid instead.
         if (action.useWithoutPayingManaCost) {
-            val onceSource = costCalculator.oncePerTurnFreeCastSourceToConsume(currentCastState, action.playerId, cardDef)
+            // Use the pre-cast `state` to recover the spell's origin zone — by now the card has
+            // left it for the stack — so a `fromExileOnly` source (Warped Space) is only consumed
+            // for an actual exile cast.
+            val castFromZone = castSourceZone(state, action.cardId)
+            val onceSource = costCalculator.oncePerTurnFreeCastSourceToConsume(currentCastState, action.playerId, cardDef, castFromZone)
             if (onceSource != null) {
                 currentCastState = currentCastState.updateEntity(onceSource) { c ->
                     c.with(com.wingedsheep.engine.state.components.battlefield.MayCastWithoutPayingCostUsedThisTurnComponent)

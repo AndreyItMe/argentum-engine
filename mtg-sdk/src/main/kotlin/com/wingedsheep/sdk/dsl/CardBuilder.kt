@@ -1615,6 +1615,7 @@ class CardFaceBuilder(private val name: String) {
 
     private val keywordSet: MutableSet<Keyword> = mutableSetOf()
     private val triggeredAbilities: MutableList<TriggeredAbility> = mutableListOf()
+    private val stateTriggeredAbilities: MutableList<StateTriggeredAbility> = mutableListOf()
     private val activatedAbilities: MutableList<ActivatedAbility> = mutableListOf()
     private val staticAbilities: MutableList<StaticAbility> = mutableListOf()
     private val additionalCostsList: MutableList<AdditionalCost> = mutableListOf()
@@ -1628,6 +1629,18 @@ class CardFaceBuilder(private val name: String) {
         val builder = TriggeredAbilityBuilder()
         builder.init()
         triggeredAbilities.add(builder.build())
+    }
+
+    /**
+     * A state-triggered ability (CR 603.8) on this face. For a Room face it functions only while
+     * the door is unlocked (the engine folds unlocked-face state triggers via `RoomFaceStatics`).
+     * Promising Stairs: "You win the game if there are eight or more different names among unlocked
+     * doors of Rooms you control."
+     */
+    fun stateTriggeredAbility(init: StateTriggeredAbilityBuilder.() -> Unit) {
+        val builder = StateTriggeredAbilityBuilder()
+        builder.init()
+        stateTriggeredAbilities.add(builder.build())
     }
 
     fun activatedAbility(init: ActivatedAbilityBuilder.() -> Unit) {
@@ -1669,6 +1682,7 @@ class CardFaceBuilder(private val name: String) {
             spellEffect = spellEffect,
             targetRequirements = spellBuilder?.targetRequirements ?: emptyList(),
             triggeredAbilities = triggeredAbilities.toList(),
+            stateTriggeredAbilities = stateTriggeredAbilities.toList(),
             activatedAbilities = activatedAbilities.toList(),
             staticAbilities = staticAbilities.toList(),
             additionalCosts = additionalCostsList.toList(),
