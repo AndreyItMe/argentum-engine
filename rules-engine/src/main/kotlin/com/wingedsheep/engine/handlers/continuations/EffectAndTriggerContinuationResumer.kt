@@ -3,12 +3,14 @@ package com.wingedsheep.engine.handlers.continuations
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.DividedDamageEffect
 import com.wingedsheep.engine.handlers.effects.composite.asMayDecide
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.Gate
+import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 import com.wingedsheep.sdk.scripting.targets.withCount
 import java.util.UUID
 
@@ -83,8 +85,8 @@ class EffectAndTriggerContinuationResumer(
         // slot left at its declared max would absorb the next slot's target into its own range and
         // validate it against the wrong filter.
         val orderedSlots = response.selectedTargets.entries.sortedBy { it.key }
-        val selectedTargets = mutableListOf<com.wingedsheep.engine.state.components.stack.ChosenTarget>()
-        val alignedRequirements = mutableListOf<com.wingedsheep.sdk.scripting.targets.TargetRequirement>()
+        val selectedTargets = mutableListOf<ChosenTarget>()
+        val alignedRequirements = mutableListOf<TargetRequirement>()
         for ((slotIndex, targetIds) in orderedSlots) {
             if (targetIds.isEmpty()) continue
             targetIds.forEach { entityId -> selectedTargets.add(entityIdToChosenTarget(state, entityId)) }
