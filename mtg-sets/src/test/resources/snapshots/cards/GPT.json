@@ -402,6 +402,38 @@
     ]
 }
 
+// Leyline of the Void
+{
+    "name": "Leyline of the Void",
+    "manaCost": "{2}{B}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "If this card is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.",
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "RedirectZoneChange",
+                "newDestination": "Exile",
+                "appliesTo": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "own:opponent",
+                    "to": "Graveyard"
+                }
+            }
+        ],
+        "mayStartOnBattlefield": true
+    },
+    "metadata": {
+        "collectorNumber": "52",
+        "rarity": "RARE",
+        "artist": "Adam Rex",
+        "flavorText": "Where treachery and oblivion converge.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/7/37dfe8b8-b39e-4e70-9e5b-be42c93b4f70.jpg?1593272209"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Mortify
 {
     "name": "Mortify",
