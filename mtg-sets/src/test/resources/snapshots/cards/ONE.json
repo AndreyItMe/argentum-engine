@@ -450,8 +450,8 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "GrantToxic",
-                                "amount": 1,
+                                "type": "GrantKeyword",
+                                "keyword": "TOXIC_1",
                                 "target": {
                                     "type": "BoundVariable",
                                     "name": "another target creature you control"
@@ -506,8 +506,8 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "GrantToxic",
-                                "amount": 1,
+                                "type": "GrantKeyword",
+                                "keyword": "TOXIC_1",
                                 "target": {
                                     "type": "BoundVariable",
                                     "name": "another target creature you control"
