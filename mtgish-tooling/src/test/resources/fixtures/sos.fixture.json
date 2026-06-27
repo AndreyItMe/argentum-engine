@@ -488,17 +488,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       }
@@ -697,7 +702,7 @@
                     "_Action": "PutCounters",
                     "args": [
                       {
-                        "_PutCounterAction": "NumberCountersOfTypeOnEachPermanent",
+                        "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                         "args": [
                           {
                             "_GameNumber": "Integer",
@@ -763,17 +768,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       },
@@ -894,17 +904,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       },
@@ -1051,7 +1066,7 @@
             "_Rule": "TriggerI",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -1060,10 +1075,15 @@
                 }
               },
               {
-                "_Condition": "DeadPermanentPassesFilter",
-                "args": {
-                  "_Permanents": "HasACounter"
-                }
+                "_Condition": "PermanentPassesFilter",
+                "args": [
+                  {
+                    "_Permanent": "Trigger_ThatPermanent"
+                  },
+                  {
+                    "_Permanents": "HasACounter"
+                  }
+                ]
               },
               {
                 "_Actions": "ActionList",
@@ -1104,10 +1124,20 @@
                     ]
                   },
                   {
-                    "_Action": "PutCountersOfDeadPermanentOnEachPermanent",
-                    "args": {
-                      "_Permanents": "TheTokensCreatedThisWay"
-                    }
+                    "_Action": "PutCounters",
+                    "args": [
+                      {
+                        "_PutCountersAction": "DuplicateCountersOfPermanentOnEachPermanent",
+                        "args": [
+                          {
+                            "_Permanent": "Trigger_ThatPermanent"
+                          },
+                          {
+                            "_Permanents": "TheTokensCreatedThisWay"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -1199,17 +1229,17 @@
                                   {
                                     "_GameNumber": "TheNumberOfGraveyardCards",
                                     "args": {
-                                      "_CardsInGraveyard": "And",
+                                      "_CardsInGraveyards": "And",
                                       "args": [
                                         {
-                                          "_CardsInGraveyard": "IsNamed",
+                                          "_CardsInGraveyards": "IsNamed",
                                           "args": {
                                             "_NameFilter": "NamedCard",
                                             "args": "Ancestral Anger"
                                           }
                                         },
                                         {
-                                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                                          "_CardsInGraveyards": "InAPlayersGraveyard",
                                           "args": {
                                             "_Players": "SinglePlayer",
                                             "args": {
@@ -1336,30 +1366,35 @@
                     },
                     [
                       {
-                        "_Action": "PutACounterOfTypeOnEachPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
-                            "args": [
-                              1,
-                              1
-                            ]
-                          },
-                          {
-                            "_Permanents": "And",
+                            "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
                             "args": [
                               {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Spirit"
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
                               },
                               {
-                                "_Permanents": "ControlledByAPlayer",
-                                "args": {
-                                  "_Players": "SinglePlayer",
-                                  "args": {
-                                    "_Player": "You"
+                                "_Permanents": "And",
+                                "args": [
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Spirit"
+                                  },
+                                  {
+                                    "_Permanents": "ControlledByAPlayer",
+                                    "args": {
+                                      "_Players": "SinglePlayer",
+                                      "args": {
+                                        "_Player": "You"
+                                      }
+                                    }
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
@@ -1502,21 +1537,26 @@
                       ]
                     },
                     {
-                      "_Action": "PutNumberCountersOfTypeOnEachPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_GameNumber": "Integer",
-                          "args": 6
-                        },
-                        {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_GameNumber": "Integer",
+                              "args": 6
+                            },
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanents": "TheTokensCreatedThisWay"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanents": "TheTokensCreatedThisWay"
                         }
                       ]
                     }
@@ -1764,7 +1804,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -1888,7 +1928,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "And",
                   "args": [
@@ -2259,17 +2299,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       }
@@ -2298,7 +2343,7 @@
                     {
                       "_Target": "UptoOneTargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                        "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                       }
                     }
                   ],
@@ -2308,7 +2353,7 @@
                       {
                         "_Action": "ExileGraveyardCard",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -2664,20 +2709,25 @@
                     ]
                   },
                   {
-                    "_Action": "PutNumberCountersOfTypeOnEachPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_GameNumber": "ValueX"
-                      },
-                      {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_GameNumber": "ValueX"
+                          },
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanents": "TheTokensCreatedThisWay"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanents": "TheTokensCreatedThisWay"
                       }
                     ]
                   }
@@ -2962,51 +3012,56 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnEachPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
-                        "args": [
-                          1,
-                          1
-                        ]
-                      },
-                      {
-                        "_Permanents": "And",
+                        "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
                         "args": [
                           {
-                            "_Permanents": "Or",
+                            "_CounterType": "PTCounter",
                             "args": [
-                              {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Pest"
-                              },
-                              {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Bat"
-                              },
-                              {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Insect"
-                              },
-                              {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Snake"
-                              },
-                              {
-                                "_Permanents": "IsCreatureType",
-                                "args": "Spider"
-                              }
+                              1,
+                              1
                             ]
                           },
                           {
-                            "_Permanents": "ControlledByAPlayer",
-                            "args": {
-                              "_Players": "SinglePlayer",
-                              "args": {
-                                "_Player": "You"
+                            "_Permanents": "And",
+                            "args": [
+                              {
+                                "_Permanents": "Or",
+                                "args": [
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Pest"
+                                  },
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Bat"
+                                  },
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Insect"
+                                  },
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Snake"
+                                  },
+                                  {
+                                    "_Permanents": "IsCreatureType",
+                                    "args": "Spider"
+                                  }
+                                ]
+                              },
+                              {
+                                "_Permanents": "ControlledByAPlayer",
+                                "args": {
+                                  "_Players": "SinglePlayer",
+                                  "args": {
+                                    "_Player": "You"
+                                  }
+                                }
                               }
-                            }
+                            ]
                           }
                         ]
                       }
@@ -3744,7 +3799,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "And",
                   "args": [
@@ -3836,14 +3891,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -3862,7 +3917,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -4129,14 +4184,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -4154,7 +4209,7 @@
                       {
                         "_Action": "PutGraveyardCardIntoHand",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -4702,7 +4757,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -4791,13 +4846,18 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "GrowthCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                        "args": [
+                          {
+                            "_CounterType": "GrowthCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -4815,7 +4875,7 @@
                     "_Permanent": "ThisPermanent"
                   },
                   {
-                    "_Permanents": "HasNumCountersOfType",
+                    "_Permanents": "HasNumberCountersOfType",
                     "args": [
                       {
                         "_Comparison": "GreaterThanOrEqualTo",
@@ -5133,17 +5193,22 @@
                       ]
                     },
                     {
-                      "_Action": "PutACounterOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "ACounterOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     }
@@ -5602,13 +5667,18 @@
                         }
                       },
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "StunCounter"
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                            "args": [
+                              {
+                                "_CounterType": "StunCounter"
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
+                            ]
                           }
                         ]
                       }
@@ -5788,13 +5858,18 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PageCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                        "args": [
+                          {
+                            "_CounterType": "PageCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -5843,13 +5918,16 @@
                     }
                   ],
                   {
-                    "_GameNumber": "NumCountersOfTypeOnPermanent",
+                    "_GameNumber": "TheTotalNumberOfCountersOfTypeAmongPermanents",
                     "args": [
                       {
                         "_CounterType": "PageCounter"
                       },
                       {
-                        "_Permanent": "ThisPermanent"
+                        "_Permanents": "SinglePermanent",
+                        "args": {
+                          "_Permanent": "ThisPermanent"
+                        }
                       }
                     ]
                   }
@@ -5918,17 +5996,22 @@
                   "_Actions": "ActionList",
                   "args": [
                     {
-                      "_Action": "PutACounterOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "ACounterOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     },
@@ -6223,23 +6306,23 @@
                         "_GameNumber": "ValueX"
                       },
                       {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "Or",
+                            "_CardsInGraveyards": "Or",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Instant"
                               },
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Sorcery"
                               }
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -6258,7 +6341,7 @@
                     {
                       "_Action": "PutEachGraveyardCardIntoHand",
                       "args": {
-                        "_CardsInGraveyard": "Ref_TargetGraveyardCards"
+                        "_CardsInGraveyards": "Ref_TargetGraveyardCards"
                       }
                     },
                     {
@@ -6751,21 +6834,26 @@
                   "_Actions": "ActionList",
                   "args": [
                     {
-                      "_Action": "PutNumberCountersOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_GameNumber": "Integer",
-                          "args": 2
-                        },
-                        {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_GameNumber": "Integer",
+                              "args": 2
+                            },
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     },
@@ -7300,7 +7388,7 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "InAPlayersGraveyard",
+                        "_CardsInGraveyards": "InAPlayersGraveyard",
                         "args": {
                           "_Players": "SinglePlayer",
                           "args": {
@@ -7316,7 +7404,7 @@
                       {
                         "_Action": "PutGraveyardCardIntoHand",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -7552,7 +7640,7 @@
                           "args": 8
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -8155,7 +8243,7 @@
                     "_Action": "PutCounters",
                     "args": [
                       {
-                        "_PutCounterAction": "NumberCountersOfTypeOnEachPermanent",
+                        "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                         "args": [
                           {
                             "_GameNumber": "NumGroupPermanents",
@@ -8597,17 +8685,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -9114,7 +9207,7 @@
                     {
                       "_Cost": "ExileGraveyardCard",
                       "args": {
-                        "_GraveyardCard": "ThisGraveyardCard"
+                        "_CardInGraveyards": "ThisGraveyardCard"
                       }
                     }
                   ]
@@ -9635,23 +9728,23 @@
                   "_Action": "PutEachGraveyardCardOntoBattlefield",
                   "args": [
                     {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "Or",
+                          "_CardsInGraveyards": "Or",
                           "args": [
                             {
-                              "_CardsInGraveyard": "IsCardtype",
+                              "_CardsInGraveyards": "IsCardtype",
                               "args": "Artifact"
                             },
                             {
-                              "_CardsInGraveyard": "IsCardtype",
+                              "_CardsInGraveyards": "IsCardtype",
                               "args": "Creature"
                             }
                           ]
                         },
                         {
-                          "_CardsInGraveyard": "ManaValueIs",
+                          "_CardsInGraveyards": "ManaValueIs",
                           "args": {
                             "_Comparison": "EqualTo",
                             "args": {
@@ -9712,23 +9805,23 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "Or",
+                          "_CardsInGraveyards": "Or",
                           "args": [
                             {
-                              "_CardsInGraveyard": "IsCardtype",
+                              "_CardsInGraveyards": "IsCardtype",
                               "args": "Instant"
                             },
                             {
-                              "_CardsInGraveyard": "IsCardtype",
+                              "_CardsInGraveyards": "IsCardtype",
                               "args": "Sorcery"
                             }
                           ]
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -9747,7 +9840,7 @@
                       "_Action": "CreateGraveyardCardEffectUntil",
                       "args": [
                         {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         },
                         [
                           {
@@ -9835,14 +9928,14 @@
                                   {
                                     "_Players": "HasACardInGraveyard",
                                     "args": {
-                                      "_CardsInGraveyard": "IsCardtype",
+                                      "_CardsInGraveyards": "IsCardtype",
                                       "args": "Instant"
                                     }
                                   },
                                   {
                                     "_Players": "HasACardInGraveyard",
                                     "args": {
-                                      "_CardsInGraveyard": "IsCardtype",
+                                      "_CardsInGraveyards": "IsCardtype",
                                       "args": "Sorcery"
                                     }
                                   }
@@ -10207,14 +10300,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -10233,7 +10326,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -10440,7 +10533,7 @@
                   "_Action": "PutCounters",
                   "args": [
                     {
-                      "_PutCounterAction": "NumberCountersOfTypeOnEachPermanent",
+                      "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                       "args": [
                         {
                           "_GameNumber": "NumCardsDrawnByPlayerThisTurn",
@@ -10554,13 +10647,18 @@
                         }
                       },
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "StunCounter"
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                            "args": [
+                              {
+                                "_CounterType": "StunCounter"
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
+                            ]
                           }
                         ]
                       }
@@ -10641,18 +10739,30 @@
                 }
               },
               {
-                "_Condition": "PlayerPassesFilter",
+                "_Condition": "ValueIs",
                 "args": [
                   {
-                    "_Player": "You"
+                    "_GameNumber": "TheNumberOfCountersPlayersHavePutOnPermanentsThisTurn",
+                    "args": [
+                      {
+                        "_Players": "SinglePlayer",
+                        "args": {
+                          "_Player": "You"
+                        }
+                      },
+                      {
+                        "_Permanents": "SinglePermanent",
+                        "args": {
+                          "_Permanent": "ThisPermanent"
+                        }
+                      }
+                    ]
                   },
                   {
-                    "_Players": "HasPutACounterOnAPermanentThisTurn",
+                    "_Comparison": "GreaterThanOrEqualTo",
                     "args": {
-                      "_Permanents": "SinglePermanent",
-                      "args": {
-                        "_Permanent": "ThisPermanent"
-                      }
+                      "_GameNumber": "Integer",
+                      "args": 1
                     }
                   }
                 ]
@@ -10699,7 +10809,7 @@
                     "_Action": "PutCounters",
                     "args": [
                       {
-                        "_PutCounterAction": "NumberCountersOfTypeOnEachPermanent",
+                        "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                         "args": [
                           {
                             "_GameNumber": "Integer",
@@ -10873,7 +10983,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -11056,34 +11166,39 @@
               "_Actions": "ActionList",
               "args": [
                 {
-                  "_Action": "PutNumberCountersOfTypeOnEachPermanent",
+                  "_Action": "PutCounters",
                   "args": [
                     {
-                      "_GameNumber": "Integer",
-                      "args": 2
-                    },
-                    {
-                      "_CounterType": "PTCounter",
-                      "args": [
-                        1,
-                        1
-                      ]
-                    },
-                    {
-                      "_Permanents": "And",
+                      "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                       "args": [
                         {
-                          "_Permanents": "IsCardtype",
-                          "args": "Creature"
+                          "_GameNumber": "Integer",
+                          "args": 2
                         },
                         {
-                          "_Permanents": "ControlledByAPlayer",
-                          "args": {
-                            "_Players": "SinglePlayer",
-                            "args": {
-                              "_Player": "You"
+                          "_CounterType": "PTCounter",
+                          "args": [
+                            1,
+                            1
+                          ]
+                        },
+                        {
+                          "_Permanents": "And",
+                          "args": [
+                            {
+                              "_Permanents": "IsCardtype",
+                              "args": "Creature"
+                            },
+                            {
+                              "_Permanents": "ControlledByAPlayer",
+                              "args": {
+                                "_Players": "SinglePlayer",
+                                "args": {
+                                  "_Player": "You"
+                                }
+                              }
                             }
-                          }
+                          ]
                         }
                       ]
                     }
@@ -11218,7 +11333,7 @@
                       {
                         "_Target": "TargetGraveyardCard",
                         "args": {
-                          "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                          "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                         }
                       }
                     ],
@@ -11228,7 +11343,7 @@
                         {
                           "_Action": "ExileGraveyardCard",
                           "args": {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           }
                         },
                         {
@@ -11430,17 +11545,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       }
@@ -11664,7 +11784,7 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "IsCardtype",
+                        "_CardsInGraveyards": "IsCardtype",
                         "args": "Creature"
                       }
                     }
@@ -11676,7 +11796,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -11693,7 +11813,7 @@
                         "args": {
                           "_GameNumber": "ManaValueOfGraveyardCard",
                           "args": {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           }
                         }
                       }
@@ -12103,32 +12223,42 @@
                   "_Actions": "ActionList",
                   "args": [
                     {
-                      "_Action": "PutACounterOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "ACounterOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     },
                     {
-                      "_Action": "DoubleCountersOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "DoubleCountersOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     }
@@ -12221,7 +12351,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -12260,17 +12390,22 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       }
@@ -12612,7 +12747,7 @@
                           {
                             "_Exilable": "AGraveyardCard",
                             "args": {
-                              "_CardsInGraveyard": "InAPlayersGraveyard",
+                              "_CardsInGraveyards": "InAPlayersGraveyard",
                               "args": {
                                 "_Players": "SinglePlayer",
                                 "args": {
@@ -12749,13 +12884,18 @@
                       }
                     },
                     {
-                      "_Action": "PutACounterOfTypeOnEachPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "StunCounter"
-                        },
-                        {
-                          "_Permanents": "ThePermanentsTappedThisWay"
+                          "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
+                          "args": [
+                            {
+                              "_CounterType": "StunCounter"
+                            },
+                            {
+                              "_Permanents": "ThePermanentsTappedThisWay"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -14073,33 +14213,38 @@
                     ]
                   },
                   {
-                    "_Action": "PutNumberCountersOfTypeOnEachPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_GameNumber": "ValueX"
-                      },
-                      {
-                        "_CounterType": "PTCounter",
-                        "args": [
-                          1,
-                          1
-                        ]
-                      },
-                      {
-                        "_Permanents": "And",
+                        "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                         "args": [
                           {
-                            "_Permanents": "IsCreatureType",
-                            "args": "Fractal"
+                            "_GameNumber": "ValueX"
                           },
                           {
-                            "_Permanents": "ControlledByAPlayer",
-                            "args": {
-                              "_Players": "SinglePlayer",
-                              "args": {
-                                "_Player": "You"
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanents": "And",
+                            "args": [
+                              {
+                                "_Permanents": "IsCreatureType",
+                                "args": "Fractal"
+                              },
+                              {
+                                "_Permanents": "ControlledByAPlayer",
+                                "args": {
+                                  "_Players": "SinglePlayer",
+                                  "args": {
+                                    "_Player": "You"
+                                  }
+                                }
                               }
-                            }
+                            ]
                           }
                         ]
                       }
@@ -14406,7 +14551,7 @@
                           {
                             "_Action": "ReturnGraveyardCardToHand",
                             "args": {
-                              "_GraveyardCard": "ThisGraveyardCard"
+                              "_CardInGraveyards": "ThisGraveyardCard"
                             }
                           }
                         ]
@@ -14463,7 +14608,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -14534,21 +14679,26 @@
                         "_Action": "MillACard"
                       },
                       {
-                        "_Action": "PutNumberCountersOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_GameNumber": "Integer",
-                            "args": 2
-                          },
-                          {
-                            "_CounterType": "PTCounter",
+                            "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                             "args": [
-                              1,
-                              1
+                              {
+                                "_GameNumber": "Integer",
+                                "args": 2
+                              },
+                              {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
                             ]
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
                           }
                         ]
                       },
@@ -14826,17 +14976,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -15182,14 +15337,14 @@
                   {
                     "_Exilable": "AGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "IsCardtype",
+                          "_CardsInGraveyards": "IsCardtype",
                           "args": "Creature"
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -15385,26 +15540,26 @@
                       {
                         "_Target": "TargetGraveyardCard",
                         "args": {
-                          "_CardsInGraveyard": "And",
+                          "_CardsInGraveyards": "And",
                           "args": [
                             {
-                              "_CardsInGraveyard": "And",
+                              "_CardsInGraveyards": "And",
                               "args": [
                                 {
-                                  "_CardsInGraveyard": "Or",
+                                  "_CardsInGraveyards": "Or",
                                   "args": [
                                     {
-                                      "_CardsInGraveyard": "IsCardtype",
+                                      "_CardsInGraveyards": "IsCardtype",
                                       "args": "Artifact"
                                     },
                                     {
-                                      "_CardsInGraveyard": "IsCardtype",
+                                      "_CardsInGraveyards": "IsCardtype",
                                       "args": "Creature"
                                     }
                                   ]
                                 },
                                 {
-                                  "_CardsInGraveyard": "ManaValueIs",
+                                  "_CardsInGraveyards": "ManaValueIs",
                                   "args": {
                                     "_Comparison": "LessThanOrEqualTo",
                                     "args": {
@@ -15416,7 +15571,7 @@
                               ]
                             },
                             {
-                              "_CardsInGraveyard": "InAPlayersGraveyard",
+                              "_CardsInGraveyards": "InAPlayersGraveyard",
                               "args": {
                                 "_Players": "SinglePlayer",
                                 "args": {
@@ -15435,7 +15590,7 @@
                           "_Action": "PutGraveyardCardOntoBattlefield",
                           "args": [
                             {
-                              "_GraveyardCard": "Ref_TargetGraveyardCard"
+                              "_CardInGraveyards": "Ref_TargetGraveyardCard"
                             },
                             [
                               {
@@ -15936,17 +16091,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -17238,17 +17398,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   },
@@ -17385,22 +17550,22 @@
                         {
                           "_Target": "TargetGraveyardCard",
                           "args": {
-                            "_CardsInGraveyard": "And",
+                            "_CardsInGraveyards": "And",
                             "args": [
                               {
-                                "_CardsInGraveyard": "And",
+                                "_CardsInGraveyards": "And",
                                 "args": [
                                   {
-                                    "_CardsInGraveyard": "IsNonCardtype",
+                                    "_CardsInGraveyards": "IsNonCardtype",
                                     "args": "Land"
                                   },
                                   {
-                                    "_CardsInGraveyard": "IsPermanent"
+                                    "_CardsInGraveyards": "IsPermanent"
                                   }
                                 ]
                               },
                               {
-                                "_CardsInGraveyard": "InAPlayersGraveyard",
+                                "_CardsInGraveyards": "InAPlayersGraveyard",
                                 "args": {
                                   "_Players": "SinglePlayer",
                                   "args": {
@@ -17419,7 +17584,7 @@
                             "_Action": "PutGraveyardCardOntoBattlefield",
                             "args": [
                               {
-                                "_GraveyardCard": "Ref_TargetGraveyardCard"
+                                "_CardInGraveyards": "Ref_TargetGraveyardCard"
                               },
                               [
                                 {
@@ -17592,14 +17757,14 @@
                     {
                       "_Target": "UptoOneTargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "ManaValueIs",
+                            "_CardsInGraveyards": "ManaValueIs",
                             "args": {
                               "_Comparison": "LessThanOrEqualTo",
                               "args": {
@@ -17611,7 +17776,7 @@
                             }
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -17630,7 +17795,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -17943,30 +18108,35 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnEachPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
-                        "args": [
-                          1,
-                          1
-                        ]
-                      },
-                      {
-                        "_Permanents": "And",
+                        "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
                         "args": [
                           {
-                            "_Permanents": "IsCardtype",
-                            "args": "Creature"
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
                           },
                           {
-                            "_Permanents": "ControlledByAPlayer",
-                            "args": {
-                              "_Players": "SinglePlayer",
-                              "args": {
-                                "_Player": "You"
+                            "_Permanents": "And",
+                            "args": [
+                              {
+                                "_Permanents": "IsCardtype",
+                                "args": "Creature"
+                              },
+                              {
+                                "_Permanents": "ControlledByAPlayer",
+                                "args": {
+                                  "_Players": "SinglePlayer",
+                                  "args": {
+                                    "_Player": "You"
+                                  }
+                                }
                               }
-                            }
+                            ]
                           }
                         ]
                       }
@@ -18018,23 +18188,23 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "Or",
+                            "_CardsInGraveyards": "Or",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Instant"
                               },
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Sorcery"
                               }
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "Opponent"
                             }
@@ -18052,7 +18222,7 @@
                           {
                             "_Exilable": "GraveyardCard",
                             "args": {
-                              "_GraveyardCard": "Ref_TargetGraveyardCard"
+                              "_CardInGraveyards": "Ref_TargetGraveyardCard"
                             }
                           }
                         ]
@@ -18234,21 +18404,26 @@
                       },
                       [
                         {
-                          "_Action": "PutNumberCountersOfTypeOnPermanent",
+                          "_Action": "PutCounters",
                           "args": [
                             {
-                              "_GameNumber": "Integer",
-                              "args": 2
-                            },
-                            {
-                              "_CounterType": "PTCounter",
+                              "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                               "args": [
-                                1,
-                                1
+                                {
+                                  "_GameNumber": "Integer",
+                                  "args": 2
+                                },
+                                {
+                                  "_CounterType": "PTCounter",
+                                  "args": [
+                                    1,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "_Permanent": "ThatEnteringPermanent"
+                                }
                               ]
-                            },
-                            {
-                              "_Permanent": "ThatEnteringPermanent"
                             }
                           ]
                         }
@@ -18548,7 +18723,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -19043,17 +19218,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -19111,7 +19291,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -19832,23 +20012,23 @@
                         {
                           "_Exilable": "AGraveyardCard",
                           "args": {
-                            "_CardsInGraveyard": "And",
+                            "_CardsInGraveyards": "And",
                             "args": [
                               {
-                                "_CardsInGraveyard": "Or",
+                                "_CardsInGraveyards": "Or",
                                 "args": [
                                   {
-                                    "_CardsInGraveyard": "IsCardtype",
+                                    "_CardsInGraveyards": "IsCardtype",
                                     "args": "Instant"
                                   },
                                   {
-                                    "_CardsInGraveyard": "IsCardtype",
+                                    "_CardsInGraveyards": "IsCardtype",
                                     "args": "Sorcery"
                                   }
                                 ]
                               },
                               {
-                                "_CardsInGraveyard": "InAPlayersGraveyard",
+                                "_CardsInGraveyards": "InAPlayersGraveyard",
                                 "args": {
                                   "_Players": "SinglePlayer",
                                   "args": {
@@ -19870,7 +20050,7 @@
                       "_Action": "PutGraveyardCardOntoBattlefield",
                       "args": [
                         {
-                          "_GraveyardCard": "ThisGraveyardCard"
+                          "_CardInGraveyards": "ThisGraveyardCard"
                         },
                         [
                           {
@@ -20165,30 +20345,35 @@
                   "_Actions": "ActionList",
                   "args": [
                     {
-                      "_Action": "PutACounterOfTypeOnEachPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_CounterType": "PTCounter",
-                          "args": [
-                            1,
-                            1
-                          ]
-                        },
-                        {
-                          "_Permanents": "And",
+                          "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
                           "args": [
                             {
-                              "_Permanents": "IsCardtype",
-                              "args": "Creature"
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
                             },
                             {
-                              "_Permanents": "ControlledByAPlayer",
-                              "args": {
-                                "_Players": "SinglePlayer",
-                                "args": {
-                                  "_Player": "Ref_TargetPlayer"
+                              "_Permanents": "And",
+                              "args": [
+                                {
+                                  "_Permanents": "IsCardtype",
+                                  "args": "Creature"
+                                },
+                                {
+                                  "_Permanents": "ControlledByAPlayer",
+                                  "args": {
+                                    "_Players": "SinglePlayer",
+                                    "args": {
+                                      "_Player": "Ref_TargetPlayer"
+                                    }
+                                  }
                                 }
-                              }
+                              ]
                             }
                           ]
                         }
@@ -20306,23 +20491,23 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "And",
+                            "_CardsInGraveyards": "And",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsNonCardtype",
+                                "_CardsInGraveyards": "IsNonCardtype",
                                 "args": "Creature"
                               },
                               {
-                                "_CardsInGraveyard": "IsNonCardtype",
+                                "_CardsInGraveyards": "IsNonCardtype",
                                 "args": "Land"
                               }
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -20340,7 +20525,7 @@
                       {
                         "_Action": "ExileGraveyardCard",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       },
                       {
@@ -20430,20 +20615,20 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "And",
+                            "_CardsInGraveyards": "And",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsNonCardtype",
+                                "_CardsInGraveyards": "IsNonCardtype",
                                 "args": "Land"
                               },
                               {
-                                "_CardsInGraveyard": "IsPermanent"
+                                "_CardsInGraveyards": "IsPermanent"
                               },
                               {
-                                "_CardsInGraveyard": "ManaValueIs",
+                                "_CardsInGraveyards": "ManaValueIs",
                                 "args": {
                                   "_Comparison": "LessThanOrEqualTo",
                                   "args": {
@@ -20455,7 +20640,7 @@
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -20474,7 +20659,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -20792,19 +20977,24 @@
                       }
                     },
                     {
-                      "_Action": "PutNumberCountersOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_GameNumber": "Twice",
-                          "args": {
-                            "_GameNumber": "ValueX"
-                          }
-                        },
-                        {
-                          "_CounterType": "StunCounter"
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
+                          "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
+                          "args": [
+                            {
+                              "_GameNumber": "Twice",
+                              "args": {
+                                "_GameNumber": "ValueX"
+                              }
+                            },
+                            {
+                              "_CounterType": "StunCounter"
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -21251,14 +21441,14 @@
                         "args": 2
                       },
                       {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -21277,7 +21467,7 @@
                     {
                       "_Action": "PutEachGraveyardCardIntoHand",
                       "args": {
-                        "_CardsInGraveyard": "Ref_TargetGraveyardCards"
+                        "_CardsInGraveyards": "Ref_TargetGraveyardCards"
                       }
                     },
                     {
@@ -21904,7 +22094,7 @@
                                 "_Rule": "TriggerA",
                                 "args": [
                                   {
-                                    "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                                    "_Trigger": "WhenAPermanentDies",
                                     "args": {
                                       "_Permanents": "SinglePermanent",
                                       "args": {
@@ -22050,17 +22240,17 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "And",
+                            "_CardsInGraveyards": "And",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Creature"
                               },
                               {
-                                "_CardsInGraveyard": "ManaValueIs",
+                                "_CardsInGraveyards": "ManaValueIs",
                                 "args": {
                                   "_Comparison": "LessThanOrEqualTo",
                                   "args": {
@@ -22072,7 +22262,7 @@
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -22091,7 +22281,7 @@
                         "_Action": "PutGraveyardCardOntoBattlefield",
                         "args": [
                           {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           },
                           [
                             {
@@ -22299,13 +22489,18 @@
                         },
                         [
                           {
-                            "_Action": "PutACounterOfTypeOnPermanent",
+                            "_Action": "PutCounters",
                             "args": [
                               {
-                                "_CounterType": "StunCounter"
-                              },
-                              {
-                                "_Permanent": "Ref_TargetPermanent"
+                                "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                                "args": [
+                                  {
+                                    "_CounterType": "StunCounter"
+                                  },
+                                  {
+                                    "_Permanent": "Ref_TargetPermanent"
+                                  }
+                                ]
                               }
                             ]
                           }
@@ -22645,21 +22840,26 @@
                       ]
                     },
                     {
-                      "_Action": "PutNumberCountersOfTypeOnPermanent",
+                      "_Action": "PutCounters",
                       "args": [
                         {
-                          "_GameNumber": "Integer",
-                          "args": 2
-                        },
-                        {
-                          "_CounterType": "PTCounter",
+                          "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                           "args": [
-                            1,
-                            1
+                            {
+                              "_GameNumber": "Integer",
+                              "args": 2
+                            },
+                            {
+                              "_CounterType": "PTCounter",
+                              "args": [
+                                1,
+                                1
+                              ]
+                            },
+                            {
+                              "_Permanent": "Ref_TargetPermanent"
+                            }
                           ]
-                        },
-                        {
-                          "_Permanent": "Ref_TargetPermanent"
                         }
                       ]
                     }
@@ -22871,22 +23071,22 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "And",
+                          "_CardsInGraveyards": "And",
                           "args": [
                             {
-                              "_CardsInGraveyard": "IsNonCardtype",
+                              "_CardsInGraveyards": "IsNonCardtype",
                               "args": "Land"
                             },
                             {
-                              "_CardsInGraveyard": "IsPermanent"
+                              "_CardsInGraveyards": "IsPermanent"
                             }
                           ]
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -22905,7 +23105,7 @@
                       "_Action": "PutGraveyardCardOntoBattlefield",
                       "args": [
                         {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         },
                         [
                           {
@@ -23137,7 +23337,7 @@
                   {
                     "_Cost": "ExileAGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "InAPlayersGraveyard",
+                      "_CardsInGraveyards": "InAPlayersGraveyard",
                       "args": {
                         "_Players": "SinglePlayer",
                         "args": {
@@ -23859,17 +24059,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -23881,7 +24086,7 @@
             "_Rule": "TriggerI",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -23890,10 +24095,15 @@
                 }
               },
               {
-                "_Condition": "DeadPermanentPassesFilter",
-                "args": {
-                  "_Permanents": "HasACounter"
-                }
+                "_Condition": "PermanentPassesFilter",
+                "args": [
+                  {
+                    "_Permanent": "Trigger_ThatPermanent"
+                  },
+                  {
+                    "_Permanents": "HasACounter"
+                  }
+                ]
               },
               {
                 "_Actions": "Targeted",
@@ -23911,10 +24121,20 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutFormerCountersOnPermanent",
-                        "args": {
-                          "_Permanent": "Ref_TargetPermanent"
-                        }
+                        "_Action": "PutCounters",
+                        "args": [
+                          {
+                            "_PutCountersAction": "DuplicateCountersOfPermanentOnPermanent",
+                            "args": [
+                              {
+                                "_Permanent": "Trigger_ThatPermanent"
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -24452,21 +24672,26 @@
                       "_Actions": "ActionList",
                       "args": [
                         {
-                          "_Action": "PutNumberCountersOfTypeOnPermanent",
+                          "_Action": "PutCounters",
                           "args": [
                             {
-                              "_GameNumber": "Integer",
-                              "args": 2
-                            },
-                            {
-                              "_CounterType": "PTCounter",
+                              "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                               "args": [
-                                1,
-                                1
+                                {
+                                  "_GameNumber": "Integer",
+                                  "args": 2
+                                },
+                                {
+                                  "_CounterType": "PTCounter",
+                                  "args": [
+                                    1,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "_Permanent": "Ref_TargetPermanent"
+                                }
                               ]
-                            },
-                            {
-                              "_Permanent": "Ref_TargetPermanent"
                             }
                           ]
                         }
@@ -25050,23 +25275,28 @@
                   ]
                 },
                 {
-                  "_Action": "PutNumberCountersOfTypeOnEachPermanent",
+                  "_Action": "PutCounters",
                   "args": [
                     {
-                      "_GameNumber": "TheNumberOfColorsOfManaSpentToCastSpell",
-                      "args": {
-                        "_Spell": "ThisSpell"
-                      }
-                    },
-                    {
-                      "_CounterType": "PTCounter",
+                      "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                       "args": [
-                        1,
-                        1
+                        {
+                          "_GameNumber": "TheNumberOfColorsOfManaSpentToCastSpell",
+                          "args": {
+                            "_Spell": "ThisSpell"
+                          }
+                        },
+                        {
+                          "_CounterType": "PTCounter",
+                          "args": [
+                            1,
+                            1
+                          ]
+                        },
+                        {
+                          "_Permanents": "TheTokensCreatedThisWay"
+                        }
                       ]
-                    },
-                    {
-                      "_Permanents": "TheTokensCreatedThisWay"
                     }
                   ]
                 },
@@ -25363,7 +25593,7 @@
                         "args": 2
                       },
                       {
-                        "_CardsInGraveyard": "InAPlayersGraveyard",
+                        "_CardsInGraveyards": "InAPlayersGraveyard",
                         "args": {
                           "_Players": "SinglePlayer",
                           "args": {
@@ -25752,21 +25982,26 @@
                       },
                       [
                         {
-                          "_Action": "PutNumberCountersOfTypeOnPermanent",
+                          "_Action": "PutCounters",
                           "args": [
                             {
-                              "_GameNumber": "Integer",
-                              "args": 5
-                            },
-                            {
-                              "_CounterType": "PTCounter",
+                              "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                               "args": [
-                                1,
-                                1
+                                {
+                                  "_GameNumber": "Integer",
+                                  "args": 5
+                                },
+                                {
+                                  "_CounterType": "PTCounter",
+                                  "args": [
+                                    1,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "_Permanent": "ThisPermanent"
+                                }
                               ]
-                            },
-                            {
-                              "_Permanent": "ThisPermanent"
                             }
                           ]
                         }
@@ -25945,7 +26180,7 @@
               {
                 "_Trigger": "WhenAnyNumberOfGraveyardCardsLeave",
                 "args": {
-                  "_CardsInGraveyard": "InAPlayersGraveyard",
+                  "_CardsInGraveyards": "InAPlayersGraveyard",
                   "args": {
                     "_Players": "SinglePlayer",
                     "args": {
@@ -25958,17 +26193,22 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
                         "args": [
-                          1,
-                          1
+                          {
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
                         ]
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
                       }
                     ]
                   }
@@ -26463,7 +26703,7 @@
                     {
                       "_Target": "UptoOneTargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                        "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                       }
                     }
                   ],
@@ -26473,7 +26713,7 @@
                       {
                         "_Action": "ExileGraveyardCard",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -26603,23 +26843,23 @@
                             {
                               "_GameNumber": "TheNumberOfGraveyardCards",
                               "args": {
-                                "_CardsInGraveyard": "And",
+                                "_CardsInGraveyards": "And",
                                 "args": [
                                   {
-                                    "_CardsInGraveyard": "Or",
+                                    "_CardsInGraveyards": "Or",
                                     "args": [
                                       {
-                                        "_CardsInGraveyard": "IsCardtype",
+                                        "_CardsInGraveyards": "IsCardtype",
                                         "args": "Instant"
                                       },
                                       {
-                                        "_CardsInGraveyard": "IsCardtype",
+                                        "_CardsInGraveyards": "IsCardtype",
                                         "args": "Sorcery"
                                       }
                                     ]
                                   },
                                   {
-                                    "_CardsInGraveyard": "InAPlayersGraveyard",
+                                    "_CardsInGraveyards": "InAPlayersGraveyard",
                                     "args": {
                                       "_Players": "SinglePlayer",
                                       "args": {
@@ -26834,30 +27074,35 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnEachPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "PTCounter",
-                        "args": [
-                          1,
-                          1
-                        ]
-                      },
-                      {
-                        "_Permanents": "And",
+                        "_PutCountersAction": "ACounterOfTypeOnEachPermanent",
                         "args": [
                           {
-                            "_Permanents": "IsCardtype",
-                            "args": "Creature"
+                            "_CounterType": "PTCounter",
+                            "args": [
+                              1,
+                              1
+                            ]
                           },
                           {
-                            "_Permanents": "ControlledByAPlayer",
-                            "args": {
-                              "_Players": "SinglePlayer",
-                              "args": {
-                                "_Player": "You"
+                            "_Permanents": "And",
+                            "args": [
+                              {
+                                "_Permanents": "IsCardtype",
+                                "args": "Creature"
+                              },
+                              {
+                                "_Permanents": "ControlledByAPlayer",
+                                "args": {
+                                  "_Players": "SinglePlayer",
+                                  "args": {
+                                    "_Player": "You"
+                                  }
+                                }
                               }
-                            }
+                            ]
                           }
                         ]
                       }
@@ -26928,7 +27173,7 @@
                     {
                       "_Cost": "ExileGraveyardCard",
                       "args": {
-                        "_GraveyardCard": "ThisGraveyardCard"
+                        "_CardInGraveyards": "ThisGraveyardCard"
                       }
                     }
                   ]
@@ -27581,7 +27826,7 @@
                     {
                       "_Action": "ReturnGraveyardCardToHand",
                       "args": {
-                        "_GraveyardCard": "ThisGraveyardCard"
+                        "_CardInGraveyards": "ThisGraveyardCard"
                       }
                     }
                   ]
@@ -27711,7 +27956,7 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                        "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                       }
                     }
                   ],
@@ -27721,7 +27966,7 @@
                       {
                         "_Action": "PutGraveyardCardOnBottomOfLibrary",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -28225,38 +28470,48 @@
                       },
                       [
                         {
-                          "_Action": "PutNumberCountersOfTypeOnPermanent",
+                          "_Action": "PutCounters",
                           "args": [
                             {
-                              "_GameNumber": "Integer",
-                              "args": 5
-                            },
-                            {
-                              "_CounterType": "PTCounter",
+                              "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
                               "args": [
-                                1,
-                                1
+                                {
+                                  "_GameNumber": "Integer",
+                                  "args": 5
+                                },
+                                {
+                                  "_CounterType": "PTCounter",
+                                  "args": [
+                                    1,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "_Permanent": "ThisPermanent"
+                                }
                               ]
-                            },
-                            {
-                              "_Permanent": "ThisPermanent"
                             }
                           ]
                         }
                       ],
                       [
                         {
-                          "_Action": "PutACounterOfTypeOnPermanent",
+                          "_Action": "PutCounters",
                           "args": [
                             {
-                              "_CounterType": "PTCounter",
+                              "_PutCountersAction": "ACounterOfTypeOnPermanent",
                               "args": [
-                                1,
-                                1
+                                {
+                                  "_CounterType": "PTCounter",
+                                  "args": [
+                                    1,
+                                    1
+                                  ]
+                                },
+                                {
+                                  "_Permanent": "ThisPermanent"
+                                }
                               ]
-                            },
-                            {
-                              "_Permanent": "ThisPermanent"
                             }
                           ]
                         }
@@ -28484,7 +28739,7 @@
                       "_Action": "PutGraveyardCardOntoBattlefield",
                       "args": [
                         {
-                          "_GraveyardCard": "ThisGraveyardCard"
+                          "_CardInGraveyards": "ThisGraveyardCard"
                         },
                         [
                           {
@@ -28793,23 +29048,28 @@
                             "_Actions": "ActionList",
                             "args": [
                               {
-                                "_Action": "MoveNumberCountersOfTypeFromPermanentOntoAnotherPermanent",
+                                "_Action": "MoveCounters",
                                 "args": [
                                   {
-                                    "_GameNumber": "ValueX"
-                                  },
-                                  {
-                                    "_CounterType": "PTCounter",
+                                    "_MoveCountersAction": "NumberCountersOfTypeFromPermanentOntoNewPermanent",
                                     "args": [
-                                      1,
-                                      1
+                                      {
+                                        "_GameNumber": "ValueX"
+                                      },
+                                      {
+                                        "_CounterType": "PTCounter",
+                                        "args": [
+                                          1,
+                                          1
+                                        ]
+                                      },
+                                      {
+                                        "_Permanent": "ThisPermanent"
+                                      },
+                                      {
+                                        "_Permanent": "Ref_TargetPermanent"
+                                      }
                                     ]
-                                  },
-                                  {
-                                    "_Permanent": "ThisPermanent"
-                                  },
-                                  {
-                                    "_Permanent": "Ref_TargetPermanent"
                                   }
                                 ]
                               }
@@ -28948,23 +29208,23 @@
                 {
                   "_GameNumber": "TheNumberOfGraveyardCards",
                   "args": {
-                    "_CardsInGraveyard": "And",
+                    "_CardsInGraveyards": "And",
                     "args": [
                       {
-                        "_CardsInGraveyard": "Or",
+                        "_CardsInGraveyards": "Or",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Instant"
                           },
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Sorcery"
                           }
                         ]
                       },
                       {
-                        "_CardsInGraveyard": "InAPlayersGraveyard",
+                        "_CardsInGraveyards": "InAPlayersGraveyard",
                         "args": {
                           "_Players": "SinglePlayer",
                           "args": {
@@ -29000,23 +29260,23 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "Or",
+                            "_CardsInGraveyards": "Or",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Instant"
                               },
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Sorcery"
                               }
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -29036,7 +29296,7 @@
                         "args": {
                           "_Action": "CastGraveyardCardWithoutPayingIntoExile",
                           "args": {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           }
                         }
                       }
@@ -30657,7 +30917,7 @@
                   "_Action": "PutCounters",
                   "args": [
                     {
-                      "_PutCounterAction": "NumberCountersOfTypeOnEachPermanent",
+                      "_PutCountersAction": "NumberCountersOfTypeOnEachPermanent",
                       "args": [
                         {
                           "_GameNumber": "ValueX"
@@ -31460,23 +31720,23 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "Or",
+                            "_CardsInGraveyards": "Or",
                             "args": [
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Instant"
                               },
                               {
-                                "_CardsInGraveyard": "IsCardtype",
+                                "_CardsInGraveyards": "IsCardtype",
                                 "args": "Sorcery"
                               }
                             ]
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -31494,7 +31754,7 @@
                       {
                         "_Action": "PutGraveyardCardIntoHand",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]

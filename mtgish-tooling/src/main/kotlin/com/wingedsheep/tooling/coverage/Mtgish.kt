@@ -30,6 +30,12 @@ object Mtgish {
         // The replacement actions of a "next time you would draw …" effect (the Words cycle) reuse the
         // ordinary action vocabulary under this discriminator, so surface it to score their capability.
         "_ReplacementActionWouldDraw",
+        // The mtgish IR collapsed every put-counter action into a `PutCounters` envelope whose real shape
+        // lives in this nested discriminator (ACounterOfTypeOnPermanent, NumberCountersOfTypeOnEachPermanent,
+        // …). Surface it so the probe scores each variant — a put-counter variant we can't express keeps
+        // its card blocking instead of being hidden behind the always-yes envelope. (RemoveCounters /
+        // MoveCounters envelopes stay unmapped, so those cards block on the outer `_Action` as before.)
+        "_PutCountersAction",
     )
 
     fun ensureData() {

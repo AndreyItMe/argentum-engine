@@ -261,7 +261,7 @@ internal fun EmitCtx.discardAnyNumberThenDrawEffect(actions: List<JsonObject>): 
 /**
  * Render Speechless: `[PlayerAction(Ref_TargetPlayer,
  *                        RevealHandAndPlayerChoosesACardToDiscard(You, IsNonCardtype Land)),
- *                      PutNumberCountersOfTypeOnPermanent(2, PTCounter(1,1), Ref_TargetPermanent)]`
+ *                      PutCounters(NumberCountersOfTypeOnPermanent(2, PTCounter(1,1), Ref_TargetPermanent))]`
  * → the Divest-style targeted-discard pipeline (reveal target opponent's hand → controller chooses a
  *   nonland card → that player discards it) then `AddCountersEffect(+1/+1, 2, <creature>)`.
  *
@@ -291,9 +291,11 @@ internal fun EmitCtx.renderSpeechlessDiscardCountersEffect(actions: List<JsonObj
         filterNode["args"].asStr() == "Land"
     if (!isNonland) return null
 
-    // "Put two +1/+1 counters on up to one target creature."
-    if (counters.strField("_Action") != "PutNumberCountersOfTypeOnPermanent") return null
-    val counterArgs = counters["args"].asArr ?: return null
+    // "Put two +1/+1 counters on up to one target creature." The put-counter action is wrapped in a
+    // `PutCounters` envelope carrying a single `NumberCountersOfTypeOnPermanent` variant.
+    val counterVariant = singlePutCounterVariant(counters) ?: return null
+    if (counterVariant.strField("_PutCountersAction") != "NumberCountersOfTypeOnPermanent") return null
+    val counterArgs = counterVariant["args"].asArr ?: return null
     val count = findInteger(counterArgs.getOrNull(0)) as? Int ?: return null
     val counterType = counterTypeDsl(counterArgs.getOrNull(1)) ?: return null
     if (!jsonContains(counterArgs.getOrNull(2), "_Permanent", "Ref_TargetPermanent")) return null

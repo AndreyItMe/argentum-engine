@@ -134,132 +134,19 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
         call("TurnFaceUpEffect", arg(Lit(tgt)))
     }
 
-    on("PutFormerCountersOnPermanent") { _, args, tvar ->
-        // "put those counters on <permanent>" — the counters that were on a just-died permanent move
-        // to the target (Scolding Administrator's dies trigger). The arg is the destination permanent
-        // ref (a bound target). Renders Effects.MoveAllLastKnownCounters(target), which moves every
-        // counter kind off the dying source (not just +1/+1), matching the engine's behaviour.
-        val tgt = refTarget(args, tvar) ?: return@on null
-        call("Effects.MoveAllLastKnownCounters", arg(tgt))
-    }
-
-    on("PutACounterOfTypeOnPermanent") { _, args, tvar ->
-        // "Put a +1/+1 (or -1/-1) counter on <permanent>." or a named keyword counter ("a flying
-        // counter"). Only the bare ±1/±1 PTCounter and the keyword counters we name render; any other
-        // counter kind scaffolds rather than guess. The subject ref is self or the bound target.
-        val arr = args.asArr ?: return@on null
-        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
-        val tgt = refTarget(arr.getOrNull(1), tvar) ?: return@on null
-        call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", tgt))
-    }
-
-    on("PutACounterOfTypeOnEachPermanent") { _, args, _ ->
-        // "Put a +1/+1 counter on each <filter>." — the mass form of PutACounterOfTypeOnPermanent
-        // (Bounding Felidar's "each other creature you control"). IR args are [<CounterType>, <filter>].
-        // Render as ForEachInGroup(AddCountersEffect(..., Self)) over the recovered group filter; the
-        // same named-counter restriction applies, and an unrenderable filter declines (-> SCAFFOLD).
-        val arr = args.asArr ?: return@on null
-        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
-        val filter = groupFilterExpr(arr.getOrNull(1)) ?: return@on null
-        call(
-            "Effects.ForEachInGroup", arg(filter),
-            arg(call("AddCountersEffect", arg(Lit(counter)), arg("1"), arg("EffectTarget.Self"))),
-        )
-    }
-
-    on("DoubleCountersOfTypeOnPermanent") { _, args, tvar ->
-        // "Double the number of +1/+1 counters on <permanent>." (Ornery Tumblewagg's saddled attack.)
-        // IR args are [<CounterType>, <permanent ref>]. Reads the current count and adds that many more
-        // via Effects.DoubleCounters. Only the named ±1/±1 / keyword counters render (same restriction as
-        // the put-a-counter handlers); the subject is self or the bound target.
-        val arr = args.asArr ?: return@on null
-        val counter = counterTypeDsl(arr.getOrNull(0)) ?: return@on null
-        val tgt = refTarget(arr.getOrNull(1), tvar) ?: return@on null
-        call("Effects.DoubleCounters", arg(Lit(counter)), arg(Lit(tgt)))
-    }
-
-    on("PutNumberCountersOfTypeOnPermanent") { _, args, tvar ->
-        // "Put N +1/+1 (or -1/-1) counters on <permanent>." — the plural form of
-        // PutACounterOfTypeOnPermanent. IR args are [<N>, <counterType>, <permanent ref>]. Only the
-        // bare ±1/±1 PTCounter and the keyword counters we name render; any other counter kind
-        // scaffolds rather than guess.
-        val arr = args.asArr ?: return@on null
-        val counter = counterTypeDsl(arr.getOrNull(1)) ?: return@on null
-        val tgt = refTarget(arr.getOrNull(2), tvar) ?: return@on null
-        // A fixed integer N renders through the static AddCountersEffect.
-        (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
-            return@on call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
-        }
-        // A derived count (e.g. "X +1/+1 counters, where X is the number of cards you've drawn this
-        // turn" — Fractal Anomaly) renders through Effects.AddDynamicCounters with the recovered
-        // DynamicAmount. Decline if the amount isn't one we can render exactly.
-        val amount = dynamicAmount(arr.getOrNull(0)) ?: return@on null
-        call(
-            "Effects.AddDynamicCounters",
-            arg("counterType", counter),
-            arg("amount", Lit(amount)),
-            arg("target", tgt),
-        )
-    }
-
-    on("PutNumberCountersOfTypeOnEachPermanent") { _, args, _ ->
-        // "Put N <counter> counters on <permanents>." — the mass / dynamic-count form. IR args are
-        // [<amount>, <counterType>, <permanents>]. The only recipient we render here is the just-created
-        // token(s) (`TheTokensCreatedThisWay` -> the CREATED_TOKENS pipeline slot, Outlaw Stitcher: "put two
-        // +1/+1 counters on that token for each spell …"); a real "each <group>" filter would need a
-        // ForEach over the group, which this handler deliberately leaves to scaffold. The amount may be
-        // dynamic, so render through AddDynamicCounters with the recovered DynamicAmount. Only the named
-        // ±1/±1 / keyword counters render; an unrenderable amount or non-token recipient declines.
-        val arr = args.asArr ?: return@on null
-        val counter = counterTypeDsl(arr.getOrNull(1)) ?: return@on null
-        val recipient = arr.getOrNull(2)
-        val target = createdTokensTarget(recipient)
-        if (target != null) {
-            // Recipient is the just-created token(s) (`TheTokensCreatedThisWay` -> CREATED_TOKENS slot,
-            // Outlaw Stitcher / Fractal Tender). A fixed integer count renders through the static
-            // AddCountersEffect (matching the singular PutNumberCountersOfTypeOnPermanent handler); a
-            // derived count (Outlaw Stitcher's "two per spell cast this turn") through AddDynamicCounters.
-            (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
-                return@on call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", target))
-            }
-            val amount = dynamicAmount(arr.getOrNull(0)) ?: return@on null
-            return@on call(
-                "Effects.AddDynamicCounters",
-                arg("counterType", counter),
-                arg("amount", Lit(amount)),
-                arg("target", target),
-            )
-        }
-        // A real "each <group> you control" recipient (Germination Practicum: "put two +1/+1
-        // counters on each creature you control"). Render a ForEachInGroup over the recovered
-        // GroupFilter, putting the counters on each iterated permanent (EffectTarget.Self). Decline
-        // (-> SCAFFOLD) if the group filter or the count isn't one we can render exactly, rather than
-        // widen the effect to the whole battlefield.
-        val groupFilter = groupFilterExpr(recipient) ?: return@on null
-        val perEntity = (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
-            call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", "EffectTarget.Self"))
-        } ?: run {
-            val amount = dynamicAmount(arr.getOrNull(0)) ?: return@on null
-            call(
-                "Effects.AddDynamicCounters",
-                arg("counterType", counter),
-                arg("amount", Lit(amount)),
-                arg("target", "EffectTarget.Self"),
-            )
-        }
-        call("Effects.ForEachInGroup", arg(groupFilter), arg(perEntity))
-    }
-
     on("PutCounters") { _, args, tvar ->
-        // mtgish's token-creation cleanup wraps the put-counter actions in a `PutCounters` envelope whose
-        // single arg carries the real action under `_PutCounterAction` (Fractal Tender: "create a 0/0
-        // Fractal, then put three +1/+1 counters on it" -> PutCounters(NumberCountersOfTypeOnEachPermanent
-        // (3, +1/+1, TheTokensCreatedThisWay))). Unwrap and re-dispatch to the matching top-level
-        // `Put<variant>` handler (the variant name is the action name minus the `Put` prefix) with the
-        // inner args; a variant with no handler declines -> SCAFFOLD.
-        val inner = args.asArr?.firstOrNull() as? JsonObject ?: return@on null
-        val variant = inner.strField("_PutCounterAction") ?: return@on null
-        ACTION_HANDLERS["Put$variant"]?.invoke(this, inner, inner["args"], tvar)
+        // The mtgish IR routes EVERY put-counter action through a `PutCounters` envelope whose `args` is
+        // a LIST of `_PutCountersAction` variant nodes (the old top-level `PutACounterOfTypeOnPermanent`
+        // / `PutNumberCountersOfTypeOnPermanent` / … actions no longer exist; the `Put` prefix is dropped
+        // and each shape moves under `_PutCountersAction`). Most cards carry one variant; a few list
+        // several ("put a +1/+1 counter on A and a +1/+1 counter on B"). Render each via
+        // [renderPutCountersVariant] and compose; if ANY variant can't render exactly the whole card
+        // declines -> SCAFFOLD rather than silently drop a counter placement.
+        val list = args.asArr ?: return@on null
+        val variants = list.mapNotNull { it as? JsonObject }
+        if (variants.size != list.size || variants.isEmpty()) return@on null
+        val dsls = variants.map { renderPutCountersVariant(it, tvar) ?: return@on null }
+        if (dsls.size == 1) dsls[0] else Composite(dsls)
     }
 
     on("CreateReplaceWouldPutCountersUntil") { node, _, _ ->
@@ -386,6 +273,115 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
     }
 }
 
+/** The sole `_PutCountersAction` variant node inside a `PutCounters` envelope action, or null when the
+ *  action isn't a `PutCounters` carrying exactly one variant. Lets a recogniser that used to match a
+ *  top-level put-counter `_Action` (now wrapped in the envelope) inspect the inner variant + its args. */
+internal fun singlePutCounterVariant(action: JsonObject?): JsonObject? {
+    if (action?.strField("_Action") != "PutCounters") return null
+    return action["args"].asArr?.singleOrNull() as? JsonObject
+}
+
+/**
+ * One `_PutCountersAction` variant inside a `PutCounters` envelope -> its Effect DSL, or null so the
+ * caller declines (-> SCAFFOLD). The mtgish IR collapsed the old per-shape put-counter actions
+ * (`PutACounterOfTypeOnPermanent`, `PutNumberCountersOfTypeOnPermanent`, `PutACounterOfTypeOnEachPermanent`,
+ * …) into this single envelope carrying a list of variants (the `Put` prefix dropped, the shape moved
+ * under `_PutCountersAction`). Only the variants the engine expresses exactly render — the same
+ * named-counter restriction ([counterTypeDsl]) and exact target/filter recovery apply, and any
+ * unrenderable counter kind, amount, target, or filter declines rather than guess.
+ */
+internal fun EmitCtx.renderPutCountersVariant(inner: JsonObject, tvar: String?): Dsl? {
+    val args = inner["args"]
+    return when (inner.strField("_PutCountersAction")) {
+        // "Put a +1/+1 (or -1/-1) counter on <permanent>." or a named keyword counter. args =
+        // [<CounterType>, <permanent ref>]. The subject ref is self or the bound target.
+        "ACounterOfTypeOnPermanent" -> {
+            val arr = args.asArr ?: return null
+            val counter = counterTypeDsl(arr.getOrNull(0)) ?: return null
+            val tgt = refTarget(arr.getOrNull(1), tvar) ?: return null
+            call("AddCountersEffect", arg("counterType", counter), arg("count", "1"), arg("target", tgt))
+        }
+        // "Put N <counter> counters on <permanent>." args = [<N>, <counterType>, <permanent ref>]. A fixed
+        // integer renders through the static AddCountersEffect; a derived count (e.g. "X +1/+1 counters,
+        // where X is the number of cards you've drawn this turn" — Fractal Anomaly) through
+        // Effects.AddDynamicCounters with the recovered DynamicAmount.
+        "NumberCountersOfTypeOnPermanent" -> {
+            val arr = args.asArr ?: return null
+            val counter = counterTypeDsl(arr.getOrNull(1)) ?: return null
+            val tgt = refTarget(arr.getOrNull(2), tvar) ?: return null
+            (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
+                return call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", tgt))
+            }
+            val amount = dynamicAmount(arr.getOrNull(0)) ?: return null
+            call("Effects.AddDynamicCounters", arg("counterType", counter), arg("amount", Lit(amount)), arg("target", tgt))
+        }
+        // "Put a +1/+1 counter on each <filter>." — the mass form (Bounding Felidar's "each other creature
+        // you control"). args = [<CounterType>, <filter>]. Render as ForEachInGroup(AddCountersEffect(...,
+        // Self)) over the recovered group filter; an unrenderable filter declines.
+        "ACounterOfTypeOnEachPermanent" -> {
+            val arr = args.asArr ?: return null
+            val counter = counterTypeDsl(arr.getOrNull(0)) ?: return null
+            val filter = groupFilterExpr(arr.getOrNull(1)) ?: return null
+            call(
+                "Effects.ForEachInGroup", arg(filter),
+                arg(call("AddCountersEffect", arg(Lit(counter)), arg("1"), arg("EffectTarget.Self"))),
+            )
+        }
+        // "Put N <counter> counters on <permanents>." — the mass / dynamic-count form. args = [<amount>,
+        // <counterType>, <permanents>].
+        "NumberCountersOfTypeOnEachPermanent" -> renderNumberCountersOnEach(args.asArr)
+        // "Double the number of <counter> counters on <permanent>." (Ornery Tumblewagg's saddled attack.)
+        // args = [<CounterType>, <permanent ref>]. Reads the current count and adds that many more.
+        "DoubleCountersOfTypeOnPermanent" -> {
+            val arr = args.asArr ?: return null
+            val counter = counterTypeDsl(arr.getOrNull(0)) ?: return null
+            val tgt = refTarget(arr.getOrNull(1), tvar) ?: return null
+            call("Effects.DoubleCounters", arg(Lit(counter)), arg(Lit(tgt)))
+        }
+        // "Put those counters on <permanent>." — a just-died permanent's counters move to the target
+        // (Scolding Administrator's dies trigger). mtgish models this as a "duplicate the source's
+        // counters onto the destination" with args = [<source ref>, <destination ref>]; for a DYING
+        // source (Trigger_ThatPermanent) duplicating its last-known counters IS a move, which
+        // Effects.MoveAllLastKnownCounters performs (every counter kind, not just +1/+1). Only the
+        // dying-source shape renders; a living source (a genuine "copy a counter" effect) declines.
+        "DuplicateCountersOfPermanentOnPermanent" -> {
+            val arr = args.asArr ?: return null
+            if (!jsonContains(arr.getOrNull(0), "_Permanent", "Trigger_ThatPermanent")) return null
+            val tgt = refTarget(arr.getOrNull(1), tvar) ?: return null
+            call("Effects.MoveAllLastKnownCounters", arg(tgt))
+        }
+        else -> null
+    }
+}
+
+/** The `NumberCountersOfTypeOnEachPermanent` put-counter variant body — args = [<amount>, <counterType>,
+ *  <permanents>]. The recipient is either the just-created token(s) (`TheTokensCreatedThisWay` -> the
+ *  CREATED_TOKENS pipeline slot, Outlaw Stitcher / Fractal Tender) or a real "each <group> you control"
+ *  filter (Germination Practicum). The amount may be a fixed int (static AddCountersEffect) or a dynamic
+ *  count (AddDynamicCounters). Only the named ±1/±1 / keyword counters render; an unrenderable amount,
+ *  recipient, or group filter declines (-> the caller scaffolds) rather than widen the effect. */
+private fun EmitCtx.renderNumberCountersOnEach(arr: JsonArray?): Dsl? {
+    arr ?: return null
+    val counter = counterTypeDsl(arr.getOrNull(1)) ?: return null
+    val recipient = arr.getOrNull(2)
+    val target = createdTokensTarget(recipient)
+    if (target != null) {
+        (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
+            return call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", target))
+        }
+        val amount = dynamicAmount(arr.getOrNull(0)) ?: return null
+        return call("Effects.AddDynamicCounters", arg("counterType", counter), arg("amount", Lit(amount)), arg("target", target))
+    }
+    val groupFilter = groupFilterExpr(recipient) ?: return null
+    val perEntity = (findInteger(arr.getOrNull(0)) as? Int)?.let { count ->
+        call("AddCountersEffect", arg("counterType", counter), arg("count", "$count"), arg("target", "EffectTarget.Self"))
+    } ?: run {
+        val amount = dynamicAmount(arr.getOrNull(0)) ?: return null
+        call("Effects.AddDynamicCounters", arg("counterType", counter), arg("amount", Lit(amount)), arg("target", "EffectTarget.Self"))
+    }
+    return call("Effects.ForEachInGroup", arg(groupFilter), arg(perEntity))
+}
+
 /** A mtgish `_CounterType` node -> the `Counters.*` constant the AddCountersEffect facade takes, or null
  *  for a counter kind we can't name (-> the caller scaffolds rather than guess). Shared by every "put a
  *  counter" handler (single / N / each). Only the bare ±1/±1 PTCounter, modeled keyword counters, and
@@ -440,7 +436,7 @@ internal fun counterTypeDsl(counterNode: JsonElement?): String? {
  * approximation). The IR args are `[<replacable-event>, [<replacement-action>], <expiration>]`:
  *  - replacable event: `APlayerWouldPutAnyNumberOfCountersOfTypeOnAPermanent(SinglePlayer(You),
  *    PTCounter(1,1), And(IsCardtype Creature, ControlledByAPlayer(SinglePlayer(You))))`.
- *  - replacement: `PutNewAmount(Plus(WouldPutCounters_NumberOfCounters, Integer N))` with `N >= 1`.
+ *  - replacement: `PutNewAmount(Plus(ThatManyCounters, Integer N))` with `N >= 1`.
  *  - expiration: `UntilEndOfTurn`.
  * Anything else (other counter type, other player scope, a recipient that isn't "a creature you
  * control", a non-EOT expiration, or a replacement that isn't "the placed count plus a fixed N")
@@ -494,7 +490,7 @@ private fun grantCounterPlacementModifierAmount(node: JsonObject): Int? {
     val plusArgs = plus["args"].asArr ?: return null
     if (plusArgs.size != 2) return null
     val base = plusArgs.getOrNull(0) as? JsonObject
-    if (base?.strField("_GameNumber") != "WouldPutCounters_NumberOfCounters") return null
+    if (base?.strField("_GameNumber") != "ThatManyCounters") return null
     val addend = plusArgs.getOrNull(1) as? JsonObject
     if (addend?.strField("_GameNumber") != "Integer") return null
     val n = addend.field("args").asInt() ?: return null

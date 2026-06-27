@@ -7058,7 +7058,7 @@ val PlagueBoiler = card("Plague Boiler") {
     colorIdentity = "BG"
     typeLine = "Artifact"
     oracleText = "At the beginning of your upkeep, put a plague counter on this artifact.\n{1}{B}{G}: Put a plague counter on this artifact or remove a plague counter from it.\nWhen this artifact has three or more plague counters on it, sacrifice it. If you do, destroy all nonland permanents."
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "269"

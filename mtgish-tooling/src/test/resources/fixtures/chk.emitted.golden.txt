@@ -608,7 +608,7 @@ val BloodthirstyOgre = card("Bloodthirsty Ogre") {
     oracleText = "{T}: Put a devotion counter on this creature.\n{T}: Target creature gets -X/-X until end of turn, where X is the number of devotion counters on this creature. Activate only if you control a Demon."
     power = 3
     toughness = 1
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.UNCOMMON
         collectorNumber = "104"
@@ -3892,7 +3892,7 @@ val JuganTheRisingStar = card("Jugan, the Rising Star") {
     power = 5
     toughness = 5
     keywords(Keyword.FLYING)
-    // STRUCTURE needs human wiring: PutDistributedCounters
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "217"
@@ -7146,7 +7146,7 @@ val PiousKitsune = card("Pious Kitsune") {
     oracleText = "At the beginning of your upkeep, put a devotion counter on this creature. Then if a creature named Eight-and-a-Half-Tails is on the battlefield, you gain 1 life for each devotion counter on this creature.\n{T}, Remove a devotion counter from this creature: You gain 1 life."
     power = 1
     toughness = 2
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.COMMON
         collectorNumber = "38"

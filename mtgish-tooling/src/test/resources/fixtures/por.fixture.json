@@ -236,7 +236,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -250,7 +250,7 @@
                   {
                     "_Action": "ShuffleGraveyardCardIntoLibrary",
                     "args": {
-                      "_GraveyardCard": "Trigger_ThatGraveyardCard"
+                      "_CardInGraveyards": "Trigger_ThatGraveyardCard"
                     }
                   }
                 ]
@@ -1615,14 +1615,14 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "IsCardtype",
+                          "_CardsInGraveyards": "IsCardtype",
                           "args": "Creature"
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -1641,7 +1641,7 @@
                       "_Action": "PutGraveyardCardOntoBattlefield",
                       "args": [
                         {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         },
                         [
                           {
@@ -3622,14 +3622,14 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "IsCardtype",
+                          "_CardsInGraveyards": "IsCardtype",
                           "args": "Sorcery"
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -3647,7 +3647,7 @@
                     {
                       "_Action": "PutGraveyardCardIntoHand",
                       "args": {
-                        "_GraveyardCard": "Ref_TargetGraveyardCard"
+                        "_CardInGraveyards": "Ref_TargetGraveyardCard"
                       }
                     }
                   ]
@@ -3926,7 +3926,7 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "InAPlayersGraveyard",
+                      "_CardsInGraveyards": "InAPlayersGraveyard",
                       "args": {
                         "_Players": "SinglePlayer",
                         "args": {
@@ -3942,7 +3942,7 @@
                     {
                       "_Action": "PutGraveyardCardIntoHand",
                       "args": {
-                        "_GraveyardCard": "Ref_TargetGraveyardCard"
+                        "_CardInGraveyards": "Ref_TargetGraveyardCard"
                       }
                     }
                   ]
@@ -4034,7 +4034,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -4048,7 +4048,7 @@
                   {
                     "_Action": "PutGraveyardCardIntoHand",
                     "args": {
-                      "_GraveyardCard": "Trigger_ThatGraveyardCard"
+                      "_CardInGraveyards": "Trigger_ThatGraveyardCard"
                     }
                   }
                 ]
@@ -4595,7 +4595,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -5422,14 +5422,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCardtype",
+                            "_CardsInGraveyards": "IsCardtype",
                             "args": "Creature"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -5449,7 +5449,7 @@
                         "args": {
                           "_Action": "PutGraveyardCardIntoHand",
                           "args": {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           }
                         }
                       }
@@ -7952,7 +7952,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -9129,14 +9129,14 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "IsCardtype",
+                          "_CardsInGraveyards": "IsCardtype",
                           "args": "Creature"
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -9154,7 +9154,7 @@
                     {
                       "_Action": "PutGraveyardCardIntoHand",
                       "args": {
-                        "_GraveyardCard": "Ref_TargetGraveyardCard"
+                        "_CardInGraveyards": "Ref_TargetGraveyardCard"
                       }
                     }
                   ]
@@ -12003,7 +12003,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {

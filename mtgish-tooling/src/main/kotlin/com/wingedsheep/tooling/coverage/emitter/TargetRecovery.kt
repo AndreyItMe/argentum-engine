@@ -1079,7 +1079,7 @@ private fun graveyardFilter(base: Dsl, blob: String): Dsl {
 private fun List<JsonObject>.consumesOnlyTargetPlayer(): Boolean {
     val targetPlayer = any { jsonContains(it, "_Player", "Ref_TargetPlayer") }
     val targetPermanent = any { jsonContains(it, "_Permanent", "Ref_TargetPermanent") }
-    val targetGraveyardCard = any { jsonContains(it, "_GraveyardCard", "Ref_TargetGraveyardCard") }
+    val targetGraveyardCard = any { jsonContains(it, "_CardInGraveyards", "Ref_TargetGraveyardCard") }
     return targetPlayer && !targetPermanent && !targetGraveyardCard
 }
 

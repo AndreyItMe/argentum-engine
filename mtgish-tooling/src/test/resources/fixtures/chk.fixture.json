@@ -645,7 +645,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -1666,7 +1666,7 @@
                     {
                       "_Action": "ReturnGraveyardCardToHand",
                       "args": {
-                        "_GraveyardCard": "ThisGraveyardCard"
+                        "_CardInGraveyards": "ThisGraveyardCard"
                       }
                     }
                   ]
@@ -1730,13 +1730,18 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "DevotionCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                        "args": [
+                          {
+                            "_CounterType": "DevotionCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -1785,13 +1790,16 @@
                                   "_ModX": "MinusX"
                                 },
                                 {
-                                  "_GameNumber": "NumCountersOfTypeOnPermanent",
+                                  "_GameNumber": "TheTotalNumberOfCountersOfTypeAmongPermanents",
                                   "args": [
                                     {
                                       "_CounterType": "DevotionCounter"
                                     },
                                     {
-                                      "_Permanent": "ThisPermanent"
+                                      "_Permanents": "SinglePermanent",
+                                      "args": {
+                                        "_Permanent": "ThisPermanent"
+                                      }
                                     }
                                   ]
                                 }
@@ -3787,7 +3795,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -4345,7 +4353,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -4920,7 +4928,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -5464,7 +5472,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -6960,14 +6968,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsSpellType",
+                            "_CardsInGraveyards": "IsSpellType",
                             "args": "Arcane"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -6985,7 +6993,7 @@
                       {
                         "_Action": "PutGraveyardCardIntoHand",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -7135,13 +7143,18 @@
                           "_Actions": "ActionList",
                           "args": [
                             {
-                              "_Action": "PutACounterOfTypeOnPermanent",
+                              "_Action": "PutCounters",
                               "args": [
                                 {
-                                  "_CounterType": "AimCounter"
-                                },
-                                {
-                                  "_Permanent": "ThisGuest"
+                                  "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                                  "args": [
+                                    {
+                                      "_CounterType": "AimCounter"
+                                    },
+                                    {
+                                      "_Permanent": "ThisGuest"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -7167,13 +7180,18 @@
                               }
                             },
                             {
-                              "_Cost": "RemoveAllCountersOfTypeFromPermanent",
+                              "_Cost": "RemoveCounters",
                               "args": [
                                 {
-                                  "_CounterType": "AimCounter"
-                                },
-                                {
-                                  "_Permanent": "ThisGuest"
+                                  "_RemoveCountersCost": "AllCountersOfTypeFromPermanent",
+                                  "args": [
+                                    {
+                                      "_CounterType": "AimCounter"
+                                    },
+                                    {
+                                      "_Permanent": "ThisGuest"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -7197,7 +7215,7 @@
                                       "_Permanent": "ThisPermanent"
                                     },
                                     {
-                                      "_GameNumber": "NumberOfCountersRemovedThisWay"
+                                      "_GameNumber": "TheNumberOfCountersRemovedThisWay"
                                     },
                                     {
                                       "_DamageRecipient": "Ref_AnyTarget"
@@ -9395,7 +9413,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -9410,14 +9428,14 @@
                     {
                       "_Target": "AnyNumberOfTargetGraveyardCards",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsCreatureType",
+                            "_CardsInGraveyards": "IsCreatureType",
                             "args": "Spirit"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -9437,7 +9455,7 @@
                         "args": {
                           "_Cost": "ExileGraveyardCard",
                           "args": {
-                            "_GraveyardCard": "Trigger_ThatGraveyardCard"
+                            "_CardInGraveyards": "Trigger_ThatGraveyardCard"
                           }
                         }
                       },
@@ -9451,7 +9469,7 @@
                             {
                               "_Action": "PutEachGraveyardCardIntoHand",
                               "args": {
-                                "_CardsInGraveyard": "Ref_TargetGraveyardCards"
+                                "_CardsInGraveyards": "Ref_TargetGraveyardCards"
                               }
                             }
                           ]
@@ -10045,7 +10063,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -10084,14 +10102,19 @@
                       {
                         "_Action": "MayAction",
                         "args": {
-                          "_Action": "PutDistributedCounters",
-                          "args": {
-                            "_CounterType": "PTCounter",
-                            "args": [
-                              1,
-                              1
-                            ]
-                          }
+                          "_Action": "PutCounters",
+                          "args": [
+                            {
+                              "_PutCountersAction": "DistributedCounters",
+                              "args": {
+                                "_CounterType": "PTCounter",
+                                "args": [
+                                  1,
+                                  1
+                                ]
+                              }
+                            }
+                          ]
                         }
                       }
                     ]
@@ -11372,7 +11395,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -12432,7 +12455,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -14991,13 +15014,18 @@
             "_Rule": "Activated",
             "args": [
               {
-                "_Cost": "RemoveACounterOfTypeFromPermanent",
+                "_Cost": "RemoveCounters",
                 "args": [
                   {
-                    "_CounterType": "DivinityCounter"
-                  },
-                  {
-                    "_Permanent": "ThisPermanent"
+                    "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                    "args": [
+                      {
+                        "_CounterType": "DivinityCounter"
+                      },
+                      {
+                        "_Permanent": "ThisPermanent"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15155,13 +15183,18 @@
             "_Rule": "Activated",
             "args": [
               {
-                "_Cost": "RemoveACounterOfTypeFromPermanent",
+                "_Cost": "RemoveCounters",
                 "args": [
                   {
-                    "_CounterType": "DivinityCounter"
-                  },
-                  {
-                    "_Permanent": "ThisPermanent"
+                    "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                    "args": [
+                      {
+                        "_CounterType": "DivinityCounter"
+                      },
+                      {
+                        "_Permanent": "ThisPermanent"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15308,13 +15341,18 @@
             "_Rule": "Activated",
             "args": [
               {
-                "_Cost": "RemoveACounterOfTypeFromPermanent",
+                "_Cost": "RemoveCounters",
                 "args": [
                   {
-                    "_CounterType": "DivinityCounter"
-                  },
-                  {
-                    "_Permanent": "ThisPermanent"
+                    "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                    "args": [
+                      {
+                        "_CounterType": "DivinityCounter"
+                      },
+                      {
+                        "_Permanent": "ThisPermanent"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15468,13 +15506,18 @@
             "_Rule": "Activated",
             "args": [
               {
-                "_Cost": "RemoveACounterOfTypeFromPermanent",
+                "_Cost": "RemoveCounters",
                 "args": [
                   {
-                    "_CounterType": "DivinityCounter"
-                  },
-                  {
-                    "_Permanent": "ThisPermanent"
+                    "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                    "args": [
+                      {
+                        "_CounterType": "DivinityCounter"
+                      },
+                      {
+                        "_Permanent": "ThisPermanent"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15625,13 +15668,18 @@
             "_Rule": "Activated",
             "args": [
               {
-                "_Cost": "RemoveACounterOfTypeFromPermanent",
+                "_Cost": "RemoveCounters",
                 "args": [
                   {
-                    "_CounterType": "DivinityCounter"
-                  },
-                  {
-                    "_Permanent": "ThisPermanent"
+                    "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                    "args": [
+                      {
+                        "_CounterType": "DivinityCounter"
+                      },
+                      {
+                        "_Permanent": "ThisPermanent"
+                      }
+                    ]
                   }
                 ]
               },
@@ -16245,16 +16293,21 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutNumberCountersOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_GameNumber": "Trigger_ThatMuch"
-                      },
-                      {
-                        "_CounterType": "TheftCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_PutCountersAction": "NumberCountersOfTypeOnPermanent",
+                        "args": [
+                          {
+                            "_GameNumber": "Trigger_ThatMuch"
+                          },
+                          {
+                            "_CounterType": "TheftCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -16284,16 +16337,21 @@
                     ]
                   },
                   {
-                    "_Cost": "RemoveNumberCountersOfTypeFromPermanent",
+                    "_Cost": "RemoveCounters",
                     "args": [
                       {
-                        "_GameNumber": "ValueX"
-                      },
-                      {
-                        "_CounterType": "TheftCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_RemoveCountersCost": "NumberCountersOfTypeFromPermanent",
+                        "args": [
+                          {
+                            "_GameNumber": "ValueX"
+                          },
+                          {
+                            "_CounterType": "TheftCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -16725,7 +16783,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -17389,13 +17447,16 @@
                         "_CreatableToken": "NumberTokens",
                         "args": [
                           {
-                            "_GameNumber": "NumCountersOfTypeOnPermanent",
+                            "_GameNumber": "TheTotalNumberOfCountersOfTypeAmongPermanents",
                             "args": [
                               {
                                 "_CounterType": "ChargeCounter"
                               },
                               {
-                                "_Permanent": "ThisPermanent"
+                                "_Permanents": "SinglePermanent",
+                                "args": {
+                                  "_Permanent": "ThisPermanent"
+                                }
                               }
                             ]
                           },
@@ -18326,13 +18387,18 @@
                 "_Actions": "ActionList",
                 "args": [
                   {
-                    "_Action": "PutACounterOfTypeOnPermanent",
+                    "_Action": "PutCounters",
                     "args": [
                       {
-                        "_CounterType": "DevotionCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                        "args": [
+                          {
+                            "_CounterType": "DevotionCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   },
@@ -18372,13 +18438,16 @@
                               "args": 1
                             },
                             {
-                              "_GameNumber": "NumCountersOfTypeOnPermanent",
+                              "_GameNumber": "TheTotalNumberOfCountersOfTypeAmongPermanents",
                               "args": [
                                 {
                                   "_CounterType": "DevotionCounter"
                                 },
                                 {
-                                  "_Permanent": "ThisPermanent"
+                                  "_Permanents": "SinglePermanent",
+                                  "args": {
+                                    "_Permanent": "ThisPermanent"
+                                  }
                                 }
                               ]
                             }
@@ -18404,13 +18473,18 @@
                     }
                   },
                   {
-                    "_Cost": "RemoveACounterOfTypeFromPermanent",
+                    "_Cost": "RemoveCounters",
                     "args": [
                       {
-                        "_CounterType": "DevotionCounter"
-                      },
-                      {
-                        "_Permanent": "ThisPermanent"
+                        "_RemoveCountersCost": "ACounterOfTypeFromPermanent",
+                        "args": [
+                          {
+                            "_CounterType": "DevotionCounter"
+                          },
+                          {
+                            "_Permanent": "ThisPermanent"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -18758,7 +18832,7 @@
                           "args": 3
                         },
                         {
-                          "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                          "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                         },
                         {
                           "_GroupFilter": "ShareAGraveyard"
@@ -18772,7 +18846,7 @@
                       {
                         "_Action": "ExileEachGraveyardCard",
                         "args": {
-                          "_CardsInGraveyard": "Ref_TargetGraveyardCards"
+                          "_CardsInGraveyards": "Ref_TargetGraveyardCards"
                         }
                       }
                     ]
@@ -19033,7 +19107,7 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "AnyCardInAnyGraveyard"
+                        "_CardsInGraveyards": "AnyCardInAnyGraveyard"
                       }
                     }
                   ],
@@ -19043,7 +19117,7 @@
                       {
                         "_Action": "PutGraveyardCardOnBottomOfLibrary",
                         "args": {
-                          "_GraveyardCard": "Ref_TargetGraveyardCard"
+                          "_CardInGraveyards": "Ref_TargetGraveyardCard"
                         }
                       }
                     ]
@@ -19632,7 +19706,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -20317,13 +20391,18 @@
                     "_Actions": "ActionList",
                     "args": [
                       {
-                        "_Action": "PutACounterOfTypeOnPermanent",
+                        "_Action": "PutCounters",
                         "args": [
                           {
-                            "_CounterType": "SamuraiCounter"
-                          },
-                          {
-                            "_Permanent": "Ref_TargetPermanent"
+                            "_PutCountersAction": "ACounterOfTypeOnPermanent",
+                            "args": [
+                              {
+                                "_CounterType": "SamuraiCounter"
+                              },
+                              {
+                                "_Permanent": "Ref_TargetPermanent"
+                              }
+                            ]
                           }
                         ]
                       },
@@ -21494,7 +21573,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {
@@ -22917,14 +22996,14 @@
                   {
                     "_Target": "TargetGraveyardCard",
                     "args": {
-                      "_CardsInGraveyard": "And",
+                      "_CardsInGraveyards": "And",
                       "args": [
                         {
-                          "_CardsInGraveyard": "IsCardtype",
+                          "_CardsInGraveyards": "IsCardtype",
                           "args": "Creature"
                         },
                         {
-                          "_CardsInGraveyard": "InAPlayersGraveyard",
+                          "_CardsInGraveyards": "InAPlayersGraveyard",
                           "args": {
                             "_Players": "SinglePlayer",
                             "args": {
@@ -22942,7 +23021,7 @@
                     {
                       "_Action": "PutGraveyardCardIntoHand",
                       "args": {
-                        "_GraveyardCard": "Ref_TargetGraveyardCard"
+                        "_CardInGraveyards": "Ref_TargetGraveyardCard"
                       }
                     }
                   ]
@@ -23789,7 +23868,7 @@
                     "_Action": "CreateFutureTrigger",
                     "args": [
                       {
-                        "_FutureTrigger": "WhenACreatureOrPlaneswalkerDies",
+                        "_FutureTrigger": "WhenAPermanentDies",
                         "args": {
                           "_Permanents": "TheTokensCreatedThisWay"
                         }
@@ -24228,14 +24307,14 @@
                     {
                       "_Target": "TargetGraveyardCard",
                       "args": {
-                        "_CardsInGraveyard": "And",
+                        "_CardsInGraveyards": "And",
                         "args": [
                           {
-                            "_CardsInGraveyard": "IsSpellType",
+                            "_CardsInGraveyards": "IsSpellType",
                             "args": "Arcane"
                           },
                           {
-                            "_CardsInGraveyard": "InAPlayersGraveyard",
+                            "_CardsInGraveyards": "InAPlayersGraveyard",
                             "args": {
                               "_Players": "SinglePlayer",
                               "args": {
@@ -24255,7 +24334,7 @@
                         "args": {
                           "_Action": "PutGraveyardCardIntoHand",
                           "args": {
-                            "_GraveyardCard": "Ref_TargetGraveyardCard"
+                            "_CardInGraveyards": "Ref_TargetGraveyardCard"
                           }
                         }
                       }
@@ -26490,7 +26569,7 @@
             "_Rule": "TriggerA",
             "args": [
               {
-                "_Trigger": "WhenACreatureOrPlaneswalkerDies",
+                "_Trigger": "WhenAPermanentDies",
                 "args": {
                   "_Permanents": "SinglePermanent",
                   "args": {

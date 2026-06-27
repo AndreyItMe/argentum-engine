@@ -833,7 +833,7 @@ internal fun EmitCtx.deliriumConditionDsl(condNode: JsonElement?): String? {
 
 /**
  * "this permanent has N or more +1/+1 counters on it"
- * (`PermanentPassesFilter(ThisPermanent, HasNumCountersOfType(GreaterThanOrEqualTo Integer N,
+ * (`PermanentPassesFilter(ThisPermanent, HasNumberCountersOfType(GreaterThanOrEqualTo Integer N,
  * PTCounter(1,1)))`, Vadmir, New Blood) -> the `Conditions.SourceCounterCountAtLeast(
  * Counters.PLUS_ONE_PLUS_ONE, N)` DSL string, or null when the subject isn't ThisPermanent, the
  * comparison isn't `>= N`, or the counter isn't the bare ±1/±1 counter. Used by the [ifRuleBlock]
@@ -850,7 +850,7 @@ private fun EmitCtx.sourceCounterCountAtLeastConditionDsl(condNode: JsonElement?
     val args = cond["args"].asArr ?: return null
     if ((args.getOrNull(0) as? JsonObject)?.strField("_Permanent") != "ThisPermanent") return null
     val has = args.getOrNull(1) as? JsonObject ?: return null
-    if (has.strField("_Permanents") != "HasNumCountersOfType") return null
+    if (has.strField("_Permanents") != "HasNumberCountersOfType") return null
     val hArgs = has["args"].asArr ?: return null
     val comparison = hArgs.getOrNull(0) as? JsonObject ?: return null
     if (comparison.strField("_Comparison") != "GreaterThanOrEqualTo") return null
@@ -977,7 +977,7 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
     // Vadmir, New Blood: "As long as Vadmir has four or more +1/+1 counters on it, it has menace and
     //   lifelink." — same SELF gated-static shape, but the gate is a counter-count threshold and the
     //   layer effect carries *two* keyword grants:
-    //   If(PermanentPassesFilter(ThisPermanent, HasNumCountersOfType(>= 4, PTCounter(1,1))))
+    //   If(PermanentPassesFilter(ThisPermanent, HasNumberCountersOfType(>= 4, PTCounter(1,1))))
     //     [ PermanentLayerEffect(ThisPermanent, [ AddAbility(Menace), AddAbility(Lifelink) ]) ]
     // -> one ConditionalStaticAbility(GrantKeyword(kw, Filters.Self), SourceCounterCountAtLeast(+1/+1, 4))
     //    per granted keyword.
@@ -1047,7 +1047,7 @@ internal fun EmitCtx.ifRuleBlock(rule: JsonObject): List<Stmt>? {
     // -> the same gated lord, one row per layer effect, gated on Conditions.YouGainedLifeThisTurn.
     // Comforting Counsel: "As long as there are five or more growth counters on this enchantment,
     //   creatures you control get +3/+3."
-    //   If(PermanentPassesFilter(ThisPermanent, HasNumCountersOfType(>= 5, GrowthCounter)))
+    //   If(PermanentPassesFilter(ThisPermanent, HasNumberCountersOfType(>= 5, GrowthCounter)))
     //     [ EachPermanentLayerEffect(creatures you control, [AdjustPT(3,3)]) ]
     // -> the same gated lord, gated on Conditions.SourceCounterCountAtLeast(Counters.GROWTH, 5).
     // Only the "during YOUR turn", "you gained life this turn", or "N+ counters on this permanent"
@@ -1738,7 +1738,7 @@ internal fun linkedExileReturnTrigger(): List<Stmt> = listOf(
 
 private val TRIGGER_SPEC = mapOf(
     "WhenAPermanentEntersTheBattlefield" to "Triggers.EntersBattlefield",
-    "WhenACreatureOrPlaneswalkerDies" to "Triggers.Dies",
+    "WhenAPermanentDies" to "Triggers.Dies",
     "WhenACreatureAttacks" to "Triggers.Attacks",
     "WhenACreatureAttacksForTheFirstTimeEachTurn" to "Triggers.AttacksFirstTimeEachTurn",
     "WhenACreatureBlocks" to "Triggers.Blocks",
@@ -1820,14 +1820,14 @@ private fun EmitCtx.opusTriggerBlock(rule: JsonObject, oncePerTurn: Boolean, tri
     val elseActions = (ifArgs.getOrNull(2) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return null
     if (thenActions.isEmpty() || elseActions.isEmpty()) return null
 
-    // mtgish encodes the count on an Opus 5+ `PutNumberCountersOfTypeOnPermanent` bonus arm
-    // UNRELIABLY — it reuses the literal 5-mana threshold as the counter count rather than the
-    // printed value (verified wrong: Tackle Artist's IR says 5 where the oracle prints "two";
-    // Spectacular Skywhale's says 5 where the oracle prints "three"). We can't recover the true
-    // count from the IR, so decline this shape to SCAFFOLD rather than emit a confidently-wrong
+    // mtgish encodes the count on an Opus 5+ `NumberCountersOfTypeOnPermanent` bonus arm (now wrapped
+    // in a `PutCounters` envelope) UNRELIABLY — it reuses the literal 5-mana threshold as the counter
+    // count rather than the printed value (verified wrong: Tackle Artist's IR says 5 where the oracle
+    // prints "two"; Spectacular Skywhale's says 5 where the oracle prints "three"). We can't recover the
+    // true count from the IR, so decline this shape to SCAFFOLD rather than emit a confidently-wrong
     // counter count ("render correctly or decline — never emit a lossy approximation").
-    if ((thenActions as List<JsonObject>?).orEmpty().any {
-            it.strField("_Action") == "PutNumberCountersOfTypeOnPermanent"
+    if (thenActions.orEmpty().any {
+            singlePutCounterVariant(it)?.strField("_PutCountersAction") == "NumberCountersOfTypeOnPermanent"
         }
     ) {
         reasons.add("opus-counter-count")
@@ -1863,7 +1863,7 @@ private fun EmitCtx.opusTriggerBlock(rule: JsonObject, oncePerTurn: Boolean, tri
  * sorcery)` trigger whose sole action is an `IfElse` gated on the 5-or-more-mana-spent condition. This
  * is the recognition net [opusTriggerBlock] uses, minus the per-arm rendering. [triggerBlock] consults
  * it so that when a card is unmistakably Opus but [opusTriggerBlock] *declines* (e.g. the unreliable
- * `PutNumberCountersOfTypeOnPermanent` count), the whole card downgrades to SCAFFOLD rather than
+ * `NumberCountersOfTypeOnPermanent` count), the whole card downgrades to SCAFFOLD rather than
  * falling through to the generic trigger path and re-rendering the same wrong value.
  */
 private fun EmitCtx.isOpusShaped(rule: JsonObject): Boolean {
@@ -1968,7 +1968,7 @@ internal fun EmitCtx.triggerBlock(
     // `triggerZone = Zone.GRAVEYARD` plus a resolution-time `MayEffect`. This envelope emits neither
     // (it would wrongly render a battlefield-zone `optional = true` trigger), so decline to SCAFFOLD
     // rather than emit a trigger that never fires from the graveyard.
-    if (effectActions.any { jsonContains(it, "_GraveyardCard", "ThisGraveyardCard") }) {
+    if (effectActions.any { jsonContains(it, "_CardInGraveyards", "ThisGraveyardCard") }) {
         reasons.add("graveyard-active-trigger")
         return null
     }
@@ -2377,6 +2377,20 @@ private fun EmitCtx.singleInterveningIfDsl(cond: JsonObject): String? {
     ) {
         return "Conditions.TriggeringEntityHadCounters"
     }
+    // The same "if it had counters on it" intervening-if, in the newer mtgish encoding:
+    // `PermanentPassesFilter(Trigger_ThatPermanent, HasACounter)` — the dies trigger's that-permanent
+    // (the just-died source) had at least one counter of any kind. Maps to the same
+    // Conditions.TriggeringEntityHadCounters. Only the Trigger_ThatPermanent subject + bare HasACounter
+    // (any kind) renders; a counter-type-specific filter or another subject declines -> SCAFFOLD.
+    if (cond.strField("_Condition") == "PermanentPassesFilter") {
+        val condArgs = cond["args"].asArr
+        val subject = (condArgs?.getOrNull(0) as? JsonObject)?.strField("_Permanent")
+        if (subject == "Trigger_ThatPermanent" &&
+            (condArgs.getOrNull(1) as? JsonObject)?.strField("_Permanents") == "HasACounter"
+        ) {
+            return "Conditions.TriggeringEntityHadCounters"
+        }
+    }
     // "if a card left your graveyard this turn" — ACardLeftPlayersGraveyardThisTurn(AnyCard, You) ->
     // Conditions.CardsLeftGraveyardThisTurn(1) (Living History, Primary Research). Only the bare
     // "any card" + You scope renders; a typed card filter or another player scope has no calibrated
@@ -2698,7 +2712,7 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     // worth stating because it is tempting to "fix": the modern once-per-batch "whenever one or more
     // other creatures you control die" (Vengeful Townsfolk) and the per-creature "whenever another
     // creature you control dies" (Unruly Mob, Rot Shambler, Catacomb Sifter, Pitiless Plunderer, …)
-    // flatten to the *identical* mtgish node — WhenACreatureOrPlaneswalkerDies over
+    // flatten to the *identical* mtgish node — WhenAPermanentDies over
     // And(Other(ThisPermanent), IsCardtype Creature, ControlledByAPlayer You). The IR carries no
     // "one or more" quantifier, so the two can't be told apart here, yet they behave differently (a
     // board wipe fires the batch trigger once but the per-each trigger once per creature). Rendering
@@ -2706,7 +2720,7 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     // engine supports both shapes (Triggers.OneOrMoreCreaturesYouControlDie /
     // Triggers.YourCreatureDies) and the bridge still scores these cards coverable — choosing between
     // them is a human call (the add-card scenario test is the real gate).
-    if (jsonContains(trig, "_Trigger", "WhenACreatureOrPlaneswalkerDies") && !isSelf(trig)) return null
+    if (jsonContains(trig, "_Trigger", "WhenAPermanentDies") && !isSelf(trig)) return null
 
     // "Whenever this creature becomes saddled for the first time each turn" (CR 702.171b — Stubborn
     // Burrowfiend). The IR tag bakes in the once-per-turn semantics, so it always renders the
@@ -3585,7 +3599,7 @@ internal fun EmitCtx.fromGraveyardIfBlock(rule: JsonObject): List<Stmt>? {
         ?.takeIf { it.strField("_PlayerEffect") == "MayCastGraveyardCardWithEnterActions" } ?: return bail()
     val castArgs = cast["args"].asArr ?: return bail()
     // The card cast must be THIS card from its own graveyard (a self-recursion permission).
-    if (!jsonContains(castArgs.getOrNull(0), "_GraveyardCard", "ThisGraveyardCard")) return bail()
+    if (!jsonContains(castArgs.getOrNull(0), "_CardInGraveyards", "ThisGraveyardCard")) return bail()
     // 3. The enter actions must be exactly one EntersWithACounter PTCounter[1,1] (+1/+1).
     val enterActions = (castArgs.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>() ?: return bail()
     val enterCounter = enterActions.singleOrNull()
@@ -3796,7 +3810,7 @@ internal fun EmitCtx.abilityCostDsl(node: JsonElement?): String? {
         // ThisGraveyardCard subject maps to Costs.ExileSelf; any other exiled card declines so we never
         // render a self-exile as a generic one.
         "ExileGraveyardCard" ->
-            if (obj.field("args").strField("_GraveyardCard") == "ThisGraveyardCard") "Costs.ExileSelf" else null
+            if (obj.field("args").strField("_CardInGraveyards") == "ThisGraveyardCard") "Costs.ExileSelf" else null
         "SacrificeAPermanent" -> costFilterDsl(obj.field("args"))?.let {
             // "Sacrifice ANOTHER <permanent>" carries an `Other(ThisPermanent)` clause (Hungry Ghoul:
             // "Sacrifice another creature"); render Costs.SacrificeAnother (excludeSelf) so the source
@@ -4005,7 +4019,7 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
  * shape renders, or null (-> SCAFFOLD) when a `ReduceCostForEach` exists in an unrenderable shape.
  *
  * The only shape rendered is the per-counter self-reduction: a single `CostReduceGeneric 1` reduction
- * scaled by `NumCountersOfTypeOnPermanent(<named passive counter>, ThisPermanent)`, which maps to
+ * scaled by `TheTotalNumberOfCountersOfTypeAmongPermanents(<named passive counter>, ThisPermanent)`, which maps to
  * `genericCostReduction = DynamicAmounts.countersOnSelf(CounterTypeFilter.Named(Counters.X))`. Any other
  * reduction symbol, amount, game-number source, or subject declines rather than guess.
  */
@@ -4023,9 +4037,9 @@ private fun EmitCtx.activationCostReductionLines(rule: JsonObject): List<String>
     // The symbol's args is a bare integer (the {N} shaved per counter); only the {1}-per-counter
     // shape ("costs {1} less … for each counter") renders.
     if (genericSymbol.field("args").asInt() != 1) { reasons.add("activated-modifiers"); return null }
-    // Second arg: NumCountersOfTypeOnPermanent(<counter>, ThisPermanent).
+    // Second arg: TheTotalNumberOfCountersOfTypeAmongPermanents(<counter>, ThisPermanent).
     val gameNumber = rArgs.getOrNull(1) as? JsonObject ?: run { reasons.add("activated-modifiers"); return null }
-    if (gameNumber.strField("_GameNumber") != "NumCountersOfTypeOnPermanent") { reasons.add("activated-modifiers"); return null }
+    if (gameNumber.strField("_GameNumber") != "TheTotalNumberOfCountersOfTypeAmongPermanents") { reasons.add("activated-modifiers"); return null }
     val gnArgs = gameNumber["args"].asArr ?: run { reasons.add("activated-modifiers"); return null }
     val constant = passiveCounterConstant(gnArgs.getOrNull(0)) ?: run { reasons.add("activated-modifiers"); return null }
     if (!jsonContains(gnArgs.getOrNull(1), "_Permanent", "ThisPermanent")) { reasons.add("activated-modifiers"); return null }

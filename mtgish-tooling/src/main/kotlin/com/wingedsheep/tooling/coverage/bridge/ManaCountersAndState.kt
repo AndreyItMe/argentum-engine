@@ -38,28 +38,38 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // emitter declines -> SCAFFOLD.
     effect("SetPT", "SetBasePowerToughness", "set base power/toughness via an enters-with layer effect (Ghost Vacuum)")
     effect("AddCreatureType", "AddCreatureType", "add a creature subtype in addition to other types (Ghost Vacuum)")
-    effects("PutACounterOfTypeOnPermanent", "PutNumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
-    // "put those counters on <permanent>" — the counters a just-died permanent had move to the target
-    // (Scolding Administrator's dies trigger). Maps to MoveAllLastKnownCounters, which moves every
-    // counter kind off the dying source (Essence Channeler shape), not just +1/+1.
-    effect("PutFormerCountersOnPermanent", "MoveAllLastKnownCounters", "move a dying permanent's counters to the target (Scolding Administrator)")
-    // "Put a counter on each <filter>" — the mass form, rendered as ForEachInGroup(AddCounters) over the
-    // recovered group filter (Bounding Felidar's "each other creature you control").
-    composed("PutACounterOfTypeOnEachPermanent", "ForEachInGroup(AddCounters) over a group filter",
+    // The mtgish IR routes every put-counter action through a `PutCounters` envelope whose nested
+    // `_PutCountersAction` variants carry the real shape (the old top-level `PutACounterOfType…` /
+    // `PutNumberCountersOfType…` actions are gone — `_PutCountersAction` is a tracked discriminator in
+    // CAPABILITY_DISCRIMINATORS). Score the envelope as structural and map each variant we can express;
+    // an unmapped variant (a distribute-among-any-number, duplicate-each-kind, …) keeps its card blocking.
+    envelope("PutCounters", "put-counter envelope — the real action is the nested _PutCountersAction variant")
+    // "Put a / N +1/+1 (or keyword) counter(s) on <permanent>" -> AddCounters / AddDynamicCounters.
+    effects("ACounterOfTypeOnPermanent", "NumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
+    // "Put a / N counter(s) on each <filter>" — the mass form, ForEachInGroup(AddCounters) over the
+    // recovered group filter or the just-created tokens (Bounding Felidar, Germination Practicum).
+    composed("ACounterOfTypeOnEachPermanent", "ForEachInGroup(AddCounters) over a group filter",
         composes = listOf("AddCounters"))
+    composed("NumberCountersOfTypeOnEachPermanent", "ForEachInGroup(AddCounters/AddDynamicCounters) over a group filter or created tokens",
+        composes = listOf("AddCounters"))
+    // "Double the number of <counter> counters on <permanent> / each <filter>" -> DoubleCounters
+    // (Ornery Tumblewagg's saddled attack; Omnivorous Flytrap's each-of-those-creatures tail).
+    effects("DoubleCountersOfTypeOnPermanent", "DoubleCountersOfTypeOnEachPermanent", tag = "DoubleCounters",
+        note = "double the +1/+1 counters (Ornery Tumblewagg, Omnivorous Flytrap)")
     // "Distribute N +1/+1 counters among one or two target creatures" — the counter analogue of
     // distributed damage; the `TargetedDistributed` envelope's `DistributeNumberAmongTargets`
     // distribution drives a DistributeDecision over the chosen targets, then this action places the
     // counters (Omnivorous Flytrap, Abzan Charm shape). The emitter declines whole-card rendering of
     // the distributed *triggered* shape (the distribution/double-on-each tail is card-specific), so
     // this is capability-only -> SCAFFOLD.
-    effect("PutDistributedCounters", "DistributeCountersAmongTargets",
+    effect("DistributedCounters", "DistributeCountersAmongTargets",
         "distribute N +1/+1 counters among one or two target creatures (Omnivorous Flytrap)")
-    // "Double the number of +1/+1 counters on each of those creatures" — applied to the just-targeted
-    // permanents. Lowered to ForEach(IterationSpace.Targets) over Effects.DoubleCounters; capability-only
-    // (the per-target iteration + the ≥6-types intervening-if tail is card-specific) -> SCAFFOLD.
-    effect("DoubleCountersOfTypeOnEachPermanent", "DoubleCounters",
-        "double the +1/+1 counters on the chosen creatures (Omnivorous Flytrap)")
+    // "Put those counters on <permanent>" — a just-died permanent's counters move to the target
+    // (Scolding Administrator's dies trigger). mtgish models it as DuplicateCountersOfPermanentOnPermanent
+    // (source, dest); for a DYING source it lowers to MoveAllLastKnownCounters, which moves every counter
+    // kind off the dead source (Essence Channeler shape), not just +1/+1. A living source scaffolds.
+    effect("DuplicateCountersOfPermanentOnPermanent", "MoveAllLastKnownCounters",
+        "move a dying permanent's counters to the target (Scolding Administrator)")
     // "Until end of turn, if you would put one or more +1/+1 counters on a creature you control, put
     // that many plus N +1/+1 counters on it instead." (Prairie Dog) — the duration-/controller-scoped
     // analogue of Hardened Scales' static ModifyCounterPlacement, lowered to

@@ -39,7 +39,7 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
     // returns EACH chosen graveyard card to its owner's hand, one Move per target via ForEachTargetEffect.
     // Only the chosen-targets form (`Ref_TargetGraveyardCards`) renders; anything else declines.
     on("PutEachGraveyardCardIntoHand") { node, _, _ ->
-        if (jsonContains(node, "_CardsInGraveyard", "Ref_TargetGraveyardCards")) {
+        if (jsonContains(node, "_CardsInGraveyards", "Ref_TargetGraveyardCards")) {
             call("ForEachTargetEffect", arg(call("listOf", arg(call("Effects.Move", arg("EffectTarget.ContextTarget(0)"), arg("Zone.HAND"))))))
         } else null
     }
@@ -550,7 +550,7 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
     on("ReturnGraveyardCardToHand") { _, args, _ ->
         // "Return this card from your graveyard to your hand" (Gangrenous Goliath's graveyard ability). Only
         // the self (this graveyard card) form renders; a chosen graveyard-card target scaffolds.
-        if (jsonContains(args, "_GraveyardCard", "ThisGraveyardCard"))
+        if (jsonContains(args, "_CardInGraveyards", "ThisGraveyardCard"))
             call("Effects.Move", arg("EffectTarget.Self"), arg("Zone.HAND")) else null
     }
 

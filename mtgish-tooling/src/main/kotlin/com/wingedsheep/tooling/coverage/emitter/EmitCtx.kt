@@ -321,17 +321,17 @@ internal fun EmitCtx.dynamicAmount(node: JsonElement?): String? = dynamicAmountE
  * The card name behind a "cards named ~ in your graveyard" count filter, or null if the filter
  * carries any constraint beyond the name + You-graveyard scope (so the caller declines rather than
  * over-count). The expected shape is `And(IsNamed(NamedCard "<name>"), InAPlayersGraveyard(You))`:
- * exactly two `_CardsInGraveyard` clauses, one an `IsNamed`, the other an `InAPlayersGraveyard`. Any
+ * exactly two `_CardsInGraveyards` clauses, one an `IsNamed`, the other an `InAPlayersGraveyard`. Any
  * extra cardtype/subtype/colour clause means the bare-name `GameObjectFilter.Any.named(...)` would be
  * wrong, so we return null.
  */
 internal fun namedCardInGraveyardOnly(filterNode: JsonElement?): String? {
     val and = filterNode as? JsonObject ?: return null
-    if (and.strField("_CardsInGraveyard") != "And") return null
+    if (and.strField("_CardsInGraveyards") != "And") return null
     val arms = and["args"].asArr?.filterIsInstance<JsonObject>() ?: return null
     if (arms.size != 2) return null
-    val namedArm = arms.firstOrNull { it.strField("_CardsInGraveyard") == "IsNamed" } ?: return null
-    val scopeArm = arms.firstOrNull { it.strField("_CardsInGraveyard") == "InAPlayersGraveyard" } ?: return null
+    val namedArm = arms.firstOrNull { it.strField("_CardsInGraveyards") == "IsNamed" } ?: return null
+    val scopeArm = arms.firstOrNull { it.strField("_CardsInGraveyards") == "InAPlayersGraveyard" } ?: return null
     if (!jsonContains(scopeArm, "_Player", "You")) return null
     return namedArm.firstArgStringTagged("NamedCard")
 }
@@ -380,7 +380,7 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
             return call("DynamicAmounts.xValueOfTriggeringSpell")
         "PowerOfTheSacrificedCreature" -> return call("DynamicAmounts.sacrificedPower")
         // "the number of [filter] cards in your graveyard" (Rise of the Varmints' Varmint count). The
-        // count's args are a `_CardsInGraveyard` filter — typically `And(IsCardtype Creature,
+        // count's args are a `_CardsInGraveyards` filter — typically `And(IsCardtype Creature,
         // InAPlayersGraveyard(You))`. Render as a resolution-time `DynamicAmount.Count` over the You
         // graveyard with the recovered filter. Only the You-scoped graveyard renders; any other player
         // scope (an opponent's graveyard, "each player's") declines -> SCAFFOLD rather than miscount.
@@ -414,7 +414,7 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // (Infernal Phantom's "When this creature dies, it deals damage equal to its power …").
         // mtgish tags the dead permanent's last-known power as its own GameNumber (no args); it reads
         // the dies-trigger source's last-known power, the same value `DynamicAmounts.sourcePower`
-        // resolves for a `WhenACreatureOrPlaneswalkerDies(ThisPermanent)` ability.
+        // resolves for a `WhenAPermanentDies(ThisPermanent)` ability.
         "PowerOfDeadPermanent" -> return call("DynamicAmounts.sourcePower")
         "PowerOfPermanent" -> {
             // "its power" where "it" is the source: either the static ThisPermanent or — in a dies
@@ -451,7 +451,7 @@ internal fun EmitCtx.dynamicAmountExpr(node: JsonElement?): Dsl? {
         // DynamicAmounts.countersOnSelf reads the live count. Only the ThisPermanent subject with no
         // named counter type renders; a specific counter kind or any other permanent subject declines
         // (-> SCAFFOLD) rather than miscount.
-        "NumCountersOnPermanent" -> {
+        "TheTotalNumberOfCountersAmongPermanents" -> {
             if (!jsonContains(node["args"], "_Permanent", "ThisPermanent") ||
                 "_CounterType" in compact(node["args"])
             ) return null

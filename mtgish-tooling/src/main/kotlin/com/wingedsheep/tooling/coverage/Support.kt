@@ -141,14 +141,14 @@ fun subtypes(node: JsonElement?): List<String> {
     return out
 }
 
-/** `_find_ref` — first _Permanent / _Player / _GraveyardCard reference string in a subtree. */
+/** `_find_ref` — first _Permanent / _Player / _CardInGraveyards reference string in a subtree. */
 fun findRef(node: JsonElement?): String? {
     var found: String? = null
     fun walk(n: JsonElement?) {
         if (found != null) return
         when (n) {
             is JsonObject -> {
-                for (k in listOf("_Permanent", "_Player", "_GraveyardCard")) {
+                for (k in listOf("_Permanent", "_Player", "_CardInGraveyards")) {
                     if (found == null) n.strField(k)?.let { found = it }
                 }
                 n.values.forEach { walk(it) }

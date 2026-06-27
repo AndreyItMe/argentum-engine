@@ -959,7 +959,7 @@ val BountyHunter = card("Bounty Hunter") {
     oracleText = "{T}: Put a bounty counter on target nonblack creature.\n{T}: Destroy target creature with a bounty counter on it."
     power = 2
     toughness = 2
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "110"
@@ -3600,7 +3600,7 @@ val EssenceBottle = card("Essence Bottle") {
     colorIdentity = ""
     typeLine = "Artifact"
     oracleText = "{3}, {T}: Put an elixir counter on this artifact.\n{T}, Remove all elixir counters from this artifact: You gain 2 life for each elixir counter removed this way."
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.UNCOMMON
         collectorNumber = "286"
@@ -5784,7 +5784,7 @@ val LegacysAllure = card("Legacy's Allure") {
     colorIdentity = "U"
     typeLine = "Enchantment"
     oracleText = "At the beginning of your upkeep, you may put a treasure counter on this enchantment.\nSacrifice this enchantment: Gain control of target creature with power less than or equal to the number of treasure counters on this enchantment. (This effect lasts indefinitely.)"
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.UNCOMMON
         collectorNumber = "71"
@@ -11956,7 +11956,7 @@ val TortureChamber = card("Torture Chamber") {
     colorIdentity = ""
     typeLine = "Artifact"
     oracleText = "At the beginning of your upkeep, put a pain counter on this artifact.\nAt the beginning of your end step, this artifact deals damage to you equal to the number of pain counters on it.\n{1}, {T}, Remove all pain counters from this artifact: It deals damage to target creature equal to the number of pain counters removed this way."
-    // STRUCTURE needs human wiring: PutACounterOfTypeOnPermanent
+    // STRUCTURE needs human wiring: PutCounters
     metadata {
         rarity = Rarity.RARE
         collectorNumber = "313"

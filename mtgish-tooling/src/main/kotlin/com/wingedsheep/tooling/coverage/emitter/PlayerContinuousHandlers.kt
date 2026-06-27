@@ -109,7 +109,7 @@ internal val playerContinuousHandlers: Map<String, ActionHandler> = actionHandle
         // "When it dies this turn, <actions>." — a self-scoped delayed dies trigger watching the
         // spell's bound target until end of turn (Turn Inside Out: +3/+0 then manifest dread on death;
         // the Desperate Measures `CreateDelayedTriggerEffect(trigger = Triggers.Dies, watchedTarget =
-        // t)` shape). Renders only when the trigger is `WhenACreatureOrPlaneswalkerDies` scoped to the
+        // t)` shape). Renders only when the trigger is `WhenAPermanentDies` scoped to the
         // bound `Ref_TargetPermanent`, the expiry is UntilEndOfTurn, and the body renders whole.
         whenThatPermanentDiesDelayedTrigger(node, tvar)
     }
@@ -117,14 +117,14 @@ internal val playerContinuousHandlers: Map<String, ActionHandler> = actionHandle
 }
 
 /**
- * `CreateTriggerUntil(WhenACreatureOrPlaneswalkerDies(SinglePermanent(Ref_TargetPermanent)),
+ * `CreateTriggerUntil(WhenAPermanentDies(SinglePermanent(Ref_TargetPermanent)),
  * [actions], UntilEndOfTurn)` → a watched-entity delayed dies trigger on the spell's bound target:
  * `CreateDelayedTriggerEffect(effect = <body>, trigger = Triggers.Dies, watchedTarget = <tvar>,
  * expiry = DelayedTriggerExpiry.EndOfTurn)`.
  *
  * This is the "Target creature gets +X/+Y until end of turn. When it dies this turn, <do something>"
  * shape (Turn Inside Out, Desperate Measures). Only renders when:
- *  - the trigger is `WhenACreatureOrPlaneswalkerDies` scoped to `SinglePermanent(Ref_TargetPermanent)`
+ *  - the trigger is `WhenAPermanentDies` scoped to `SinglePermanent(Ref_TargetPermanent)`
  *    (i.e. "when *that* creature dies", the spell's bound target — not some other group),
  *  - the expiry is `UntilEndOfTurn`,
  *  - the body action list renders whole (sharing the ability's bound `tvar`).
@@ -137,7 +137,7 @@ internal fun EmitCtx.whenThatPermanentDiesDelayedTrigger(node: JsonObject, tvar:
     val actionList = args.getOrNull(1) as? JsonObject ?: return null
     val expiration = args.getOrNull(2) as? JsonObject ?: return null
 
-    if (trigger.strField("_Trigger") != "WhenACreatureOrPlaneswalkerDies") return null
+    if (trigger.strField("_Trigger") != "WhenAPermanentDies") return null
     if (expiration.strField("_Expiration") != "UntilEndOfTurn") return null
 
     // The trigger must watch the bound target specifically: SinglePermanent(Ref_TargetPermanent).
