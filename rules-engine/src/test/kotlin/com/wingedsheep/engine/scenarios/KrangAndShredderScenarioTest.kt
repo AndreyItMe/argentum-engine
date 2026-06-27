@@ -9,9 +9,8 @@ import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
-import io.kotest.matchers.collections.shouldContain
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario test for Krang & Shredder's "Disappear" end-step ability (TMT).
@@ -70,17 +69,25 @@ class KrangAndShredderScenarioTest : ScenarioTestBase() {
                 game.selectCards(listOf(centaur))
                 game.resolveStack()
 
-                // Disappear grants a free-cast (MayPlayPermission) on ONLY the chosen card. The earlier
-                // implementation granted the permission over the whole linked-exile pile.
-                val freeCastable = game.state.mayPlayPermissions
-                    .filter { it.controllerId == game.player1Id }
-                    .flatMap { it.cardIds }
-                    .toSet()
-                withClue("The chosen card is granted a free cast (permissions=$freeCastable)") {
-                    freeCastable shouldContain centaur
+                // The chosen card is actually CAST during resolution (cascade-style) and enters the
+                // battlefield under the Disappear controller — not merely granted a "play it later"
+                // permission, which the earlier implementation left to expire unused at end of turn.
+                val centaurOnBattlefield = game.findPermanent("Centaur Courser")
+                withClue("The chosen card (Centaur Courser) entered the battlefield") {
+                    centaurOnBattlefield shouldNotBe null
                 }
-                withClue("The other exiled card is NOT granted a free cast — not the whole pile (permissions=$freeCastable)") {
-                    freeCastable shouldNotContain grizzly
+                withClue("...under the Disappear controller's control, even though the opponent owns it") {
+                    game.state.projectedState.getController(centaurOnBattlefield!!) shouldBe game.player1Id
+                }
+
+                // The other exiled card was NOT cast — only the one card the player chose, not the
+                // whole linked-exile pile.
+                withClue("The other card (Grizzly Bears) stays exiled") {
+                    game.isInExile(2, "Grizzly Bears") shouldBe true
+                    game.isOnBattlefield("Grizzly Bears") shouldBe false
+                }
+                withClue("The chosen card is no longer in exile") {
+                    game.isInExile(2, "Centaur Courser") shouldBe false
                 }
             }
         }

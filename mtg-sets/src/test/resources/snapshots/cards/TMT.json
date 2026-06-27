@@ -4791,11 +4791,8 @@
                                 "prompt": "Choose a card exiled with Krang & Shredder to cast without paying its mana cost"
                             },
                             {
-                                "type": "GrantFreeCastTargetFromExile",
-                                "target": {
-                                    "type": "PipelineTarget",
-                                    "collectionName": "krangChosen"
-                                }
+                                "type": "CastFromCollectionWithoutPayingCost",
+                                "from": "krangChosen"
                             }
                         ]
                     }
