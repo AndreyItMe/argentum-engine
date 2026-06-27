@@ -3394,6 +3394,57 @@
     ]
 }
 
+// Deadly Embrace
+{
+    "name": "Deadly Embrace",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy target creature an opponent controls. Then draw a card for each creature that died this turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature an opponent controls"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "TurnTracking",
+                        "player": "Each",
+                        "tracker": "CREATURES_DIED"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:opponent"
+                },
+                "id": "target creature an opponent controls"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "557",
+        "rarity": "RARE",
+        "artist": "Lius Lasahido",
+        "flavorText": "\"Come, little lamb... to the slaughter with you!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/1/a11cb85c-85dd-435c-8303-4d0d18bdb1e9.jpg?1748707601"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Delivery Moogle
 {
     "name": "Delivery Moogle",
@@ -6944,6 +6995,44 @@
     ]
 }
 
+// Matoya, Archon Elder
+{
+    "name": "Matoya, Archon Elder",
+    "manaCost": "{2}{U}",
+    "typeLine": "Legendary Creature — Human Warlock",
+    "oracleText": "Whenever you scry or surveil, draw a card. (Draw after you scry or surveil.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "ScriedOrSurveiledEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "62",
+        "rarity": "RARE",
+        "artist": "Luisa J. Preissler",
+        "flavorText": "\"Don't you know it's rude to enter without knocking? Hmph, the youth of today...\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/d/1dd61cf6-2fb5-4cff-ab00-7677ac85774c.jpg?1748705987"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Memories Returning
 {
     "name": "Memories Returning",
@@ -8473,7 +8562,7 @@
             "type": "CreateTokenCopyOfTarget",
             "target": {
                 "type": "BoundVariable",
-                "name": "artifact, creature, or land"
+                "name": "target artifact, creature, or land"
             }
         },
         "targetRequirements": [
@@ -8482,7 +8571,7 @@
                 "filter": {
                     "baseFilter": "artifact|creature|land"
                 },
-                "id": "artifact, creature, or land"
+                "id": "target artifact, creature, or land"
             }
         ]
     },
@@ -13224,6 +13313,55 @@
         "imageUri": "https://cards.scryfall.io/normal/front/7/0/70d9ab99-ec8a-402e-ba1d-ffa6c4c84a3f.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Xande, Dark Mage
+{
+    "name": "Xande, Dark Mage",
+    "manaCost": "{2}{U}{B}",
+    "typeLine": "Legendary Creature — Human Wizard",
+    "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nXande gets +1/+1 for each noncreature, nonland card in your graveyard.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "MENACE"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantDynamicStats",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "Self"
+                },
+                "powerBonus": {
+                    "type": "AggregateZone",
+                    "player": "You",
+                    "zone": "Graveyard",
+                    "filter": "noncreature nonland"
+                },
+                "toughnessBonus": {
+                    "type": "AggregateZone",
+                    "player": "You",
+                    "zone": "Graveyard",
+                    "filter": "noncreature nonland"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "561",
+        "rarity": "RARE",
+        "artist": "Joseph Weston",
+        "flavorText": "\"But your struggle was all for naught. Don't you see how close the darkness has drawn?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/c/1caed9a8-b73b-470e-b9d8-8c3b7cac3eee.jpg?1748707603"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
 }
 
 // Y'shtola Rhul

@@ -5,7 +5,6 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
-import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.targets.TargetPermanent
 
 /**
@@ -14,9 +13,9 @@ import com.wingedsheep.sdk.scripting.targets.TargetPermanent
  * Sorcery
  * Create a token that's a copy of target artifact, creature, or land.
  *
- * The token copies the printed characteristics of the target (CR 707.2) via
- * [Effects.CreateTokenCopyOfTarget]. Target is any permanent that is an artifact, a creature,
- * or a land.
+ * Targets any one artifact, creature, or land permanent (the union filter), then makes a token
+ * copy of it via [Effects.CreateTokenCopyOfTarget], which copies that permanent's copiable
+ * characteristics (Rule 707.2) for whichever permanent type was chosen.
  */
 val RelmsSketching = card("Relm's Sketching") {
     manaCost = "{2}{U}{U}"
@@ -25,33 +24,22 @@ val RelmsSketching = card("Relm's Sketching") {
     oracleText = "Create a token that's a copy of target artifact, creature, or land."
 
     spell {
-        val t = target(
-            "artifact, creature, or land",
+        val permanent = target(
+            "target artifact, creature, or land",
             TargetPermanent(
                 filter = TargetFilter(
-                    GameObjectFilter(
-                        cardPredicates = listOf(
-                            CardPredicate.Or(
-                                listOf(
-                                    CardPredicate.IsArtifact,
-                                    CardPredicate.IsCreature,
-                                    CardPredicate.IsLand,
-                                )
-                            )
-                        )
-                    )
+                    GameObjectFilter.Artifact or GameObjectFilter.Creature or GameObjectFilter.Land
                 )
             )
         )
-        effect = Effects.CreateTokenCopyOfTarget(target = t)
+        effect = Effects.CreateTokenCopyOfTarget(target = permanent)
     }
 
     metadata {
         rarity = Rarity.UNCOMMON
         collectorNumber = "67"
         artist = "Smirtouille"
-        flavorText = "In her pictures she captures everything: forests, water, light . . . " +
-            "the very essence of the things she paints."
+        flavorText = "In her pictures she captures everything: forests, water, light . . . the very essence of the things she paints."
         imageUri = "https://cards.scryfall.io/normal/front/6/a/6aedac12-3714-4a81-bd4d-1d2555c66f78.jpg?1748706008"
     }
 }
