@@ -20,13 +20,21 @@ services:
       - app_network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ACCOUNTS_DB_USER:-argentum} -d ${ACCOUNTS_DB_NAME:-argentum}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   backend:
     image: ${IMAGE_REPO}/backend:latest
     restart: always
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_started
+      # Wait until Postgres accepts connections so Flyway/Hikari don't race an unready DB on startup.
+      postgres:
+        condition: service_healthy
     environment:
       - CACHE_REDIS_ENABLED=${CACHE_REDIS_ENABLED:-true}
       - CACHE_REDIS_HOST=redis

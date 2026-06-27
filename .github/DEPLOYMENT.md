@@ -44,6 +44,26 @@ Go to your repository **Settings → Secrets and variables → Actions** and add
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions — no setup needed.
 
+### Optional: accounts + saved decks + stats (PostgreSQL + magic-link email)
+
+Off by default. To turn it on, add these secrets (see `docs/accounts-and-persistence.md` for the full
+design). The deploy writes them into the server `.env`; the bundled `postgres` service stores the data.
+
+| Secret                 | Description                                                                 | Example                              |
+|------------------------|-----------------------------------------------------------------------------|--------------------------------------|
+| `ACCOUNTS_ENABLED`     | Master switch — set to `true` to enable accounts                            | `true`                               |
+| `ACCOUNTS_DB_PASSWORD` | Postgres password. **Set this before the first deploy** that starts Postgres (changing it later needs the volume recreated). | (a long random string)               |
+| `ACCOUNTS_AUTH_SECRET` | HMAC secret for signing auth tokens — long & random; don't rotate casually  | (a long random string)               |
+| `ACCOUNTS_FROM_EMAIL`  | From address — **must be on your verified Mailgun domain**                  | `no-reply@mg.wingedsheep.com`        |
+| `MAIL_HOST`            | Mailgun SMTP host — **`smtp.eu.mailgun.org` for EU-region accounts**, else `smtp.mailgun.org` | `smtp.eu.mailgun.org`                |
+| `MAIL_PORT`            | SMTP port (optional, defaults to 587)                                       | `587`                                |
+| `MAIL_USERNAME`        | Mailgun SMTP username (the domain's SMTP login)                             | `postmaster@mg.wingedsheep.com`      |
+| `MAIL_PASSWORD`        | Mailgun SMTP password                                                       | (from the Mailgun dashboard)         |
+
+Notes:
+- The magic-link URL is built from `APP_DOMAIN` (`https://<APP_DOMAIN>/login/verify?token=…`), so no extra URL secret is needed.
+- With `ACCOUNTS_ENABLED` unset/`false`, none of the above are required and the server runs anonymous + in-memory as before (the idle `postgres` container still starts but is unused).
+
 ## How it works
 
 1. **Build job** — Builds two Docker images from the repo and pushes to GHCR:
