@@ -69,8 +69,19 @@ class EffectAndTriggerContinuationResumer(
             return ExecutionResult.error(state, "Expected target selection response for triggered ability")
         }
 
-        val selectedTargets = response.selectedTargets.flatMap { (_, targetIds) ->
-            targetIds.map { entityId -> entityIdToChosenTarget(state, entityId) }
+        // Build the chosen-targets list in requirement-slot order, keeping it PARALLEL to the
+        // requirements that actually received a target. A declined "up to one" slot (empty list)
+        // drops out of BOTH lists together, so a later target never shifts forward into an earlier
+        // requirement's position. Without this, exiling only a creature with Don & Leo, Problem
+        // Solvers (declining the "up to one artifact" slot) validated the creature against the
+        // artifact requirement at resolution and fizzled with "all targets invalid" (CR 608.2b).
+        val orderedSlots = response.selectedTargets.entries.sortedBy { it.key }
+        val selectedTargets = mutableListOf<com.wingedsheep.engine.state.components.stack.ChosenTarget>()
+        val alignedRequirements = mutableListOf<com.wingedsheep.sdk.scripting.targets.TargetRequirement>()
+        for ((slotIndex, targetIds) in orderedSlots) {
+            if (targetIds.isEmpty()) continue
+            targetIds.forEach { entityId -> selectedTargets.add(entityIdToChosenTarget(state, entityId)) }
+            continuation.targetRequirements.getOrNull(slotIndex)?.let { alignedRequirements.add(it) }
         }
 
         // Zero-target resolution path. Two cases:
@@ -160,7 +171,7 @@ class EffectAndTriggerContinuationResumer(
         )
 
         val stackResult = services.stackResolver.putTriggeredAbility(
-            state, abilityComponent, selectedTargets, continuation.targetRequirements
+            state, abilityComponent, selectedTargets, alignedRequirements
         )
 
         if (!stackResult.isSuccess) {

@@ -365,6 +365,7 @@ val engineSerializersModule = SerializersModule {
         subclass(PhasedOutComponent::class)
         subclass(CastFromHandComponent::class)
         subclass(CastFromGraveyardComponent::class)
+        subclass(CastFromLibraryComponent::class)
         subclass(EnteredFromGraveyardComponent::class)
         subclass(CountersComponent::class)
         subclass(DamageComponent::class)
