@@ -85,8 +85,8 @@ The duplication isn't random — it falls into five repeating patterns.
   type as a `ControlRecipient.PlayerWithMost`).
 - **Grants:** `GrantShroud`/`GrantHexproof`, `GrantHexproofFromChosenColor`/`GrantProtectionFromChosenColor`,
   `GrantFlashToSpells`/`GrantSpellsCantBeCountered` → keyword/quality parameter.
-- `GrantToxic` → `GrantKeyword("TOXIC_$n")` facade (the codebase already does exactly this for
-  `GrantProtectionFromColor`).
+- ✅ `GrantToxic` → `GrantKeyword("TOXIC_$n")` facade (the codebase already does exactly this for
+  `GrantProtectionFromColor`) — DONE in PR #1025.
 
 ### 2. Filter/`*Group` variants re-implementing a single-target atom
 
@@ -170,6 +170,8 @@ than more flags.
    `PlayerRankMetric`.
 4. **Single-keyword grants → `GrantKeyword` facades** (`GrantToxic`, `GrantShroud`,
    `GrantHexproof`) — removes Effect *and* executor with zero card-author churn.
+   - ✅ `GrantToxic` collapsed into a `GrantKeyword("TOXIC_$n")` facade — effect type +
+     executor deleted (PR #1025). `GrantShroud` / `GrantHexproof` remain.
 5. **Adopt the project's own `ForEachInGroup`+`Self` rule** for all `*Group` filter-variants.
 6. **Finish the stalled merges** — spell-copy family, retarget quartet, the named pairs in
    smell #4.
@@ -498,7 +500,7 @@ tagged *(ReplacementEffect)* implement `ReplacementEffect`, not `Effect`.
 | `TapUntapCollectionEffect` | B | Pipeline collection variant, `tap:Boolean` (7). |
 | `PhaseOutEffect` | B | Phasing atom (702.26), 4. |
 | `PhaseOutUntilLeavesEffect` / `PhaseInLinkedToSourceEffect` | B | Source-linked phasing pair (Oubliette), analogue of ExileUntilLeaves (2 each). |
-| `GrantToxicEffect` | C | kdoc admits it emits `TOXIC_<n>` → make it a `GrantKeyword` facade, delete the type. |
+| ~~`GrantToxicEffect`~~ | ✅ DONE | Collapsed into `Effects.GrantToxic` → `GrantKeyword("TOXIC_$n")` facade; effect type + executor deleted (PR #1025). |
 | `GrantHarmonizeEffect` / `GrantFlashbackEffect` | C | Identical graveyard-cast-grant shape → `GrantGraveyardCastKeyword(keyword, cost)` (covers Retrace/Jump-start/Disturb). |
 | `GrantActivatedAbilityToGroupEffect` | C | Duplicates the single-target payload with `filter` → `ForEachInGroup`+`Self`. |
 | `SetGroupCreatureSubtypesEffect` | C | Filter-variant of `SetCreatureSubtypes` → `ForEachInGroup`+`Self` (1). |

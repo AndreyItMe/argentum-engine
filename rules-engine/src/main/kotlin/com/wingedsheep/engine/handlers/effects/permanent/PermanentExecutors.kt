@@ -42,7 +42,6 @@ import com.wingedsheep.engine.handlers.effects.permanent.counters.ProliferateExe
 import com.wingedsheep.engine.handlers.effects.permanent.counters.RemoveAllCountersExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.RemoveAnyNumberOfCountersExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.counters.RemoveCountersExecutor
-import com.wingedsheep.engine.handlers.effects.permanent.abilities.GrantToxicExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.protection.ChooseColorThenExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.protection.GrantCantBeBlockedByChosenColorExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.protection.GrantHexproofFromChosenColorExecutor
@@ -207,7 +206,6 @@ class PermanentExecutors(
         GrantHexproofFromChosenColorExecutor(),
         GrantProtectionFromChosenColorExecutor(),
         GrantProtectionFromChosenCardTypeExecutor(),
-        GrantCantBeBlockedByChosenColorExecutor(),
-        GrantToxicExecutor()
+        GrantCantBeBlockedByChosenColorExecutor()
     )
 }

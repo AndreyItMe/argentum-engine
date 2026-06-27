@@ -40,23 +40,6 @@ data class GrantKeywordEffect(
 }
 
 /**
- * Grant Toxic N to a target until end of turn. Resolves to a `TOXIC_<n>` keyword
- * grant; combat damage reads granted toxic amounts from projected keywords.
- */
-@SerialName("GrantToxic")
-@Serializable
-data class GrantToxicEffect(
-    val amount: Int,
-    val target: EffectTarget = EffectTarget.ContextTarget(0),
-    val duration: Duration = Duration.EndOfTurn
-) : Effect {
-    override val description: String = buildString {
-        append("${target.description} gains toxic $amount")
-        if (duration.description.isNotEmpty()) append(" ${duration.description}")
-    }
-}
-
-/**
  * Remove a keyword or ability flag from a target until end of turn.
  * "All other creatures lose flying until end of turn."
  *

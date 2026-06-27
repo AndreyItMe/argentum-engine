@@ -50,7 +50,6 @@ import com.wingedsheep.sdk.scripting.effects.GrantCantBeBlockedByChosenColorEffe
 import com.wingedsheep.sdk.scripting.effects.GrantCantBeBlockedExceptByEffect
 import com.wingedsheep.sdk.scripting.effects.GrantFlashbackEffect
 import com.wingedsheep.sdk.scripting.effects.GrantHarmonizeEffect
-import com.wingedsheep.sdk.scripting.effects.GrantToxicEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockEffect
@@ -2048,14 +2047,18 @@ object Effects {
     )
 
     /**
-     * Grant Toxic N to a target until end of turn. Resolves to a `TOXIC_<n>`
-     * keyword grant; combat damage reads granted toxic amounts from projected keywords.
+     * Grant Toxic N to a target until end of turn.
+     *
+     * Composes [GrantKeywordEffect] with the `TOXIC_<n>` string keyword — the same projected
+     * keyword form printed Toxic produces (see `ToxicComponent`/`StateProjector`), so combat
+     * damage reads printed + granted toxic from a single source of truth. No dedicated effect
+     * type is needed (mirrors [GrantProtectionFromColor]).
      */
     fun GrantToxic(
         amount: Int,
         target: EffectTarget = EffectTarget.ContextTarget(0),
         duration: Duration = Duration.EndOfTurn
-    ): Effect = GrantToxicEffect(amount, target, duration)
+    ): Effect = GrantKeywordEffect("TOXIC_$amount", target, duration)
 
     /**
      * Grant Harmonize (CR 702.180) to a target instant or sorcery card in a graveyard.
