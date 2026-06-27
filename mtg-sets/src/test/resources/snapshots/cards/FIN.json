@@ -8114,6 +8114,97 @@
     ]
 }
 
+// Qutrub Forayer
+{
+    "name": "Qutrub Forayer",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Zombie Horror",
+    "oracleText": "When this creature enters, choose one —\n• Destroy target creature that was dealt damage this turn.\n• Exile up to two target cards from a single graveyard.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "destination": "Graveyard",
+                                "byDestruction": true
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "statePredicates": [
+                                                "WasDealtDamageThisTurn"
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "description": "Destroy target creature that was dealt damage this turn"
+                        },
+                        {
+                            "effect": {
+                                "type": "ForEach",
+                                "space": "IterationSpace.Targets",
+                                "body": {
+                                    "type": "MoveToZone",
+                                    "target": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "destination": "Exile"
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "count": 2,
+                                    "optional": true,
+                                    "filter": {
+                                        "baseFilter": {},
+                                        "zone": "Graveyard"
+                                    },
+                                    "sameOwner": true
+                                }
+                            ],
+                            "description": "Exile up to two target cards from a single graveyard"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "112",
+        "artist": "Lordigan",
+        "flavorText": "They willfully attain an undead existence to serve their foul mistresses for eternity.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/4/7475ecf6-23f5-45af-9ef0-ac7923bbc9cb.jpg?1748706179"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Rabanastre, Royal City
 {
     "name": "Rabanastre, Royal City",
@@ -8368,6 +8459,42 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Relm's Sketching
+{
+    "name": "Relm's Sketching",
+    "manaCost": "{2}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create a token that's a copy of target artifact, creature, or land.",
+    "script": {
+        "spellEffect": {
+            "type": "CreateTokenCopyOfTarget",
+            "target": {
+                "type": "BoundVariable",
+                "name": "artifact, creature, or land"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "artifact|creature|land"
+                },
+                "id": "artifact, creature, or land"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "67",
+        "rarity": "UNCOMMON",
+        "artist": "Smirtouille",
+        "flavorText": "In her pictures she captures everything: forests, water, light . . . the very essence of the things she paints.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/a/6aedac12-3714-4a81-bd4d-1d2555c66f78.jpg?1748706008"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -9366,6 +9493,56 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Scorpion Sentinel
+{
+    "name": "Scorpion Sentinel",
+    "manaCost": "{1}{U}",
+    "typeLine": "Artifact Creature — Robot Scorpion",
+    "oracleText": "As long as you control seven or more lands, this creature gets +3/+0.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 3,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "land"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 7
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "72",
+        "artist": "HAISIRO",
+        "flavorText": "\"Barret, be careful! Attack while its tail's up, it's gonna counterattack with its laser.\"\n—Cloud Strife",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/8/08ab5220-e5c1-472e-8217-97fd60e1773c.jpg?1748706024"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -12290,6 +12467,82 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Vayne's Treachery
+{
+    "name": "Vayne's Treachery",
+    "manaCost": "{1}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Kicker—Sacrifice an artifact or creature. (You may sacrifice an artifact or creature in addition to any other costs as you cast this spell.)\nTarget creature gets -2/-2 until end of turn. If this spell was kicked, that creature gets -6/-6 until end of turn instead.",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "additionalCost": {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomSacrifice",
+                    "filter": "creature|artifact"
+                }
+            }
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "WasKicked"
+            },
+            "then": {
+                "type": "ModifyStats",
+                "powerModifier": {
+                    "type": "Fixed",
+                    "amount": -6
+                },
+                "toughnessModifier": {
+                    "type": "Fixed",
+                    "amount": -6
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                }
+            },
+            "otherwise": {
+                "type": "ModifyStats",
+                "powerModifier": {
+                    "type": "Fixed",
+                    "amount": -2
+                },
+                "toughnessModifier": {
+                    "type": "Fixed",
+                    "amount": -2
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                }
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "artist": "Touge369",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/d/6de6d23b-7d42-41c1-be1c-010fe43ee586.jpg?1748706226"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
