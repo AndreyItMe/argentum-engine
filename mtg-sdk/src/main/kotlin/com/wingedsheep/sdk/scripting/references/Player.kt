@@ -184,6 +184,25 @@ sealed interface Player {
         override val description: String = "its owner"
     }
 
+    /**
+     * The distinct owners of the cards currently in the effect source's *linked-exile pile*
+     * (the source's [com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent],
+     * populated by [com.wingedsheep.sdk.dsl.Effects.ExileUntilLeaves]). Resolves to one entry
+     * per distinct owner of a still-exiled linked card — never falling back to "all players" —
+     * and to nothing when the pile is empty.
+     *
+     * Reach it through [com.wingedsheep.sdk.dsl.Effects.ForEachPlayer] on a leaves-the-battlefield
+     * trigger to make "the exiled card's owner does X" act on the right player(s). Per the
+     * Unidentified Hovership ruling (CR 701.62 manifest dread; DSK 37), when more than one card was
+     * exiled, *each player who owns one or more of them* acts once — hence distinct owners, not
+     * once per card. It is intentionally a list (per-player loop) reference, not a single-player one.
+     */
+    @SerialName("OwnersOfLinkedExile")
+    @Serializable
+    data object OwnersOfLinkedExile : Player {
+        override val description: String = "the exiled card's owner"
+    }
+
     // =============================================================================
     // Possessive Forms (for descriptions)
     // =============================================================================
@@ -207,5 +226,6 @@ sealed interface Player {
             EnchantedPlayer -> "enchanted player's"
             is ControllerOf -> "its controller's"
             is OwnerOf -> "its owner's"
+            OwnersOfLinkedExile -> "the exiled card's owner's"
         }
 }

@@ -3363,6 +3363,102 @@
     ]
 }
 
+// Derelict Attic // Widow's Walk
+{
+    "name": "Derelict Attic // Widow's Walk",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "When you unlock this door, you draw two cards and you lose 2 life.\n//\nWhenever a creature you control attacks alone, it gets +1/+0 and gains deathtouch until end of turn.",
+    "metadata": {
+        "collectorNumber": "93",
+        "artist": "Marc Simonetti",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/c/2cae24c1-53f1-4f3f-8795-b634c46a17c4.jpg?1726780598"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Derelict Attic",
+            "manaCost": "{2}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, you draw two cards and you lose 2 life.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "DrawCards",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                {
+                                    "type": "LoseLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    },
+                                    "target": "Controller"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Widow's Walk",
+            "manaCost": "{3}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever a creature you control attacks alone, it gets +1/+0 and gains deathtouch until end of turn.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": {
+                            "type": "AttackEvent",
+                            "filter": "creature ctrl:you",
+                            "requires": [
+                                "AttacksAlone"
+                            ]
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "ModifyStats",
+                                    "powerModifier": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "toughnessModifier": {
+                                        "type": "Fixed",
+                                        "amount": 0
+                                    },
+                                    "target": "TriggeringEntity"
+                                },
+                                {
+                                    "type": "GrantKeyword",
+                                    "keyword": "DEATHTOUCH",
+                                    "target": "TriggeringEntity"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Dissection Tools
 {
     "name": "Dissection Tools",
@@ -9078,6 +9174,57 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Lakeside Shack
+{
+    "name": "Lakeside Shack",
+    "manaCost": "",
+    "typeLine": "Land",
+    "oracleText": "This land enters tapped unless a player has 13 or less life.\n{T}: Add {G} or {U}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLUE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersTapped",
+                "unlessCondition": {
+                    "type": "APlayerLifeAtMost",
+                    "threshold": 13
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "262",
+        "artist": "Bartek Fedyczak",
+        "flavorText": "They say that if you stay in the cabin until the mists reach it, something will slither from the water and knock at the door.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/9/a9367acd-393a-4966-ba60-af2ecd4e7596.jpg?1726286852"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "BLUE"
     ]
 }
 
@@ -16051,6 +16198,142 @@
                 ]
             }
         }
+    ]
+}
+
+// Unidentified Hovership
+{
+    "name": "Unidentified Hovership",
+    "manaCost": "{1}{W}{W}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "Flying\nWhen this Vehicle enters, exile up to one target creature with toughness 5 or less.\nWhen this Vehicle leaves the battlefield, the exiled card's owner manifests dread.\nCrew 1",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING",
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 1
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ExileUntilLeaves",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "up to one target creature with toughness 5 or less"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "creature tou<=5"
+                    },
+                    "id": "up to one target creature with toughness 5 or less"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "OwnersOfLinkedExile"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                "storeAs": "manifestDreadLooked"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "manifestDreadLooked",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "manifestDreadManifested",
+                                "storeRemainder": "manifestDreadGraveyard",
+                                "selectedLabel": "Manifest (put onto the battlefield face down)",
+                                "remainderLabel": "Put into your graveyard"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "manifestDreadManifested",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield"
+                                },
+                                "faceDown": "MANIFEST"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "manifestDreadGraveyard",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
+                            },
+                            "EmitManifestedDreadEvent"
+                        ]
+                    }
+                },
+                "descriptionOverride": "When this Vehicle leaves the battlefield, the exiled card's owner manifests dread."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "37",
+        "rarity": "RARE",
+        "artist": "Jana Heidersdorf",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/d/bd23f168-9ad0-4b4e-bfff-ae004c163727.jpg?1726285993",
+        "rulings": [
+            {
+                "date": "2024-09-20",
+                "text": "If Unidentified Hovership leaves the battlefield before its second ability resolves, the ability still exiles the target creature."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If there's no exiled card when Unidentified Hovership's third ability resolves (most likely because its second ability hasn't resolved yet), the ability won't do anything."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If Unidentified Hovership's second ability exiled more than one card (possibly because another effect caused it to trigger an additional time), each player who owns one or more of the exiled cards manifests dread."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 

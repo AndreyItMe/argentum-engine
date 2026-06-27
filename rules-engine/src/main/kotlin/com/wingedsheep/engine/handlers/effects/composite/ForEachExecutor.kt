@@ -207,6 +207,11 @@ class ForEachExecutor(
             }
             Player.You -> listOf(context.controllerId)
             Player.EachOpponent -> state.getOpponents(context.controllerId)
+            // Distinct owners of the cards still in the source's linked-exile pile. Resolve to
+            // exactly those owners (empty when the pile is empty) — never the activePlayers
+            // fallback below, so "the exiled card's owner does X" does nothing when nothing was
+            // exiled (Unidentified Hovership ruling, DSK 37).
+            Player.OwnersOfLinkedExile -> TargetResolutionUtils.linkedExileOwners(state, context)
             Player.TargetOpponent, Player.TargetPlayer -> listOfNotNull(
                 TargetResolutionUtils.resolvePlayerRef(player, context, state)
             )

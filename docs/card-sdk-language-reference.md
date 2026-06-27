@@ -1660,6 +1660,14 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
   `PreventLifeGain` (`LifeGainEvent(player = EnchantedPlayer)`). Resolves to nothing if the source isn't
   an Aura attached to a player. (Grievous Wound.)
 - `Player.ControllerOf(desc)` / `Player.OwnerOf(desc)` — controller/owner of the first chosen target.
+- `Player.OwnersOfLinkedExile` — the **distinct owners** of the cards still in the effect source's
+  linked-exile pile (`LinkedExileComponent`, populated by `Effects.ExileUntilLeaves`). A *list*
+  reference: reach it only through `Effects.ForEachPlayer(Player.OwnersOfLinkedExile, …)`, typically
+  on a `LeavesBattlefield` trigger, to make "the exiled card's owner does X" act on the right
+  player(s). One iteration per distinct owner (a player owning several exiled cards acts once);
+  resolves to nothing — never "all players" — when the pile is empty. Unidentified Hovership ("the
+  exiled card's owner manifests dread", CR 701.62) = `ForEachPlayer(Player.OwnersOfLinkedExile,
+  Patterns.Library.manifestDread().effects)`.
 - `Player.ContextPlayer(i)` / `Player.Candidate` / `Player.Any` — positional target, CR 115
   candidate during target-restriction evaluation, and "a player" matching.
 - `EffectTarget.ContextProperty(key)` — value plumbed into `EffectContext` (damage amount, life gained, blight

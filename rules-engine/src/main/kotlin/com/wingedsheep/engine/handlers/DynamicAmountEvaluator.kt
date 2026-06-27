@@ -920,6 +920,7 @@ class DynamicAmountEvaluator(
             is Player.AnOpponent, is Player.DefendingPlayer, is Player.EnchantedPlayer -> listOfNotNull(
                 TargetResolutionUtils.resolvePlayerRef(player, context, state)
             )
+            is Player.OwnersOfLinkedExile -> TargetResolutionUtils.linkedExileOwners(state, context)
         }
     }
 

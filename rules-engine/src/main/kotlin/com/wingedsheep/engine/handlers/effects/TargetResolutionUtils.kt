@@ -139,8 +139,39 @@ object TargetResolutionUtils {
                 ?.let { state.getEntity(it)?.get<CardComponent>()?.ownerId }
             is Player.ControllerOf -> context.targets.firstOrNull()?.toEntityId()
                 ?.let { controllerOf(state, it) }
-            Player.Each, Player.EachOpponent, Player.ActivePlayerFirst -> null
+            // Multi-player / list-only references have no single resolution here.
+            // OwnersOfLinkedExile is resolved by ForEachExecutor.resolvePlayers (a player loop).
+            Player.Each, Player.EachOpponent, Player.ActivePlayerFirst,
+            Player.OwnersOfLinkedExile -> null
         }
+    }
+
+    /**
+     * Distinct owners of the cards still in the effect source's linked-exile pile
+     * ([com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent], populated by
+     * `Effects.ExileUntilLeaves`). Backs [Player.OwnersOfLinkedExile]. The component persists across
+     * the source's own zone change, so this resolves correctly from a leaves-the-battlefield
+     * trigger. Only cards still in an exile zone count (a token that ceased to exist, or a card that
+     * has since left exile, drops out); owners are deduplicated so a player owning several exiled
+     * cards is listed once. Empty — never "all players" — when nothing qualifies.
+     */
+    fun linkedExileOwners(state: GameState, context: EffectContext): List<EntityId> {
+        val sourceId = context.sourceId ?: return emptyList()
+        val linked = state.getEntity(sourceId)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent>()
+            ?: return emptyList()
+        return linked.exiledIds
+            .filter { id ->
+                state.zones.any { (zone, cards) ->
+                    zone.zoneType == com.wingedsheep.sdk.core.Zone.EXILE && id in cards
+                }
+            }
+            .mapNotNull { id ->
+                val container = state.getEntity(id)
+                container?.get<com.wingedsheep.engine.state.components.identity.OwnerComponent>()?.playerId
+                    ?: container?.get<CardComponent>()?.ownerId
+            }
+            .distinct()
     }
 
     /**
