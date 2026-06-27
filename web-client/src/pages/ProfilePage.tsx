@@ -1,23 +1,14 @@
 /**
  * Account profile: shows the signed-in user, lets them rename their display name, shows their
- * win/loss record, and lists their saved decks — both account (online) and browser-only — via the
- * shared {@link SavedDeckList}, so they can see at a glance which decks are backed up. Prompts sign-in
- * when anonymous.
+ * win/loss record, and offers a small launcher into the deckbuilder's saved-deck browser (the polished
+ * overlay that lists account + browser decks with online badges). Prompts sign-in when anonymous.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type React from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  type AccountStats,
-  type DeckSummary,
-  deleteDeck as apiDeleteDeck,
-  fetchStats,
-  listDecks,
-} from '@/api/account'
+import { type AccountStats, type DeckSummary, fetchStats, listDecks } from '@/api/account'
 import { LoginModal } from '@/components/auth/LoginModal'
-import { SavedDeckList, type SavedDeckListItem } from '@/components/deckbuilder/SavedDeckList'
 import { useAuthStore } from '@/store/authStore'
-import { useDeckLibrary } from '@/store/deckLibrary'
 
 export function ProfilePage() {
   const navigate = useNavigate()
@@ -27,11 +18,6 @@ export function ProfilePage() {
   const init = useAuthStore((s) => s.init)
   const logout = useAuthStore((s) => s.logout)
   const updateDisplayName = useAuthStore((s) => s.updateDisplayName)
-
-  const localDecks = useDeckLibrary((s) => s.decks)
-  const hydrateLocal = useDeckLibrary((s) => s.hydrate)
-  const hydratedLocal = useDeckLibrary((s) => s.hydrated)
-  const deleteLocalDeck = useDeckLibrary((s) => s.deleteDeck)
 
   const [stats, setStats] = useState<AccountStats | null>(null)
   const [decks, setDecks] = useState<DeckSummary[]>([])
@@ -47,51 +33,10 @@ export function ProfilePage() {
   }, [status, init])
 
   useEffect(() => {
-    if (!hydratedLocal) hydrateLocal()
-  }, [hydratedLocal, hydrateLocal])
-
-  useEffect(() => {
     if (status !== 'authenticated') return
     void fetchStats().then(setStats).catch(() => setStats(null))
     void listDecks().then(setDecks).catch(() => setDecks([]))
   }, [status])
-
-  // Combine the user's account decks (online) with browser-only locals not yet backed up, so the
-  // list doubles as a "what's backed up where" view. A local deck whose name matches a cloud deck is
-  // considered the backed-up copy and isn't shown twice (same name-based rule as the save/migration).
-  const deckItems: SavedDeckListItem[] = useMemo(() => {
-    const cloudNames = new Set(decks.map((d) => d.name.toLowerCase()))
-    const cloudItems: SavedDeckListItem[] = decks.map((d) => ({
-      key: `c:${d.id}`,
-      name: d.name,
-      online: true,
-      ...(d.format ? { format: d.format } : {}),
-    }))
-    const localItems: SavedDeckListItem[] = localDecks
-      .filter((d) => !cloudNames.has(d.name.toLowerCase()))
-      .map((d) => ({
-        key: `l:${d.id}`,
-        name: d.name,
-        online: false,
-        ...(d.format ? { format: d.format } : {}),
-      }))
-    return [...cloudItems, ...localItems]
-  }, [decks, localDecks])
-
-  const openDeck = (item: SavedDeckListItem) => {
-    if (item.key.startsWith('c:')) navigate(`/deckbuilder?accountDeck=${item.key.slice(2)}`)
-    else navigate(`/deckbuilder/${item.key.slice(2)}`)
-  }
-
-  const removeDeck = async (item: SavedDeckListItem) => {
-    if (item.key.startsWith('c:')) {
-      const id = Number(item.key.slice(2))
-      await apiDeleteDeck(id)
-      setDecks((prev) => prev.filter((d) => d.id !== id))
-    } else {
-      deleteLocalDeck(item.key.slice(2))
-    }
-  }
 
   const startEditName = () => {
     setNameDraft(user?.displayName ?? '')
@@ -167,13 +112,20 @@ export function ProfilePage() {
             <Stat label="Win rate" value={stats ? `${Math.round(stats.winRate * 100)}%` : '—'} />
           </div>
 
-          <h2 style={styles.section}>Saved decks</h2>
-          <SavedDeckList
-            decks={deckItems}
-            onOpen={openDeck}
-            onDelete={(item) => void removeDeck(item)}
-            emptyText="No saved decks yet. Build one and save it from the deckbuilder."
-          />
+          <h2 style={styles.section}>Decks</h2>
+          {/* Small launcher into the deckbuilder's saved-deck browser (the polished overlay that lists
+              account + browser decks with online badges) — no need to duplicate that UI here. */}
+          <button type="button" style={styles.deckManager} onClick={() => navigate('/deckbuilder?decks=open')}>
+            <span style={styles.deckManagerText}>
+              <span style={styles.deckManagerTitle}>Manage my decks</span>
+              <span style={styles.muted}>
+                {decks.length === 0
+                  ? 'No decks saved to your account yet'
+                  : `${decks.length} deck${decks.length === 1 ? '' : 's'} saved to your account`}
+              </span>
+            </span>
+            <span style={styles.deckManagerArrow}>Open deck browser →</span>
+          </button>
         </div>
       </div>
     )
@@ -269,6 +221,22 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statValue: { color: '#fff', fontSize: 26, fontWeight: 700 },
   statLabel: { color: '#888', fontSize: 12, marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  deckManager: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    textAlign: 'left',
+    backgroundColor: '#14141f',
+    border: '1px solid #2a2a3e',
+    borderRadius: 12,
+    padding: '16px 18px',
+    color: '#fff',
+    cursor: 'pointer',
+  },
+  deckManagerText: { display: 'flex', flexDirection: 'column', gap: 4 },
+  deckManagerTitle: { fontSize: 16, fontWeight: 600 },
+  deckManagerArrow: { color: '#8b9bff', fontSize: 14, fontWeight: 600, flexShrink: 0 },
   primary: {
     alignSelf: 'flex-start',
     marginTop: 8,

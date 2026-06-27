@@ -96,6 +96,7 @@ the account's stats.
 | GET | `/api/auth/me` | Bearer → `user` |
 | PUT | `/api/auth/me` | Bearer + `{ displayName }` → updated `user` (1–40 chars; duplicates allowed) |
 | GET | `/api/account/decks` | list summaries |
+| GET | `/api/account/decks?full` | every deck in full (one round-trip; powers the unified deck browser) |
 | GET | `/api/account/decks/{id}` | full deck |
 | POST | `/api/account/decks` | body = `SharedDeck` JSON → created deck |
 | PUT | `/api/account/decks/{id}` | replace |
@@ -109,15 +110,18 @@ the account's stats.
 
 - `authStore` (standalone Zustand) holds the signed-in user; `api/account.ts` is the REST client.
 - Sign-in modal (`LoginModal`) + `/login/verify` page; a nav entry in the connection overlay.
-- **Unified Save:** the deckbuilder has one Save / Save as. When signed in it saves to the account
-  (cloud); when anonymous it saves to the browser library (localStorage). The cloud path dedupes by
-  deck name (same rule as the migration prompt) so re-saving overwrites rather than duplicating.
-  `AccountDeckBar` is now just the cloud "My decks" browser + a sign-in affordance.
+- **Unified Save (everywhere):** every "save a deck" button routes through `useSaveDeck` — when signed
+  in it saves to the account (cloud, overwriting a same-named deck via `upsertDeckByName`), otherwise
+  to the browser library (localStorage). This covers the deckbuilder Save/Save-as, the tournament/draft
+  "Save Deck" + deck-viewer save (previously always localStorage, even when signed in), and the lobby
+  deck picker's Paste-tab save.
+- **Unified deck library (`useUnifiedDecks`):** merges account decks (fetched in full via `?full`) with
+  browser-only decks, each tagged `online`. Feeds (a) the deckbuilder's saved-deck **browser** overlay,
+  which shows an **Online / Browser** badge per deck and routes load/rename/delete to the right store,
+  and (b) the lobby deck picker's "My Decks" tab, so signed-in users can pick their cloud decks to play.
 - **Display name:** editable on the profile page (`PUT /api/auth/me`); the email stays the identity.
-- Profile page at `/profile` shows stats + saved decks via the shared `SavedDeckList`, which renders
-  both account (online) and browser-only decks with an **Online / Browser only** badge so the user
-  can see what's backed up. Deck names deep-link into the deckbuilder
-  (`/deckbuilder?accountDeck=<id>` for cloud, `/deckbuilder/<id>` for local).
+- Profile page at `/profile` shows stats + a small **Manage my decks** launcher that opens the
+  deckbuilder's deck browser (`/deckbuilder?decks=open`) — one polished list instead of a second copy.
 - On sign-in, a landing-page prompt (`DeckMigrationPrompt`) offers to copy browser-only decks to the
   account.
 

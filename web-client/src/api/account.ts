@@ -133,6 +133,14 @@ export async function listDecks(): Promise<DeckSummary[]> {
   return (await res.json()) as DeckSummary[]
 }
 
+/** Full detail for every saved deck in one request (`?full`) — used by the unified deck browser. */
+export async function listDeckDetails(): Promise<DeckDetail[]> {
+  const res = await fetch('/api/account/decks?full', { headers: authHeaders() })
+  if (res.status === 401) throw new UnauthorizedError()
+  if (!res.ok) throw new Error(`Failed to load decks (${res.status})`)
+  return (await res.json()) as DeckDetail[]
+}
+
 export async function getDeck(id: number): Promise<DeckDetail> {
   const res = await fetch(`/api/account/decks/${id}`, { headers: authHeaders() })
   if (res.status === 401) throw new UnauthorizedError()
@@ -166,6 +174,18 @@ export async function deleteDeck(id: number): Promise<void> {
   const res = await fetch(`/api/account/decks/${id}`, { method: 'DELETE', headers: authHeaders() })
   if (res.status === 401) throw new UnauthorizedError()
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete deck (${res.status})`)
+}
+
+/**
+ * Save a deck to the account, overwriting any existing deck with the same name (case-insensitive)
+ * rather than creating a duplicate. This is the single cloud-save path shared by the deckbuilder, the
+ * tournament/draft save, the deck picker, and the sign-in migration — so "save when signed in" means
+ * the same thing everywhere.
+ */
+export async function upsertDeckByName(deck: SharedDeck): Promise<DeckDetail> {
+  const existing = await listDecks()
+  const match = existing.find((d) => d.name.toLowerCase() === deck.name.toLowerCase())
+  return match ? updateDeck(match.id, deck) : saveDeck(deck)
 }
 
 // ----- Stats -----

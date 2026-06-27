@@ -7,28 +7,12 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import type React from 'react'
-import { type PrintingRef } from '@/types'
-import { listDecks, saveDeck } from '@/api/account'
-import type { SharedDeck } from '@/components/deckbuilder/shareDeck'
-import { type SavedDeck, useDeckLibrary } from '@/store/deckLibrary'
+import { listDecks, upsertDeckByName } from '@/api/account'
+import { useDeckLibrary } from '@/store/deckLibrary'
+import { savedDeckToShared } from '@/store/useSaveDeck'
 import { useAuthStore } from '@/store/authStore'
 
 const DISMISS_KEY = 'argentum-deck-migration-dismissed'
-
-function savedToShared(deck: SavedDeck): SharedDeck {
-  const printings: Record<string, PrintingRef> = {}
-  for (const entry of deck.entries ?? []) {
-    if (entry.printing) printings[entry.name] = entry.printing
-  }
-  return {
-    name: deck.name,
-    cards: deck.cards,
-    ...(Object.keys(printings).length > 0 ? { printings } : {}),
-    ...(deck.format ? { format: deck.format } : {}),
-    ...(deck.commander ? { commander: deck.commander } : {}),
-    ...(deck.commanderPrinting ? { commanderPrinting: deck.commanderPrinting } : {}),
-  }
-}
 
 export function DeckMigrationPrompt() {
   const status = useAuthStore((s) => s.status)
@@ -68,7 +52,7 @@ export function DeckMigrationPrompt() {
     setState('saving')
     for (const deck of candidates) {
       try {
-        await saveDeck(savedToShared(deck))
+        await upsertDeckByName(savedDeckToShared(deck))
       } catch {
         /* skip the ones that fail; the rest still migrate */
       }

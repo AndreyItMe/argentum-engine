@@ -4,7 +4,9 @@ import com.wingedsheep.gameserver.auth.AuthSupport
 import com.wingedsheep.gameserver.persistence.DeckRepository
 import com.wingedsheep.gameserver.persistence.DeckRow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
@@ -49,6 +51,20 @@ class AccountDeckController(
     fun list(@RequestHeader(HttpHeaders.AUTHORIZATION, required = false) auth: String?): List<DeckSummary> {
         val userId = authSupport.requireUser(auth).uid
         return decks.findByUserIdOrderByUpdatedAtDesc(userId).map { it.toSummary() }
+    }
+
+    /**
+     * Full detail for every deck in one round-trip (`GET /api/account/decks?full`). Lets the deck
+     * browser render rich metadata (card counts, colors, art) for cloud decks without an N+1 of
+     * per-deck `GET /{id}` calls. Returns the same shape as repeated `get`, as a JSON array.
+     */
+    @GetMapping(params = ["full"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun listFull(@RequestHeader(HttpHeaders.AUTHORIZATION, required = false) auth: String?): ResponseEntity<Any> {
+        val userId = authSupport.requireUser(auth).uid
+        val rows = decks.findByUserIdOrderByUpdatedAtDesc(userId)
+        val array = buildJsonArray { rows.forEach { add(it.toDetailObject()) } }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+            .body(json.encodeToString(JsonArray.serializer(), array))
     }
 
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -112,15 +128,14 @@ class AccountDeckController(
 
     private fun DeckRow.toSummary() = DeckSummary(id = id!!, name = name, format = format, updatedAt = updatedAt.toString())
 
-    /** Build the deck-detail response, embedding the stored deck JSON inline (no re-encoding). */
-    private fun DeckRow.toDetailJson(): String {
-        val obj = buildJsonObject {
-            put("id", id)
-            put("name", name)
-            format?.let { put("format", it) }
-            put("updatedAt", updatedAt.toString())
-            put("deck", json.parseToJsonElement(data))
-        }
-        return json.encodeToString(JsonObject.serializer(), obj)
+    /** Build the deck-detail object, embedding the stored deck JSON inline (no re-encoding). */
+    private fun DeckRow.toDetailObject(): JsonObject = buildJsonObject {
+        put("id", id)
+        put("name", name)
+        format?.let { put("format", it) }
+        put("updatedAt", updatedAt.toString())
+        put("deck", json.parseToJsonElement(data))
     }
+
+    private fun DeckRow.toDetailJson(): String = json.encodeToString(JsonObject.serializer(), toDetailObject())
 }

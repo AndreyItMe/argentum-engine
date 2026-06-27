@@ -50,13 +50,9 @@ import {
   type SharedDeck,
 } from './shareDeck'
 import { AccountDeckBar } from './AccountDeckBar'
-import {
-  getDeck as getAccountDeck,
-  listDecks as apiListDecks,
-  saveDeck as apiSaveDeck,
-  updateDeck as apiUpdateDeck,
-} from '@/api/account'
+import { getDeck as getAccountDeck, upsertDeckByName } from '@/api/account'
 import { useAuthStore } from '@/store/authStore'
+import { type UnifiedDeck, useUnifiedDecks } from '@/store/useUnifiedDecks'
 import {
   detectProducedColors,
   suggestBasicLands,
@@ -218,12 +214,19 @@ export function DeckbuilderPage() {
     return s ? `?${s}` : ''
   }, [searchParams])
 
-  const decks = useDeckLibrary((s) => s.decks)
+  // The saved-deck browser + "My decks" card show the unified library (cloud decks when signed in,
+  // plus browser-only locals), each tagged online/local. Plain localStorage actions below still back
+  // the anonymous save path and the active-deck (local) operations.
+  const {
+    decks: browserDecks,
+    reload: reloadUnifiedDecks,
+    removeDeck: removeUnifiedDeck,
+    renameDeck: renameUnifiedDeck,
+  } = useUnifiedDecks()
   const hydrate = useDeckLibrary((s) => s.hydrate)
   const hydrated = useDeckLibrary((s) => s.hydrated)
   const saveDeck = useDeckLibrary((s) => s.saveDeck)
   const deleteDeck = useDeckLibrary((s) => s.deleteDeck)
-  const renameDeck = useDeckLibrary((s) => s.renameDeck)
   const getDeck = useDeckLibrary((s) => s.getDeck)
 
   // Hydrate localStorage once on mount.
@@ -441,6 +444,21 @@ export function DeckbuilderPage() {
   const [bulkEditOpen, setBulkEditOpen] = useState(false)
   // Saved-decks browser overlay visibility.
   const [decksBrowserOpen, setDecksBrowserOpen] = useState(false)
+  // Deep link from the profile's "Manage decks" button (/deckbuilder?decks=open): open the saved-deck
+  // browser straight away, then strip the param so it doesn't re-open on later navigations.
+  useEffect(() => {
+    if (searchParams.get('decks') !== 'open') return
+    reloadUnifiedDecks()
+    setDecksBrowserOpen(true)
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        params.delete('decks')
+        return params
+      },
+      { replace: true },
+    )
+  }, [searchParams, setSearchParams, reloadUnifiedDecks])
   // Example-decks picker overlay visibility.
   const [examplesOpen, setExamplesOpen] = useState(false)
 
@@ -881,10 +899,7 @@ export function DeckbuilderPage() {
     }
     const shared = overrideName ? { ...built, name: overrideName } : built
     try {
-      const existing = await apiListDecks()
-      const match = existing.find((d) => d.name.toLowerCase() === shared.name.toLowerCase())
-      if (match) await apiUpdateDeck(match.id, shared)
-      else await apiSaveDeck(shared)
+      await upsertDeckByName(shared)
       if (overrideName) setDeckName(overrideName)
       flashSave('Saved to account')
     } catch {
@@ -1028,7 +1043,16 @@ export function DeckbuilderPage() {
     }
   }
 
-  const handleLoadSaved = (deck: SavedDeck) => {
+  const handleLoadSaved = (deck: UnifiedDeck) => {
+    // Cloud decks load through the SharedDeck path (fetched fresh, then applied like a deep link);
+    // local decks load straight from their stored shape and deep-link to /deckbuilder/<id>.
+    if (deck.cloudId != null) {
+      void getAccountDeck(deck.cloudId)
+        .then((detail) => applySharedDeck(detail.deck))
+        .catch(() => {})
+      setDecksBrowserOpen(false)
+      return
+    }
     setDeckName(deck.name)
     setDeckCards(mergeCommanderIntoCards(deck.cards, deck.commander ?? null))
     setSideboardCards(deck.sideboard ? { ...deck.sideboard } : {})
@@ -1048,16 +1072,16 @@ export function DeckbuilderPage() {
     setDecksBrowserOpen(false)
   }
 
-  const handleRenameSaved = (deck: SavedDeck) => {
+  const handleRenameSaved = (deck: UnifiedDeck) => {
     const next = window.prompt('Rename deck', deck.name)
     if (!next || !next.trim()) return
-    renameDeck(deck.id, next.trim())
+    void renameUnifiedDeck(deck, next.trim())
     if (deck.id === activeDeckId) setDeckName(next.trim())
   }
 
-  const handleDeleteSaved = (deck: SavedDeck) => {
+  const handleDeleteSaved = (deck: UnifiedDeck) => {
     if (!window.confirm(`Delete "${deck.name}"?`)) return
-    deleteDeck(deck.id)
+    void removeUnifiedDeck(deck)
     if (deck.id === activeDeckId) handleNew()
   }
 
@@ -1291,7 +1315,7 @@ export function DeckbuilderPage() {
 
       {decksBrowserOpen && (
         <SavedDecksBrowser
-          decks={decks}
+          decks={browserDecks}
           catalog={catalogIndex}
           activeDeckId={activeDeckId}
           onClose={() => setDecksBrowserOpen(false)}
@@ -1312,9 +1336,12 @@ export function DeckbuilderPage() {
       {/* Left rail */}
       <aside className={styles.left}>
         <SavedDecksSummary
-          decks={decks}
+          decks={browserDecks}
           activeDeckId={activeDeckId}
-          onOpen={() => setDecksBrowserOpen(true)}
+          onOpen={() => {
+            reloadUnifiedDecks()
+            setDecksBrowserOpen(true)
+          }}
         />
         {viewMode === 'deck' ? (
           <DeckHoverPreview
@@ -2219,13 +2246,13 @@ function SavedDecksBrowser({
   onRename,
   onDelete,
 }: {
-  decks: SavedDeck[]
+  decks: UnifiedDeck[]
   catalog: Record<string, CardSummary>
   activeDeckId: string | null
   onClose: () => void
-  onLoad: (d: SavedDeck) => void
-  onRename: (d: SavedDeck) => void
-  onDelete: (d: SavedDeck) => void
+  onLoad: (d: UnifiedDeck) => void
+  onRename: (d: UnifiedDeck) => void
+  onDelete: (d: UnifiedDeck) => void
 }) {
   const [filter, setFilter] = useState('')
   const [sort, setSort] = useState<DecksBrowserSort>('updated')
@@ -2485,15 +2512,15 @@ function DeckCard({
   onRename,
   onDelete,
 }: {
-  deck: SavedDeck
+  deck: UnifiedDeck
   total: number
   colors: string[]
   legalFormats: string[]
   isActive: boolean
   heroArt: string | undefined
-  onLoad: (d: SavedDeck) => void
-  onRename: (d: SavedDeck) => void
-  onDelete: (d: SavedDeck) => void
+  onLoad: (d: UnifiedDeck) => void
+  onRename: (d: UnifiedDeck) => void
+  onDelete: (d: UnifiedDeck) => void
 }) {
   const updated = useMemo(() => formatRelativeTime(deck.updatedAt), [deck.updatedAt])
   // Banner gradient derived from the deck's colour identity. Falls back to a
@@ -2547,6 +2574,13 @@ function DeckCard({
         <div className={styles.deckCardName}>{deck.name}</div>
         <div className={styles.deckCardMeta}>
           <span>{updated}</span>
+          <span aria-hidden="true">·</span>
+          <span
+            style={{ color: deck.online ? '#9be8bd' : '#9a9aa8', fontWeight: 600 }}
+            title={deck.online ? 'Backed up to your account' : 'Saved only in this browser'}
+          >
+            {deck.online ? '● Online' : '○ Browser'}
+          </span>
         </div>
         {(deck.format || legalFormats.length > 0) && (
           <span className={styles.formatBadges}>

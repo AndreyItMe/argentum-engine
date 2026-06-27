@@ -11,6 +11,7 @@ import { ReplayViewer, type GameSummary } from '../admin/ReplayViewer'
 import type { ReplayData } from '@/replay/reconstructSnapshots.ts'
 import { QuickGameLobbyOverlay } from './QuickGameLobbyOverlay'
 import { useDeckLibrary, buildDraftedDeckSave, type SavedDeckEntry } from '@/store/deckLibrary'
+import { useSaveDeck } from '@/store/useSaveDeck'
 import { DeckPicker } from './DeckPicker'
 import { BanListEditor } from './BanListEditor'
 import { SetPickerModal } from './SetPickerModal'
@@ -2003,7 +2004,7 @@ function TournamentOverlay({
   const [deckSavedAt, setDeckSavedAt] = useState<number | null>(null)
   const [saveDeckDialog, setSaveDeckDialog] = useState<{ name: string } | null>(null)
   const hydrateDeckLibrary = useDeckLibrary((s) => s.hydrate)
-  const saveDeckToLibrary = useDeckLibrary((s) => s.saveDeck)
+  const { save: saveDeckRouted, isLoggedIn } = useSaveDeck()
   useEffect(() => { hydrateDeckLibrary() }, [hydrateDeckLibrary])
 
   const buildDeckSave = (): { cards: Record<string, number>; entries: SavedDeckEntry[] | undefined } | null => {
@@ -2029,7 +2030,8 @@ function TournamentOverlay({
     const built = buildDeckSave()
     if (!built) return
     const name = saveDeckDialog.name.trim() || `Drafted deck – ${new Date().toLocaleDateString()}`
-    saveDeckToLibrary({ name, cards: built.cards, ...(built.entries ? { entries: built.entries } : {}) })
+    // Routes to the account when signed in, localStorage otherwise — same as the deckbuilder.
+    void saveDeckRouted({ name, cards: built.cards, ...(built.entries ? { entries: built.entries } : {}) })
     setSaveDeckDialog(null)
     setDeckSavedAt(Date.now())
     setTimeout(() => setDeckSavedAt(null), 2000)
@@ -2140,7 +2142,7 @@ function TournamentOverlay({
                   color: '#fff',
                   fontWeight: 600,
                 }}
-                title="Save this drafted deck to your local My Decks library"
+                title={isLoggedIn ? 'Save this drafted deck to your account' : 'Save this drafted deck to your browser My Decks library'}
               >
                 {deckSavedAt ? 'Saved ✓' : 'Save Deck'}
               </button>
@@ -2478,6 +2480,7 @@ function TournamentOverlay({
       {saveDeckDialog && (
         <SaveDeckDialog
           name={saveDeckDialog.name}
+          online={isLoggedIn}
           onNameChange={(name) => setSaveDeckDialog({ name })}
           onCancel={() => setSaveDeckDialog(null)}
           onConfirm={confirmSaveDeck}
@@ -2489,11 +2492,13 @@ function TournamentOverlay({
 
 function SaveDeckDialog({
   name,
+  online,
   onNameChange,
   onConfirm,
   onCancel,
 }: {
   name: string
+  online: boolean
   onNameChange: (name: string) => void
   onConfirm: () => void
   onCancel: () => void
@@ -2521,6 +2526,11 @@ function SaveDeckDialog({
           <label style={{ fontSize: 'var(--font-sm)', color: 'var(--text-faint)' }}>
             Deck name
           </label>
+          <p style={{ margin: 0, fontSize: 'var(--font-xs, 0.75rem)', color: 'var(--text-faint)' }}>
+            {online
+              ? 'Saving to your account — available on any device you sign in from.'
+              : 'Saving to this browser. Sign in to save decks to your account.'}
+          </p>
           <input
             ref={inputRef}
             type="text"
@@ -2576,7 +2586,7 @@ function DeckViewerModal({
   const [hoveredCard, setHoveredCard] = useState<SealedCardInfo | null>(null)
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null)
   const hydrateDeckLibrary = useDeckLibrary((s) => s.hydrate)
-  const saveDeck = useDeckLibrary((s) => s.saveDeck)
+  const { save: saveDeckRouted, isLoggedIn } = useSaveDeck()
   useEffect(() => { hydrateDeckLibrary() }, [hydrateDeckLibrary])
   const defaultDeckName = `Drafted ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   const [saveName, setSaveName] = useState(defaultDeckName)
@@ -2758,15 +2768,17 @@ function DeckViewerModal({
                 deckBuildingState.landCounts,
                 [...deckBuildingState.cardPool, ...deckBuildingState.basicLands],
               )
-              saveDeck({ name: saveName.trim() || defaultDeckName, cards, ...(entries ? { entries } : {}) })
+              // Routes to the account when signed in, localStorage otherwise.
+              void saveDeckRouted({ name: saveName.trim() || defaultDeckName, cards, ...(entries ? { entries } : {}) })
               setSavedAt(Date.now())
               setTimeout(() => setSavedAt(null), 2000)
             }}
             disabled={totalCards === 0}
             className={styles.startButton}
             style={{ flexShrink: 0 }}
+            title={isLoggedIn ? 'Save to your account' : 'Save to your browser My Decks library'}
           >
-            {savedAt ? 'Saved ✓' : 'Save to My Decks'}
+            {savedAt ? 'Saved ✓' : isLoggedIn ? 'Save to My Decks (online)' : 'Save to My Decks'}
           </button>
         </div>
       </div>

@@ -23,11 +23,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PrintingRef } from '@/types'
 import type { AvailableSet } from '@/types/messages'
 import {
-  useDeckLibrary,
   mergeCommanderIntoCards,
   stripCommanderFromCards,
-  type SavedDeck,
 } from '@/store/deckLibrary'
+import { type UnifiedDeck, useUnifiedDecks } from '@/store/useUnifiedDecks'
+import { useSaveDeck } from '@/store/useSaveDeck'
 import {
   labelForFormat,
   useDeckLegalFormats,
@@ -155,10 +155,10 @@ export function DeckPicker({
   tabs = ALL_TABS,
   format = null,
 }: DeckPickerProps) {
-  const decks = useDeckLibrary((s) => s.decks)
-  const hydrate = useDeckLibrary((s) => s.hydrate)
-  const saveDeck = useDeckLibrary((s) => s.saveDeck)
-  const deleteDeck = useDeckLibrary((s) => s.deleteDeck)
+  // Unified library: cloud decks (when signed in) + browser-only decks, each tagged with where it
+  // lives. Selecting a cloud deck works the same as a local one because both carry their card list.
+  const { decks, reload: reloadDecks, removeDeck } = useUnifiedDecks()
+  const { save: saveDeckRouted } = useSaveDeck()
 
   const showSaved = tabs.includes('saved')
   const showExamples = tabs.includes('examples')
@@ -193,11 +193,6 @@ export function DeckPicker({
   useEffect(() => {
     setRandomSetCode(initialSetCode)
   }, [initialSetCode])
-
-  // Hydrate localStorage once.
-  useEffect(() => {
-    hydrate()
-  }, [hydrate])
 
   // Move off `random` to `saved` once decks are hydrated, so users land on their own list.
   useEffect(() => {
@@ -367,10 +362,12 @@ export function DeckPicker({
     setTab('paste')
   }
 
-  const handleSaveCurrent = () => {
+  const handleSaveCurrent = async () => {
     if (!pendingName.trim() || Object.keys(currentDeck).length === 0) return
-    const saved = saveDeck({ name: pendingName.trim(), cards: currentDeck })
-    setSelectedSavedId(saved.id)
+    // Routes to the account when signed in (then refresh so the new cloud deck appears), else local.
+    const { id } = await saveDeckRouted({ name: pendingName.trim(), cards: currentDeck })
+    reloadDecks()
+    setSelectedSavedId(id)
     setPendingName('')
     setTab('saved')
   }
@@ -426,9 +423,9 @@ export function DeckPicker({
             hiddenCount={decks.length - visibleDecks.length}
             selectedId={selectedSavedId}
             onSelect={setSelectedSavedId}
-            onDelete={(id) => {
-              deleteDeck(id)
-              if (selectedSavedId === id) setSelectedSavedId(null)
+            onDelete={(d) => {
+              void removeDeck(d)
+              if (selectedSavedId === d.id) setSelectedSavedId(null)
             }}
             onEdit={(d) => {
               // Show the full deck in the paste editor — including the commander,
@@ -570,14 +567,14 @@ function TabButton({
 function SavedDecksPanel({
   decks, legalityMap, format, hiddenCount, selectedId, onSelect, onDelete, onEdit,
 }: {
-  decks: SavedDeck[]
+  decks: UnifiedDeck[]
   legalityMap: Record<string, string[]>
   format: string | null
   hiddenCount: number
   selectedId: string | null
   onSelect: (id: string) => void
-  onDelete: (id: string) => void
-  onEdit: (d: SavedDeck) => void
+  onDelete: (d: UnifiedDeck) => void
+  onEdit: (d: UnifiedDeck) => void
 }) {
   if (decks.length === 0) {
     if (format && hiddenCount > 0) {
@@ -610,7 +607,20 @@ function SavedDecksPanel({
               onClick={() => onSelect(d.id)}
             >
               <div className={styles.savedItemMeta}>
-                <span className={styles.savedItemName}>{d.name}</span>
+                <span className={styles.savedItemName}>
+                  {d.name}
+                  <span
+                    className={styles.savedItemFormatBadge}
+                    style={{
+                      marginLeft: 6,
+                      color: d.online ? '#9be8bd' : '#b8b8c4',
+                      borderColor: d.online ? 'rgba(62,207,122,0.35)' : undefined,
+                    }}
+                    title={d.online ? 'Backed up to your account' : 'Saved only in this browser'}
+                  >
+                    {d.online ? 'Online' : 'Browser'}
+                  </span>
+                </span>
                 <span className={styles.savedItemCount}>{total} cards</span>
                 {(d.format || legalIn.length > 0) && (
                   <span className={styles.savedItemFormats}>
@@ -638,7 +648,7 @@ function SavedDecksPanel({
               </div>
               <div className={styles.savedItemActions}>
                 <button className={styles.linkButton} onClick={(e) => { e.stopPropagation(); onEdit(d) }} type="button">Edit</button>
-                <button className={styles.dangerButton} onClick={(e) => { e.stopPropagation(); onDelete(d.id) }} type="button">Delete</button>
+                <button className={styles.dangerButton} onClick={(e) => { e.stopPropagation(); onDelete(d) }} type="button">Delete</button>
               </div>
             </li>
           )
