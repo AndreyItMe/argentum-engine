@@ -3363,6 +3363,102 @@
     ]
 }
 
+// Derelict Attic // Widow's Walk
+{
+    "name": "Derelict Attic // Widow's Walk",
+    "manaCost": "",
+    "typeLine": "Enchantment — Room",
+    "oracleText": "When you unlock this door, you draw two cards and you lose 2 life.\n//\nWhenever a creature you control attacks alone, it gets +1/+0 and gains deathtouch until end of turn.",
+    "metadata": {
+        "collectorNumber": "93",
+        "artist": "Marc Simonetti",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/c/2cae24c1-53f1-4f3f-8795-b634c46a17c4.jpg?1726780598"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ],
+    "layout": "SPLIT",
+    "cardFaces": [
+        {
+            "name": "Derelict Attic",
+            "manaCost": "{2}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "When you unlock this door, you draw two cards and you lose 2 life.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_1",
+                        "trigger": "DoorUnlockedEvent",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "DrawCards",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    }
+                                },
+                                {
+                                    "type": "LoseLife",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    },
+                                    "target": "Controller"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Widow's Walk",
+            "manaCost": "{3}{B}",
+            "typeLine": "Enchantment — Room",
+            "oracleText": "Whenever a creature you control attacks alone, it gets +1/+0 and gains deathtouch until end of turn.",
+            "script": {
+                "triggeredAbilities": [
+                    {
+                        "id": "ability_2",
+                        "trigger": {
+                            "type": "AttackEvent",
+                            "filter": "creature ctrl:you",
+                            "requires": [
+                                "AttacksAlone"
+                            ]
+                        },
+                        "binding": "ANY",
+                        "effect": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "ModifyStats",
+                                    "powerModifier": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    },
+                                    "toughnessModifier": {
+                                        "type": "Fixed",
+                                        "amount": 0
+                                    },
+                                    "target": "TriggeringEntity"
+                                },
+                                {
+                                    "type": "GrantKeyword",
+                                    "keyword": "DEATHTOUCH",
+                                    "target": "TriggeringEntity"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Dissection Tools
 {
     "name": "Dissection Tools",
