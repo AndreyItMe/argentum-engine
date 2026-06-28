@@ -322,7 +322,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Turtle-Duck
 - [x] Twin Blades
 - [x] Ty Lee, Artful Acrobat
-- [ ] Ty Lee, Chi Blocker
+- [x] Ty Lee, Chi Blocker
 - [ ] Uncle Iroh
 - [x] United Front
 - [x] Unlucky Cabbage Merchant
