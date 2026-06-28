@@ -43,7 +43,8 @@ val TerritoryForge = card("Territory Forge") {
     }
 
     staticAbility {
-        ability = HasAllActivatedAbilitiesOfLinkedExiledCard
+        // Default filter = the source itself ("This artifact has all activated abilities …").
+        ability = HasAllActivatedAbilitiesOfLinkedExiledCard()
     }
 
     metadata {

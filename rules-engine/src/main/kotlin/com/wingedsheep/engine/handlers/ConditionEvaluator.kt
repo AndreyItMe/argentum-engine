@@ -1276,8 +1276,14 @@ class ConditionEvaluator(
         context: EffectContext
     ): Boolean {
         val target = context.positionalTarget(condition.index) ?: return false
-        val entityId = (target as? com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent)
-            ?.entityId ?: return false
+        // Works whether the target is a battlefield permanent (face-down reveal) or a card in another
+        // zone — a graveyard card exiled by Agatha's Soul Cauldron is a ChosenTarget.Card. Both expose
+        // the underlying entity, whose CardComponent still carries the printed type after it moves.
+        val entityId = when (target) {
+            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent -> target.entityId
+            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Card -> target.cardId
+            else -> return false
+        }
         return state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.isCreature == true
     }
 

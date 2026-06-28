@@ -213,6 +213,9 @@ data class GroupFilter(
     /** Add subtype by string */
     fun withSubtype(subtype: String) = copy(baseFilter = baseFilter.withSubtype(subtype))
 
+    /** Must have a counter of the given type (e.g. `Counters.PLUS_ONE_PLUS_ONE`) */
+    fun withCounter(counterType: String) = copy(baseFilter = baseFilter.withCounter(counterType))
+
     /** Add keyword requirement */
     fun withKeyword(keyword: Keyword) = copy(baseFilter = baseFilter.withKeyword(keyword))
 

@@ -61,20 +61,40 @@ data class GrantActivatedAbility(
 }
 
 /**
- * Grants the source permanent **all activated abilities of the card(s) it exiled** (its linked
- * exile pile). Models "This permanent has all activated abilities of the exiled card"
- * (Territory Forge).
+ * Grants the permanents matching [filter] **all activated abilities of the card(s) in this
+ * source's linked-exile pile**. Two shapes:
+ *  - `filter = GroupFilter.source()` (the default) → "This permanent has all activated abilities of
+ *    the exiled card" (Territory Forge — the source grants the abilities to *itself*).
+ *  - any battlefield filter → "Creatures you control with +1/+1 counters on them have all activated
+ *    abilities of all creature cards exiled with this" (Agatha's Soul Cauldron — the source grants
+ *    the abilities to *other* matching permanents). Pair with [creatureCardsOnly] when the printed
+ *    text restricts the source pile to creature cards.
  *
  * Resolution is dynamic: the engine reads the source's linked-exile pile at activation-legality
  * time, pulls every activated ability off each exiled card's definition, and surfaces them as
- * activatable on the source permanent (with the source as the ability's controller/source, so
- * self-references and `{T}` resolve against this permanent — CR-faithful to the Territory Forge
- * ruling that the exiled card's "this card" references become references to Territory Forge).
+ * activatable on each *matching* permanent — with that permanent as the ability's source, so
+ * self-references and `{T}` resolve against the creature that gained the ability (CR-faithful to
+ * the rulings that the exiled card's "this card" references become references to the permanent
+ * that has the ability).
  *
  * It grants only *activated* abilities — not triggered, static, or replacement abilities.
+ *
+ * @property filter The permanents that gain the exiled cards' abilities (default: the source itself).
+ * @property creatureCardsOnly When true, only *creature* cards in the linked-exile pile contribute
+ *   their abilities (Agatha's "all **creature** cards exiled with"). When false, every exiled card
+ *   contributes (Territory Forge).
  */
 @SerialName("HasAllActivatedAbilitiesOfLinkedExiledCard")
 @Serializable
-data object HasAllActivatedAbilitiesOfLinkedExiledCard : StaticAbility {
-    override val description: String = "this permanent has all activated abilities of the exiled card"
+data class HasAllActivatedAbilitiesOfLinkedExiledCard(
+    val filter: GroupFilter = GroupFilter.source(),
+    val creatureCardsOnly: Boolean = false,
+) : StaticAbility {
+    override val description: String =
+        "${filter.description} have all activated abilities of the${if (creatureCardsOnly) " creature" else ""} cards exiled with this"
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }

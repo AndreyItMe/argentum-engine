@@ -2247,11 +2247,31 @@ class ActivateAbilityHandler(
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             val classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
             for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
-                // Territory Forge: "this permanent has all activated abilities of the exiled card".
+                // "[filter] have all activated abilities of the [creature] cards exiled with this"
+                // (Territory Forge = Self; Agatha's Soul Cauldron = creatures you control with a
+                // +1/+1 counter). Mirror CastPermissionUtils.getStaticGrantedAbilitiesWithGranter:
+                // grant each pile ability to every matching permanent, recording the *receiver* as
+                // the granter so `{T}`/self-references bind to the permanent that gained the ability.
                 if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard) {
-                    if (permanentId != entityId) continue
-                    for (granted in com.wingedsheep.engine.legalactions.utils.linkedExiledActivatedAbilities(state, permanentId, cardRegistry)) {
-                        result.add(granted to permanentId)
+                    val receives = when (val scope = ability.filter.scope) {
+                        is Scope.Self -> permanentId == entityId
+                        is Scope.Specific -> scope.entityId == entityId
+                        is Scope.AttachedTo -> container.get<AttachedToComponent>()?.targetId == entityId
+                        is Scope.Battlefield -> {
+                            if (ability.filter.excludeSelf && permanentId == entityId) false
+                            else {
+                                val granterController = state.projectedState.getController(permanentId)
+                                granterController != null && predicateEvaluator.matches(
+                                    state, state.projectedState, entityId, ability.filter.baseFilter,
+                                    PredicateContext(controllerId = granterController, sourceId = permanentId)
+                                )
+                            }
+                        }
+                    }
+                    if (receives) {
+                        for (granted in com.wingedsheep.engine.legalactions.utils.linkedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.creatureCardsOnly)) {
+                            result.add(granted to entityId)
+                        }
                     }
                     continue
                 }

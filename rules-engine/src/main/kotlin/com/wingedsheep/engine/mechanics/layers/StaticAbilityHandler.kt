@@ -806,7 +806,7 @@ class StaticAbilityHandler(
             // Activated abilities (ActivateAbilityHandler / ActivatedAbilityEnumerator):
             is ExtraLoyaltyActivation,
             is GrantActivatedAbility,
-            HasAllActivatedAbilitiesOfLinkedExiledCard,
+            is HasAllActivatedAbilitiesOfLinkedExiledCard,
             is GainActivatedAbilitiesOfPermanents,
             is SpendAnyManaTypeForActivatedAbilities,
             is PreventActivatedAbilities,

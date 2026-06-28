@@ -417,7 +417,9 @@ object Conditions {
      * printed types rather than projected state. The right test for a face-down permanent (which
      * projects as a typeless 2/2 Creature regardless of what it really is) — e.g. "Reveal target
      * face-down permanent. If it's a creature card, you may turn it face up." (Hauntwoods Shrieker).
-     * Resolution-only.
+     * Also handles a card target in another zone (a graveyard/exile card target), whose printed type
+     * survives the zone change — e.g. "Exile target card from a graveyard. When a creature card is
+     * exiled this way, …" (Agatha's Soul Cauldron). Resolution-only.
      */
     fun TargetIsCreatureCard(targetIndex: Int = 0): ConditionInterface =
         com.wingedsheep.sdk.scripting.conditions.TargetIsCreatureCard(targetIndex)

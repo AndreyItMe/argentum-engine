@@ -3451,13 +3451,21 @@ staticAbility {
   (Cursed Totem → `GameObjectFilter.Creature`). With `nonManaAbilitiesOnly = true`, mana abilities
   stay usable and only non-mana abilities are blocked — the "… can't be activated unless they're
   mana abilities" wording (Sharkey, Tyrant of the Shire → `GameObjectFilter.Land.opponentControls()`).
-- `HasAllActivatedAbilitiesOfLinkedExiledCard` (data object) — the source permanent gains **all
-  activated abilities of every card in its linked-exile pile** (`LinkedExileComponent`). Resolved
-  dynamically at activation-legality time: the engine pulls each exiled card's `activatedAbilities`
-  and surfaces them on the source, with the source as granter (so `{T}` taps the source and
-  "this card" self-references bind to the source — CR-faithful). Grants *activated* abilities only,
-  not triggered/static/replacement. Pair with `Effects.ExileLinkedToSource(target)` to fill the
-  pile. (Territory Forge.)
+- `HasAllActivatedAbilitiesOfLinkedExiledCard(filter = GroupFilter.source(), creatureCardsOnly = false)`
+  — the permanents matching `filter` gain **all activated abilities of the cards in this source's
+  linked-exile pile** (`LinkedExileComponent`). Resolved dynamically at activation-legality time: the
+  engine pulls each exiled card's `activatedAbilities` and surfaces them on every matching permanent,
+  with **that permanent** as granter (so `{T}` taps it and "this card" self-references bind to it —
+  CR-faithful). Grants *activated* abilities only, not triggered/static/replacement. Pair with
+  `Effects.ExileLinkedToSource(target)` to fill the pile.
+    - `filter = GroupFilter.source()` (the default) → "This permanent has all activated abilities of
+      the exiled card" — the source grants the abilities to *itself* (Territory Forge).
+    - any battlefield filter → the source grants the abilities to *other* matching permanents
+      ("Creatures you control with +1/+1 counters on them have all activated abilities of all creature
+      cards exiled with this" — Agatha's Soul Cauldron →
+      `HasAllActivatedAbilitiesOfLinkedExiledCard(GroupFilter.AllCreaturesYouControl.withCounter(Counters.PLUS_ONE_PLUS_ONE), creatureCardsOnly = true)`).
+    - `creatureCardsOnly = true` restricts the source pile to *creature* cards (the exiled card's
+      printed type), for the "all **creature** cards exiled with" wording.
 - `SuppressEntersTriggers(filter = GameObjectFilter.Creature)` — permanents matching `filter`
   entering the battlefield don't cause abilities to trigger (CR 603.6 enters-the-battlefield
   triggers). Suppresses both the entering permanent's *own* ETB triggers and any other permanent's
@@ -3477,8 +3485,11 @@ staticAbility {
   portion of the activated-ability costs of permanents matching `filter` (a `GroupFilter`; use
   `GroupFilter.source()` for "this permanent's abilities"). Relaxes colored/hybrid/Phyrexian/colorless
   pips to generic per CR 118.14 / 609.4b; non-mana cost components are untouched. Honored by both
-  affordability checks and the mana solver. (Sharkey, Tyrant of the Shire — "Mana of any type can be
-  spent to activate Sharkey's abilities")
+  affordability checks and the mana solver. `filter` is matched against the permanent whose ability
+  is being activated, so a battlefield filter scopes the permission to a class of permanents —
+  `GroupFilter.AllCreaturesYouControl` for "spend mana as though it were mana of any color to activate
+  abilities of creatures you control" (Agatha's Soul Cauldron). (Sharkey, Tyrant of the Shire — "Mana
+  of any type can be spent to activate Sharkey's abilities" → `GroupFilter.source()`.)
 - `PreventManaPoolEmptying` — mana pools don't empty between steps/phases. (Upwelling)
 - `NoMaximumHandSize` — controller has no hand-size limit *while this permanent is on the
   battlefield*. (Thought Vessel, Reliquary Tower) For a one-shot resolution effect that confers a

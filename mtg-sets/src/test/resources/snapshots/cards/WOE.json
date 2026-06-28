@@ -1,3 +1,107 @@
+// Agatha's Soul Cauldron
+{
+    "name": "Agatha's Soul Cauldron",
+    "manaCost": "{2}",
+    "typeLine": "Legendary Artifact",
+    "oracleText": "You may spend mana as though it were mana of any color to activate abilities of creatures you control.\nCreatures you control with +1/+1 counters on them have all activated abilities of all creature cards exiled with Agatha's Soul Cauldron.\n{T}: Exile target card from a graveyard. When a creature card is exiled this way, put a +1/+1 counter on target creature you control.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target card from a graveyard"
+                            },
+                            "destination": "Exile",
+                            "linkToSource": true
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": "TargetIsCreatureCard"
+                            },
+                            "then": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "SelectTarget",
+                                        "requirement": {
+                                            "type": "TargetObject",
+                                            "filter": {
+                                                "baseFilter": "creature ctrl:you"
+                                            }
+                                        },
+                                        "storeAs": "cauldronCounterTarget"
+                                    },
+                                    {
+                                        "type": "AddCounters",
+                                        "counterType": "+1/+1",
+                                        "count": 1,
+                                        "target": {
+                                            "type": "PipelineTarget",
+                                            "collectionName": "cauldronCounterTarget"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {},
+                            "zone": "Graveyard"
+                        },
+                        "id": "target card from a graveyard"
+                    }
+                ]
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "SpendAnyManaTypeForActivatedAbilities",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            },
+            {
+                "type": "HasAllActivatedAbilitiesOfLinkedExiledCard",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            {
+                                "type": "HasCounter",
+                                "counterType": "+1/+1"
+                            }
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                },
+                "creatureCardsOnly": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "242",
+        "rarity": "MYTHIC",
+        "artist": "Jason A. Engle",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/1/019b51b0-e5c6-4208-922b-7736686dddcd.jpg?1692939838"
+    },
+    "colorIdentityOverride": []
+}
+
 // Archive Dragon
 {
     "name": "Archive Dragon",

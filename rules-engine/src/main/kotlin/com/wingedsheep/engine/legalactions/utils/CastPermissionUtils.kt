@@ -870,12 +870,33 @@ class CastPermissionUtils(
             // Include unlocked Room face statics (CR 709.5) so a Room that grants activated
             // abilities (e.g. Greenhouse) only hands them out once its door is unlocked.
             for (ability in com.wingedsheep.engine.state.components.identity.RoomFaceStatics.activeStaticAbilities(container, cardDef)) {
-                // "This permanent has all activated abilities of the exiled card" (Territory Forge):
-                // pull every activated ability off each linked-exiled card and grant it to the source.
+                // "[filter] have all activated abilities of the [creature] cards exiled with this":
+                // pull every activated ability off each card in the granter's linked-exile pile and
+                // grant it to each matching permanent. Self filter = Territory Forge (grants to
+                // itself); a battlefield filter = Agatha's Soul Cauldron (grants to other creatures
+                // you control with +1/+1 counters). The granter recorded is the *receiver* so the
+                // ability's `{T}`/self-references bind to the permanent that gained it (CR-faithful).
                 if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard) {
-                    if (permanentId != entityId) continue
-                    for (granted in linkedExiledActivatedAbilities(state, permanentId, cardRegistry)) {
-                        result.add(StaticGrantedAbility(granted, permanentId))
+                    val receives = when (val scope = ability.filter.scope) {
+                        is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self -> permanentId == entityId
+                        is com.wingedsheep.sdk.scripting.filters.unified.Scope.Specific -> scope.entityId == entityId
+                        is com.wingedsheep.sdk.scripting.filters.unified.Scope.AttachedTo ->
+                            container.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()?.targetId == entityId
+                        is com.wingedsheep.sdk.scripting.filters.unified.Scope.Battlefield -> {
+                            if (ability.filter.excludeSelf && permanentId == entityId) false
+                            else {
+                                val granterController = state.projectedState.getController(permanentId)
+                                granterController != null && predicateEvaluator.matches(
+                                    state, state.projectedState, entityId, ability.filter.baseFilter,
+                                    PredicateContext(controllerId = granterController, sourceId = permanentId)
+                                )
+                            }
+                        }
+                    }
+                    if (receives) {
+                        for (granted in linkedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.creatureCardsOnly)) {
+                            result.add(StaticGrantedAbility(granted, entityId))
+                        }
                     }
                     continue
                 }
@@ -1084,14 +1105,18 @@ data class StaticGrantedAbility(
 fun linkedExiledActivatedAbilities(
     state: GameState,
     sourceId: EntityId,
-    cardRegistry: CardRegistry
+    cardRegistry: CardRegistry,
+    creatureCardsOnly: Boolean = false
 ): List<com.wingedsheep.sdk.scripting.ActivatedAbility> {
     val exiledIds = state.getEntity(sourceId)
         ?.get<com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent>()
         ?.exiledIds ?: return emptyList()
     return exiledIds.flatMap { exiledId ->
-        val defId = state.getEntity(exiledId)?.get<CardComponent>()?.cardDefinitionId
-        val cardDef = defId?.let { cardRegistry.getCard(it) }
+        val card = state.getEntity(exiledId)?.get<CardComponent>()
+        // Agatha's "all *creature* cards exiled" restricts the source pile by the exiled card's
+        // printed type; Territory Forge (creatureCardsOnly = false) takes every exiled card.
+        if (creatureCardsOnly && card?.typeLine?.isCreature != true) return@flatMap emptyList()
+        val cardDef = card?.cardDefinitionId?.let { cardRegistry.getCard(it) }
         cardDef?.script?.activatedAbilities ?: emptyList()
     }
 }
