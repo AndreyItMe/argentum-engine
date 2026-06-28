@@ -3717,6 +3717,58 @@
     }
 }
 
+// Fire Navy Trebuchet
+{
+    "name": "Fire Navy Trebuchet",
+    "manaCost": "{2}{B}",
+    "typeLine": "Artifact Creature — Wall",
+    "oracleText": "Defender, reach\nWhenever you attack, create a 2/1 colorless Construct artifact creature token with flying named Ballistic Boulder that's tapped and attacking. Sacrifice that token at the beginning of the next end step.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 4
+    },
+    "keywords": [
+        "DEFENDER",
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "YouAttackEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 2,
+                    "toughness": 1,
+                    "colors": [],
+                    "creatureTypes": [
+                        "Construct"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "name": "Ballistic Boulder",
+                    "tapped": true,
+                    "attacking": true,
+                    "artifactToken": true,
+                    "sacrificeAtStep": "END"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "100",
+        "rarity": "UNCOMMON",
+        "artist": "Mikio Masuda",
+        "flavorText": "The trebuchets would be destructive enough even without the fire.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/5/e58372cc-9a89-47a4-a0db-df5435e26cd3.jpg?1764120692"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Fire Sages
 {
     "name": "Fire Sages",
