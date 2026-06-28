@@ -367,6 +367,18 @@ export interface ClientCard {
   } | null
 
   /**
+   * Delirium progress: present only on cards whose definition cares about delirium ("four or
+   * more card types among cards in your graveyard"). Lets the UI render a badge showing the
+   * distinct card-type count (`current`) out of the threshold (`required`, 4 in practice) for
+   * the card's controller. Absent on cards that don't reference delirium.
+   */
+  readonly deliriumInfo?: {
+    readonly current: number
+    readonly required: number
+    readonly active: boolean
+  } | null
+
+  /**
    * For planeswalkers on the battlefield: the complete set of loyalty abilities,
    * in declaration order. The UI renders the full list and grays out any ability
    * whose `abilityId` isn't present in the legal actions for this card.
@@ -456,11 +468,6 @@ export interface ClientPlayer {
   readonly maxHandSize?: number | null
   readonly librarySize: number
   readonly graveyardSize: number
-  /**
-   * Distinct card types among cards in this player's graveyard — the Delirium count (active at 4+).
-   * Drives the delirium tracker on the graveyard pile.
-   */
-  readonly graveyardCardTypes?: number
   readonly exileSize: number
   readonly landsPlayedThisTurn: number
   readonly hasLost: boolean

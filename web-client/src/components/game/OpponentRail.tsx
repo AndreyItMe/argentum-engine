@@ -1121,7 +1121,6 @@ function chipTitle(opponent: ClientPlayer): string {
   if (handLimitSuffix(opponent.maxHandSize)) {
     lines.push(`Max hand size ${opponent.maxHandSize ?? '∞ (no maximum)'}`)
   }
-  if ((opponent.graveyardCardTypes ?? 0) >= 4) lines.push('Delirium active (4+ card types)')
   if (opponent.poisonCounters > 0) lines.push(`Poison ${opponent.poisonCounters}/10`)
   for (const e of opponent.commanderDamage ?? []) {
     lines.push(`⚔ ${e.commanderName}: ${e.amount}/${e.threshold}`)

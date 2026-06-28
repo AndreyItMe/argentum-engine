@@ -1443,6 +1443,13 @@ function GameCardImpl({
         </div>
       )}
 
+      {/* Delirium progress badge (cards gated on "4+ card types in your graveyard"). Carries over
+          the gold-pip motif from the old graveyard-pile tracker, now shown only on the cards that
+          actually care about delirium. The exact count lives in the tooltip. */}
+      {card.deliriumInfo && (
+        <DeliriumBadge info={card.deliriumInfo} pip={responsive.badges.counterIconFontSize} />
+      )}
+
       {/* Banding (CR 702.22): band-membership badge, color-coded per band */}
       {isBanded && bandColor && (
         <div style={{ ...styles.bandBadge, backgroundColor: bandColor.base }}>
@@ -2696,6 +2703,62 @@ function GameCardImpl({
   }
 
   return <RenderProfiler id={profilerId}>{cardElement}</RenderProfiler>
+}
+
+/**
+ * Delirium progress badge: a compact row of pips (one per card type needed) that fill gold as
+ * distinct card types accumulate in the controller's graveyard, glowing once delirium is active.
+ * Rendered only on cards that gate on delirium. The exact count rides in the tooltip — a card
+ * corner is too small for a legible numeral, so the pips carry the at-a-glance signal.
+ */
+function DeliriumBadge({
+  info,
+  pip,
+}: {
+  info: { current: number; required: number; active: boolean }
+  pip: number
+}) {
+  const gold = '#f5d76e'
+  const pipSize = Math.max(3, Math.round(pip))
+  const filled = Math.min(info.current, info.required)
+  return (
+    <div
+      title={
+        info.active
+          ? `Delirium active — ${info.current} card types in graveyard (${info.required}+ needed)`
+          : `Delirium: ${info.current}/${info.required} card types in graveyard`
+      }
+      style={{
+        position: 'absolute',
+        bottom: 2,
+        left: 2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: Math.max(2, Math.round(pipSize / 2)),
+        padding: '2px 4px',
+        borderRadius: 999,
+        background: 'rgba(0, 0, 0, 0.72)',
+        border: `1px solid ${info.active ? gold : 'rgba(255,255,255,0.25)'}`,
+        boxShadow: info.active ? `0 0 6px ${gold}aa` : '0 1px 2px rgba(0,0,0,0.5)',
+        pointerEvents: 'none',
+        zIndex: 3,
+      }}
+    >
+      {Array.from({ length: info.required }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: pipSize,
+            height: pipSize,
+            borderRadius: '50%',
+            background: i < filled ? gold : 'transparent',
+            border: `1px solid ${i < filled ? gold : 'rgba(255,255,255,0.4)'}`,
+            boxShadow: info.active && i < filled ? `0 0 4px ${gold}` : 'none',
+          }}
+        />
+      ))}
+    </div>
+  )
 }
 
 // Memoized so a parent re-render (e.g. BattlefieldContent reacting to a
