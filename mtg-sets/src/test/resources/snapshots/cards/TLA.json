@@ -6770,6 +6770,101 @@
     ]
 }
 
+// Ostrich-Horse
+{
+    "name": "Ostrich-Horse",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Bird Horse",
+    "oracleText": "When this creature enters, mill three cards. You may put a land card from among them into your hand. If you don't, put a +1/+1 counter on this creature. (To mill three cards, put the top three cards of your library into your graveyard.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            },
+                            "storeAs": "gathered0"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "gathered0",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        },
+                        {
+                            "type": "FilterCollection",
+                            "from": "gathered0",
+                            "filter": {
+                                "type": "MatchesFilter",
+                                "filter": "land"
+                            },
+                            "storeMatching": "matching2"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "matching2",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "selected3"
+                        },
+                        {
+                            "type": "ConditionalOnCollection",
+                            "collection": "selected3",
+                            "ifNotEmpty": {
+                                "type": "MoveCollection",
+                                "from": "selected3",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Hand"
+                                }
+                            },
+                            "ifEmpty": {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "188",
+        "artist": "Pablo Rivera",
+        "flavorText": "Ostrich-horses are renowned in the Earth Kingdom as reliable steeds for couriers, soldiers, and merchants.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/c/5ca3fd45-9301-44ef-afc0-4d7999d66d36.jpg?1764121280"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Otter-Penguin
 {
     "name": "Otter-Penguin",
