@@ -159,7 +159,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Fire Navy Trebuchet
 - [x] Fire Sages
 - [ ] Firebender Ascension
-- [ ] Firebending Lesson
+- [x] Firebending Lesson
 - [ ] Firebending Student
 - [ ] First-Time Flyer
 - [ ] Flexible Waterbender

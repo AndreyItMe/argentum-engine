@@ -1751,6 +1751,69 @@
     ]
 }
 
+// Firebending Lesson
+{
+    "name": "Firebending Lesson",
+    "manaCost": "{R}",
+    "typeLine": "Instant — Lesson",
+    "oracleText": "Kicker {4} (You may pay an additional {4} as you cast this spell.)\nFirebending Lesson deals 2 damage to target creature. If this spell was kicked, it deals 5 damage to that creature instead.",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{4}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "WasKicked"
+            },
+            "then": {
+                "type": "DealDamage",
+                "amount": {
+                    "type": "Fixed",
+                    "amount": 5
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target creature"
+                }
+            },
+            "otherwise": {
+                "type": "DealDamage",
+                "amount": {
+                    "type": "Fixed",
+                    "amount": 2
+                },
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target creature"
+                }
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "138",
+        "artist": "Toni Infante",
+        "flavorText": "\"Firebending is not something to fear, but if you don't respect it, it'll chew you up and spit you out.\"\n—Zuko",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/a/fa940e68-010e-4b68-be8a-555d7068f7b4.jpg?1764120947"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Foggy Bottom Swamp
 {
     "name": "Foggy Bottom Swamp",
