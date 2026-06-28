@@ -254,7 +254,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Professor Zei, Anthropologist
 - [ ] Rabaroo Troop
 - [ ] Ran and Shaw
-- [ ] Raucous Audience
+- [x] Raucous Audience
 - [ ] Raven Eagle
 - [ ] Razor Rings
 - [x] Realm of Koh

@@ -6177,6 +6177,61 @@
     ]
 }
 
+// Raucous Audience
+{
+    "name": "Raucous Audience",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Human Citizen",
+    "oracleText": "{T}: Add {G}. If you control a creature with power 4 or greater, add {G}{G} instead.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "Exists",
+                            "player": "You",
+                            "zone": "Battlefield",
+                            "filter": "creature pow>=4"
+                        }
+                    },
+                    "then": {
+                        "type": "AddMana",
+                        "color": "GREEN",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "otherwise": {
+                        "type": "AddMana",
+                        "color": "GREEN"
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "190",
+        "artist": "ikeda_cpt",
+        "flavorText": "\"I think The Boulder is going to win back the belt at Earth Rumble Six!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/c/ccd03ec3-0fae-48b2-9f04-9c57d2f94267.jpg?1764121294"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Realm of Koh
 {
     "name": "Realm of Koh",
