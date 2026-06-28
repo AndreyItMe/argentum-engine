@@ -37,6 +37,11 @@ import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.imageOverrideFor
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.sdk.model.CardDefinition
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import com.wingedsheep.sdk.scripting.LookAtFaceDownCreatures
 import com.wingedsheep.sdk.scripting.LookAtTopOfLibrary
 import com.wingedsheep.sdk.scripting.OpponentsPlayWithHandsRevealed
@@ -1102,6 +1107,22 @@ class ClientStateTransformer(
             }
         }
 
+        // Delirium progress badge: shown only on cards whose definition actually gates on
+        // delirium ("four or more card types among cards in your graveyard"), detected by
+        // walking the card's serialized tree so the badge appears wherever delirium lives
+        // (static/triggered/activated ability, spell effect, cost reduction, replacement).
+        // Unlike threshold, this counts distinct card types, not raw graveyard size.
+        val deliriumInfo = cardDef?.let { def ->
+            findDeliriumThreshold(def)?.let { required ->
+                val current = distinctGraveyardCardTypes(state, controllerId)
+                ClientDeliriumInfo(
+                    current = current,
+                    required = required,
+                    active = current >= required
+                )
+            }
+        }
+
         // Modal DFC (CR 712) back face for display/flip preview (it lives in `cardFaces`, not `backFace`).
         val modalBackFace = if (cardDef?.layout == com.wingedsheep.sdk.model.CardLayout.MODAL_DFC) {
             cardDef.cardFaces.firstOrNull()
@@ -1181,6 +1202,7 @@ class ClientStateTransformer(
             classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel,
             classMaxLevel = cardDef?.maxClassLevel,
             thresholdInfo = thresholdInfo,
+            deliriumInfo = deliriumInfo,
             stackText = if (zoneKey.zoneType == Zone.STACK && spellOnStack != null && cardDef != null) {
                 when {
                     spellOnStack.castFaceDown -> "Cast as a face-down 2/2 creature"
@@ -1601,15 +1623,6 @@ class ClientStateTransformer(
         val graveyardSize = state.getGraveyard(playerId).size
         val exileSize = state.getExile(playerId).size
 
-        // Distinct card types in the graveyard — the Delirium count (active at 4+). Mirrors the
-        // engine's Aggregation.DISTINCT_TYPES so the client tracker matches what gates delirium
-        // abilities. Graveyard is a non-battlefield zone, so base card types are correct here.
-        val graveyardCardTypes = state.getGraveyard(playerId)
-            .flatMapTo(mutableSetOf()) { entityId ->
-                state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.cardTypes?.map { it.name } ?: emptyList()
-            }
-            .size
-
         // Effective maximum hand size (CR 402.2): 7 by default, smaller/larger when an effect set
         // it, null when unlimited (Reliquary Tower). Shared source of truth with cleanup.
         val maxHandSize = com.wingedsheep.engine.core.MaximumHandSize.effective(
@@ -1667,7 +1680,6 @@ class ClientStateTransformer(
             maxHandSize = maxHandSize,
             librarySize = librarySize,
             graveyardSize = graveyardSize,
-            graveyardCardTypes = graveyardCardTypes,
             exileSize = exileSize,
             landsPlayedThisTurn = landsPlayed,
             hasLost = hasLost,
@@ -2803,6 +2815,107 @@ class ClientStateTransformer(
                 if (isYourGraveyardCount(left) && right is DynamicAmount.Fixed) right.amount + 1 else null
             ComparisonOperator.LT ->
                 if (isYourGraveyardCount(right) && left is DynamicAmount.Fixed) left.amount + 1 else null
+            else -> null
+        }
+    }
+
+    /**
+     * Distinct card types among cards in [playerId]'s graveyard — the Delirium count (CR; active
+     * at 4+). Mirrors the engine's `Aggregation.DISTINCT_TYPES`. Graveyard is a non-battlefield
+     * zone, so base card types are correct here (no projection needed).
+     */
+    private fun distinctGraveyardCardTypes(state: GameState, playerId: EntityId): Int =
+        state.getGraveyard(playerId)
+            .flatMapTo(mutableSetOf()) { entityId ->
+                state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.cardTypes?.map { it.name } ?: emptyList()
+            }
+            .size
+
+    /**
+     * The delirium threshold a card gates on, or null if the card doesn't care about delirium.
+     *
+     * Delirium gates can sit anywhere in a card's script — a static ability, an activated/triggered
+     * ability, a spell effect, a cost reduction, or a replacement effect — so rather than
+     * enumerate every container we walk the card's serialized JSON tree (the same coverage
+     * strategy as `CardLinter`) for a `distinct graveyard card types <comparison> N` shape.
+     * Result is memoized per card name: card definitions are immutable and shared, and this runs
+     * for every card in every client view.
+     */
+    private fun findDeliriumThreshold(cardDef: CardDefinition): Int? =
+        deliriumThresholdCache.computeIfAbsent(cardDef.name) { detectDeliriumThreshold(cardDef) ?: 0 }
+            .takeIf { it > 0 }
+
+    /** Cache of card name → delirium threshold; `0` is the sentinel for "no delirium gate". */
+    private val deliriumThresholdCache = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
+    /**
+     * Card encoder with defaults materialized (same trick as `CardLinter`): the shared
+     * `CardSerialization.json` encodes with `encodeDefaults = false`, which would drop the
+     * default-valued discriminators we match on (`player = You`, `filter = Any`), so encode them.
+     */
+    private val deliriumDetectJson = kotlinx.serialization.json.Json(
+        from = com.wingedsheep.sdk.serialization.CardSerialization.json
+    ) { encodeDefaults = true }
+
+    private fun detectDeliriumThreshold(cardDef: CardDefinition): Int? {
+        val tree = deliriumDetectJson.encodeToJsonElement(CardDefinition.serializer(), cardDef)
+        val thresholds = mutableListOf<Int>()
+        collectDeliriumThresholds(tree, thresholds)
+        return thresholds.minOrNull()
+    }
+
+    private fun collectDeliriumThresholds(element: JsonElement, out: MutableList<Int>) {
+        when (element) {
+            is JsonObject -> {
+                if (element.content("type") == "Compare") {
+                    deliriumThresholdOf(element)?.let { out.add(it) }
+                }
+                element.values.forEach { collectDeliriumThresholds(it, out) }
+            }
+            is JsonArray -> element.forEach { collectDeliriumThresholds(it, out) }
+            else -> {}
+        }
+    }
+
+    /** A primitive string field's content, or null if the key is absent or holds a non-primitive. */
+    private fun JsonObject.content(key: String): String? =
+        (this[key] as? JsonPrimitive)?.contentOrNull
+
+    /**
+     * Matches a `Compare` whose one side counts distinct card types in *your* graveyard
+     * (`AggregateZone(You, Graveyard, DISTINCT_TYPES)`) and whose other side is a fixed number,
+     * returning the threshold at which delirium turns on. Mirrors [matchYourGraveyardAtLeast] but
+     * on the serialized tree and for the distinct-types aggregation.
+     */
+    private fun deliriumThresholdOf(compare: JsonObject): Int? {
+        // `Player.You` serializes polymorphically as {"type":"You"}; tolerate a bare "You" too.
+        fun isYou(operand: JsonElement?): Boolean = when (operand) {
+            is JsonPrimitive -> operand.contentOrNull == "You"
+            is JsonObject -> operand.content("type") == "You"
+            else -> false
+        }
+
+        fun isDistinctGraveyardTypes(operand: JsonElement?): Boolean {
+            val o = operand as? JsonObject ?: return false
+            return o.content("type") == "AggregateZone" &&
+                isYou(o["player"]) &&
+                o.content("zone") == "Graveyard" &&
+                o.content("aggregation") == "DISTINCT_TYPES"
+        }
+
+        fun fixedAmount(operand: JsonElement?): Int? {
+            val o = operand as? JsonObject ?: return null
+            if (o.content("type") != "Fixed") return null
+            return o.content("amount")?.toIntOrNull()
+        }
+
+        val left = compare["left"]
+        val right = compare["right"]
+        return when (compare.content("operator")) {
+            "GTE" -> if (isDistinctGraveyardTypes(left)) fixedAmount(right) else null
+            "LTE" -> if (isDistinctGraveyardTypes(right)) fixedAmount(left) else null
+            "GT" -> if (isDistinctGraveyardTypes(left)) fixedAmount(right)?.plus(1) else null
+            "LT" -> if (isDistinctGraveyardTypes(right)) fixedAmount(left)?.plus(1) else null
             else -> null
         }
     }

@@ -391,6 +391,16 @@ data class ClientCard(
      */
     val thresholdInfo: ClientThresholdInfo? = null,
 
+    /**
+     * For cards that care about Delirium (a condition gated on "four or more card types among
+     * cards in your graveyard"). Present only when the card's definition actually references
+     * delirium — wherever it appears (static/triggered/activated ability, spell effect, cost
+     * reduction, replacement effect) — so the badge shows up exactly on the relevant cards
+     * rather than on every graveyard. `current` is the distinct card-type count in the card
+     * controller's graveyard; `required` is the printed threshold (always 4 in practice).
+     */
+    val deliriumInfo: ClientDeliriumInfo? = null,
+
     /** Whether this is a double-faced card (DFC). */
     val isDoubleFaced: Boolean = false,
 
@@ -506,6 +516,20 @@ data class ClientThresholdInfo(
 )
 
 /**
+ * Per-card Delirium progress (CR — four or more card types among cards in your graveyard).
+ *
+ * - [current]: distinct card types in the card controller's graveyard.
+ * - [required]: the delirium threshold the card gates on (4 for printed delirium).
+ * - [active]: whether [current] has reached [required].
+ */
+@Serializable
+data class ClientDeliriumInfo(
+    val current: Int,
+    val required: Int,
+    val active: Boolean
+)
+
+/**
  * Zone information for client display.
  */
 @Serializable
@@ -543,13 +567,6 @@ data class ClientPlayer(
     val maxHandSize: Int? = 7,
     val librarySize: Int,
     val graveyardSize: Int,
-
-    /**
-     * Number of distinct card types among cards in this player's graveyard (CR — the Delirium count;
-     * Delirium is active at 4+). Drives the delirium tracker the client renders on the graveyard
-     * pile so the threshold is visible at a glance.
-     */
-    val graveyardCardTypes: Int = 0,
     val exileSize: Int,
     val landsPlayedThisTurn: Int,
     val hasLost: Boolean,
