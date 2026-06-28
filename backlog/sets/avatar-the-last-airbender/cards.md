@@ -320,7 +320,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Trusty Boomerang
 - [x] Tundra Tank
 - [x] Turtle-Duck
-- [ ] Twin Blades
+- [x] Twin Blades
 - [ ] Ty Lee, Artful Acrobat
 - [ ] Ty Lee, Chi Blocker
 - [ ] Uncle Iroh
