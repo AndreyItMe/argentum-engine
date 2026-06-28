@@ -1216,6 +1216,81 @@
     ]
 }
 
+// Deadly Precision
+{
+    "name": "Deadly Precision",
+    "manaCost": "{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "As an additional cost to cast this spell, pay {4} or sacrifice an artifact or creature.\nDestroy target creature.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "Pay {4} — destroy target creature",
+                    "additionalManaCost": "{4}"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "Sacrifice an artifact or creature — destroy target creature",
+                    "additionalCosts": [
+                        {
+                            "type": "AdditionalAtom",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "artifact|creature"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "countsAsModalSpell": false
+        }
+    },
+    "metadata": {
+        "collectorNumber": "95",
+        "artist": "Yuhong Ding",
+        "flavorText": "Mai didn't always care, but she never missed.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/6/4661daf6-d960-4278-8946-70948efaf99d.jpg?1764120656"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Diligent Zookeeper
 {
     "name": "Diligent Zookeeper",
