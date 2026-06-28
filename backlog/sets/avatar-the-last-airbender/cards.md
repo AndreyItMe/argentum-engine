@@ -248,7 +248,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Pirate Peddlers
 - [x] Plains
 - [ ] Planetarium of Wan Shi Tong
-- [ ] Platypus-Bear
+- [x] Platypus-Bear
 - [x] Pretending Poxbearers
 - [ ] Price of Freedom
 - [ ] Professor Zei, Anthropologist
