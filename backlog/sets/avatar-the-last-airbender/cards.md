@@ -313,7 +313,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Tiger-Seal
 - [x] Tolls of War
 - [ ] Toph, Hardheaded Teacher
-- [ ] Toph, the Blind Bandit
+- [x] Toph, the Blind Bandit
 - [ ] Toph, the First Metalbender
 - [x] Treetop Freedom Fighters
 - [x] True Ancestry
