@@ -178,7 +178,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Glider Staff
 - [x] Gran-Gran
 - [x] Great Divide Guide
-- [ ] Guru Pathik
+- [x] Guru Pathik
 - [ ] Hakoda, Selfless Commander
 - [ ] Hama, the Bloodbender
 - [x] Haru, Hidden Talent
