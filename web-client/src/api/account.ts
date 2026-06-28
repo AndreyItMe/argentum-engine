@@ -249,6 +249,22 @@ export interface DeckCardEntry {
   readonly copies: number
 }
 
+/**
+ * One card line enriched with the registry metadata the deck viewer needs to render a deck the
+ * polished way (group by type, mana curve, colour pips). Structurally satisfies `DeckStatsCard`
+ * (see `DeckSummary`) so `computeDeckStats` consumes it directly.
+ */
+export interface GameDeckCard {
+  readonly cardName: string
+  readonly copies: number
+  /** Converted mana cost. */
+  readonly cmc: number
+  /** Card type enum names, e.g. `["CREATURE"]`, `["LAND"]`. */
+  readonly cardTypes: string[]
+  /** The card's own colours as enum names, e.g. `["WHITE","BLUE"]`; empty = colourless. */
+  readonly colors: string[]
+}
+
 /** One seat's recorded deck within a finished game. */
 export interface GameDeckParticipant {
   readonly playerName: string
@@ -256,7 +272,7 @@ export interface GameDeckParticipant {
   readonly isSelf: boolean
   readonly won: boolean
   readonly colors: string
-  readonly cards: DeckCardEntry[]
+  readonly cards: GameDeckCard[]
 }
 
 /** Both seats' decks for a finished game, for the recent-games deck viewer. */

@@ -37,6 +37,23 @@ data class GameHistoryEntry(
 /** One card line in a stored deck (for the recent-games deck viewer). */
 data class DeckCardEntry(val cardName: String, val copies: Int)
 
+/**
+ * One card line enriched with the registry metadata the client needs to render a deck the polished
+ * way (group by type, draw a mana curve, colour the pips) — so the deck viewer doesn't have to load
+ * the full card catalog just to know a card's cost/type/colour. Field names match the client's
+ * `DeckStatsCard` shape so `computeDeckStats` consumes them directly.
+ */
+data class GameDeckCard(
+    val cardName: String,
+    val copies: Int,
+    /** Converted mana cost; 0 when the card can't be resolved. */
+    val cmc: Int,
+    /** Card type enum names (e.g. ["CREATURE"], ["LAND"]) — empty when unresolved. */
+    val cardTypes: List<String>,
+    /** The card's own colours as enum names (e.g. ["WHITE","BLUE"]); empty = colourless/unresolved. */
+    val colors: List<String>,
+)
+
 /** One seat's recorded deck within a finished game, for the recent-games deck viewer. */
 data class GameDeckParticipant(
     val playerName: String,
@@ -46,8 +63,8 @@ data class GameDeckParticipant(
     val won: Boolean,
     /** Color identity recomputed from the stored deck, canonical WUBRG order; "" = colorless. */
     val colors: String,
-    /** The deck's cards, most copies first then alphabetical. */
-    val cards: List<DeckCardEntry>,
+    /** The deck's cards, most copies first then alphabetical, each enriched with display metadata. */
+    val cards: List<GameDeckCard>,
 )
 
 /** Both seats' decks for one finished game the requesting user played. */
@@ -313,7 +330,7 @@ class StatsQueryService(
                     isSelf = seat.isSelf,
                     won = seat.won,
                     colors = deckProfiler.profile(cards.map { it.cardName }).colors,
-                    cards = cards.sortedWith(compareByDescending<DeckCardEntry> { it.copies }.thenBy { it.cardName }),
+                    cards = enrichDeckCards(cards),
                 )
             },
         )
@@ -420,6 +437,29 @@ class StatsQueryService(
     /** Registry lookup tolerant of a "name#collector" pin (mirrors [DeckProfiler]). */
     private fun lookupCard(name: String) =
         cardRegistry.getCard(name) ?: cardRegistry.getCard(name.substringBefore('#'))
+
+    /**
+     * Enrich bare `(name, copies)` deck lines with the cost/type/colour the client needs to render a
+     * deck the polished way (group by type, mana curve, colour pips). Sorted most-copies-first then
+     * alphabetically — a stable order the client regroups for display. Unresolved cards keep sensible
+     * zero/empty defaults so a deck with an unknown card still renders.
+     */
+    fun enrichDeckCards(cards: List<DeckCardEntry>): List<GameDeckCard> =
+        cards.sortedWith(compareByDescending<DeckCardEntry> { it.copies }.thenBy { it.cardName })
+            .map { e ->
+                val card = lookupCard(e.cardName)
+                GameDeckCard(
+                    cardName = e.cardName,
+                    copies = e.copies,
+                    cmc = card?.cmc ?: 0,
+                    cardTypes = card?.typeLine?.cardTypes?.map { it.name } ?: emptyList(),
+                    colors = card?.colors?.map { it.name } ?: emptyList(),
+                )
+            }
+
+    /** Enrich a name→copies map (a stored [SharedDeck]'s card list) for the saved-deck viewer. */
+    fun enrichDeck(cardCounts: Map<String, Int>): List<GameDeckCard> =
+        enrichDeckCards(cardCounts.map { (name, copies) -> DeckCardEntry(name, copies) })
 
     /** The single dominant card type used to bucket a card in [cardTypeBreakdown]. */
     private fun primaryTypeLabel(types: Set<CardType>): String {
@@ -574,22 +614,26 @@ class StatsQueryService(
         """.trimIndent(),
     ) { rs, _ -> IpCount(rs.getString("ip"), rs.getLong("n")) }
 
-    /** Most-played cards across every recorded deck. */
+    /**
+     * Most-played cards across every recorded deck. Basic lands are excluded — every deck runs a pile
+     * of them, so they'd otherwise crowd out the cards that actually characterize the metagame (same
+     * reasoning as [topCardsForUser]). Filtering is done after the group-by, so [limit] applies to the
+     * non-basic results.
+     */
     fun topCards(limit: Int): List<CardStat> = jdbc.query(
         """
         SELECT card_name, sum(copies) AS copies, count(*) AS decks
         FROM match_participant_cards
         GROUP BY card_name
         ORDER BY copies DESC, decks DESC
-        LIMIT ?
         """.trimIndent(),
         { rs, _ -> CardStat(rs.getString("card_name"), rs.getLong("copies"), rs.getLong("decks")) },
-        limit,
-    )
+    ).filterNot { lookupCard(it.cardName)?.typeLine?.isBasicLand == true }.take(limit)
 
     /**
      * Win rate per card: of the decks containing the card, how many won. Restricted to cards seen in
-     * at least [minDecks] decks so a single lucky game can't top the chart.
+     * at least [minDecks] decks so a single lucky game can't top the chart. Basic lands are excluded
+     * (see [topCards]) — they appear in nearly every deck and say nothing about a card's win impact.
      */
     fun cardWinRates(minDecks: Int, limit: Int): List<CardWinRate> = jdbc.query(
         """
@@ -601,15 +645,14 @@ class StatsQueryService(
         GROUP BY c.card_name
         HAVING count(*) >= ?
         ORDER BY (count(*) FILTER (WHERE p.won))::float / count(*) DESC, decks DESC
-        LIMIT ?
         """.trimIndent(),
         { rs, _ ->
             val decks = rs.getLong("decks")
             val wins = rs.getLong("wins")
             CardWinRate(rs.getString("card_name"), decks, wins, if (decks > 0) wins.toDouble() / decks else 0.0)
         },
-        minDecks, limit,
-    )
+        minDecks,
+    ).filterNot { lookupCard(it.cardName)?.typeLine?.isBasicLand == true }.take(limit)
 
     /** Recorded tournaments, newest first. */
     fun recentTournaments(limit: Int): List<TournamentSummary> = jdbc.query(

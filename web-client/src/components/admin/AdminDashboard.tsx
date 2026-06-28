@@ -38,7 +38,11 @@ import {
 import type { AdminAuth } from '@/api/adminAuth'
 import type { StatBucket } from '@/api/account'
 import { colorLabel } from './statFormat'
+import { GeoMap } from './GeoMap'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle, chartTooltipStyle } from './adminUi'
+
+/** How many card rows to show before the "Show all" toggle — keeps the tables from running forever. */
+const CARD_PREVIEW = 12
 
 export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () => void }) {
   const [overview, setOverview] = useState<GlobalOverview | null>(null)
@@ -49,6 +53,8 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
   const [winRates, setWinRates] = useState<CardWinRate[]>([])
   const [tournaments, setTournaments] = useState<TournamentSummary[]>([])
   const [geo, setGeo] = useState<GeoBucket[]>([])
+  const [showAllCards, setShowAllCards] = useState(false)
+  const [showAllWinRates, setShowAllWinRates] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -60,8 +66,8 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
           fetchGamesPerDay(auth, 30),
           fetchModeDistribution(auth),
           fetchColorDistribution(auth),
-          fetchTopCards(auth, 25),
-          fetchCardWinRates(auth, 5, 25),
+          fetchTopCards(auth, 100),
+          fetchCardWinRates(auth, 5, 100),
           fetchTournaments(auth, 25),
         ])
         if (cancelled) return
@@ -119,9 +125,12 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
       </div>
 
       <div style={styles.twoCol}>
-        <Panel title="Most-played cards">
+        <Panel
+          title="Most-played cards"
+          action={<ShowMoreToggle total={cards.length} expanded={showAllCards} onToggle={() => setShowAllCards((v) => !v)} />}
+        >
           <Table head={['Card', 'Copies', 'Decks']}>
-            {cards.map((c) => (
+            {(showAllCards ? cards : cards.slice(0, CARD_PREVIEW)).map((c) => (
               <tr key={c.cardName}>
                 <td style={cellStyle.td}>{c.cardName}</td>
                 <td style={cellStyle.tdNum}>{c.copies}</td>
@@ -130,9 +139,12 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
             ))}
           </Table>
         </Panel>
-        <Panel title="Highest win-rate cards (≥5 decks)">
+        <Panel
+          title="Highest win-rate cards (≥5 decks)"
+          action={<ShowMoreToggle total={winRates.length} expanded={showAllWinRates} onToggle={() => setShowAllWinRates((v) => !v)} />}
+        >
           <Table head={['Card', 'Win %', 'Decks']}>
-            {winRates.map((c) => (
+            {(showAllWinRates ? winRates : winRates.slice(0, CARD_PREVIEW)).map((c) => (
               <tr key={c.cardName}>
                 <td style={cellStyle.td}>{c.cardName}</td>
                 <td style={cellStyle.tdNum}>{Math.round(c.winRate * 100)}%</td>
@@ -165,19 +177,20 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
         {geo.length === 0 ? (
           <p style={cellStyle.muted}>Resolving locations…</p>
         ) : (
-          <Table head={['Country', 'Region', 'City', 'Games']}>
-            {geo.map((g, i) => (
-              <tr key={`${g.countryCode}-${g.city}-${i}`}>
-                <td style={cellStyle.td}>{g.country ?? 'Unknown'}</td>
-                <td style={cellStyle.td}>{g.region ?? '—'}</td>
-                <td style={cellStyle.td}>{g.city ?? '—'}</td>
-                <td style={cellStyle.tdNum}>{g.games}</td>
-              </tr>
-            ))}
-          </Table>
+          <GeoMap buckets={geo} />
         )}
       </Panel>
     </AdminScreen>
+  )
+}
+
+/** "Show all (N) / Show top N" link rendered in a card panel's header when there's more to see. */
+function ShowMoreToggle({ total, expanded, onToggle }: { total: number; expanded: boolean; onToggle: () => void }) {
+  if (total <= CARD_PREVIEW) return null
+  return (
+    <button type="button" style={styles.toggle} onClick={onToggle}>
+      {expanded ? `Show top ${CARD_PREVIEW}` : `Show all ${total}`}
+    </button>
   )
 }
 
@@ -199,4 +212,5 @@ const styles: Record<string, React.CSSProperties> = {
   error: { color: adminTheme.bad, fontSize: 13, margin: 0 },
   cardRow: { display: 'flex', gap: 12, flexWrap: 'wrap' },
   twoCol: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 },
+  toggle: { background: 'none', border: 'none', color: adminTheme.accent, cursor: 'pointer', fontSize: 12, padding: 0 },
 }

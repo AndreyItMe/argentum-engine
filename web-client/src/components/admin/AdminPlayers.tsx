@@ -8,15 +8,20 @@
 import { useEffect, useState } from 'react'
 import type React from 'react'
 import {
+  type AdminGamesPage,
   type AdminUserDetail,
   type AdminUserSummary,
   fetchUserDetail,
+  fetchUserGames,
   fetchUsers,
   setUserAdmin,
 } from '@/api/adminUsers'
 import type { AdminAuth } from '@/api/adminAuth'
-import { colorLabel } from './statFormat'
+import { colorForIdentity, colorLabel } from './statFormat'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle } from './adminUi'
+import { AdminDeckModal, AdminSavedDecks } from './AdminPlayerDecks'
+
+const GAMES_PAGE_SIZE = 10
 
 export function AdminPlayers({ auth, onBack }: { auth: AdminAuth; onBack: () => void }) {
   const [users, setUsers] = useState<AdminUserSummary[]>([])
@@ -108,6 +113,9 @@ function PlayerDetail({
   const [detail, setDetail] = useState<AdminUserDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [updating, setUpdating] = useState(false)
+  const [games, setGames] = useState<AdminGamesPage>({ entries: [], total: 0 })
+  const [gamesPage, setGamesPage] = useState(0)
+  const [deckModal, setDeckModal] = useState<{ gameId: string; opponent: string } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -118,6 +126,19 @@ function PlayerDetail({
       cancelled = true
     }
   }, [auth, id])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUserGames(auth, id, GAMES_PAGE_SIZE, gamesPage * GAMES_PAGE_SIZE)
+      .then((p) => !cancelled && setGames(p))
+      .catch(() => !cancelled && setGames({ entries: [], total: 0 }))
+    return () => {
+      cancelled = true
+    }
+  }, [auth, id, gamesPage])
+
+  /** Open a finished game's replay in a new tab so the admin keeps their place on this screen. */
+  const watchReplay = (gameId: string) => window.open(`/replay/${gameId}`, '_blank', 'noopener')
 
   const toggleAdmin = async () => {
     if (!detail) return
@@ -230,24 +251,89 @@ function PlayerDetail({
             </Panel>
           )}
 
-          {detail.recentGames.length > 0 && (
-            <Panel title="Recent games">
-              <Table head={['Date', 'Mode', 'Colors', 'Opponent', 'Result']}>
-                {detail.recentGames.map((g, i) => (
-                  <tr key={`${g.endedAt}-${i}`}>
+          {games.total > 0 && (
+            <Panel title={`Games · ${games.total}`}>
+              <Table head={['Date', 'Mode', 'Colors', 'Opponent', 'Result', 'Deck', 'Replay']}>
+                {games.entries.map((g, i) => (
+                  <tr key={`${g.gameId}-${i}`}>
                     <td style={cellStyle.td}>{g.endedAt.slice(0, 10)}</td>
                     <td style={cellStyle.td}>{prettyMode(g.gameMode)}</td>
-                    <td style={cellStyle.td}>{g.colors ? colorLabel(g.colors) : '—'}</td>
+                    <td style={cellStyle.td}>
+                      {g.colors ? (
+                        <span style={styles.colorsCell}>
+                          <span style={{ ...styles.colorDot, backgroundColor: colorForIdentity(g.colors) }} />
+                          {colorLabel(g.colors)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td style={cellStyle.td}>{g.opponents ?? '—'}</td>
                     <td style={{ ...cellStyle.tdNum, color: g.won ? adminTheme.good : adminTheme.bad }}>
                       {g.won ? 'Win' : 'Loss'}
                     </td>
+                    <td style={cellStyle.tdNum}>
+                      <button
+                        type="button"
+                        style={styles.rowLink}
+                        onClick={() => setDeckModal({ gameId: g.gameId, opponent: g.opponents ?? 'opponent' })}
+                      >
+                        View
+                      </button>
+                    </td>
+                    <td style={cellStyle.tdNum}>
+                      {g.hasReplay ? (
+                        <button type="button" style={styles.rowLink} onClick={() => watchReplay(g.gameId)}>
+                          Watch
+                        </button>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                   </tr>
                 ))}
               </Table>
+              {games.total > GAMES_PAGE_SIZE && (
+                <div style={styles.pager}>
+                  <button
+                    type="button"
+                    style={{ ...styles.pagerBtn, ...(gamesPage === 0 ? styles.pagerBtnDisabled : {}) }}
+                    disabled={gamesPage === 0}
+                    onClick={() => setGamesPage((p) => Math.max(0, p - 1))}
+                  >
+                    ← Newer
+                  </button>
+                  <span style={cellStyle.muted}>
+                    Page {gamesPage + 1} of {Math.max(1, Math.ceil(games.total / GAMES_PAGE_SIZE))}
+                  </span>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.pagerBtn,
+                      ...((gamesPage + 1) * GAMES_PAGE_SIZE >= games.total ? styles.pagerBtnDisabled : {}),
+                    }}
+                    disabled={(gamesPage + 1) * GAMES_PAGE_SIZE >= games.total}
+                    onClick={() => setGamesPage((p) => p + 1)}
+                  >
+                    Older →
+                  </button>
+                </div>
+              )}
             </Panel>
           )}
+
+          <AdminSavedDecks auth={auth} userId={id} />
         </>
+      )}
+
+      {deckModal && (
+        <AdminDeckModal
+          auth={auth}
+          userId={id}
+          gameId={deckModal.gameId}
+          opponentLabel={deckModal.opponent}
+          onClose={() => setDeckModal(null)}
+        />
       )}
     </AdminScreen>
   )
@@ -333,4 +419,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     cursor: 'pointer',
   },
+  colorsCell: { display: 'inline-flex', alignItems: 'center', gap: 6 },
+  colorDot: { width: 9, height: 9, borderRadius: 999, display: 'inline-block' },
+  rowLink: { background: 'none', border: 'none', color: adminTheme.accent, cursor: 'pointer', fontSize: 13, padding: 0 },
+  pager: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 12 },
+  pagerBtn: {
+    background: 'none',
+    border: `1px solid ${adminTheme.border}`,
+    borderRadius: 8,
+    color: adminTheme.textSecondary,
+    cursor: 'pointer',
+    fontSize: 13,
+    padding: '6px 12px',
+  },
+  pagerBtnDisabled: { color: adminTheme.textMuted, cursor: 'default', borderColor: adminTheme.borderSoft },
 }
