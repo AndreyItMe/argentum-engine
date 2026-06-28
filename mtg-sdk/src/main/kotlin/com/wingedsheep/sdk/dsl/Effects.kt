@@ -1705,11 +1705,12 @@ object Effects {
         keywords: Set<Keyword> = emptySet(),
         controller: EffectTarget? = null,
         imageUri: String? = null,
-        legendary: Boolean = false
+        legendary: Boolean = false,
+        tapped: Boolean = false
     ): Effect = CreateTokenEffect(
         count = count, power = power, toughness = toughness, colors = colors,
         creatureTypes = creatureTypes, keywords = keywords,
-        controller = controller, imageUri = imageUri, legendary = legendary
+        controller = controller, imageUri = imageUri, legendary = legendary, tapped = tapped
     )
 
     /**

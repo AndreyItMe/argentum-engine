@@ -1224,6 +1224,78 @@
     ]
 }
 
+// Bartz and Boko
+{
+    "name": "Bartz and Boko",
+    "manaCost": "{3}{G}{G}",
+    "typeLine": "Legendary Creature — Human Bird",
+    "oracleText": "Affinity for Birds (This spell costs {1} less to cast for each Bird you control.)\nWhen Bartz and Boko enters, each other Bird you control deals damage equal to its power to target creature an opponent controls.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "AFFINITY"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "AffinityForSubtype",
+            "forSubtype": "Bird"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Bird ctrl:you",
+                            "excludeSelf": true
+                        }
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "EntityProperty",
+                            "entity": "IterationEntity",
+                            "numericProperty": "Power"
+                        },
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target creature an opponent controls"
+                        },
+                        "damageSource": "Self"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "target creature an opponent controls"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "175",
+        "rarity": "RARE",
+        "artist": "Ryuichi Sakuma",
+        "flavorText": "\"Call me Bartz. Me and my chocobo just go wherever the trail leads us...\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/8/d818d574-2832-4a7a-a13b-aa6e695fdaa5.jpg?1748706414"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Battle Menu
 {
     "name": "Battle Menu",
@@ -13030,6 +13102,64 @@
     ]
 }
 
+// The Final Days
+{
+    "name": "The Final Days",
+    "manaCost": "{2}{B}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create two tapped 2/2 black Horror creature tokens. If this spell was cast from a graveyard, instead create X of those tokens, where X is the number of creature cards in your graveyard.\nFlashback {4}{B}{B} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{4}{B}{B}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "count": {
+                "type": "Conditional",
+                "condition": {
+                    "type": "WasCastFromZone",
+                    "zone": "Graveyard"
+                },
+                "ifTrue": {
+                    "type": "Count",
+                    "player": "You",
+                    "zone": "Graveyard",
+                    "filter": "creature"
+                },
+                "ifFalse": {
+                    "type": "Fixed",
+                    "amount": 2
+                }
+            },
+            "power": 2,
+            "toughness": 2,
+            "colors": [
+                "BLACK"
+            ],
+            "creatureTypes": [
+                "Horror"
+            ],
+            "imageUri": "https://cards.scryfall.io/normal/front/d/d/ddcf50c2-24f5-46b4-bfe9-c636bb51bae5.jpg?1748704070",
+            "tapped": true
+        }
+    },
+    "metadata": {
+        "collectorNumber": "101",
+        "rarity": "UNCOMMON",
+        "artist": "Fang Xinyu",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bbf01770-6d0f-4015-b4b4-a74a53cb767a.jpg?1748706140"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // The Fire Crystal
 {
     "name": "The Fire Crystal",
@@ -14560,6 +14690,100 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Vivi Ornitier
+{
+    "name": "Vivi Ornitier",
+    "manaCost": "{1}{U}{R}",
+    "typeLine": "Legendary Creature — Wizard",
+    "oracleText": "{0}: Add X mana in any combination of {U} and/or {R}, where X is Vivi Ornitier's power. Activate only during your turn and only once each turn.\nWhenever you cast a noncreature spell, put a +1/+1 counter on Vivi Ornitier and it deals 1 damage to each opponent.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            },
+                            "damageSource": "Self"
+                        }
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{0}"
+                    }
+                },
+                "effect": {
+                    "type": "AddManaOfChoice",
+                    "colorSet": {
+                        "type": "ManaColorSet.Specific",
+                        "colors": [
+                            "BLUE",
+                            "RED"
+                        ]
+                    },
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Source",
+                        "numericProperty": "Power"
+                    }
+                },
+                "timing": "ManaAbility",
+                "restrictions": [
+                    "OnlyDuringYourTurn",
+                    "OncePerTurn"
+                ],
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "248",
+        "rarity": "MYTHIC",
+        "artist": "Toni Infante",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/c/ecc1027a-8c07-44a0-bdde-fa2844cff694.jpg?1762773080"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
     ]
 }
 
