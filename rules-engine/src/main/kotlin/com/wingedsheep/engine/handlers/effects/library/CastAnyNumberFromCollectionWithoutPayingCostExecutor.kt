@@ -67,7 +67,8 @@ class CastAnyNumberFromCollectionWithoutPayingCostExecutor :
         val decision = SelectCardsDecision(
             id = decisionId,
             playerId = controllerId,
-            prompt = "Choose a spell to cast for free, or select none to stop",
+            prompt = if (effect.payManaCost) "Choose a spell to cast, or select none to stop"
+            else "Choose a spell to cast for free, or select none to stop",
             context = DecisionContext(
                 sourceId = context.sourceId,
                 sourceName = sourceName,
@@ -91,6 +92,7 @@ class CastAnyNumberFromCollectionWithoutPayingCostExecutor :
             decisionId = decisionId,
             from = effect.from,
             effectContext = normalizedContext,
+            payManaCost = effect.payManaCost,
         )
 
         val pausedState = state

@@ -63,6 +63,7 @@ import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.CopyCardIntoCollectionEffect
+import com.wingedsheep.sdk.scripting.effects.CopyCollectionIntoCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.CastAnyNumberFromCollectionWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.AnyPlayerMayPayEffect
@@ -2396,6 +2397,15 @@ object Effects {
         CopyCardIntoCollectionEffect(source = source, storeAs = storeAs)
 
     /**
+     * Copy every card in the pipeline collection [from] into the collection [storeAs] (Rule
+     * 707.12) — the collection-wide "copy them". Each copy is created in its original's current
+     * zone; gather/exile the originals first, then pair with [CastAnyNumberFromCollection] over
+     * [storeAs] to "may cast any number of the copies" (The Tale of Tamiyo).
+     */
+    fun CopyCollectionIntoCollection(from: String, storeAs: String): Effect =
+        CopyCollectionIntoCollectionEffect(from = from, storeAs = storeAs)
+
+    /**
      * The [affected] permanent becomes a copy of a creature card exiled with the effect's source,
      * for as long as the source remains attached to it (Assimilation Aegis). Defaults [affected]
      * to [EffectTarget.AttachedToTriggeringPermanent] — the creature the source just attached to.
@@ -2455,6 +2465,16 @@ object Effects {
      */
     fun CastAnyNumberFromCollectionWithoutPayingCost(from: String): Effect =
         CastAnyNumberFromCollectionWithoutPayingCostEffect(from = from)
+
+    /**
+     * Cast any number of the cards stored under [from], **paying each one's normal mana cost**,
+     * during this effect's resolution (the "you may cast any number of [them]" wording without
+     * "without paying their mana costs" — The Tale of Tamiyo IV). The controller is offered the
+     * cards one at a time and may stop at any point; an {X} card prompts for X. Cards left uncast
+     * stay where they are (copies are then swept by the Rule 707.10a state-based action).
+     */
+    fun CastAnyNumberFromCollection(from: String): Effect =
+        CastAnyNumberFromCollectionWithoutPayingCostEffect(from = from, payManaCost = true)
 
     /**
      * Repeat a body effect in a do-while loop controlled by a repeat condition.

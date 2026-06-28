@@ -32,6 +32,30 @@ data class CollectionContainsMatch(
 }
 
 /**
+ * Condition: "if two cards in the named collection share a card type".
+ *
+ * True when at least two distinct cards in the stored pipeline [collection] have a card type
+ * (artifact, battle, creature, enchantment, instant, kindred, land, planeswalker, sorcery — CR
+ * 205.2a) in common. A collection of fewer than two cards is always false. Supertypes (legendary,
+ * basic, snow) and subtypes (Horror, Room, …) are not card types and are ignored.
+ *
+ * Models "if two cards that share a card type were [milled/revealed] this way" — e.g. The Tale of
+ * Tamiyo's "Mill two cards. If two cards that share a card type were milled this way, draw a card
+ * and repeat this process." Pair it with a prior mill/reveal that stores the cards under
+ * [collection], inside both an [com.wingedsheep.sdk.scripting.effects.ConditionalEffect] (for the
+ * "draw a card") and a [com.wingedsheep.sdk.scripting.effects.RepeatCondition.WhileCondition] (for
+ * the "repeat this process").
+ */
+@SerialName("CollectionSharesCardType")
+@Serializable
+data class CollectionSharesCardType(
+    val collection: String
+) : Condition {
+    override val description: String = "if two of those cards share a card type"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
+/**
  * Condition: "if [the target] is a creature card" — tests the *underlying card's* card type,
  * reading the base [com.wingedsheep.sdk.model.CardDefinition] characteristics rather than projected
  * state. This is the correct test for a face-down permanent: while face down it projects as a

@@ -171,6 +171,7 @@ object CardLinter {
         put("FilterCollection" to "storeNonMatching", write(Space.COLLECTION))
         put("ExileLibraryUntilManaValue" to "storeAs", write(Space.COLLECTION))
         put("CopyCardIntoCollection" to "storeAs", write(Space.COLLECTION))
+        put("CopyCollectionIntoCollection" to "storeAs", write(Space.COLLECTION))
         put("CastFromCollectionWithoutPayingCost" to "storeCastTo", write(Space.COLLECTION))
         put("CounterAllOnStack" to "storeCountAs", write(Space.COLLECTION))
         put("Behold" to "storeAs", write(Space.COLLECTION))
@@ -194,6 +195,7 @@ object CardLinter {
             "GrantPlayWithAdditionalCost", "GrantPlayWithCostIncrease", "FilterCollection",
             "StoreCardName", "CastFromCollectionWithoutPayingCost",
             "CastAnyNumberFromCollectionWithoutPayingCost", "ExileFromStorage",
+            "CopyCollectionIntoCollection",
         )) put(type to "from", read(Space.COLLECTION))
         put("ChoosePile" to "pileA", read(Space.COLLECTION))
         put("ChoosePile" to "pileB", read(Space.COLLECTION))
@@ -203,6 +205,7 @@ object CardLinter {
         put("IterationSpace.Collection" to "collection", read(Space.COLLECTION))
         put("ConditionalOnCollection" to "collection", read(Space.COLLECTION))
         put("CollectionContainsMatch" to "collection", read(Space.COLLECTION))
+        put("CollectionSharesCardType" to "collection", read(Space.COLLECTION))
         put("SuccessCriterion.CollectionNonEmpty" to "name", read(Space.COLLECTION))
         put("FromVariable" to "variableName", read(Space.COLLECTION))
         put("PipelineTarget" to "collectionName", read(Space.COLLECTION))

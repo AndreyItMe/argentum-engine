@@ -108,6 +108,40 @@ data class CopyCardIntoCollectionEffect(
 }
 
 /**
+ * Copy **every** card in the pipeline collection [from] and store all the copies' entity ids in the
+ * collection [storeAs]. The collection-wide sibling of [CopyCardIntoCollectionEffect] — for "copy
+ * them" over a set of cards rather than one ([CopyCardIntoCollectionEffect] overwrites its
+ * collection, so it can't accumulate across a `ForEach`).
+ *
+ * Per Rule 707.12 each copy is created in the **same zone its original currently occupies** (under
+ * the effect's controller), keeping the original's copiable characteristics and tagged as a
+ * stack-style copy. So gather/exile the originals first, then copy: a copy of an exiled card is
+ * created in exile, ready for [CastAnyNumberFromCollectionWithoutPayingCostEffect] to cast.
+ *
+ *     // The Tale of Tamiyo IV — exile the targets, copy them, then may cast any number of copies
+ *     CompositeEffect(listOf(
+ *         ForEachTargetEffect(listOf(MoveToZoneEffect(ContextTarget(0), Zone.EXILE))),
+ *         GatherCardsEffect(CardSource.ChosenTargets, storeAs = "exiled"),
+ *         CopyCollectionIntoCollectionEffect(from = "exiled", storeAs = "copies"),
+ *         CastAnyNumberFromCollectionWithoutPayingCostEffect(from = "copies", payManaCost = true),
+ *     ))
+ *
+ * Copies that are never cast are swept up by the Rule 707.10a state-based action (a copy of a card
+ * outside the stack/battlefield ceases to exist), so no explicit cleanup is needed.
+ *
+ * @property from Pipeline collection of the cards to copy.
+ * @property storeAs Pipeline collection under which the new copies' entity ids are stored.
+ */
+@SerialName("CopyCollectionIntoCollection")
+@Serializable
+data class CopyCollectionIntoCollectionEffect(
+    val from: String,
+    val storeAs: String,
+) : Effect {
+    override val description: String = "Copy those cards"
+}
+
+/**
  * The [affected] permanent becomes a copy of a creature card exiled with the effect's source
  * (read from the source's linked exile — see `CardSource.FromLinkedExile`), for as long as the
  * source remains attached to it ([com.wingedsheep.sdk.scripting.Duration.WhileSourceAttachedToAffected]).

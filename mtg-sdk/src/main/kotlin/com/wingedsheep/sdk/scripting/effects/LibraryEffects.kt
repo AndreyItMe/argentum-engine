@@ -306,15 +306,23 @@ data class CastFromCollectionWithoutPayingCostEffect(
  * without paying their mana costs" clause (Kotis, the Fangkeeper; Villainous-Wealth-shaped
  * cards once migrated).
  *
+ * **Paying the mana cost.** Set [payManaCost] to `true` for the "you may cast any number of [them]"
+ * wording that *doesn't* say "without paying their mana costs" (The Tale of Tamiyo IV — "Copy them.
+ * You may cast any number of the copies."). Each chosen card is then cast paying its normal cost
+ * (an {X} spell prompts for X, Rule 601.2b); with the default `false` each is cast for free.
+ *
  * @property from Name of the collection of already-exiled candidate cards.
+ * @property payManaCost When true, each chosen card is cast paying its normal mana cost.
  */
 @SerialName("CastAnyNumberFromCollectionWithoutPayingCost")
 @Serializable
 data class CastAnyNumberFromCollectionWithoutPayingCostEffect(
     val from: String,
+    val payManaCost: Boolean = false,
 ) : Effect {
     override val description: String =
-        "Cast any number of those cards without paying their mana costs"
+        if (payManaCost) "Cast any number of those cards"
+        else "Cast any number of those cards without paying their mana costs"
 }
 
 @SerialName("Cascade")

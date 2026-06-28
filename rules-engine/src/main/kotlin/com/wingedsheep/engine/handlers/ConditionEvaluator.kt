@@ -105,6 +105,7 @@ import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasCast
 import com.wingedsheep.sdk.scripting.conditions.TriggeringEntityWasNotPutByThisSource
 import com.wingedsheep.sdk.scripting.conditions.TriggeringSpellHasSingleTarget
 import com.wingedsheep.sdk.scripting.conditions.CollectionContainsMatch
+import com.wingedsheep.sdk.scripting.conditions.CollectionSharesCardType
 import com.wingedsheep.sdk.scripting.conditions.IsFirstSpellPaidWithTreasureManaCastThisTurn
 import com.wingedsheep.sdk.scripting.conditions.SourceAbilityResolvedNTimesThisTurn
 import com.wingedsheep.sdk.scripting.conditions.ManaSpentToCastIncludes
@@ -458,6 +459,7 @@ class ConditionEvaluator(
             is SourceAbilityResolvedNTimesThisTurn -> ifResolution { evaluateSourceAbilityResolvedNTimes(state, condition, it) }
             is OpponentSpellOnStack -> ifResolution { evaluateOpponentSpellOnStack(state, it) }
             is CollectionContainsMatch -> ifResolution { evaluateCollectionContainsMatch(state, condition, it) }
+            is CollectionSharesCardType -> ifResolution { evaluateCollectionSharesCardType(state, condition, it) }
             is CreatureDiedThisTurnCondition ->
                 ifResolution { CreatureDiedThisTurnConditionEvaluator().evaluate(state, condition, it) }
             is ControlledCreatureDiedThisTurnCondition ->
@@ -1443,5 +1445,27 @@ class ConditionEvaluator(
         return collection.any { entityId ->
             predicateEvaluator.matches(state, state.projectedState, entityId, condition.filter, predicateContext)
         }
+    }
+
+    /**
+     * CR 205.2a — two cards "share a card type" when their printed card-type sets intersect.
+     * True iff some card type appears on at least two distinct cards in the collection. Reads the
+     * cards' printed [com.wingedsheep.sdk.core.CardType]s (the cards are off the battlefield — in
+     * the graveyard after a mill — so base characteristics are the right source).
+     */
+    private fun evaluateCollectionSharesCardType(
+        state: GameState,
+        condition: CollectionSharesCardType,
+        context: EffectContext
+    ): Boolean {
+        val collection = context.pipeline.storedCollections[condition.collection] ?: return false
+        if (collection.size < 2) return false
+        val seenTypes = mutableSetOf<com.wingedsheep.sdk.core.CardType>()
+        for (entityId in collection) {
+            val cardTypes = state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.cardTypes ?: continue
+            if (cardTypes.any { it in seenTypes }) return true
+            seenTypes += cardTypes
+        }
+        return false
     }
 }

@@ -358,5 +358,7 @@ data class CastAnyNumberFromCollectionContinuation(
     override val decisionId: String,
     val from: String,
     val effectContext: com.wingedsheep.engine.handlers.EffectContext,
+    /** When true, each chosen card is cast paying its normal mana cost rather than for free. */
+    val payManaCost: Boolean = false,
 ) : ContinuationFrame
 

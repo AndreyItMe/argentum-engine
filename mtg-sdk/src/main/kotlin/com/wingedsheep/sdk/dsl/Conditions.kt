@@ -1433,6 +1433,14 @@ object Conditions {
     fun CollectionContainsMatch(collection: String, filter: GameObjectFilter = GameObjectFilter.Any): ConditionInterface =
         com.wingedsheep.sdk.scripting.conditions.CollectionContainsMatch(collection, filter)
 
+    /**
+     * If two cards in the named pipeline collection share a card type (CR 205.2a). False for a
+     * collection of fewer than two cards. Models "if two cards that share a card type were milled
+     * this way" (The Tale of Tamiyo).
+     */
+    fun CollectionSharesCardType(collection: String): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.CollectionSharesCardType(collection)
+
     // =========================================================================
     // Composite Conditions
     // =========================================================================

@@ -113,7 +113,15 @@ class RepeatWhileExecutor(
                 return EffectResult(stateWithoutCont, priorEvents + result.events, result.error)
             }
 
-            // Body completed synchronously — pop AFTER_BODY and ask condition
+            // Body completed synchronously — pop AFTER_BODY and ask condition.
+            //
+            // A WhileCondition is evaluated against the *body's own outputs this iteration* (e.g.
+            // CollectionSharesCardType over the cards milled this pass — The Tale of Tamiyo), so the
+            // body's pipeline collections are handed to askCondition as [bodyOutputs]. They are
+            // merged onto the context for the condition check only — never into the next iteration's
+            // body context, which must stay the pristine pre-loop context: CompositeEffectExecutor
+            // only surfaces *new* collection keys, so a stale `milled` carried forward would mask
+            // the next pass's mill and the loop would never terminate.
             val (_, stateAfterPop) = result.state.popContinuation()
             return askCondition(
                 state = stateAfterPop,
@@ -123,15 +131,35 @@ class RepeatWhileExecutor(
                 context = context,
                 sourceName = sourceName,
                 effectExecutor = effectExecutor,
-                priorEvents = priorEvents + result.events
+                priorEvents = priorEvents + result.events,
+                bodyOutputs = BodyOutputs(
+                    collections = result.updatedCollections,
+                    subtypeGroups = result.updatedSubtypeGroups,
+                    numbers = result.updatedStoredNumbers,
+                    chosenValues = result.updatedChosenValues,
+                ),
             )
+        }
+
+        /** The pipeline outputs of one body execution, merged onto the context for the condition. */
+        data class BodyOutputs(
+            val collections: Map<String, List<EntityId>> = emptyMap(),
+            val subtypeGroups: Map<String, List<Set<String>>> = emptyMap(),
+            val numbers: Map<String, Int> = emptyMap(),
+            val chosenValues: Map<String, String> = emptyMap(),
+        ) {
+            val isEmpty: Boolean
+                get() = collections.isEmpty() && subtypeGroups.isEmpty() &&
+                    numbers.isEmpty() && chosenValues.isEmpty()
         }
 
         /**
          * After the body completes, evaluate the repeat condition.
          *
          * For PlayerChooses: create yes/no decision and push AFTER_DECISION continuation.
-         * For WhileCondition: evaluate synchronously and either repeat or finish.
+         * For WhileCondition: evaluate synchronously (against [context] merged with [bodyOutputs])
+         * and either repeat or finish. The recursion uses the pristine [context] so each iteration's
+         * body starts fresh (see executeIteration's note on why stale collections must not leak).
          */
         fun askCondition(
             state: GameState,
@@ -142,7 +170,8 @@ class RepeatWhileExecutor(
             sourceName: String?,
             effectExecutor: (GameState, Effect, EffectContext) -> EffectResult,
             priorEvents: List<GameEvent>,
-            conditionEvaluator: com.wingedsheep.engine.handlers.ConditionEvaluator? = null
+            conditionEvaluator: com.wingedsheep.engine.handlers.ConditionEvaluator? = null,
+            bodyOutputs: BodyOutputs = BodyOutputs(),
         ): EffectResult {
             return when (repeatCondition) {
                 is RepeatCondition.PlayerChooses -> {
@@ -158,7 +187,15 @@ class RepeatWhileExecutor(
                 }
                 is RepeatCondition.WhileCondition -> {
                     val evaluator = conditionEvaluator ?: com.wingedsheep.engine.handlers.ConditionEvaluator()
-                    val shouldRepeat = evaluator.evaluate(state, repeatCondition.condition, context)
+                    val conditionContext = if (bodyOutputs.isEmpty) context else context.copy(
+                        pipeline = context.pipeline.copy(
+                            storedCollections = context.pipeline.storedCollections + bodyOutputs.collections,
+                            storedSubtypeGroups = context.pipeline.storedSubtypeGroups + bodyOutputs.subtypeGroups,
+                            storedNumbers = context.pipeline.storedNumbers + bodyOutputs.numbers,
+                            chosenValues = context.pipeline.chosenValues + bodyOutputs.chosenValues,
+                        )
+                    )
+                    val shouldRepeat = evaluator.evaluate(state, repeatCondition.condition, conditionContext)
                     if (shouldRepeat) {
                         // Deepen resolution depth per iteration so a WhileCondition that never goes
                         // false is caught by the EffectExecutorRegistry depth guard (this recursion

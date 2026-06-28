@@ -938,8 +938,11 @@ class LibraryAndZoneContinuationResumer(
         )
 
         val effects = listOf(
-            CastFromCollectionWithoutPayingCostEffect(from = singleKey),
-            CastAnyNumberFromCollectionWithoutPayingCostEffect(from = continuation.from),
+            CastFromCollectionWithoutPayingCostEffect(from = singleKey, payManaCost = continuation.payManaCost),
+            CastAnyNumberFromCollectionWithoutPayingCostEffect(
+                from = continuation.from,
+                payManaCost = continuation.payManaCost,
+            ),
         )
         val result = effectRunner.executeRemainingEffects(state, effects, loopContext)
         if (result.isPaused) return result.toExecutionResult()

@@ -87,6 +87,7 @@ class LibraryExecutors(
         NoteCreatureTypePipelineExecutor(),
         GatherCardsExecutor(),
         CopyCardIntoCollectionExecutor(),
+        CopyCollectionIntoCollectionExecutor(),
         GrantSuspendExecutor(),
         SelectFromCollectionExecutor(cardRegistry = cardRegistry),
         ChoosePileExecutor(),
