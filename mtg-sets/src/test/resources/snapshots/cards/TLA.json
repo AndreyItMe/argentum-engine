@@ -13384,6 +13384,74 @@
     ]
 }
 
+// Vengeful Villagers
+{
+    "name": "Vengeful Villagers",
+    "manaCost": "{3}{W}",
+    "typeLine": "Creature — Human Citizen",
+    "oracleText": "Whenever this creature attacks, choose target creature an opponent controls. Tap it, then you may sacrifice an artifact or creature. If you do, put a stun counter on the chosen creature. (If a permanent with a stun counter would become untapped, remove one from it instead.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "TapUntap",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "chosen creature"
+                            }
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.MayPay",
+                                "cost": {
+                                    "type": "Sacrifice",
+                                    "filter": "artifact|creature"
+                                }
+                            },
+                            "then": {
+                                "type": "AddCounters",
+                                "counterType": "stun",
+                                "count": 1,
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "chosen creature"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "chosen creature"
+                },
+                "descriptionOverride": "Whenever this creature attacks, choose target creature an opponent controls. Tap it, then you may sacrifice an artifact or creature. If you do, put a stun counter on it."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "40",
+        "rarity": "UNCOMMON",
+        "artist": "Ittoku",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/c/8cabb6ed-5c80-4dab-b96c-9d4d9fe72db7.jpg?1764120161"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Vindictive Warden
 {
     "name": "Vindictive Warden",

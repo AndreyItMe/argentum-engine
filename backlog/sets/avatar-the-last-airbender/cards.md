@@ -326,7 +326,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Uncle Iroh
 - [x] United Front
 - [x] Unlucky Cabbage Merchant
-- [ ] Vengeful Villagers
+- [x] Vengeful Villagers
 - [x] Vindictive Warden
 - [x] Walltop Sentries
 - [ ] Wan Shi Tong, Librarian
