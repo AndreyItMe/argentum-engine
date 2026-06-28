@@ -227,7 +227,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Messenger Hawk
 - [x] Meteor Sword
 - [x] Misty Palms Oasis
-- [ ] Momo, Friendly Flier
+- [x] Momo, Friendly Flier
 - [ ] Momo, Playful Pet
 - [ ] Mongoose Lizard
 - [x] Mountain

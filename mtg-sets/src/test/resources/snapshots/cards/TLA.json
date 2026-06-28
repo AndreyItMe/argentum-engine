@@ -2917,6 +2917,109 @@
     ]
 }
 
+// Momo, Friendly Flier
+{
+    "name": "Momo, Friendly Flier",
+    "manaCost": "{W}",
+    "typeLine": "Legendary Creature — Lemur Bat Ally",
+    "oracleText": "Flying\nThe first non-Lemur creature spell with flying you cast during each of your turns costs {1} less to cast.\nWhenever another creature you control with flying enters, Momo gets +1/+1 until end of turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature kw:flying ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCast",
+                    "filter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "HasKeyword",
+                                "keyword": "FLYING"
+                            },
+                            {
+                                "type": "NotSubtype",
+                                "subtype": "Lemur"
+                            }
+                        ]
+                    }
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 1
+                },
+                "gating": {
+                    "type": "OnlyIf",
+                    "condition": {
+                        "type": "All",
+                        "conditions": [
+                            "IsYourTurn",
+                            {
+                                "type": "Not",
+                                "condition": {
+                                    "type": "PlayerCastSpellsThisTurn",
+                                    "filter": {
+                                        "cardPredicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "HasKeyword",
+                                                "keyword": "FLYING"
+                                            },
+                                            {
+                                                "type": "NotSubtype",
+                                                "subtype": "Lemur"
+                                            }
+                                        ]
+                                    },
+                                    "atLeast": 1
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "29",
+        "rarity": "RARE",
+        "artist": "Brandon L. Hunt",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/4/c472ef84-a632-4ad7-853c-60588a7a4b12.jpg?1764120082"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // North Pole Gates
 {
     "name": "North Pole Gates",
