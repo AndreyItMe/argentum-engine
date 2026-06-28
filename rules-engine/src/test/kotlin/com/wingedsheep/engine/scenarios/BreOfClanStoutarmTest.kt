@@ -8,8 +8,12 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
+import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.GainLifeEffect
+import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.targets.TargetObject
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 
@@ -58,6 +62,34 @@ class BreOfClanStoutarmTest : ScenarioTestBase() {
                 subtypes = setOf(Subtype("Ogre")),
                 power = 2,
                 toughness = 2
+            )
+        )
+        // A cheap *targeted* nonland (MV 1 ≤ 3 life gained): "deal 2 damage to target creature".
+        // Exercises the targeted free-cast path (CastFromCollectionWithoutPayingCost → ChooseTargets),
+        // which the vanilla-creature cases above never touch.
+        cardRegistry.register(
+            CardDefinition.instant(
+                name = "Tiny Bolt",
+                manaCost = ManaCost.parse("{R}"),
+                oracleText = "Tiny Bolt deals 2 damage to target creature.",
+                script = CardScript.spell(
+                    effect = DealDamageEffect(2, EffectTarget.ContextTarget(0)),
+                    TargetObject(filter = TargetFilter(GameObjectFilter.Creature))
+                )
+            )
+        )
+        // A cheap *sorcery* (MV 1 ≤ 3 life gained). Casting it during the end step proves the cast
+        // ignores type-based timing restrictions (CR 601 / the printed ruling) — a sorcery normally
+        // can't be cast then. It also targets, so it covers sorcery + the ChooseTargets path together.
+        cardRegistry.register(
+            CardDefinition.sorcery(
+                name = "Searing Sorcery",
+                manaCost = ManaCost.parse("{R}"),
+                oracleText = "Searing Sorcery deals 2 damage to target creature.",
+                script = CardScript.spell(
+                    effect = DealDamageEffect(2, EffectTarget.ContextTarget(0)),
+                    TargetObject(filter = TargetFilter(GameObjectFilter.Creature))
+                )
             )
         )
 
@@ -120,6 +152,73 @@ class BreOfClanStoutarmTest : ScenarioTestBase() {
                 }
                 withClue("The cast card is not also put into hand") {
                     namesInHand(game, 1).contains("Cheap Ogre") shouldBe false
+                }
+            }
+
+            test("mana value ≤ life gained: a targeted spell can be cast for free and pick a target") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Bre of Clan Stoutarm")
+                    .withCardInHand(1, "Healing Salve")
+                    .withCardInLibrary(1, "Forest")
+                    .withCardInLibrary(1, "Tiny Bolt")
+                    .withCardOnBattlefield(2, "Cheap Ogre") // the creature Tiny Bolt will kill
+                    .withLandsOnBattlefield(1, "Plains", 2)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Healing Salve").error shouldBe null
+                game.resolveStack()
+
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.resolveStack()
+                // Accept the free cast, then choose Tiny Bolt's target (the opponent's Cheap Ogre).
+                game.answerYesNo(true)
+                val ogre = game.findPermanent("Cheap Ogre")
+                    ?: error("Cheap Ogre should be on the battlefield as a target")
+                game.selectTargets(listOf(ogre))
+                game.resolveStack()
+
+                withClue("Tiny Bolt resolved (2 damage) → Cheap Ogre died") {
+                    game.isOnBattlefield("Cheap Ogre") shouldBe false
+                }
+                withClue("Tiny Bolt went to its owner's graveyard after resolving") {
+                    game.isInGraveyard(1, "Tiny Bolt") shouldBe true
+                }
+            }
+
+            test("mana value ≤ life gained: a sorcery can be cast for free at the end step (timing ignored)") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardOnBattlefield(1, "Bre of Clan Stoutarm")
+                    .withCardInHand(1, "Healing Salve")
+                    .withCardInLibrary(1, "Forest")
+                    .withCardInLibrary(1, "Searing Sorcery")
+                    .withCardOnBattlefield(2, "Cheap Ogre") // the creature the sorcery will kill
+                    .withLandsOnBattlefield(1, "Plains", 2)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Healing Salve").error shouldBe null
+                game.resolveStack()
+
+                game.passUntilPhase(Phase.ENDING, Step.END)
+                game.resolveStack()
+                // A sorcery normally can't be cast in the end step — accepting here proves the
+                // free cast ignores the type's timing restriction.
+                game.answerYesNo(true)
+                val ogre = game.findPermanent("Cheap Ogre")
+                    ?: error("Cheap Ogre should be on the battlefield as a target")
+                game.selectTargets(listOf(ogre))
+                game.resolveStack()
+
+                withClue("The sorcery resolved (2 damage) → Cheap Ogre died") {
+                    game.isOnBattlefield("Cheap Ogre") shouldBe false
+                }
+                withClue("The sorcery went to its owner's graveyard after resolving") {
+                    game.isInGraveyard(1, "Searing Sorcery") shouldBe true
                 }
             }
 
