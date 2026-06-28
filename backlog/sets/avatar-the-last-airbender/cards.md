@@ -101,7 +101,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Bitter Work
 - [x] Boar-q-pine
 - [x] Boiling Rock Prison
-- [ ] Boiling Rock Rioter
+- [x] Boiling Rock Rioter
 - [x] Boomerang Basics
 - [ ] Bumi Bash
 - [ ] Bumi, King of Three Trials
