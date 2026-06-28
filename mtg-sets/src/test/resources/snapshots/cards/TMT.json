@@ -12667,6 +12667,101 @@
     }
 }
 
+// Turtles Forever
+{
+    "name": "Turtles Forever",
+    "manaCost": "{3}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Search your library and/or outside the game for exactly four legendary creature cards you own with different names, then reveal those cards. An opponent chooses two of them. Put the chosen cards into your hand and shuffle the rest into your library.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromMultipleZones",
+                        "zones": [
+                            "Library",
+                            "Sideboard"
+                        ],
+                        "filter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                "IsLegendary"
+                            ]
+                        }
+                    },
+                    "storeAs": "tfPool"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "tfPool",
+                    "selection": {
+                        "type": "ChooseExactly",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 4
+                        }
+                    },
+                    "storeSelected": "tfFound",
+                    "prompt": "Search for exactly four legendary creature cards with different names",
+                    "restrictions": [
+                        "OnePerCardName"
+                    ]
+                },
+                {
+                    "type": "RevealCollection",
+                    "from": "tfFound"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "tfFound",
+                    "selection": {
+                        "type": "ChooseExactly",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "chooser": "Opponent",
+                    "storeSelected": "tfChosen",
+                    "storeRemainder": "tfRest",
+                    "prompt": "Choose two of those cards to put into their hand",
+                    "alwaysPrompt": true
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "tfChosen",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "tfRest",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Library"
+                    }
+                },
+                "ShuffleLibrary"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "27",
+        "rarity": "RARE",
+        "artist": "Devin Elle Kurtz",
+        "flavorText": "\"See you around the multiverse, bros.\"\n—One Leonardo or another",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/0/f0db974a-3289-4727-9aaf-e9cca9113c87.jpg?1760102536"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Turtles in Time
 {
     "name": "Turtles in Time",
