@@ -158,6 +158,25 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 }
             }
 
+            is CardSource.AttachedTo -> {
+                // Permanents attached to the resolved host that match the filter (projected).
+                // Intersect the host's live attachments with the projected filter matches so
+                // type/control-changing effects are respected (e.g. "Equipment attached to that
+                // creature"). Empty when the host left play or has no matching attachments.
+                val hostId = context.resolveTarget(source.host)
+                val attachedIds = hostId
+                    ?.let { state.getEntity(it)?.get<AttachmentsComponent>()?.attachedIds }
+                    ?: emptyList()
+                if (attachedIds.isEmpty()) {
+                    emptyList()
+                } else {
+                    val matching = BattlefieldFilterUtils
+                        .findMatchingOnBattlefield(state, source.filter, context)
+                        .toSet()
+                    attachedIds.filter { it in matching }
+                }
+            }
+
             is CardSource.ChosenTargets -> {
                 context.targets.mapNotNull { chosen ->
                     when (chosen) {

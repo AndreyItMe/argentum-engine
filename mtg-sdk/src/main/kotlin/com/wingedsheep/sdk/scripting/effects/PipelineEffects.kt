@@ -137,6 +137,28 @@ sealed interface CardSource {
     }
 
     /**
+     * Permanents attached to a host entity (resolved from an [EffectTarget]) that match
+     * [filter]. Reads the host's `AttachmentsComponent` and keeps the attached permanents
+     * that match the filter under projected state.
+     *
+     * The non-targeted counterpart of putting "the Equipment attached to that creature" into a
+     * pipeline — e.g. "destroy up to one Equipment attached to that creature" gathers the
+     * equipment here, then a [SelectionMode.ChooseUpTo]`(1)` select + a destroying move pick
+     * and destroy at most one. The host typically comes from a spell's own target
+     * ([EffectTarget.ContextTarget]); any [EffectTarget] that resolves to a permanent works
+     * (Self, TriggeringEntity, …). Yields nothing when the host has left play or has no
+     * matching attachments.
+     */
+    @SerialName("AttachedToTarget")
+    @Serializable
+    data class AttachedTo(
+        val host: EffectTarget,
+        val filter: GameObjectFilter = GameObjectFilter.Companion.Any
+    ) : CardSource {
+        override val description: String = "${filter.description} attached to ${host.description}"
+    }
+
+    /**
      * Permanents that were tapped as part of the ability's activation cost.
      * Reads from `EffectContext.tappedPermanents`, populated at cost-payment time.
      *

@@ -1619,6 +1619,13 @@ effect = Effects.Pipeline {
   You may play that card from exile this turn" (Norin, Swift Survivalist): `gather(TriggeringEntity)` →
   `exile(...)` → `GrantMayPlayFromExile(EndOfTurn)`.
 - `CardSource.TappedAsCost` — the permanents tapped to pay the activation cost.
+- `CardSource.AttachedTo(host, filter?)` — the permanents attached to the `host` entity (any
+  `EffectTarget` that resolves to a permanent — a spell's `ContextTarget`, `Self`, `TriggeringEntity`, …)
+  that match `filter`, read off the host's `AttachmentsComponent` and intersected with the projected
+  filter matches. The non-targeted counterpart of "the Equipment/Aura attached to that creature": yields
+  nothing when the host has left play or has no matching attachments. Backs "destroy up to one Equipment
+  attached to that creature" (Light of Judgment): `gather(AttachedTo(targetCreature, Equipment))` →
+  `chooseUpTo(1)` → `destroy(...)`.
 - `CardSource.ChosenTargets` — the spell/ability's already-resolved targets.
 - `CardSource.FromLinkedExile(count?)` — the cards in the source's linked-exile pile.
 - `CardSource.LastKnownCombatPairedWithSource` — creatures blocking/blocked by the source at the
