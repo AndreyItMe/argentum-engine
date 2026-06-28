@@ -279,7 +279,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Sokka, Bold Boomeranger
 - [x] Sokka, Lateral Strategist
 - [x] Sokka, Tenacious Tactician
-- [ ] Sold Out
+- [x] Sold Out
 - [x] Solstice Revelations
 - [x] South Pole Voyager
 - [ ] Southern Air Temple

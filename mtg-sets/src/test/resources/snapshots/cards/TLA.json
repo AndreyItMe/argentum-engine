@@ -10465,6 +10465,72 @@
     ]
 }
 
+// Sold Out
+{
+    "name": "Sold Out",
+    "manaCost": "{3}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Exile target creature. If it was dealt damage this turn, create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "EntityMatches",
+                            "entity": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "filter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "statePredicates": [
+                                    "WasDealtDamageThisTurn"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "type": "CreatePredefinedToken",
+                        "tokenType": "Clue"
+                    }
+                },
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature"
+                    },
+                    "destination": "Exile"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "119",
+        "artist": "Nijihayashi",
+        "flavorText": "Haru's good deed went severely punished.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1affba6d-2cca-4cdf-8690-1e23ffbe8462.jpg?1764120823"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Solstice Revelations
 {
     "name": "Solstice Revelations",
