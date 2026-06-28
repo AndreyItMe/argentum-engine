@@ -187,7 +187,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Hermitic Herbalist
 - [ ] Hog-Monkey
 - [ ] Honest Work
-- [ ] How to Start a Riot
+- [x] How to Start a Riot
 - [x] Iguana Parrot
 - [x] Invasion Reinforcements
 - [ ] Invasion Submersible
