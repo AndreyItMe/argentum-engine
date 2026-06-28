@@ -138,6 +138,14 @@ export function ProfilePage() {
           )}
           {nameError ? <p style={styles.error}>{nameError}</p> : <p style={styles.muted}>{user.email}</p>}
 
+          {user.isAdmin && (
+            <button type="button" style={styles.adminLink} onClick={() => navigate('/admin')}>
+              <span style={styles.adminLinkBadge}>ADMIN</span>
+              <span style={styles.adminLinkText}>Open the admin dashboard</span>
+              <span style={styles.adminLinkArrow}>→</span>
+            </button>
+          )}
+
           <div style={styles.statsRow}>
             <Stat label="Games" value={stats?.games ?? 0} />
             <Stat label="Wins" value={stats?.wins ?? 0} />
@@ -347,7 +355,32 @@ const tooltipStyle: React.CSSProperties = {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap: { minHeight: '100vh', backgroundColor: '#0a0a15', padding: '32px 16px' },
+  wrap: { height: '100vh', overflowY: 'auto', backgroundColor: '#0a0a15', padding: '32px 16px' },
+  adminLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    backgroundColor: 'rgba(139,155,255,0.08)',
+    border: '1px solid #2f2f55',
+    borderRadius: 12,
+    padding: '12px 16px',
+    color: '#fff',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  adminLinkBadge: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: 0.6,
+    color: '#8b9bff',
+    backgroundColor: 'rgba(139,155,255,0.14)',
+    border: '1px solid #8b9bff55',
+    borderRadius: 999,
+    padding: '2px 7px',
+  },
+  adminLinkText: { flex: 1, fontSize: 14, fontWeight: 600 },
+  adminLinkArrow: { color: '#8b9bff', fontSize: 16, fontWeight: 700 },
   container: { maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 },
   header: { display: 'flex', justifyContent: 'space-between' },
   link: { background: 'none', border: 'none', color: '#8b9bff', cursor: 'pointer', fontSize: 14, padding: 0 },

@@ -39,6 +39,8 @@ export interface AccountUser {
   readonly id: number
   readonly email: string
   readonly displayName: string
+  /** True when this account has been granted access to the admin dashboard. */
+  readonly isAdmin: boolean
 }
 
 export interface LoginResponse {

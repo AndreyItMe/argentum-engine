@@ -58,6 +58,18 @@ data class UserTournamentEntry(
     val playerCount: Int,
 )
 
+/** A registered account plus its lifetime game counts, for the admin Players list. */
+data class AdminUserStat(
+    val id: Long,
+    val email: String,
+    val displayName: String,
+    val isAdmin: Boolean,
+    val createdAt: String,
+    val games: Long,
+    val wins: Long,
+    val lastPlayed: String?,
+)
+
 /** A recorded tournament for the admin list. */
 data class TournamentSummary(
     val endedAt: String,
@@ -216,6 +228,37 @@ class StatsQueryService(private val jdbc: JdbcTemplate) {
     )
 
     // ---- Global (admin) ----------------------------------------------------------------------
+
+    /**
+     * Every registered account with its lifetime game/win counts and last-played time, most-active
+     * first. A LEFT JOIN keeps accounts that have never played (they show 0 games). Drives the admin
+     * Players list; per-account detail reuses the per-user methods above.
+     */
+    fun allUsersWithStats(): List<AdminUserStat> = jdbc.query(
+        """
+        SELECT u.id AS id, u.email AS email, u.display_name AS display_name, u.is_admin AS is_admin,
+               u.created_at AS created_at,
+               count(p.id) AS games,
+               count(p.id) FILTER (WHERE p.won) AS wins,
+               max(r.ended_at) AS last_played
+        FROM users u
+        LEFT JOIN match_participants p ON p.user_id = u.id
+        LEFT JOIN match_results r ON r.id = p.match_id
+        GROUP BY u.id, u.email, u.display_name, u.is_admin, u.created_at
+        ORDER BY games DESC, u.created_at ASC
+        """.trimIndent(),
+    ) { rs, _ ->
+        AdminUserStat(
+            id = rs.getLong("id"),
+            email = rs.getString("email"),
+            displayName = rs.getString("display_name"),
+            isAdmin = rs.getBoolean("is_admin"),
+            createdAt = rs.getTimestamp("created_at").toInstant().toString(),
+            games = rs.getLong("games"),
+            wins = rs.getLong("wins"),
+            lastPlayed = rs.getTimestamp("last_played")?.toInstant()?.toString(),
+        )
+    }
 
     fun overview(): GlobalOverview {
         val totalGames = jdbc.queryForObject("SELECT count(*) FROM match_results", Long::class.java) ?: 0

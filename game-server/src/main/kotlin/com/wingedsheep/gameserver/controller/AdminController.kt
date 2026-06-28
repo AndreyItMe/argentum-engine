@@ -1,6 +1,6 @@
 package com.wingedsheep.gameserver.controller
 
-import com.wingedsheep.gameserver.config.GameProperties
+import com.wingedsheep.gameserver.auth.AdminAuthService
 import com.wingedsheep.gameserver.handler.MessageSender
 import com.wingedsheep.gameserver.protocol.ServerMessage
 import com.wingedsheep.gameserver.replay.GameHistoryRepository
@@ -8,6 +8,7 @@ import com.wingedsheep.gameserver.replay.GameReplayRecord
 import com.wingedsheep.gameserver.replay.SpectatorReplayDelta
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -25,31 +26,26 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/admin")
 class AdminController(
     private val gameHistoryRepository: GameHistoryRepository,
-    private val gameProperties: GameProperties,
+    private val adminAuth: AdminAuthService,
     private val messageSender: MessageSender
 ) {
 
     @GetMapping("/games")
     fun listGames(
-        @RequestHeader("X-Admin-Password", required = false) password: String?
-    ): ResponseEntity<Any> {
-        val authError = checkAuth(password)
-        if (authError != null) return authError
-
-        val summaries = gameHistoryRepository.findAll().map { it.toSummary() }
-        return ResponseEntity.ok(summaries)
+        @RequestHeader("X-Admin-Password", required = false) password: String?,
+        @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
+    ): ResponseEntity<Any> = adminAuth.guard(password, authorization) {
+        ResponseEntity.ok(gameHistoryRepository.findAll().map { it.toSummary() })
     }
 
     @GetMapping("/games/{gameId}/replay", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getReplay(
         @PathVariable gameId: String,
-        @RequestHeader("X-Admin-Password", required = false) password: String?
-    ): ResponseEntity<Any> {
-        val authError = checkAuth(password)
-        if (authError != null) return authError
-
+        @RequestHeader("X-Admin-Password", required = false) password: String?,
+        @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
+    ): ResponseEntity<Any> = adminAuth.guard(password, authorization) {
         val record = gameHistoryRepository.findById(gameId)
-            ?: return ResponseEntity.notFound().build()
+            ?: return@guard ResponseEntity.status(404).body(mapOf("error" to "Replay not found"))
 
         val initialJson = messageSender.json.encodeToString(
             ServerMessage.SpectatorStateUpdate.serializer(),
@@ -59,22 +55,9 @@ class AdminController(
             ListSerializer(SpectatorReplayDelta.serializer()),
             record.deltas
         )
-        return ResponseEntity.ok()
+        ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_JSON)
             .body("""{"initialSnapshot":$initialJson,"deltas":$deltasJson}""")
-    }
-
-    private fun checkAuth(password: String?): ResponseEntity<Any>? {
-        val configuredPassword = gameProperties.admin.password
-        if (configuredPassword.isBlank()) {
-            return ResponseEntity.status(401)
-                .body(mapOf("error" to "Admin feature is not configured"))
-        }
-        if (password != configuredPassword) {
-            return ResponseEntity.status(401)
-                .body(mapOf("error" to "Invalid admin password"))
-        }
-        return null
     }
 
     private fun GameReplayRecord.toSummary() = GameSummary(

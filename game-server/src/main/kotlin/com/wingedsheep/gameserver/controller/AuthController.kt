@@ -34,7 +34,7 @@ class AuthController(
     data class RequestLoginBody(val email: String)
     data class VerifyBody(val token: String)
     data class UpdateProfileBody(val displayName: String)
-    data class UserDto(val id: Long, val email: String, val displayName: String)
+    data class UserDto(val id: Long, val email: String, val displayName: String, val isAdmin: Boolean)
     data class LoginResponse(val authToken: String, val user: UserDto)
 
     companion object {
@@ -86,5 +86,5 @@ class AuthController(
         return ResponseEntity.ok(updated.toDto())
     }
 
-    private fun UserRow.toDto() = UserDto(id = id!!, email = email, displayName = displayName)
+    private fun UserRow.toDto() = UserDto(id = id!!, email = email, displayName = displayName, isAdmin = isAdmin)
 }

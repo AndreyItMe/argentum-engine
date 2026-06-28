@@ -18,6 +18,8 @@ data class UserRow(
     @Id val id: Long? = null,
     val email: String,
     val displayName: String,
+    /** Grants access to the admin dashboard via this account's normal auth token (set from the dashboard). */
+    val isAdmin: Boolean = false,
     val createdAt: Instant = Instant.now(),
 )
 

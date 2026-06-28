@@ -78,7 +78,7 @@ Flyway migration `V1__init.sql`:
 
 | Table | Purpose |
 |-------|---------|
-| `users` | account: email (unique), display name, created_at |
+| `users` | account: email (unique), display name, created_at, `is_admin` (added in `V3__admin_role.sql`) |
 | `login_tokens` | single-use magic-link tokens (SHA-256 hashed, short TTL) |
 | `decks` | saved decks: denormalized name/format + full `SharedDeck` JSON in `data` |
 | `match_results` | one row per finished game |
@@ -94,6 +94,9 @@ Flyway migration `V2__match_stats.sql` extends the stats schema:
 | `tournaments` | finished tournaments + settings (format, mode, set codes, player count, rounds, winner) |
 | `tournament_participants` | a seat in a tournament with final placement + W/L/D |
 
+Flyway migration `V3__admin_role.sql` adds `users.is_admin` (boolean, default false) — the per-account
+admin flag (see **Admin access** below).
+
 ## Auth flow (magic link)
 
 1. `POST /api/auth/request-login { email }` → upsert account, email a single-use link (logged to
@@ -107,13 +110,31 @@ Auth tokens are stateless HMAC-SHA256-signed (a minimal JWT shape) so REST calls
 authenticate. The token also links the in-game identity to the account so finished games count toward
 the account's stats.
 
+## Admin access
+
+The admin dashboard accepts **two** credentials, resolved by `AdminAuthService`:
+
+1. **Bootstrap password** — the `X-Admin-Password` header matching `GAME_ADMIN_PASSWORD`. Not tied to
+   an account; always works (a break-glass path), but meant only to get the first admin in. This also
+   works on a server with no database at all (the replay browser is password-only).
+2. **Admin account** — a normal `Authorization: Bearer …` whose account has `is_admin = true`. The
+   flag is resolved against the DB **per request** (not baked into the token), so a promotion/demotion
+   takes effect immediately. Promotion is done from the dashboard's **Players** view.
+
+Bootstrapping the first admin: set `GAME_ADMIN_PASSWORD`, open `/admin`, sign in with the password,
+go to **Players**, and promote an account. From then on that account reaches `/admin` with its normal
+sign-in and the password can be retired. `GET /api/auth/me` now includes `isAdmin`, which the client
+uses to show an **Admin dashboard** link on the profile and to skip the password prompt at `/admin`.
+
+Every admin endpoint (`/api/admin/**` and `/api/stats/admin/**`) accepts either credential.
+
 ## Endpoints
 
 | Method | Path | Notes |
 |--------|------|-------|
 | POST | `/api/auth/request-login` | `{ email }` → 200 |
 | POST | `/api/auth/verify` | `{ token }` → `{ authToken, user }` |
-| GET | `/api/auth/me` | Bearer → `user` |
+| GET | `/api/auth/me` | Bearer → `user` (includes `isAdmin`) |
 | PUT | `/api/auth/me` | Bearer + `{ displayName }` → updated `user` (1–40 chars; duplicates allowed) |
 | GET | `/api/account/decks` | list summaries |
 | GET | `/api/account/decks?full` | every deck in full (one round-trip; powers the unified deck browser) |
@@ -127,8 +148,8 @@ the account's stats.
 
 ### Stats (all under `/api/stats`)
 
-Per-user endpoints take `Authorization: Bearer …`; admin endpoints take `X-Admin-Password` (the same
-header as the replay browser). Both groups are only mounted when accounts are enabled.
+Per-user endpoints take `Authorization: Bearer …`; admin endpoints take either admin credential (see
+**Admin access**). Both groups are only mounted when accounts are enabled.
 
 | Method | Path | Notes |
 |--------|------|-------|
@@ -144,6 +165,17 @@ header as the replay browser). Both groups are only mounted when accounts are en
 | GET | `/api/stats/admin/cards` · `/cards/win-rates?minDecks` | most-played + per-card win rate |
 | GET | `/api/stats/admin/tournaments?limit` | recorded tournaments |
 | GET | `/api/stats/admin/geo` | IP → coarse location, aggregated by location (raw IPs never returned) |
+
+### Admin — players (`/api/admin/users`, either admin credential)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/admin/users` | roster: every account + lifetime games/wins, `isAdmin`, last played |
+| GET | `/api/admin/users/{id}` | one account's full stats (overview, colors, modes, head-to-head, top cards, tournaments, recent games) |
+| POST | `/api/admin/users/{id}/admin` | `{ isAdmin }` → grant/revoke admin access |
+
+The replay browser lives at `/api/admin/games` and `/api/admin/games/{id}/replay` (also either
+credential; password-only on a DB-less server).
 
 Aggregate queries live in `StatsQueryService` (plain SQL via `JdbcTemplate`). Geolocation
 (`GeoIpService`) resolves IPs via the free ip-api.com batch endpoint, cached in-process; it's only
@@ -167,9 +199,17 @@ called from the admin `geo` endpoint, never the hot recording path.
   sets, game modes, head-to-head, most-played cards, tournament finishes, and a recent-games list — all
   from `/api/stats/me/*` via `api/account.ts`. It also has a small **Manage my decks** launcher that
   opens the deckbuilder's deck browser (`/deckbuilder?decks=open`).
-- Admin page at `/admin` has a **Dashboard** tab (`AdminDashboard`, fed by `api/adminStats.ts`)
-  alongside the replay browser: headline totals, a games-per-day line chart, mode/color distributions,
-  most-played + highest-win-rate cards, recorded tournaments, and a geolocation table.
+- Admin page at `/admin` is a **hub** (`AdminPage` → `AdminHub`) that routes to three areas, each its
+  own self-scrolling screen (`AdminScreen` in `adminUi.tsx` — the whole app runs in
+  `#root { overflow: hidden }`, so admin screens scroll themselves rather than the document):
+  - **Stats** (`AdminDashboard`, `api/adminStats.ts`) — headline totals, games-per-day line chart,
+    mode/color distributions, most-played + highest-win-rate cards, recorded tournaments, geolocation.
+  - **Replays** (`ReplayViewer`) — browse and play back every completed game.
+  - **Players** (`AdminPlayers`, `api/adminUsers.ts`) — the account roster, a per-account drill-down
+    (full stats + recent games), and the **Make admin / Revoke admin** control.
+  Admin auth is the shared `AdminAuth` (`api/adminAuth.ts`): the bootstrap password (kept in
+  sessionStorage) or, for an admin account, its Bearer token. A signed-in admin skips the password
+  prompt entirely; the profile page shows an **Admin dashboard** link when `user.isAdmin`.
 - On sign-in, a landing-page prompt (`DeckMigrationPrompt`) offers to copy browser-only decks to the
   account.
 

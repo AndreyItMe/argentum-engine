@@ -1,9 +1,10 @@
 /**
- * REST client for the admin dashboard's global stats (`/api/stats/admin/*`). Auth reuses the same
- * `X-Admin-Password` header as the replay browser; the password is held by the caller (AdminPage keeps
- * it in sessionStorage). These endpoints are only mounted when the server has accounts enabled.
+ * REST client for the admin dashboard's global stats (`/api/stats/admin/*`). Auth is the dashboard's
+ * shared {@link AdminAuth} — the bootstrap password, or the signed-in admin account's token. These
+ * endpoints are only mounted when the server has accounts enabled.
  */
 import type { StatBucket } from './account'
+import { type AdminAuth, adminAuthHeaders } from './adminAuth'
 
 export interface GlobalOverview {
   readonly totalGames: number
@@ -49,21 +50,21 @@ export interface TournamentSummary {
   readonly winnerName: string | null
 }
 
-async function getAdminStats<T>(password: string, path: string): Promise<T> {
-  const res = await fetch(`/api/stats/admin${path}`, { headers: { 'X-Admin-Password': password } })
+async function getAdminStats<T>(auth: AdminAuth, path: string): Promise<T> {
+  const res = await fetch(`/api/stats/admin${path}`, { headers: adminAuthHeaders(auth) })
   if (!res.ok) throw new Error(`Failed to load stats (${res.status})`)
   return (await res.json()) as T
 }
 
-export const fetchOverview = (pwd: string) => getAdminStats<GlobalOverview>(pwd, '/overview')
-export const fetchGamesPerDay = (pwd: string, days = 30) =>
-  getAdminStats<DailyCount[]>(pwd, `/games-per-day?days=${days}`)
-export const fetchModeDistribution = (pwd: string) => getAdminStats<StatBucket[]>(pwd, '/modes')
-export const fetchColorDistribution = (pwd: string) => getAdminStats<StatBucket[]>(pwd, '/colors')
-export const fetchGeo = (pwd: string) => getAdminStats<GeoBucket[]>(pwd, '/geo')
-export const fetchTopCards = (pwd: string, limit = 50) =>
-  getAdminStats<CardStat[]>(pwd, `/cards?limit=${limit}`)
-export const fetchCardWinRates = (pwd: string, minDecks = 10, limit = 50) =>
-  getAdminStats<CardWinRate[]>(pwd, `/cards/win-rates?minDecks=${minDecks}&limit=${limit}`)
-export const fetchTournaments = (pwd: string, limit = 50) =>
-  getAdminStats<TournamentSummary[]>(pwd, `/tournaments?limit=${limit}`)
+export const fetchOverview = (auth: AdminAuth) => getAdminStats<GlobalOverview>(auth, '/overview')
+export const fetchGamesPerDay = (auth: AdminAuth, days = 30) =>
+  getAdminStats<DailyCount[]>(auth, `/games-per-day?days=${days}`)
+export const fetchModeDistribution = (auth: AdminAuth) => getAdminStats<StatBucket[]>(auth, '/modes')
+export const fetchColorDistribution = (auth: AdminAuth) => getAdminStats<StatBucket[]>(auth, '/colors')
+export const fetchGeo = (auth: AdminAuth) => getAdminStats<GeoBucket[]>(auth, '/geo')
+export const fetchTopCards = (auth: AdminAuth, limit = 50) =>
+  getAdminStats<CardStat[]>(auth, `/cards?limit=${limit}`)
+export const fetchCardWinRates = (auth: AdminAuth, minDecks = 10, limit = 50) =>
+  getAdminStats<CardWinRate[]>(auth, `/cards/win-rates?minDecks=${minDecks}&limit=${limit}`)
+export const fetchTournaments = (auth: AdminAuth, limit = 50) =>
+  getAdminStats<TournamentSummary[]>(auth, `/tournaments?limit=${limit}`)
