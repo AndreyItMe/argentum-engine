@@ -4823,6 +4823,7 @@
                                         "amount": 1
                                     }
                                 },
+                                "filter": "nonland",
                                 "storeSelected": "krangChosen",
                                 "prompt": "Choose a card exiled with Krang & Shredder to cast without paying its mana cost"
                             },
