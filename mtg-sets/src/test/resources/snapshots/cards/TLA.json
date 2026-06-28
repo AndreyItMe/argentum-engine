@@ -10928,6 +10928,58 @@
     ]
 }
 
+// Suki, Kyoshi Warrior
+{
+    "name": "Suki, Kyoshi Warrior",
+    "manaCost": "{2}{G/W}{G/W}",
+    "typeLine": "Legendary Creature — Human Warrior Ally",
+    "oracleText": "Suki's power is equal to the number of creatures you control.\nWhenever Suki attacks, create a 1/1 white Ally creature token that's tapped and attacking.",
+    "creatureStats": {
+        "power": {
+            "type": "Dynamic",
+            "source": {
+                "type": "AggregateBattlefield",
+                "player": "You",
+                "filter": "creature"
+            }
+        },
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Ally"
+                    ],
+                    "tapped": true,
+                    "attacking": true
+                },
+                "descriptionOverride": "Whenever Suki attacks, create a 1/1 white Ally creature token that's tapped and attacking."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "243",
+        "rarity": "UNCOMMON",
+        "artist": "Yuhong Ding",
+        "flavorText": "\"Hoping for another dance lesson?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/e/3e311480-04f8-4b8f-938e-1cc6d06b9902.jpg?1764121794"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "WHITE"
+    ]
+}
+
 // Sun-Blessed Peak
 {
     "name": "Sun-Blessed Peak",
