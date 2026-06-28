@@ -84,7 +84,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Appa, Loyal Sky Bison
 - [ ] Appa, Steadfast Guardian
 - [ ] Avatar Aang
-- [ ] Avatar Destiny
+- [x] Avatar Destiny
 - [x] Avatar Enthusiasts
 - [ ] Avatar's Wrath
 - [x] Azula Always Lies
