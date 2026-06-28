@@ -1903,6 +1903,87 @@
     ]
 }
 
+// Bumi Bash
+{
+    "name": "Bumi Bash",
+    "manaCost": "{3}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Choose one —\n• Bumi Bash deals damage equal to the number of lands you control to target creature.\n• Destroy target land creature or nonbasic land.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "land"
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ],
+                    "description": "Bumi Bash deals damage equal to the number of lands you control to target creature"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature land",
+                                "alternatives": [
+                                    {
+                                        "baseFilter": {
+                                            "cardPredicates": [
+                                                "IsLand",
+                                                {
+                                                    "type": "Not",
+                                                    "predicate": "IsBasicLand"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            "id": "target land creature or nonbasic land"
+                        }
+                    ],
+                    "description": "Destroy target land creature or nonbasic land"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "125",
+        "artist": "Maël Ollivier-Henry",
+        "flavorText": "\"You thought I was a frail old man, but I'm the most powerful Earthbender you'll ever see.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/8/e8895479-26cb-4ee8-98ca-6d46c43f0dbd.jpg?1773973552"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Callous Inspector
 {
     "name": "Callous Inspector",
