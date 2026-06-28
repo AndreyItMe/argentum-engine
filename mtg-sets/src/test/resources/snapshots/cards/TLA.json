@@ -9043,6 +9043,50 @@
     ]
 }
 
+// Swampsnare Trap
+{
+    "name": "Swampsnare Trap",
+    "manaCost": "{2}{B}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "This spell costs {1} less to cast if it targets a creature with flying.\nEnchant creature\nEnchanted creature gets -5/-3.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGenericBy",
+                    "source": {
+                        "type": "FixedIfAnyTargetMatches",
+                        "amount": 1,
+                        "filter": "creature kw:flying"
+                    }
+                }
+            },
+            {
+                "type": "ModifyStats",
+                "powerBonus": -5,
+                "toughnessBonus": -3
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "120",
+        "artist": "Yoshioka",
+        "flavorText": "\"Just a little closer. Nice and easy. Nothing to worry about. We just fixin' to eat ya.\"\n—Due, Foggy Swamp Tribe member",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/3/6348b6bf-08a7-45f0-8b2d-2827ab89f21c.jpg?1764120830"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // The Walls of Ba Sing Se
 {
     "name": "The Walls of Ba Sing Se",

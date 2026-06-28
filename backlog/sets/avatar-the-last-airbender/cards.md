@@ -291,7 +291,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Sun Warriors
 - [x] Sun-Blessed Peak
 - [x] Swamp
-- [ ] Swampsnare Trap
+- [x] Swampsnare Trap
 - [ ] Team Avatar
 - [ ] Teo, Spirited Glider
 - [ ] The Boulder, Ready to Rumble
