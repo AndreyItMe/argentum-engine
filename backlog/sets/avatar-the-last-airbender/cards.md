@@ -292,7 +292,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Sun-Blessed Peak
 - [x] Swamp
 - [x] Swampsnare Trap
-- [ ] Team Avatar
+- [x] Team Avatar
 - [ ] Teo, Spirited Glider
 - [ ] The Boulder, Ready to Rumble
 - [ ] The Cave of Two Lovers
