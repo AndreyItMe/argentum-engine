@@ -206,7 +206,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] June, Bounty Hunter
 - [ ] Katara, Bending Prodigy
 - [ ] Katara, Water Tribe's Hope
-- [ ] Katara, the Fearless
+- [x] Katara, the Fearless
 - [x] Knowledge Seeker
 - [ ] Koh, the Face Stealer
 - [x] Kyoshi Battle Fan

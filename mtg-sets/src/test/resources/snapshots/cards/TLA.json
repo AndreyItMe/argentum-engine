@@ -5186,6 +5186,40 @@
     ]
 }
 
+// Katara, the Fearless
+{
+    "name": "Katara, the Fearless",
+    "manaCost": "{G}{W}{U}",
+    "typeLine": "Legendary Creature — Human Warrior Ally",
+    "oracleText": "If a triggered ability of an Ally you control triggers, that ability triggers an additional time.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "AdditionalSourceTriggers",
+                "sourceFilter": "creature Ally",
+                "excludeSelf": false,
+                "description": "If a triggered ability of an Ally you control triggers, that ability triggers an additional time"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "230",
+        "rarity": "RARE",
+        "artist": "Hisashi Momose",
+        "flavorText": "\"I will never, ever turn my back on people who need me!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/0/b0a18f8b-7364-4375-b2e1-e2f15978517f.jpg?1764121694"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "WHITE",
+        "BLUE"
+    ]
+}
+
 // Knowledge Seeker
 {
     "name": "Knowledge Seeker",
