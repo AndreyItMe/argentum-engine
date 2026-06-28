@@ -8649,6 +8649,102 @@
     ]
 }
 
+// Solstice Revelations
+{
+    "name": "Solstice Revelations",
+    "manaCost": "{2}{R}",
+    "typeLine": "Instant — Lesson",
+    "oracleText": "Exile cards from the top of your library until you exile a nonland card. You may cast that card without paying its mana cost if the spell's mana value is less than the number of Mountains you control. If you don't cast that card this way, put it into your hand.\nFlashback {6}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{6}{R}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherUntilMatch",
+                    "filter": "nonland",
+                    "storeMatch": "nonland",
+                    "storeRevealed": "allRevealed"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "allRevealed",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Exile"
+                    }
+                },
+                {
+                    "type": "FilterCollection",
+                    "from": "nonland",
+                    "filter": {
+                        "type": "ManaValueAtMost",
+                        "max": {
+                            "type": "Subtract",
+                            "left": {
+                                "type": "AggregateBattlefield",
+                                "player": "You",
+                                "filter": "land Mountain"
+                            },
+                            "right": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    },
+                    "storeMatching": "castable"
+                },
+                {
+                    "type": "ConditionalOnCollection",
+                    "collection": "castable",
+                    "ifNotEmpty": {
+                        "type": "Gated",
+                        "gate": "Gate.MayDecide",
+                        "then": {
+                            "type": "CastFromCollectionWithoutPayingCost",
+                            "from": "castable"
+                        }
+                    }
+                },
+                {
+                    "type": "FilterCollection",
+                    "from": "nonland",
+                    "filter": {
+                        "type": "InZone",
+                        "zone": "Exile"
+                    },
+                    "storeMatching": "uncast"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "uncast",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "153",
+        "rarity": "UNCOMMON",
+        "artist": "Kotakan",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/2/f22ac19f-66fb-4d54-9f09-495a20a29577.jpg?1764121053"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // South Pole Voyager
 {
     "name": "South Pole Voyager",
