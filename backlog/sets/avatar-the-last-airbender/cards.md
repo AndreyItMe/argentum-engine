@@ -245,7 +245,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Path to Redemption
 - [ ] Phoenix Fleet Airship
 - [x] Pillar Launch
-- [ ] Pirate Peddlers
+- [x] Pirate Peddlers
 - [x] Plains
 - [ ] Planetarium of Wan Shi Tong
 - [x] Platypus-Bear

@@ -7154,6 +7154,49 @@
     ]
 }
 
+// Pirate Peddlers
+{
+    "name": "Pirate Peddlers",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "Deathtouch\nWhenever you sacrifice another permanent, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "DEATHTOUCH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "PermanentsSacrificedEvent",
+                    "filter": "permanent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "descriptionOverride": "Whenever you sacrifice another permanent, put a +1/+1 counter on this creature."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "115",
+        "artist": "Eduardo Francisco",
+        "flavorText": "\"We prefer to think of ourselves as 'high-risk traders.'\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/c/5c998994-6c3b-4f34-9b31-babba2b17266.jpg?1764120791"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Platypus-Bear
 {
     "name": "Platypus-Bear",
