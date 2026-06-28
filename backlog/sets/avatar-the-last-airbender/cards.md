@@ -278,7 +278,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Sokka's Haiku
 - [x] Sokka, Bold Boomeranger
 - [x] Sokka, Lateral Strategist
-- [ ] Sokka, Tenacious Tactician
+- [x] Sokka, Tenacious Tactician
 - [ ] Sold Out
 - [x] Solstice Revelations
 - [x] South Pole Voyager
