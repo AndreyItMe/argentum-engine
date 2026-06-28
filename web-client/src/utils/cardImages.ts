@@ -55,3 +55,17 @@ export function getScryfallFallbackUrl(
   const scryfallName = cardName.endsWith(' Token') ? cardName.slice(0, -6) : cardName
   return `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(scryfallName)}&format=image&version=${version}`
 }
+
+/**
+ * Get the landscape *art crop* for a card by name (Scryfall `version=art_crop`).
+ *
+ * Unlike the full-card images above, this returns just the illustration with no frame,
+ * which is the right shape for a wide banner/tile background. Used by the saved-deck
+ * gallery to paint each deck's hero art from its rarest card.
+ *
+ * @param cardName The card's name (the default printing's art is used)
+ */
+export function getScryfallArtCropUrl(cardName: string): string {
+  const scryfallName = cardName.endsWith(' Token') ? cardName.slice(0, -6) : cardName
+  return `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(scryfallName)}&format=image&version=art_crop`
+}

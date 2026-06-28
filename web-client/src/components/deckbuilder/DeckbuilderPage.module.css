@@ -434,137 +434,181 @@
   overflow-y: auto;
   padding: var(--space-4);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-3);
   align-content: start;
 }
 
+/* Full-art deck tile: the deck's hero-card art fills the whole card, with a bottom
+ * scrim carrying the name, format, colours and count — like a game's deck gallery. */
 .deckCard {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.03);
+  aspect-ratio: 4 / 3;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
   overflow: hidden;
-  transition: transform 0.1s ease, border-color 0.1s ease, background 0.1s ease;
+  background: #14141c;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .deckCard:hover {
   border-color: var(--accent-primary, #6aa3ff);
-  background: rgba(106, 163, 255, 0.06);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
 }
 
 .deckCardActive {
   border-color: var(--accent-primary, #6aa3ff);
-  background: rgba(106, 163, 255, 0.1);
-  box-shadow: 0 0 0 1px rgba(106, 163, 255, 0.4) inset;
+  box-shadow: 0 0 0 1px rgba(106, 163, 255, 0.55) inset, 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
-.deckCardBanner {
-  position: relative;
-  height: 64px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 6px 8px;
-}
-
-.deckCardBanner::after {
-  /* Subtle vignette so the banner reads against any colour combo. */
-  content: '';
+/* The clickable surface — fills the tile and carries the art + overlay. A plain button
+ * reset so the whole card reads as one big "load this deck" target. */
+.deckCardLoad {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.35));
-  pointer-events: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
-.deckCardColors {
-  display: inline-flex;
-  gap: 3px;
-  z-index: 1;
-}
-
-.deckCardColorDot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.55);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.deckCardColorless {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  z-index: 1;
-}
-
-.deckCardCount {
-  z-index: 1;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.deckCardPinBadge {
+.deckCardArt {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 1;
-  background: rgba(108, 210, 255, 0.18);
-  color: #6cd2ff;
-  border: 1px solid rgba(108, 210, 255, 0.45);
-  border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  inset: 0;
+  background-size: cover;
+  background-position: center 28%;
+  background-repeat: no-repeat;
+  transition: transform 0.3s ease;
 }
 
-.deckCardBody {
+.deckCard:hover .deckCardArt {
+  transform: scale(1.05);
+}
+
+.deckCardScrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(8, 8, 12, 0.94) 0%,
+    rgba(8, 8, 12, 0.82) 24%,
+    rgba(8, 8, 12, 0.34) 52%,
+    rgba(8, 8, 12, 0.04) 78%
+  );
+}
+
+.deckCardInfo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px 10px;
-  min-width: 0;
+  gap: 6px;
+  padding: 10px 12px 11px;
 }
 
 .deckCardName {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 0, 0, 0.5);
 }
 
-.deckCardMeta {
+.deckCardMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.deckCardFormat {
+  flex: 0 0 auto;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.deckCardPips {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.deckCardCount {
+  margin-left: auto;
+  flex: 0 0 auto;
   font-size: 0.72rem;
-  color: var(--text-muted);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
   font-variant-numeric: tabular-nums;
+}
+
+/* Storage badge — top-left. Cloud = synced to the account; monitor = browser-only. */
+.deckCardStorage {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+
+.deckCardStorage svg {
+  display: block;
+}
+
+.deckCardStorageOnline {
+  color: #74e2a4;
+  background: rgba(16, 54, 38, 0.6);
+  border-color: rgba(116, 226, 164, 0.42);
+}
+
+.deckCardStorageLocal {
+  color: #cfd5e1;
 }
 
 .deckCardActions {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
   display: flex;
   gap: 2px;
   opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.12s ease;
 }
 
 .deckCard:hover .deckCardActions,
@@ -574,18 +618,18 @@
 
 .deckCardActions .savedIconButton,
 .deckCardActions .savedIconButtonDanger {
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
+  color: #fff;
 }
 
-/* Sits at the top-left of the banner so it doesn't collide with the format
- * pills in the body. The banner gradient varies, so we layer a dark backdrop
- * + blur to keep contrast readable across all colour identities. */
+/* Active "Editing" ribbon — top-right, fades out on hover so the action buttons
+ * (same corner) take over cleanly. */
 .deckCardActiveBadge {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 2;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -600,6 +644,11 @@
   font-weight: 700;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
+  transition: opacity 0.12s ease;
+}
+
+.deckCard:hover .deckCardActiveBadge {
+  opacity: 0;
 }
 
 .deckCardActiveBadge::before {

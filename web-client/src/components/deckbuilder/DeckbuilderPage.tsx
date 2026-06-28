@@ -25,7 +25,8 @@ import { ManaCost, ManaSymbol } from '@/components/ui/ManaSymbols'
 import { HoverCardPreview } from '@/components/ui/HoverCardPreview'
 import { useDfcHoverFlip } from '@/components/ui/useDfcHoverFlip'
 import { SetIcon } from '@/components/ui/SetIcon'
-import { getCardImageUrl } from '@/utils/cardImages'
+import { getCardImageUrl, getScryfallArtCropUrl } from '@/utils/cardImages'
+import { rarityColor } from '@/components/draft/RarityBadge'
 import {
   parseQuery,
   toggleToken,
@@ -2279,12 +2280,13 @@ function SavedDecksBrowser({
     return out
   }, [decks])
   const legalityMap = useDeckLegalFormats(legalityInput)
-  const heroArtMap = useDeckHeroArt(decks)
 
   // Pre-compute per-deck metadata once. Doing this up front keeps sort/filter
   // O(n) for hundreds of decks even when the user types fast. Card totals and
   // colour pips include the commander so the user-visible numbers match what
-  // they'd actually play with.
+  // they'd actually play with. `heroCard` is the deck's rarest non-land card —
+  // its Scryfall art crop becomes the tile background so a deck is recognisable
+  // by its splashiest spell at a glance.
   const enriched = useMemo(
     () =>
       decks.map((d) => {
@@ -2292,7 +2294,8 @@ function SavedDecksBrowser({
         const total = Object.values(fullCards).reduce((a, b) => a + b, 0)
         const colors = deckColors(fullCards, catalog)
         const legalFormats = legalityMap[d.id] ?? []
-        return { deck: d, total, colors, legalFormats }
+        const hero = rarestCard(fullCards, catalog, d.commander ?? null)
+        return { deck: d, total, colors, legalFormats, hero }
       }),
     [decks, catalog, legalityMap]
   )
@@ -2422,7 +2425,7 @@ function SavedDecksBrowser({
                 : 'No decks match the current filters.'}
             </div>
           ) : (
-            filtered.map(({ deck, total, colors, legalFormats }) => (
+            filtered.map(({ deck, total, colors, legalFormats, hero }) => (
               <DeckCard
                 key={deck.id}
                 deck={deck}
@@ -2430,7 +2433,7 @@ function SavedDecksBrowser({
                 colors={colors}
                 legalFormats={legalFormats}
                 isActive={deck.id === activeDeckId}
-                heroArt={heroArtMap[deck.id]}
+                hero={hero}
                 onLoad={onLoad}
                 onRename={onRename}
                 onDelete={onDelete}
@@ -2443,62 +2446,101 @@ function SavedDecksBrowser({
   )
 }
 
+// Rarity ranking for choosing a deck's "hero" card — the splashiest spell whose art
+// represents the deck in the gallery. Higher wins.
+const RARITY_RANK: Record<string, number> = { MYTHIC: 3, RARE: 2, UNCOMMON: 1, COMMON: 0 }
+
 /**
- * Bulk-fetch chosen-printing art for every saved deck that has pinned entries.
- *
- * One round-trip across the whole browser using `/api/printings?names=…` rather than
- * one request per deck — the saved-deck overlay can render dozens of cards at once.
- * For each deck we surface a single representative thumbnail (the first pinned entry
- * in the deck's stored order) so the user can recognise their deck at a glance by
- * the printing they actually chose, not the catalog default.
- *
- * Returns a map keyed by `deck.id`. Decks with no pins (or whose pinned printing
- * isn't in the registry) are simply absent — DeckCard falls back to its gradient banner.
+ * The deck's rarest non-land card, used as the gallery tile's hero art. Lands (even rare
+ * duals) and basics are skipped — they make for dull, repetitive tiles across a collection.
+ * Ties break toward the commander (the deck's identity), then the highest mana value (the
+ * marquee bomb), then name for stable ordering. Returns null only for an empty / all-land /
+ * uncatalogued deck, in which case the tile falls back to a colour-identity gradient.
  */
-function useDeckHeroArt(decks: SavedDeck[]): Record<string, string> {
-  const [art, setArt] = useState<Record<string, string>>({})
-  // Per-deck "(name, printing)" representative — first pinned entry in the deck's order.
-  // Recomputed when the decks change so renames / loads stay in sync. Memoised separately
-  // from the fetch so we don't re-fire when the parent re-renders for unrelated reasons.
-  const reps = useMemo(() => {
-    const out: Array<{ deckId: string; name: string; ref: PrintingRef }> = []
-    for (const d of decks) {
-      const pinned = d.entries?.find((e) => e.printing) ?? null
-      if (pinned?.printing) out.push({ deckId: d.id, name: pinned.name, ref: pinned.printing })
+function rarestCard(
+  cards: Record<string, number>,
+  catalog: Record<string, CardSummary>,
+  commander: string | null,
+): CardSummary | null {
+  let best: CardSummary | null = null
+  let bestRank = -1
+  let bestIsCommander = false
+  for (const [rawName, n] of Object.entries(cards)) {
+    if (n <= 0) continue
+    const name = rawName.split('#')[0] ?? rawName
+    const c = catalog[name]
+    if (!c || c.basicLand) continue
+    if (c.cardTypes.some((t) => t.toUpperCase() === 'LAND')) continue
+    const rank = RARITY_RANK[(c.rarity ?? 'COMMON').toUpperCase()] ?? 0
+    const isCommander = commander != null && name === commander
+    if (best === null || rank > bestRank) {
+      best = c
+      bestRank = rank
+      bestIsCommander = isCommander
+      continue
     }
-    return out
-  }, [decks])
+    if (rank === bestRank && !bestIsCommander) {
+      if (isCommander || c.cmc > best.cmc || (c.cmc === best.cmc && c.name < best.name)) {
+        best = c
+        bestIsCommander = isCommander
+      }
+    }
+  }
+  return best
+}
 
-  useEffect(() => {
-    if (reps.length === 0) {
-      setArt({})
-      return
-    }
-    let cancelled = false
-    const params = new URLSearchParams()
-    new Set(reps.map((r) => r.name)).forEach((n) => params.append('names', n))
-    fetch(`/api/printings?${params.toString()}`)
-      .then((r) => (r.ok ? r.json() : {}))
-      .then((data: Record<string, PrintingDTO[]>) => {
-        if (cancelled) return
-        const next: Record<string, string> = {}
-        for (const { deckId, name, ref } of reps) {
-          const match = data[name]?.find(
-            (p) => p.setCode === ref.setCode && p.collectorNumber === ref.collectorNumber,
-          )
-          if (match?.imageUri) next[deckId] = match.imageUri
-        }
-        setArt(next)
-      })
-      .catch(() => {
-        if (!cancelled) setArt({})
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [reps])
+// Deck-name tint by hero rarity — reuses the draft rarity palette so colours read
+// consistently across the app, but lifts COMMON off near-black so names stay legible
+// over the dark art scrim.
+function deckNameColor(rarity: string | undefined): string {
+  if (!rarity || rarity.toUpperCase() === 'COMMON') return '#eef1f6'
+  return rarityColor(rarity)
+}
 
-  return art
+// Per-format accent for the single saved-format chip. Keyed by upper-case format name;
+// anything unmapped falls back to a neutral slate so new formats still render cleanly.
+const FORMAT_ACCENT: Record<string, string> = {
+  STANDARD: '#6aa3ff',
+  PIONEER: '#c47dff',
+  MODERN: '#8a7bff',
+  LEGACY: '#7bd0ff',
+  VINTAGE: '#ff9d57',
+  PAUPER: '#9aa6b8',
+  COMMANDER: '#e0b15a',
+  BRAWL: '#e0b15a',
+  STANDARD_BRAWL: '#e0b15a',
+  HISTORIC: '#ff8aa8',
+  CUSTOM_DECKS: '#7be0a8',
+}
+function formatAccent(format: string): string {
+  return FORMAT_ACCENT[format.toUpperCase()] ?? '#9aa6b8'
+}
+
+function CloudIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4 7.5 7.5 0 0 0 5.35 8.04 5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+    </svg>
+  )
+}
+
+function MonitorIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  )
 }
 
 function DeckCard({
@@ -2507,7 +2549,7 @@ function DeckCard({
   colors,
   legalFormats,
   isActive,
-  heroArt,
+  hero,
   onLoad,
   onRename,
   onDelete,
@@ -2517,96 +2559,88 @@ function DeckCard({
   colors: string[]
   legalFormats: string[]
   isActive: boolean
-  heroArt: string | undefined
+  hero: CardSummary | null
   onLoad: (d: UnifiedDeck) => void
   onRename: (d: UnifiedDeck) => void
   onDelete: (d: UnifiedDeck) => void
 }) {
-  const updated = useMemo(() => formatRelativeTime(deck.updatedAt), [deck.updatedAt])
-  // Banner gradient derived from the deck's colour identity. Falls back to a
-  // neutral gradient for colourless / empty decks.
-  const banner = useMemo(() => deckBannerGradient(colors), [colors])
-  // When the deck has at least one pinned printing, layer that printing's art
-  // *under* the colour-identity gradient so the deck is recognisable by what the user
-  // actually picked. The gradient stays — without it, art at this size is hard to read
-  // and the colour cue is the primary way users scan the browser.
-  const bannerStyle = heroArt
-    ? { background: `${banner}, url(${heroArt}) center/cover` }
-    : { background: banner }
-  const pinCount = useMemo(
-    () => (deck.entries ?? []).filter((e) => e.printing).length,
-    [deck.entries],
-  )
+  // Hero art = the deck's rarest card as a wide Scryfall art crop. Falls back to a
+  // colour-identity gradient when the deck has no catalogued non-land card yet.
+  const artUrl = useMemo(() => (hero ? getScryfallArtCropUrl(hero.name) : null), [hero])
+  const gradient = useMemo(() => deckBannerGradient(colors), [colors])
+  const nameColor = deckNameColor(hero?.rarity)
+  // One chip only: the format the deck was saved as, else the first format it's legal in.
+  const shownFormat = deck.format ?? legalFormats[0] ?? null
 
   return (
-    <button
-      type="button"
-      className={`${styles.deckCard} ${isActive ? styles.deckCardActive : ''}`}
-      onClick={() => onLoad(deck)}
-      title={`Load ${deck.name}`}
-    >
-      <div className={styles.deckCardBanner} style={bannerStyle}>
-        {pinCount > 0 && (
-          <span
-            className={styles.deckCardPinBadge}
-            title={`${pinCount} pinned printing${pinCount === 1 ? '' : 's'}`}
-          >
-            ◧ {pinCount}
+    <div className={`${styles.deckCard} ${isActive ? styles.deckCardActive : ''}`}>
+      <button
+        type="button"
+        className={styles.deckCardLoad}
+        onClick={() => onLoad(deck)}
+        title={`Load ${deck.name}`}
+      >
+        <span
+          className={styles.deckCardArt}
+          // The URL is quoted inside url() because card names can contain apostrophes
+          // ("Barrin's Spite"), which encodeURIComponent leaves literal — an unquoted
+          // url() with a bare ' is invalid CSS and the browser silently drops the art.
+          style={artUrl ? { backgroundImage: `url("${artUrl}")` } : { background: gradient }}
+          aria-hidden="true"
+        />
+        <span className={styles.deckCardScrim} aria-hidden="true" />
+        <span className={styles.deckCardInfo}>
+          <span className={styles.deckCardName} style={{ color: nameColor }}>
+            {deck.name}
           </span>
-        )}
-        {colors.length > 0 ? (
-          <div className={styles.deckCardColors}>
-            {colors.map((c) => (
+          <span className={styles.deckCardMetaRow}>
+            {shownFormat && (
               <span
-                key={c}
-                className={styles.deckCardColorDot}
-                style={{ background: COLOR_DOT[c] ?? '#888' }}
-                title={c}
-              />
-            ))}
-          </div>
-        ) : (
-          <span className={styles.deckCardColorless}>colourless</span>
-        )}
-        <span className={styles.deckCardCount}>{total}</span>
-      </div>
-      <div className={styles.deckCardBody}>
-        <div className={styles.deckCardName}>{deck.name}</div>
-        <div className={styles.deckCardMeta}>
-          <span>{updated}</span>
-          <span aria-hidden="true">·</span>
-          <span
-            style={{ color: deck.online ? '#9be8bd' : '#9a9aa8', fontWeight: 600 }}
-            title={deck.online ? 'Backed up to your account' : 'Saved only in this browser'}
-          >
-            {deck.online ? '● Online' : '○ Browser'}
-          </span>
-        </div>
-        {(deck.format || legalFormats.length > 0) && (
-          <span className={styles.formatBadges}>
-            {deck.format && (
-              <span
-                className={styles.formatBadgeSaved}
-                title={`Saved as ${labelForFormat(deck.format)}`}
+                className={styles.deckCardFormat}
+                style={{
+                  color: formatAccent(shownFormat),
+                  borderColor: `${formatAccent(shownFormat)}66`,
+                }}
+                title={
+                  deck.format
+                    ? `Saved as ${labelForFormat(shownFormat)}`
+                    : `Legal in ${labelForFormat(shownFormat)}`
+                }
               >
-                {labelForFormat(deck.format)}
+                {labelForFormat(shownFormat)}
               </span>
             )}
-            {legalFormats
-              .filter((f) => f !== deck.format)
-              .map((f) => (
-                <span
-                  key={f}
-                  className={styles.formatBadge}
-                  title={`Legal in ${labelForFormat(f)}`}
-                >
-                  {labelForFormat(f)}
-                </span>
-              ))}
+            <span className={styles.deckCardPips}>
+              {colors.length > 0 ? (
+                colors.map((c) => {
+                  const tok = COLOR_TOKENS.find((t) => t.key === c)
+                  return <ManaSymbol key={c} symbol={tok ? tok.label : 'C'} size={15} />
+                })
+              ) : (
+                <ManaSymbol symbol="C" size={15} />
+              )}
+            </span>
+            <span className={styles.deckCardCount}>{total} cards</span>
           </span>
-        )}
-      </div>
-      <div className={styles.deckCardActions} onClick={(e) => e.stopPropagation()}>
+        </span>
+      </button>
+
+      {/* Storage status — cloud (synced to your account) vs. local (this browser only). */}
+      <span
+        className={`${styles.deckCardStorage} ${
+          deck.online ? styles.deckCardStorageOnline : styles.deckCardStorageLocal
+        }`}
+        title={
+          deck.online
+            ? 'Saved to your account — synced to the cloud and available on any device'
+            : 'Saved only in this browser — not backed up to your account'
+        }
+      >
+        {deck.online ? <CloudIcon /> : <MonitorIcon />}
+        {deck.online ? 'Cloud' : 'Local'}
+      </span>
+
+      <div className={styles.deckCardActions}>
         <button
           className={styles.savedIconButton}
           onClick={() => onRename(deck)}
@@ -2626,8 +2660,9 @@ function DeckCard({
           ✕
         </button>
       </div>
+
       {isActive && <span className={styles.deckCardActiveBadge}>Editing</span>}
-    </button>
+    </div>
   )
 }
 
@@ -2673,25 +2708,6 @@ function deckColors(
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([color]) => color)
-}
-
-function formatRelativeTime(ts: number): string {
-  const now = Date.now()
-  const diff = Math.max(0, now - ts)
-  const sec = Math.floor(diff / 1000)
-  if (sec < 60) return 'just now'
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `${min}m ago`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}h ago`
-  const day = Math.floor(hr / 24)
-  if (day < 7) return `${day}d ago`
-  const wk = Math.floor(day / 7)
-  if (wk < 5) return `${wk}w ago`
-  const mo = Math.floor(day / 30)
-  if (mo < 12) return `${mo}mo ago`
-  const yr = Math.floor(day / 365)
-  return `${yr}y ago`
 }
 
 function SearchBar({
