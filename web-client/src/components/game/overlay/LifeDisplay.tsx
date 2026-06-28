@@ -19,6 +19,8 @@ export function LifeDisplay({
   commanderDamage,
   seatColor,
   isAlly = false,
+  handSize,
+  maxHandSize,
 }: {
   life: number
   isPlayer?: boolean
@@ -27,6 +29,13 @@ export function LifeDisplay({
   spectatorMode?: boolean
   poisonCounters?: number
   commanderDamage?: readonly ClientCommanderDamage[]
+  /** Current hand size — paired with [maxHandSize] to show the hand-limit badge when it changed. */
+  handSize?: number | undefined
+  /**
+   * Effective maximum hand size (CR 402.2). A badge appears only when this differs from the default
+   * 7 — a finite cap (Cursed Rack) or `null` for no maximum (Reliquary Tower).
+   */
+  maxHandSize?: number | null | undefined
   /**
    * Multiplayer: the player's seat-identity color — tints the orb border and
    * name so the viewed opponent's orb visibly matches their rail chip.
@@ -412,7 +421,73 @@ export function LifeDisplay({
           POISON {poisonCounters}/10
         </div>
       )}
+      <MaxHandSizeBadge handSize={handSize} maxHandSize={maxHandSize} />
       <CommanderDamageBadges entries={commanderDamage ?? []} />
+    </div>
+  )
+}
+
+/** Default maximum hand size (CR 402.2). No badge is shown while the limit is unchanged. */
+const DEFAULT_MAX_HAND_SIZE = 7
+
+/**
+ * Hand-limit badge under the life orb — visible only when this player's maximum hand size has been
+ * changed from the default 7: a finite cap (Cursed Rack → "HAND 5/4", amber when over the limit and
+ * a discard looms) or no maximum at all (Reliquary Tower → "HAND ∞"). When the limit is the normal
+ * 7, nothing renders, so the badge stays a signal that something is affecting the hand.
+ */
+export function MaxHandSizeBadge({
+  handSize,
+  maxHandSize,
+}: {
+  handSize?: number | undefined
+  maxHandSize?: number | null | undefined
+}) {
+  // `undefined` = field absent (older payload); only the explicit default 7 is "unchanged".
+  if (maxHandSize === undefined || maxHandSize === DEFAULT_MAX_HAND_SIZE) return null
+
+  const unlimited = maxHandSize === null
+  const over = !unlimited && handSize !== undefined && handSize > maxHandSize
+  const color = unlimited ? '#7ad0ff' : over ? '#ffb86b' : '#cdb4f0'
+  const borderColor = unlimited
+    ? 'rgba(122, 208, 255, 0.55)'
+    : over
+      ? 'rgba(255, 184, 107, 0.6)'
+      : 'rgba(205, 180, 240, 0.5)'
+  const bgColor = unlimited
+    ? 'rgba(10, 28, 40, 0.92)'
+    : over
+      ? 'rgba(46, 30, 10, 0.92)'
+      : 'rgba(26, 18, 40, 0.92)'
+  const label = unlimited
+    ? 'HAND ∞'
+    : handSize !== undefined
+      ? `HAND ${handSize}/${maxHandSize}`
+      : `HAND MAX ${maxHandSize}`
+  const title = unlimited
+    ? 'No maximum hand size — this player never discards to hand size'
+    : `Maximum hand size ${maxHandSize}${over ? ` — must discard down to ${maxHandSize} in cleanup` : ''}`
+
+  return (
+    <div
+      title={title}
+      style={{
+        marginTop: 4,
+        minHeight: 18,
+        padding: '2px 7px',
+        borderRadius: 4,
+        border: `1px solid ${borderColor}`,
+        backgroundColor: bgColor,
+        color,
+        fontSize: 11,
+        fontWeight: 800,
+        lineHeight: '14px',
+        letterSpacing: '0.3px',
+        fontVariantNumeric: 'tabular-nums',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
     </div>
   )
 }

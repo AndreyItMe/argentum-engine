@@ -532,8 +532,24 @@ data class ClientPlayer(
     val life: Int,
     val poisonCounters: Int,
     val handSize: Int,
+
+    /**
+     * This player's effective maximum hand size (CR 402.2) — the limit cleanup discards down to,
+     * shared with [com.wingedsheep.engine.core.MaximumHandSize] so the displayed badge matches what
+     * cleanup enforces. `7` by default; a smaller/larger value when an effect set it (Cursed Rack);
+     * `null` when the player has no maximum (Reliquary Tower, Thought Vessel). The client shows a
+     * badge only when this differs from the default 7 (or is unlimited).
+     */
+    val maxHandSize: Int? = 7,
     val librarySize: Int,
     val graveyardSize: Int,
+
+    /**
+     * Number of distinct card types among cards in this player's graveyard (CR — the Delirium count;
+     * Delirium is active at 4+). Drives the delirium tracker the client renders on the graveyard
+     * pile so the threshold is visible at a glance.
+     */
+    val graveyardCardTypes: Int = 0,
     val exileSize: Int,
     val landsPlayedThisTurn: Int,
     val hasLost: Boolean,

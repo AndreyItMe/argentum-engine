@@ -163,6 +163,12 @@ export function ZonePile({ player, isOpponent = false }: { player: ClientPlayer;
           {player.graveyardSize > 0 && (
             <div style={{ ...styles.pileCount, fontSize: responsive.fontSize.small }}>{player.graveyardSize}</div>
           )}
+          {/* Delirium tracker (CR — 4+ card types in your graveyard). Always shown while the
+              graveyard has cards so the progress toward — and reaching of — delirium is visible
+              at a glance, for both players. */}
+          {player.graveyardSize > 0 && (player.graveyardCardTypes ?? 0) > 0 && (
+            <DeliriumTracker types={player.graveyardCardTypes ?? 0} pileWidth={effectivePileWidth} />
+          )}
           {/* Show targeted cards fanned out when a spell is targeting cards in this graveyard */}
           {targetedGraveyardCards.map((card, index) => {
             const fanOffset = targetedGraveyardCards.length > 1
@@ -273,6 +279,62 @@ export function ZonePile({ player, isOpponent = false }: { player: ClientPlayer;
           onClose={() => setBrowsingLibrary(false)}
         />
       )}
+    </div>
+  )
+}
+
+/** Delirium activates at 4+ distinct card types in the graveyard (CR). */
+const DELIRIUM_THRESHOLD = 4
+
+/**
+ * Compact delirium tracker overlaid on the top edge of the graveyard pile: a row of four pips that
+ * fill as distinct card types accumulate, glowing gold once the fourth lands (delirium active).
+ * The exact count lives in the tooltip — the pile is often only ~30px wide, too narrow for a
+ * legible numeral, so the pips carry the at-a-glance signal and the tooltip the precise number.
+ */
+function DeliriumTracker({ types, pileWidth }: { types: number; pileWidth: number }) {
+  const active = types >= DELIRIUM_THRESHOLD
+  const filled = Math.min(types, DELIRIUM_THRESHOLD)
+  // Scale pips to the pile width so four-plus-gaps always fit, even at the 28px minimum.
+  const pip = Math.max(3, Math.round(pileWidth / 9))
+  const gold = '#f5d76e'
+  return (
+    <div
+      title={
+        active
+          ? `Delirium active — ${types} card types in graveyard (4+ needed)`
+          : `Delirium: ${types}/${DELIRIUM_THRESHOLD} card types in graveyard`
+      }
+      style={{
+        position: 'absolute',
+        top: 3,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: Math.max(2, Math.round(pip / 2)),
+        padding: '2px 4px',
+        borderRadius: 999,
+        background: 'rgba(0, 0, 0, 0.7)',
+        border: `1px solid ${active ? gold : 'rgba(255,255,255,0.18)'}`,
+        boxShadow: active ? `0 0 7px ${gold}aa` : 'none',
+        pointerEvents: 'none',
+        zIndex: 6,
+      }}
+    >
+      {Array.from({ length: DELIRIUM_THRESHOLD }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: pip,
+            height: pip,
+            borderRadius: '50%',
+            background: i < filled ? gold : 'transparent',
+            border: `1px solid ${i < filled ? gold : 'rgba(255,255,255,0.35)'}`,
+            boxShadow: active && i < filled ? `0 0 4px ${gold}` : 'none',
+          }}
+        />
+      ))}
     </div>
   )
 }

@@ -4,7 +4,6 @@ import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
-import com.wingedsheep.engine.state.components.battlefield.chosenOpponent
 import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.SaddledComponent
 import com.wingedsheep.engine.state.components.battlefield.AbilityResolutionCountThisTurnComponent
@@ -68,7 +67,6 @@ import com.wingedsheep.engine.state.components.player.OpponentCreaturesExiledThi
 import com.wingedsheep.engine.state.components.player.PlayerEffectRemoval
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.player.PlayerHexproofComponent
-import com.wingedsheep.engine.state.components.player.PlayerNoMaximumHandSizeComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.player.SpellsCantBeCounteredComponent
 import com.wingedsheep.engine.state.components.player.PlayerTurnHijackedComponent
@@ -77,12 +75,8 @@ import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
 import com.wingedsheep.sdk.scripting.Duration
-import com.wingedsheep.sdk.scripting.NoMaximumHandSize
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
-import com.wingedsheep.sdk.scripting.SetMaximumHandSize
-import com.wingedsheep.sdk.scripting.references.Player
 
 /**
  * Handles all end-of-turn cleanup: discard to hand size, damage removal,
@@ -93,11 +87,8 @@ class CleanupPhaseManager(
     private val decisionHandler: DecisionHandler
 ) {
 
-    /** Default maximum hand size (CR 402.2), absent any effect that sets or removes it. */
-    private val defaultMaxHandSize = 7
-
     // Stateless evaluators (default projection) used to read SetMaximumHandSize abilities and
-    // their ConditionalStaticAbility gates at cleanup time.
+    // their ConditionalStaticAbility gates at cleanup time (delegated to [MaximumHandSize]).
     private val conditionEvaluator = ConditionEvaluator()
     private val dynamicAmountEvaluator = DynamicAmountEvaluator(conditionEvaluator)
 
@@ -117,7 +108,9 @@ class CleanupPhaseManager(
         // Check if player needs to discard
         val handKey = ZoneKey(activePlayer, Zone.HAND)
         val hand = newState.getZone(handKey)
-        val maxHandSize = maximumHandSize(newState, activePlayer)
+        val maxHandSize = MaximumHandSize.effective(
+            newState, activePlayer, cardRegistry, conditionEvaluator, dynamicAmountEvaluator
+        )
         val cardsToDiscard = if (maxHandSize == null) 0 else hand.size - maxHandSize
 
         if (cardsToDiscard > 0) {
@@ -365,103 +358,6 @@ class CleanupPhaseManager(
         } else {
             state
         }
-    }
-
-    /**
-     * The effective maximum hand size for [playerId] at cleanup, or `null` when they have no
-     * maximum (Reliquary Tower / Wisdom of Ages — [hasNoMaximumHandSize]).
-     *
-     * Starts from [defaultMaxHandSize] (CR 402.2) and applies every [SetMaximumHandSize] static
-     * ability on the battlefield whose [SetMaximumHandSize.player] scope (resolved relative to the
-     * source's controller) includes [playerId], taking the most restrictive (smallest) value. A
-     * [ConditionalStaticAbility] wrapper is unwrapped and its condition evaluated against the
-     * source's controller, so "as long as …" gates (Winter's Delirium) are honored.
-     */
-    private fun maximumHandSize(state: GameState, playerId: EntityId): Int? {
-        if (hasNoMaximumHandSize(state, playerId)) return null
-        var max = defaultMaxHandSize
-        val registry = cardRegistry
-        val projected = state.projectedState
-        for (permanentId in state.getBattlefield()) {
-            val card = state.getEntity(permanentId)?.get<CardComponent>() ?: continue
-            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.isEmpty()) continue
-            val controllerId = projected.getController(permanentId) ?: continue
-            val context = EffectContext(sourceId = permanentId, controllerId = controllerId)
-            for (raw in cardDef.script.staticAbilities) {
-                val setAbility = activeSetMaximumHandSize(state, raw, context) ?: continue
-                if (!playerScopeIncludes(setAbility.player, playerId, controllerId, state, permanentId)) continue
-                val value = dynamicAmountEvaluator.evaluate(state, setAbility.amount, context)
-                    .coerceAtLeast(0)
-                max = minOf(max, value)
-            }
-        }
-        return max
-    }
-
-    /**
-     * Unwrap [raw] to a live [SetMaximumHandSize] if it is one (directly or behind a
-     * [ConditionalStaticAbility] whose condition holds), else `null`.
-     */
-    private fun activeSetMaximumHandSize(
-        state: GameState,
-        raw: com.wingedsheep.sdk.scripting.StaticAbility,
-        context: EffectContext
-    ): SetMaximumHandSize? = when (raw) {
-        is SetMaximumHandSize -> raw
-        is ConditionalStaticAbility -> {
-            val inner = raw.ability as? SetMaximumHandSize
-            if (inner != null && conditionEvaluator.evaluate(state, raw.condition, context)) inner else null
-        }
-        else -> null
-    }
-
-    /**
-     * Whether a [SetMaximumHandSize.player] scope, resolved relative to [controllerId] (the
-     * source's controller), includes [playerId]. Mirrors the player-scope switch in
-     * [com.wingedsheep.engine.handlers.effects.DamageUtils.isLifeGainPrevented].
-     */
-    private fun playerScopeIncludes(
-        scope: Player,
-        playerId: EntityId,
-        controllerId: EntityId,
-        state: GameState,
-        sourceId: EntityId
-    ): Boolean =
-        when (scope) {
-            Player.You -> playerId == controllerId
-            Player.EachOpponent -> playerId != controllerId
-            Player.Each, Player.Any, Player.ActivePlayerFirst -> true
-            // The opponent durably chosen as the source entered (Cursed Rack), read from the
-            // source's CastChoicesComponent[OPPONENT].
-            Player.ChosenOpponent -> state.getEntity(sourceId)?.chosenOpponent() == playerId
-            else -> false
-        }
-
-    /**
-     * Check if [playerId] has no maximum hand size — either from a permanent they control with the
-     * [NoMaximumHandSize] static ability (Thought Vessel, Reliquary Tower) or from a player-scoped
-     * rest-of-game effect ([PlayerNoMaximumHandSizeComponent], conferred by Wisdom of Ages).
-     */
-    private fun hasNoMaximumHandSize(state: GameState, playerId: EntityId): Boolean {
-        if (state.getEntity(playerId)?.has<PlayerNoMaximumHandSizeComponent>() == true) {
-            return true
-        }
-        val registry = cardRegistry
-        val projected = state.projectedState
-        for (permanentId in projected.getBattlefieldControlledBy(playerId)) {
-            val container = state.getEntity(permanentId) ?: continue
-            val card = container.get<CardComponent>() ?: continue
-            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
-            // Routed through RoomFaceStatics so a Room face's "You have no maximum hand size"
-            // (e.g. Steaming Sauna) counts only while that door is unlocked (CR 709.5).
-            if (com.wingedsheep.engine.state.components.identity.RoomFaceStatics
-                    .activeStaticAbilities(container, cardDef).any { it is NoMaximumHandSize }
-            ) {
-                return true
-            }
-        }
-        return false
     }
 
     /**
