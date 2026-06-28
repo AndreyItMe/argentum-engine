@@ -7553,6 +7553,145 @@
     ]
 }
 
+// Raven Eagle
+{
+    "name": "Raven Eagle",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Bird Assassin",
+    "oracleText": "Flying\nWhenever this creature enters or attacks, exile up to one target card from a graveyard. If a creature card is exiled this way, create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nWhenever you draw your second card each turn, each opponent loses 1 life and you gain 1 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "card from a graveyard"
+                            },
+                            "destination": "Exile"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": "TargetIsCreatureCard"
+                            },
+                            "then": {
+                                "type": "CreatePredefinedToken",
+                                "tokenType": "Clue"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": {},
+                        "zone": "Graveyard"
+                    },
+                    "id": "card from a graveyard"
+                },
+                "descriptionOverride": "Whenever this creature enters, exile up to one target card from a graveyard. If a creature card is exiled this way, create a Clue token."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "card from a graveyard"
+                            },
+                            "destination": "Exile"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": "TargetIsCreatureCard"
+                            },
+                            "then": {
+                                "type": "CreatePredefinedToken",
+                                "tokenType": "Clue"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": {},
+                        "zone": "Graveyard"
+                    },
+                    "id": "card from a graveyard"
+                },
+                "descriptionOverride": "Whenever this creature attacks, exile up to one target card from a graveyard. If a creature card is exiled this way, create a Clue token."
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "NthCardDrawnEvent",
+                    "nthCard": 2
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever you draw your second card each turn, each opponent loses 1 life and you gain 1 life."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "116",
+        "rarity": "RARE",
+        "artist": "Robin Olausson",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/2/2262f24b-db6b-4f86-96d0-47a20fc015ab.jpg?1764120797"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Razor Rings
 {
     "name": "Razor Rings",
