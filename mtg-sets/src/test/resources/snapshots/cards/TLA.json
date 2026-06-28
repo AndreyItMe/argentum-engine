@@ -6232,6 +6232,71 @@
     ]
 }
 
+// Razor Rings
+{
+    "name": "Razor Rings",
+    "manaCost": "{1}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Razor Rings deals 4 damage to target attacking or blocking creature. You gain life equal to the excess damage dealt this way.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target attacking or blocking creature"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Target",
+                        "numericProperty": "ExcessMarkedDamage"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            {
+                                "type": "StateOr",
+                                "predicates": [
+                                    "IsAttacking",
+                                    "IsBlocking"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "id": "target attacking or blocking creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "33",
+        "artist": "Norikatsu Miyoshi",
+        "flavorText": "\"There's someone in there! He's bending the vines!\"\n—Sokka",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/0/b05cfee5-ee59-4df6-a5f6-d9ef0fa7f98a.jpg?1764120111"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Realm of Koh
 {
     "name": "Realm of Koh",

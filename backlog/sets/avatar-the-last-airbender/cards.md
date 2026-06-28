@@ -256,7 +256,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Ran and Shaw
 - [x] Raucous Audience
 - [ ] Raven Eagle
-- [ ] Razor Rings
+- [x] Razor Rings
 - [x] Realm of Koh
 - [ ] Rebellious Captives
 - [x] Redirect Lightning
