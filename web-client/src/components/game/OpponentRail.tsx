@@ -450,11 +450,14 @@ function SelfRailChip({ self }: { self: ClientPlayer }) {
               fontSize: sz.hand,
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
-              color: '#9fb0d0',
+              color: handLimitSuffix(self.maxHandSize) ? '#f0d488' : '#9fb0d0',
             }}
+            title={handLimitSuffix(self.maxHandSize)
+              ? `Hand ${self.handSize} · maximum hand size ${self.maxHandSize ?? '∞'}`
+              : undefined}
           >
-            <HandCountIcon />
-            {self.handSize}
+            <HandCountIcon color={handLimitSuffix(self.maxHandSize) ? '#f0d488' : '#8899bb'} />
+            {self.handSize}{handLimitSuffix(self.maxHandSize)}
           </span>
         )}
 
@@ -500,6 +503,19 @@ function SelfRailChip({ self }: { self: ClientPlayer }) {
       </div>
     </div>
   )
+}
+
+/** Default maximum hand size (CR 402.2) — no "/max" suffix is shown while the limit is unchanged. */
+const DEFAULT_MAX_HAND_SIZE = 7
+
+/**
+ * Suffix appended to a rail chip's hand count when this player's maximum hand size has changed from
+ * the default 7: "/∞" for no maximum (Reliquary Tower) or "/N" for a finite cap (Cursed Rack). An
+ * empty string when the limit is the normal 7 (or absent), so the chip stays uncluttered.
+ */
+function handLimitSuffix(maxHandSize?: number | null): string {
+  if (maxHandSize === undefined || maxHandSize === DEFAULT_MAX_HAND_SIZE) return ''
+  return maxHandSize === null ? '/∞' : `/${maxHandSize}`
 }
 
 /** Tiny card-back glyph for the hand count (cross-platform safe, unlike 🂠). */
@@ -885,11 +901,14 @@ function RailChip({
               fontSize: sz.hand,
               fontWeight: 700,
               fontVariantNumeric: 'tabular-nums',
-              color: '#9fb0d0',
+              color: handLimitSuffix(opponent.maxHandSize) ? '#f0d488' : '#9fb0d0',
             }}
+            title={handLimitSuffix(opponent.maxHandSize)
+              ? `Hand ${opponent.handSize} · maximum hand size ${opponent.maxHandSize ?? '∞'}`
+              : undefined}
           >
-            <HandCountIcon />
-            {opponent.handSize}
+            <HandCountIcon color={handLimitSuffix(opponent.maxHandSize) ? '#f0d488' : '#8899bb'} />
+            {opponent.handSize}{handLimitSuffix(opponent.maxHandSize)}
           </span>
         )}
 
@@ -1099,6 +1118,10 @@ function chipTitle(opponent: ClientPlayer): string {
     opponent.name,
     `Life ${opponent.life} · Hand ${opponent.handSize} · Library ${opponent.librarySize} · Graveyard ${opponent.graveyardSize}`,
   ]
+  if (handLimitSuffix(opponent.maxHandSize)) {
+    lines.push(`Max hand size ${opponent.maxHandSize ?? '∞ (no maximum)'}`)
+  }
+  if ((opponent.graveyardCardTypes ?? 0) >= 4) lines.push('Delirium active (4+ card types)')
   if (opponent.poisonCounters > 0) lines.push(`Poison ${opponent.poisonCounters}/10`)
   for (const e of opponent.commanderDamage ?? []) {
     lines.push(`⚔ ${e.commanderName}: ${e.amount}/${e.threshold}`)

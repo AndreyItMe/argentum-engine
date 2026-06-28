@@ -448,8 +448,19 @@ export interface ClientPlayer {
   readonly life: number
   readonly poisonCounters: number
   readonly handSize: number
+  /**
+   * Effective maximum hand size (CR 402.2): 7 by default, a different number when an effect set it
+   * (Cursed Rack), or `null` when the player has no maximum (Reliquary Tower). The UI surfaces a
+   * badge only when this differs from the default 7 (or is unlimited).
+   */
+  readonly maxHandSize?: number | null
   readonly librarySize: number
   readonly graveyardSize: number
+  /**
+   * Distinct card types among cards in this player's graveyard — the Delirium count (active at 4+).
+   * Drives the delirium tracker on the graveyard pile.
+   */
+  readonly graveyardCardTypes?: number
   readonly exileSize: number
   readonly landsPlayedThisTurn: number
   readonly hasLost: boolean

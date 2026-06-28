@@ -67,6 +67,9 @@ class ClientStateTransformer(
 ) {
 
     private val conditionEvaluator = com.wingedsheep.engine.handlers.ConditionEvaluator()
+    // Reused (with conditionEvaluator + cardRegistry) to surface each player's effective maximum
+    // hand size via the shared com.wingedsheep.engine.core.MaximumHandSize source of truth.
+    private val dynamicAmountEvaluator = DynamicAmountEvaluator(conditionEvaluator)
 
 
     /**
@@ -1598,6 +1601,21 @@ class ClientStateTransformer(
         val graveyardSize = state.getGraveyard(playerId).size
         val exileSize = state.getExile(playerId).size
 
+        // Distinct card types in the graveyard — the Delirium count (active at 4+). Mirrors the
+        // engine's Aggregation.DISTINCT_TYPES so the client tracker matches what gates delirium
+        // abilities. Graveyard is a non-battlefield zone, so base card types are correct here.
+        val graveyardCardTypes = state.getGraveyard(playerId)
+            .flatMapTo(mutableSetOf()) { entityId ->
+                state.getEntity(entityId)?.get<CardComponent>()?.typeLine?.cardTypes?.map { it.name } ?: emptyList()
+            }
+            .size
+
+        // Effective maximum hand size (CR 402.2): 7 by default, smaller/larger when an effect set
+        // it, null when unlimited (Reliquary Tower). Shared source of truth with cleanup.
+        val maxHandSize = com.wingedsheep.engine.core.MaximumHandSize.effective(
+            state, playerId, cardRegistry, conditionEvaluator, dynamicAmountEvaluator
+        )
+
         // Determine lands played this turn
         val landsPlayed = if (landDropsComponent != null) {
             landDropsComponent.maxPerTurn - landDropsComponent.remaining
@@ -1646,8 +1664,10 @@ class ClientStateTransformer(
             life = displayedLife ?: 20,
             poisonCounters = container?.get<CountersComponent>()?.getCount(CounterType.POISON) ?: 0,
             handSize = handSize,
+            maxHandSize = maxHandSize,
             librarySize = librarySize,
             graveyardSize = graveyardSize,
+            graveyardCardTypes = graveyardCardTypes,
             exileSize = exileSize,
             landsPlayedThisTurn = landsPlayed,
             hasLost = hasLost,

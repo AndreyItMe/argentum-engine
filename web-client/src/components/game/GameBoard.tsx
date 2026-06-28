@@ -578,6 +578,8 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
                 spectatorMode={spectatorMode}
                 poisonCounters={effectiveOpponent.poisonCounters}
                 commanderDamage={effectiveOpponent.commanderDamage ?? []}
+                handSize={effectiveOpponent.handSize}
+                maxHandSize={effectiveOpponent.maxHandSize}
                 {...(isMulti ? { seatColor: viewedSeatColor.base } : {})}
                 {...(isViewedOpponentAlly ? { isAlly: true } : {})}
               />
@@ -657,7 +659,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
         <div style={{ ...styles.centerLifeSection, ...styles.centerLifeSectionRight }}>
           {effectiveViewingPlayer && (
             <>
-              <LifeDisplay life={effectiveViewingPlayer.life} isPlayer playerId={effectiveViewingPlayer.playerId} playerName={effectiveViewingPlayer.name} spectatorMode={spectatorMode} poisonCounters={effectiveViewingPlayer.poisonCounters} commanderDamage={effectiveViewingPlayer.commanderDamage ?? []} {...(isMulti ? { seatColor: selfSeatColor.base } : {})} />
+              <LifeDisplay life={effectiveViewingPlayer.life} isPlayer playerId={effectiveViewingPlayer.playerId} playerName={effectiveViewingPlayer.name} spectatorMode={spectatorMode} poisonCounters={effectiveViewingPlayer.poisonCounters} commanderDamage={effectiveViewingPlayer.commanderDamage ?? []} handSize={effectiveViewingPlayer.handSize} maxHandSize={effectiveViewingPlayer.maxHandSize} {...(isMulti ? { seatColor: selfSeatColor.base } : {})} />
               {!responsive.isMobile && <ActiveEffectsBadges effects={effectiveViewingPlayer.activeEffects} />}
               {!responsive.isMobile && effectiveViewingPlayer.manaPool && <ManaPool manaPool={effectiveViewingPlayer.manaPool} />}
             </>
