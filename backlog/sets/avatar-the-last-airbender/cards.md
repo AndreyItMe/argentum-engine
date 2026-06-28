@@ -286,7 +286,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [ ] Sozin's Comet
 - [x] Sparring Dummy
 - [ ] Spirit Water Revival
-- [ ] Suki, Courageous Rescuer
+- [x] Suki, Courageous Rescuer
 - [ ] Suki, Kyoshi Warrior
 - [ ] Sun Warriors
 - [x] Sun-Blessed Peak

@@ -8915,6 +8915,65 @@
     ]
 }
 
+// Suki, Courageous Rescuer
+{
+    "name": "Suki, Courageous Rescuer",
+    "manaCost": "{1}{W}{W}",
+    "typeLine": "Legendary Creature — Human Warrior Ally",
+    "oracleText": "Other creatures you control get +1/+0.\nWhenever another permanent you control leaves the battlefield during your turn, create a 1/1 white Ally creature token. This ability triggers only once each turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "permanent ctrl:you",
+                    "from": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Ally"
+                    ]
+                },
+                "triggerCondition": "IsYourTurn",
+                "oncePerTurn": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 0,
+                "filter": {
+                    "baseFilter": "creature ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "37",
+        "rarity": "RARE",
+        "artist": "Tky",
+        "flavorText": "\"I'm okay. Just finish the mission!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/3/33b97433-e16c-422e-a0ca-f6b1e98d8681.jpg?1764120140"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Sun-Blessed Peak
 {
     "name": "Sun-Blessed Peak",
