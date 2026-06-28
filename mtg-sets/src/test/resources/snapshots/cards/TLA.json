@@ -698,6 +698,83 @@
     ]
 }
 
+// Curious Farm Animals
+{
+    "name": "Curious Farm Animals",
+    "manaCost": "{W}",
+    "typeLine": "Creature — Boar Elk Bird Ox",
+    "oracleText": "When this creature dies, you gain 3 life.\n{2}, Sacrifice this creature: Destroy up to one target artifact or enchantment.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "artifact or enchantment"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "optional": true,
+                        "filter": {
+                            "baseFilter": "artifact|enchantment"
+                        },
+                        "id": "artifact or enchantment"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "14",
+        "artist": "John Di Giovanni",
+        "flavorText": "Earth Kingdom cuisine offers a stunning array of unique meats, like chicken-pork, deer-pork, and beef-pork.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/4/2402d759-84b6-41d2-ad78-9333974e9222.jpg?1764119964"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Cycle of Renewal
 {
     "name": "Cycle of Renewal",
