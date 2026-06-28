@@ -216,6 +216,60 @@
     ]
 }
 
+// Predator Ooze
+{
+    "name": "Predator Ooze",
+    "manaCost": "{G}{G}{G}",
+    "typeLine": "Creature — Ooze",
+    "oracleText": "Indestructible (Damage and effects that say \"destroy\" don't destroy this creature.)\nWhenever this creature attacks, put a +1/+1 counter on it.\nWhenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "INDESTRUCTIBLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "CreatureDealtDamageBySourceDiesEvent",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "rarity": "RARE",
+        "artist": "Ryan Yee",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/3/73c71457-f7c9-4ab4-b89d-e235e3f15e16.jpg?1562922371",
+        "rulings": [
+            {
+                "date": "2011-01-22",
+                "text": "Each time a creature dies, check whether Predator Ooze had dealt any damage to it at any time during that turn. If so, Predator Ooze's ability will trigger. It doesn't matter who controlled the creature or whose graveyard it was put into."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Wild Hunger
 {
     "name": "Wild Hunger",
