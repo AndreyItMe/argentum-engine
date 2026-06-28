@@ -130,7 +130,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Diligent Zookeeper
 - [x] Dragonfly Swarm
 - [x] Earth King's Lieutenant
-- [ ] Earth Kingdom General
+- [x] Earth Kingdom General
 - [x] Earth Kingdom Jailer
 - [x] Earth Kingdom Protectors
 - [ ] Earth Kingdom Soldier
