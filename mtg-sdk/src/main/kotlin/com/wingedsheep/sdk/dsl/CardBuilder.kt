@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.conditions.SourceCastForImpending
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.costs.PayCost
+import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
@@ -68,7 +69,8 @@ fun card(name: String, init: CardBuilder.() -> Unit): CardDefinition {
  * }
  * ```
  *
- * @param landType The basic land type: "Plains", "Island", "Swamp", "Mountain", or "Forest"
+ * @param landType The basic land type: "Plains", "Island", "Swamp", "Mountain", "Forest",
+ *   or "Wastes" (the colorless basic land — type line "Basic Land" with no subtype, taps for {C})
  * @param init Metadata configuration for this art variant
  */
 fun basicLand(landType: String, init: BasicLandBuilder.() -> Unit): CardDefinition {
@@ -94,24 +96,30 @@ class BasicLandBuilder(private val landType: String) {
      */
     var inBooster: Boolean = true
 
-    private val manaColor: Color = when (landType) {
+    // Wastes is the colorless basic land: type line "Basic Land" with no subtype, taps for {C}.
+    private val isWastes: Boolean = landType == "Wastes"
+
+    private val manaColor: Color? = when (landType) {
         "Plains" -> Color.WHITE
         "Island" -> Color.BLUE
         "Swamp" -> Color.BLACK
         "Mountain" -> Color.RED
         "Forest" -> Color.GREEN
+        "Wastes" -> null
         else -> throw IllegalArgumentException("Unknown basic land type: $landType")
     }
 
     fun build(): CardDefinition {
-        val typeLine = TypeLine.parse("Basic Land — $landType")
+        // Wastes has no land subtype; the colored basics carry a subtype after the dash.
+        val typeLine = if (isWastes) TypeLine.parse("Basic Land") else TypeLine.parse("Basic Land — $landType")
+        val manaSymbol = manaColor?.symbol ?: 'C'
 
-        // Basic lands have an intrinsic mana ability: "{T}: Add {color}."
+        // Basic lands have an intrinsic mana ability: "{T}: Add {color}." (Wastes adds {C}.)
         // Mana abilities don't use the stack and resolve immediately.
         val manaAbility = ActivatedAbility(
             id = AbilityId.generate(),
             cost = AbilityCost.Tap,
-            effect = AddManaEffect(manaColor),
+            effect = if (manaColor != null) AddManaEffect(manaColor) else AddColorlessManaEffect(1),
             isManaAbility = true,
             timing = TimingRule.ManaAbility
         )
@@ -133,7 +141,7 @@ class BasicLandBuilder(private val landType: String) {
             name = landType,
             manaCost = ManaCost.ZERO,
             typeLine = typeLine,
-            oracleText = "({T}: Add {${manaColor.symbol}}.)",
+            oracleText = "({T}: Add {$manaSymbol}.)",
             script = script,
             metadata = metadata
         )

@@ -30,6 +30,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.CopyOfComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.identity.RevertCopyAtEndOfTurnComponent
+import com.wingedsheep.engine.state.components.identity.RevertCopyAtNextEndStepComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.player.AdditionalPhasesComponent
 import com.wingedsheep.engine.state.components.player.InAdditionalCombatPhaseComponent
@@ -247,6 +248,44 @@ class CleanupPhaseManager(
     }
 
     /**
+     * Expire everything keyed to "the next end step", invoked on entry to the end step (TurnManager
+     * Step.END) — one step earlier than end-of-turn cleanup. Two things wear off here:
+     *
+     *  - floating effects with [Duration.UntilNextEndStep], and
+     *  - temporary copies tagged [RevertCopyAtNextEndStepComponent] (Niko, Light of Hope's "Shards
+     *    you control become copies of it until the next end step"), restored from their
+     *    [CopyOfComponent.originalCardComponent] snapshot — the same revert mechanism cleanup uses
+     *    for [RevertCopyAtEndOfTurnComponent], just fired at the start of the step.
+     *
+     * Not player-keyed: "the next end step" is the next one of any player's turn. Because this runs
+     * on *entry* to the end step, an effect created later in that same end step is not present yet,
+     * so it correctly survives to the following end step — matching the paired delayed
+     * "at the beginning of the next end step" trigger.
+     */
+    fun performNextEndStepExpiry(state: GameState): GameState {
+        var result = state
+
+        val remainingFloating = result.floatingEffects.filter { it.duration !is Duration.UntilNextEndStep }
+        if (remainingFloating.size != result.floatingEffects.size) {
+            result = result.copy(floatingEffects = remainingFloating)
+        }
+
+        for ((entityId, container) in result.entities) {
+            if (!container.has<RevertCopyAtNextEndStepComponent>()) continue
+            val originalCard = container.get<CopyOfComponent>()?.originalCardComponent
+            result = result.updateEntity(entityId) { c ->
+                var reverted = c.without<RevertCopyAtNextEndStepComponent>()
+                if (originalCard != null) {
+                    reverted = reverted.with(originalCard).without<CopyOfComponent>()
+                }
+                reverted
+            }
+        }
+
+        return result
+    }
+
+    /**
      * Expire goaded designations (CR 701.15a) for which [activePlayer] is a goader.
      * Runs alongside [expireUntilYourNextTurnEffects] so all "until your next turn"
      * semantics share the same hook (post-untap of the goader's next turn). Removes
@@ -459,6 +498,7 @@ class CleanupPhaseManager(
                 is Duration.EndOfCombat -> false  // Should already be removed, but clean up
                 is Duration.UntilYourNextTurn -> true  // Keep until that player's next turn
                 is Duration.UntilYourNextUpkeep -> true  // Keep until upkeep
+                is Duration.UntilNextEndStep -> true  // Expired on entry to the next end step (performNextEndStepExpiry)
                 is Duration.Permanent -> true  // Never expires
                 is Duration.WhileSourceOnBattlefield -> {
                     // Keep if source is still on battlefield

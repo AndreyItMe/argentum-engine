@@ -337,6 +337,7 @@ val engineSerializersModule = SerializersModule {
         subclass(ToxicComponent::class)
         subclass(CopyOfComponent::class)
         subclass(RevertCopyAtEndOfTurnComponent::class)
+        subclass(com.wingedsheep.engine.state.components.identity.RevertCopyAtNextEndStepComponent::class)
         subclass(com.wingedsheep.engine.state.components.identity.CopyWhileAttachedComponent::class)
         subclass(DoubleFacedComponent::class)
         subclass(RoomComponent::class)

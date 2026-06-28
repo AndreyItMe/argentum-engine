@@ -6,9 +6,7 @@ import com.wingedsheep.sdk.dsl.basicLand
  * Final Fantasy Basic Lands
  *
  * Final Fantasy contains 3 art variants of each colored basic land type (cards 294-308)
- * plus a borderless variant of each (cards 572-576).
- *
- * Note: FIN also prints a colorless Wastes (#309), which the `basicLand` DSL does not yet model.
+ * plus a borderless variant of each (cards 572-576), and a colorless Wastes (#309).
  */
 
 // =============================================================================
@@ -151,8 +149,18 @@ val FinalFantasyForest576 = basicLand("Forest") {
     imageUri = "https://cards.scryfall.io/normal/front/2/0/2036f825-ef57-4a40-b45f-0668d9c8ec6a.jpg?1748707608"
 }
 
+// =============================================================================
+// Wastes (Card 309) — colorless basic land, taps for {C}
+// =============================================================================
+
+val FinalFantasyWastes309 = basicLand("Wastes") {
+    collectorNumber = "309"
+    artist = "Eddie Mendoza"
+    imageUri = "https://cards.scryfall.io/normal/front/c/6/c61feafd-ef09-437c-a12c-fd7d6cb8c15a.jpg?1748706933"
+}
+
 /**
- * All Final Fantasy colored basic land variants.
+ * All Final Fantasy basic land variants.
  */
 val FinalFantasyBasicLands = listOf(
     FinalFantasyPlains294, FinalFantasyPlains295, FinalFantasyPlains296, FinalFantasyPlains572,
@@ -160,4 +168,5 @@ val FinalFantasyBasicLands = listOf(
     FinalFantasySwamp300, FinalFantasySwamp301, FinalFantasySwamp302, FinalFantasySwamp574,
     FinalFantasyMountain303, FinalFantasyMountain304, FinalFantasyMountain305, FinalFantasyMountain575,
     FinalFantasyForest306, FinalFantasyForest307, FinalFantasyForest308, FinalFantasyForest576,
+    FinalFantasyWastes309,
 )

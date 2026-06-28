@@ -1927,6 +1927,17 @@ object Effects {
         CreatePredefinedTokenEffect("Lander", count, controller)
 
     /**
+     * Create Shard enchantment tokens (Niko, Light of Hope).
+     * A colorless "Enchantment — Shard" with "{2}, Sacrifice this enchantment: Scry 1, then draw a
+     * card." The Clue token's enchantment cousin.
+     *
+     * @param count Number of tokens to create
+     * @param controller Who controls the tokens (null = spell controller)
+     */
+    fun CreateShard(count: Int = 1, controller: EffectTarget? = null): Effect =
+        CreatePredefinedTokenEffect("Shard", count, controller)
+
+    /**
      * Create Mutavault land tokens.
      * "{T}: Add {C}."
      * "{1}: This token becomes a 2/2 creature with all creature types until end of turn.

@@ -148,6 +148,31 @@ object PredefinedTokens {
     }
 
     /**
+     * Shard token — a colorless Enchantment — Shard with:
+     * "{2}, Sacrifice this enchantment: Scry 1, then draw a card."
+     * Created by Niko, Light of Hope ([Effects.CreateShard]). The Clue token's enchantment cousin
+     * (Scry 1 then draw, rather than just draw).
+     */
+    val Shard = card("Shard") {
+        typeLine = "Enchantment — Shard"
+
+        activatedAbility {
+            cost = Costs.Composite(
+                Costs.Mana("{2}"),
+                Costs.SacrificeSelf
+            )
+            effect = Effects.Composite(
+                Effects.Scry(1),
+                Effects.DrawCards(1)
+            )
+        }
+
+        metadata {
+            imageUri = "https://cards.scryfall.io/normal/front/6/a/6a198942-049c-4537-b5b1-d35df32d45d5.jpg?1726236836"
+        }
+    }
+
+    /**
      * Lander token — an artifact with:
      * "{2}, {T}, Sacrifice this token: Search your library for a basic land card,
      * put it onto the battlefield tapped, then shuffle."
@@ -476,6 +501,7 @@ object PredefinedTokens {
         Food,
         Blood,
         Clue,
+        Shard,
         Lander,
         JustOneGlass,
         Map,

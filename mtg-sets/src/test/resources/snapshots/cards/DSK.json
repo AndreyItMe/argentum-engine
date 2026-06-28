@@ -11659,6 +11659,131 @@
     ]
 }
 
+// Niko, Light of Hope
+{
+    "name": "Niko, Light of Hope",
+    "manaCost": "{2}{W}{U}",
+    "typeLine": "Legendary Creature — Human Wizard",
+    "oracleText": "When Niko enters, create two Shard tokens. (They're enchantments with \"{2}, Sacrifice this token: Scry 1, then draw a card.\")\n{2}, {T}: Exile target nonlegendary creature you control. Shards you control become copies of it until the next end step. Return it to the battlefield under its owner's control at the beginning of the next end step.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Shard",
+                    "count": 2
+                },
+                "descriptionOverride": "When Niko enters, create two Shard tokens."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "MoveToZone",
+                                    "target": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "destination": "Exile"
+                                },
+                                {
+                                    "type": "CreateDelayedTrigger",
+                                    "step": "END",
+                                    "effect": {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Battlefield"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "EachPermanentBecomesCopyOfTarget",
+                            "filter": {
+                                "baseFilter": "name:Shard ctrl:you"
+                            },
+                            "duration": "UntilNextEndStep",
+                            "sourceFromAnyZone": true
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature",
+                                    "IsNonlegendary"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "id": "target nonlegendary creature you control"
+                    }
+                ],
+                "descriptionOverride": "{2}, {T}: Exile target nonlegendary creature you control. Shards you control become copies of it until the next end step. Return it to the battlefield under its owner's control at the beginning of the next end step."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "224",
+        "rarity": "MYTHIC",
+        "artist": "Aurore Folny",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/1/91ad013f-de8d-4980-b4b6-c7f91ff495b1.jpg?1726286704",
+        "rulings": [
+            {
+                "date": "2024-09-20",
+                "text": "If the target creature is an illegal target as Niko's last ability tries to resolve, it won't resolve and none of its effects will happen. Shards you control won't become copies of the creature."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If Shards you control do become copies of the creature, they'll use the copiable values of the creature as it last existed on the battlefield. They don't copy whether that creature was tapped or untapped, whether it had any counters on it, whether it had any Auras and/or Equipment attached to it, or any non-copy effects that changed its power, toughness, types, color, and so on."
+            },
+            {
+                "date": "2024-09-20",
+                "text": "If the creature that was exiled was copying something else, the Shards that become copies of that creature will use the copiable values of that creature. In most cases, they will be copies of whatever that creature was copying. If it was copying a permanent or card with {X} in its mana cost, X is 0."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
 // Norin, Swift Survivalist
 {
     "name": "Norin, Swift Survivalist",

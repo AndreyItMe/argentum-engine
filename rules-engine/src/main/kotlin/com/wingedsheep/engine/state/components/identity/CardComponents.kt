@@ -104,6 +104,22 @@ data class CopyOfComponent(
 data object RevertCopyAtEndOfTurnComponent : Component
 
 /**
+ * Marks a permanent whose current copy identity is temporary and must revert to its pre-copy
+ * [CardComponent] at the beginning of the *next end step* — one step earlier than
+ * [RevertCopyAtEndOfTurnComponent] (which waits for cleanup).
+ *
+ * Set by "becomes a copy of … until the next end step" group-copy effects (Niko, Light of Hope:
+ * "Shards you control become copies of it until the next end step"). The revert is timed to
+ * coincide with the paired "return it at the beginning of the next end step" delayed trigger, so
+ * the source creature comes back and the copies wear off in the same step.
+ * `CleanupPhaseManager.performNextEndStepExpiry` (invoked on entry to the end step) restores the
+ * snapshot from [CopyOfComponent.originalCardComponent] and drops both this marker and the
+ * `CopyOfComponent`.
+ */
+@Serializable
+data object RevertCopyAtNextEndStepComponent : Component
+
+/**
  * Marks a permanent whose current copy identity lasts only "for as long as [attachmentId] remains
  * attached to it" (Assimilation Aegis: "for as long as this Equipment remains attached to it, that
  * creature becomes a copy …"). The pre-copy snapshot lives on the entity's

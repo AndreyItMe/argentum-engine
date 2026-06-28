@@ -57,6 +57,24 @@ sealed interface Duration {
     }
 
     /**
+     * Effect lasts until the beginning of the next end step (the *next* one — never the end step
+     * it was created in). Distinct from [EndOfTurn], which ends during the cleanup step: this ends
+     * one step earlier, at the start of the end step, the same moment as a delayed
+     * "at the beginning of the next end step" trigger fires. So "exile … return it at the beginning
+     * of the next end step" and "… becomes a copy of it until the next end step" line up exactly.
+     *
+     * Not player-keyed — it's "the next end step" of any player's turn, not "your next end step".
+     * Physically expired by `CleanupPhaseManager.performNextEndStepExpiry`, invoked on entry to the
+     * end step (`TurnManager`). Example: Niko, Light of Hope — "Shards you control become copies of
+     * it until the next end step."
+     */
+    @SerialName("UntilNextEndStep")
+    @Serializable
+    data object UntilNextEndStep : Duration {
+        override val description = "until the next end step"
+    }
+
+    /**
      * Effect lasts until end of combat.
      * Example: Fog effects, combat tricks
      */
@@ -236,6 +254,7 @@ sealed interface Duration {
 object Durations {
     val EndOfTurn = Duration.EndOfTurn
     val UntilYourNextTurn = Duration.UntilYourNextTurn
+    val UntilNextEndStep = Duration.UntilNextEndStep
     val EndOfCombat = Duration.EndOfCombat
     val Permanent = Duration.Permanent
 

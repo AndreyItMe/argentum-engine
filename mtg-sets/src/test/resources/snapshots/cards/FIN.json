@@ -307,6 +307,100 @@
     ]
 }
 
+// Aerith Rescue Mission
+{
+    "name": "Aerith Rescue Mission",
+    "manaCost": "{3}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Choose one —\n• Take the Elevator — Create three 1/1 colorless Hero creature tokens.\n• Take 59 Flights of Stairs — Tap up to three target creatures. Put a stun counter on one of them. (If a permanent with a stun counter would become untapped, remove one from it instead.)",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "CreateToken",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "power": 1,
+                        "toughness": 1,
+                        "colors": [],
+                        "creatureTypes": [
+                            "Hero"
+                        ],
+                        "imageUri": "https://cards.scryfall.io/normal/front/d/0/d0657ce1-bf75-4007-ac1b-0623eb263357.jpg?1748704030"
+                    },
+                    "description": "Take the Elevator — Create three 1/1 colorless Hero creature tokens."
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForEach",
+                                "space": "IterationSpace.Targets",
+                                "body": {
+                                    "type": "TapUntap",
+                                    "target": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    }
+                                }
+                            },
+                            {
+                                "type": "GatherCards",
+                                "source": "ChosenTargets",
+                                "storeAs": "aerithTapped"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "aerithTapped",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "aerithStunned",
+                                "prompt": "Put a stun counter on one of the tapped creatures",
+                                "useTargetingUI": true
+                            },
+                            {
+                                "type": "AddCountersToCollection",
+                                "collectionName": "aerithStunned",
+                                "counterType": "stun"
+                            }
+                        ]
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "count": 3,
+                            "optional": true,
+                            "filter": {
+                                "baseFilter": "creature"
+                            },
+                            "id": "creatures"
+                        }
+                    ],
+                    "description": "Take 59 Flights of Stairs — Tap up to three target creatures. Put a stun counter on one of them."
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "5",
+        "artist": "Hokuyuu",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/1/3123d16c-e1e6-4659-a7a3-2ec6efc6bf08.jpg?1748705771"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Aettir and Priwen
 {
     "name": "Aettir and Priwen",
@@ -4809,6 +4903,91 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Galuf's Final Act
+{
+    "name": "Galuf's Final Act",
+    "manaCost": "{1}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Until end of turn, target creature gets +1/+0 and gains \"When this creature dies, put a number of +1/+1 counters equal to its power on up to one target creature.\"",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantTriggeredAbility",
+                    "ability": {
+                        "id": "ability_1",
+                        "trigger": {
+                            "type": "ZoneChangeEvent",
+                            "from": "Battlefield",
+                            "to": "Graveyard"
+                        },
+                        "effect": {
+                            "type": "AddDynamicCounters",
+                            "counterType": "+1/+1",
+                            "amount": {
+                                "type": "EntityProperty",
+                                "entity": "Source",
+                                "numericProperty": "Power"
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            }
+                        },
+                        "targetRequirement": {
+                            "type": "TargetObject",
+                            "optional": true,
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        },
+                        "descriptionOverride": "When this creature dies, put a number of +1/+1 counters equal to its power on up to one target creature."
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "186",
+        "rarity": "UNCOMMON",
+        "artist": "Nijihayashi",
+        "flavorText": "\"I'll destroy you Exdeath... even if it means I have to take you into the afterlife myself!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/c/0ce05634-6c01-4941-a135-904cb4e33ac4.jpg?1748706456"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
@@ -9874,7 +10053,8 @@
                         "baseFilter": "creature ctrl:you"
                     },
                     "id": "target creature you control"
-                }
+                },
+                "descriptionOverride": "Landfall — Whenever a land you control enters, put a +1/+1 counter on target creature you control."
             }
         ],
         "activatedAbilities": [
@@ -9901,7 +10081,8 @@
                         "Beast"
                     ],
                     "duration": "Permanent"
-                }
+                },
+                "descriptionOverride": "{5}{G}{G}: This enchantment becomes a 7/7 Beast creature in addition to its other types."
             }
         ]
     },

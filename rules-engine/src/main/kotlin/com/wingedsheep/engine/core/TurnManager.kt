@@ -279,6 +279,7 @@ class TurnManager(
             var redirectedState = state
                 .updateEntity(activePlayer) { it.without<InAdditionalCombatPhaseComponent>() }
                 .copy(step = Step.END, phase = Phase.ENDING, priorityPassedBy = emptySet())
+            redirectedState = cleanupPhaseManager.performNextEndStepExpiry(redirectedState)
             val events = mutableListOf<GameEvent>(
                 PhaseChangedEvent(Phase.ENDING),
                 StepChangedEvent(Step.END)
@@ -356,6 +357,10 @@ class TurnManager(
                         phase = Phase.ENDING,
                         priorityPassedBy = emptySet()
                     )
+
+                // An "until the next end step" effect created during the previous end step wears
+                // off now, on entry to this additional one (CR 500.9).
+                redirectedState = cleanupPhaseManager.performNextEndStepExpiry(redirectedState)
 
                 // Phase is unchanged (END and CLEANUP both live in the ending phase), so only the
                 // step-changed event is emitted — that re-fires the end-step triggers.
@@ -555,6 +560,10 @@ class TurnManager(
             }
 
             Step.END -> {
+                // "Until the next end step" effects and copies wear off on entry to the end step,
+                // alongside the paired "return it at the beginning of the next end step" triggers.
+                newState = cleanupPhaseManager.performNextEndStepExpiry(newState)
+
                 val loseComponent = newState.getEntity(activePlayer)?.get<LoseAtEndStepComponent>()
                 if (loseComponent != null) {
                     if (loseComponent.turnsUntilLoss <= 0) {

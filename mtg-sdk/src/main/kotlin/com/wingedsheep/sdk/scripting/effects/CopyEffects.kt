@@ -52,14 +52,18 @@ data class EachPermanentBecomesCopyOfTargetEffect(
     val affected: EffectTarget? = null,
     val sourceFromAnyZone: Boolean = false,
 ) : Effect {
-    override val description: String =
-        if (affected != null) {
-            "${affected.description} becomes a copy of ${target.description}" +
-                if (duration == Duration.EndOfTurn) " until end of turn" else ""
-        } else {
-            "Each ${if (excludeTarget) "other " else ""}${filter.baseFilter.description} becomes a copy of ${target.description}" +
-                if (duration == Duration.EndOfTurn) " until end of turn" else ""
+    override val description: String = run {
+        val durationSuffix = when (duration) {
+            Duration.EndOfTurn -> " until end of turn"
+            Duration.UntilNextEndStep -> " until the next end step"
+            else -> ""
         }
+        if (affected != null) {
+            "${affected.description} becomes a copy of ${target.description}$durationSuffix"
+        } else {
+            "Each ${if (excludeTarget) "other " else ""}${filter.baseFilter.description} becomes a copy of ${target.description}$durationSuffix"
+        }
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newFilter = filter.applyTextReplacement(replacer)

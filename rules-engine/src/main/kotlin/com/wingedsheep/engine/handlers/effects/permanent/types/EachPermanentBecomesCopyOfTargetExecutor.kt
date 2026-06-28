@@ -8,6 +8,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.CopyOfComponent
 import com.wingedsheep.engine.state.components.identity.RevertCopyAtEndOfTurnComponent
+import com.wingedsheep.engine.state.components.identity.RevertCopyAtNextEndStepComponent
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.effects.EachPermanentBecomesCopyOfTargetEffect
 import kotlin.reflect.KClass
@@ -78,10 +79,10 @@ class EachPermanentBecomesCopyOfTargetExecutor : EffectExecutor<EachPermanentBec
             return EffectResult.success(state)
         }
 
-        // Only `Permanent` (Mirrorform/Clone, baked forever) and `EndOfTurn` (reverted at
-        // cleanup) are supported; anything else degrades gracefully to permanent.
-        val temporary = effect.duration == Duration.EndOfTurn
-
+        // Supported durations: `Permanent` (Mirrorform/Clone, baked forever), `EndOfTurn`
+        // (reverted at cleanup), and `UntilNextEndStep` (reverted on entry to the next end step,
+        // coincident with a paired "return it at the beginning of the next end step" trigger —
+        // Niko, Light of Hope). Anything else degrades gracefully to permanent.
         var newState = state
         for (entityId in affected) {
             val container = newState.getEntity(entityId) ?: continue
@@ -106,8 +107,12 @@ class EachPermanentBecomesCopyOfTargetExecutor : EffectExecutor<EachPermanentBec
                             originalCardComponent = originalCardSnapshot
                         )
                     )
-                if (temporary) {
-                    updated = updated.with(RevertCopyAtEndOfTurnComponent)
+                // Tag the temporary-copy revert marker. Branch with concrete types so each is stored
+                // under its own component key (`with` is a reified generic).
+                when (effect.duration) {
+                    Duration.EndOfTurn -> updated = updated.with(RevertCopyAtEndOfTurnComponent)
+                    Duration.UntilNextEndStep -> updated = updated.with(RevertCopyAtNextEndStepComponent)
+                    else -> {}
                 }
                 updated
             }
