@@ -37,6 +37,7 @@ import {
 } from '@/api/adminStats'
 import type { AdminAuth } from '@/api/adminAuth'
 import type { StatBucket } from '@/api/account'
+import { TournamentDetailModal } from '@/components/profile/TournamentDetailModal'
 import { colorLabel } from './statFormat'
 import { GeoMap } from './GeoMap'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle, chartTooltipStyle } from './adminUi'
@@ -55,6 +56,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
   const [geo, setGeo] = useState<GeoBucket[]>([])
   const [showAllCards, setShowAllCards] = useState(false)
   const [showAllWinRates, setShowAllWinRates] = useState(false)
+  const [openTournament, setOpenTournament] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -160,8 +162,8 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
           <p style={cellStyle.muted}>No tournaments recorded yet.</p>
         ) : (
           <Table head={['Date', 'Name', 'Mode', 'Players', 'Winner']}>
-            {tournaments.map((t, i) => (
-              <tr key={`${t.endedAt}-${i}`}>
+            {tournaments.map((t) => (
+              <tr key={t.id} style={styles.clickableRow} onClick={() => setOpenTournament(t.id)}>
                 <td style={cellStyle.td}>{t.endedAt.slice(0, 10)}</td>
                 <td style={cellStyle.td}>{t.name ?? '—'}</td>
                 <td style={cellStyle.td}>{t.gameMode ?? '—'}</td>
@@ -180,6 +182,10 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
           <GeoMap buckets={geo} />
         )}
       </Panel>
+
+      {openTournament != null && (
+        <TournamentDetailModal tournamentId={openTournament} onClose={() => setOpenTournament(null)} />
+      )}
     </AdminScreen>
   )
 }
@@ -213,4 +219,5 @@ const styles: Record<string, React.CSSProperties> = {
   cardRow: { display: 'flex', gap: 12, flexWrap: 'wrap' },
   twoCol: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 },
   toggle: { background: 'none', border: 'none', color: adminTheme.accent, cursor: 'pointer', fontSize: 12, padding: 0 },
+  clickableRow: { cursor: 'pointer' },
 }

@@ -42,12 +42,40 @@ export interface CardWinRate {
 }
 
 export interface TournamentSummary {
+  /** Opens the full tournament detail (standings + games). */
+  readonly id: number
   readonly endedAt: string
   readonly name: string | null
   readonly format: string | null
   readonly gameMode: string | null
   readonly playerCount: number
   readonly winnerName: string | null
+}
+
+/** One seat in a recorded game, for the admin global game list. */
+export interface AdminGamePlayer {
+  readonly name: string
+  readonly userId: string | null
+  readonly isAi: boolean
+  readonly won: boolean
+}
+
+/** A recorded game in the admin global game list, with every seat. */
+export interface AdminRecentGame {
+  readonly gameId: string
+  readonly endedAt: string
+  readonly gameMode: string | null
+  readonly format: string | null
+  readonly players: AdminGamePlayer[]
+  readonly winnerName: string | null
+  readonly hasReplay: boolean
+  readonly tournamentName: string | null
+}
+
+/** A page of global games plus the total count (for the pager). */
+export interface AdminRecentGamesPage {
+  readonly entries: AdminRecentGame[]
+  readonly total: number
 }
 
 async function getAdminStats<T>(auth: AdminAuth, path: string): Promise<T> {
@@ -68,3 +96,18 @@ export const fetchCardWinRates = (auth: AdminAuth, minDecks = 10, limit = 50) =>
   getAdminStats<CardWinRate[]>(auth, `/cards/win-rates?minDecks=${minDecks}&limit=${limit}`)
 export const fetchTournaments = (auth: AdminAuth, limit = 50) =>
   getAdminStats<TournamentSummary[]>(auth, `/tournaments?limit=${limit}`)
+
+/** A page of global games, newest first; `total` comes from the `X-Total-Count` header. */
+export async function fetchRecentGames(
+  auth: AdminAuth,
+  limit: number,
+  offset: number,
+): Promise<AdminRecentGamesPage> {
+  const res = await fetch(`/api/stats/admin/recent-games?limit=${limit}&offset=${offset}`, {
+    headers: adminAuthHeaders(auth),
+  })
+  if (!res.ok) throw new Error(`Failed to load games (${res.status})`)
+  const total = Number(res.headers.get('X-Total-Count') ?? '0')
+  const entries = (await res.json()) as AdminRecentGame[]
+  return { entries, total: Number.isFinite(total) ? total : entries.length }
+}
