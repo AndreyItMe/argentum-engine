@@ -64,6 +64,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.permissions.activeMayPlayFor
 import com.wingedsheep.engine.state.components.identity.PlayWithAdditionalCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
+import com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
@@ -554,13 +555,22 @@ class CastSpellHandler(
             }
         }
 
-        // Apply runtime mana tax from exile permissions (e.g., Soul Partition).
+        // Airbend: a fixed alternative cost ({2}) is paid instead of the printed cost — it
+        // replaces the base entirely and never stacks with the Soul Partition-style tax below.
         if (!playForFree) {
-            val runtimeCostIncrease = state.getEntity(action.cardId)
-                ?.get<PlayWithCostIncreaseComponent>()
+            val fixedAltCost = state.getEntity(action.cardId)
+                ?.get<PlayWithFixedAlternativeManaCostComponent>()
                 ?.takeIf { it.controllerId == action.playerId }
-            if (runtimeCostIncrease != null) {
-                effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
+            if (fixedAltCost != null) {
+                effectiveCost = fixedAltCost.fixedCost
+            } else {
+                // Apply runtime mana tax from exile permissions (e.g., Soul Partition).
+                val runtimeCostIncrease = state.getEntity(action.cardId)
+                    ?.get<PlayWithCostIncreaseComponent>()
+                    ?.takeIf { it.controllerId == action.playerId }
+                if (runtimeCostIncrease != null) {
+                    effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
+                }
             }
         }
 
@@ -1805,13 +1815,22 @@ class CastSpellHandler(
             }
         }
 
-        // Apply runtime mana tax from exile permissions (e.g., Soul Partition).
+        // Airbend: a fixed alternative cost ({2}) replaces the printed cost entirely (never stacks
+        // with the Soul Partition-style tax). Mirrors the validation-phase branch above.
         if (!playForFreeInExecute) {
-            val runtimeCostIncrease = currentState.getEntity(action.cardId)
-                ?.get<PlayWithCostIncreaseComponent>()
+            val fixedAltCost = currentState.getEntity(action.cardId)
+                ?.get<PlayWithFixedAlternativeManaCostComponent>()
                 ?.takeIf { it.controllerId == action.playerId }
-            if (runtimeCostIncrease != null) {
-                effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
+            if (fixedAltCost != null) {
+                effectiveCost = fixedAltCost.fixedCost
+            } else {
+                // Apply runtime mana tax from exile permissions (e.g., Soul Partition).
+                val runtimeCostIncrease = currentState.getEntity(action.cardId)
+                    ?.get<PlayWithCostIncreaseComponent>()
+                    ?.takeIf { it.controllerId == action.playerId }
+                if (runtimeCostIncrease != null) {
+                    effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
+                }
             }
         }
 

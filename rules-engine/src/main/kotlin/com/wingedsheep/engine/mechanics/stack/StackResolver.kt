@@ -264,6 +264,7 @@ class StackResolver(
                 updated = updated.without<PlayWithoutPayingCostComponent>()
             }
             updated = updated.without<com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent>()
+            updated = updated.without<com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent>()
             updated
         }
         // Drop this card from one-shot may-play grants. Permanent grants survive
@@ -1751,6 +1752,7 @@ class StackResolver(
                 .without<TargetsComponent>()
                 .without<com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent>()
                 .without<com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent>()
+                .without<com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent>()
                 .without<ExileAfterResolveComponent>()
         }
         newState = newState.removeMayPlayPermissionsForCard(spellId)

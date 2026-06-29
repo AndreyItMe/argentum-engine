@@ -85,6 +85,16 @@ internal fun BridgeBuilder.manaCountersAndState() {
     composed("Earthbend", "Effects.Earthbend: AnimateLand + GrantKeyword(haste) + AddCounters + GrantTriggeredAbility(return)",
         composes = listOf("AnimateLand", "GrantKeyword", "AddCounters", "GrantTriggeredAbility", "MoveToZone"))
 
+    // Airbend (TLA keyword action): "Exile target permanent. While it's exiled, its owner may cast it
+    // for {2} rather than its mana cost." Composed wholesale by Effects.Airbend (no Keyword.AIRBEND) —
+    // gather the chosen target(s), move them to exile, then grant the owner a may-play permission with
+    // a fixed {2} alternative mana cost. Target-agnostic: the card's TargetRequirement supplies the
+    // shape ("up to one", "any number of", "another", "you control"). The IR `AirbendPermanent` action
+    // renders as a bare `Effects.Airbend()`; the surrounding Targeted envelope declares the target.
+    // (`AirbendSpell` — the "or spell" stack branch, Aang Swift Savior — is intentionally left blocked.)
+    composed("AirbendPermanent", "Effects.Airbend: GatherCards(ChosenTargets) + MoveCollection(EXILE) + GrantMayPlayFromExile(ownerControls, fixedAlternativeManaCost {2})",
+        composes = listOf("GatherCards", "MoveCollection", "GrantMayPlayFromExile"))
+
     effect("RegeneratePermanent", "Regenerate", UNIVERSAL)
     // "<permanent> becomes prepared" (Secrets of Strixhaven — Leech Collector's trigger). Maps to the
     // BecomePrepared effect; the enters-prepared flavour is the PREPARED keyword + PREPARE layout.

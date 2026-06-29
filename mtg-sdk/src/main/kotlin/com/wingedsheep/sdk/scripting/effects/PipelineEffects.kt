@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.CounterType
+import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -1269,11 +1270,23 @@ data class GrantMayPlayFromExileEffect(
      * but for a *paid* cast rather than a free one. Defaults to off (impulse-draw cards leave the
      * card to go to its owner's graveyard normally).
      */
-    val exileAfterResolve: Boolean = false
+    val exileAfterResolve: Boolean = false,
+    /**
+     * When non-null, each granted card may be cast for this *fixed* mana cost **instead of** its
+     * printed mana cost, for as long as it stays exiled. Unlike [GrantPlayWithCostIncreaseEffect]
+     * (which adds generic mana on top of the printed cost) this *replaces* the cost entirely — a
+     * 6-drop and a 2-drop both become this cost. Models the Airbend keyword (Avatar: The Last
+     * Airbender): "Exile it. While it's exiled, its owner may cast it for {2} rather than its mana
+     * cost." Pair with [ownerControls] = true for the "its owner may cast" wording. The engine
+     * stamps a `PlayWithFixedAlternativeManaCostComponent` honored by the cast enumerator and
+     * the cast handler's cost calculation.
+     */
+    val fixedAlternativeManaCost: ManaCost? = null
 ) : Effect {
     override val description: String = buildString {
         val who = if (ownerControls) "its owner" else "you"
         append("${expiry.description.replaceFirstChar { it.uppercase() }}, $who may play those cards from exile")
+        if (fixedAlternativeManaCost != null) append(" for $fixedAlternativeManaCost rather than their mana cost")
         if (condition != null) {
             append(" ")
             append(condition.description)

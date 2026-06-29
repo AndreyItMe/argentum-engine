@@ -117,6 +117,25 @@ data class PlayWithCostIncreaseComponent(
 ) : Component
 
 /**
+ * Marks a card in exile as castable for a *fixed alternative* mana cost — paid **instead of**
+ * its printed mana cost — by the specified player, for as long as it remains exiled. Unlike
+ * [PlayWithCostIncreaseComponent] (which adds generic mana on top of the printed cost), this
+ * *replaces* the cost: a 6-drop and a 2-drop both cost [fixedCost]. Models the Airbend keyword
+ * (Avatar: The Last Airbender): "While it's exiled, its owner may cast it for {2} rather than its
+ * mana cost." Stamped by [com.wingedsheep.engine.handlers.effects.library.GrantMayPlayFromExileExecutor]
+ * when the granting effect carries a `fixedAlternativeManaCost`, and read by the cast enumerator
+ * (`CastFromZoneEnumerator`) and the cast handler (`CastSpellHandler`) when computing the cost.
+ *
+ * @param controllerId The player who may cast the card for [fixedCost].
+ * @param fixedCost The whole mana cost paid in place of the card's printed cost.
+ */
+@Serializable
+data class PlayWithFixedAlternativeManaCostComponent(
+    val controllerId: EntityId,
+    val fixedCost: com.wingedsheep.sdk.core.ManaCost
+) : Component
+
+/**
  * Marks a spell so that if it would be put into a graveyard after resolving or being
  * countered, it is exiled instead. Used by effects like Daring Waverider that grant
  * one-shot free casts from exile with "exile it instead" clauses.

@@ -76,7 +76,12 @@ import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
 import com.wingedsheep.sdk.scripting.effects.EachPlayerReturnsPermanentToHandEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
+import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.effects.CardSource
+import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.GrantMayPlayFromExileEffect
+import com.wingedsheep.sdk.scripting.effects.MayPlayExpiry
+import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.MakePlottedEffect
 import com.wingedsheep.sdk.scripting.effects.GrantPlayWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.GrantFreeCastTargetFromExileEffect
@@ -182,6 +187,7 @@ import com.wingedsheep.sdk.scripting.effects.ChooseActionEffect
 import com.wingedsheep.sdk.scripting.effects.EffectChoice
 import com.wingedsheep.sdk.scripting.effects.FeasibilityCheck
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -623,6 +629,64 @@ object Effects {
         target: EffectTarget,
         opponentCostIncrease: Int = 0
     ): Effect = ExileAndGrantOwnerPlayPermissionEffect(target, opponentCostIncrease)
+
+    /** The default Airbend recast cost: {2} (Avatar: The Last Airbender). */
+    private val AIRBEND_COST: ManaCost get() = ManaCost.parse("{2}")
+
+    /**
+     * Airbend the spell/ability's chosen target(s) — "Exile it. While it's exiled, its owner may
+     * cast it for [cost] rather than its mana cost." (Avatar: The Last Airbender.)
+     *
+     * Target-agnostic by design: the *card* declares the targeting shape via its
+     * [com.wingedsheep.sdk.scripting.targets.TargetRequirement] ("up to one", "any number of",
+     * "another", "you control", "target nonland permanent"), and this effect airbends whatever was
+     * chosen by gathering [CardSource.ChosenTargets]. The recast permission is granted to each
+     * exiled card's *owner* for as long as it stays exiled, paying the fixed [cost] instead of the
+     * card's printed mana cost (see [GrantMayPlayFromExileEffect.fixedAlternativeManaCost]).
+     */
+    fun Airbend(cost: ManaCost = AIRBEND_COST): Effect = CompositeEffect(listOf(
+        GatherCardsEffect(source = CardSource.ChosenTargets, storeAs = "airbendChosen"),
+        MoveCollectionEffect(
+            from = "airbendChosen",
+            destination = CardDestination.ToZone(Zone.EXILE),
+            storeMovedAs = "airbendExiled"
+        ),
+        GrantMayPlayFromExileEffect(
+            from = "airbendExiled",
+            expiry = MayPlayExpiry.Permanent,
+            ownerControls = true,
+            fixedAlternativeManaCost = cost
+        )
+    ))
+
+    /**
+     * Airbend every permanent matching [filter] (a group, not a target) — "Airbend all other
+     * creatures" (Avatar's Wrath). Same exile + fixed-cost recast-to-owner tail as [Airbend], but
+     * the set is gathered from the battlefield by filter rather than from the chosen targets.
+     *
+     * @param excludeSelf exclude the source permanent (the "other" in "all other creatures").
+     */
+    fun AirbendAll(
+        filter: GameObjectFilter,
+        excludeSelf: Boolean = true,
+        cost: ManaCost = AIRBEND_COST
+    ): Effect = CompositeEffect(listOf(
+        GatherCardsEffect(
+            source = CardSource.BattlefieldMatching(filter = filter, player = Player.Each, excludeSelf = excludeSelf),
+            storeAs = "airbendChosen"
+        ),
+        MoveCollectionEffect(
+            from = "airbendChosen",
+            destination = CardDestination.ToZone(Zone.EXILE),
+            storeMovedAs = "airbendExiled"
+        ),
+        GrantMayPlayFromExileEffect(
+            from = "airbendExiled",
+            expiry = MayPlayExpiry.Permanent,
+            ownerControls = true,
+            fixedAlternativeManaCost = cost
+        )
+    ))
 
     /**
      * Exile all cards in each opponent's graveyard.

@@ -10,6 +10,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ExileAfterResolveComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent
+import com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.identity.PlottedComponent
 import com.wingedsheep.engine.state.permissions.MayPlayPermission
@@ -131,6 +132,23 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
                     timestamp = state.timestamp,
                 )
             )
+
+            // Airbend: each granted card is castable for a fixed cost (e.g. {2}) instead of its
+            // printed mana cost, by the grantee, for as long as it stays exiled. Stamp the cost
+            // component the enumerator / cast handler read when computing the spell's cost.
+            val fixedCost = effect.fixedAlternativeManaCost
+            if (fixedCost != null) {
+                for (cardId in cardIds) {
+                    newState = newState.updateEntity(cardId) { container ->
+                        container.with(
+                            PlayWithFixedAlternativeManaCostComponent(
+                                controllerId = grantee,
+                                fixedCost = fixedCost
+                            )
+                        )
+                    }
+                }
+            }
         }
 
         return EffectResult.success(newState)

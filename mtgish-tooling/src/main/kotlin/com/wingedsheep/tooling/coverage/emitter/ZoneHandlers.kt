@@ -103,6 +103,13 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         call("Effects.Exile", arg(Lit(tgt)))
     }
 
+    // Airbend (TLA): "Exile target permanent. While it's exiled, its owner may cast it for {2} rather
+    // than its mana cost." Effects.Airbend() is target-agnostic — it airbends the chosen target(s) via
+    // CardSource.ChosenTargets, so the Targeted envelope's declared target requirement ("up to one",
+    // "another", "you control", …) carries the shape and the action renders argument-free. (The "or
+    // spell" stack branch is the separate `AirbendSpell` IR tag, left to scaffold.)
+    simple("AirbendPermanent", dsl = "Effects.Airbend()")
+
     on("ExileEachPermanent") { _, args, _ ->
         // The mass form. The only group we render is the just-created token(s) ("exile that token at the
         // beginning of the next end step", Daring Piracy; "exile those tokens", Rakdos Guildmage) — their
