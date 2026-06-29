@@ -2722,6 +2722,249 @@
     ]
 }
 
+// Dai Li Agents
+{
+    "name": "Dai Li Agents",
+    "manaCost": "{3}{B}{G}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "When this creature enters, earthbend 1, then earthbend 1. (To earthbend 1, target land you control becomes a 0/0 creature with haste that's still a land. Put a +1/+1 counter on it. When it dies or is exiled, return it to the battlefield tapped.)\nWhenever this creature attacks, each opponent loses X life and you gain X life, where X is the number of creatures you control with +1/+1 counters on them.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "AnimateLand",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "power": 0,
+                                    "toughness": 0,
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "GrantKeyword",
+                                    "keyword": "HASTE",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "AddCounters",
+                                    "counterType": "+1/+1",
+                                    "count": 1,
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    }
+                                },
+                                {
+                                    "type": "GrantTriggeredAbility",
+                                    "ability": {
+                                        "id": "ability_2",
+                                        "trigger": {
+                                            "type": "ZoneChangeEvent",
+                                            "from": "Battlefield"
+                                        },
+                                        "effect": {
+                                            "type": "Composite",
+                                            "effects": [
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Graveyard"
+                                                },
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Exile"
+                                                }
+                                            ]
+                                        },
+                                        "descriptionOverride": "When this dies or is exiled, return it to the battlefield tapped."
+                                    },
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "AnimateLand",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "power": 0,
+                                    "toughness": 0,
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "GrantKeyword",
+                                    "keyword": "HASTE",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "AddCounters",
+                                    "counterType": "+1/+1",
+                                    "count": 1,
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    }
+                                },
+                                {
+                                    "type": "GrantTriggeredAbility",
+                                    "ability": {
+                                        "id": "ability_3",
+                                        "trigger": {
+                                            "type": "ZoneChangeEvent",
+                                            "from": "Battlefield"
+                                        },
+                                        "effect": {
+                                            "type": "Composite",
+                                            "effects": [
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Graveyard"
+                                                },
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Exile"
+                                                }
+                                            ]
+                                        },
+                                        "descriptionOverride": "When this dies or is exiled, return it to the battlefield tapped."
+                                    },
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "land ctrl:you"
+                    },
+                    "id": "target land you control"
+                },
+                "additionalTargetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        },
+                        "id": "target land you control"
+                    }
+                ],
+                "descriptionOverride": "When this creature enters, earthbend 1, then earthbend 1."
+            },
+            {
+                "id": "ability_4",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "AggregateBattlefield",
+                                "player": "You",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ],
+                                    "statePredicates": [
+                                        {
+                                            "type": "HasCounter",
+                                            "counterType": "+1/+1"
+                                        }
+                                    ],
+                                    "controllerPredicate": "ControlledByYou"
+                                }
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "AggregateBattlefield",
+                                "player": "You",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsCreature"
+                                    ],
+                                    "statePredicates": [
+                                        {
+                                            "type": "HasCounter",
+                                            "counterType": "+1/+1"
+                                        }
+                                    ],
+                                    "controllerPredicate": "ControlledByYou"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever this creature attacks, each opponent loses X life and you gain X life, where X is the number of creatures you control with +1/+1 counters on them."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "214",
+        "rarity": "UNCOMMON",
+        "artist": "Eduardo Francisco",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9ddb8715-341b-400a-b6eb-f3f90518157c.jpg?1764121532"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
+
 // Dai Li Indoctrination
 {
     "name": "Dai Li Indoctrination",

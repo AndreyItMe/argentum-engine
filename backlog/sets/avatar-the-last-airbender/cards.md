@@ -121,7 +121,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Cunning Maneuver
 - [x] Curious Farm Animals
 - [x] Cycle of Renewal
-- [ ] Dai Li Agents
+- [x] Dai Li Agents
 - [x] Dai Li Indoctrination
 - [x] Day of Black Sun
 - [x] Deadly Precision
