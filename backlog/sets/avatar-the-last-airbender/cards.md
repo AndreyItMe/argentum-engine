@@ -338,7 +338,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Waterbender Ascension
 - [ ] Waterbending Lesson
 - [x] Waterbending Scroll
-- [ ] Watery Grasp
+- [x] Watery Grasp
 - [x] White Lotus Hideout
 - [x] White Lotus Reinforcements
 - [ ] White Lotus Tile
