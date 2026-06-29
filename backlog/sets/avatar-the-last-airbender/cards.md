@@ -2,7 +2,7 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 244 / 286
+**Implemented:** 245 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
 > **Status (June 2026):** 240/286 implemented. The **Airbend** keyword (permanent form) is now built —
@@ -221,7 +221,7 @@ up by Airbend, not Firebending).
 - [x] It'll Quench Ya!
 - [x] Jasmine Dragon Tea Shop
 - [x] Jeong Jeong's Deserters
-- [ ] Jeong Jeong, the Deserter
+- [x] Jeong Jeong, the Deserter
 - [x] Jet's Brainwashing
 - [x] Jet, Freedom Fighter
 - [x] Joo Dee, One of Many
