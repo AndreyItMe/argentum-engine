@@ -36,6 +36,7 @@ val MysidianElder = card("Mysidian Elder") {
             toughness = 1,
             colors = setOf(Color.BLACK),
             creatureTypes = setOf("Wizard"),
+            imageUri = "https://cards.scryfall.io/normal/front/1/8/187fe54c-7d0c-4225-9d46-3affbead897d.jpg?1782725378",
             triggeredAbilities = listOf(
                 TriggeredAbility.create(
                     trigger = Triggers.YouCastNoncreature.event,
