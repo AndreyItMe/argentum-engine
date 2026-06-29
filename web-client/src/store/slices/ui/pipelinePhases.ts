@@ -633,7 +633,14 @@ export function enterPhase(
       const maxTaps = actionInfo.waterbendAmount ?? (actionInfo.hasXCost ? xValue : genericInCost)
       store.startWaterbendSelection({
         actionInfo,
-        cardName: actionInfo.description.replace('Cast ', '').replace('Activate ', ''),
+        // Strip the leading verb and the trailing " (waterbend {N})" disambiguator the enumerator
+        // appends to the optional paid action's description — the HUD already says "Waterbend …"
+        // and shows the cost as mana pips, so the suffix would double the text and render {N} as
+        // literal characters.
+        cardName: actionInfo.description
+          .replace('Cast ', '')
+          .replace('Activate ', '')
+          .replace(/\s*\(waterbend \{[^}]*\}\)\s*$/i, ''),
         manaCost,
         selectedPermanents: [],
         validPermanents: actionInfo.validWaterbendPermanents!,

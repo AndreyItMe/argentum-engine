@@ -72,6 +72,9 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
   const delveSelectionState = useGameStore((state) => state.delveSelectionState)
   const tapForPowerSelectionState = useGameStore((state) => state.tapForPowerSelectionState)
   const manaSelectionState = useGameStore((state) => state.manaSelectionState)
+  // A multi-phase cast/activation in progress (convoke, waterbend, harmonize, targeting, …). While
+  // one is mid-flight the player must finish or cancel it, not pass priority / move to combat.
+  const pipelineState = useGameStore((state) => state.pipelineState)
   const cancelManaSelection = useGameStore((state) => state.cancelManaSelection)
   const { executeAction } = useInteraction()
 
@@ -779,7 +782,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
 
       {/* Floating pass/resolve button (bottom-right) - always present, disabled when unavailable */}
       {!spectatorMode && viewingPlayer && !isInManaSelectionMode && !isInCounterDistMode && (() => {
-        const passEnabled = canAct && !isHijacked && !isInCombatMode && !isInDistributeMode && !isInCounterDistMode && !isInManaSelectionMode && !delveSelectionState && !tapForPowerSelectionState && !targetingState
+        const passEnabled = canAct && !isHijacked && !isInCombatMode && !isInDistributeMode && !isInCounterDistMode && !isInManaSelectionMode && !delveSelectionState && !tapForPowerSelectionState && !targetingState && !pipelineState
         return (
           <div style={{
             position: 'fixed',
