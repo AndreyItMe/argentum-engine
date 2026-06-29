@@ -19,7 +19,6 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * Legendary Creature — Spirit Ally
  * 3/3
  *
- * Flash
  * Flying, vigilance
  * Waterbend {5}, {T}: You may cast a noncreature spell from your hand without paying its mana cost.
  *
@@ -35,12 +34,11 @@ val YueTheMoonSpirit = card("Yue, the Moon Spirit") {
     typeLine = "Legendary Creature — Spirit Ally"
     power = 3
     toughness = 3
-    oracleText = "Flash\n" +
-        "Flying, vigilance\n" +
+    oracleText = "Flying, vigilance\n" +
         "Waterbend {5}, {T}: You may cast a noncreature spell from your hand without paying its mana cost. " +
         "(While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}.)"
 
-    keywords(Keyword.FLASH, Keyword.FLYING, Keyword.VIGILANCE)
+    keywords(Keyword.FLYING, Keyword.VIGILANCE)
 
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{5}"), Costs.Tap)
