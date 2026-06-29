@@ -159,6 +159,14 @@ data class ClientCard(
     /** Card colors */
     val colors: Set<Color>,
 
+    /**
+     * Colors this permanent has been granted by an attached "choose a color" aura
+     * (e.g. Shimmerwilds Growth's "Enchanted land is the chosen color"). The chosen
+     * colour lives on the hidden aura behind the host, so we surface it here so the
+     * client can paint a mana pip on the host showing the colour it has become.
+     */
+    val grantedColors: Set<Color> = emptySet(),
+
     /** Oracle text / rules text (for display in card details) */
     val oracleText: String,
 

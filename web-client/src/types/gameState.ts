@@ -125,6 +125,14 @@ export interface ClientCard {
   /** Card colors */
   readonly colors: readonly Color[]
 
+  /**
+   * Colors this permanent has been granted by an attached "choose a color" aura
+   * (e.g. Shimmerwilds Growth's "Enchanted land is the chosen color"). The chosen
+   * color lives on the hidden aura behind the host, so it's surfaced here to paint
+   * a mana pip on the host showing the color it has become.
+   */
+  readonly grantedColors?: readonly Color[]
+
   /** Oracle text / rules text (for display in card details) */
   readonly oracleText: string
 

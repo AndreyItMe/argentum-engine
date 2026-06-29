@@ -6,7 +6,7 @@ import type { ClientCard, EntityId } from '@/types'
 import { Color, ColorSymbols, Keyword } from '@/types/enums'
 import { getCardImageUrl, getScryfallFallbackUrl, MANIFEST_FACE_DOWN_IMAGE_URL, MORPH_FACE_DOWN_IMAGE_URL } from '@/utils/cardImages.ts'
 import { useInteraction } from '@/hooks/useInteraction.ts'
-import { ManaCost } from '@/components/ui/ManaSymbols.tsx'
+import { ManaCost, ManaSymbol } from '@/components/ui/ManaSymbols.tsx'
 import { HoverCardPreview } from '@/components/ui/HoverCardPreview.tsx'
 import {
   useResponsiveContext,
@@ -58,6 +58,15 @@ import { KeywordIcons, ActiveEffectBadges } from './CardOverlays'
 import { counterManaClass, counterSvgIcon } from '@/assets/icons/keywords'
 import { SvgGlyph } from '@/assets/icons/SvgGlyph'
 import { RenderProfiler } from '@/utils/renderProfiler'
+
+/** Soft halo colors for the chosen-color gem, keyed by MTG color (see grantedColors). */
+const COLOR_GLOW: Record<Color, string> = {
+  [Color.WHITE]: 'rgba(245, 240, 210, 0.9)',
+  [Color.BLUE]: 'rgba(74, 144, 217, 0.9)',
+  [Color.BLACK]: 'rgba(150, 120, 165, 0.9)',
+  [Color.RED]: 'rgba(214, 74, 58, 0.9)',
+  [Color.GREEN]: 'rgba(74, 168, 90, 0.9)',
+}
 
 interface GameCardProps {
   card: ClientCard
@@ -1338,6 +1347,42 @@ function GameCardImpl({
               filter: 'drop-shadow(0 0 2px rgba(212, 175, 55, 0.85))',
             }}
           />
+        </div>
+      )}
+
+      {/* Chosen-color gem — when an attached "choose a color" aura (e.g. Shimmerwilds Growth's
+          "Enchanted land is the chosen color") has made this permanent a color, the aura sits
+          hidden behind the host, so paint the chosen color(s) as mana pip(s) on the host itself.
+          A soft colored halo makes the granted color readable at a glance even on an
+          otherwise-colorless land. */}
+      {battlefield && !faceDown && card.grantedColors && card.grantedColors.length > 0 && (
+        <div
+          aria-label={`Chosen color: ${card.grantedColors.map((c) => c.toLowerCase()).join(', ')}`}
+          title={`Chosen color: ${card.grantedColors
+            .map((c) => c.charAt(0) + c.slice(1).toLowerCase())
+            .join(', ')}`}
+          style={{
+            position: 'absolute',
+            top: 3,
+            // Slide clear of the ring-bearer marker on the rare creature that has both.
+            left: card.isRingBearer ? 3 + responsive.badges.ptFontSize * 2 : 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            padding: '2px 4px',
+            borderRadius: 999,
+            background: 'radial-gradient(circle at 35% 30%, rgba(34, 34, 42, 0.92) 0%, rgba(10, 10, 14, 0.92) 90%)',
+            border: '1px solid rgba(255, 255, 255, 0.28)',
+            boxShadow: card.grantedColors
+              .map((c) => `0 0 6px 1px ${COLOR_GLOW[c]}`)
+              .join(', '),
+            zIndex: 7,
+            pointerEvents: 'none',
+          }}
+        >
+          {card.grantedColors.map((c) => (
+            <ManaSymbol key={c} symbol={ColorSymbols[c]} size={responsive.badges.ptFontSize * 1.25} />
+          ))}
         </div>
       )}
 

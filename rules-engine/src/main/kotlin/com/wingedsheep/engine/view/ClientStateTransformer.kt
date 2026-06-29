@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
+import com.wingedsheep.sdk.scripting.GrantChosenColor
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.ProtectionScope
 import com.wingedsheep.engine.state.GameState
@@ -911,6 +912,21 @@ class ClientStateTransformer(
             state.getEntity(otherId)?.get<AttachedToComponent>()?.targetId == entityId
         }
 
+        // Surface colours granted to this permanent by an attached "choose a colour" aura
+        // (Shimmerwilds Growth: "Enchanted land is the chosen color"). The chosen colour is
+        // stored on the *aura's* CastChoicesComponent, and the aura sits hidden behind its host,
+        // so without this the host shows no sign of the colour it has become. We only surface a
+        // colour from auras that actually grant the chosen colour to their host (they carry a
+        // GrantChosenColor static ability), so an aura that picks a colour for some other reason
+        // doesn't paint a misleading pip on the host.
+        val grantedColors = attachments.mapNotNull { auraId ->
+            val auraContainer = state.getEntity(auraId) ?: return@mapNotNull null
+            val grantsColor = auraContainer.get<CardComponent>()
+                ?.let { cardRegistry.getCard(it.cardDefinitionId) }
+                ?.script?.staticAbilities?.any { it is GrantChosenColor } == true
+            if (grantsColor) auraContainer.chosenColor() else null
+        }.toSet()
+
         // Get linked exile (cards exiled by this permanent, e.g., Suspension Field)
         val linkedExile = container.get<LinkedExileComponent>()?.exiledIds ?: emptyList()
 
@@ -1146,6 +1162,7 @@ class ClientStateTransformer(
             cardTypes = displayCardTypes.map { it.name }.toSet(),
             subtypes = displaySubtypes.toSet(),
             colors = if (castFace != null) castFace.manaCost.colors else colors,
+            grantedColors = grantedColors,
             oracleText = castFace?.oracleText ?: cardComponent.oracleText,
             // A non-permanent cast face (Omen/Adventure/split half) has no power/toughness.
             power = if (castFace != null) null else power,

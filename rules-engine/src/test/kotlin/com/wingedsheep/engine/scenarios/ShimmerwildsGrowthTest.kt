@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
+import com.wingedsheep.engine.view.ClientStateTransformer
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.dsl.basicLand
@@ -232,5 +233,41 @@ class ShimmerwildsGrowthTest : FunSpec({
 
         val pool = driver.state.getEntity(activePlayer)!!.get<ManaPoolComponent>()!!
         pool.green shouldBe 2
+    }
+
+    test("Client view surfaces the chosen color on the enchanted land") {
+        // The chosen color lives on the (hidden) aura, so the client projection lifts it
+        // onto the enchanted land's grantedColors so the UI can paint a pip showing the
+        // color the land has become.
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of("Forest" to 40),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val forest = driver.putPermanentOnBattlefield(activePlayer, "Forest")
+        val growth = driver.putCardInHand(activePlayer, "Shimmerwilds Growth")
+        driver.giveMana(activePlayer, Color.GREEN, 2)
+        driver.castSpell(activePlayer, growth, listOf(forest))
+        driver.bothPass()
+
+        val decision = driver.pendingDecision as ChooseColorDecision
+        driver.submitDecision(activePlayer, ColorChosenResponse(decision.id, Color.BLUE))
+
+        val view = ClientStateTransformer(cardRegistry = driver.cardRegistry)
+            .transform(driver.state, viewingPlayerId = activePlayer)
+
+        // The land carries the chosen color so the client can render a pip on it.
+        view.cards[forest]?.grantedColors shouldBe setOf(Color.BLUE)
+        // The aura made no choice "of its own" — its chosenColor is its display label, but
+        // it carries no grantedColors (nothing is attached to it).
+        val auraId = driver.state.getBattlefield().first { entityId ->
+            driver.state.getEntity(entityId)
+                ?.get<com.wingedsheep.engine.state.components.identity.CardComponent>()?.name == "Shimmerwilds Growth"
+        }
+        view.cards[auraId]?.grantedColors shouldBe emptySet()
     }
 })
