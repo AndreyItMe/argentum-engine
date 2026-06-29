@@ -91,7 +91,7 @@ up by Airbend, not Firebending).
 - [x] Air Nomad Legacy
 - [ ] Airbender Ascension
 - [ ] Airbender's Reversal
-- [ ] Airbending Lesson
+- [x] Airbending Lesson
 - [x] Airship Engine Room
 - [x] Allies at Last
 - [ ] Appa, Loyal Sky Bison
