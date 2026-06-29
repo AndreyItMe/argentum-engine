@@ -190,14 +190,35 @@ data class AdminUserStat(
     val lastPlayed: String?,
 )
 
-/** A recorded tournament for the admin list. */
+/** A recorded tournament for the admin list. The [id] opens the shared tournament detail view. */
 data class TournamentSummary(
+    val id: Long,
     val endedAt: String,
     val name: String?,
     val format: String?,
     val gameMode: String?,
     val playerCount: Int,
     val winnerName: String?,
+)
+
+/** One seat in a recorded game, for the admin global game list. */
+data class AdminGamePlayer(
+    val name: String,
+    val userId: UUID?,
+    val isAi: Boolean,
+    val won: Boolean,
+)
+
+/** A recorded game for the admin global game list, newest first, with every seat. */
+data class AdminRecentGame(
+    val gameId: String,
+    val endedAt: String,
+    val gameMode: String?,
+    val format: String?,
+    val players: List<AdminGamePlayer>,
+    val winnerName: String?,
+    val hasReplay: Boolean,
+    val tournamentName: String?,
 )
 
 /**
@@ -915,13 +936,14 @@ class StatsQueryService(
     /** Recorded tournaments, newest first. */
     fun recentTournaments(limit: Int): List<TournamentSummary> = jdbc.query(
         """
-        SELECT ended_at, name, format, game_mode, player_count, winner_name
+        SELECT id, ended_at, name, format, game_mode, player_count, winner_name
         FROM tournaments
         ORDER BY ended_at DESC
         LIMIT ?
         """.trimIndent(),
         { rs, _ ->
             TournamentSummary(
+                id = rs.getLong("id"),
                 endedAt = rs.getTimestamp("ended_at").toInstant().toString(),
                 name = rs.getString("name"),
                 format = rs.getString("format"),
@@ -932,4 +954,112 @@ class StatsQueryService(
         },
         limit,
     )
+
+    /** Total number of recorded games across every player — drives the admin global game pager. */
+    fun recentGamesGlobalCount(): Long = jdbc.queryForObject(
+        "SELECT count(*) FROM match_results",
+        Long::class.java,
+    ) ?: 0
+
+    /**
+     * The most-recent games across every player, newest first, one page at a time. Unlike the
+     * per-user [recentGames] this is neutral — it lists every seat (winner flagged) rather than a
+     * single viewer's perspective — and tags each game with its tournament name when it came from one.
+     */
+    fun recentGamesGlobal(limit: Int, offset: Int): List<AdminRecentGame> {
+        data class Row(
+            val mid: Long,
+            val gameId: String,
+            val endedAt: String,
+            val gameMode: String?,
+            val format: String?,
+            val lobbyId: String?,
+            val hasReplay: Boolean,
+        )
+        val rows = jdbc.query(
+            """
+            SELECT r.id AS mid, r.game_id AS game_id, r.ended_at AS ended_at, r.game_mode AS game_mode,
+                   r.format AS format, r.lobby_id AS lobby_id, (gr.id IS NOT NULL) AS has_replay
+            FROM match_results r
+            LEFT JOIN game_replays gr ON gr.game_id = r.game_id
+            ORDER BY r.ended_at DESC
+            LIMIT ? OFFSET ?
+            """.trimIndent(),
+            { rs, _ ->
+                Row(
+                    mid = rs.getLong("mid"),
+                    gameId = rs.getString("game_id"),
+                    endedAt = rs.getTimestamp("ended_at").toInstant().toString(),
+                    gameMode = rs.getString("game_mode"),
+                    format = rs.getString("format"),
+                    lobbyId = rs.getString("lobby_id"),
+                    hasReplay = rs.getBoolean("has_replay"),
+                )
+            },
+            limit, offset,
+        )
+        if (rows.isEmpty()) return emptyList()
+        val playersByMid = playersForMatches(rows.map { it.mid })
+        val tournamentNames = tournamentNamesByLobby(rows.mapNotNull { it.lobbyId })
+        return rows.map { row ->
+            val players = playersByMid[row.mid].orEmpty()
+            AdminRecentGame(
+                gameId = row.gameId,
+                endedAt = row.endedAt,
+                gameMode = row.gameMode,
+                format = row.format,
+                players = players,
+                winnerName = players.firstOrNull { it.won }?.name,
+                hasReplay = row.hasReplay,
+                tournamentName = row.lobbyId?.let { tournamentNames[it] },
+            )
+        }
+    }
+
+    /** Every seat for a set of match ids, keyed by match id (seat order preserved). */
+    private fun playersForMatches(matchIds: List<Long>): Map<Long, List<AdminGamePlayer>> {
+        if (matchIds.isEmpty()) return emptyMap()
+        val placeholders = matchIds.joinToString(",") { "?" }
+        val out = LinkedHashMap<Long, MutableList<AdminGamePlayer>>()
+        jdbc.query(
+            """
+            SELECT p.match_id AS mid, COALESCE(u.display_name, p.player_name) AS name,
+                   p.user_id AS uid, p.is_ai AS is_ai, p.won AS won
+            FROM match_participants p
+            LEFT JOIN users u ON u.id = p.user_id
+            WHERE p.match_id IN ($placeholders)
+            ORDER BY p.id
+            """.trimIndent(),
+            { rs ->
+                out.getOrPut(rs.getLong("mid")) { mutableListOf() }.add(
+                    AdminGamePlayer(
+                        name = rs.getString("name"),
+                        userId = rs.getObject("uid", UUID::class.java),
+                        isAi = rs.getBoolean("is_ai"),
+                        won = rs.getBoolean("won"),
+                    ),
+                )
+            },
+            *matchIds.toTypedArray(),
+        )
+        return out
+    }
+
+    /** Tournament name for each lobby id that has one, keyed by lobby id. */
+    private fun tournamentNamesByLobby(lobbyIds: List<String>): Map<String, String> {
+        val distinct = lobbyIds.distinct()
+        if (distinct.isEmpty()) return emptyMap()
+        val placeholders = distinct.joinToString(",") { "?" }
+        val out = HashMap<String, String>()
+        jdbc.query(
+            "SELECT lobby_id, name FROM tournaments WHERE lobby_id IN ($placeholders)",
+            { rs ->
+                val lobby = rs.getString("lobby_id")
+                val name = rs.getString("name")
+                if (lobby != null && name != null) out[lobby] = name
+            },
+            *distinct.toTypedArray(),
+        )
+        return out
+    }
 }

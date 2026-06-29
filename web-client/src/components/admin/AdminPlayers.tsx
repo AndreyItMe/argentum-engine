@@ -17,6 +17,7 @@ import {
   setUserAdmin,
 } from '@/api/adminUsers'
 import type { AdminAuth } from '@/api/adminAuth'
+import { TournamentDetailModal } from '@/components/profile/TournamentDetailModal'
 import { colorForIdentity, colorLabel, mergeModeBuckets } from './statFormat'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle } from './adminUi'
 import { AdminDeckModal, AdminSavedDecks } from './AdminPlayerDecks'
@@ -116,6 +117,7 @@ function PlayerDetail({
   const [games, setGames] = useState<AdminGamesPage>({ entries: [], total: 0 })
   const [gamesPage, setGamesPage] = useState(0)
   const [deckModal, setDeckModal] = useState<{ gameId: string; opponent: string } | null>(null)
+  const [openTournament, setOpenTournament] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -238,8 +240,8 @@ function PlayerDetail({
           {detail.tournaments.length > 0 && (
             <Panel title="Tournaments">
               <Table head={['Date', 'Tournament', 'Place']}>
-                {detail.tournaments.map((t, i) => (
-                  <tr key={`${t.endedAt}-${i}`}>
+                {detail.tournaments.map((t) => (
+                  <tr key={t.id} style={styles.row} onClick={() => setOpenTournament(t.id)}>
                     <td style={cellStyle.td}>{t.endedAt.slice(0, 10)}</td>
                     <td style={cellStyle.td}>{t.name ?? '—'}</td>
                     <td style={cellStyle.tdNum}>
@@ -334,6 +336,10 @@ function PlayerDetail({
           opponentLabel={deckModal.opponent}
           onClose={() => setDeckModal(null)}
         />
+      )}
+
+      {openTournament != null && (
+        <TournamentDetailModal tournamentId={openTournament} onClose={() => setOpenTournament(null)} />
       )}
     </AdminScreen>
   )

@@ -90,6 +90,24 @@ class AdminStatsController(
         ResponseEntity.ok(statsQuery.recentTournaments(limit.coerceIn(1, 200)))
     }
 
+    /**
+     * A page of the most-recent games across every player, newest first, with the total in
+     * `X-Total-Count` so the admin UI can page through every recorded game. Neutral (lists every
+     * seat, winner flagged) — unlike the per-user history which is a single viewer's perspective.
+     */
+    @GetMapping("/recent-games")
+    fun recentGames(
+        @RequestHeader("X-Admin-Password", required = false) password: String?,
+        @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
+        @RequestParam(defaultValue = "25") limit: Int,
+        @RequestParam(defaultValue = "0") offset: Int,
+    ): ResponseEntity<Any> = adminAuth.guard(password, authorization) {
+        val entries = statsQuery.recentGamesGlobal(limit.coerceIn(1, 100), offset.coerceAtLeast(0))
+        ResponseEntity.ok()
+            .header("X-Total-Count", statsQuery.recentGamesGlobalCount().toString())
+            .body(entries)
+    }
+
     @GetMapping("/geo")
     fun geo(
         @RequestHeader("X-Admin-Password", required = false) password: String?,

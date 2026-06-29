@@ -13,6 +13,7 @@ import type React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ReplayViewer, type GameSummary } from './ReplayViewer'
 import { AdminDashboard } from './AdminDashboard'
+import { AdminActivity } from './AdminActivity'
 import { AdminPlayers } from './AdminPlayers'
 import { AdminHub, type AdminArea } from './AdminHub'
 import { adminTheme } from './adminUi'
@@ -142,6 +143,9 @@ export function AdminPage() {
 
   if (view === 'stats') {
     return <AdminDashboard auth={auth} onBack={() => setView('hub')} />
+  }
+  if (view === 'activity') {
+    return <AdminActivity auth={auth} onBack={() => setView('hub')} />
   }
   if (view === 'players') {
     return <AdminPlayers auth={auth} onBack={() => setView('hub')} />
