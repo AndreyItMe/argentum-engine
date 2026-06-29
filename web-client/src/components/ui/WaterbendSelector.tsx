@@ -127,13 +127,14 @@ export function WaterbendSelector() {
   return (
     <div style={styles.bar}>
       <span style={styles.label}>
-        {/* The waterbend amount {N} (you may tap up to this many permanents, each paying {1}),
-            rendered as a proper mana pip rather than literal "{N}" text. */}
-        Waterbend
-        <span style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px' }}>
-          <ManaSymbol symbol={String(maxTaps)} size={16} />
-        </span>
+        {/* Card name first, then the waterbend prompt in parentheses with the amount {N} rendered
+            as a proper mana pip (not literal "{N}" text): e.g. "Ruinous Waterbending (waterbend {4})". */}
         <strong>{cardName}</strong>
+        <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }}>
+          <span style={{ marginRight: 3 }}>(waterbend</span>
+          <ManaSymbol symbol={String(maxTaps)} size={16} />
+          <span>)</span>
+        </span>
       </span>
       <span style={styles.divider} />
       <span style={styles.costLabel}>Cost:</span>
