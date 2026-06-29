@@ -306,6 +306,30 @@ object SetArchetypes {
                     "Ramp into expensive instants and sorceries that cascade for free value, snowballing card advantage with Increment counters. A go-big spells-matter ramp deck."),
             )
         ),
+        "ECL" to SetSynergies(
+            setCode = "ECL",
+            setName = "Lorwyn Eclipsed",
+            archetypes = listOf(
+                Archetype("Kithkin", listOf(Color.GREEN, Color.WHITE),
+                    "Flood the board with 1/1 Kithkin tokens, then use Convoke to cast expensive spells for free. Mass pump effects turn the token horde lethal.",
+                    creatureTypes = listOf("Kithkin")),
+                Archetype("Merfolk", listOf(Color.WHITE, Color.BLUE),
+                    "Merfolk untap each other after combat and chain together card draw. Control the pace of the game with bounce and tempo plays while building an unstoppable Merrow tide.",
+                    creatureTypes = listOf("Merfolk")),
+                Archetype("Faeries", listOf(Color.BLUE, Color.BLACK),
+                    "Operate entirely at flash speed — drop Faeries at end of turn, steal blockers, and lock out opponents with aerial superiority. A control deck that wins with evasion.",
+                    creatureTypes = listOf("Faerie")),
+                Archetype("Boggarts", listOf(Color.BLACK, Color.RED),
+                    "Relentless Boggart aggro backed by Wither. Your attackers deal damage as -1/-1 counters, permanently shrinking blockers. Blight provides flexible sacrifice payoffs.",
+                    creatureTypes = listOf("Goblin")),
+                Archetype("Elementals", listOf(Color.BLUE, Color.RED),
+                    "Flamekin Elementals reward casting instants and sorceries. Evoke provides flexible tempo plays — pay the cheap cost for a burst of value, or go full price for a permanent threat.",
+                    creatureTypes = listOf("Elemental")),
+                Archetype("Changelings", listOf(Color.BLUE, Color.GREEN),
+                    "Changelings count as every creature type simultaneously, triggering Kithkin, Merfolk, Elf, and Faerie payoffs all at once. A tribal swiss-army-knife deck with enormous flexibility.",
+                    creatureTypes = listOf("Shapeshifter")),
+            )
+        ),
     )
 
     /** Get archetypes for a specific set code, or null if not found. */

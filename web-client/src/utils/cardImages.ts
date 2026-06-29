@@ -78,3 +78,30 @@ export function getScryfallArtCropUrl(cardName: string): string {
   const scryfallName = cardName.endsWith(' Token') ? cardName.slice(0, -6) : cardName
   return `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(scryfallName)}&format=image&version=art_crop`
 }
+
+/**
+ * Derive the landscape *art crop* directly from a card's stored image URL.
+ *
+ * Our card metadata already carries a direct `cards.scryfall.io` CDN URL in `imageUri`
+ * (almost always the `normal` size). Scryfall keys every size of an image under the same
+ * path with only the size segment differing (`small` | `normal` | `large` | `png` |
+ * `border_crop` | `art_crop`), so swapping that segment yields the crop on the same CDN
+ * host — no `api.scryfall.com` round-trip, no redirect, and no API rate limiting (which
+ * only applies to the API host, not the image CDN).
+ *
+ * Prefer this over {@link getScryfallArtCropUrl} whenever a card's `imageUri` is on hand;
+ * fall back to the by-name API lookup only when it isn't (returns null here).
+ *
+ * @param imageUri A card's `imageUri` (e.g. `https://cards.scryfall.io/normal/front/a/b/<id>.jpg`)
+ * @returns The CDN `art_crop` URL, or null when `imageUri` isn't a recognised Scryfall CDN image URL
+ */
+export function getCdnArtCropUrl(imageUri: string | null | undefined): string | null {
+  if (!imageUri) return null
+  const match = imageUri.match(
+    /^(https:\/\/cards\.scryfall\.io\/)(small|normal|large|png|border_crop)(\/.*?)(\.\w+)(\?.*)?$/
+  )
+  if (!match) return null
+  const [, host, , path, , query = ''] = match
+  // art_crop is always served as .jpg, even when the source size (e.g. png) isn't.
+  return `${host}art_crop${path}.jpg${query}`
+}

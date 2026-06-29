@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { SealedCardInfo } from '@/types'
 import { ManaSymbol } from '../ui/ManaSymbols'
-import { getScryfallArtCropUrl } from '@/utils/cardImages'
+import { getCdnArtCropUrl, getScryfallArtCropUrl } from '@/utils/cardImages'
 
 /**
  * Archetype definition for a set's draft strategy.
@@ -371,36 +371,42 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
         name: 'Kithkin',
         colors: ['G', 'W'],
         creatureTypes: ['Kithkin'],
+        keyCard: "Brigid, Clachan's Heart",
         description: 'Flood the board with 1/1 Kithkin tokens, then use Convoke to cast expensive spells for free. Mass pump effects turn the token horde lethal.',
       },
       {
         name: 'Merfolk',
         colors: ['W', 'U'],
         creatureTypes: ['Merfolk'],
+        keyCard: 'Sygg, Wanderwine Wisdom',
         description: 'Merfolk untap each other after combat and chain together card draw. Control the pace of the game with bounce and tempo plays while building an unstoppable Merrow tide.',
       },
       {
         name: 'Faeries',
         colors: ['U', 'B'],
         creatureTypes: ['Faerie'],
+        keyCard: 'Maralen, Fae Ascendant',
         description: 'Operate entirely at flash speed — drop Faeries at end of turn, steal blockers, and lock out opponents with aerial superiority. A control deck that wins with evasion.',
       },
       {
         name: 'Boggarts',
         colors: ['B', 'R'],
         creatureTypes: ['Goblin'],
+        keyCard: 'Grub, Storied Matriarch',
         description: 'Relentless Boggart aggro backed by Wither. Your attackers deal damage as -1/-1 counters, permanently shrinking blockers. Blight provides flexible sacrifice payoffs.',
       },
       {
         name: 'Elementals',
         colors: ['U', 'R'],
         creatureTypes: ['Elemental'],
+        keyCard: 'Ashling, Rekindled',
         description: 'Flamekin Elementals reward casting instants and sorceries. Evoke provides flexible tempo plays — pay the cheap cost for a burst of value, or go full price for a permanent threat.',
       },
       {
         name: 'Changelings',
         colors: ['U', 'G'],
         creatureTypes: ['Shapeshifter'],
+        keyCard: 'Omni-Changeling',
         description: 'Changelings count as every creature type simultaneously, triggering Kithkin, Merfolk, Elf, and Faerie payoffs all at once. A tribal swiss-army-knife deck with enormous flexibility.',
       },
     ],
@@ -1168,7 +1174,14 @@ function ArchetypeCard({
   const [artFailed, setArtFailed] = useState(false)
   const [hovered, setHovered] = useState(false)
 
-  const artUrl = archetype.keyCard ? getScryfallArtCropUrl(archetype.keyCard) : null
+  // Prefer a direct CDN art crop derived from the key card's own image URL when that card
+  // is in the supplied pool — it skips the rate-limited api.scryfall.com lookup + redirect.
+  // Otherwise fall back to the by-name API lookup (the key card often isn't in the pool).
+  const artUrl = useMemo(() => {
+    if (!archetype.keyCard) return null
+    const poolMatch = cardPool?.find((c) => c.name === archetype.keyCard)
+    return getCdnArtCropUrl(poolMatch?.imageUri) ?? getScryfallArtCropUrl(archetype.keyCard)
+  }, [archetype.keyCard, cardPool])
   const showArt = artUrl != null && !artFailed
 
   const rarities = useMemo(() => {

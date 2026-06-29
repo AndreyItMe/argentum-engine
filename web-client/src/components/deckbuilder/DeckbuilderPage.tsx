@@ -25,7 +25,7 @@ import { ManaCost, ManaSymbol } from '@/components/ui/ManaSymbols'
 import { HoverCardPreview } from '@/components/ui/HoverCardPreview'
 import { useDfcHoverFlip } from '@/components/ui/useDfcHoverFlip'
 import { SetIcon } from '@/components/ui/SetIcon'
-import { getCardImageUrl, getScryfallArtCropUrl, splitImageRotateDeg } from '@/utils/cardImages'
+import { getCardImageUrl, getCdnArtCropUrl, getScryfallArtCropUrl, splitImageRotateDeg } from '@/utils/cardImages'
 import { rarityColor } from '@/components/draft/RarityBadge'
 import {
   parseQuery,
@@ -2564,9 +2564,14 @@ function DeckCard({
   onRename: (d: UnifiedDeck) => void
   onDelete: (d: UnifiedDeck) => void
 }) {
-  // Hero art = the deck's rarest card as a wide Scryfall art crop. Falls back to a
-  // colour-identity gradient when the deck has no catalogued non-land card yet.
-  const artUrl = useMemo(() => (hero ? getScryfallArtCropUrl(hero.name) : null), [hero])
+  // Hero art = the deck's rarest card as a wide Scryfall art crop. Derive it straight
+  // from the card's CDN image URL (no rate-limited api.scryfall.com lookup) when we have
+  // one, falling back to the by-name API lookup otherwise. Falls back to a colour-identity
+  // gradient when the deck has no catalogued non-land card yet.
+  const artUrl = useMemo(
+    () => (hero ? (getCdnArtCropUrl(hero.imageUri) ?? getScryfallArtCropUrl(hero.name)) : null),
+    [hero]
+  )
   const gradient = useMemo(() => deckBannerGradient(colors), [colors])
   const nameColor = deckNameColor(hero?.rarity)
   // One chip only: the format the deck was saved as, else the first format it's legal in.
