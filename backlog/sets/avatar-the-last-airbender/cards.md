@@ -217,7 +217,7 @@ The set is built around four **"bending" keyword families** plus a returning **E
 - [x] Lightning Strike
 - [ ] Lo and Li, Twin Tutors
 - [x] Long Feng, Grand Secretariat
-- [ ] Lost Days
+- [x] Lost Days
 - [ ] Mai, Jaded Edge
 - [x] Mai, Scornful Striker
 - [x] Master Pakku

@@ -7988,6 +7988,54 @@
     ]
 }
 
+// Lost Days
+{
+    "name": "Lost Days",
+    "manaCost": "{4}{U}",
+    "typeLine": "Instant — Lesson",
+    "oracleText": "The owner of target creature or enchantment puts it into their library second from the top or on the bottom. You create a Clue token. (It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "PutOnLibraryPositionOfChoice",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature or enchantment"
+                    },
+                    "positions": [
+                        "SecondFromTop",
+                        "Bottom"
+                    ]
+                },
+                {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Clue"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature|enchantment"
+                },
+                "id": "target creature or enchantment"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "62",
+        "artist": "Matteo Bassini",
+        "flavorText": "At every step, his friend was just out of reach.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/b/db8e88e3-0931-403f-90e7-3c22c0b61dac.jpg?1764120357"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Mai, Scornful Striker
 {
     "name": "Mai, Scornful Striker",
