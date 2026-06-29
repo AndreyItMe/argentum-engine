@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.effects.MayEffect
 import com.wingedsheep.sdk.scripting.values.ContextPropertyKey
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
@@ -17,9 +18,11 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * Implementation: `Triggers.PlusOneCountersPlacedOnYourCreature` (a `CountersPlacedEvent`
  * for `Counters.PLUS_ONE_PLUS_ONE` filtered to creatures you control) gives us the
  * trigger and exposes the placed count via `TRIGGER_COUNTERS_PLACED_AMOUNT`. The "may"
- * is `optional = true`, and the "do this only once each turn" gate uses the existing
- * `oncePerTurn = true` flag on `TriggeredAbility` (the same mechanism as Scavenger's
- * Talent).
+ * is a `MayEffect` wrapping the draw — a bare `optional = true` flag on a no-target
+ * triggered ability is a silent no-op (the engine only honours it on targeted abilities
+ * or ones with an `elseEffect`), so the player would never have been prompted. The
+ * "do this only once each turn" gate uses the existing `oncePerTurn = true` flag on
+ * `TriggeredAbility` (the same mechanism as Scavenger's Talent).
  */
 val Terrasymbiosis = card("Terrasymbiosis") {
     manaCost = "{2}{G}"
@@ -30,10 +33,11 @@ val Terrasymbiosis = card("Terrasymbiosis") {
 
     triggeredAbility {
         trigger = Triggers.PlusOneCountersPlacedOnYourCreature
-        optional = true
         oncePerTurn = true
-        effect = Effects.DrawCards(
-            DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_COUNTERS_PLACED_AMOUNT)
+        effect = MayEffect(
+            Effects.DrawCards(
+                DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_COUNTERS_PLACED_AMOUNT)
+            )
         )
     }
 

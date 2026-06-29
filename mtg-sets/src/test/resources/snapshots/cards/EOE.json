@@ -17182,13 +17182,16 @@
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "DrawCards",
-                    "count": {
-                        "type": "ContextProperty",
-                        "key": "TRIGGER_COUNTERS_PLACED_AMOUNT"
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "ContextProperty",
+                            "key": "TRIGGER_COUNTERS_PLACED_AMOUNT"
+                        }
                     }
                 },
-                "optional": true,
                 "oncePerTurn": true
             }
         ]
