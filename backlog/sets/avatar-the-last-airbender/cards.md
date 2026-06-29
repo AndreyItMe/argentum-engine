@@ -2,7 +2,7 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 242 / 286
+**Implemented:** 243 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
 > **Status (June 2026):** 240/286 implemented. The **Airbend** keyword (permanent form) is now built —
@@ -280,7 +280,7 @@ up by Airbend, not Firebending).
 - [x] Raven Eagle
 - [x] Razor Rings
 - [x] Realm of Koh
-- [ ] Rebellious Captives
+- [x] Rebellious Captives
 - [x] Redirect Lightning
 - [x] Rockalanche
 - [x] Rocky Rebuke
