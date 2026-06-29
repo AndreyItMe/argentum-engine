@@ -803,11 +803,24 @@ object ZoneTransitionService {
             updated
         }
 
+        // "Lands you control enter untapped" (The Wandering Minstrel): an EntersUntapped effect on
+        // another battlefield permanent overrides a tapped entry from an effect that put this
+        // permanent onto the battlefield tapped (ramp/fetch). Checked after the entity is fully
+        // placed so its controller/type are visible to the filter. (tappedAndAttacking — combat
+        // tokens — is intentionally not overridden; its filter never matches a land anyway.)
+        val withTapResolved = if (options.tapped && !options.tappedAndAttacking &&
+            EnterUntappedReplacements.entersUntapped(withEntity, entityId, controllerId)
+        ) {
+            withEntity.updateEntity(entityId) { it.without<TappedComponent>() }
+        } else {
+            withEntity
+        }
+
         // Track "a permanent entered the battlefield face down under your control this turn"
         // (Oblivious Bookworm). Per-player count, cleared at the turn boundary by
         // CleanupPhaseManager.
-        if (!options.faceDown) return withEntity
-        return withEntity.updateEntity(controllerId) { playerContainer ->
+        if (!options.faceDown) return withTapResolved
+        return withTapResolved.updateEntity(controllerId) { playerContainer ->
             val existing = playerContainer.get<PermanentEnteredFaceDownThisTurnComponent>()
                 ?: PermanentEnteredFaceDownThisTurnComponent()
             playerContainer.with(PermanentEnteredFaceDownThisTurnComponent(existing.count + 1))

@@ -317,6 +317,37 @@ data class EntersTapped(
 }
 
 /**
+ * "Permanents matching [appliesTo] enter the battlefield untapped" — the inverse of
+ * [EntersTapped]. Models a *static* effect carried by a permanent that overrides a tapped
+ * entry of OTHER permanents it cares about (e.g. The Wandering Minstrel's "Lands you control
+ * enter untapped"). Unlike [EntersTapped], which is a self-replacement consumed once as the
+ * source itself enters, this is a runtime replacement consulted from the battlefield while the
+ * source is in play, so the [appliesTo] filter should describe the *affected* permanents (e.g.
+ * `GameObjectFilter.Land.youControl()`).
+ *
+ * Per CR 614 (replacement-effect ordering), if a permanent would enter tapped via another
+ * replacement, the affected permanent's controller chooses which to apply first — with this
+ * effect available they'd choose untapped — and a permanent simply put onto the battlefield
+ * tapped (no replacement) enters untapped instead. Both outcomes collapse to "enters untapped",
+ * which is what the engine applies.
+ */
+@SerialName("EntersUntapped")
+@Serializable
+data class EntersUntapped(
+    override val appliesTo: EventPattern = EventPattern.ZoneChangeEvent(
+        filter = GameObjectFilter.Any,
+        to = Zone.BATTLEFIELD
+    )
+) : ReplacementEffect {
+    override val description: String = "If ${appliesTo.description}, it enters untapped"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
+}
+
+/**
  * Permanent/creature enters with counters.
  * Example: Master Biomancer, Metallic Mimic
  *

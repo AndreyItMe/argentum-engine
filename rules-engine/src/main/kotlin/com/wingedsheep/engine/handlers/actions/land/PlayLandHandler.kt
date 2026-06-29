@@ -155,13 +155,20 @@ class PlayLandHandler(
         newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
             .place(newState, action.playerId, action.cardId)
 
+        // "Lands you control enter untapped" (The Wandering Minstrel) and similar EntersUntapped
+        // replacement effects from other battlefield permanents override every tapped-entry path
+        // below (permission-forced, shock-land "pay or tapped", conditional tapped duals). The
+        // land is on the battlefield with its controller set, so the filter resolves correctly.
+        val landEntersUntapped = com.wingedsheep.engine.handlers.effects.EnterUntappedReplacements
+            .entersUntapped(newState, action.cardId, action.playerId)
+
         // A may-play permission with landEntersTapped=true forces the played land
         // tapped regardless of the card's own ETB script — Lightstall Inquisitor's
         // "each land played this way enters tapped" clause.
         val permissionForcesTapped = fromZone == Zone.EXILE && permissionForcesLandTapped(
             state, action.playerId, action.cardId
         )
-        if (permissionForcesTapped) {
+        if (permissionForcesTapped && !landEntersUntapped) {
             newState = newState.updateEntity(action.cardId) { c -> c.with(TappedComponent) }
         }
         // "When you play a card this way, …" rider (Fires of Mount Doom). If this land was
@@ -255,8 +262,11 @@ class PlayLandHandler(
             }
         }
 
-        // Check for "enters the battlefield tapped" replacement effect
-        if (cardDef != null) {
+        // Check for "enters the battlefield tapped" replacement effect. Skipped entirely when an
+        // EntersUntapped effect (The Wandering Minstrel) applies — the land falls through to the
+        // normal untapped finish, so a shock land's "pay life or enter tapped" prompt is elided
+        // (paying is moot when the land enters untapped regardless).
+        if (cardDef != null && !landEntersUntapped) {
             val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
             if (entersTapped != null) {
                 // Permission already forced tapped — skip the shock-land "pay life" prompt

@@ -5498,6 +5498,20 @@ replacementEffect {
   "three or more lands total". The parallel "fast land" cycle (Blooming Marsh — "two or fewer other lands")
   uses an `LTE`-direction `Compare(AggregateBattlefield(You, Land), LTE, Fixed(3))`. `payLifeCost` renders
   the "you may pay N life; if you don't, it enters tapped" variant.
+- `EntersUntapped(appliesTo = ZoneChangeEvent(filter, to = Zone.BATTLEFIELD))` — the inverse of
+  `EntersTapped`: "[filter] enter the battlefield untapped" (The Wandering Minstrel — "Lands you
+  control enter untapped", `filter = GameObjectFilter.Land.youControl()`). Unlike `EntersTapped`,
+  which is a self-replacement consumed once as the source enters, this is a *runtime* replacement
+  stamped into the source's `ReplacementEffectSourceComponent` (`StaticAbilityHandler.isRuntimeReplacementEffect`)
+  and consulted from the battlefield against OTHER permanents as they enter — so `appliesTo.filter`
+  describes the *affected* permanents. The entry-tap paths (`PlayLandHandler`, `ZoneTransitionService`)
+  ask `EnterUntappedReplacements.entersUntapped(...)` before marking a permanent tapped and skip the
+  tap when it matches. Per CR 614 ordering this collapses "would enter tapped via another replacement"
+  (controller chooses untapped) and "simply put onto the battlefield tapped" (no replacement → untapped)
+  to the same outcome; a shock land's "pay N life or enter tapped" prompt is elided (moot when it enters
+  untapped regardless). Edge not covered: a same-event simultaneous mass-entry where the source itself is
+  among the entering permanents (the source isn't yet consulted), and a land tapped via a generic
+  `OnEnterRunEffect` self-tap (e.g. Game Trail) is not overridden.
 - `RedirectZoneChange(newDestination, appliesTo, linkToSource = false)` — redirect a zone change to a
   different destination (Rest in Peace / Leyline of the Void: graveyard → exile). `appliesTo` is an
   `EventPattern.ZoneChangeEvent(filter, from?, to?)`; the `filter`'s `controllerPredicate` scopes it
