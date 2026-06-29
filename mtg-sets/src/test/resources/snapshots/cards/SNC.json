@@ -75,3 +75,118 @@
         "BLACK"
     ]
 }
+
+// Inspiring Overseer
+{
+    "name": "Inspiring Overseer",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Angel Cleric",
+    "oracleText": "Flying\nWhen this creature enters, you gain 1 life and draw a card.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "18",
+        "artist": "Irina Nordsol",
+        "flavorText": "\"This city could certainly use a bit more divine intervention.\"\n—Inspector Jillard",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/5/35d9da1d-8678-4252-b0f8-9960795642f0.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Involuntary Employment
+{
+    "name": "Involuntary Employment",
+    "manaCost": "{3}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Gain control of target creature until end of turn. Untap that creature. It gains haste until end of turn. Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GainControl",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "duration": "EndOfTurn"
+                },
+                {
+                    "type": "TapUntap",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "tap": false
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "HASTE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "110",
+        "rarity": "UNCOMMON",
+        "artist": "Milivoj Ćeran",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/af7626e2-0041-4ac5-97b3-2db8dcb094d4.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}

@@ -1,0 +1,116 @@
+// Goblin Oriflamme
+{
+    "name": "Goblin Oriflamme",
+    "manaCost": "{1}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "Attacking creatures you control get +1/+0.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 0,
+                "filter": {
+                    "baseFilter": "creature attacking ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "130",
+        "rarity": "UNCOMMON",
+        "artist": "David Palumbo",
+        "flavorText": "\"It was difficult to tell whether the piles of gore within their warrens were mere trash heaps, sacred altars, or warnings.\"\n—Sarpadian Empires, vol. IV",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/3/33ec7cbe-16a0-4dbb-91fe-7e445a5268c8.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Good-Fortune Unicorn
+{
+    "name": "Good-Fortune Unicorn",
+    "manaCost": "{1}{G}{W}",
+    "typeLine": "Creature — Unicorn",
+    "oracleText": "Whenever another creature you control enters, put a +1/+1 counter on that creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "201",
+        "rarity": "UNCOMMON",
+        "artist": "Kee Lo",
+        "flavorText": "Catching even a glimpse of one is the start of eight years of good luck.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/9/49d68905-e13e-4751-b028-90c795c11cd5.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "GREEN"
+    ]
+}
+
+// Ravenous Giant
+{
+    "name": "Ravenous Giant",
+    "manaCost": "{2}{R}{R}",
+    "typeLine": "Creature — Giant",
+    "oracleText": "At the beginning of your upkeep, this creature deals 1 damage to you.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "You"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "143",
+        "rarity": "UNCOMMON",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "The might of an army with the restraint of a child.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/52337d8d-e0ee-4229-848d-9bbd989e15b7.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}

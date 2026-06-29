@@ -1,0 +1,41 @@
+// Unflinching Courage
+{
+    "name": "Unflinching Courage",
+    "manaCost": "{1}{G}{W}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nEnchanted creature gets +2/+2 and has trample and lifelink. (Damage dealt by the creature also causes its controller to gain that much life.)",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 2,
+                "toughnessBonus": 2
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "TRAMPLE"
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "LIFELINK"
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "111",
+        "rarity": "UNCOMMON",
+        "artist": "Mike Bierek",
+        "flavorText": "As Trostani's influence grew, vitality spread through the Conclave—much to the other guilds' dismay.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/5/35952c24-d728-4ec6-b0d1-b8183a18554a.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "GREEN"
+    ]
+}

@@ -1,3 +1,40 @@
+// Aggressive Mammoth
+{
+    "name": "Aggressive Mammoth",
+    "manaCost": "{3}{G}{G}{G}",
+    "typeLine": "Creature — Elephant",
+    "oracleText": "Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)\nOther creatures you control have trample.",
+    "creatureStats": {
+        "power": 8,
+        "toughness": 8
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "TRAMPLE",
+                "filter": {
+                    "baseFilter": "creature ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "302",
+        "rarity": "RARE",
+        "artist": "Filip Burburan",
+        "flavorText": "\"Approach from behind. That way, if it does charge, at least you aren't in front of it.\"\n—Vivien Reid",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/2/323f3c76-5e79-43e6-ae78-f555810edbc3.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Angel of the Dawn
 {
     "name": "Angel of the Dawn",
@@ -64,6 +101,342 @@
     ]
 }
 
+// Exclusion Mage
+{
+    "name": "Exclusion Mage",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "When this creature enters, return target creature an opponent controls to its owner's hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "55",
+        "rarity": "UNCOMMON",
+        "artist": "Chris Seaman",
+        "flavorText": "Successful battles start with knowing who's worth fighting.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/c/ccad82f5-5c5c-42ad-b66e-942f0d9631ca.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Gigantosaurus
+{
+    "name": "Gigantosaurus",
+    "manaCost": "{G}{G}{G}{G}{G}",
+    "typeLine": "Creature — Dinosaur",
+    "creatureStats": {
+        "power": 10,
+        "toughness": 10
+    },
+    "metadata": {
+        "collectorNumber": "185",
+        "rarity": "RARE",
+        "artist": "Jonathan Kuo",
+        "flavorText": "\"Each tooth is the length of a horse, and new ones grow in every sixteen days. Let's get a closer look!\"\n—Vivien Reid",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/1/c1db84d8-d426-4c0d-b44e-5be7b0f5f5bf.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Herald of Faith
+{
+    "name": "Herald of Faith",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flying\nWhenever this creature attacks, you gain 2 life.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "13",
+        "rarity": "UNCOMMON",
+        "artist": "Tommy Arnold",
+        "flavorText": "The clerics prayed for salvation. The soldiers prayed for victory. Both prayers were answered.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/5/452591ca-7273-4e47-820b-3ff89697a036.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Heroic Reinforcements
+{
+    "name": "Heroic Reinforcements",
+    "manaCost": "{2}{R}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create two 1/1 white Soldier creature tokens. Until end of turn, creatures you control get +1/+1 and gain haste. (They can attack and {T} this turn.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Soldier"
+                    ]
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                },
+                                "target": "Self"
+                            },
+                            {
+                                "type": "GrantKeyword",
+                                "keyword": "HASTE",
+                                "target": "Self"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "217",
+        "rarity": "UNCOMMON",
+        "artist": "Scott Murphy",
+        "flavorText": "Cries of anguish quickly spurred cries of action.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/3/33c35bf8-ae43-41aa-aae9-4d7513f9058c.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
+// Lathliss, Dragon Queen
+{
+    "name": "Lathliss, Dragon Queen",
+    "manaCost": "{4}{R}{R}",
+    "typeLine": "Legendary Creature — Dragon",
+    "oracleText": "Flying\nWhenever another nontoken Dragon you control enters, create a 5/5 red Dragon creature token with flying.\n{1}{R}: Dragons you control get +1/+0 until end of turn.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature Dragon nontoken ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 5,
+                    "toughness": 5,
+                    "colors": [
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Dragon"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}{R}"
+                    }
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Dragon ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 0
+                        },
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "149",
+        "rarity": "RARE",
+        "artist": "Alex Konstad",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/4/54a4c37d-5eeb-42c9-9688-c2ed0d5044cd.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Leonin Vanguard
+{
+    "name": "Leonin Vanguard",
+    "manaCost": "{W}",
+    "typeLine": "Creature — Cat Soldier",
+    "oracleText": "At the beginning of combat on your turn, if you control three or more creatures, this creature gets +1/+1 until end of turn and you gain 1 life.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Self"
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "22",
+        "rarity": "UNCOMMON",
+        "artist": "Aaron Miller",
+        "flavorText": "The best fighters are skilled in both harming and healing.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/2/724738ad-6a9b-4ef6-b637-558645cd8151.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Meteor Golem
 {
     "name": "Meteor Golem",
@@ -111,6 +484,96 @@
     "colorIdentityOverride": []
 }
 
+// Mystic Archaeologist
+{
+    "name": "Mystic Archaeologist",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "{3}{U}{U}: Draw two cards.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{U}{U}"
+                    }
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "63",
+        "rarity": "RARE",
+        "artist": "Eric Deschamps",
+        "flavorText": "The delight of discovery drives the pursuit of knowledge.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/b/1b19cad0-5754-4625-8303-c8310bc7cbd5.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Skeleton Archer
+{
+    "name": "Skeleton Archer",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Skeleton Archer",
+    "oracleText": "When this creature enters, it deals 1 damage to any target.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "AnyTarget",
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "118",
+        "artist": "Randy Vargas",
+        "flavorText": "\"When it comes to killing with precision, a soul is but a hindrance.\"\n—Isareth the Awakener",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/f/8fee5cc4-a686-4ce6-aa6b-1b8a88e6dea3.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Trusty Packbeast
 {
     "name": "Trusty Packbeast",
@@ -156,6 +619,117 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Vampire Neonate
+{
+    "name": "Vampire Neonate",
+    "manaCost": "{B}",
+    "typeLine": "Creature — Vampire",
+    "oracleText": "{2}, {T}: Each opponent loses 1 life and you gain 1 life.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "artist": "Daarken",
+        "flavorText": "One day, they may be paragons of deadly elegance. For the moment, they possess nothing but thirst.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/6/167822a5-2ab5-42f5-afa4-562fe2d7501b.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Viashino Pyromancer
+{
+    "name": "Viashino Pyromancer",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Lizard Wizard",
+    "oracleText": "When this creature enters, it deals 2 damage to target player or planeswalker.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetPlayerOrPlaneswalker",
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "166",
+        "artist": "Jesper Ejsing",
+        "flavorText": "\"I trained with the Ghitu, and I respect the fire as they do.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/8/a82fdb2f-b199-44ff-9615-90fc074cb8b0.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -313,5 +887,57 @@
     "startingLoyalty": 5,
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Volley Veteran
+{
+    "name": "Volley Veteran",
+    "manaCost": "{3}{R}",
+    "typeLine": "Creature — Goblin Warrior",
+    "oracleText": "When this creature enters, it deals damage to target creature an opponent controls equal to the number of Goblins you control.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature Goblin"
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "168",
+        "rarity": "UNCOMMON",
+        "artist": "Craig J Spearing",
+        "flavorText": "\"Fill the sky with stuff!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/6/164960fc-6e80-4a53-90d7-5a18c0a28083.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }

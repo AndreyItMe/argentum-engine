@@ -1,3 +1,85 @@
+// Archway Angel
+{
+    "name": "Archway Angel",
+    "manaCost": "{5}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flying\nWhen this creature enters, you gain 2 life for each Gate you control.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Multiply",
+                        "amount": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "land Gate"
+                        },
+                        "multiplier": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "rarity": "UNCOMMON",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "A ray of hope breaks through the shroud of rain.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/2/b209d219-b946-4226-a8b4-65a5f3837fac.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Biogenic Upgrade
+{
+    "name": "Biogenic Upgrade",
+    "manaCost": "{4}{G}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Distribute three +1/+1 counters among one, two, or three target creatures, then double the number of +1/+1 counters on each of those creatures.",
+    "script": {
+        "spellEffect": {
+            "type": "DividedDamage",
+            "totalDamage": 3
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "count": 3,
+                "minCount": 1,
+                "filter": {
+                    "baseFilter": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "123",
+        "rarity": "UNCOMMON",
+        "artist": "Tomasz Jedruszek",
+        "flavorText": "\"To survive exceptional times we must adapt by exceptional means.\"\n—Vannifar",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/d/0dd73fb2-453f-40b9-8beb-dfa99e6a706e.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Bladebrand
 {
     "name": "Bladebrand",
@@ -43,6 +125,61 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Gateway Sneak
+{
+    "name": "Gateway Sneak",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Vedalken Rogue",
+    "oracleText": "Whenever a Gate you control enters, this creature can't be blocked this turn.\nWhenever this creature deals combat damage to a player, draw a card.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "land Gate ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "GrantKeyword",
+                    "keyword": "CANT_BE_BLOCKED",
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "40",
+        "rarity": "UNCOMMON",
+        "artist": "Matt Stewart",
+        "flavorText": "\"I've been through every guildgate in this city, and no one sees me come or go.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/d/edc0229d-05e6-41b7-b7a9-2a8b2b258add.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

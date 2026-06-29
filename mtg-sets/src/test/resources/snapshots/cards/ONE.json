@@ -273,6 +273,55 @@
     ]
 }
 
+// Offer Immortality
+{
+    "name": "Offer Immortality",
+    "manaCost": "{1}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gains deathtouch and indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy it.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "DEATHTOUCH",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "INDESTRUCTIBLE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "102",
+        "artist": "A. M. Sartor",
+        "flavorText": "\"Give all you are to Phyrexia, and you will receive more than you could have ever desired.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/0/b0aac10a-6d47-4a6c-8a10-2b7c06f3ff32.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Razorverge Thicket
 {
     "name": "Razorverge Thicket",

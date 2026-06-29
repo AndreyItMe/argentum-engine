@@ -91,6 +91,57 @@
     ]
 }
 
+// Deadly Riposte
+{
+    "name": "Deadly Riposte",
+    "manaCost": "{1}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Deadly Riposte deals 3 damage to target tapped creature and you gain 2 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature tapped"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "5",
+        "artist": "Olena Richards",
+        "flavorText": "\"Automatons are fast, precise, and tireless, but they all share one weakness: predictability. Learn their patterns. Strike when they're vulnerable.\"\n—Horance, Urzan general",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/8/38eca0ae-d400-4afb-9a45-7100f4cd7149.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Flow of Knowledge
 {
     "name": "Flow of Knowledge",
@@ -151,6 +202,112 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Goblin Firebomb
+{
+    "name": "Goblin Firebomb",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "Flash\n{7}, {T}, Sacrifice this artifact: Destroy target permanent.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{7}"
+                            }
+                        },
+                        "CostTap",
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "permanent"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "235",
+        "artist": "Noah Thatcher",
+        "flavorText": "\"And if this works, Tawnos is gonna let us build the full-sized version!\"\n—Tergel, goblin explosioneer",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/b/0ba00d0f-0ea5-417c-a792-06b3b9d1c8f1.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
+// Obliterating Bolt
+{
+    "name": "Obliterating Bolt",
+    "manaCost": "{1}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Obliterating Bolt deals 4 damage to target creature or planeswalker. If that creature or planeswalker would die this turn, exile it instead.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "MarkExileOnDeath",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetCreatureOrPlaneswalker",
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "145",
+        "rarity": "UNCOMMON",
+        "artist": "Campbell White",
+        "flavorText": "In desperation, Pero called on his memory of a lightning storm that nearly killed his family. When he opened his eyes, only smoke and dust remained.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/f/7f886411-8216-4fb7-9172-a408c39043ee.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 

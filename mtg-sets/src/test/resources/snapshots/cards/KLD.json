@@ -39,6 +39,127 @@
     ]
 }
 
+// Brazen Scourge
+{
+    "name": "Brazen Scourge",
+    "manaCost": "{1}{R}{R}",
+    "typeLine": "Creature — Gremlin",
+    "oracleText": "Haste (This creature can attack and {T} as soon as it comes under your control.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "metadata": {
+        "collectorNumber": "107",
+        "rarity": "UNCOMMON",
+        "artist": "Kev Walker",
+        "flavorText": "Driven by an insatiable hunger, gremlins never cease feeding. They can destroy a lifetime of work in just a few moments.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/8/68c6fbdb-7b5c-4ad0-88f5-4779deae16ce.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Cloudblazer
+{
+    "name": "Cloudblazer",
+    "manaCost": "{3}{W}{U}",
+    "typeLine": "Creature — Human Scout",
+    "oracleText": "Flying\nWhen this creature enters, you gain 2 life and draw two cards.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "176",
+        "rarity": "UNCOMMON",
+        "artist": "Dan Murayama Scott",
+        "flavorText": "All the aether charts in the world can't compete with the trained eye of a talented scout.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/c/3cb12355-abd8-4bf3-aac1-f710ac162585.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
+// Cultivator's Caravan
+{
+    "name": "Cultivator's Caravan",
+    "manaCost": "{3}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "{T}: Add one mana of any color.\nCrew 3 (Tap any number of creatures you control with total power 3 or more: This Vehicle becomes an artifact creature until end of turn.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 3
+        }
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": "AddManaOfChoice",
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "203",
+        "rarity": "RARE",
+        "artist": "Mark Zug",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b46b3726-4bc8-4e3a-bc6d-402c81663712.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Filigree Familiar
 {
     "name": "Filigree Familiar",

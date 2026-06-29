@@ -1,0 +1,249 @@
+// Affectionate Indrik
+{
+    "name": "Affectionate Indrik",
+    "manaCost": "{5}{G}",
+    "typeLine": "Creature — Beast",
+    "oracleText": "When this creature enters, you may have it fight target creature you don't control. (Each deals damage equal to its power to the other.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Fight",
+                    "target1": "Self",
+                    "target2": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "121",
+        "rarity": "UNCOMMON",
+        "artist": "Steve Prescott",
+        "flavorText": "The problem isn't the indrik's enthusiasm, it's Ravnica's lack of guardrails.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b4c8ddc1-d95c-499f-b1d1-f608f8f07b02.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Burglar Rat
+{
+    "name": "Burglar Rat",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Rat",
+    "oracleText": "When this creature enters, each opponent discards a card.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "64",
+        "artist": "Tyler Walpole",
+        "flavorText": "\"Even rats hoard their treasures. Are your precious things so different?\"\n—Izoni",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/9/e9f7f218-fd2a-4233-8753-065ddc314f2d.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Circuitous Route
+{
+    "name": "Circuitous Route",
+    "manaCost": "{3}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Search your library for up to two basic land cards and/or Gate cards, put them onto the battlefield tapped, then shuffle.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Library",
+                        "filter": {
+                            "cardPredicates": [
+                                {
+                                    "type": "Or",
+                                    "predicates": [
+                                        "IsBasicLand",
+                                        {
+                                            "type": "And",
+                                            "predicates": [
+                                                "IsLand",
+                                                {
+                                                    "type": "HasSubtype",
+                                                    "subtype": "Gate"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "storeAs": "searchable"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "searchable",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "storeSelected": "found"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "found",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Battlefield",
+                        "placement": "Tapped"
+                    }
+                },
+                "ShuffleLibrary"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "125",
+        "rarity": "UNCOMMON",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "\"The shortest path between two points is not always the safest.\"\n—Tamina, district guide",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/a/5a970429-6369-4422-a343-00b30267f09d.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Healer's Hawk
+{
+    "name": "Healer's Hawk",
+    "manaCost": "{W}",
+    "typeLine": "Creature — Bird",
+    "oracleText": "Flying\nLifelink (Damage dealt by this creature also causes you to gain that much life.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLYING",
+        "LIFELINK"
+    ],
+    "metadata": {
+        "collectorNumber": "14",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "The wounded see the glow of its vials long before they see its wings diving out of the clouds.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/3/3313bd5c-b657-47a3-822a-dd0d9165492a.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Swiftblade Vindicator
+{
+    "name": "Swiftblade Vindicator",
+    "manaCost": "{R}{W}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "Double strike (This creature deals both first-strike and regular combat damage.)\nVigilance (Attacking doesn't cause this creature to tap.)\nTrample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "DOUBLE_STRIKE",
+        "VIGILANCE",
+        "TRAMPLE"
+    ],
+    "metadata": {
+        "collectorNumber": "203",
+        "rarity": "RARE",
+        "artist": "Viktor Titov",
+        "flavorText": "A swiftblade is an artist, each fiery trail of their blades a fleeting masterpiece traced on the air.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/8/285c4d9e-0f22-49a8-b68c-150fd0d4b617.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}

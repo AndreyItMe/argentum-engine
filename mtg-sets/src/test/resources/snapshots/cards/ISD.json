@@ -3319,6 +3319,60 @@
     ]
 }
 
+// Stromkirk Noble
+{
+    "name": "Stromkirk Noble",
+    "manaCost": "{R}",
+    "typeLine": "Creature — Vampire Noble",
+    "oracleText": "This creature can't be blocked by Humans.\nWhenever this creature deals combat damage to a player, put a +1/+1 counter on it.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "CantBeBlockedBy",
+                "blockerFilter": {
+                    "cardPredicates": [
+                        "IsCreature",
+                        {
+                            "type": "HasSubtype",
+                            "subtype": "Human"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "164",
+        "rarity": "RARE",
+        "artist": "James Ryman",
+        "flavorText": "\"A responsible king walks among his subjects.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/c/9c16cf74-f9e0-4d80-9a29-b91dec0b6b38.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Thraben Purebloods
 {
     "name": "Thraben Purebloods",

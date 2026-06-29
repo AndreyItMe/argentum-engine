@@ -1,3 +1,40 @@
+// Ajani's Pridemate
+{
+    "name": "Ajani's Pridemate",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Cat Soldier",
+    "oracleText": "Whenever you gain life, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "rarity": "UNCOMMON",
+        "artist": "Svetlin Velinov",
+        "flavorText": "\"When one of us prospers, the pride prospers.\"\n—Jazal Goldmane",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/7/f70d1452-6b61-4c63-841f-4256ac498e9f.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Cultivate
 {
     "name": "Cultivate",

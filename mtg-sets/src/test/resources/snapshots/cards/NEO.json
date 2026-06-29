@@ -1,0 +1,35 @@
+// Uncharted Haven
+{
+    "name": "Uncharted Haven",
+    "manaCost": "",
+    "typeLine": "Land",
+    "oracleText": "This land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddManaOfChoice",
+                    "colorSet": "ManaColorSet.SourceChosenColor"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped",
+            {
+                "type": "EntersWithChoice",
+                "choiceType": "COLOR"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "281",
+        "artist": "Lorenzo Lanfranconi",
+        "flavorText": "Untouched by mortal or kami, unspoiled by their wars.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/d/1d4ad89a-3a00-4bf4-a357-4a8a089d4a82.jpg"
+    },
+    "colorIdentityOverride": []
+}

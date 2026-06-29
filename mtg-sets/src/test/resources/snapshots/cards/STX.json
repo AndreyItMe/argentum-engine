@@ -1,3 +1,128 @@
+// Burrog Befuddler
+{
+    "name": "Burrog Befuddler",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Frog Wizard",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nWhen this creature enters, target creature an opponent controls gets -1/-0 until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": -1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "38",
+        "artist": "Zoltan Boros",
+        "flavorText": "Students who seek river herbs in Doradur quickly find themselves slightly damp and thoroughly surrounded.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/0/6040c573-cd8c-4593-8ade-d9922482035c.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Campus Guide
+{
+    "name": "Campus Guide",
+    "manaCost": "{2}",
+    "typeLine": "Artifact Creature — Golem",
+    "oracleText": "When this creature enters, you may search your library for a basic land card, reveal it, then shuffle and put that card on top.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library",
+                                "filter": "basicland"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        "ShuffleLibrary",
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Top"
+                            },
+                            "revealed": true
+                        }
+                    ]
+                },
+                "optional": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "252",
+        "artist": "Slawomir Maniak",
+        "flavorText": "\"There's nowhere in Strixhaven I can't find. Where do you need to go?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/7/87a9a8a2-de81-441b-b501-418311b677f7.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Flamescroll Celebrant
 {
     "name": "Flamescroll Celebrant",
@@ -110,5 +235,26 @@
             },
             "imageUri": "https://cards.scryfall.io/normal/back/0/d/0dba25e3-2b4f-45d4-965f-3834bcb359ee.jpg?1739656768"
         }
+    ]
+}
+
+// Teach by Example
+{
+    "name": "Teach by Example",
+    "manaCost": "{U/R}{U/R}",
+    "typeLine": "Instant",
+    "oracleText": "({U/R} can be paid with either {U} or {R}.)\nWhen you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.",
+    "script": {
+        "spellEffect": "CopyNextSpellCast"
+    },
+    "metadata": {
+        "collectorNumber": "241",
+        "artist": "Johan Grenier",
+        "flavorText": "\"Learning to imitate a master is the first step in becoming one.\"\n—Uvilda, Prismari dean",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/a/aa7fbb9b-50a8-4d18-a667-fe965468ca16.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
     ]
 }

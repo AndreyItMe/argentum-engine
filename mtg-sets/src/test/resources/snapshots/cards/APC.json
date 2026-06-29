@@ -1849,6 +1849,56 @@
     ]
 }
 
+// Phyrexian Arena
+{
+    "name": "Phyrexian Arena",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "At the beginning of your upkeep, you draw a card and you lose 1 life.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": "Controller"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "47",
+        "rarity": "RARE",
+        "artist": "Pete Venters",
+        "flavorText": "An audience of one with the malice of thousands.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/4/84e19975-e3e1-453b-b902-a1b1fc1d8504.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Phyrexian Gargantua
 {
     "name": "Phyrexian Gargantua",

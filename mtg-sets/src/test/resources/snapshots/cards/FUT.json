@@ -16,3 +16,28 @@
         "BLACK"
     ]
 }
+
+// Thornweald Archer
+{
+    "name": "Thornweald Archer",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Elf Archer",
+    "oracleText": "Reach (This creature can block creatures with flying.)\nDeathtouch (Any amount of damage this deals to a creature is enough to destroy it.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "REACH",
+        "DEATHTOUCH"
+    ],
+    "metadata": {
+        "collectorNumber": "154",
+        "artist": "Dave Kendall",
+        "flavorText": "Their arrows are tipped with basilisk eyes and fletched with cockatrice feathers.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/8/783a50a0-9394-4d97-856f-21eb126a0018.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}

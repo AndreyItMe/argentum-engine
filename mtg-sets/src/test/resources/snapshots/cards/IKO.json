@@ -1,0 +1,19 @@
+// Aegis Turtle
+{
+    "name": "Aegis Turtle",
+    "manaCost": "{U}",
+    "typeLine": "Creature — Turtle",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 5
+    },
+    "metadata": {
+        "collectorNumber": "39",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "\"The endurance of the ancient turtles in a land so harsh makes a strong case for patience, tranquility, and composure.\"\n—Gavi, nest warden",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/4/e433e7f0-7417-4dfe-a7a4-3f222b0a835f.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}

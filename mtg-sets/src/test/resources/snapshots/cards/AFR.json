@@ -1,0 +1,54 @@
+// Vampire Spawn
+{
+    "name": "Vampire Spawn",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Vampire",
+    "oracleText": "When this creature enters, each opponent loses 2 life and you gain 2 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "PlayerRef",
+                                "player": "EachOpponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "123",
+        "artist": "Alex Brock",
+        "flavorText": "Unsuccessful vampire hunters often wind up as ravenous spawn.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/8/b8975c72-b2ec-4c5f-86a4-4e1e3bb41c15.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}

@@ -1,3 +1,38 @@
+// Druid of the Cowl
+{
+    "name": "Druid of the Cowl",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Elf Druid",
+    "oracleText": "{T}: Add {G}.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "106",
+        "artist": "Magali Villeneuve",
+        "flavorText": "\"The wild tangle of the Cowl provides sanctuary to life that watched the first buildings rise.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/6/a683f79b-0330-4fac-8279-6c0d888414b8.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Universal Solvent
 {
     "name": "Universal Solvent",

@@ -1,0 +1,85 @@
+// Kindled Fury
+{
+    "name": "Kindled Fury",
+    "manaCost": "{R}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +1/+0 and gains first strike until end of turn. (It deals combat damage before creatures without first strike.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "92",
+        "artist": "Shelly Wan",
+        "flavorText": "\"All beings carry the fire inside them. The challenge is to unleash it before they dwindle into oblivion.\"\n—Illulia, flamekin soulstoke",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/9/993956c9-30d8-41ee-84c2-c06d0512aea4.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Negate
+{
+    "name": "Negate",
+    "manaCost": "{1}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Counter target noncreature spell.",
+    "script": {
+        "spellEffect": "Counter",
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "noncreature",
+                    "zone": "Stack"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "43",
+        "artist": "Jeremy Jarvis",
+        "flavorText": "Masters of the arcane savor a delicious irony. Their study of deep and complex arcana leads to such a simple end: the ability to say merely yes or no.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/a/5a501252-e722-4ebf-bcf7-f53a42745fa7.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}

@@ -1,0 +1,57 @@
+// Suspicious Shambler
+{
+    "name": "Suspicious Shambler",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Zombie",
+    "oracleText": "{4}{B}{B}, Exile this card from your graveyard: Create two 2/2 black Zombie creature tokens. Activate only as a sorcery.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}{B}{B}"
+                            }
+                        },
+                        "CostExileSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 2,
+                    "toughness": 2,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Zombie"
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "activateFromZone": "Graveyard"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "27",
+        "artist": "Javier Charro",
+        "flavorText": "It was the perfect disguise—at least until its stomach started moaning.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/ff36347c-1fc1-4493-8e45-ef3372ecce45.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}

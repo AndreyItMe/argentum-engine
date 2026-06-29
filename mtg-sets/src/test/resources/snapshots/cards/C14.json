@@ -1,3 +1,65 @@
+// Jazal Goldmane
+{
+    "name": "Jazal Goldmane",
+    "manaCost": "{2}{W}{W}",
+    "typeLine": "Legendary Creature — Cat Warrior",
+    "oracleText": "First strike (This creature deals combat damage before creatures without first strike.)\n{3}{W}{W}: Attacking creatures you control get +X/+X until end of turn, where X is the number of attacking creatures.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "FIRST_STRIKE"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{W}{W}"
+                    }
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature attacking ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "AggregateBattlefield",
+                            "player": "Each",
+                            "filter": "creature attacking"
+                        },
+                        "toughnessModifier": {
+                            "type": "AggregateBattlefield",
+                            "player": "Each",
+                            "filter": "creature attacking"
+                        },
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "9",
+        "rarity": "MYTHIC",
+        "artist": "Aaron Miller",
+        "flavorText": "\"As my kha, he is the source of my inspiration. As my brother, he is the embodiment of my aspirations.\"\n—Ajani Goldmane",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/4/c410d530-e9fc-4dc0-a4bd-70bd70aaf0c7.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Myriad Landscape
 {
     "name": "Myriad Landscape",

@@ -1,3 +1,42 @@
+// Ball Lightning
+{
+    "name": "Ball Lightning",
+    "manaCost": "{R}{R}{R}",
+    "typeLine": "Creature — Elemental",
+    "oracleText": "Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)\nHaste (This creature can attack and {T} as soon as it comes under your control.)\nAt the beginning of the end step, sacrifice this creature.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 1
+    },
+    "keywords": [
+        "TRAMPLE",
+        "HASTE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": "SacrificeSelf"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "57",
+        "rarity": "RARE",
+        "artist": "Quinton Hoover",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/1/c1ba83ab-83f5-421d-bba1-0f925870b5c8.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Bog Imp
 {
     "name": "Bog Imp",

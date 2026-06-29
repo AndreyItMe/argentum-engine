@@ -1,3 +1,133 @@
+// Balmor, Battlemage Captain
+{
+    "name": "Balmor, Battlemage Captain",
+    "manaCost": "{U}{R}",
+    "typeLine": "Legendary Creature — Bird Wizard",
+    "oracleText": "Flying\nWhenever you cast an instant or sorcery spell, creatures you control get +1/+0 and gain trample until end of turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": 0
+                                },
+                                "target": "Self"
+                            },
+                            {
+                                "type": "GrantKeyword",
+                                "keyword": "TRAMPLE",
+                                "target": "Self"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "196",
+        "rarity": "UNCOMMON",
+        "artist": "Bram Sels",
+        "flavorText": "\"Even the most hardened armies are ill-equipped to defend against an onslaught from the sky.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/5/959ba62e-bb3a-49ad-8b1b-e787e413e5d4.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
+    ]
+}
+
+// Bite Down
+{
+    "name": "Bite Down",
+    "manaCost": "{1}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature you control deals damage equal to its power to target creature or planeswalker you don't control.",
+    "script": {
+        "spellEffect": {
+            "type": "DealDamage",
+            "amount": {
+                "type": "EntityProperty",
+                "entity": "Target",
+                "numericProperty": "Power"
+            },
+            "target": {
+                "type": "BoundVariable",
+                "name": "t2"
+            },
+            "damageSource": {
+                "type": "BoundVariable",
+                "name": "t1"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "t1"
+            },
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature|planeswalker ctrl:you"
+                },
+                "id": "t2"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "155",
+        "artist": "Kitt Lapeña",
+        "flavorText": "\"Yavimaya takes care of herself; the kavu are evidence of this. What does your Coalition offer that the forest cannot provide?\"\n—Jenson Carthalion",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/e/0eacd3de-b803-4322-8d88-d533761aa748.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Combat Research
 {
     "name": "Combat Research",
@@ -289,6 +419,162 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Magnigoth Sentry
+{
+    "name": "Magnigoth Sentry",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Treefolk",
+    "oracleText": "Reach (This creature can block creatures with flying.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "metadata": {
+        "collectorNumber": "172",
+        "artist": "Dave Kendall",
+        "flavorText": "When one of Yavimaya's enormous magnigoth trees awakens into a treefolk, it is a towering presence of physical strength and ancient wisdom.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/9/d939d4bc-b7e8-4ee8-b904-68f0bff0fde1.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Prayer of Binding
+{
+    "name": "Prayer of Binding",
+    "manaCost": "{3}{W}",
+    "typeLine": "Enchantment",
+    "oracleText": "Flash\nWhen this enchantment enters, exile up to one target nonland permanent an opponent controls until this enchantment leaves the battlefield. You gain 2 life.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ExileUntilLeaves",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "nonland permanent ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": "FromLinkedExile",
+                            "storeAs": "linked_return"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "linked_return",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "underOwnersControl": true
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "28",
+        "rarity": "UNCOMMON",
+        "artist": "Wylie Beckert",
+        "flavorText": "When a Phyrexian agent cannot be killed, they must be contained.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/2/322f90b6-6b49-458d-9d5b-b601bfdd0af8.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Resolute Reinforcements
+{
+    "name": "Resolute Reinforcements",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nWhen this creature enters, create a 1/1 white Soldier creature token.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Soldier"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "29",
+        "rarity": "UNCOMMON",
+        "artist": "Billy Christian",
+        "flavorText": "Morale rarely survives the sudden appearance of a squad of Sursi skirmishers at an army's flank.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/e/3e11ad33-b9d7-43ef-840a-61955683b599.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 

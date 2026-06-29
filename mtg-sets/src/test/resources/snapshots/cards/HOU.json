@@ -66,3 +66,96 @@
         "RED"
     ]
 }
+
+// Crash Through
+{
+    "name": "Crash Through",
+    "manaCost": "{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Creatures you control gain trample until end of turn. (Each of those creatures can deal excess combat damage to the player or planeswalker it's attacking.)\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "GrantKeyword",
+                        "keyword": "TRAMPLE",
+                        "target": "Self"
+                    }
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "88",
+        "artist": "Izzy",
+        "flavorText": "\"We have to get out of the city, Djeru. All of us! Gather as many as you can.\"\n—Samut, former Tah-crop initiate",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/b/4bdaba76-b98d-4699-9a5f-e59285b09552.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Firebrand Archer
+{
+    "name": "Firebrand Archer",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Archer",
+    "oracleText": "Whenever you cast a noncreature spell, this creature deals 1 damage to each opponent.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "92",
+        "artist": "John Stanko",
+        "flavorText": "A word of vengeance, and her arrows awaken in flame.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/d/6ddc6b73-298b-4afa-990a-63706e77dd9f.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}

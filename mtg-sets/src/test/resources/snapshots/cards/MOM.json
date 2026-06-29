@@ -100,3 +100,116 @@
         "BLACK"
     ]
 }
+
+// Elspeth's Smite
+{
+    "name": "Elspeth's Smite",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Elspeth's Smite deals 3 damage to target attacking or blocking creature. If that creature would die this turn, exile it instead.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "MarkExileOnDeath",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            {
+                                "type": "StateOr",
+                                "predicates": [
+                                    "IsAttacking",
+                                    "IsBlocking"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "13",
+        "rarity": "UNCOMMON",
+        "artist": "Livia Prima",
+        "flavorText": "Elesh Norn screamed as the light pierced her. Her nightmare had become flesh.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/0/f03a480f-de67-4611-9db7-c0c3d020f597.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Wary Thespian
+{
+    "name": "Wary Thespian",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Cat Druid",
+    "oracleText": "When this creature enters or dies, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Surveil",
+                    "count": 1
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "Surveil",
+                    "count": 1
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "215",
+        "artist": "Billy Christian",
+        "flavorText": "The Cabaretti performance had veered off-script ... so how were the acrobats still moving in perfect unison?",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/7/675b29bf-0b64-410f-9a92-c88e5615c27f.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}

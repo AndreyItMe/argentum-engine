@@ -1,3 +1,48 @@
+// Bolt Bend
+{
+    "name": "Bolt Bend",
+    "manaCost": "{3}{R}",
+    "typeLine": "Instant",
+    "oracleText": "This spell costs {3} less to cast if you control a creature with power 4 or greater.\nChange the target of target spell or ability with a single target.",
+    "script": {
+        "spellEffect": "ChangeTarget",
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {},
+                    "zone": "Stack"
+                },
+                "id": "target"
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": "SelfCast",
+                "modification": {
+                    "type": "ReduceGenericBy",
+                    "source": {
+                        "type": "FixedIfControlFilter",
+                        "amount": 3,
+                        "filter": "creature pow>=4"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "115",
+        "rarity": "UNCOMMON",
+        "artist": "Svetlin Velinov",
+        "flavorText": "\"Give them everything you've got . . . and some things you don't.\"\n—Ral Zarek",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/9/39b35408-3728-4e1b-9f58-b0775df914d6.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Domri, Anarch of Bolas
 {
     "name": "Domri, Anarch of Bolas",

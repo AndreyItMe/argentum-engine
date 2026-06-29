@@ -1,3 +1,27 @@
+// Raging Redcap
+{
+    "name": "Raging Redcap",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Goblin Knight",
+    "oracleText": "Double strike (This creature deals both first-strike and regular combat damage.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "keywords": [
+        "DOUBLE_STRIKE"
+    ],
+    "metadata": {
+        "collectorNumber": "134",
+        "artist": "Dan Murayama Scott",
+        "flavorText": "Many tales of redcap terror begin with two simple things: bloodlust and stolen steel.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/9/d9325398-41c3-4177-a64d-ea38cb7a8737.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Scorching Dragonfire
 {
     "name": "Scorching Dragonfire",
@@ -43,5 +67,60 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Syr Alin, the Lion's Claw
+{
+    "name": "Syr Alin, the Lion's Claw",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Legendary Creature — Human Knight",
+    "oracleText": "First strike (This creature deals combat damage before creatures without first strike.)\nWhenever Syr Alin attacks, other creatures you control get +1/+1 until end of turn.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "FIRST_STRIKE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you",
+                            "excludeSelf": true
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "32",
+        "rarity": "UNCOMMON",
+        "artist": "Paul Scott Canavan",
+        "flavorText": "\"The realm must never yield to the chaos of the wilds.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/c/4cddb2d2-d813-4b83-a592-380ba4edf54f.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }

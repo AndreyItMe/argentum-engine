@@ -50,6 +50,109 @@
     ]
 }
 
+// Dwynen's Elite
+{
+    "name": "Dwynen's Elite",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Elf Warrior",
+    "oracleText": "When this creature enters, if you control another Elf, create a 1/1 green Elf Warrior creature token.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "GREEN"
+                    ],
+                    "creatureTypes": [
+                        "Elf",
+                        "Warrior"
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature Elf"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "173",
+        "rarity": "UNCOMMON",
+        "artist": "Lius Lasahido",
+        "flavorText": "\"Come, my beautiful brothers and sisters. Let us hunt.\"\n—Dwynen, Gilt-Leaf daen",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c203722b-3f16-4b6c-9b2e-18169d3f80c9.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Dwynen, Gilt-Leaf Daen
+{
+    "name": "Dwynen, Gilt-Leaf Daen",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Legendary Creature — Elf Warrior",
+    "oracleText": "Reach (This creature can block creatures with flying.)\nOther Elf creatures you control get +1/+1.\nWhenever Dwynen attacks, you gain 1 life for each attacking Elf you control.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature Elf"
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Elf ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "172",
+        "rarity": "RARE",
+        "artist": "Johannes Voss",
+        "flavorText": "\"This is our land. We will not allow eyeblights to poison its beauty.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/1/91c143a9-c642-425a-a469-a9d158e43c21.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Eyeblight Assassin
 {
     "name": "Eyeblight Assassin",
@@ -194,6 +297,62 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Harbinger of the Tides
+{
+    "name": "Harbinger of the Tides",
+    "manaCost": "{U}{U}",
+    "typeLine": "Creature — Merfolk Wizard",
+    "oracleText": "You may cast this spell as though it had flash if you pay {2} more to cast it. (You may cast it any time you could cast an instant.)\nWhen this creature enters, you may return target tapped creature an opponent controls to its owner's hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{2}",
+            "branchesEffect": false,
+            "grantsFlashTiming": true
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature tapped ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "58",
+        "rarity": "RARE",
+        "artist": "Svetlin Velinov",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/4/94ca53de-cffb-4740-b318-a4ebfb3a31af.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

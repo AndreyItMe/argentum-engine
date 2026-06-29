@@ -250,6 +250,78 @@
     ]
 }
 
+// Halana and Alena, Partners
+{
+    "name": "Halana and Alena, Partners",
+    "manaCost": "{2}{R}{G}",
+    "typeLine": "Legendary Creature — Human Ranger",
+    "oracleText": "First strike (This creature deals combat damage before creatures without first strike.)\nReach (This creature can block creatures with flying.)\nAt the beginning of combat on your turn, put X +1/+1 counters on another target creature you control, where X is Halana and Alena's power. That creature gains haste until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FIRST_STRIKE",
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddDynamicCounters",
+                            "counterType": "+1/+1",
+                            "amount": {
+                                "type": "EntityProperty",
+                                "entity": "Source",
+                                "numericProperty": "Power"
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "HASTE",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you",
+                        "excludeSelf": true
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "239",
+        "rarity": "RARE",
+        "artist": "Jason Rainville",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/0/608fa232-f5fe-4c58-9efe-fb780f454b19.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
 // Hullbreaker Horror
 {
     "name": "Hullbreaker Horror",

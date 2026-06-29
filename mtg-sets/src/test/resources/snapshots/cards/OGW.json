@@ -96,3 +96,64 @@
         "WHITE"
     ]
 }
+
+// Tajuru Pathwarden
+{
+    "name": "Tajuru Pathwarden",
+    "manaCost": "{4}{G}",
+    "typeLine": "Creature — Elf Warrior Ally",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nTrample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE",
+        "TRAMPLE"
+    ],
+    "metadata": {
+        "collectorNumber": "145",
+        "artist": "Victor Adame Minguez",
+        "flavorText": "\"My people blazed these pathways long ago, before the Eldrazi came. We will ride them long after the Eldrazi are gone.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/0/b073e75b-b432-41a5-a71e-d169fecf774f.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Untamed Hunger
+{
+    "name": "Untamed Hunger",
+    "manaCost": "{2}{B}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nEnchanted creature gets +2/+1 and has menace. (It can't be blocked except by two or more creatures.)",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 2,
+                "toughnessBonus": 1
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "MENACE"
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "91",
+        "artist": "Willian Murai",
+        "flavorText": "\"Mindlessness is not weakness. When we are lost to hunger we are unstoppable.\"\n—Drana, Kalastria bloodchief",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/9/595deb86-b6cf-4e4f-a6cf-f5ff128b720d.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}

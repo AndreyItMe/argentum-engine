@@ -1,3 +1,228 @@
+// Angelic Edict
+{
+    "name": "Angelic Edict",
+    "manaCost": "{4}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Exile target creature or enchantment.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target"
+            },
+            "destination": "Exile"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature|enchantment"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "2",
+        "artist": "Trevor Claxton",
+        "flavorText": "The Boros built a prison in the sky where Azorius statutes couldn't restrict their sense of justice.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/2/e24b62d3-c200-4330-a255-92d77f01ba44.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Aurelia, the Warleader
+{
+    "name": "Aurelia, the Warleader",
+    "manaCost": "{2}{R}{R}{W}{W}",
+    "typeLine": "Legendary Creature — Angel",
+    "oracleText": "Flying, vigilance, haste\nWhenever Aurelia attacks for the first time each turn, untap all creatures you control. After this phase, there is an additional combat phase.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING",
+        "VIGILANCE",
+        "HASTE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "AttackEvent",
+                    "requires": [
+                        "AttacksFirstTimeEachTurn"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature ctrl:you"
+                                }
+                            },
+                            "body": {
+                                "type": "TapUntap",
+                                "target": "Self",
+                                "tap": false
+                            }
+                        },
+                        "AddCombatPhase"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "143",
+        "rarity": "MYTHIC",
+        "artist": "Slawomir Maniak",
+        "flavorText": "Where Razia was aloof and untouchable, Aurelia is on the frontlines, calling for war.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/e/4ec18e35-05e4-4bfc-b32b-c3e71c95a71d.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
+// Boros Charm
+{
+    "name": "Boros Charm",
+    "manaCost": "{R}{W}",
+    "typeLine": "Instant",
+    "oracleText": "Choose one —\n• Boros Charm deals 4 damage to target player or planeswalker.\n• Permanents you control gain indestructible until end of turn.\n• Target creature gains double strike until end of turn.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 4
+                        },
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target"
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetPlayerOrPlaneswalker",
+                            "id": "target"
+                        }
+                    ],
+                    "description": "Boros Charm deals 4 damage to target player or planeswalker"
+                },
+                {
+                    "effect": {
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "permanent ctrl:you"
+                            }
+                        },
+                        "body": {
+                            "type": "GrantKeyword",
+                            "keyword": "INDESTRUCTIBLE",
+                            "target": "Self"
+                        }
+                    },
+                    "description": "Permanents you control gain indestructible until end of turn"
+                },
+                {
+                    "effect": {
+                        "type": "GrantKeyword",
+                        "keyword": "DOUBLE_STRIKE",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target"
+                        }
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            },
+                            "id": "target"
+                        }
+                    ],
+                    "description": "Target creature gains double strike until end of turn"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "148",
+        "rarity": "UNCOMMON",
+        "artist": "Zoltan Boros",
+        "flavorText": "\"Practice compassion and mercy. But know when they must end.\"\n—Aurelia",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/4/d4ddf9cc-40a7-4b4f-bb51-b08171453c9a.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
+// Boros Guildgate
+{
+    "name": "Boros Guildgate",
+    "manaCost": "",
+    "typeLine": "Land — Gate",
+    "oracleText": "This land enters tapped.\n{T}: Add {R} or {W}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "WHITE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "239",
+        "artist": "Noah Bradley",
+        "flavorText": "Enter with merciful hearts. Exit with battle cries.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/0/a0b447a8-524b-4bda-b975-7e194fd741fb.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "RED"
+    ]
+}
+
 // Court Street Denizen
 {
     "name": "Court Street Denizen",
@@ -43,6 +268,96 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Dimir Guildgate
+{
+    "name": "Dimir Guildgate",
+    "manaCost": "",
+    "typeLine": "Land — Gate",
+    "oracleText": "This land enters tapped.\n{T}: Add {U} or {B}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLUE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLACK"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "241",
+        "artist": "Cliff Childs",
+        "flavorText": "Enter and become a mastermind of spies, lies, and deception.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/9/4951bf75-1a88-4c85-b4e9-063d84f1dabf.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
+// Gruul Guildgate
+{
+    "name": "Gruul Guildgate",
+    "manaCost": "",
+    "typeLine": "Land — Gate",
+    "oracleText": "This land enters tapped.\n{T}: Add {R} or {G}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "243",
+        "artist": "Randy Gallegos",
+        "flavorText": "Enter and leave the shackles of society behind.",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/9/99c54269-8798-4023-836f-640103e08ce0.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
     ]
 }
 
@@ -96,6 +411,51 @@
     ]
 }
 
+// Orzhov Guildgate
+{
+    "name": "Orzhov Guildgate",
+    "manaCost": "",
+    "typeLine": "Land — Gate",
+    "oracleText": "This land enters tapped.\n{T}: Add {W} or {B}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "WHITE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLACK"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "244",
+        "artist": "John Avon",
+        "flavorText": "Enter to find wealth, security, and eternal life . . . for just a small price up front.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/0/000d609c-deb7-4bd7-9c1d-e20fb3ed4f5f.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLACK"
+    ]
+}
+
 // Ripscale Predator
 {
     "name": "Ripscale Predator",
@@ -118,5 +478,50 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Simic Guildgate
+{
+    "name": "Simic Guildgate",
+    "manaCost": "",
+    "typeLine": "Land — Gate",
+    "oracleText": "This land enters tapped.\n{T}: Add {G} or {U}.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLUE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "246",
+        "artist": "Svetlin Velinov",
+        "flavorText": "Enter and comprehend the perfection of orchestrated life.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/c/1ce3f6f2-c52c-4fb8-afa0-b1ea723bb4c6.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "GREEN"
     ]
 }

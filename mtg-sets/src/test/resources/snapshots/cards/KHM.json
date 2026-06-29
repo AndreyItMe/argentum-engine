@@ -1,3 +1,49 @@
+// Axgard Cavalry
+{
+    "name": "Axgard Cavalry",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Dwarf Berserker",
+    "oracleText": "{T}: Target creature gains haste until end of turn. (It can attack and {T} this turn.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "GrantKeyword",
+                    "keyword": "HASTE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "121",
+        "artist": "Evyn Fong",
+        "flavorText": "Riding the goat\n—Dwarven expression meaning\n\"a foolhardy act of bravery\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/4/2411c341-a470-4484-9248-7c1d3ca12978.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Esika's Chariot
 {
     "name": "Esika's Chariot",
@@ -72,6 +118,75 @@
     "colorIdentityOverride": [
         "GREEN"
     ]
+}
+
+// Goldvein Pick
+{
+    "name": "Goldvein Pick",
+    "manaCost": "{2}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +1/+1.\nWhenever equipped creature deals combat damage to a player, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "binding": "ATTACHED",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "239",
+        "artist": "Dan Murayama Scott",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/b/9bf5e4ad-a6e9-4b7c-a1ec-8246d3a3b6ca.jpg"
+    },
+    "colorIdentityOverride": []
 }
 
 // Seize the Spoils
@@ -162,5 +277,49 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Youthful Valkyrie
+{
+    "name": "Youthful Valkyrie",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flying\nWhenever another Angel you control enters, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature Angel ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "382",
+        "rarity": "UNCOMMON",
+        "artist": "Anna Steinbauer",
+        "flavorText": "Before she is admitted to the host of Starnheim, a young valkyrie must learn a thousand tales of her ancestors.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/ffe93b27-f8ae-4abf-8ade-90f503f132c2.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }

@@ -1,0 +1,96 @@
+// Nessian Hornbeetle
+{
+    "name": "Nessian Hornbeetle",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Insect",
+    "oracleText": "At the beginning of combat on your turn, if you control another creature with power 4 or greater, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature pow>=4"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "182",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Felix",
+        "flavorText": "\"The first rule of politics can be learned from a lowly hornbeetle: it is wise to cultivate powerful friends.\"\n—Pythamon, sage of Meletis",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/2/8200fcda-e30c-460f-9964-47e657b7c758.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Terror of Mount Velus
+{
+    "name": "Terror of Mount Velus",
+    "manaCost": "{5}{R}{R}",
+    "typeLine": "Creature — Dragon",
+    "oracleText": "Flying\nDouble strike (This creature deals both first-strike and regular combat damage.)\nWhen this creature enters, creatures you control gain double strike until end of turn.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "DOUBLE_STRIKE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "GrantKeyword",
+                        "keyword": "DOUBLE_STRIKE",
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "295",
+        "rarity": "RARE",
+        "artist": "Billy Christian",
+        "flavorText": "The forge of Purphoros burns in the heart of Mount Velus, attracting dragons with its blistering heat.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/3/332dc6c3-7802-4bde-aa4e-0feab70c216f.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}

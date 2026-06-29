@@ -1,3 +1,85 @@
+// Elvish Archdruid
+{
+    "name": "Elvish Archdruid",
+    "manaCost": "{1}{G}{G}",
+    "typeLine": "Creature — Elf Druid",
+    "oracleText": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN",
+                    "amount": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature Elf"
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Elf ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "176",
+        "rarity": "RARE",
+        "artist": "Karl Kopinski",
+        "flavorText": "He knows the name of every elf born in the last four centuries. More importantly, they all know his.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/4/544bc214-e32d-4370-a15f-62812a0420be.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Essence Scatter
+{
+    "name": "Essence Scatter",
+    "manaCost": "{1}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Counter target creature spell.",
+    "script": {
+        "spellEffect": "Counter",
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature",
+                    "zone": "Stack"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "51",
+        "artist": "Jon Foster",
+        "flavorText": "Some wizards compete not to summon the most interesting creatures, but to create the most interesting aftereffects when a summons goes awry.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c231101e-6620-46fc-a0ad-a53291d12dc2.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Rootbound Crag
 {
     "name": "Rootbound Crag",

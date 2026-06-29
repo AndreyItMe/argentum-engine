@@ -1,0 +1,82 @@
+// Corsair Captain
+{
+    "name": "Corsair Captain",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "When this creature enters, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nOther Pirates you control get +1/+1.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Pirate ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "11",
+        "rarity": "RARE",
+        "artist": "Victor Adame Minguez",
+        "flavorText": "\"Lungs full of sea air and a hold full of loot. Ah, what a life!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/9/a9b016d4-ddf6-47d6-b934-a0b979b60680.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Release the Dogs
+{
+    "name": "Release the Dogs",
+    "manaCost": "{3}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create four 1/1 white Dog creature tokens.",
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "count": {
+                "type": "Fixed",
+                "amount": 4
+            },
+            "power": 1,
+            "toughness": 1,
+            "colors": [
+                "WHITE"
+            ],
+            "creatureTypes": [
+                "Dog"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Kang",
+        "flavorText": "They charge into battle and out for their morning walk with the same exuberance.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/d/7df3cd89-02c9-4a1c-9a8a-d17a0b1030c9.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}

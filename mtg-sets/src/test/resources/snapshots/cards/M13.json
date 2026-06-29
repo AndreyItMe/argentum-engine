@@ -68,6 +68,52 @@
     ]
 }
 
+// Krenko, Mob Boss
+{
+    "name": "Krenko, Mob Boss",
+    "manaCost": "{2}{R}{R}",
+    "typeLine": "Legendary Creature — Goblin Warrior",
+    "oracleText": "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature Goblin"
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Goblin"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "138",
+        "rarity": "RARE",
+        "artist": "Karl Kopinski",
+        "flavorText": "\"He displays a perverse charisma fueled by avarice. Highly dangerous. Recommend civil sanctions.\"\n—Agmand Sarv, Azorius hussar",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/a/aa078518-0ce2-4c6f-9061-aa7e22ed7493.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Murder
 {
     "name": "Murder",

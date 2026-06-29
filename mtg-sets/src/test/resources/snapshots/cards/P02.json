@@ -65,6 +65,26 @@
     ]
 }
 
+// Bear Cub
+{
+    "name": "Bear Cub",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Bear",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "metadata": {
+        "collectorNumber": "123",
+        "artist": "Ron Spencer",
+        "flavorText": "Every little cub has its mother's teeth to guard it.\n—Elvish saying",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/7/d71abb70-bee5-4823-83dc-db0707023b37.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Cruel Edict
 {
     "name": "Cruel Edict",

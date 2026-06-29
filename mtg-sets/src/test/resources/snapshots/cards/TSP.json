@@ -111,6 +111,70 @@
     ]
 }
 
+// Mystical Teachings
+{
+    "name": "Mystical Teachings",
+    "manaCost": "{3}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Search your library for an instant card or a card with flash, reveal it, put it into your hand, then shuffle.\nFlashback {5}{B} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{5}{B}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Library",
+                        "filter": "instant"
+                    },
+                    "storeAs": "searchable"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "searchable",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "found"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "found",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    },
+                    "revealed": true
+                },
+                "ShuffleLibrary"
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "69",
+        "artist": "Ron Spears",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/0/a057e5f3-b6bd-4995-b990-714201f36989.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
 // Terramorphic Expanse
 {
     "name": "Terramorphic Expanse",

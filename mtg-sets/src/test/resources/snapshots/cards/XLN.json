@@ -1,3 +1,83 @@
+// Bishop's Soldier
+{
+    "name": "Bishop's Soldier",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Vampire Soldier",
+    "oracleText": "Lifelink (Damage dealt by this creature also causes you to gain that much life.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "metadata": {
+        "collectorNumber": "6",
+        "artist": "Scott Murphy",
+        "flavorText": "Vampires, the noble class of old Torrezon, are guided by their dual loyalties to church and crown.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/9/d954677c-2de6-440a-90d0-bab2e0c8b4af.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Dive Down
+{
+    "name": "Dive Down",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature you control gets +0/+3 and gains hexproof until end of turn. (It can't be the target of spells or abilities your opponents control.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "HEXPROOF",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "53",
+        "artist": "Magali Villeneuve",
+        "flavorText": "\"Seeing the river is not the same as seeing the fish.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/3/b33e493e-1aef-43b3-9716-52158b002430.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Fiery Cannonade
 {
     "name": "Fiery Cannonade",

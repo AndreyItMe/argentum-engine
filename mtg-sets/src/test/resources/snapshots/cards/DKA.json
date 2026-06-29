@@ -1,3 +1,47 @@
+// Drogskol Reaver
+{
+    "name": "Drogskol Reaver",
+    "manaCost": "{5}{W}{U}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "Flying\nDouble strike (This creature deals both first-strike and regular combat damage.)\nLifelink (Damage dealt by this creature also causes you to gain that much life.)\nWhenever you gain life, draw a card.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "DOUBLE_STRIKE",
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "137",
+        "rarity": "MYTHIC",
+        "artist": "Vincent Proce",
+        "flavorText": "Wracked and warped with anguish, it obsessively seeks out other souls to hoard within its eternal prison.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/af2d9e0b-6433-40a2-9847-9fa4e3c008c4.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
 // Faithless Looting
 {
     "name": "Faithless Looting",

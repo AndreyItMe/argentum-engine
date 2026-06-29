@@ -124,6 +124,181 @@
     ]
 }
 
+// Felidar Cub
+{
+    "name": "Felidar Cub",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Cat Beast",
+    "oracleText": "Sacrifice this creature: Destroy target enchantment.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostSacrificeSelf",
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "enchantment"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "25",
+        "artist": "Steve Prescott",
+        "flavorText": "Felidars that make it through their first year of life can easily live to see a hundred years more.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/a/ea76a183-e15c-4968-b29d-91c074aa8681.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Hedron Archive
+{
+    "name": "Hedron Archive",
+    "manaCost": "{4}",
+    "typeLine": "Artifact",
+    "oracleText": "{T}: Add {C}{C}.\n{2}, {T}, Sacrifice this artifact: Draw two cards.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddColorlessMana",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap",
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "223",
+        "rarity": "UNCOMMON",
+        "artist": "Craig J Spearing",
+        "flavorText": "\"You've begun to understand the hedrons' true purpose,\" said Ugin. \"The Eldrazi can be imprisoned.\"\"And how did that work out last time?\" asked Jace.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/5/2519149c-f8a3-413f-b7b2-cd596970be4c.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
+// Stasis Snare
+{
+    "name": "Stasis Snare",
+    "manaCost": "{1}{W}{W}",
+    "typeLine": "Enchantment",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nWhen this enchantment enters, exile target creature an opponent controls until this enchantment leaves the battlefield.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ExileUntilLeaves",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "target"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": "FromLinkedExile",
+                            "storeAs": "linked_return"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "linked_return",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Battlefield"
+                            },
+                            "underOwnersControl": true
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "50",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Felix",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/ff820544-f4a3-40c4-a48e-84b5e2d06caa.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Stonefury
 {
     "name": "Stonefury",
@@ -158,6 +333,62 @@
         "artist": "Chris Rallis",
         "flavorText": "Akoum can make any intruder look small.",
         "imageUri": "https://cards.scryfall.io/normal/front/6/a/6aa37f74-50dd-4013-b48a-c33f1dbfb3e1.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Sure Strike
+{
+    "name": "Sure Strike",
+    "manaCost": "{1}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +3/+0 and gains first strike until end of turn. (It deals combat damage before creatures without first strike.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "157",
+        "artist": "Jakub Kasper",
+        "flavorText": "To survive imminent doom, it sometimes takes a foolhardy soul who acts first and fears later.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/7/074dd176-4608-42ca-8fc3-c7040cd7b32e.jpg"
     },
     "colorIdentityOverride": [
         "RED"
@@ -213,5 +444,68 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Vampiric Rites
+{
+    "name": "Vampiric Rites",
+    "manaCost": "{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "{1}{B}, Sacrifice a creature: You gain 1 life and draw a card.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}{B}"
+                            }
+                        },
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature"
+                            }
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "rarity": "UNCOMMON",
+        "artist": "Anastasia Ovchinnikova",
+        "flavorText": "For vampires, blood carries more than life. Memories long eroded from the minds of bloodchiefs can be reclaimed from the veins of their sired kin.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/4/3416309a-5824-48f5-876e-00e0f180acf9.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }

@@ -1,0 +1,105 @@
+// Highborn Vampire
+{
+    "name": "Highborn Vampire",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Vampire Warrior",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "metadata": {
+        "collectorNumber": "107",
+        "artist": "Denman Rooke",
+        "flavorText": "With the bloodchiefs annihilated in the fight between the free and enthralled, the swamps around Malakir are full of dangerous, young vampires eager to make their marks.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/4/24c40082-516e-4381-a4cc-e61c5a9a6cac.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Marauding Blight-Priest
+{
+    "name": "Marauding Blight-Priest",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Vampire Cleric",
+    "oracleText": "Whenever you gain life, each opponent loses 1 life.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "112",
+        "artist": "Caio Monteiro",
+        "flavorText": "\"The vampires never had gods. We followed our bloodchiefs. Now they are gone. What is left? Destruction and death, my friends. That is enough.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/3/730ddbcd-0814-4e22-85e9-78b0878324b6.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Spitfire Lagac
+{
+    "name": "Spitfire Lagac",
+    "manaCost": "{3}{R}",
+    "typeLine": "Creature — Lizard",
+    "oracleText": "Landfall — Whenever a land you control enters, this creature deals 1 damage to each opponent.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "land ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "167",
+        "artist": "Antonio José Manzanedo",
+        "flavorText": "\"If you hear a choking sort of cough, it's about to get really hot.\"\n—Raff Slugeater, goblin shortcutter",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/7/47f26493-812f-4c14-91c4-d2ab549a7b8a.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}

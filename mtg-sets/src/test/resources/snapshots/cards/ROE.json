@@ -1,3 +1,59 @@
+// Battle-Rattle Shaman
+{
+    "name": "Battle-Rattle Shaman",
+    "manaCost": "{3}{R}",
+    "typeLine": "Creature — Goblin Shaman",
+    "oracleText": "At the beginning of combat on your turn, you may have target creature get +2/+0 until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "optional": true,
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "136",
+        "artist": "Warren Mahy",
+        "flavorText": "The shaman rattles not to inspire a battle fury but to drown out the shrieks of those fleeing the Eldrazi.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/a/aa1df08a-ccef-44cf-936a-838e238c27c1.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Dreamstone Hedron
 {
     "name": "Dreamstone Hedron",
@@ -118,6 +174,119 @@
         "imageUri": "https://cards.scryfall.io/normal/front/b/c/bc7e0407-fea1-43ef-8580-82271e440bb3.jpg?1562708057"
     },
     "colorIdentityOverride": []
+}
+
+// Fleeting Distraction
+{
+    "name": "Fleeting Distraction",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets -1/-0 until end of turn.\nDraw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": -1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "67",
+        "artist": "Kieran Yanner",
+        "flavorText": "\"To distract an archmage would take incredible power. But for a simpleton, something sparkly will do.\"\n—Noyan Dar, Tazeem lullmage",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/d/ed843c4d-28b5-4a4c-8bae-8f03f329bf2b.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Pelakka Wurm
+{
+    "name": "Pelakka Wurm",
+    "manaCost": "{4}{G}{G}{G}",
+    "typeLine": "Creature — Wurm",
+    "oracleText": "Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)\nWhen this creature enters, you gain 7 life.\nWhen this creature dies, draw a card.",
+    "creatureStats": {
+        "power": 7,
+        "toughness": 7
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 7
+                    }
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "204",
+        "rarity": "UNCOMMON",
+        "artist": "Daniel Ljunggren",
+        "flavorText": "It eats what it wants to eat—which is anything that moves.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/e/8e732593-0bdc-4dd4-9b07-9aa1a780e6e8.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
 }
 
 // Prophetic Prism

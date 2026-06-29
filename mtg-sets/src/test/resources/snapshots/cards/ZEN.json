@@ -1,3 +1,110 @@
+// Day of Judgment
+{
+    "name": "Day of Judgment",
+    "manaCost": "{2}{W}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy all creatures.",
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "creature"
+                }
+            },
+            "body": {
+                "type": "MoveToZone",
+                "target": "Self",
+                "destination": "Graveyard",
+                "byDestruction": true
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "9",
+        "rarity": "RARE",
+        "artist": "Vincent Proce",
+        "flavorText": "\"I have seen planes leveled and all life rendered to dust. It brought no pleasure, even to a heart as dark as mine.\"\n—Sorin Markov",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/a/2aa98fca-972b-46c2-bdec-6ace35c988d5.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Expedition Map
+{
+    "name": "Expedition Map",
+    "manaCost": "{1}",
+    "typeLine": "Artifact",
+    "oracleText": "{2}, {T}, Sacrifice this artifact: Search your library for a land card, reveal it, put it into your hand, then shuffle.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap",
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library",
+                                "filter": "land"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            },
+                            "revealed": true
+                        },
+                        "ShuffleLibrary"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "201",
+        "artist": "Franz Vohwinkel",
+        "flavorText": "\"I use maps to find out where explorers have already been. Then I go the other way.\"\n—Javad Nasrin, Ondu relic hunter",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/5/c55bee97-593f-441f-b96c-a998d5212a55.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Kor Cartographer
 {
     "name": "Kor Cartographer",
@@ -208,5 +315,31 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Vampire Nighthawk
+{
+    "name": "Vampire Nighthawk",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Creature — Vampire Shaman",
+    "oracleText": "Flying\nDeathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\nLifelink (Damage dealt by this creature also causes you to gain that much life.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING",
+        "DEATHTOUCH",
+        "LIFELINK"
+    ],
+    "metadata": {
+        "collectorNumber": "116",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Chan",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/4/44f19fe3-7a17-4c45-adfa-590f73dfebfa.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }

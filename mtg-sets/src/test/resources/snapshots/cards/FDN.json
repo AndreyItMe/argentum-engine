@@ -186,6 +186,63 @@
     ]
 }
 
+// Arahbo, the First Fang
+{
+    "name": "Arahbo, the First Fang",
+    "manaCost": "{2}{W}",
+    "typeLine": "Legendary Creature — Cat Avatar",
+    "oracleText": "Other Cats you control get +1/+1.\nWhenever Arahbo or another nontoken Cat you control enters, create a 1/1 white Cat creature token.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature Cat nontoken ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Cat"
+                    ]
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Cat ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "2",
+        "rarity": "RARE",
+        "artist": "Simon Dominic",
+        "flavorText": "It's said all cats in the Multiverse trace their lineage back to him, from the meekest kitten to the mightiest lion.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/524a5d93-26ed-436d-a437-dc9460acce98.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Arcane Epiphany
 {
     "name": "Arcane Epiphany",
@@ -392,6 +449,37 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Boltwave
+{
+    "name": "Boltwave",
+    "manaCost": "{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Boltwave deals 3 damage to each opponent.",
+    "script": {
+        "spellEffect": {
+            "type": "DealDamage",
+            "amount": {
+                "type": "Fixed",
+                "amount": 3
+            },
+            "target": {
+                "type": "PlayerRef",
+                "player": "EachOpponent"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "79",
+        "rarity": "UNCOMMON",
+        "artist": "Caio Monteiro",
+        "flavorText": "\"Taming a storm is like taming a wild beast; once you understand its wants and needs, you can direct it any way you like.\"\n—Ral Zarek",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/d/8d1ec351-5e70-4eb2-b590-6bff94ef8178.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -1238,6 +1326,74 @@
     ]
 }
 
+// Fiery Annihilation
+{
+    "name": "Fiery Annihilation",
+    "manaCost": "{2}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Fiery Annihilation deals 5 damage to target creature. Exile up to one target Equipment attached to that creature. If that creature would die this turn, exile it instead.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 5
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "t1"
+                    }
+                },
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "t2"
+                    },
+                    "destination": "Exile"
+                },
+                {
+                    "type": "MarkExileOnDeath",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "t1"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "t1"
+            },
+            {
+                "type": "TargetObject",
+                "optional": true,
+                "filter": {
+                    "baseFilter": "artifact Equipment"
+                },
+                "id": "t2"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "86",
+        "rarity": "UNCOMMON",
+        "artist": "Warren Mahy",
+        "flavorText": "\"Fireproof or your money back!\"\n—Jornald's Arms and Armor (out of business)",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/4/54fe00aa-d284-48f9-b5a2-1bd4c5fa8e58.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Gatekeeper of Malakir
 {
     "name": "Gatekeeper of Malakir",
@@ -1711,6 +1867,102 @@
     ]
 }
 
+// Incinerating Blast
+{
+    "name": "Incinerating Blast",
+    "manaCost": "{4}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Incinerating Blast deals 6 damage to target creature.\nYou may discard a card. If you do, draw a card.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 6
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Gated",
+                        "gate": {
+                            "type": "Gate.DoAction",
+                            "action": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "FromZone",
+                                            "zone": "Hand"
+                                        },
+                                        "storeAs": "hand"
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "hand",
+                                        "selection": {
+                                            "type": "ChooseExactly",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeSelected": "discarded",
+                                        "prompt": "Choose 1 card to discard"
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "discarded",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Graveyard"
+                                        },
+                                        "moveType": "Discard"
+                                    }
+                                ]
+                            }
+                        },
+                        "then": {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "90",
+        "artist": "Zoltan Boros",
+        "flavorText": "Most pyromancers could never summon the sheer heat necessary to melt solid rock, but most pyromancers aren't Chandra Nalaar.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d58e20ab-c5ca-4295-884d-78efdaa83243.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Infestation Sage
 {
     "name": "Infestation Sage",
@@ -1756,6 +2008,130 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Inspiring Paladin
+{
+    "name": "Inspiring Paladin",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Knight",
+    "oracleText": "During your turn, this creature has first strike. (It deals combat damage before creatures without first strike.)\nDuring your turn, creatures you control with +1/+1 counters on them have first strike.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE",
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": "IsYourTurn"
+            },
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature"
+                            ],
+                            "statePredicates": [
+                                {
+                                    "type": "HasCounter",
+                                    "counterType": "+1/+1"
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    }
+                },
+                "condition": "IsYourTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "18",
+        "artist": "Valera Lutfullina",
+        "flavorText": "As the line faltered, the thunder of hoofbeats heralded desperately needed aid.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/7/0763be06-25b2-4d6b-ab33-a1af85aeb443.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Joust Through
+{
+    "name": "Joust Through",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Joust Through deals 3 damage to target attacking or blocking creature. You gain 1 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            {
+                                "type": "StateOr",
+                                "predicates": [
+                                    "IsAttacking",
+                                    "IsBlocking"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "19",
+        "rarity": "UNCOMMON",
+        "artist": "Miro Petrov",
+        "flavorText": "\"Allow me to offer a counterpoint.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/4/846adb38-f9bb-4fed-b8ed-36ec7885f989.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
@@ -3662,5 +4038,45 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Vanguard Seraph
+{
+    "name": "Vanguard Seraph",
+    "manaCost": "{3}{W}",
+    "typeLine": "Creature — Angel Warrior",
+    "oracleText": "Flying\nWhenever you gain life for the first time each turn, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "LifeGainEvent",
+                    "firstTimeEachTurn": true
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Surveil",
+                    "count": 1
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "28",
+        "artist": "Zezhou Chen",
+        "flavorText": "She guides expedition parties through the perilous floating ruins of Zendikar's ancient empires.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/3/4329c861-fc16-4a96-9c03-25af6ac2adc8.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }

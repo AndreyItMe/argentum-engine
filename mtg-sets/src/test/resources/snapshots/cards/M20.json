@@ -1,3 +1,83 @@
+// Empyrean Eagle
+{
+    "name": "Empyrean Eagle",
+    "manaCost": "{1}{W}{U}",
+    "typeLine": "Creature — Bird Spirit",
+    "oracleText": "Flying\nOther creatures you control with flying get +1/+1.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature kw:flying ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "208",
+        "rarity": "UNCOMMON",
+        "artist": "Jason A. Engle",
+        "flavorText": "All the birds of the skies are the spirit's brood, gathered for safety under its wings.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/c/ac555709-c7cc-4c64-8a6f-8fe2bc149fcd.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
+// Rapacious Dragon
+{
+    "name": "Rapacious Dragon",
+    "manaCost": "{4}{R}",
+    "typeLine": "Creature — Dragon",
+    "oracleText": "Flying\nWhen this creature enters, create two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure",
+                    "count": 2
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "153",
+        "rarity": "UNCOMMON",
+        "artist": "Johan Grenier",
+        "flavorText": "\"Surely it won't notice if I take—\"\n—Theria the Sly, last words",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/c/2c9bf6d8-ebf6-40ff-858a-3483d19bb584.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Silverback Shaman
 {
     "name": "Silverback Shaman",
@@ -38,6 +118,53 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Spectral Sailor
+{
+    "name": "Spectral Sailor",
+    "manaCost": "{U}",
+    "typeLine": "Creature — Spirit Pirate",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\n{3}{U}: Draw a card.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{U}"
+                    }
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "76",
+        "rarity": "UNCOMMON",
+        "artist": "Cristi Balanescu",
+        "flavorText": "\"Any ship that sails on these mean seas for long is bound to pick up a ghost or two.\"\n—Admiral Beckett Brass",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/7/67483891-36d1-46f2-8b4f-b8b7bd54bdcc.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

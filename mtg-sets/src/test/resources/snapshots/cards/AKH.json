@@ -47,6 +47,76 @@
     ]
 }
 
+// Regal Caracal
+{
+    "name": "Regal Caracal",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Creature — Cat",
+    "oracleText": "Other Cats you control get +1/+1 and have lifelink. (Damage dealt by those creatures also causes you to gain that much life.)\nWhen this creature enters, create two 1/1 white Cat creature tokens with lifelink.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Cat"
+                    ],
+                    "keywords": [
+                        "LIFELINK"
+                    ]
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Cat ctrl:you",
+                    "excludeSelf": true
+                }
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "LIFELINK",
+                "filter": {
+                    "baseFilter": "creature Cat ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "24",
+        "rarity": "RARE",
+        "artist": "Filip Burburan",
+        "flavorText": "Oketra's closest viziers are known as her chosen, though others may have a better claim to that moniker.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/d/cd349f95-3eae-4ef2-abf8-e911bb8e93e5.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Scaled Behemoth
 {
     "name": "Scaled Behemoth",

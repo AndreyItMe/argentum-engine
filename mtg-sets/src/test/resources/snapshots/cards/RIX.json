@@ -1,3 +1,32 @@
+// Brass's Bounty
+{
+    "name": "Brass's Bounty",
+    "manaCost": "{6}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "For each land you control, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "script": {
+        "spellEffect": {
+            "type": "CreatePredefinedToken",
+            "tokenType": "Treasure",
+            "dynamicCount": {
+                "type": "AggregateBattlefield",
+                "player": "You",
+                "filter": "land"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "94",
+        "rarity": "RARE",
+        "artist": "Grzegorz Rutkowski",
+        "flavorText": "\"Why squabble for trinkets when we could be living large off all this gold?\"\n—Admiral Beckett Brass",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/3/13505866-6ce9-4d11-b3f3-fc2f09839b71.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Brazen Freebooter
 {
     "name": "Brazen Freebooter",
@@ -34,6 +63,99 @@
     ]
 }
 
+// Fanatical Firebrand
+{
+    "name": "Fanatical Firebrand",
+    "manaCost": "{R}",
+    "typeLine": "Creature — Goblin Pirate",
+    "oracleText": "Haste (This creature can attack and {T} as soon as it comes under your control.)\n{T}, Sacrifice this creature: It deals 1 damage to any target.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        "CostTap",
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "AnyTarget",
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "101",
+        "artist": "Wayne Reynolds",
+        "flavorText": "\"The Brazen Coalition is a firecannon pointed at our enemies. Goblins like him are the spark to its powder.\"\n—Admiral Beckett Brass",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/e/5e5565de-028c-4799-a9f6-4dcd685639eb.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Gleaming Barrier
+{
+    "name": "Gleaming Barrier",
+    "manaCost": "{2}",
+    "typeLine": "Artifact Creature — Wall",
+    "oracleText": "Defender\nWhen this creature dies, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 4
+    },
+    "keywords": [
+        "DEFENDER"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Treasure"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "178",
+        "artist": "Jason Felix",
+        "flavorText": "\"Gold without freedom might as well be lead.\"\n—Angrath",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/2/62447a76-4aa7-4823-941e-84bc18eb672a.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Goblin Trailblazer
 {
     "name": "Goblin Trailblazer",
@@ -55,6 +177,116 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Moment of Craving
+{
+    "name": "Moment of Craving",
+    "manaCost": "{1}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets -2/-2 until end of turn. You gain 2 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": -2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": -2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "79",
+        "artist": "Steven Belledin",
+        "flavorText": "\"The time of condemnation is at hand. Dusk washes over the world, and I consign you to eternal darkness!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/0/c0e3ea55-162d-4466-ba4e-b938a0845fb5.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Moment of Triumph
+{
+    "name": "Moment of Triumph",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +2/+2 until end of turn. You gain 2 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "15",
+        "artist": "Steven Belledin",
+        "flavorText": "\"The time of salvation is at hand. Dusk washes over the world, and the Legion will rise immortal!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/8/08be8c18-eca3-4960-b174-e4a78579ed63.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
@@ -95,5 +327,114 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Swab Goblin
+{
+    "name": "Swab Goblin",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Goblin Pirate",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "metadata": {
+        "collectorNumber": "203",
+        "artist": "Josu Hernaiz",
+        "flavorText": "Though small, goblins can hold their own in a fight. Foolhardy confidence goes a long way.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/4/0403b8e5-29c5-4a4a-b9e7-1e79a7452f14.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Thrashing Brontodon
+{
+    "name": "Thrashing Brontodon",
+    "manaCost": "{1}{G}{G}",
+    "typeLine": "Creature — Dinosaur",
+    "oracleText": "{1}, Sacrifice this creature: Destroy target artifact or enchantment.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
+                        },
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Graveyard",
+                    "byDestruction": true
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "artifact|enchantment"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "148",
+        "rarity": "UNCOMMON",
+        "artist": "Jakub Kasper",
+        "flavorText": "It cares more about preserving the herd's territory than about preserving itself.",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/d/0d9264ff-9f7c-46f3-862a-fee7ad213250.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Zetalpa, Primal Dawn
+{
+    "name": "Zetalpa, Primal Dawn",
+    "manaCost": "{6}{W}{W}",
+    "typeLine": "Legendary Creature — Elder Dinosaur",
+    "oracleText": "Flying, double strike, vigilance, trample, indestructible",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 8
+    },
+    "keywords": [
+        "FLYING",
+        "DOUBLE_STRIKE",
+        "VIGILANCE",
+        "TRAMPLE",
+        "INDESTRUCTIBLE"
+    ],
+    "metadata": {
+        "collectorNumber": "30",
+        "rarity": "RARE",
+        "artist": "Chris Rallis",
+        "flavorText": "The sky takes flight and the earth trembles.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/d/3d10560f-199d-4d04-b573-90024f8aecc4.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
