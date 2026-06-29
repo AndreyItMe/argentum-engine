@@ -138,6 +138,11 @@ section; do not let SDK additions land without a corresponding doc update.
 - `artist: String` — illustrator credit.
 - `flavorText: String` — italicized flavor.
 - `imageUri: String?` — art URL; auto-fetched from Scryfall if omitted.
+- `imageRotation: Int` — clockwise degrees to rotate the art when rendered (default `0`). Set `180` for
+  flip-layout tokens whose only Scryfall image shows the other face upright — the WOE Role tokens are printed
+  two-to-a-card (`Wicked // Cursed`, `Monster // Sorcerer`), so the bottom face (`Cursed`, `Sorcerer`) reads
+  upside-down on the single image. Purely cosmetic: flows SDK → `ClientCard.imageRotation` → client CSS transform;
+  the engine never reads it.
 - `scryfallId: String?` — Scryfall UUID.
 - `releaseDate: String?` — `YYYY-MM-DD`.
 - `inBooster: Boolean` — part of the draft/sealed product (default `true`; `false` for Special Guests / starter

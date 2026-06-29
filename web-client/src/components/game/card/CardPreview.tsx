@@ -128,6 +128,11 @@ export function CardPreview() {
   const isRoom = card.isRoom === true
   const isSplit = card.cardFaces != null && card.cardFaces.length === 2
   const splitImageRotateDeg: 0 | 90 = isSplit ? 90 : 0
+  // Flip-layout tokens (WOE "Cursed" / "Sorcerer" Roles) carry imageRotation = 180 so the bottom
+  // face reads upright. Split-card landscape rotation takes precedence when both somehow apply.
+  const previewImageRotateDeg: 0 | 90 | 180 | 270 = splitImageRotateDeg !== 0
+    ? splitImageRotateDeg
+    : ((card.imageRotation ?? 0) as 0 | 90 | 180 | 270)
 
   // Mana cost overlay badge for the card image (only for hand cards)
   const previewOverlay = (
@@ -234,7 +239,7 @@ export function CardPreview() {
       pos={hoverPosition}
       rulings={card.rulings}
       extraHeight={extraHeight}
-      imageRotateDeg={splitImageRotateDeg}
+      imageRotateDeg={previewImageRotateDeg}
       overlay={previewOverlay}
     >
       {/* Stats box (for creatures with modifications) */}

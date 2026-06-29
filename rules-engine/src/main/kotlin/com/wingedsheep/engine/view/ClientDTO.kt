@@ -288,6 +288,13 @@ data class ClientCard(
     /** Image URI from card metadata (for rendering card images) */
     val imageUri: String? = null,
 
+    /**
+     * Clockwise rotation in degrees to apply to the card art when rendering (default 0). Non-zero
+     * only for flip-layout tokens whose single Scryfall image shows the other face upright — e.g.
+     * the Wilds of Eldraine "Cursed" / "Sorcerer" Roles need 180. Purely cosmetic.
+     */
+    val imageRotation: Int = 0,
+
     /** Active effects on this card (e.g., "can't be blocked except by black creatures") */
     val activeEffects: List<ClientCardEffect> = emptyList(),
 

@@ -261,6 +261,13 @@ export interface ClientCard {
   /** Image URI from card metadata (for rendering card images) */
   readonly imageUri?: string | null
 
+  /**
+   * Clockwise rotation in degrees for the card art (default 0 / absent). Non-zero only for
+   * flip-layout tokens whose single image shows the other face upright (e.g. the WOE "Cursed" /
+   * "Sorcerer" Roles need 180). Purely cosmetic.
+   */
+  readonly imageRotation?: number
+
   /** Active effects on this card (e.g., "can't be blocked except by black creatures") */
   readonly activeEffects?: readonly ClientCardEffect[]
 

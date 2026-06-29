@@ -152,6 +152,102 @@
     ]
 }
 
+// Beluna's Gatekeeper
+{
+    "name": "Beluna's Gatekeeper",
+    "manaCost": "{5}{U}",
+    "typeLine": "Creature — Giant Soldier",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 5
+    },
+    "metadata": {
+        "collectorNumber": "43",
+        "artist": "Kai Carpenter",
+        "flavorText": "\"And what makes you think Lady Grandsquall wants to see you, little one?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/c/5c1d410e-4237-4963-b015-54d26730e63d.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Entry Denied",
+            "manaCost": "{1}{U}",
+            "typeLine": "Sorcery — Adventure",
+            "oracleText": "Return target creature you don't control with mana value 3 or less to its owner's hand. (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature mv<=3 ctrl:opponent"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+// Besotted Knight
+{
+    "name": "Besotted Knight",
+    "manaCost": "{3}{W}",
+    "typeLine": "Creature — Human Knight",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "artist": "Andreia Ugrai",
+        "flavorText": "\"You are no monster to me, my love.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/9/5980a930-c7f8-45e1-a18a-87734d9ed09e.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Betroth the Beast",
+            "manaCost": "{W}",
+            "typeLine": "Sorcery — Adventure",
+            "oracleText": "Create a Royal Role token attached to target creature you control. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1 and has ward {1}.) (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "CreateRoleToken",
+                    "roleName": "Royal Role",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Bestial Bloodline
 {
     "name": "Bestial Bloodline",
@@ -360,6 +456,86 @@
         "imageUri": "https://cards.scryfall.io/normal/front/1/a/1a860925-d912-49e5-9ddc-41ab26916bb3.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Cheeky House-Mouse
+{
+    "name": "Cheeky House-Mouse",
+    "manaCost": "{W}",
+    "typeLine": "Creature — Mouse",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "metadata": {
+        "collectorNumber": "7",
+        "rarity": "UNCOMMON",
+        "artist": "Uriah Voth",
+        "flavorText": "\"Get back here, vile rodent! I was almost done cursing that ring!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/f/1f3013bf-9647-4bdb-a638-d299ae00f88e.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Squeak By",
+            "manaCost": "{W}",
+            "typeLine": "Sorcery — Adventure",
+            "oracleText": "Target creature you control gets +1/+1 until end of turn. It can't be blocked by creatures with power 3 or greater this turn. (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "GrantStaticAbility",
+                            "ability": {
+                                "type": "CantBeBlockedBy",
+                                "blockerFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "PowerAtLeast",
+                                            "min": 3
+                                        }
+                                    ]
+                                }
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
+    ]
 }
 
 // Collector's Vault
@@ -863,6 +1039,74 @@
     ]
 }
 
+// Food Fight
+{
+    "name": "Food Fight",
+    "manaCost": "{1}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "Artifacts you control have \"{2}, Sacrifice this artifact: It deals damage to any target equal to 1 plus the number of permanents named Food Fight you control.\"",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_1",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            {
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomMana",
+                                    "cost": "{2}"
+                                }
+                            },
+                            "CostSacrificeSelf"
+                        ]
+                    },
+                    "effect": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Add",
+                            "left": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "right": {
+                                "type": "Count",
+                                "player": "You",
+                                "zone": "Battlefield",
+                                "filter": "name:Food Fight"
+                            }
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "damageSource": "Self"
+                    },
+                    "targetRequirements": [
+                        "AnyTarget"
+                    ]
+                },
+                "filter": {
+                    "baseFilter": "artifact ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "129",
+        "rarity": "RARE",
+        "artist": "Filipe Pagliuso",
+        "flavorText": "With no time to gather weapons, the dwarves fought the redcaps with anything within reach.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1a7cc43c-6e8c-41d2-a885-24604dfc7e7f.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Freeze in Place
 {
     "name": "Freeze in Place",
@@ -1221,6 +1465,61 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Minecart Daredevil
+{
+    "name": "Minecart Daredevil",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Dwarf Knight",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "metadata": {
+        "collectorNumber": "141",
+        "artist": "Edgar Sánchez Hidalgo",
+        "flavorText": "Mines that once rang with the strikes of pickaxes now echo with shouts of reckless glee.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/b/5b2a02f3-3921-4f40-9ffa-70bc08b052e1.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Ride the Rails",
+            "manaCost": "{1}{R}",
+            "typeLine": "Instant — Adventure",
+            "oracleText": "Target creature gets +2/+1 until end of turn. (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
     ]
 }
 
@@ -2196,6 +2495,105 @@
     ]
 }
 
+// Three Bowls of Porridge
+{
+    "name": "Three Bowls of Porridge",
+    "manaCost": "{2}",
+    "typeLine": "Artifact — Food",
+    "oracleText": "{2}, {T}: Choose one that hasn't been chosen —\n• This artifact deals 2 damage to target creature.\n• Tap target creature.\n• Sacrifice this artifact. You gain 3 life.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "DealDamage",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                },
+                                "damageSource": "Self"
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature"
+                                    }
+                                }
+                            ],
+                            "description": "This artifact deals 2 damage to target creature"
+                        },
+                        {
+                            "effect": {
+                                "type": "TapUntap",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature"
+                                    }
+                                }
+                            ],
+                            "description": "Tap target creature"
+                        },
+                        {
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    "SacrificeSelf",
+                                    {
+                                        "type": "GainLife",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 3
+                                        }
+                                    }
+                                ]
+                            },
+                            "description": "Sacrifice this artifact. You gain 3 life"
+                        }
+                    ],
+                    "excludePreviouslyChosenModes": true,
+                    "countsAsModalSpell": false
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "253",
+        "rarity": "UNCOMMON",
+        "artist": "Edgar Sánchez Hidalgo",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/5/a508e040-d1e5-46aa-8404-1adc18f0f8bd.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
 // Toadstool Admirer
 {
     "name": "Toadstool Admirer",
@@ -2314,5 +2712,65 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Vantress Transmuter
+{
+    "name": "Vantress Transmuter",
+    "manaCost": "{3}{U}",
+    "typeLine": "Creature — Human Wizard",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "metadata": {
+        "collectorNumber": "75",
+        "artist": "Andrey Kuzinskiy",
+        "flavorText": "\"My orders were to capture you alive. They didn't specify in what form.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/1/11507fa1-ef9e-41c9-b987-be57a03bd0df.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Croaking Curse",
+            "manaCost": "{1}{U}",
+            "typeLine": "Sorcery — Adventure",
+            "oracleText": "Tap target creature. Create a Cursed Role token attached to it. (If you control another Role on it, put that one into the graveyard. Enchanted creature has base power and toughness 1/1.) (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "TapUntap",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "CreateRoleToken",
+                            "roleName": "Cursed Role",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature"
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        }
     ]
 }

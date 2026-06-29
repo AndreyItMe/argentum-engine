@@ -19,7 +19,10 @@ import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.TransformEffect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantKeyword
+import com.wingedsheep.sdk.scripting.GrantWard
 import com.wingedsheep.sdk.scripting.ModifyStats
+import com.wingedsheep.sdk.scripting.SetBasePowerToughnessStatic
+import com.wingedsheep.sdk.scripting.effects.WardCost
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
@@ -325,7 +328,57 @@ object PredefinedTokens {
         }
 
         metadata {
+            // "Monster // Sorcerer" flip token: the single image shows Monster upright; Sorcerer is
+            // the bottom face and reads upside-down, so rotate 180° to display it correctly.
             imageUri = "https://cards.scryfall.io/normal/front/6/b/6b8a810b-8538-41c3-a792-dbd1a1845faa.jpg?1694737457"
+            imageRotation = 180
+            artist = "Rovina Cai"
+        }
+    }
+
+    /**
+     * Royal Role — Enchantment — Aura Role token (Wilds of Eldraine).
+     * "Enchanted creature gets +1/+1 and has ward {1}."
+     */
+    val RoyalRole = card("Royal Role") {
+        typeLine = "Enchantment — Aura Role"
+        oracleText = "Enchant creature\nEnchanted creature gets +1/+1 and has ward {1}."
+
+        auraTarget = Targets.Creature
+
+        staticAbility {
+            ability = ModifyStats(+1, +1, Filters.EnchantedCreature)
+        }
+
+        staticAbility {
+            ability = GrantWard(WardCost.Mana("{1}"))
+        }
+
+        metadata {
+            imageUri = "https://cards.scryfall.io/normal/front/c/f/cff8ef48-2988-4d21-837e-01f1459e07c5.jpg?1782732082"
+            artist = "Rovina Cai"
+        }
+    }
+
+    /**
+     * Cursed Role — Enchantment — Aura Role token (Wilds of Eldraine).
+     * "Enchanted creature has base power and toughness 1/1."
+     */
+    val CursedRole = card("Cursed Role") {
+        typeLine = "Enchantment — Aura Role"
+        oracleText = "Enchant creature\nEnchanted creature has base power and toughness 1/1."
+
+        auraTarget = Targets.Creature
+
+        staticAbility {
+            ability = SetBasePowerToughnessStatic(1, 1)
+        }
+
+        metadata {
+            // "Wicked // Cursed" flip token: the single image shows Wicked upright; Cursed is the
+            // bottom face and reads upside-down, so rotate 180° to display it correctly.
+            imageUri = "https://cards.scryfall.io/normal/front/a/9/a9b7040e-cd24-42cc-b043-9af8c557da6a.jpg?1782732081"
+            imageRotation = 180
             artist = "Rovina Cai"
         }
     }
@@ -529,6 +582,8 @@ object PredefinedTokens {
         Cragflame,
         Mutavault,
         SorcererRole,
+        RoyalRole,
+        CursedRole,
         Incubator,
         Drone,
         Everywhere,

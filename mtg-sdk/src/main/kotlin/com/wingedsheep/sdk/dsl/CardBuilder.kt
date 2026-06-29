@@ -1593,6 +1593,13 @@ class MetadataBuilder {
     var flavorText: String? = null
     var imageUri: String? = null
     var inBooster: Boolean = true
+
+    /**
+     * Clockwise rotation in degrees for the card art (default 0). Set `180` for flip-layout tokens
+     * whose only available image shows the other face upright — e.g. the Wilds of Eldraine "Cursed"
+     * and "Sorcerer" Roles, which are the bottom face of a two-roles-per-card flip token.
+     */
+    var imageRotation: Int = 0
     private val _rulings = mutableListOf<Ruling>()
 
     /**
@@ -1611,7 +1618,8 @@ class MetadataBuilder {
         flavorText = flavorText,
         imageUri = imageUri,
         rulings = _rulings.toList(),
-        inBooster = inBooster
+        inBooster = inBooster,
+        imageRotation = imageRotation
     )
 }
 

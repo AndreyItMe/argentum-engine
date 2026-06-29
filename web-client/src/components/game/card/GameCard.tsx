@@ -412,6 +412,12 @@ function GameCardImpl({
     ? (card.isManifested ? MANIFEST_FACE_DOWN_IMAGE_URL : MORPH_FACE_DOWN_IMAGE_URL)
     : getCardImageUrl(card.name, card.imageUri, 'normal')
 
+  // Flip-layout tokens (e.g. the WOE "Cursed" / "Sorcerer" Roles) carry only one Scryfall image,
+  // which shows the other face upright; imageRotation (degrees) flips the art to read correctly.
+  const imageRotationStyle = !faceDown && card.imageRotation
+    ? { transform: `rotate(${card.imageRotation}deg)` }
+    : undefined
+
   // Use responsive sizes, but allow override for fitting cards in hand
   const baseWidth = small
     ? responsive.smallCardWidth
@@ -1226,7 +1232,7 @@ function GameCardImpl({
             <img
               src={cardImageUrl}
               alt={card.name}
-              style={styles.tokenArtImage}
+              style={imageRotationStyle ? { ...styles.tokenArtImage, ...imageRotationStyle } : styles.tokenArtImage}
             />
           </div>
           <div style={{
@@ -1242,7 +1248,7 @@ function GameCardImpl({
           <img
             src={cardImageUrl}
             alt={faceDown ? 'Card back' : card.name}
-            style={styles.cardImage}
+            style={imageRotationStyle ? { ...styles.cardImage, ...imageRotationStyle } : styles.cardImage}
             onError={(e) => {
               const img = e.currentTarget
               const fallbackUrl = getScryfallFallbackUrl(card.name, 'normal')

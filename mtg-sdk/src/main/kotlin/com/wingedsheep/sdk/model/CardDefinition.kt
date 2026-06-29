@@ -31,6 +31,14 @@ data class ScryfallMetadata(
     val releaseDate: String? = null,
     val rulings: List<Ruling> = emptyList(),
     /**
+     * Clockwise rotation in degrees to apply to the card art when rendered (default 0 = none).
+     * Used for flip-layout tokens whose only Scryfall image shows the *other* face upright: the
+     * Wilds of Eldraine Role tokens are printed two-to-a-card (e.g. "Wicked // Cursed"), so the
+     * bottom face ("Cursed") reads upside-down on the single available image and needs 180. Purely
+     * cosmetic — the engine never reads this; it flows through to the client renderer only.
+     */
+    val imageRotation: Int = 0,
+    /**
      * Whether this printing is part of the set's draft/sealed product. Mirrors Scryfall's
      * `booster` field — false for Special Guests, The List, promos, and other non-draft slots.
      * Drives [com.wingedsheep.engine.limited.BoosterGenerator]: gates both the booster pool and
