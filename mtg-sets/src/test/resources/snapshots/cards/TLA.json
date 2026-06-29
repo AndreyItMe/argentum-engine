@@ -4576,6 +4576,82 @@
     ]
 }
 
+// Ember Island Production
+{
+    "name": "Ember Island Production",
+    "manaCost": "{3}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Choose one —\n• Create a token that's a copy of target creature you control, except it's not legendary and it's a 4/4 Hero in addition to its other types.\n• Create a token that's a copy of target creature an opponent controls, except it's not legendary and it's a 2/2 Coward in addition to its other types.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "CreateTokenCopyOfTarget",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "overridePower": 4,
+                        "overrideToughness": 4,
+                        "removedSupertypes": [
+                            "LEGENDARY"
+                        ],
+                        "addedSubtypes": [
+                            "Hero"
+                        ]
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature ctrl:you"
+                            }
+                        }
+                    ],
+                    "description": "Create a token that's a copy of target creature you control, except it's not legendary and it's a 4/4 Hero in addition to its other types"
+                },
+                {
+                    "effect": {
+                        "type": "CreateTokenCopyOfTarget",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "overridePower": 2,
+                        "overrideToughness": 2,
+                        "removedSupertypes": [
+                            "LEGENDARY"
+                        ],
+                        "addedSubtypes": [
+                            "Coward"
+                        ]
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature ctrl:opponent"
+                            }
+                        }
+                    ],
+                    "description": "Create a token that's a copy of target creature an opponent controls, except it's not legendary and it's a 2/2 Coward in addition to its other types"
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "48",
+        "rarity": "UNCOMMON",
+        "artist": "Brian Yuen",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/f/0f79a7fc-36b1-4397-8e67-6638379d3a38.jpg?1775728768"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Energybending
 {
     "name": "Energybending",
