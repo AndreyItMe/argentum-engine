@@ -239,6 +239,164 @@
     "colorIdentityOverride": []
 }
 
+// Aang, Swift Savior
+{
+    "name": "Aang, Swift Savior",
+    "manaCost": "{1}{W}{U}",
+    "typeLine": "Legendary Creature — Human Avatar Ally",
+    "oracleText": "Flash\nFlying\nWhen Aang enters, airbend up to one other target creature or spell. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana cost.)\nWaterbend {8}: Transform Aang.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": "TargetIsSpellOnStack"
+                    },
+                    "then": {
+                        "type": "Counter",
+                        "counterDestination": {
+                            "type": "CounterDestination.Exile",
+                            "ownerControls": true,
+                            "fixedAlternativeManaCost": "{2}"
+                        }
+                    },
+                    "otherwise": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": "ChosenTargets",
+                                "storeAs": "airbendChosen"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "airbendChosen",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile"
+                                },
+                                "storeMovedAs": "airbendExiled"
+                            },
+                            {
+                                "type": "GrantMayPlayFromExile",
+                                "from": "airbendExiled",
+                                "expiry": "Permanent",
+                                "ownerControls": true,
+                                "fixedAlternativeManaCost": "{2}"
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetOther",
+                    "baseRequirement": {
+                        "type": "TargetObject",
+                        "optional": true,
+                        "filter": {
+                            "baseFilter": "creature",
+                            "alternatives": [
+                                {
+                                    "baseFilter": {},
+                                    "zone": "Stack"
+                                }
+                            ]
+                        }
+                    },
+                    "id": "up to one other target creature or spell"
+                },
+                "descriptionOverride": "When Aang enters, airbend up to one other target creature or spell."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{8}"
+                    }
+                },
+                "effect": "Transform",
+                "hasWaterbend": true
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Aang and La, Ocean's Fury",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Avatar Spirit Ally",
+        "oracleText": "Reach, trample\nWhenever Aang and La attack, put a +1/+1 counter on each tapped creature you control.",
+        "creatureStats": {
+            "power": 5,
+            "toughness": 5
+        },
+        "keywords": [
+            "REACH",
+            "TRAMPLE"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_3",
+                    "trigger": "AttackEvent",
+                    "effect": {
+                        "type": "ForEach",
+                        "space": {
+                            "type": "IterationSpace.Group",
+                            "filter": {
+                                "baseFilter": "creature tapped ctrl:you"
+                            }
+                        },
+                        "body": {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        }
+                    },
+                    "descriptionOverride": "Whenever Aang and La attack, put a +1/+1 counter on each tapped creature you control."
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "204",
+            "rarity": "RARE",
+            "artist": "Tetsuko",
+            "imageUri": "https://cards.scryfall.io/normal/back/8/2/82866a0e-485a-4f7e-8c49-f7d9ff3f4ad4.jpg?1778914119"
+        },
+        "colorIdentityOverride": [
+            "WHITE",
+            "BLUE"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "204",
+        "rarity": "RARE",
+        "artist": "Tetsuko",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/2/82866a0e-485a-4f7e-8c49-f7d9ff3f4ad4.jpg?1778914119"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
 // Aang, at the Crossroads
 {
     "name": "Aang, at the Crossroads",
