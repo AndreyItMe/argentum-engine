@@ -2,7 +2,7 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 245 / 286
+**Implemented:** 246 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
 > **Status (June 2026):** 240/286 implemented. The **Airbend** keyword (permanent form) is now built —
@@ -212,7 +212,7 @@ up by Airbend, not Firebending).
 - [x] How to Start a Riot
 - [x] Iguana Parrot
 - [x] Invasion Reinforcements
-- [ ] Invasion Submersible
+- [x] Invasion Submersible
 - [x] Invasion Tactics
 - [x] Iroh's Demonstration
 - [ ] Iroh, Grand Lotus

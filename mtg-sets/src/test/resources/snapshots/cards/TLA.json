@@ -8733,6 +8733,89 @@
     ]
 }
 
+// Invasion Submersible
+{
+    "name": "Invasion Submersible",
+    "manaCost": "{2}{U}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "When this Vehicle enters, return up to one other target nonland permanent to its owner's hand.\nExhaust — Waterbend {3}: This Vehicle becomes an artifact creature. Put three +1/+1 counters on it. (While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}. Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 0
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "up to one other target nonland permanent"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "nonland permanent",
+                        "excludeSelf": true
+                    },
+                    "id": "up to one other target nonland permanent"
+                },
+                "descriptionOverride": "When this Vehicle enters, return up to one other target nonland permanent to its owner's hand."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCardType",
+                            "cardType": "Creature",
+                            "target": "Self"
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 3,
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "hasWaterbend": true,
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "57",
+        "rarity": "UNCOMMON",
+        "artist": "Sylvain Sarrailh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/af5299f5-1633-4c07-ade5-fd47e29ea4aa.jpg?1764120298"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Invasion Tactics
 {
     "name": "Invasion Tactics",
