@@ -276,7 +276,7 @@ up by Airbend, not Firebending).
 - [x] Rocky Rebuke
 - [ ] Rough Rhino Cavalry
 - [x] Rowdy Snowballers
-- [ ] Ruinous Waterbending
+- [x] Ruinous Waterbending
 - [x] Rumble Arena
 - [x] Saber-Tooth Moose-Lion
 - [x] Sandbender Scavengers

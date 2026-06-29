@@ -2484,6 +2484,81 @@
     ]
 }
 
+// Ruinous Waterbending
+{
+    "name": "Ruinous Waterbending",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Sorcery — Lesson",
+    "oracleText": "As an additional cost to cast this spell, you may waterbend {4}. (While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}.)\nAll creatures get -2/-2 until end of turn. If this spell's additional cost was paid, whenever a creature dies this turn, you gain 1 life.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": -2
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": -2
+                        },
+                        "target": "Self"
+                    }
+                },
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": "WaterbendWasPaid"
+                    },
+                    "then": {
+                        "type": "CreateDelayedTrigger",
+                        "effect": {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "trigger": {
+                            "event": {
+                                "type": "ZoneChangeEvent",
+                                "filter": "creature",
+                                "from": "Battlefield",
+                                "to": "Graveyard"
+                            },
+                            "binding": "ANY"
+                        }
+                    }
+                }
+            ]
+        },
+        "spellWaterbend": {
+            "amount": 4,
+            "optional": true
+        }
+    },
+    "metadata": {
+        "collectorNumber": "118",
+        "rarity": "UNCOMMON",
+        "artist": "Yuu Fujiki",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/3/53161747-c82b-41e8-90ea-7791ea262a85.jpg?1764120817"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Rumble Arena
 {
     "name": "Rumble Arena",
