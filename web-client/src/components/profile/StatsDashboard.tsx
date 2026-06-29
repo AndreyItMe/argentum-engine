@@ -6,6 +6,7 @@
  * opponents with an account link to their own public profile. An optional read-only recent-games list
  * is shown when provided (public profiles); the signed-in page keeps its own paginated table.
  */
+import { useState } from 'react'
 import type React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -33,7 +34,10 @@ import type {
   StatBucket,
   UserTournamentEntry,
 } from '@/api/account'
-import { colorForIdentity, colorLabel } from '@/components/admin/statFormat'
+import { colorForIdentity, colorLabel, splitModeBucket } from '@/components/admin/statFormat'
+import { HoverCardPreview } from '@/components/ui/HoverCardPreview'
+import { EloCell, GameModeCell, OpponentCell } from '@/components/profile/gameHistoryCells'
+import { TournamentDetailModal } from '@/components/profile/TournamentDetailModal'
 
 export interface StatsDashboardData {
   stats: AccountStats | null
@@ -78,6 +82,7 @@ export function StatsDashboard(props: StatsDashboardData) {
   const { stats, ratings, ratingHistory, colors, cardTypes, curve, creatureTypes, modes, sets, topCards, opponents, tournaments, recentGames } = props
   const navigate = useNavigate()
   const hasData = (stats?.games ?? 0) > 0
+  const [openTournament, setOpenTournament] = useState<number | null>(null)
 
   return (
     <>
@@ -191,7 +196,15 @@ export function StatsDashboard(props: StatsDashboardData) {
 
         {modes.length > 0 && (
           <Panel title="Game modes">
-            <ChipList items={modes.map((m) => `${prettyMode(m.label)} · ${m.count}`)} />
+            <div style={styles.chipRow}>
+              {mergeModes(modes).map((m) => (
+                <span key={`${m.primary}-${m.variant ?? ''}`} style={styles.chip}>
+                  {m.primary}
+                  {m.variant ? <span style={styles.chipVariant}> › {m.variant}</span> : null}
+                  <span style={styles.chipCount}> · {m.count}</span>
+                </span>
+              ))}
+            </div>
           </Panel>
         )}
 
@@ -204,7 +217,7 @@ export function StatsDashboard(props: StatsDashboardData) {
         {opponents.length > 0 && (
           <Panel title="Head to head">
             <p style={styles.subtle}>Most-played human opponents (AI excluded).</p>
-            <SimpleTable head={['Opponent', 'W', 'L']}>
+            <SimpleTable head={['Opponent', { label: 'W', numeric: true }, { label: 'L', numeric: true }]}>
               {opponents.map((o, i) => (
                 <tr key={`${o.opponent}-${i}`}>
                   <td style={styles.td}>
@@ -226,24 +239,25 @@ export function StatsDashboard(props: StatsDashboardData) {
 
         {topCards.length > 0 && (
           <Panel title="Most-played cards">
-            <div style={styles.cardChips}>
-              {topCards.map((c) => (
-                <span key={c.cardName} style={styles.cardChip}>
-                  <span style={styles.cardChipCount}>{c.copies}×</span>
-                  {c.cardName}
-                </span>
-              ))}
-            </div>
+            <TopCards cards={topCards} />
           </Panel>
         )}
 
         {tournaments.length > 0 && (
           <Panel title="Tournaments">
-            <SimpleTable head={['Date', 'Tournament', 'Place']}>
+            <p style={styles.subtle}>Open a tournament to see its final standings and every game’s replay.</p>
+            <SimpleTable head={['Date', 'Tournament', { label: 'Mode' }, { label: 'Place', numeric: true }]}>
               {tournaments.map((t, i) => (
-                <tr key={`${t.endedAt}-${i}`}>
+                <tr
+                  key={`${t.id}-${i}`}
+                  style={styles.clickableRow}
+                  onClick={() => setOpenTournament(t.id)}
+                >
                   <td style={styles.td}>{t.endedAt.slice(0, 10)}</td>
-                  <td style={styles.td}>{t.name ?? '—'}</td>
+                  <td style={styles.tdLink}>{t.name?.trim() || 'Tournament'}</td>
+                  <td style={styles.td}>
+                    <GameModeCell gameMode={t.gameMode} format={t.format} />
+                  </td>
                   <td style={styles.tdNum}>
                     {t.placement}/{t.playerCount}
                   </td>
@@ -256,11 +270,13 @@ export function StatsDashboard(props: StatsDashboardData) {
 
       {recentGames && recentGames.length > 0 && (
         <Panel title="Recent games" wide>
-          <SimpleTable head={['Date', 'Mode', 'Colors', 'Opponent', 'Result']}>
+          <SimpleTable head={['Date', 'Mode', 'Colors', 'Opponent', { label: 'Elo' }, { label: 'Result', numeric: true }]}>
             {recentGames.map((g, i) => (
               <tr key={`${g.gameId}-${i}`}>
                 <td style={styles.td}>{g.endedAt.slice(0, 10)}</td>
-                <td style={styles.td}>{prettyMode(g.gameMode)}</td>
+                <td style={styles.td}>
+                  <GameModeCell gameMode={g.gameMode} format={g.format} />
+                </td>
                 <td style={styles.td}>
                   {g.colors ? (
                     <span style={styles.colorsCell}>
@@ -271,15 +287,62 @@ export function StatsDashboard(props: StatsDashboardData) {
                     '—'
                   )}
                 </td>
-                <td style={styles.td}>{g.opponents ?? '—'}</td>
+                <td style={styles.td}>
+                  <OpponentCell entry={g} />
+                </td>
+                <td style={styles.td}>
+                  <EloCell entry={g} />
+                </td>
                 <td style={{ ...styles.tdNum, color: g.won ? '#5bd16e' : '#e15b6e' }}>{g.won ? 'Win' : 'Loss'}</td>
               </tr>
             ))}
           </SimpleTable>
         </Panel>
       )}
+
+      {openTournament != null && (
+        <TournamentDetailModal tournamentId={openTournament} onClose={() => setOpenTournament(null)} />
+      )}
     </>
   )
+}
+
+/** Most-played cards as count chips, each showing the card art on hover (like the deck viewer). */
+function TopCards({ cards }: { cards: CardStat[] }) {
+  const [hover, setHover] = useState<{ name: string; imageUri: string | null; pos: { x: number; y: number } } | null>(null)
+  return (
+    <div style={styles.cardChips}>
+      {cards.map((c) => (
+        <span
+          key={c.cardName}
+          style={styles.cardChip}
+          onMouseEnter={(e) => setHover({ name: c.cardName, imageUri: c.imageUri, pos: { x: e.clientX, y: e.clientY } })}
+          onMouseMove={(e) => setHover({ name: c.cardName, imageUri: c.imageUri, pos: { x: e.clientX, y: e.clientY } })}
+          onMouseLeave={() => setHover(null)}
+        >
+          <span style={styles.cardChipCount}>{c.copies}×</span>
+          {c.cardName}
+        </span>
+      ))}
+      {hover && <HoverCardPreview name={hover.name} imageUri={hover.imageUri} pos={hover.pos} />}
+    </div>
+  )
+}
+
+/**
+ * Merge raw mode buckets (keyed by a `"<gameMode>~<format>"` composite) into display rows, summing
+ * any whose hierarchy label collapses to the same thing (e.g. several Quick Game engine formats).
+ */
+function mergeModes(modes: StatBucket[]): { primary: string; variant: string | null; count: number }[] {
+  const acc = new Map<string, { primary: string; variant: string | null; count: number }>()
+  for (const m of modes) {
+    const { primary, variant } = splitModeBucket(m.label)
+    const key = `${primary}|${variant ?? ''}`
+    const cur = acc.get(key)
+    if (cur) cur.count += m.count
+    else acc.set(key, { primary, variant, count: m.count })
+  }
+  return [...acc.values()].sort((a, b) => b.count - a.count)
 }
 
 /** Colors-you-play as mana-pip rows with proportional bars. Reads nicer than an axis-labelled chart. */
@@ -289,14 +352,16 @@ function ColorsList({ colors }: { colors: StatBucket[] }) {
     <div style={styles.colorList}>
       {colors.map((c) => (
         <div key={c.label || 'colorless'} style={styles.colorRow}>
-          <span style={styles.colorPips}>{manaPips(c.label)}</span>
-          <span style={styles.colorName}>{colorLabel(c.label)}</span>
+          <div style={styles.colorHead}>
+            <span style={styles.colorPips}>{manaPips(c.label)}</span>
+            <span style={styles.colorName}>{colorLabel(c.label)}</span>
+            <span style={styles.colorCount}>{c.count}</span>
+          </div>
           <span style={styles.colorBarTrack}>
             <span
               style={{ ...styles.colorBarFill, width: `${(c.count / max) * 100}%`, backgroundColor: colorForIdentity(c.label) }}
             />
           </span>
-          <span style={styles.colorCount}>{c.count}</span>
         </div>
       ))}
     </div>
@@ -430,32 +495,35 @@ function ChipList({ items }: { items: string[] }) {
   )
 }
 
-function SimpleTable({ head, children }: { head: string[]; children: React.ReactNode }) {
+/** A table-head cell: a plain string (left-aligned) or `{ label, numeric }` for a right-aligned column. */
+type HeadCell = string | { label: string; numeric?: boolean }
+
+/**
+ * A minimal table whose header alignment matches its body columns. Pass a plain string for a normal
+ * left-aligned column and `{ label, numeric: true }` for a right-aligned numeric column — so headers
+ * always sit over the data they describe (previously every non-first header was forced right).
+ */
+function SimpleTable({ head, children }: { head: HeadCell[]; children: React.ReactNode }) {
   return (
     <div style={styles.tableWrap}>
       <table style={styles.table}>
         <thead>
           <tr>
-            {head.map((h, i) => (
-              <th key={h} style={i === 0 ? styles.th : styles.thNum}>
-                {h}
-              </th>
-            ))}
+            {head.map((h) => {
+              const label = typeof h === 'string' ? h : h.label
+              const numeric = typeof h === 'string' ? false : (h.numeric ?? false)
+              return (
+                <th key={label} style={numeric ? styles.thNum : styles.th}>
+                  {label}
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>{children}</tbody>
       </table>
     </div>
   )
-}
-
-function prettyMode(mode: string | null): string {
-  if (!mode) return '—'
-  return mode
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
 }
 
 const tooltipStyle: React.CSSProperties = {
@@ -521,13 +589,16 @@ const styles: Record<string, React.CSSProperties> = {
   ratingValue: { color: '#fff', fontSize: 30, fontWeight: 800, lineHeight: 1.1, marginTop: 4 },
   ratingTier: { fontSize: 14, fontWeight: 700, marginTop: 2 },
   ratingRecord: { color: '#888', fontSize: 12, marginTop: 4 },
-  colorList: { display: 'flex', flexDirection: 'column', gap: 10 },
-  colorRow: { display: 'flex', alignItems: 'center', gap: 10 },
-  colorPips: { display: 'inline-flex', minWidth: 70, fontSize: 15 },
-  colorName: { color: '#cdd', fontSize: 13, width: 92, flexShrink: 0 },
-  colorBarTrack: { flex: 1, height: 10, backgroundColor: '#1d1d2e', borderRadius: 999, overflow: 'hidden' },
+  // Two rows per colour: pips + name + count on top (wraps for many colours), full-width bar below —
+  // so a five-colour identity never overflows the panel the way a single fixed-width row did.
+  colorList: { display: 'flex', flexDirection: 'column', gap: 12 },
+  colorRow: { display: 'flex', flexDirection: 'column', gap: 5 },
+  colorHead: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  colorPips: { display: 'inline-flex', flexWrap: 'wrap', fontSize: 15, flexShrink: 0 },
+  colorName: { color: '#cdd', fontSize: 13, flex: '1 1 auto', minWidth: 0 },
+  colorBarTrack: { width: '100%', height: 8, backgroundColor: '#1d1d2e', borderRadius: 999, overflow: 'hidden' },
   colorBarFill: { display: 'block', height: '100%', borderRadius: 999 },
-  colorCount: { color: '#aab', fontSize: 12, width: 28, textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
+  colorCount: { color: '#aab', fontSize: 12, marginLeft: 'auto', flexShrink: 0, fontVariantNumeric: 'tabular-nums' },
   legend: { display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8, justifyContent: 'center' },
   legendItem: { display: 'inline-flex', alignItems: 'center', gap: 6, color: '#bbc', fontSize: 12 },
   legendSwatch: { width: 10, height: 10, borderRadius: 3, display: 'inline-block' },
@@ -542,6 +613,8 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#cdd',
     fontSize: 13,
   },
+  chipVariant: { color: '#9aa0b5' },
+  chipCount: { color: '#7f8694' },
   cardChips: { display: 'flex', flexWrap: 'wrap', gap: 8 },
   cardChip: {
     display: 'inline-flex',
@@ -561,6 +634,8 @@ const styles: Record<string, React.CSSProperties> = {
   thNum: { textAlign: 'right', color: '#888', fontWeight: 600, padding: '6px 8px', borderBottom: '1px solid #2a2a3e' },
   td: { textAlign: 'left', color: '#ccc', padding: '6px 8px', borderBottom: '1px solid #1f1f2e' },
   tdNum: { textAlign: 'right', color: '#ccc', padding: '6px 8px', borderBottom: '1px solid #1f1f2e' },
+  tdLink: { textAlign: 'left', color: '#8b9bff', padding: '6px 8px', borderBottom: '1px solid #1f1f2e' },
+  clickableRow: { cursor: 'pointer' },
   opponentLink: { background: 'none', border: 'none', color: '#8b9bff', cursor: 'pointer', fontSize: 13, padding: 0 },
   colorsCell: { display: 'inline-flex', alignItems: 'center', gap: 6 },
   colorDot: { width: 9, height: 9, borderRadius: 999, display: 'inline-block' },

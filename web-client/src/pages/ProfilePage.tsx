@@ -18,6 +18,7 @@ import {
 } from '@/api/account'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { DeckViewModal } from '@/components/profile/DeckViewModal'
+import { EloCell, GameModeCell, OpponentCell } from '@/components/profile/gameHistoryCells'
 import { colorForIdentity, colorLabel } from '@/components/admin/statFormat'
 import { useAuthStore } from '@/store/authStore'
 
@@ -203,11 +204,24 @@ export function ProfilePage() {
                   </span>
                 )}
               </div>
-              <SimpleTable head={['Date', 'Mode', 'Colors', 'Opponent', 'Result', 'Deck', 'Replay']}>
+              <SimpleTable
+                head={[
+                  'Date',
+                  'Mode',
+                  'Colors',
+                  'Opponent',
+                  { label: 'Elo' },
+                  { label: 'Result', numeric: true },
+                  { label: 'Deck', numeric: true },
+                  { label: 'Replay', numeric: true },
+                ]}
+              >
                 {history.map((g, i) => (
                   <tr key={`${g.gameId}-${i}`}>
                     <td style={styles.td}>{g.endedAt.slice(0, 10)}</td>
-                    <td style={styles.td}>{prettyMode(g.gameMode)}</td>
+                    <td style={styles.td}>
+                      <GameModeCell gameMode={g.gameMode} format={g.format} />
+                    </td>
                     <td style={styles.td}>
                       {g.colors ? (
                         <span style={styles.colorsCell}>
@@ -218,7 +232,12 @@ export function ProfilePage() {
                         '—'
                       )}
                     </td>
-                    <td style={styles.td}>{g.opponents ?? '—'}</td>
+                    <td style={styles.td}>
+                      <OpponentCell entry={g} />
+                    </td>
+                    <td style={styles.td}>
+                      <EloCell entry={g} />
+                    </td>
                     <td style={{ ...styles.tdNum, color: g.won ? '#5bd16e' : '#e15b6e' }}>
                       {g.won ? 'Win' : 'Loss'}
                     </td>
@@ -324,33 +343,30 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   )
 }
 
-function SimpleTable({ head, children }: { head: string[]; children: React.ReactNode }) {
+/** A table-head cell: a plain string (left-aligned) or `{ label, numeric }` for a right-aligned column. */
+type HeadCell = string | { label: string; numeric?: boolean }
+
+function SimpleTable({ head, children }: { head: HeadCell[]; children: React.ReactNode }) {
   return (
     <div style={styles.tableWrap}>
       <table style={styles.table}>
         <thead>
           <tr>
-            {head.map((h, i) => (
-              <th key={h} style={i === 0 ? styles.th : styles.thNum}>
-                {h}
-              </th>
-            ))}
+            {head.map((h) => {
+              const label = typeof h === 'string' ? h : h.label
+              const numeric = typeof h === 'string' ? false : (h.numeric ?? false)
+              return (
+                <th key={label} style={numeric ? styles.thNum : styles.th}>
+                  {label}
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>{children}</tbody>
       </table>
     </div>
   )
-}
-
-/** Turn a raw game-mode token (TOURNAMENT / QUICK_GAME / ...) into a readable label. */
-function prettyMode(mode: string | null): string {
-  if (!mode) return '—'
-  return mode
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
 }
 
 const styles: Record<string, React.CSSProperties> = {

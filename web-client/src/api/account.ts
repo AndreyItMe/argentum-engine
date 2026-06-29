@@ -216,13 +216,27 @@ export interface HeadToHead {
   readonly losses: number
 }
 
+/** One opponent seat in a recorded game; `userId` is set only for signed-in opponents. */
+export interface GameOpponent {
+  readonly name: string
+  readonly userId: string | null
+  readonly isAi: boolean
+}
+
 export interface GameHistoryEntry {
   readonly endedAt: string
   readonly gameMode: string | null
   readonly format: string | null
   readonly colors: string | null
+  /** Comma-joined opponent names — a plain label fallback. */
   readonly opponents: string | null
+  /** Per-seat opponents, so signed-in opponents can link to their public profile. */
+  readonly opponentList: GameOpponent[]
   readonly won: boolean
+  /** This player's ELO before a ranked game; null for non-ranked games. */
+  readonly selfRating: number | null
+  /** The opponent's ELO at the time of a ranked game; null otherwise. */
+  readonly opponentRating: number | null
   readonly gameId: string
   /** True when a compact replay was stored for this game and can be watched/shared. */
   readonly hasReplay: boolean
@@ -232,15 +246,60 @@ export interface CardStat {
   readonly cardName: string
   readonly copies: number
   readonly decks: number
+  /** Default-printing art URL (per-user top cards only); null when unresolved. */
+  readonly imageUri: string | null
 }
 
 export interface UserTournamentEntry {
+  /** Opens the full tournament detail (standings + games). */
+  readonly id: number
   readonly endedAt: string
   readonly name: string | null
   readonly format: string | null
   readonly gameMode: string | null
   readonly placement: number
   readonly playerCount: number
+}
+
+/** One player's final standing in a tournament. */
+export interface TournamentStanding {
+  readonly placement: number
+  readonly playerName: string
+  readonly userId: string | null
+  readonly isAi: boolean
+  readonly wins: number
+  readonly losses: number
+  readonly draws: number
+}
+
+/** One seat within a single tournament game. */
+export interface TournamentGamePlayer {
+  readonly name: string
+  readonly userId: string | null
+  readonly isAi: boolean
+  readonly won: boolean
+}
+
+/** One game played within a tournament. */
+export interface TournamentGame {
+  readonly gameId: string
+  readonly endedAt: string
+  readonly hasReplay: boolean
+  readonly players: TournamentGamePlayer[]
+}
+
+/** Full public detail for one tournament: standings + every game played (all players'). */
+export interface TournamentDetail {
+  readonly id: number
+  readonly name: string | null
+  readonly format: string | null
+  readonly gameMode: string | null
+  readonly setCodes: string | null
+  readonly playerCount: number
+  readonly winnerName: string | null
+  readonly endedAt: string
+  readonly standings: TournamentStanding[]
+  readonly games: TournamentGame[]
 }
 
 /** One card line within a stored deck. */
@@ -383,6 +442,14 @@ export async function fetchHistoryPage(limit: number, offset: number): Promise<H
   const entries = (await res.json()) as GameHistoryEntry[]
   const total = Number(res.headers.get('X-Total-Count') ?? entries.length)
   return { entries, total: Number.isFinite(total) ? total : entries.length }
+}
+
+/** Full public detail for one tournament (standings + all games). */
+export async function fetchTournamentDetail(id: number): Promise<TournamentDetail> {
+  const res = await fetch(`/api/stats/tournaments/${id}`, { headers: authHeaders() })
+  if (res.status === 404) throw new ProfileNotFoundError()
+  if (!res.ok) throw new Error(`Failed to load tournament (${res.status})`)
+  return (await res.json()) as TournamentDetail
 }
 
 /** Both seats' decklists for one of the user's finished games (for the recent-games deck viewer). */

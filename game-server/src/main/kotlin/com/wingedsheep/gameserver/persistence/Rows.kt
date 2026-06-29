@@ -59,6 +59,12 @@ data class MatchResultRow(
     val gameId: String,
     val format: String? = null,
     val tournamentName: String? = null,
+    /**
+     * The lobby that produced this game, when it came from one (tournament bracket / multiplayer pod).
+     * Joins to [TournamentRow.lobbyId] so a tournament's full game list can be found. Null for
+     * non-lobby games (quick game / casual) and games recorded before this column existed.
+     */
+    val lobbyId: String? = null,
     /** Matchmaking context: a [LobbyGameMode] name, or QUICK_GAME / CASUAL / HOTSEAT for non-lobby games. */
     val gameMode: String? = null,
     /** True for a ranked (ELO-adjusting) game. */

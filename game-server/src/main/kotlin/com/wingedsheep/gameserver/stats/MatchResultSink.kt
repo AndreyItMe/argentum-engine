@@ -15,6 +15,8 @@ data class RecordedMatch(
     val gameId: String,
     val format: String?,
     val tournamentName: String?,
+    /** The lobby that produced this game, or null for non-lobby games. Links games to a tournament. */
+    val lobbyId: String? = null,
     /** Matchmaking context: a LobbyGameMode name, or QUICK_GAME / CASUAL for non-lobby games. */
     val gameMode: String?,
     /** True for a ranked (ELO-adjusting) game. */
@@ -79,6 +81,7 @@ class JdbcMatchResultSink(private val matchResults: MatchResultRepository) : Mat
                 gameId = match.gameId,
                 format = match.format,
                 tournamentName = match.tournamentName,
+                lobbyId = match.lobbyId,
                 gameMode = match.gameMode,
                 ranked = match.ranked,
                 frameCount = match.frameCount,

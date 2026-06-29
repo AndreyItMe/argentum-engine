@@ -17,7 +17,7 @@ import {
   setUserAdmin,
 } from '@/api/adminUsers'
 import type { AdminAuth } from '@/api/adminAuth'
-import { colorForIdentity, colorLabel } from './statFormat'
+import { colorForIdentity, colorLabel, mergeModeBuckets } from './statFormat'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle } from './adminUi'
 import { AdminDeckModal, AdminSavedDecks } from './AdminPlayerDecks'
 
@@ -208,7 +208,7 @@ function PlayerDetail({
 
           {detail.modes.length > 0 && (
             <Panel title="Game modes">
-              <ChipList items={detail.modes.map((m) => `${prettyMode(m.label)} · ${m.count}`)} />
+              <ChipList items={mergeModeBuckets(detail.modes).map((m) => `${m.label} · ${m.count}`)} />
             </Panel>
           )}
 

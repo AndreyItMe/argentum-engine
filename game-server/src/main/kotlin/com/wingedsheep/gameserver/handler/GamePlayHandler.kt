@@ -697,6 +697,7 @@ class GamePlayHandler(
                         it.setNames.joinToString(" / ") + " " + it.format.name.lowercase()
                             .replaceFirstChar { c -> c.uppercase() }
                     },
+                    lobbyId = lobbyId,
                     gameMode = gameMode,
                     ranked = gameSession.ranked,
                     frameCount = frameCount,

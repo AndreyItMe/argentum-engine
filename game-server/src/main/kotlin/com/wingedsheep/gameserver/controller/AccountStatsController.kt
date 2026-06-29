@@ -210,6 +210,17 @@ class AccountStatsController(
     ): List<UserTournamentEntry> =
         statsQuery.tournamentHistory(authSupport.requireUser(auth).userId, limit.coerceIn(1, 100))
 
+    /**
+     * Public detail for one tournament: final standings for every participant and every game played in
+     * it (all players', not just the viewer's), each linkable to its public replay. No auth required —
+     * the same data is already public on each player's profile — but the tournament must exist (404).
+     */
+    @GetMapping("/tournaments/{id}")
+    fun tournamentDetail(@PathVariable id: Long): ResponseEntity<com.wingedsheep.gameserver.stats.TournamentDetail> {
+        val detail = statsQuery.tournamentDetail(id) ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(detail)
+    }
+
     // ---- Public profiles --------------------------------------------------------------------
 
     /** Everything a read-only public profile shows for another player, in one request. */

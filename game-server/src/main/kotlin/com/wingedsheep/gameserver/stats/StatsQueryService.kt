@@ -21,14 +21,29 @@ data class HeadToHead(
     val losses: Long,
 )
 
+/** One opponent seat in a recorded game (so the client can link to a human opponent's profile). */
+data class GameOpponent(
+    val name: String,
+    /** Null for guests and AI seats — only signed-in opponents link to a public profile. */
+    val userId: UUID?,
+    val isAi: Boolean,
+)
+
 /** One row in a user's game history. */
 data class GameHistoryEntry(
     val endedAt: String,
     val gameMode: String?,
     val format: String?,
     val colors: String?,
+    /** Comma-joined opponent names — kept for callers that just want a label (e.g. the deck modal). */
     val opponents: String?,
+    /** Per-seat opponents, so signed-in opponents can be linked to their public profile. */
+    val opponentList: List<GameOpponent>,
     val won: Boolean,
+    /** This player's ELO *before* this game, when it was a ranked game; null otherwise. */
+    val selfRating: Int?,
+    /** The opponent's ELO at the time of a ranked game; null otherwise (or for multi-seat games). */
+    val opponentRating: Int?,
     /** Stable game id, used to open/share the replay. */
     val gameId: String,
     /** True when a compact replay was stored for this game and can be watched/shared. */
@@ -98,20 +113,67 @@ data class DailyCount(val day: String, val count: Long)
 /** One IP and how many games connected from it (admin-only; resolved to a location elsewhere). */
 data class IpCount(val ip: String, val count: Long)
 
-/** A card and how often it has appeared in decks. */
-data class CardStat(val cardName: String, val copies: Long, val decks: Long)
+/** A card and how often it has appeared in decks. [imageUri] is set only for per-user top cards. */
+data class CardStat(val cardName: String, val copies: Long, val decks: Long, val imageUri: String? = null)
 
 /** A card's win rate: games (decks containing it) and how many of those decks won. */
 data class CardWinRate(val cardName: String, val decks: Long, val wins: Long, val winRate: Double)
 
-/** One tournament in a user's tournament history. */
+/** One tournament in a user's tournament history. [id] opens the full tournament detail. */
 data class UserTournamentEntry(
+    val id: Long,
     val endedAt: String,
     val name: String?,
     val format: String?,
     val gameMode: String?,
     val placement: Int,
     val playerCount: Int,
+)
+
+/** One player's final standing in a tournament. */
+data class TournamentStanding(
+    val placement: Int,
+    val playerName: String,
+    /** Null for guests and AI seats. */
+    val userId: UUID?,
+    val isAi: Boolean,
+    val wins: Int,
+    val losses: Int,
+    val draws: Int,
+)
+
+/** One seat in a single tournament game. */
+data class TournamentGamePlayer(
+    val name: String,
+    val userId: UUID?,
+    val isAi: Boolean,
+    val won: Boolean,
+)
+
+/** One game played within a tournament, with its replay availability. */
+data class TournamentGame(
+    val gameId: String,
+    val endedAt: String,
+    val hasReplay: Boolean,
+    val players: List<TournamentGamePlayer>,
+)
+
+/**
+ * Full, public detail for one finished tournament: every participant's final standing and every game
+ * that was played (not just the requesting player's), each linkable to its replay. [games] is empty
+ * for tournaments recorded before games carried a lobby id (those show standings only).
+ */
+data class TournamentDetail(
+    val id: Long,
+    val name: String?,
+    val format: String?,
+    val gameMode: String?,
+    val setCodes: String?,
+    val playerCount: Int,
+    val winnerName: String?,
+    val endedAt: String,
+    val standings: List<TournamentStanding>,
+    val games: List<TournamentGame>,
 )
 
 /** A registered account plus its lifetime game counts, for the admin Players list. */
@@ -186,14 +248,19 @@ class StatsQueryService(
         userId,
     )
 
-    /** How often the user has played each game mode, most-played first. */
+    /**
+     * How often the user has played each game mode, most-played first. The label is a composite
+     * `"<gameMode>~<format>"` (format may be empty) so the client can render the mode as a hierarchy
+     * (e.g. "Tournament › Draft"); the client merges buckets whose display label collapses to the same
+     * thing. `~` never occurs in the enum names being concatenated.
+     */
     fun modeBreakdown(userId: UUID): List<StatBucket> = jdbc.query(
         """
-        SELECT COALESCE(r.game_mode, 'UNKNOWN') AS label, count(*) AS n
+        SELECT COALESCE(r.game_mode, 'UNKNOWN') || '~' || COALESCE(r.format, '') AS label, count(*) AS n
         FROM match_participants p
         JOIN match_results r ON r.id = p.match_id
         WHERE p.user_id = ?
-        GROUP BY COALESCE(r.game_mode, 'UNKNOWN')
+        GROUP BY COALESCE(r.game_mode, 'UNKNOWN') || '~' || COALESCE(r.format, '')
         ORDER BY n DESC
         """.trimIndent(),
         { rs, _ -> StatBucket(rs.getString("label"), rs.getLong("n")) },
@@ -247,17 +314,15 @@ class StatsQueryService(
     fun recentGames(userId: UUID, limit: Int, offset: Int): List<GameHistoryEntry> {
         data class Row(
             val pid: Long,
+            val mid: Long,
+            val gameId: String,
             val entry: GameHistoryEntry,
         )
         val rows = jdbc.query(
             """
-            SELECT me.id AS pid, r.ended_at AS ended_at, r.game_mode AS game_mode, r.format AS format,
-                   me.won AS won, me.colors AS colors, r.game_id AS game_id,
-                   (gr.id IS NOT NULL) AS has_replay,
-                   (SELECT string_agg(COALESCE(u2.display_name, o.player_name), ', ')
-                      FROM match_participants o
-                      LEFT JOIN users u2 ON u2.id = o.user_id
-                      WHERE o.match_id = r.id AND o.id <> me.id) AS opponents
+            SELECT me.id AS pid, me.match_id AS mid, r.ended_at AS ended_at, r.game_mode AS game_mode,
+                   r.format AS format, me.won AS won, me.colors AS colors, r.game_id AS game_id,
+                   (gr.id IS NOT NULL) AS has_replay
             FROM match_participants me
             JOIN match_results r ON r.id = me.match_id
             LEFT JOIN game_replays gr ON gr.game_id = r.game_id
@@ -268,13 +333,18 @@ class StatsQueryService(
             { rs, _ ->
                 Row(
                     pid = rs.getLong("pid"),
+                    mid = rs.getLong("mid"),
+                    gameId = rs.getString("game_id"),
                     entry = GameHistoryEntry(
                         endedAt = rs.getTimestamp("ended_at").toInstant().toString(),
                         gameMode = rs.getString("game_mode"),
                         format = rs.getString("format"),
                         colors = rs.getString("colors"),
-                        opponents = rs.getString("opponents"),
+                        opponents = null,
+                        opponentList = emptyList(),
                         won = rs.getBoolean("won"),
+                        selfRating = null,
+                        opponentRating = null,
                         gameId = rs.getString("game_id"),
                         hasReplay = rs.getBoolean("has_replay"),
                     ),
@@ -283,13 +353,79 @@ class StatsQueryService(
             userId, limit, offset,
         )
         val cardsByPid = cardsForParticipants(rows.map { it.pid })
+        val opponentsByMid = opponentsForMatches(rows.map { it.mid }, userId)
+        val ratingByGame = ratingsForGames(rows.map { it.gameId }, userId)
         return rows.map { row ->
             val cards = cardsByPid[row.pid]
             // Recompute from the recorded deck when we have one; otherwise keep whatever was stored.
             val colors = if (cards.isNullOrEmpty()) row.entry.colors
             else deckProfiler.profile(cards.map { it.cardName }).colors
-            row.entry.copy(colors = colors)
+            val opps = opponentsByMid[row.mid].orEmpty()
+            val rating = ratingByGame[row.gameId]
+            row.entry.copy(
+                colors = colors,
+                opponents = opps.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name },
+                opponentList = opps,
+                selfRating = rating?.first,
+                opponentRating = rating?.second,
+            )
         }
+    }
+
+    /** Opponent seats (everyone but [userId]'s own seat) for a set of match ids, keyed by match id. */
+    private fun opponentsForMatches(matchIds: List<Long>, userId: UUID): Map<Long, List<GameOpponent>> {
+        if (matchIds.isEmpty()) return emptyMap()
+        val placeholders = matchIds.joinToString(",") { "?" }
+        val out = LinkedHashMap<Long, MutableList<GameOpponent>>()
+        jdbc.query(
+            """
+            SELECT o.match_id AS mid, COALESCE(u.display_name, o.player_name) AS name,
+                   o.user_id AS uid, o.is_ai AS is_ai
+            FROM match_participants o
+            LEFT JOIN users u ON u.id = o.user_id
+            WHERE o.match_id IN ($placeholders) AND (o.user_id IS NULL OR o.user_id <> ?)
+            ORDER BY o.id
+            """.trimIndent(),
+            { rs ->
+                out.getOrPut(rs.getLong("mid")) { mutableListOf() }.add(
+                    GameOpponent(
+                        name = rs.getString("name"),
+                        userId = rs.getObject("uid", UUID::class.java),
+                        isAi = rs.getBoolean("is_ai"),
+                    ),
+                )
+            },
+            *buildList<Any> { addAll(matchIds); add(userId) }.toTypedArray(),
+        )
+        return out
+    }
+
+    /**
+     * Each player's pre-game ELO and the opponent's ELO for the given ranked games, keyed by game id.
+     * `rating_before` is the rating the player carried into the game and `opponent_rating` is the
+     * opponent's rating at that time — i.e. both players' ELO "at the time the game was played".
+     * Non-ranked games have no row and are simply absent from the map.
+     */
+    private fun ratingsForGames(gameIds: List<String>, userId: UUID): Map<String, Pair<Int, Int?>> {
+        if (gameIds.isEmpty()) return emptyMap()
+        val placeholders = gameIds.joinToString(",") { "?" }
+        val out = HashMap<String, Pair<Int, Int?>>()
+        jdbc.query(
+            """
+            SELECT game_id, rating_before, opponent_rating
+            FROM rating_history
+            WHERE user_id = ? AND game_id IN ($placeholders)
+            """.trimIndent(),
+            { rs ->
+                val gameId = rs.getString("game_id") ?: return@query
+                val self = Math.round(rs.getDouble("rating_before")).toInt()
+                val oppRaw = rs.getObject("opponent_rating")
+                val opp = if (oppRaw == null) null else Math.round((oppRaw as Number).toDouble()).toInt()
+                out[gameId] = self to opp
+            },
+            *buildList<Any> { add(userId); addAll(gameIds) }.toTypedArray(),
+        )
+        return out
     }
 
     /**
@@ -500,13 +636,21 @@ class StatsQueryService(
         """.trimIndent(),
         { rs, _ -> CardStat(rs.getString("card_name"), rs.getLong("copies"), rs.getLong("decks")) },
         userId,
-    ).filterNot { lookupCard(it.cardName)?.typeLine?.isBasicLand == true }.take(limit)
+    ).filterNot { lookupCard(it.cardName)?.typeLine?.isBasicLand == true }
+        .take(limit)
+        // Resolve each card's art the same way as the deck viewer (default printing → canonical
+        // metadata) so the most-played-cards section can show a hover preview without a Scryfall hit.
+        .map { it.copy(imageUri = imageUriFor(it.cardName)) }
+
+    /** Default-printing art URL for a card name, or null when it can't be resolved (mirrors [enrichDeckCards]). */
+    private fun imageUriFor(name: String): String? =
+        lookupCard(name)?.let { printingRegistry.defaultPrinting(it.name)?.imageUri ?: it.metadata.imageUri }
 
     /** The user's tournament finishes, newest first. */
     fun tournamentHistory(userId: UUID, limit: Int): List<UserTournamentEntry> = jdbc.query(
         """
-        SELECT t.ended_at AS ended_at, t.name AS name, t.format AS format, t.game_mode AS game_mode,
-               tp.placement AS placement, t.player_count AS player_count
+        SELECT t.id AS id, t.ended_at AS ended_at, t.name AS name, t.format AS format,
+               t.game_mode AS game_mode, tp.placement AS placement, t.player_count AS player_count
         FROM tournament_participants tp
         JOIN tournaments t ON t.id = tp.tournament_id
         WHERE tp.user_id = ?
@@ -515,6 +659,7 @@ class StatsQueryService(
         """.trimIndent(),
         { rs, _ ->
             UserTournamentEntry(
+                id = rs.getLong("id"),
                 endedAt = rs.getTimestamp("ended_at").toInstant().toString(),
                 name = rs.getString("name"),
                 format = rs.getString("format"),
@@ -525,6 +670,106 @@ class StatsQueryService(
         },
         userId, limit,
     )
+
+    /**
+     * Full public detail for one tournament: every participant's standing plus every game played in it
+     * (found by the lobby id the games were recorded under), each with replay availability. Returns
+     * null when no tournament has that id. Games are empty for tournaments recorded before games
+     * carried a lobby id.
+     */
+    fun tournamentDetail(id: Long): TournamentDetail? {
+        val header = jdbc.query(
+            """
+            SELECT id, lobby_id, name, format, game_mode, set_codes, player_count, winner_name, ended_at
+            FROM tournaments WHERE id = ?
+            """.trimIndent(),
+            { rs, _ ->
+                TournamentDetail(
+                    id = rs.getLong("id"),
+                    name = rs.getString("name"),
+                    format = rs.getString("format"),
+                    gameMode = rs.getString("game_mode"),
+                    setCodes = rs.getString("set_codes"),
+                    playerCount = rs.getInt("player_count"),
+                    winnerName = rs.getString("winner_name"),
+                    endedAt = rs.getTimestamp("ended_at").toInstant().toString(),
+                    standings = emptyList(),
+                    games = emptyList(),
+                ) to rs.getString("lobby_id")
+            },
+            id,
+        ).firstOrNull() ?: return null
+        val (detail, lobbyId) = header
+
+        val standings = jdbc.query(
+            """
+            SELECT tp.placement AS placement, COALESCE(u.display_name, tp.player_name) AS name,
+                   tp.user_id AS uid, tp.is_ai AS is_ai, tp.wins AS wins, tp.losses AS losses, tp.draws AS draws
+            FROM tournament_participants tp
+            LEFT JOIN users u ON u.id = tp.user_id
+            WHERE tp.tournament_id = ?
+            ORDER BY tp.placement ASC, name ASC
+            """.trimIndent(),
+            { rs, _ ->
+                TournamentStanding(
+                    placement = rs.getInt("placement"),
+                    playerName = rs.getString("name"),
+                    userId = rs.getObject("uid", UUID::class.java),
+                    isAi = rs.getBoolean("is_ai"),
+                    wins = rs.getInt("wins"),
+                    losses = rs.getInt("losses"),
+                    draws = rs.getInt("draws"),
+                )
+            },
+            id,
+        )
+
+        val games = if (lobbyId.isNullOrEmpty()) emptyList() else tournamentGames(lobbyId)
+        return detail.copy(standings = standings, games = games)
+    }
+
+    /** Every recorded game for a lobby (the tournament's bracket games), oldest first, with seats. */
+    private fun tournamentGames(lobbyId: String): List<TournamentGame> {
+        data class GameRow(val mid: Long, val gameId: String, val endedAt: String, val hasReplay: Boolean)
+        val games = jdbc.query(
+            """
+            SELECT r.id AS mid, r.game_id AS game_id, r.ended_at AS ended_at, (gr.id IS NOT NULL) AS has_replay
+            FROM match_results r
+            LEFT JOIN game_replays gr ON gr.game_id = r.game_id
+            WHERE r.lobby_id = ?
+            ORDER BY r.ended_at ASC
+            """.trimIndent(),
+            { rs, _ ->
+                GameRow(rs.getLong("mid"), rs.getString("game_id"), rs.getTimestamp("ended_at").toInstant().toString(), rs.getBoolean("has_replay"))
+            },
+            lobbyId,
+        )
+        if (games.isEmpty()) return emptyList()
+        val placeholders = games.joinToString(",") { "?" }
+        val playersByMid = LinkedHashMap<Long, MutableList<TournamentGamePlayer>>()
+        jdbc.query(
+            """
+            SELECT p.match_id AS mid, COALESCE(u.display_name, p.player_name) AS name,
+                   p.user_id AS uid, p.is_ai AS is_ai, p.won AS won
+            FROM match_participants p
+            LEFT JOIN users u ON u.id = p.user_id
+            WHERE p.match_id IN ($placeholders)
+            ORDER BY p.id
+            """.trimIndent(),
+            { rs ->
+                playersByMid.getOrPut(rs.getLong("mid")) { mutableListOf() }.add(
+                    TournamentGamePlayer(
+                        name = rs.getString("name"),
+                        userId = rs.getObject("uid", UUID::class.java),
+                        isAi = rs.getBoolean("is_ai"),
+                        won = rs.getBoolean("won"),
+                    ),
+                )
+            },
+            *games.map { it.mid }.toTypedArray(),
+        )
+        return games.map { TournamentGame(it.gameId, it.endedAt, it.hasReplay, playersByMid[it.mid].orEmpty()) }
+    }
 
     // ---- Global (admin) ----------------------------------------------------------------------
 
