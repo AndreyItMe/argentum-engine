@@ -2586,12 +2586,20 @@ class ClientStateTransformer(
             }
         }
 
-        // Surface temporarily-granted triggered abilities (e.g., Sygg, Wanderwine Wisdom
-        // grants a draw-on-combat-damage trigger to target creature until end of turn).
-        // The granted ability is real game state but the printed oracle text on the
-        // recipient doesn't reflect it, so without a badge a player can't see the grant.
+        // Surface temporarily-granted abilities (triggered / activated / cast-keyword). E.g. Sygg,
+        // Wanderwine Wisdom grants a draw-on-combat-damage trigger until end of turn; Songcrafter
+        // Mage grants harmonize to a graveyard spell. The grant is real game state but the printed
+        // oracle text on the recipient doesn't reflect it, so without a badge a player can't see it.
+        //
+        // The *same* ability can be granted to one permanent more than once — a land earthbended
+        // twice holds two separate grant entries of the identical "return it tapped" trigger (each
+        // grant gets a fresh AbilityId, so they don't collapse by id). To the player they're one
+        // ability, so dedupe by the shown description and emit a single badge instead of stacking
+        // duplicate "Granted Ability" tiles.
+        val seenGrantDescriptions = HashSet<String>()
         for (granted in state.grantedTriggeredAbilities) {
             if (granted.entityId != entityId) continue
+            if (!seenGrantDescriptions.add(granted.ability.description)) continue
             effects.add(
                 ClientCardEffect(
                     effectId = "granted_trig_${granted.ability.id.value}",
@@ -2603,6 +2611,7 @@ class ClientStateTransformer(
         }
         for (granted in state.grantedActivatedAbilities) {
             if (granted.entityId != entityId) continue
+            if (!seenGrantDescriptions.add(granted.ability.description)) continue
             effects.add(
                 ClientCardEffect(
                     effectId = "granted_act_${granted.ability.id.value}",
@@ -2612,11 +2621,9 @@ class ClientStateTransformer(
                 )
             )
         }
-        // Surface a temporarily-granted cast keyword (Songcrafter Mage grants harmonize to an
-        // instant/sorcery in the graveyard). The grant is real game state but not reflected in
-        // the card's printed text, so a badge shows the player the card is now castable.
         for (granted in state.grantedKeywordAbilities) {
             if (granted.entityId != entityId) continue
+            if (!seenGrantDescriptions.add(granted.ability.description)) continue
             effects.add(
                 ClientCardEffect(
                     effectId = "granted_kw_${granted.ability.keyword?.name ?: "keyword"}",

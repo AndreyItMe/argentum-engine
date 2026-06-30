@@ -133,6 +133,38 @@ class EarthbendingLessonTest : FunSpec({
         driver.isTapped(forest) shouldBe true
     }
 
+    test("earthbended twice — client view shows a single Granted Ability badge") {
+        // Earthbending the same land twice grants the identical "return it tapped" self-trigger
+        // twice, so state holds two grant entries (each with its own AbilityId). To the player
+        // that's one ability, so the client view must collapse them into a single badge rather
+        // than stacking two duplicate "Granted Ability" tiles. See ClientStateTransformer dedup.
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 40), startingLife = 20)
+
+        val you = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val forest = driver.putLandOnBattlefield(you, "Forest")
+
+        val lesson1 = driver.putCardInHand(you, "Earthbending Lesson")
+        driver.giveMana(you, Color.GREEN, 4)
+        driver.castSpell(you, lesson1, listOf(forest)).isSuccess shouldBe true
+        driver.bothPass()
+
+        val lesson2 = driver.putCardInHand(you, "Earthbending Lesson")
+        driver.giveMana(you, Color.GREEN, 4)
+        driver.castSpell(you, lesson2, listOf(forest)).isSuccess shouldBe true
+        driver.bothPass()
+
+        // Premise of the bug: two grant entries now ride the same land.
+        driver.state.grantedTriggeredAbilities.count { it.entityId == forest } shouldBe 2
+
+        // …but the client view collapses them to one badge.
+        val transformer = com.wingedsheep.engine.view.ClientStateTransformer(driver.cardRegistry)
+        val card = transformer.transform(driver.state, you).cards[forest]!!
+        card.activeEffects.count { it.icon == "granted-ability" } shouldBe 1
+    }
+
     test("Rule 400.7 — granted abilities are dropped when the land re-enters the battlefield") {
         // The earthbended land carries a granted "When this dies or is exiled, return…" trigger
         // while it's animated. Once the granted trigger fires and the land returns to the
