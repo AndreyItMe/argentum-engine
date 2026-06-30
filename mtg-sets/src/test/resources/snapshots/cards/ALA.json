@@ -1,3 +1,46 @@
+// Death Baron
+{
+    "name": "Death Baron",
+    "manaCost": "{1}{B}{B}",
+    "typeLine": "Creature — Zombie Wizard",
+    "oracleText": "Skeletons you control and other Zombies you control get +1/+1 and have deathtouch. (Any amount of damage they deal to a creature is enough to destroy it.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Zombie|Skeleton ctrl:you",
+                    "excludeSelf": true
+                }
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "DEATHTOUCH",
+                "filter": {
+                    "baseFilter": "creature Zombie|Skeleton ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "70",
+        "rarity": "RARE",
+        "artist": "Nils Hamm",
+        "flavorText": "For the necromancer barons, killing and recruitment are one and the same.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/d/4d59b5e5-fc16-4f1a-9f17-f42908473531.jpg?1782715970"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Dispeller's Capsule
 {
     "name": "Dispeller's Capsule",

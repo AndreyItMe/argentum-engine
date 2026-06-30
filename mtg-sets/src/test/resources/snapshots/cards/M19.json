@@ -282,6 +282,48 @@
     ]
 }
 
+// Kargan Dragonrider
+{
+    "name": "Kargan Dragonrider",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Warrior",
+    "oracleText": "As long as you control a Dragon, this creature has flying.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FLYING",
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature Dragon"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "297",
+        "artist": "Greg Opalinski",
+        "flavorText": "\"Only those who give the dragons the respect they deserve may bear our title.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/4/34750304-c536-47d4-922d-a3654c37ffbc.jpg?1782709434"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Lathliss, Dragon Queen
 {
     "name": "Lathliss, Dragon Queen",

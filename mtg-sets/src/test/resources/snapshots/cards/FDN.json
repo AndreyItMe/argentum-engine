@@ -284,6 +284,58 @@
     ]
 }
 
+// Armasaur Guide
+{
+    "name": "Armasaur Guide",
+    "manaCost": "{4}{W}",
+    "typeLine": "Creature — Dinosaur",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nWhenever you attack with three or more creatures, put a +1/+1 counter on target creature you control.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "YouAttackEvent",
+                    "minAttackers": 3
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature you control"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "target creature you control"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "artist": "Loïc Canavaggia",
+        "flavorText": "The armasaur was skittish about the lanterns, until it noticed the captivating dance of its shadow along the walls.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/8/c80fc380-0499-4499-8a60-c43844c02c9b.jpg?1782689262"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Ashroot Animist
 {
     "name": "Ashroot Animist",
