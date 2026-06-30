@@ -1,8 +1,58 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import type { GroupedCard } from '@/store/selectors.ts'
 import { MAX_VISUAL_STACK_DEPTH } from '@/store/selectors.ts'
 import { useResponsiveContext } from '../board/shared'
 import { GameCard } from './GameCard'
+
+/**
+ * Small chip that toggles a stack between its collapsed peek and the fully
+ * ungrouped (expanded) layout. Rendered on top of the stack so a click never
+ * falls through to a card underneath.
+ */
+function StackToggle({
+  expanded,
+  count,
+  onToggle,
+}: {
+  expanded: boolean
+  count: number
+  onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
+      title={expanded ? 'Group these cards back into a stack' : `Ungroup these ${count} cards`}
+      style={{
+        position: 'absolute',
+        top: -8,
+        left: -8,
+        zIndex: 1000,
+        height: 18,
+        minWidth: 18,
+        padding: '0 5px',
+        borderRadius: 9,
+        border: '1px solid rgba(255, 255, 255, 0.35)',
+        background: 'rgba(30, 41, 59, 0.95)',
+        color: 'white',
+        fontSize: 11,
+        fontWeight: 700,
+        lineHeight: 1,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+        userSelect: 'none',
+      }}
+    >
+      {expanded ? '⤡' : '⤢'}
+    </button>
+  )
+}
 
 /**
  * Renders a group of identical cards as an overlapping stack.
@@ -12,8 +62,13 @@ import { GameCard } from './GameCard'
  * N identical tokens paints at most that many peeked cards plus a "×N" count badge
  * on the front card (GameCard renders it when count > 1), instead of one DOM node
  * per token. This keeps a legitimately huge board (a horde of tokens) cheap to
- * display. Members hidden behind the cap are still fully reachable for actions —
- * the server sends per-entity legal actions and the group carries every id.
+ * display. Members hidden behind the cap are still fully reachable for server-driven
+ * actions (legal-action highlights, targeting) because the group carries every id.
+ *
+ * But some flows need the player to click *individual* hidden members directly —
+ * e.g. waterbend, where you tap N identical tokens to pay, and only the front 4 have
+ * a clickable card. The ⤢ toggle "ungroups" the stack into a wrapped row of full,
+ * individually-clickable cards (and ⤡ collapses it back).
  */
 function CardStackImpl({
   group,
@@ -25,6 +80,7 @@ function CardStackImpl({
   isOpponentCard: boolean
 }) {
   const responsive = useResponsiveContext()
+  const [expanded, setExpanded] = useState(false)
 
   // For single cards, just render a normal GameCard
   if (group.count === 1) {
@@ -37,6 +93,36 @@ function CardStackImpl({
         battlefield
         isOpponentCard={isOpponentCard}
       />
+    )
+  }
+
+  // Ungrouped: every member rendered as its own non-overlapping card so each is
+  // fully clickable (overlapping peek layers only expose a thin strip of the cards
+  // behind the front one). Wraps so a large group stays inside the row.
+  if (expanded) {
+    return (
+      <div
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-end',
+          gap: responsive.cardGap,
+        }}
+      >
+        {group.cards.map((card) => (
+          <GameCard
+            key={card.id}
+            card={card}
+            count={1}
+            faceDown={card.isFaceDown}
+            interactive={interactive}
+            battlefield
+            isOpponentCard={isOpponentCard}
+          />
+        ))}
+        <StackToggle expanded count={group.count} onToggle={() => setExpanded(false)} />
+      </div>
     )
   }
 
@@ -91,6 +177,9 @@ function CardStackImpl({
           />
         </div>
       ))}
+      {/* Ungroup affordance — lets the player split the stack to click individual
+          members (e.g. tap 8 of 8 tokens for waterbend, not just the front 4). */}
+      <StackToggle expanded={false} count={group.count} onToggle={() => setExpanded(true)} />
     </div>
   )
 }
