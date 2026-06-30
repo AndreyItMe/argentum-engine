@@ -1840,9 +1840,10 @@ object Effects {
     fun CreateTokenCopyOfSelf(
         count: Int = 1,
         overridePower: Int? = null,
-        overrideToughness: Int? = null
+        overrideToughness: Int? = null,
+        removeLegendary: Boolean = false
     ): Effect =
-        CreateTokenCopyOfSourceEffect(count, overridePower, overrideToughness)
+        CreateTokenCopyOfSourceEffect(count, overridePower, overrideToughness, removeLegendary = removeLegendary)
 
     /**
      * Create a token that's a copy of a randomly chosen creature card with mana value [manaValue]

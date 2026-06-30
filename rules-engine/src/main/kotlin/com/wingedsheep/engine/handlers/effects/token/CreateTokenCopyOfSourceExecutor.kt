@@ -77,12 +77,18 @@ class CreateTokenCopyOfSourceExecutor(
                     runCatching { CardType.valueOf(name.uppercase()) }.getOrNull()
                 }
                 .toSet()
-            val unionedTypeLine = if (extraCardTypes.isEmpty()) {
+            val typeLineWithExtras = if (extraCardTypes.isEmpty()) {
                 sourceCard.typeLine
             } else {
                 sourceCard.typeLine.copy(
                     cardTypes = sourceCard.typeLine.cardTypes + extraCardTypes
                 )
+            }
+            // "except it's not legendary" copy clause (CR 707.2) — strip the legendary supertype.
+            val unionedTypeLine = if (effect.removeLegendary) {
+                typeLineWithExtras.withoutLegendary()
+            } else {
+                typeLineWithExtras
             }
             val tokenCard = sourceCard.copy(
                 ownerId = controllerId,
