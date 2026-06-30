@@ -28,10 +28,24 @@ class DeathAndLeaveTriggerDetector(
 ) {
 
     /**
-     * Resolve the dying entity's identity either from its still-present container or from
-     * last-known info on the event. The latter fallback is required for tokens, which are
-     * removed from the game by 704.5s in the same SBA pass that puts them in the graveyard
-     * (see [com.wingedsheep.engine.mechanics.sba.zone.TokensInWrongZonesCheck]).
+     * Resolve the dying entity's identity from the last-known snapshot captured the instant it
+     * left the battlefield (CR 113.7a / 603.10 / 608.2h), falling back to its still-present
+     * container only when no snapshot was captured.
+     *
+     * The snapshot is required, not just sufficient: a double-faced permanent's [CardComponent]
+     * is reset to its front face as part of the very same zone-move (CR 712.8a, applied in
+     * [com.wingedsheep.engine.handlers.effects.ZoneTransitionService]) *before* trigger detection
+     * ever runs. A back face's own "when this dies"/"when this leaves" trigger (Galian Beast)
+     * must therefore be looked up by the card definition it had at the moment it died — captured
+     * pre-reset on [ZoneChangeEvent.lastKnown] — not the already-reset live container, or the
+     * lookup silently returns the front face's abilities instead and the back face's trigger
+     * never fires. For every non-DFC card the two values are identical, so this is a no-op there.
+     *
+     * The live-container fallback below only matters when no snapshot was captured at all (a
+     * theoretical safety net — every battlefield-leaving event reaching this function populates
+     * [ZoneChangeEvent.lastKnown]); the container itself may already be gone for a token cleaned
+     * up by 704.5s in the same SBA pass that put it in the graveyard (see
+     * [com.wingedsheep.engine.mechanics.sba.zone.TokensInWrongZonesCheck]).
      */
     private data class DyingEntityInfo(
         val cardDefinitionId: String,
@@ -40,9 +54,13 @@ class DeathAndLeaveTriggerDetector(
 
     private fun resolveDyingEntity(state: GameState, event: ZoneChangeEvent): DyingEntityInfo? {
         val container = state.getEntity(event.entityId)
+        // Face-down creatures have no abilities (Rule 708.2)
+        if (container?.has<FaceDownComponent>() == true) return null
+
+        event.lastKnown?.cardDefinitionId?.let { cardDefId ->
+            return DyingEntityInfo(cardDefId, event.entityName)
+        }
         if (container != null) {
-            // Face-down creatures have no abilities (Rule 708.2)
-            if (container.has<FaceDownComponent>()) return null
             val cardComponent = container.get<CardComponent>() ?: return null
             return DyingEntityInfo(cardComponent.cardDefinitionId, cardComponent.name)
         }

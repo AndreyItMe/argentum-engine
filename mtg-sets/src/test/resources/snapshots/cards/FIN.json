@@ -19689,6 +19689,102 @@
     ]
 }
 
+// Vincent Valentine
+{
+    "name": "Vincent Valentine",
+    "manaCost": "{2}{B}{B}",
+    "typeLine": "Legendary Creature — Assassin",
+    "oracleText": "Whenever a creature an opponent controls dies, put a number of +1/+1 counters on Vincent Valentine equal to that creature's power.\nWhenever Vincent Valentine attacks, you may transform it.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:opponent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddDynamicCounters",
+                    "counterType": "+1/+1",
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Triggering",
+                        "numericProperty": "Power"
+                    },
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": "Transform"
+                }
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Galian Beast",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Werewolf Beast",
+        "oracleText": "Trample, lifelink\nWhen Galian Beast dies, return it to the battlefield tapped (front face up).",
+        "creatureStats": {
+            "power": 3,
+            "toughness": 2
+        },
+        "keywords": [
+            "TRAMPLE",
+            "LIFELINK"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_3",
+                    "trigger": {
+                        "type": "ZoneChangeEvent",
+                        "from": "Battlefield",
+                        "to": "Graveyard"
+                    },
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": "Self",
+                        "destination": "Battlefield",
+                        "placement": "Tapped"
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "125",
+            "rarity": "RARE",
+            "artist": "Norikatsu Miyoshi",
+            "flavorText": "\"This body is... the punishment that's been given to me...\"",
+            "imageUri": "https://cards.scryfall.io/normal/back/0/2/028ef608-acfe-4e9d-90db-eca4411ba78a.jpg?1782686505"
+        },
+        "colorIdentityOverride": [
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "125",
+        "rarity": "RARE",
+        "artist": "Norikatsu Miyoshi",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/2/028ef608-acfe-4e9d-90db-eca4411ba78a.jpg?1782686505"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Vincent's Limit Break
 {
     "name": "Vincent's Limit Break",
