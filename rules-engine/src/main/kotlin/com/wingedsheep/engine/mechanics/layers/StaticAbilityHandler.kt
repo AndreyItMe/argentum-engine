@@ -384,6 +384,15 @@ class StaticAbilityHandler(
         val filter = convertGroupFilter(ability.filter)
         val effects = mutableListOf<ContinuousEffectData>()
 
+        // Layer 3 (TEXT): Set name (CR 612.8 — overwrites any existing name)
+        val newName = ability.setName
+        if (newName != null) {
+            effects.add(ContinuousEffectData(
+                modification = Modification.SetName(newName),
+                affectsFilter = filter
+            ))
+        }
+
         // Layer 4 (TYPE): Set card types (replaces all existing)
         if (ability.setCardTypes.isNotEmpty()) {
             effects.add(ContinuousEffectData(

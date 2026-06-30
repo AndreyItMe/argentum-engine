@@ -35,7 +35,13 @@ class LegendRuleCheck(
                 val cardComponent = container.get<CardComponent>() ?: continue
 
                 if (projected.isLegendary(entityId)) {
-                    legendaryByName.getOrPut(cardComponent.name) { mutableListOf() }.add(entityId)
+                    // Use the current (projected) name, not just the printed one: a Layer-3
+                    // SetName continuous effect (e.g. Witness Protection, "named Legitimate
+                    // Businessperson") can make two otherwise-distinct legendary permanents
+                    // share a name (CR 201.2a: "objects have the same name if they have at
+                    // least one name in common"), which triggers the legend rule (CR 704.5j).
+                    val currentName = projected.getName(entityId) ?: cardComponent.name
+                    legendaryByName.getOrPut(currentName) { mutableListOf() }.add(entityId)
                 }
             }
 

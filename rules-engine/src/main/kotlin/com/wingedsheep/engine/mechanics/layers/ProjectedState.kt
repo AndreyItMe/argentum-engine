@@ -39,6 +39,7 @@ data class CrossZoneSubtypeGrant(
 data class ProjectedValues(
     val power: Int? = null,
     val toughness: Int? = null,
+    val name: String? = null,
     val keywords: Set<String> = emptySet(),
     val colors: Set<String> = emptySet(),
     val types: Set<String> = emptySet(),
@@ -110,6 +111,13 @@ class ProjectedState(
     fun getPower(entityId: EntityId): Int? = projectedValues[entityId]?.power
 
     fun getToughness(entityId: EntityId): Int? = projectedValues[entityId]?.toughness
+
+    /**
+     * The object's projected name, if a continuous effect has overwritten it (CR 612.8 —
+     * Layer 3 text-changing, e.g. Witness Protection's [Modification.SetName]). Null when no
+     * such effect is active; callers should fall back to [com.wingedsheep.engine.state.components.identity.CardComponent.name].
+     */
+    fun getName(entityId: EntityId): String? = projectedValues[entityId]?.name
 
     fun getKeywords(entityId: EntityId): Set<String> = projectedValues[entityId]?.keywords ?: emptySet()
 

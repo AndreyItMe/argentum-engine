@@ -399,8 +399,22 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
     }
     val layerEffects = (args.getOrNull(1) as? JsonArray)?.filterIsInstance<JsonObject>()
     if (layerEffects.isNullOrEmpty()) { reasons.add("PermanentLayerEffect"); return null }
+
+    // "Becomes a whole new creature" shape (Witness Protection, Retro-Mutation, Unable to
+    // Scream, Sugar Coat): SetCardtype + any of SetCreatureType/SetColor/SetName bundle into
+    // one TransformPermanent (Layers 3/4/5); SetPT and LosesAllAbilities render as their own
+    // siblings (Layers 7b/6). Anchored on SetCardtype so a plain AdjustPT/AddAbility aura (the
+    // common case) is untouched and falls through to the per-effect loop below.
+    val identityStmts = transformIdentityBlock(layerEffects)
+    val remaining = if (identityStmts != null) {
+        layerEffects.filterNot { it.strField("_StaticLayerEffect") in IDENTITY_LAYER_TAGS }
+    } else {
+        layerEffects
+    }
+
     val stmts = mutableListOf<Stmt>()
-    for (le in layerEffects) {
+    identityStmts?.let(stmts::addAll)
+    for (le in remaining) {
         val abilities: List<Dsl> = when (le.strField("_StaticLayerEffect")) {
             "AdjustPT" -> {
                 val pt = le["args"] as? JsonArray
@@ -461,6 +475,72 @@ internal fun EmitCtx.staticHostBlock(rule: JsonObject): List<Stmt>? {
         }
         abilities.forEach { stmts.add(staticAbilityStmt(it)) }
     }
+    return stmts
+}
+
+/** `_StaticLayerEffect` tags consumed by [transformIdentityBlock] when it fires — excluded from the
+ *  per-effect loop in [staticHostBlock] so they aren't double-rendered (or double-declined). */
+private val IDENTITY_LAYER_TAGS = setOf("SetCardtype", "SetCreatureType", "SetColor", "SetName", "SetPT", "LosesAllAbilities")
+
+/**
+ * "Becomes a whole new creature" bundle — Witness Protection's
+ * `[LosesAllAbilities, SetColor, SetCreatureType, SetCardtype, SetPT, SetName]`, or any subset
+ * anchored on `SetCardtype` (Retro-Mutation has no `SetColor`/`SetName`; Unable to Scream has no
+ * `SetColor`/`SetName`/`LosesAllAbilities` removed-on-purpose shape). Lowers to the same static
+ * stack `add-card` hand-authors for this family:
+ *  - `SetCardtype`/`SetCreatureType`/`SetColor`/`SetName` merge into one `TransformPermanent`
+ *    (Layers 3/4/5 — the SDK bundles them in a single facade, see
+ *    `com.wingedsheep.sdk.scripting.TransformPermanent`).
+ *  - `SetPT` -> its own `SetBasePowerToughnessStatic(p, t)` (Layer 7b).
+ *  - `LosesAllAbilities` -> its own `LoseAllAbilities()` (Layer 6).
+ *
+ * Returns null (the anchor is absent, or a present tag's shape isn't recognized) so the caller
+ * falls back to the per-effect loop, which declines any of these tags individually — i.e. an
+ * unrecognized variant still scaffolds rather than rendering a lossy partial transform.
+ */
+private fun transformIdentityBlock(layerEffects: List<JsonObject>): List<Stmt>? {
+    val byTag = layerEffects.associateBy { it.strField("_StaticLayerEffect") }
+    val cardTypeNode = byTag["SetCardtype"] ?: return null
+    val cardType = cardTypeNode["args"].asStr() ?: return null
+    if (cardType.uppercase() != "CREATURE") return null
+
+    val setSubtypes = byTag["SetCreatureType"]?.let { node ->
+        node["args"].asStr()?.let { setOf(it) } ?: return null
+    } ?: emptySet()
+
+    val setColors = byTag["SetColor"]?.let { node ->
+        val colorList = node["args"] as? JsonObject ?: return null
+        if (colorList.strField("_SettableColor") != "SimpleColorList") return null
+        val colors = (colorList["args"] as? JsonArray)?.mapNotNull { it.asStr()?.uppercase() }
+        if (colors.isNullOrEmpty()) return null
+        colors.toSet()
+    }
+
+    val setName = byTag["SetName"]?.let { it["args"].asStr() ?: return null }
+
+    val transformArgs = mutableListOf(arg("setCardTypes", Lit("setOf(\"CREATURE\")")))
+    if (setSubtypes.isNotEmpty()) {
+        transformArgs.add(arg("setSubtypes", Lit("setOf(${setSubtypes.joinToString(", ") { "\"${ktStr(it)}\"" }})")))
+    }
+    if (setColors != null) {
+        transformArgs.add(arg("setColors", Lit("setOf(${setColors.joinToString(", ") { "Color.$it" }})")))
+    }
+    if (setName != null) {
+        transformArgs.add(arg("setName", Lit("\"${ktStr(setName)}\"")))
+    }
+
+    val stmts = mutableListOf<Stmt>(staticAbilityStmt(call("TransformPermanent", *transformArgs.toTypedArray())))
+
+    byTag["SetPT"]?.let { node ->
+        val pt = (node["args"] as? JsonObject)?.get("args") as? JsonArray
+        if (pt?.size != 2) return null
+        stmts.add(staticAbilityStmt(call("SetBasePowerToughnessStatic", arg("${pt[0].asInt()}"), arg("${pt[1].asInt()}"))))
+    }
+
+    if (byTag.containsKey("LosesAllAbilities")) {
+        stmts.add(staticAbilityStmt(call("LoseAllAbilities")))
+    }
+
     return stmts
 }
 

@@ -1155,7 +1155,12 @@ class ClientStateTransformer(
 
         return ClientCard(
             id = entityId,
-            name = castFace?.name ?: cardComponent.name,
+            // A Layer-3 SetName continuous effect (Witness Protection's TransformPermanent
+            // setName) overwrites the displayed name, mirroring how subtypes/types above
+            // already prefer the projected value over the base CardComponent. A non-permanent
+            // cast face (Omen/Adventure/split half) on the stack still wins, since it has no
+            // battlefield projection entry to overwrite.
+            name = castFace?.name ?: projectedValues?.name ?: cardComponent.name,
             manaCost = (castFace?.manaCost ?: cardComponent.manaCost).toString(),
             manaValue = (castFace?.manaCost ?: cardComponent.manaCost).cmc,
             typeLine = typeLineString,

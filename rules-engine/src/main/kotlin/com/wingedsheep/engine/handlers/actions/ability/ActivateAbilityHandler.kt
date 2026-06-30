@@ -192,9 +192,14 @@ class ActivateAbilityHandler(
 
             // Creatures that have lost all abilities cannot activate them (e.g., Deep Freeze)
             if (state.projectedState.hasLostAllAbilities(action.sourceId)) {
-                // Only block the creature's own abilities, not granted ones
+                // Only block the permanent's own abilities, not granted ones. Intrinsic
+                // basic-land-subtype abilities (CR 305.7) count as "own" here too — a land hit
+                // by Imprisoned in the Moon keeps its land subtype (only card types/abilities
+                // are overwritten, not subtypes) but per ruling loses the mana ability that
+                // subtype would otherwise imply.
                 val isOwnAbility = (cardDef?.script?.effectiveActivatedAbilities(classLevel)?.any { it.id == action.abilityId } == true)
                     || action.abilityId.value.startsWith("class_level_up_")
+                    || IntrinsicManaAbilities.lookup(action.abilityId) != null
                 if (isOwnAbility) {
                     return "This permanent has lost all abilities"
                 }

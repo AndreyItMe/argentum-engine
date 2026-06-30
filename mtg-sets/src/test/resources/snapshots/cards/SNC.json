@@ -190,3 +190,49 @@
         "RED"
     ]
 }
+
+// Witness Protection
+{
+    "name": "Witness Protection",
+    "manaCost": "{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nEnchanted creature loses all abilities and is a green and white Citizen creature with base power and toughness 1/1 named Legitimate Businessperson. (It loses all other colors, card types, creature types, and names.)",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "TransformPermanent",
+                "setCardTypes": [
+                    "CREATURE"
+                ],
+                "setSubtypes": [
+                    "Citizen"
+                ],
+                "setColors": [
+                    "GREEN",
+                    "WHITE"
+                ],
+                "setName": "Legitimate Businessperson"
+            },
+            {
+                "type": "SetBasePowerToughnessStatic",
+                "power": 1,
+                "toughness": 1
+            },
+            "LoseAllAbilities"
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "66",
+        "artist": "Dominik Mayer",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a2be6f2c-8ad0-402d-a7ca-9fe817e83b72.jpg?1782701623"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}

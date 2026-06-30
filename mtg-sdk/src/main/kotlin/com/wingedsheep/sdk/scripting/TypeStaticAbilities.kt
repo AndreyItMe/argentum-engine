@@ -378,8 +378,11 @@ data class AnimateLandGroup(
  * Transforms the enchanted permanent into a completely different card type identity.
  * Used for Sugar Coat: "Enchanted permanent is a colorless Food artifact..."
  * Used for Imprisoned in the Moon, Darksteel Mutation, Song of the Dryads, etc.
+ * Used for Witness Protection: "...is a green and white Citizen creature with base power
+ * and toughness 1/1 named Legitimate Businessperson."
  *
  * This generates multiple continuous effects across layers:
+ * - Layer 3 (TEXT): SetName to overwrite the object's name (CR 612.8)
  * - Layer 4 (TYPE): SetCardTypes to replace all card types, SetAllSubtypes to replace all subtypes
  * - Layer 5 (COLOR): ChangeColor to set color identity (empty set = colorless)
  *
@@ -390,6 +393,9 @@ data class AnimateLandGroup(
  * @property setSubtypes Subtypes to set (replaces ALL existing subtypes). A non-empty set
  *   replaces all subtypes; an empty set leaves subtypes unchanged unless [clearSubtypes] is set.
  * @property setColors Colors to set (null = don't change, empty = colorless)
+ * @property setName Name to set (null = don't change). Per CR 612.8 the object "loses any
+ *   names it had and has only the specified name" — applied at Layer 3 (TEXT), before the
+ *   type/color layers. Used by Witness Protection ("named Legitimate Businessperson").
  * @property clearSubtypes When true, removes all subtypes (used with `setSubtypes = emptySet()`
  *   to express "has no subtypes" — e.g. the Enduring cycle's enchantment-only return, which
  *   strips Sheep/Glimmer). Distinguishes "clear subtypes" from "don't change subtypes".
@@ -401,6 +407,7 @@ data class TransformPermanent(
     val setCardTypes: Set<String> = emptySet(),
     val setSubtypes: Set<String> = emptySet(),
     val setColors: Set<Color>? = null,
+    val setName: String? = null,
     val clearSubtypes: Boolean = false,
     val filter: GroupFilter = GroupFilter.attachedCreature()
 ) : StaticAbility {
@@ -413,5 +420,6 @@ data class TransformPermanent(
             if (setSubtypes.isNotEmpty()) append(" ")
             append(setCardTypes.joinToString(" ") { it.lowercase() })
         }
+        if (setName != null) append(" named $setName")
     }
 }

@@ -256,6 +256,19 @@ sealed interface Modification {
         override val layer get() = Layer.CONTROL
     }
 
+    // --- Layer 3: Text-changing ---
+
+    /**
+     * Sets the affected object's name, overwriting any name it had (CR 612.8: "That object
+     * loses any names it had and has only the specified name"). Used by Witness Protection
+     * ("...named Legitimate Businessperson"); the [com.wingedsheep.sdk.scripting.TransformPermanent]
+     * facade's `setName` lowers to this.
+     */
+    @Serializable
+    data class SetName(val name: String) : Modification {
+        override val layer get() = Layer.TEXT
+    }
+
     // --- Layer 4: Type-changing ---
 
     @Serializable
@@ -611,6 +624,7 @@ sealed interface Modification {
 internal data class MutableProjectedValues(
     var power: Int? = null,
     var toughness: Int? = null,
+    var name: String? = null,
     val keywords: MutableSet<String> = mutableSetOf(),
     val colors: MutableSet<String> = mutableSetOf(),
     val types: MutableSet<String> = mutableSetOf(),

@@ -96,6 +96,9 @@ internal class EffectApplicator(
                     values.power = t
                     values.toughness = p
                 }
+                is Modification.SetName -> {
+                    values.name = mod.name
+                }
                 is Modification.GrantKeyword -> {
                     values.keywords.add(mod.keyword)
                     // Changeling grants all creature types (Rule 702.73)

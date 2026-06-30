@@ -3273,10 +3273,15 @@ staticAbility {
   and `SelectFromCollectionExecutor` — so a granted type drives type-matters checks everywhere ("target Zombie spell",
   "return target Zombie card from your graveyard", search filters). Leave both flags `false` for battlefield-only effects
   like Xenograft. (Leyline of Transformation)
-- `TransformPermanent(setCardTypes, setSubtypes, setColors?, clearSubtypes, filter)` — Layer 4/5 "becomes a whole new
-  identity" (Sugar Coat, Darksteel Mutation). A non-empty `setSubtypes` replaces all subtypes; an empty `setSubtypes`
-  leaves subtypes alone **unless** `clearSubtypes = true`, which replaces them with none ("has no subtypes" — the
-  Enduring return strips Sheep/Glimmer). `setColors = null` keeps colors.
+- `TransformPermanent(setCardTypes, setSubtypes, setColors?, setName?, clearSubtypes, filter)` — Layer 3/4/5 "becomes a
+  whole new identity" (Sugar Coat, Darksteel Mutation, Witness Protection, Imprisoned in the Moon). A non-empty `setSubtypes` replaces all
+  subtypes; an empty `setSubtypes` leaves subtypes alone **unless** `clearSubtypes = true`, which replaces them with
+  none ("has no subtypes" — the Enduring return strips Sheep/Glimmer). `setColors = null` keeps colors. `setName`
+  (default `null` = don't change) overwrites the object's name at Layer 3 (CR 612.8 — "loses any names it had and has
+  only the specified name"), lowering to `Modification.SetName`; only supertypes (e.g. Legendary) survive a rename,
+  so two same-controller permanents renamed to the same name can trigger the legend rule (Witness Protection: "named
+  Legitimate Businessperson"). `ClientCard.name` and `LegendRuleCheck` both prefer the projected name over the base
+  `CardComponent.name` when one is active.
 - `ConditionalStaticAbility` — static gated by a runtime `Condition`. A conditional wrapping a *multi-effect* ability
   (e.g. `TransformPermanent`) lowers through the plural converter and gates every resulting effect on the condition.
 - `CantBeTurnedFaceUp(filter)` — matching permanents can't be turned face up (Layer 6; projects a

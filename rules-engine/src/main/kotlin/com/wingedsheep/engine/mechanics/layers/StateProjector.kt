@@ -299,6 +299,7 @@ class StateProjector(
             ProjectedValues(
                 power = v.power,
                 toughness = v.toughness,
+                name = v.name,
                 keywords = v.keywords.toSet(),
                 colors = v.colors.toSet(),
                 types = v.types.toSet(),

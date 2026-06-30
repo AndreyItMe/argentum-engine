@@ -61,16 +61,24 @@ object LandManaColorInspector {
 
         val colors = mutableSetOf<Color>()
 
+        // A land that has lost all abilities (e.g. Imprisoned in the Moon) keeps its land
+        // subtypes (only card types/abilities are overwritten, not subtypes — CR 205.4b) but per
+        // ruling loses the intrinsic mana ability that subtype implies, and loses its printed
+        // mana ability too. Only granted abilities (handled below) survive.
+        val ownAbilitiesSuppressed = projected.hasLostAllAbilities(entityId)
+
         // Intrinsic abilities derived from projected basic-land subtypes (Plains/Island/...)
-        for (ability in IntrinsicManaAbilities.forEntity(state, projected, entityId)) {
-            collectColors(ability.effect, container, colors)
+        if (!ownAbilitiesSuppressed) {
+            for (ability in IntrinsicManaAbilities.forEntity(state, projected, entityId)) {
+                collectColors(ability.effect, container, colors)
+            }
         }
 
         // Card-defined activated abilities (if any). Skip when intrinsic abilities are
         // present — basic land types replace the printed mana ability (matches
         // ManaAbilityEnumerator's behavior for shock lands etc.).
         val intrinsicLandColors = colors.toSet()
-        if (intrinsicLandColors.isEmpty()) {
+        if (!ownAbilitiesSuppressed && intrinsicLandColors.isEmpty()) {
             val cardDef = cardRegistry.getCard(card.cardDefinitionId)
             if (cardDef != null) {
                 for (ability in cardDef.script.activatedAbilities) {

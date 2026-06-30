@@ -177,6 +177,76 @@
     ]
 }
 
+// Imprisoned in the Moon
+{
+    "name": "Imprisoned in the Moon",
+    "manaCost": "{2}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature, land, or planeswalker\nEnchanted permanent is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "TransformPermanent",
+                "setCardTypes": [
+                    "LAND"
+                ],
+                "setColors": []
+            },
+            "LoseAllAbilities",
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_1",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "AddColorlessMana",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "isManaAbility": true,
+                    "descriptionOverride": "{T}: Add {C}."
+                }
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature|land|planeswalker"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "65",
+        "rarity": "RARE",
+        "artist": "Ryan Alexander Lee",
+        "flavorText": "Only one vault was great enough to hold Emrakul.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/9/7990ebba-e9f2-4ba4-a352-e26ec81d4bed.jpg?1782711902",
+        "rulings": [
+            {
+                "date": "2016-07-13",
+                "text": "If the enchanted permanent is a land and has land types, it retains those types even though it loses any intrinsic mana abilities associated with them. For example, a Plains enchanted by Imprisoned in the Moon is still a Plains, but it can't tap for {W}, only for {C}."
+            },
+            {
+                "date": "2016-07-13",
+                "text": "Becoming a land may cause other Auras to become illegally attached. These are put into their owner's graveyard, and any Equipment attached to the land become unattached and remain on the battlefield. Counters on the land remain on it even if they don't do anything."
+            },
+            {
+                "date": "2016-07-13",
+                "text": "The permanent will keep any supertypes it previously had. Notably, if Imprisoned in the Moon is enchanting a legendary permanent, that permanent will continue to be legendary."
+            },
+            {
+                "date": "2016-07-13",
+                "text": "If you remove Imprisoned in the Moon from a planeswalker after tapping it for mana, you can still activate a loyalty ability of that planeswalker even though it's tapped."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Ironclad Slayer
 {
     "name": "Ironclad Slayer",

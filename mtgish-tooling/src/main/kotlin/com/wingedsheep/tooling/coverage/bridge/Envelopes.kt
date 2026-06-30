@@ -103,6 +103,19 @@ internal fun BridgeBuilder.structuralEnvelopes() {
     // "You control enchanted permanent" (Control Magic, Steal Artifact) -> ControlEnchantedPermanent.
     composed("SetController", "gain control of enchanted permanent (aura)", composes = listOf("ControlEnchantedPermanent"))
 
+    // "Becomes a whole new creature" bundle (Witness Protection, Retro-Mutation, Unable to Scream,
+    // Sugar Coat) — these four `_StaticLayerEffect` tags co-occur anchored on SetCardtype and merge
+    // into one `TransformPermanent` (Layers 3/4/5); see `staticHostBlock`'s `transformIdentityBlock`.
+    composed("SetCardtype", "becomes a different card type, e.g. 'is a Citizen creature' (aura transform)", composes = listOf("TransformPermanent"))
+    composed("SetCreatureType", "becomes a different creature type as part of a card-type transform (aura)", composes = listOf("TransformPermanent"))
+    composed("SetColor", "becomes a different color as part of a card-type transform (aura)", composes = listOf("TransformPermanent"))
+    // CR 612.8: "loses any names it had and has only the specified name." Witness Protection:
+    // "...named Legitimate Businessperson." Lowers to `TransformPermanent.setName` -> Layer 3 `SetName`.
+    composed("SetName", "renamed (CR 612.8) as part of a card-type transform (aura)", composes = listOf("TransformPermanent"))
+    // "Loses all abilities" co-occurring with the transform bundle above (rendered as its own
+    // `LoseAllAbilities()` sibling static, not merged into TransformPermanent).
+    composed("LosesAllAbilities", "loses all abilities (aura)", composes = listOf("LoseAllAbilities"))
+
     // Continuous-effect envelopes (the capability is the nested _LayerEffect / _Rule).
     envelope("CreatePermanentLayerEffectUntil", "envelope: continuous effect (capability is the _LayerEffect)")
     // "Each matching permanent gets … until end of turn." The capability is normally the nested

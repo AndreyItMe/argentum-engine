@@ -92,11 +92,17 @@ class ManaAbilityEnumerator : ActionEnumerator {
             // If no card definition (e.g., tokens) and no granted/static/intrinsic mana abilities, skip
             if (cardDef == null && grantedManaAbilities.isEmpty() && staticManaAbilities.isEmpty() && intrinsicManaAbilities.isEmpty()) continue
 
-            // If entity lost all abilities, only granted/static abilities remain (own abilities suppressed)
+            // If entity lost all abilities, only granted/static abilities remain (own abilities
+            // suppressed) — this includes intrinsic basic-land-subtype abilities: a Plains hit by
+            // Imprisoned in the Moon keeps its "Plains" subtype (CR 205.4b types/subtypes are
+            // untouched by ability removal) but per ruling "loses any intrinsic mana abilities
+            // associated with them", so `entityLostAllAbilities` must be checked before falling
+            // back to the intrinsic-subtype inference.
             val classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
             val ownManaAbilities = when {
+                entityLostAllAbilities -> emptyList()
                 intrinsicManaAbilities.isNotEmpty() -> intrinsicManaAbilities
-                cardDef == null || entityLostAllAbilities -> emptyList()
+                cardDef == null -> emptyList()
                 else -> cardDef.script.effectiveActivatedAbilities(classLevel).filter { it.isManaAbility }
             }
             val manaAbilities = ownManaAbilities + grantedManaAbilities + staticManaAbilities
