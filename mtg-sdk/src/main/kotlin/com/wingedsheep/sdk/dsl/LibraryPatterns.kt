@@ -530,6 +530,49 @@ object LibraryPatterns {
         )
     )
 
+    /**
+     * "Reveal cards from the top of your library until you reveal a card matching [filter].
+     * Put that card into your hand and the rest [restDestination] (defaults to the bottom of
+     * your library) [restOrder] (defaults to a random order)." — Spinner of Souls / Wirewood
+     * Herald shape.
+     *
+     * The [filter] partition is reused twice: [GatherUntilMatchEffect] stops the reveal at the
+     * first match, then a [FilterCollectionEffect] over every revealed card splits the single
+     * match (→ hand) from the cards revealed before it (→ [restDestination]). If the library
+     * empties before a match is found, nothing goes to hand and every revealed card goes to the
+     * rest destination.
+     */
+    fun revealUntilMatchToHand(
+        filter: GameObjectFilter,
+        restDestination: CardDestination = CardDestination.ToZone(Zone.LIBRARY, placement = ZonePlacement.Bottom),
+        restOrder: CardOrder = CardOrder.Random
+    ): CompositeEffect = CompositeEffect(
+        listOf(
+            GatherUntilMatchEffect(
+                filter = filter,
+                storeMatch = "ignored",
+                storeRevealed = "revealed"
+            ),
+            RevealCollectionEffect(from = "revealed"),
+            FilterCollectionEffect(
+                from = "revealed",
+                filter = CollectionFilter.MatchesFilter(filter),
+                storeMatching = "matchedToHand",
+                storeNonMatching = "rest"
+            ),
+            MoveCollectionEffect(
+                from = "matchedToHand",
+                destination = CardDestination.ToZone(Zone.HAND),
+                revealed = true
+            ),
+            MoveCollectionEffect(
+                from = "rest",
+                destination = restDestination,
+                order = restOrder
+            )
+        )
+    )
+
     fun revealUntilNonlandDealDamageEachTarget(): ForEachEffect = ForEachTargetEffect(
         listOf(
             GatherUntilMatchEffect(
