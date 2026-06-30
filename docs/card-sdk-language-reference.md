@@ -5836,6 +5836,10 @@ substitution.
   entering / fully unlocking a Room) each accumulate one and whose dies trigger reads the total counter count via
   `DynamicAmount.ContextProperty(ContextPropertyKey.LAST_KNOWN_TOTAL_COUNTER_COUNT)` to size the X/X Spirit token it
   leaves behind — another pure passive counter with no inherent rule.)
+  `fire` (`Counters.FIRE`): TLA — War Balloon (a `{1}` ability accumulates one; a `ConditionalStaticAbility`
+  gated on `Conditions.SourceCounterCountAtLeast(Counters.FIRE, 3)` grants `GrantCardType("CREATURE")` so the
+  Vehicle is an artifact creature at 3+); reused by later Fated/Fated-Firepower cards — another pure passive
+  counter with no inherent rule.
 - `stun` — CR 122.1d, a built-in replacement: "If a permanent with a stun counter on it would become untapped,
   instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
   which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the
