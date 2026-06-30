@@ -47,6 +47,20 @@ data class ActivatedAbility(
      * is bounded by the generic mana in the cost (CR: "for each generic mana in that cost").
      */
     val hasWaterbend: Boolean = false,
+    /**
+     * True for an *exhaust* ability (Avatar: The Last Airbender, returning from Edge of Eternities;
+     * CR 702.177). "Exhaust — [cost]: [effect]" means "[cost]: [effect]. Activate only once."
+     *
+     * This flag is purely the keyword marker: it drives the "Exhaust — " prefix in [description]
+     * and lets tooling recognise an exhaust ability. The *rules* meaning — once per the lifetime of
+     * this object — is carried by an [ActivationRestriction.Once] in [restrictions], which the
+     * `activatedAbility { isExhaust = true }` DSL adds automatically. Per CR 400.7 / 403.4 a
+     * permanent that leaves and re-enters the battlefield is a new object whose exhaust abilities may
+     * be activated again — exactly what the per-object [ActivationRestriction.Once] tracker provides
+     * (it lives on the permanent entity and resets on a new entity), so no game-scoped tracking is
+     * needed.
+     */
+    val isExhaust: Boolean = false,
     /** When true, prevents auto-pass whenever this ability is available.
      *  Used for abilities that interact with transient game state the player would miss,
      *  such as copying a spell on the stack. */
@@ -96,11 +110,22 @@ data class ActivatedAbility(
         get() = targetRequirements.firstOrNull()
 
     val description: String
-        get() = descriptionOverride ?: run {
-            // A waterbend cost renders as "Waterbend {N}" (the keyword action precedes the cost).
-            val costText = if (hasWaterbend) "Waterbend ${cost.description}" else cost.description
-            "$costText: ${effect.description}"
-        }
+        get() = descriptionOverride ?: describeWithCost(cost)
+
+    /**
+     * Render this ability's menu text against a (possibly cost-reduced) [effectiveCost], applying
+     * the keyword-action prefixes in printed order: "Exhaust — Waterbend {N}: ...". The legal-action
+     * enumerator calls this when a cost reduction means the printed [cost] no longer matches what the
+     * player will pay, so the rebuilt label keeps the same prefixes the [description] getter shows.
+     */
+    fun describeWithCost(effectiveCost: AbilityCost): String {
+        // A waterbend cost renders as "Waterbend {N}" (the keyword action precedes the cost).
+        val base = effectiveCost.description.ifEmpty { "{0}" }
+        val costText = if (hasWaterbend) "Waterbend $base" else base
+        // An exhaust ability prefixes "Exhaust — " before the (already waterbend-prefixed) cost.
+        val prefixed = if (isExhaust) "Exhaust — $costText" else costText
+        return "$prefixed: ${effect.description}"
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): ActivatedAbility {
         val newCost = cost.applyTextReplacement(replacer)

@@ -3725,6 +3725,9 @@ private fun EmitCtx.activatedAbilityStmts(
     }
     val stmts = mutableListOf<Stmt>(Assign("cost", Lit(cost)))
     if (hasWaterbend) stmts.add(Assign("hasWaterbend", Lit("true")))
+    // "Exhaust — [cost]: [effect]" (CR 702.177) -> isExhaust = true. The DSL adds the
+    // ActivationRestriction.Once enforcement, so the modifier is dropped from the restriction lines.
+    if (hasExhaustModifier(rule)) stmts.add(Assign("isExhaust", Lit("true")))
     activationRestrictionLines(rule)?.let { lines -> lines.forEach { stmts.add(RawLine(it)) } } ?: return null
     activationCostReductionLines(rule)?.let { lines -> lines.forEach { stmts.add(RawLine(it)) } } ?: return null
     if (tvar != null) stmts.add(targetLocal(tnode!!))
@@ -3926,6 +3929,11 @@ private fun activatedModifiers(rule: JsonObject): List<JsonObject> =
 private fun hasSorcerySpeedModifier(rule: JsonObject): Boolean =
     activatedModifiers(rule).any { it.strField("_ActivateModifier") == "ActivateOnlyAsASorcery" }
 
+/** True iff the activated rule carries an `Exhaust` modifier ("Exhaust — …" — rendered as
+ *  `isExhaust = true`, which the DSL desugars to ActivationRestriction.Once, not a restriction line). */
+private fun hasExhaustModifier(rule: JsonObject): Boolean =
+    activatedModifiers(rule).any { it.strField("_ActivateModifier") == "Exhaust" }
+
 private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? {
     if (rule.strField("_Rule") != "ActivatedWithModifiers") return emptyList()
     // ActivateOnlyAsASorcery is a timing rule, not an ActivationRestriction — it's emitted as
@@ -3938,6 +3946,10 @@ private fun EmitCtx.activationRestrictionLines(rule: JsonObject): List<String>? 
         // (see [activationCostReductionLines]), not an ActivationRestriction. Drop it here so an
         // ability whose only non-timing modifier is a cost reduction needs no `restrictions =` line.
         .filter { it.strField("_ActivateModifier") != "ReduceCostForEach" }
+        // Exhaust is emitted as `isExhaust = true` (which the DSL desugars to ActivationRestriction.Once),
+        // not a restriction line. Drop it so an ability whose only modifier is Exhaust needs no
+        // `restrictions =` line.
+        .filter { it.strField("_ActivateModifier") != "Exhaust" }
     if (nonTimingModifiers.isEmpty()) return emptyList()
     val blob = compact(rule)
     if ("ActivateOnlyIf" in blob && "IsTheirTurn" in blob && "IsBeforeAttackersDeclared" in blob) {

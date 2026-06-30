@@ -31,6 +31,7 @@ import {
   getStashCounters,
   getFlyingCounters,
   getFirstStrikeCounters,
+  getDoubleStrikeCounters,
   getVigilanceCounters,
   getDeathtouchCounters,
   getLifelinkCounters,
@@ -1892,6 +1893,20 @@ function GameCardImpl({
           <i className={`ms ms-${counterManaClass.FIRST_STRIKE}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
           <span style={{ fontWeight: 700 }}>
             {getFirstStrikeCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Double strike counter badge */}
+      {battlefield && getDoubleStrikeCounters(card) > 0 && (
+        <div style={{
+          ...styles.doubleStrikeCounterBadge,
+          fontSize: responsive.badges.counterTextFontSize,
+          padding: responsive.badges.badgePadding,
+        }}>
+          <i className={`ms ms-${counterManaClass.DOUBLE_STRIKE}`} style={{ fontSize: responsive.badges.counterIconFontSize }} />
+          <span style={{ fontWeight: 700 }}>
+            {getDoubleStrikeCounters(card)}
           </span>
         </div>
       )}

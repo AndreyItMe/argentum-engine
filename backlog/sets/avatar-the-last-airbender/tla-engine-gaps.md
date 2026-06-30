@@ -26,11 +26,13 @@ Generated to scope what must be built before the set can be completed.
 >
 > **The genuine remaining gaps** (what's still blocking the last 55 cards):
 > - ❌ **Airbend** keyword (~11 cards) — exile + recast-for-{2} fixed-alternative-cost may-play.
-> - ❌ **Exhaust** keyword (8 cards) — once-per-game activation tracker surviving zone changes.
-> - 🟡 **Remaining Waterbend cost shapes** (~9 cards) — the plain spell-level additional cost (incl.
->   waterbend {X}) is now built; still open are **Ward — Waterbend** (The Unagi of Kyoshi Island),
->   **Exhaust — Waterbend** (Invasion Submersible), in-resolution "may pay a waterbend cost"
->   (Waterbending Lesson), and **waterbend-as-alternative-cast** (Hama, the Bloodbender).
+> - ✅ **Exhaust** keyword (8 cards) — `isExhaust = true` → `ActivationRestriction.Once` (per-object,
+>   CR 702.177 "Activate only once"; *not* once-per-game). Plus a strip-on-leave fix so the once-ever
+>   record resets on a new object (CR 400.7). All 8 exhaust cards implemented.
+> - 🟡 **Remaining Waterbend cost shapes** (~7 cards) — the plain spell-level additional cost (incl.
+>   waterbend {X}) and **Exhaust — Waterbend** (Invasion Submersible, Avatar Kuruk) are now built;
+>   still open are **Ward — Waterbend** (The Unagi of Kyoshi Island), in-resolution "may pay a
+>   waterbend cost" (Waterbending Lesson), and **waterbend-as-alternative-cast** (Hama, the Bloodbender).
 > - ❌ **Granting / conditional Firebending** — "target creature gains firebending N", "has
 >   firebending as long as …".
 > - ❌ **Fire counter** type (Fated Firepower, War Balloon).
@@ -58,9 +60,9 @@ Per signature mechanic (implemented / total): **Earthbend 5/27**, **Firebending 
 
 TLA is built around **four "bending" keyword families** (Earthbend, Waterbend, Firebending, Airbend)
 plus a returning **Exhaust** keyword and a pervasive **"second card drawn each turn"** sub-theme.
-*(Update: Earthbend, Firebending, the draw-count theme, and both activated-ability and spell-level
-Waterbend (incl. waterbend {X}) are now all built — see the status banner above. Airbend, Exhaust, and
-the remaining Waterbend cost shapes (Ward—Waterbend, Exhaust—Waterbend, waterbend-as-alternative-cast)
+*(Update: Earthbend, Firebending, Exhaust, the draw-count theme, and activated-ability, spell-level,
+and Exhaust—Waterbend cost shapes (incl. waterbend {X}) are now all built — see the status banner
+above. Airbend and the remaining Waterbend cost shapes (Ward—Waterbend, waterbend-as-alternative-cast)
 remain the headline work.)* Once those primitives land, the large majority of the remaining cards (standard creatures,
 dual lands, sieges, sagas, lords, modal removal, cycling cards, Food/token makers) are buildable —
 and indeed most now are.
@@ -180,7 +182,27 @@ its owner, for as long as it stays exiled) honored in the cast enumerators + cos
 / "all other creatures" shapes then compose from existing targeting.
 → Aang the Last Airbender, Appa, Airbending Lesson, Avatar's Wrath, Glider Staff, Airbender Ascension, …
 
-### 4. Exhaust — ❌ GAP (8 cards)
+### 4. Exhaust — ✅ DONE (built since this analysis)
+
+> Built. **Correction to the original analysis below:** exhaust is *not* once-per-game. CR 702.177a
+> defines *"Exhaust — [Cost]: [Effect]"* as *"[Cost]: [Effect]. Activate only once."* — and CR 400.7 /
+> 403.4 make a permanent that leaves and re-enters the battlefield a **new object with no memory**, so
+> its exhaust ability may be activated again. That is exactly the *per-object* semantics of the existing
+> `ActivationRestriction.Once` (`AbilityActivatedEverComponent` on the permanent entity), so **no
+> game-scoped tracker was needed**.
+>
+> Implementation: a marker flag `isExhaust = true` on `activatedAbility { }` that (a) renders the
+> "Exhaust — " display prefix and (b) auto-adds `ActivationRestriction.Once`, so the keyword and its
+> enforcement can't drift. One engine fix was required: `ZoneMovementUtils.stripBattlefieldComponents`
+> did **not** clear `AbilityActivatedEverComponent` on battlefield exit, so with the engine's stable
+> entity ids a bounced-and-recast exhaust permanent would wrongly stay locked — now stripped (CR 400.7).
+> Immediately unlocked Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work. The other 4
+> each needed one further primitive, all built in the same effort, so **all 8 are now implemented**:
+> Mai (new double strike keyword counter), Jeong Jeong (copy-next-Lesson reflexive trigger), Invasion
+> Submersible (becomes-artifact-creature via `AddCardType` + Exhaust—Waterbend), The Legend of Kuruk
+> (Saga DFC + Exhaust—Waterbend {20}). Original (incorrect "once per game") analysis follows.
+
+#### (original) Exhaust — ❌ GAP (8 cards)
 
 Returning keyword (Edge of Eternities): *"Exhaust — [activated ability]. Activate each exhaust ability
 only once [per game]."*
@@ -345,9 +367,10 @@ spell half). The set is now at **231/286**; the order below covers only what's l
 
 1. **Airbend** (§3) — fixed-alternative-cost may-play + stack-spell exile branch. **~11 cards** — the
    single highest-leverage remaining keyword.
-2. **Remaining Waterbend cost shapes** (the §1 leftovers) — Ward — Waterbend, Exhaust — Waterbend,
-   in-resolution "may pay a waterbend cost", and waterbend-as-alternative-cast (Hama). **~9 cards.**
-3. **Exhaust** (§4) — once-per-game activation tracker surviving zone changes. **8 cards.**
+2. **Remaining Waterbend cost shapes** (the §1 leftovers) — Ward — Waterbend, in-resolution "may pay
+   a waterbend cost", and waterbend-as-alternative-cast (Hama). **~7 cards.** (Exhaust — Waterbend done.)
+3. ~~**Exhaust** (§4)~~ — ✅ **done**: `isExhaust` → per-object `ActivationRestriction.Once` (CR
+   702.177) + strip-on-leave reset (CR 400.7). All 8 exhaust cards implemented.
 4. **Granting / conditional Firebending** — "gains firebending N until EOT" / "has firebending as long
    as …" (the §2 leftover); plus the **Fire counter** type (§B + War Balloon) and **Foretell** (§G).
 5. **Tier-3 one-offs** (§A–I) and the assorted dynamic-amount / selection-restriction primitives surfaced

@@ -534,6 +534,13 @@ export function getFirstStrikeCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of double strike counters on a card.
+ */
+export function getDoubleStrikeCounters(card: ClientCard): number {
+  return card.counters[CounterType.DOUBLE_STRIKE] ?? 0
+}
+
+/**
  * Get the number of vigilance counters on a card.
  */
 export function getVigilanceCounters(card: ClientCard): number {

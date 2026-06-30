@@ -2847,6 +2847,146 @@
     ]
 }
 
+// Bitter Work
+{
+    "name": "Bitter Work",
+    "manaCost": "{1}{R}{G}",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever you attack a player with one or more creatures with power 4 or greater, draw a card.\nExhaust — {4}: Earthbend 4. Activate only during your turn. (Target land you control becomes a 0/0 creature with haste that's still a land. Put four +1/+1 counters on it. When it dies or is exiled, return it to the battlefield tapped. Activate each exhaust ability only once.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "YouAttackEvent",
+                    "attackerFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "PowerAtLeast",
+                                "min": 4
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "Whenever you attack a player with one or more creatures with power 4 or greater, draw a card."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{4}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AnimateLand",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land you control"
+                            },
+                            "power": 0,
+                            "toughness": 0,
+                            "duration": "Permanent"
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "HASTE",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land you control"
+                            },
+                            "duration": "Permanent"
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 4,
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land you control"
+                            }
+                        },
+                        {
+                            "type": "GrantTriggeredAbility",
+                            "ability": {
+                                "id": "ability_3",
+                                "trigger": {
+                                    "type": "ZoneChangeEvent",
+                                    "from": "Battlefield"
+                                },
+                                "effect": {
+                                    "type": "Composite",
+                                    "effects": [
+                                        {
+                                            "type": "MoveToZone",
+                                            "target": "Self",
+                                            "destination": "Battlefield",
+                                            "placement": "Tapped",
+                                            "fromZone": "Graveyard"
+                                        },
+                                        {
+                                            "type": "MoveToZone",
+                                            "target": "Self",
+                                            "destination": "Battlefield",
+                                            "placement": "Tapped",
+                                            "fromZone": "Exile"
+                                        }
+                                    ]
+                                },
+                                "descriptionOverride": "When this dies or is exiled, return it to the battlefield tapped."
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land you control"
+                            },
+                            "duration": "Permanent"
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        },
+                        "id": "target land you control"
+                    }
+                ],
+                "restrictions": [
+                    "OnlyDuringYourTurn",
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "210",
+        "rarity": "UNCOMMON",
+        "artist": "Bun Toujo",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/e/3e8de6a9-9859-4ed2-8ece-ef80a7209be9.jpg?1764121491"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
 // Boar-q-pine
 {
     "name": "Boar-q-pine",
@@ -8334,6 +8474,87 @@
     ]
 }
 
+// Hog-Monkey
+{
+    "name": "Hog-Monkey",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Boar Monkey",
+    "oracleText": "At the beginning of combat on your turn, target creature you control with a +1/+1 counter on it gains menace until end of turn. (It can't be blocked except by two or more creatures.)\nExhaust — {5}: Put two +1/+1 counters on this creature. (Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "GrantKeyword",
+                    "keyword": "MENACE",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature you control with a +1/+1 counter on it"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature"
+                            ],
+                            "statePredicates": [
+                                {
+                                    "type": "HasCounter",
+                                    "counterType": "+1/+1"
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    },
+                    "id": "target creature you control with a +1/+1 counter on it"
+                },
+                "descriptionOverride": "At the beginning of combat on your turn, target creature you control with a +1/+1 counter on it gains menace until end of turn."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{5}"
+                    }
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 2,
+                    "target": "Self"
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "104",
+        "artist": "Miho Midorikawa",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/f/4f442970-5355-4abf-8684-17daaa8e469b.jpg?1764120722"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // How to Start a Riot
 {
     "name": "How to Start a Riot",
@@ -8509,6 +8730,89 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Invasion Submersible
+{
+    "name": "Invasion Submersible",
+    "manaCost": "{2}{U}",
+    "typeLine": "Artifact — Vehicle",
+    "oracleText": "When this Vehicle enters, return up to one other target nonland permanent to its owner's hand.\nExhaust — Waterbend {3}: This Vehicle becomes an artifact creature. Put three +1/+1 counters on it. (While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}. Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 0
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "up to one other target nonland permanent"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "nonland permanent",
+                        "excludeSelf": true
+                    },
+                    "id": "up to one other target nonland permanent"
+                },
+                "descriptionOverride": "When this Vehicle enters, return up to one other target nonland permanent to its owner's hand."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCardType",
+                            "cardType": "Creature",
+                            "target": "Self"
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 3,
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "hasWaterbend": true,
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "57",
+        "rarity": "UNCOMMON",
+        "artist": "Sylvain Sarrailh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/af5299f5-1633-4c07-ade5-fd47e29ea4aa.jpg?1764120298"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -8798,6 +9102,89 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Jeong Jeong, the Deserter
+{
+    "name": "Jeong Jeong, the Deserter",
+    "manaCost": "{2}{R}",
+    "typeLine": "Legendary Creature — Human Rebel Ally",
+    "oracleText": "Firebending 1 (Whenever this creature attacks, add {R}. This mana lasts until end of combat.)\nExhaust — {3}: Put a +1/+1 counter on Jeong Jeong. When you next cast a Lesson spell this turn, copy it and you may choose new targets for the copy. (Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "keywords": [
+        "FIREBENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "FIREBENDING",
+            "n": 1
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED",
+                    "expiry": "END_OF_COMBAT"
+                },
+                "descriptionOverride": "Whenever this creature attacks, add {R}. Until end of combat, you don't lose this mana as steps and phases end."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "CopyNextSpellCast",
+                            "spellFilter": {
+                                "cardPredicates": [
+                                    {
+                                        "type": "HasSubtype",
+                                        "subtype": "Lesson"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "142",
+        "rarity": "UNCOMMON",
+        "artist": "Danciao",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/9/a9f63d3b-bee5-48bc-8b04-d8b24b0bda6e.jpg?1764120974"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -9848,6 +10235,80 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Mai, Jaded Edge
+{
+    "name": "Mai, Jaded Edge",
+    "manaCost": "{1}{R}",
+    "typeLine": "Legendary Creature — Human Noble",
+    "oracleText": "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nExhaust — {3}: Put a double strike counter on Mai. (Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "PROWESS"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "double strike",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "147",
+        "rarity": "UNCOMMON",
+        "artist": "Toraji",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/3/732e6bc9-0798-4c00-aea0-5ef4298b45f5.jpg?1764121013"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -12443,6 +12904,133 @@
     ]
 }
 
+// Rebellious Captives
+{
+    "name": "Rebellious Captives",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Human Peasant Ally",
+    "oracleText": "Exhaust — {6}: Put two +1/+1 counters on this creature, then earthbend 2. (Target land you control becomes a 0/0 creature with haste that's still a land. Put two +1/+1 counters on it. When it dies or is exiled, return it to the battlefield tapped. Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{6}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 2,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "AnimateLand",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "power": 0,
+                                    "toughness": 0,
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "GrantKeyword",
+                                    "keyword": "HASTE",
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                },
+                                {
+                                    "type": "AddCounters",
+                                    "counterType": "+1/+1",
+                                    "count": 2,
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    }
+                                },
+                                {
+                                    "type": "GrantTriggeredAbility",
+                                    "ability": {
+                                        "id": "ability_2",
+                                        "trigger": {
+                                            "type": "ZoneChangeEvent",
+                                            "from": "Battlefield"
+                                        },
+                                        "effect": {
+                                            "type": "Composite",
+                                            "effects": [
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Graveyard"
+                                                },
+                                                {
+                                                    "type": "MoveToZone",
+                                                    "target": "Self",
+                                                    "destination": "Battlefield",
+                                                    "placement": "Tapped",
+                                                    "fromZone": "Exile"
+                                                }
+                                            ]
+                                        },
+                                        "descriptionOverride": "When this dies or is exiled, return it to the battlefield tapped."
+                                    },
+                                    "target": {
+                                        "type": "BoundVariable",
+                                        "name": "target land you control"
+                                    },
+                                    "duration": "Permanent"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "land ctrl:you"
+                        },
+                        "id": "target land you control"
+                    }
+                ],
+                "restrictions": [
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "191",
+        "artist": "Ittoku",
+        "flavorText": "\"The Fire Nation will regret the day they set foot on our land!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/6/e64a4a8b-323c-4c8b-92af-1a3295799e65.jpg?1764121300"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Redirect Lightning
 {
     "name": "Redirect Lightning",
@@ -12662,6 +13250,87 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Rough Rhino Cavalry
+{
+    "name": "Rough Rhino Cavalry",
+    "manaCost": "{4}{R}",
+    "typeLine": "Creature — Human Mercenary",
+    "oracleText": "Firebending 2 (Whenever this creature attacks, add {R}{R}. This mana lasts until end of combat.)\nExhaust — {8}: Put two +1/+1 counters on this creature. It gains trample until end of turn. (Activate each exhaust ability only once.)",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "FIREBENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "FIREBENDING",
+            "n": 2
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "expiry": "END_OF_COMBAT"
+                },
+                "descriptionOverride": "Whenever this creature attacks, add {R}{R}. Until end of combat, you don't lose this mana as steps and phases end."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{8}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 2,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "TRAMPLE",
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "restrictions": [
+                    "Once"
+                ],
+                "isExhaust": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "152",
+        "artist": "Yuhong Ding",
+        "flavorText": "\"Each one is a different kind of weapons specialist. They are also a very capable singing group.\"\n—Iroh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/8/a8bc29cf-f6f8-4bb8-b722-f016b58b6d2d.jpg?1764121046"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -15176,6 +15845,153 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// The Legend of Kuruk
+{
+    "name": "The Legend of Kuruk",
+    "manaCost": "{2}{U}{U}",
+    "typeLine": "Enchantment — Saga",
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter.)\nI, II — Scry 2, then draw a card.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.",
+    "script": {
+        "sagaChapters": [
+            {
+                "chapter": 1,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Scry",
+                            "count": 2
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 2,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Scry",
+                            "count": 2
+                        },
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 3,
+                "effect": "ExileAndReturnTransformed"
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Avatar Kuruk",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Avatar",
+        "oracleText": "Whenever you cast a spell, create a 1/1 colorless Spirit creature token with \"This token can't block or be blocked by non-Spirit creatures.\"\nExhaust — Waterbend {20}: Take an extra turn after this one. (While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}. Activate each exhaust ability only once.)",
+        "creatureStats": {
+            "power": 4,
+            "toughness": 3
+        },
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_1",
+                    "trigger": "SpellCastEvent",
+                    "binding": "ANY",
+                    "effect": {
+                        "type": "CreateToken",
+                        "power": 1,
+                        "toughness": 1,
+                        "colors": [],
+                        "creatureTypes": [
+                            "Spirit"
+                        ],
+                        "name": "Spirit",
+                        "imageUri": "https://cards.scryfall.io/normal/front/f/5/f59eba51-458a-40e0-b754-999f91d5d839.jpg?1764117653",
+                        "staticAbilities": [
+                            {
+                                "type": "CantBeBlockedExceptBy",
+                                "blockerFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Spirit"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "CanOnlyBlockCreaturesWith",
+                                "blockerFilter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Spirit"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "descriptionOverride": "Whenever you cast a spell, create a 1/1 colorless Spirit creature token with \"This token can't block or be blocked by non-Spirit creatures.\""
+                }
+            ],
+            "activatedAbilities": [
+                {
+                    "id": "ability_2",
+                    "cost": {
+                        "type": "CostAtomWrapper",
+                        "atom": {
+                            "type": "AtomMana",
+                            "cost": "{20}"
+                        }
+                    },
+                    "effect": "TakeExtraTurn",
+                    "restrictions": [
+                        "Once"
+                    ],
+                    "hasWaterbend": true,
+                    "isExhaust": true
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "61",
+            "rarity": "MYTHIC",
+            "artist": "Takayama Toshiaki",
+            "imageUri": "https://cards.scryfall.io/normal/back/5/e/5e9a53d3-7f2f-4a9c-9516-0713da740478.jpg?1770463831"
+        },
+        "colorIdentityOverride": [
+            "BLUE"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "61",
+        "rarity": "MYTHIC",
+        "artist": "Takayama Toshiaki",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/e/5e9a53d3-7f2f-4a9c-9516-0713da740478.jpg?1770463831"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

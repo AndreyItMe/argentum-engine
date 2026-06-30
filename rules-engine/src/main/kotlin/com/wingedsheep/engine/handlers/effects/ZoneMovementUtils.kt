@@ -10,6 +10,7 @@ import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.ComponentContainer
+import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedEverComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentHostLeftComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
@@ -352,6 +353,12 @@ object ZoneMovementUtils {
             .without<HasDealtDamageComponent>()
             .without<HasDealtCombatDamageToPlayerComponent>()
             .without<CountersComponent>()
+            // "Activate only once" memory (CR 702.177 Exhaust, and any `ActivationRestriction.Once`
+            // ability) is tracked per object. A permanent that leaves and re-enters the battlefield
+            // is a new object with no memory (CR 400.7 / 403.4), so the once-ever record must reset —
+            // otherwise a blinked/bounced-and-recast exhaust permanent could never use its ability
+            // again. Mirrors the documented intent of the sibling "ever" trackers.
+            .without<AbilityActivatedEverComponent>()
             .without<AttachedToComponent>()
             .without<AttachmentsComponent>()
             // A blink returns a new object (CR 400.7); it must not carry a stale "host left" marker

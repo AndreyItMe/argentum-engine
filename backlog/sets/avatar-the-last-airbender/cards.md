@@ -2,10 +2,11 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 240 / 286
+**Implemented:** 248 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
-> **Status (June 2026):** 240/286 implemented. The **Airbend** keyword (permanent form) is now built —
+> **Status (June 2026):** 248/286 implemented. The **Exhaust** keyword is now built (`isExhaust = true`
+> → the per-object `ActivationRestriction.Once`), and the **Airbend** keyword (permanent form) before it —
 > a fixed-alternative-cost may-play-from-exile primitive (`Effects.Airbend` / `Effects.AirbendAll`),
 > which unlocked Airbending Lesson, Glider Staff, Aang the Last Airbender, Airbender Ascension,
 > Airbender's Reversal, and both Appa. Earlier work landed **Firebending**, the **Vigilance keyword
@@ -36,10 +37,10 @@ up by Airbend, not Firebending).
 | Mechanic | Total | Remaining | Notes |
 |----------|------:|----------:|-------|
 | Earthbend | 28 | 6 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). |
-| Waterbend | 25 | 10 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`) and **spell-level additional cost** (incl. **waterbend {X}**) both built. ❌ still needed: **Ward—Waterbend**, **Exhaust—Waterbend**, and **waterbend-as-alternative-cast** (Hama). |
+| Waterbend | 25 | 10 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), and **Exhaust—Waterbend** (`isExhaust` + `hasWaterbend`, e.g. Invasion Submersible, Avatar Kuruk) all built. ❌ still needed: **Ward—Waterbend** and **waterbend-as-alternative-cast** (Hama). |
 | Firebending | 28 | 14 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions hand-wired via `AddManaEffect(…, ManaExpiry.END_OF_COMBAT)`. ❌ still missing: **granting** firebending to others / **conditional** "has firebending as long as …" / "gains firebending until EOT". |
 | Airbend | 11 | 3 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` (fixed-alternative-cost may-play from exile) + the spell stack branch (`Effects.ExileTargetSpell(fixedAlternativeManaCost)` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter, so it bypasses can't-be-countered). ❌ remaining 3 blocked by *other* gaps: cast-zone restriction (Avatar's Wrath), each-player-choose Saga chapter (Yangchen), four-bend events + {WUBRG} reduction (Avatar Aang). |
-| Exhaust | 8 | 8 | Activated ability usable only once per game. ❌ keyword **not built**. |
+| Exhaust | 8 | 0 | Activated ability usable only once (per object, CR 702.177). ✅ built — `isExhaust = true` on `activatedAbility` desugars to `ActivationRestriction.Once` (the existing per-object tracker is rules-correct; **not** once-per-game) and renders the "Exhaust — " prefix. **All 8 implemented**: Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work, plus Jeong Jeong (copy-next-Lesson rider), Invasion Submersible (Exhaust—Waterbend → becomes-artifact-creature via `AddCardType`), The Legend of Kuruk (Saga DFC + Exhaust—Waterbend {20} extra turn), and Mai (new **double strike** keyword counter). |
 
 ### Other keywords present (evergreen + returning)
 
@@ -120,7 +121,7 @@ up by Airbend, not Firebending).
 - [x] Beifong's Bounty Hunters
 - [ ] Bender's Waterskin
 - [x] Benevolent River Spirit
-- [ ] Bitter Work
+- [x] Bitter Work
 - [x] Boar-q-pine
 - [x] Boiling Rock Prison
 - [x] Boiling Rock Rioter
@@ -207,12 +208,12 @@ up by Airbend, not Firebending).
 - [ ] Heartless Act
 - [x] Hei Bai, Spirit of Balance
 - [x] Hermitic Herbalist
-- [ ] Hog-Monkey
+- [x] Hog-Monkey
 - [ ] Honest Work
 - [x] How to Start a Riot
 - [x] Iguana Parrot
 - [x] Invasion Reinforcements
-- [ ] Invasion Submersible
+- [x] Invasion Submersible
 - [x] Invasion Tactics
 - [x] Iroh's Demonstration
 - [ ] Iroh, Grand Lotus
@@ -221,7 +222,7 @@ up by Airbend, not Firebending).
 - [x] It'll Quench Ya!
 - [x] Jasmine Dragon Tea Shop
 - [x] Jeong Jeong's Deserters
-- [ ] Jeong Jeong, the Deserter
+- [x] Jeong Jeong, the Deserter
 - [x] Jet's Brainwashing
 - [x] Jet, Freedom Fighter
 - [x] Joo Dee, One of Many
@@ -240,7 +241,7 @@ up by Airbend, not Firebending).
 - [ ] Lo and Li, Twin Tutors
 - [x] Long Feng, Grand Secretariat
 - [x] Lost Days
-- [ ] Mai, Jaded Edge
+- [x] Mai, Jaded Edge
 - [x] Mai, Scornful Striker
 - [x] Master Pakku
 - [x] Master Piandao
@@ -280,11 +281,11 @@ up by Airbend, not Firebending).
 - [x] Raven Eagle
 - [x] Razor Rings
 - [x] Realm of Koh
-- [ ] Rebellious Captives
+- [x] Rebellious Captives
 - [x] Redirect Lightning
 - [x] Rockalanche
 - [x] Rocky Rebuke
-- [ ] Rough Rhino Cavalry
+- [x] Rough Rhino Cavalry
 - [x] Rowdy Snowballers
 - [x] Ruinous Waterbending
 - [x] Rumble Arena
@@ -321,7 +322,7 @@ up by Airbend, not Firebending).
 - [x] The Earth King
 - [x] The Fire Nation Drill
 - [ ] The Last Agni Kai
-- [ ] The Legend of Kuruk
+- [x] The Legend of Kuruk
 - [x] The Legend of Kyoshi
 - [x] The Legend of Roku
 - [ ] The Legend of Yangchen

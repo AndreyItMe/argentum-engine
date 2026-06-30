@@ -1359,6 +1359,13 @@ class ActivatedAbilityBuilder {
      * (Avatar: The Last Airbender). See [ActivatedAbility.hasWaterbend].
      */
     var hasWaterbend: Boolean = false
+    /**
+     * When true, this is an *exhaust* ability (CR 702.177): "Exhaust — [cost]: [effect]" =
+     * "[cost]: [effect]. Activate only once." Setting this renders the "Exhaust — " prefix and
+     * automatically adds [ActivationRestriction.Once] to [restrictions] (the once-per-object
+     * enforcement), so an author only writes `isExhaust = true`. See [ActivatedAbility.isExhaust].
+     */
+    var isExhaust: Boolean = false
     var holdPriority: Boolean = false
     var genericCostReduction: DynamicAmount? = null
     /** Colors that may be spent on the `{X}` portion of this ability's cost (empty = any). */
@@ -1389,6 +1396,12 @@ class ActivatedAbilityBuilder {
 
     fun build(): ActivatedAbility {
         requireNotNull(effect) { "Activated ability must have an effect" }
+        // An exhaust ability is "Activate only once" (CR 702.177a): ensure the once-per-object
+        // restriction is present so the keyword marker and its enforcement can't drift apart.
+        val effectiveRestrictions =
+            if (isExhaust && restrictions.none { it == ActivationRestriction.Once })
+                restrictions + ActivationRestriction.Once
+            else restrictions
         return ActivatedAbility(
             id = AbilityId.generate(),
             cost = cost,
@@ -1397,12 +1410,13 @@ class ActivatedAbilityBuilder {
             isManaAbility = manaAbility,
             isEquipAbility = isEquipAbility,
             timing = timing,
-            restrictions = restrictions,
+            restrictions = effectiveRestrictions,
             activateFromZone = activateFromZone,
             promptOnDraw = promptOnDraw,
             descriptionOverride = description,
             hasConvoke = hasConvoke,
             hasWaterbend = hasWaterbend,
+            isExhaust = isExhaust,
             holdPriority = holdPriority,
             genericCostReduction = genericCostReduction,
             xManaRestriction = xManaRestriction

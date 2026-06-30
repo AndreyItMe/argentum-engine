@@ -3826,10 +3826,25 @@ ability — feed the matching count `DynamicAmount` to `genericCostReduction`.
 **`ActivationRestriction`**
 
 - `MaxPerTurn(n)` — at most N activations per turn.
-- `OnlyOnce` — once per game.
+- `OncePerTurn` — once each turn (resets at end of turn).
+- `Once` — *"Activate only once"* (CR): once per the **lifetime of this object**, tracked on the
+  permanent entity via `AbilityActivatedEverComponent`. Per CR 400.7 / 403.4 a permanent that leaves
+  and re-enters the battlefield is a *new object*, so its `Once` ability may be activated again — this
+  is **not** "once per game". Backs the **Exhaust** keyword (below).
 - `OnlyIfCondition(c)` — condition gate.
 - `OnlyDuringYourTurn` / `DuringPhase(p)` / `DuringStep(s)` / `BeforeStep(s)` — timing gates (compose
   via `All(...)`, e.g. `All(DuringStep(UPKEEP), OnlyDuringYourTurn)` for "only during your upkeep").
+
+**Exhaust** (Avatar: The Last Airbender, returning from Edge of Eternities; CR 702.177) — *not a
+keyword-line keyword*; a marker flag on an activated ability. *"Exhaust — [cost]: [effect]"* means
+*"[cost]: [effect]. Activate only once."* Set `isExhaust = true` in the `activatedAbility { }` block.
+That (a) renders the *"Exhaust — "* prefix on the ability's `description` (in printed order, so an
+"Exhaust — Waterbend {N}" ability reads correctly) and (b) **auto-adds `ActivationRestriction.Once`**
+to the ability's restrictions, so the keyword marker and its once-per-object enforcement can't drift
+apart. No game-scoped tracker is needed — `Once`'s per-object lifetime (above) is exactly Exhaust's
+rules semantics, so a permanent re-entering the battlefield may activate its exhaust ability again.
+Compose freely with other restrictions, e.g. `restrictions = listOf(ActivationRestriction.OnlyDuringYourTurn)`
+alongside `isExhaust = true` for "Exhaust — …: … Activate only during your turn." (Bitter Work).
 
 **Loyalty abilities**
 
@@ -5700,11 +5715,12 @@ substitution.
   instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
   which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the
   sacrifice/pay continuation resumer. Adding stun counters is done by `AddCounters(Counters.STUN, n, target)`.
-- **Keyword counters** (Rule 122.1b) — `flying`, `first strike`, `vigilance`, `lifelink`, `indestructible`,
-  `deathtouch`, `trample`, `hexproof`, `reach`. `StateProjector` grants the matching `Keyword` to any permanent
-  carrying one (mapped in `KEYWORD_COUNTER_MAP`, re-applied after Layer 6 so "loses all abilities" can't wipe a
-  counter-granted keyword). Add via `AddCounters(Counters.DEATHTOUCH, ...)` etc.; no static ability needed.
-  (`reach`: Sagu Pummeler's renew payoff puts a reach counter on a creature. `vigilance`: Aragorn, Company Leader.)
+- **Keyword counters** (Rule 122.1b) — `flying`, `first strike`, `double strike`, `vigilance`, `lifelink`,
+  `indestructible`, `deathtouch`, `trample`, `hexproof`, `reach`. `StateProjector` grants the matching `Keyword`
+  to any permanent carrying one (mapped in `KEYWORD_COUNTER_MAP`, re-applied after Layer 6 so "loses all abilities"
+  can't wipe a counter-granted keyword). Add via `AddCounters(Counters.DEATHTOUCH, ...)` etc.; no static ability needed.
+  (`reach`: Sagu Pummeler's renew payoff puts a reach counter on a creature. `vigilance`: Aragorn, Company Leader.
+  `double strike`: Mai, Jaded Edge's exhaust ability.)
 - **Ability counters beyond single keywords** — `decayed` (`Counters.DECAYED`, CR 702.147a, Tarkir: Dragonstorm) grants
   the whole **Decayed** ability (a "can't block" static **and** an attack-triggered end-of-combat sacrifice) to any
   creature that bears one. `StateProjector` projects the `DECAYED` keyword + `cantBlock = true` (initial pass and the

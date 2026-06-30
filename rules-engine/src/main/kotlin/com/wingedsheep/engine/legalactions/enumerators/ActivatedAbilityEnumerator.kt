@@ -174,9 +174,9 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 // into custom text).
                 val displayDescription =
                     if (effectiveCost != rawCost && ability.descriptionOverride == null) {
-                        // A cost reduced all the way to zero renders as an empty string; show "{0}"
-                        // so a free (e.g. Forge-Anew-discounted) equip reads as free, not blank.
-                        "${effectiveCost.description.ifEmpty { "{0}" }}: ${ability.effect.description}"
+                        // Rebuild from the effective cost, preserving any keyword-action prefixes
+                        // ("Exhaust — ", "Waterbend ") and rendering a fully-discounted cost as "{0}".
+                        ability.describeWithCost(effectiveCost)
                     } else {
                         ability.description
                     }
