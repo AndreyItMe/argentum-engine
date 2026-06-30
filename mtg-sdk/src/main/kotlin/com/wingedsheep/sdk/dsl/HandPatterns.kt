@@ -23,11 +23,13 @@ import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.MoveType
 import com.wingedsheep.sdk.scripting.effects.RepeatDynamicTimesEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
+import com.wingedsheep.sdk.scripting.effects.SelectTargetEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
 import com.wingedsheep.sdk.scripting.effects.SelectionRestriction
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
@@ -457,14 +459,13 @@ object HandPatterns {
     )
 
     /**
-     * Connive (CR 702.166): draw a card, then discard a card. If the discarded card
-     * is a nonland, put a +1/+1 counter on [target].
-     *
-     * Pipeline: Draw → Gather(hand) → Select(1) → Move(Discard) → ConditionalOnCollection(Nonland).
-     * SelectFromCollection auto-resolves on empty / single-card hands, matching the
-     * old monolithic executor's short-circuit behavior.
+     * Shared connive pipeline (CR 702.166): draw a card, then discard a card; if the discard was a
+     * nonland, run [onNonland]. Draw → Gather(hand) → Select(1) → Move(Discard) →
+     * ConditionalOnCollection(Nonland). SelectFromCollection auto-resolves on empty / single-card
+     * hands, matching the old monolithic executor's short-circuit behavior. [connive] and
+     * [conniveTargeting] differ only in [onNonland], so they share this body.
      */
-    fun connive(target: EffectTarget = EffectTarget.Self): CompositeEffect = CompositeEffect(
+    private fun connivePipeline(onNonland: Effect): CompositeEffect = CompositeEffect(
         listOf(
             DrawCardsEffect(1, EffectTarget.Controller),
             GatherCardsEffect(
@@ -486,14 +487,52 @@ object HandPatterns {
             ConditionalOnCollectionEffect(
                 collection = "connive_discarded",
                 filter = GameObjectFilter.Nonland,
-                ifNotEmpty = AddCountersEffect(
-                    counterType = Counters.PLUS_ONE_PLUS_ONE,
-                    count = 1,
-                    target = target
-                )
+                ifNotEmpty = onNonland
             )
         ),
         descriptionOverride = "Connive"
+    )
+
+    /**
+     * Connive (CR 702.166): draw a card, then discard a card. If the discarded card
+     * is a nonland, put a +1/+1 counter on [target].
+     */
+    fun connive(target: EffectTarget = EffectTarget.Self): CompositeEffect = connivePipeline(
+        AddCountersEffect(
+            counterType = Counters.PLUS_ONE_PLUS_ONE,
+            count = 1,
+            target = target
+        )
+    )
+
+    /**
+     * Connive variant whose +1/+1 counter lands on a *chosen target* rather than the conniving
+     * permanent itself — the "When you discard a nonland card this way, put a +1/+1 counter on
+     * target creature you control" shape (Teo, Spirited Glider).
+     *
+     * Unlike [connive] (counter goes on a fixed [EffectTarget], default Self), the recipient is a
+     * reflexive target: it is selected at resolution via [SelectTargetEffect] *inside* the nonland
+     * gate, so the player only picks a creature once a nonland card has actually been discarded —
+     * never up front, and never when the discard turns out to be a land (or the hand was empty). The
+     * counter then lands on that [EffectTarget.PipelineTarget].
+     *
+     * @param requirement what the chosen counter recipient must satisfy (e.g.
+     *   `Targets.CreatureYouControl`).
+     */
+    fun conniveTargeting(
+        requirement: TargetRequirement,
+        storeAs: String = "connive_counter_target",
+    ): CompositeEffect = connivePipeline(
+        CompositeEffect(
+            listOf(
+                SelectTargetEffect(requirement = requirement, storeAs = storeAs),
+                AddCountersEffect(
+                    counterType = Counters.PLUS_ONE_PLUS_ONE,
+                    count = 1,
+                    target = EffectTarget.PipelineTarget(storeAs)
+                )
+            )
+        )
     )
 
     /**
