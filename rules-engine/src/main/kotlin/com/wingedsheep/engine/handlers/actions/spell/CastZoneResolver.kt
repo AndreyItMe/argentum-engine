@@ -25,6 +25,7 @@ import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGravey
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.GrantFlashToSpellType
 import com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile
@@ -431,11 +432,18 @@ class CastZoneResolver(
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.script.staticAbilities) {
-                if (ability is CastSpellTypesFromTopOfLibrary) {
-                    if (matchesCardFilter(cardComponent, ability.filter)) return true
+                // Honor a conditional gate (e.g. The Lunar Whale's "as long as it attacked this
+                // turn") against the granting permanent before allowing the cast from top.
+                val unwrapped = if (ability is ConditionalStaticAbility) {
+                    val ctx = EffectContext(sourceId = entityId, controllerId = playerId)
+                    if (!conditionEvaluator.evaluate(state, ability.condition, ctx)) continue
+                    ability.ability
+                } else ability
+                if (unwrapped is CastSpellTypesFromTopOfLibrary) {
+                    if (matchesCardFilter(cardComponent, unwrapped.filter)) return true
                 }
-                if (ability is PlayLandsAndCastFilteredFromTopOfLibrary) {
-                    if (matchesCardFilter(cardComponent, ability.spellFilter)) return true
+                if (unwrapped is PlayLandsAndCastFilteredFromTopOfLibrary) {
+                    if (matchesCardFilter(cardComponent, unwrapped.spellFilter)) return true
                 }
             }
         }

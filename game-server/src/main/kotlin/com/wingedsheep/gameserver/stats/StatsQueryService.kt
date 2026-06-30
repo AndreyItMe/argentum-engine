@@ -207,6 +207,9 @@ data class AdminGamePlayer(
     val userId: UUID?,
     val isAi: Boolean,
     val won: Boolean,
+    // Coarse connection origin, resolved from the seat's recorded IP via [GeoIpService]. Null for AI
+    // seats and when the IP couldn't be resolved. Raw IPs never reach the client — only the location.
+    val location: GeoLocation? = null,
 )
 
 /** A recorded game for the admin global game list, newest first, with every seat. */
@@ -234,6 +237,7 @@ class StatsQueryService(
     private val deckProfiler: DeckProfiler,
     private val cardRegistry: CardRegistry,
     private val printingRegistry: PrintingRegistry,
+    private val geoIp: GeoIpService,
 ) {
 
     // ---- Per-user ----------------------------------------------------------------------------
@@ -1016,32 +1020,56 @@ class StatsQueryService(
         }
     }
 
-    /** Every seat for a set of match ids, keyed by match id (seat order preserved). */
+    /**
+     * Every seat for a set of match ids, keyed by match id (seat order preserved). Each seat's
+     * recorded IP is resolved to a coarse location via [GeoIpService] (batched across all seats,
+     * cached in-process); the raw IP stays server-side and only the location reaches the DTO.
+     */
     private fun playersForMatches(matchIds: List<Long>): Map<Long, List<AdminGamePlayer>> {
         if (matchIds.isEmpty()) return emptyMap()
         val placeholders = matchIds.joinToString(",") { "?" }
-        val out = LinkedHashMap<Long, MutableList<AdminGamePlayer>>()
-        jdbc.query(
+        data class Seat(
+            val mid: Long,
+            val name: String,
+            val userId: UUID?,
+            val isAi: Boolean,
+            val won: Boolean,
+            val ip: String?,
+        )
+        val seats = jdbc.query(
             """
             SELECT p.match_id AS mid, COALESCE(u.display_name, p.player_name) AS name,
-                   p.user_id AS uid, p.is_ai AS is_ai, p.won AS won
+                   p.user_id AS uid, p.is_ai AS is_ai, p.won AS won, p.client_ip AS client_ip
             FROM match_participants p
             LEFT JOIN users u ON u.id = p.user_id
             WHERE p.match_id IN ($placeholders)
             ORDER BY p.id
             """.trimIndent(),
-            { rs ->
-                out.getOrPut(rs.getLong("mid")) { mutableListOf() }.add(
-                    AdminGamePlayer(
-                        name = rs.getString("name"),
-                        userId = rs.getObject("uid", UUID::class.java),
-                        isAi = rs.getBoolean("is_ai"),
-                        won = rs.getBoolean("won"),
-                    ),
+            { rs, _ ->
+                Seat(
+                    mid = rs.getLong("mid"),
+                    name = rs.getString("name"),
+                    userId = rs.getObject("uid", UUID::class.java),
+                    isAi = rs.getBoolean("is_ai"),
+                    won = rs.getBoolean("won"),
+                    ip = rs.getString("client_ip")?.takeIf { it.isNotBlank() },
                 )
             },
             *matchIds.toTypedArray(),
         )
+        val locations = geoIp.resolve(seats.mapNotNull { it.ip })
+        val out = LinkedHashMap<Long, MutableList<AdminGamePlayer>>()
+        for (seat in seats) {
+            out.getOrPut(seat.mid) { mutableListOf() }.add(
+                AdminGamePlayer(
+                    name = seat.name,
+                    userId = seat.userId,
+                    isAi = seat.isAi,
+                    won = seat.won,
+                    location = seat.ip?.let { locations[it] },
+                ),
+            )
+        }
         return out
     }
 

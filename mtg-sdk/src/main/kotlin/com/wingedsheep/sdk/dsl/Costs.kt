@@ -416,6 +416,17 @@ object Costs {
         ): AdditionalCost =
             AdditionalCost.ExileFromGraveyardOrPay(exileCount, alternativeManaCost, filter)
 
+        /**
+         * Sacrifice [count] permanent(s) matching [filter] you control, or pay
+         * [alternativeManaCost] instead (Louisoix's Sacrifice).
+         */
+        fun SacrificeOrPay(
+            filter: GameObjectFilter = GameObjectFilter.Any,
+            alternativeManaCost: String,
+            count: Int = 1,
+        ): AdditionalCost =
+            AdditionalCost.SacrificeOrPay(filter, alternativeManaCost, count)
+
         /** "Behold a [filter] and exile it" — [Behold] + [ExileFromStorage] composed. */
         fun BeholdAndExile(
             filter: GameObjectFilter,

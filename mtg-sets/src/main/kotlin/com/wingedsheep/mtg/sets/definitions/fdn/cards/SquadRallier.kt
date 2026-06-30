@@ -12,14 +12,9 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * {3}{W}
  * Creature — Human Scout
  * 3/4
- *
  * {2}{W}: Look at the top four cards of your library. You may reveal a creature card with
  * power 2 or less from among them and put it into your hand. Put the rest on the bottom of
  * your library in a random order.
- *
- * The activated ability is the Water Tribe Rallier / Star Charter dig shape via
- * [Patterns.Library.lookAtTopRevealMatchingToHand]: gather top four, optionally reveal up to
- * one creature with power ≤2 to hand, and bottom the rest in a random order.
  */
 val SquadRallier = card("Squad Rallier") {
     manaCost = "{3}{W}"
@@ -27,16 +22,14 @@ val SquadRallier = card("Squad Rallier") {
     typeLine = "Creature — Human Scout"
     power = 3
     toughness = 4
-    oracleText = "{2}{W}: Look at the top four cards of your library. You may reveal a creature " +
-        "card with power 2 or less from among them and put it into your hand. Put the rest on the " +
-        "bottom of your library in a random order."
+    oracleText = "{2}{W}: Look at the top four cards of your library. You may reveal a creature card with power 2 or less from among them and put it into your hand. Put the rest on the bottom of your library in a random order."
 
     activatedAbility {
         cost = Costs.Mana("{2}{W}")
         effect = Patterns.Library.lookAtTopRevealMatchingToHand(
             count = DynamicAmount.Fixed(4),
             filter = GameObjectFilter.Creature.powerAtMost(2),
-            prompt = "You may reveal a creature card with power 2 or less and put it into your hand"
+            prompt = "You may reveal a creature card with power 2 or less to put into your hand"
         )
     }
 

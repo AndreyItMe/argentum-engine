@@ -1,5 +1,14 @@
 server:
   port: 8080
+  # Gzip HTTP responses. The replay endpoints reconstruct the full snapshot+delta stream on demand,
+  # which for a long game is ~1MB of highly repetitive JSON (the same card objects, rulings, and both
+  # players' full blocks repeat every frame) — it compresses ~90%. Only applies when the client sends
+  # Accept-Encoding: gzip (all browsers do) and the body exceeds min-response-size; small responses and
+  # the WebSocket path are untouched.
+  compression:
+    enabled: true
+    mime-types: application/json,application/octet-stream,text/plain,text/html,text/css,application/javascript
+    min-response-size: 2KB
 
 spring:
   application:

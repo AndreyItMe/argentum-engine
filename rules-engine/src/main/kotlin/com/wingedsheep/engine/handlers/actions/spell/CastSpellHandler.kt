@@ -545,6 +545,19 @@ class CastSpellHandler(
             }
         }
 
+        // Apply SacrificeOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val sacOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.SacrificeOrPay>()
+                .firstOrNull()
+            if (sacOrPay != null) {
+                val choseSacrifice = action.additionalCostPayment?.sacrificedPermanents?.isNotEmpty() == true
+                if (!choseSacrifice) {
+                    effectiveCost = effectiveCost + ManaCost.parse(sacOrPay.alternativeManaCost)
+                }
+            }
+        }
+
         // Apply spell-level waterbend additional cost (Avatar: The Last Airbender). Adds the
         // waterbend amount {N} (or {X}) as generic mana; the tapped artifacts/creatures in
         // alternativePayment reduce that generic below, capped at N.
@@ -1506,6 +1519,31 @@ class CastSpellHandler(
                     }
                     // If exiledCards is empty, the player is paying extra mana instead
                 }
+                is AdditionalCost.SacrificeOrPay -> {
+                    // SacrificeOrPay: player chose the sacrifice path if sacrificedPermanents is
+                    // non-empty, otherwise they pay extra mana (validated via mana payment).
+                    val sacrificed = action.additionalCostPayment?.sacrificedPermanents ?: emptyList()
+                    if (sacrificed.isNotEmpty()) {
+                        if (sacrificed.size != additionalCost.count) {
+                            val spellName = state.getEntity(action.cardId)?.get<CardComponent>()?.name ?: "this spell"
+                            return "You must sacrifice exactly ${additionalCost.count} permanent(s) for $spellName"
+                        }
+                        val context = PredicateContext(controllerId = action.playerId)
+                        for (permId in sacrificed) {
+                            if (permId !in state.getBattlefield()) {
+                                return "Permanent to sacrifice is not on the battlefield"
+                            }
+                            if (projected.getController(permId) != action.playerId) {
+                                return "You can only sacrifice permanents you control"
+                            }
+                            if (!predicateEvaluator.matches(state, projected, permId, additionalCost.filter, context)) {
+                                val permName = state.getEntity(permId)?.get<CardComponent>()?.name ?: "Permanent"
+                                return "$permName doesn't match the required filter: ${additionalCost.filter.description}"
+                            }
+                        }
+                    }
+                    // If sacrificedPermanents is empty, the player is paying extra mana instead
+                }
                 is AdditionalCost.RemoveCountersFromYourCreatures -> {
                     // Web client sends a typed list of (entity, counterType, count)
                     // entries so the player picks which counter type comes off each
@@ -1804,6 +1842,20 @@ class CastSpellHandler(
                 val choseExile = action.additionalCostPayment?.exiledCards?.isNotEmpty() == true
                 if (!choseExile) {
                     effectiveCost = effectiveCost + ManaCost.parse(exileOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply SacrificeOrPay: if player chose the "pay mana" path (no sacrificed permanents),
+        // add the extra mana on top of the base cost.
+        if (cardDef != null && !playForFreeInExecute) {
+            val sacOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.SacrificeOrPay>()
+                .firstOrNull()
+            if (sacOrPay != null) {
+                val choseSacrifice = action.additionalCostPayment?.sacrificedPermanents?.isNotEmpty() == true
+                if (!choseSacrifice) {
+                    effectiveCost = effectiveCost + ManaCost.parse(sacOrPay.alternativeManaCost)
                 }
             }
         }
@@ -2265,6 +2317,42 @@ class CastSpellHandler(
                             ))
                         }
                         exiledCardCount += exiledCards.size
+                    }
+                    is AdditionalCost.SacrificeOrPay -> {
+                        // Sacrifice the chosen permanents if the player chose the sacrifice path.
+                        // If sacrificedPermanents is empty, "pay mana" path — extra mana already
+                        // added above. Mirrors the CostAtom.Sacrifice payment, including the
+                        // last-known-information snapshot (CR 112.7a / 608.2h) so a sacrificed
+                        // permanent's stats survive onto downstream effects/triggers.
+                        val sacrificed = action.additionalCostPayment.sacrificedPermanents
+                        if (sacrificed.isNotEmpty()) {
+                            val projectedBeforeSacrifice = currentState.projectedState
+                            sacrificedSnapshots.addAll(
+                                captureEntitySnapshots(sacrificed, projectedBeforeSacrifice)
+                            )
+                            for (permId in sacrificed) {
+                                val permContainer = currentState.getEntity(permId) ?: continue
+                                val permCard = permContainer.get<CardComponent>() ?: continue
+                                val controllerId = permContainer.get<ControllerComponent>()?.playerId ?: action.playerId
+                                val ownerId = permCard.ownerId ?: action.playerId
+                                val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
+                                val graveyardZone = ZoneKey(ownerId, Zone.GRAVEYARD)
+
+                                currentState = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+                                    .trackPermanentSacrifice(currentState, listOf(permId), action.playerId)
+                                currentState = currentState.removeFromZone(battlefieldZone, permId)
+                                currentState = currentState.addToZone(graveyardZone, permId)
+
+                                events.add(PermanentsSacrificedEvent(action.playerId, listOf(permId), listOf(permCard.name)))
+                                events.add(ZoneChangeEvent(
+                                    entityId = permId,
+                                    entityName = permCard.name,
+                                    fromZone = Zone.BATTLEFIELD,
+                                    toZone = Zone.GRAVEYARD,
+                                    ownerId = ownerId
+                                ))
+                            }
+                        }
                     }
                     is AdditionalCost.RemoveCountersFromYourCreatures -> {
                         // Remove the chosen counters from the designated creatures.

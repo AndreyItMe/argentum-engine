@@ -670,6 +670,7 @@ class GamePlayHandler(
                 tournamentRound = tournamentRound,
                 setup = replaySetup,
                 actions = gameSession.getRecordedActions(),
+                yields = gameSession.getReplayYields(),
             )
             // AI-only games (e.g. the LLM tournament) stay in the in-memory cache for live viewing
             // but aren't persisted — they never appear in any account's history.

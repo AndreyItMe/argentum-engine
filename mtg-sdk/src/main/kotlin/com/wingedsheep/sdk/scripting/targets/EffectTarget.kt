@@ -54,6 +54,25 @@ sealed interface EffectTarget {
         override val description: String = "enchanted permanent"
     }
 
+    /**
+     * The permanent whose static ability granted the currently-resolving ability — the
+     * Equipment/Aura/permanent bearing the `GrantActivatedAbility` (or gained-abilities) static,
+     * as opposed to [Self], which in a granted ability is the *host* that received it.
+     *
+     * Use for granted abilities that reference the granting object by name, e.g. an Equipment that
+     * gives its bearer "...Return [this Equipment] to its owner's hand" (Trusty Boomerang), or
+     * "Attach [this Equipment] to target creature" (Cranial Plating). Resolves to the granter
+     * captured when the ability was put on the stack, so it survives the granter leaving play
+     * (CR 113.7a last-known information — the effect no-ops if the granter is gone). For an ability
+     * whose source already *is* the granter (Territory Forge / Sharkey-style gains), this resolves
+     * to the same entity as [Self].
+     */
+    @SerialName("GrantingSource")
+    @Serializable
+    data object GrantingSource : EffectTarget {
+        override val description: String = "the source that granted this ability"
+    }
+
     /** The controller of the target (used for effects like "its controller gains 4 life") */
     @SerialName("TargetController")
     @Serializable

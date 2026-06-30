@@ -6993,6 +6993,74 @@
     ]
 }
 
+// Firebending Student
+{
+    "name": "Firebending Student",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Monk",
+    "oracleText": "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nFirebending X, where X is this creature's power. (Whenever this creature attacks, add X {R}. This mana lasts until end of combat.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "keywords": [
+        "PROWESS"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED",
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Source",
+                        "numericProperty": "Power"
+                    },
+                    "expiry": "END_OF_COMBAT"
+                },
+                "descriptionOverride": "Firebending X, where X is this creature's power. Whenever this creature attacks, add X {R}. This mana lasts until end of combat."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "139",
+        "rarity": "RARE",
+        "artist": "Kozato",
+        "flavorText": "\"Fire is the element of power.\"\n—Iroh",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/b/3b366f59-16fe-43cb-888d-1f93ef8fd332.jpg?1764120954"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // First-Time Flyer
 {
     "name": "First-Time Flyer",
@@ -11172,6 +11240,89 @@
     ]
 }
 
+// North Pole Patrol
+{
+    "name": "North Pole Patrol",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Human Soldier Ally",
+    "oracleText": "{T}: Untap another target permanent you control.\nWaterbend {3}, {T}: Tap target creature an opponent controls. (While paying a waterbend cost, you can tap your artifacts and creatures to help. Each one pays for {1}.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "TapUntap",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "another target permanent you control"
+                    },
+                    "tap": false
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "permanent ctrl:you",
+                            "excludeSelf": true
+                        },
+                        "id": "another target permanent you control"
+                    }
+                ],
+                "descriptionOverride": "{T}: Untap another target permanent you control."
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{3}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "TapUntap",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature an opponent controls"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        },
+                        "id": "target creature an opponent controls"
+                    }
+                ],
+                "descriptionOverride": "Waterbend {3}, {T}: Tap target creature an opponent controls.",
+                "hasWaterbend": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "65",
+        "rarity": "UNCOMMON",
+        "artist": "Rose Benjamin",
+        "flavorText": "Waterbenders patrol the coast each day for good fishing spots and bad weather omens.",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c2c0c138-5b61-4949-8431-4a6d458ead6a.jpg?1764120386"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Northern Air Temple
 {
     "name": "Northern Air Temple",
@@ -12540,6 +12691,122 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Ran and Shaw
+{
+    "name": "Ran and Shaw",
+    "manaCost": "{3}{R}{R}",
+    "typeLine": "Legendary Creature — Dragon",
+    "oracleText": "Flying, firebending 2\nWhen Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary.\n{3}{R}: Dragons you control get +2/+0 until end of turn.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING",
+        "FIREBENDING"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "FIREBENDING",
+            "n": 2
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "RED",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "expiry": "END_OF_COMBAT"
+                },
+                "descriptionOverride": "Whenever this creature attacks, add {R}{R}. Until end of combat, you don't lose this mana as steps and phases end."
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateTokenCopyOfSource",
+                    "removeLegendary": true
+                },
+                "triggerCondition": {
+                    "type": "All",
+                    "conditions": [
+                        "WasCast",
+                        {
+                            "type": "Compare",
+                            "left": {
+                                "type": "Count",
+                                "player": "You",
+                                "zone": "Graveyard",
+                                "filter": "Dragon|Lesson"
+                            },
+                            "operator": "GTE",
+                            "right": {
+                                "type": "Fixed",
+                                "amount": 3
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "When Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_3",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{R}"
+                    }
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Dragon ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 2
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 0
+                        },
+                        "target": "Self"
+                    }
+                },
+                "descriptionOverride": "{3}{R}: Dragons you control get +2/+0 until end of turn."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "150",
+        "rarity": "RARE",
+        "artist": "Miho Midorikawa",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/4/6436e2d0-989f-47e3-90bc-9cde82a2ddb4.jpg?1764121032"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 
@@ -15338,25 +15605,33 @@
                             "type": "ConditionalOnCollection",
                             "collection": "connive_discarded",
                             "ifNotEmpty": {
-                                "type": "AddCounters",
-                                "counterType": "+1/+1",
-                                "count": 1,
-                                "target": {
-                                    "type": "BoundVariable",
-                                    "name": "target creature you control"
-                                }
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "SelectTarget",
+                                        "requirement": {
+                                            "type": "TargetObject",
+                                            "filter": {
+                                                "baseFilter": "creature ctrl:you"
+                                            }
+                                        },
+                                        "storeAs": "connive_counter_target"
+                                    },
+                                    {
+                                        "type": "AddCounters",
+                                        "counterType": "+1/+1",
+                                        "count": 1,
+                                        "target": {
+                                            "type": "PipelineTarget",
+                                            "collectionName": "connive_counter_target"
+                                        }
+                                    }
+                                ]
                             },
                             "filter": "nonland"
                         }
                     ],
                     "descriptionOverride": "Connive"
-                },
-                "targetRequirement": {
-                    "type": "TargetObject",
-                    "filter": {
-                        "baseFilter": "creature ctrl:you"
-                    },
-                    "id": "target creature you control"
                 }
             }
         ]
@@ -17281,6 +17556,100 @@
     "colorIdentityOverride": [
         "GREEN"
     ]
+}
+
+// Trusty Boomerang
+{
+    "name": "Trusty Boomerang",
+    "manaCost": "{1}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature has \"{1}, {T}: Tap target creature. Return Trusty Boomerang to its owner's hand.\"\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            {
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomMana",
+                                    "cost": "{1}"
+                                }
+                            },
+                            "CostTap"
+                        ]
+                    },
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "TapUntap",
+                                "target": {
+                                    "type": "ContextTarget",
+                                    "index": 0
+                                }
+                            },
+                            {
+                                "type": "MoveToZone",
+                                "target": "GrantingSource",
+                                "destination": "Hand"
+                            }
+                        ]
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "creature"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "260",
+        "rarity": "UNCOMMON",
+        "artist": "Toni Infante",
+        "flavorText": "\"Boomerang! You do always come back!\"\n—Sokka",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/f/df99a166-6d58-4d92-9037-2fdfbaf65629.jpg?1764121919"
+    }
 }
 
 // Tundra Tank

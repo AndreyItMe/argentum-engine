@@ -226,7 +226,15 @@ data class ActivatedAbilityOnStackComponent(
      * [com.wingedsheep.sdk.scripting.AbilityIdentity]). Null for synthesized abilities with no
      * stable [com.wingedsheep.sdk.scripting.AbilityId] behind them (e.g. crew/saddle).
      */
-    val abilityIdentity: com.wingedsheep.sdk.scripting.AbilityIdentity? = null
+    val abilityIdentity: com.wingedsheep.sdk.scripting.AbilityIdentity? = null,
+    /**
+     * The permanent whose static ability granted this activated ability (the Equipment/Aura/permanent
+     * bearing the `GrantActivatedAbility` static), captured at activation. Read at resolution into
+     * [com.wingedsheep.engine.handlers.EffectContext.granterId] so the granted ability can name its
+     * granter via [com.wingedsheep.sdk.scripting.targets.EffectTarget.GrantingSource] — e.g. Trusty
+     * Boomerang's "Return [this Equipment] to its owner's hand". Null for non-granted abilities.
+     */
+    val granterId: EntityId? = null
 ) : Component {
     val hasTargets: Boolean = false  // Will be updated based on effect
 }

@@ -184,8 +184,34 @@ function Players({ players, onProfile }: { players: AdminGamePlayer[]; onProfile
               {p.isAi ? <span style={styles.aiTag}> AI</span> : null}
             </span>
           )}
+          <PlayerOrigin location={p.location} />
         </span>
       ))}
+    </span>
+  )
+}
+
+/** A 2-letter ISO country code → flag emoji (regional-indicator letters); '' when not a real code. */
+function flagEmoji(countryCode: string | null): string {
+  if (!countryCode || countryCode.length !== 2) return ''
+  const base = 0x1f1e6 // 🇦
+  return String.fromCodePoint(...[...countryCode.toUpperCase()].map((c) => base + c.charCodeAt(0) - 65))
+}
+
+/** Where a seat connected from, as a compact muted tag with the full detail on hover. AI seats and
+ *  unresolved IPs (every field null) render nothing. */
+function PlayerOrigin({ location }: { location: AdminGamePlayer['location'] }) {
+  if (!location) return null
+  const { city, region, country, countryCode } = location
+  const detail = [city, region, country].filter(Boolean).join(', ')
+  if (!detail) return null
+  const flag = flagEmoji(countryCode)
+  const short = city ?? region ?? country ?? ''
+  return (
+    <span style={styles.origin} title={detail}>
+      {' '}
+      {flag ? `${flag} ` : ''}
+      {short}
     </span>
   )
 }
@@ -205,6 +231,7 @@ const styles: Record<string, React.CSSProperties> = {
   playerLink: { background: 'none', border: 'none', color: adminTheme.accent, cursor: 'pointer', fontSize: 'inherit', padding: 0 },
   playerLinkWon: { background: 'none', border: 'none', color: adminTheme.accent, cursor: 'pointer', fontSize: 'inherit', padding: 0, fontWeight: 600 },
   aiTag: { color: adminTheme.textMuted, fontSize: 11 },
+  origin: { color: adminTheme.textMuted, fontSize: 11, whiteSpace: 'nowrap' },
   clickableRow: { cursor: 'pointer' },
   pager: { display: 'inline-flex', alignItems: 'center', gap: 10 },
   pageInfo: { color: adminTheme.textMuted, fontSize: 12, fontVariantNumeric: 'tabular-nums' },

@@ -594,14 +594,24 @@ object Conditions {
     // =========================================================================
 
     /**
-     * If there are N or more creature cards in your graveyard.
+     * If there are N or more cards matching [filter] in your graveyard. The general form behind
+     * [CreatureCardsInGraveyardAtLeast]; use for any "N or more <kind> cards in your graveyard"
+     * gate — e.g. Ran and Shaw's "three or more Dragon and/or Lesson cards"
+     * (`GameObjectFilter.Any.withAnySubtype("Dragon", "Lesson")`). A card matching the filter in
+     * more than one way is still counted once.
      */
-    fun CreatureCardsInGraveyardAtLeast(count: Int): ConditionInterface =
+    fun CardsInGraveyardMatchingAtLeast(count: Int, filter: GameObjectFilter): ConditionInterface =
         Compare(
-            DynamicAmount.Count(Player.You, Zone.GRAVEYARD, GameObjectFilter.Creature),
+            DynamicAmount.Count(Player.You, Zone.GRAVEYARD, filter),
             ComparisonOperator.GTE,
             DynamicAmount.Fixed(count)
         )
+
+    /**
+     * If there are N or more creature cards in your graveyard.
+     */
+    fun CreatureCardsInGraveyardAtLeast(count: Int): ConditionInterface =
+        CardsInGraveyardMatchingAtLeast(count, GameObjectFilter.Creature)
 
     /**
      * If there are N or more cards in your graveyard.

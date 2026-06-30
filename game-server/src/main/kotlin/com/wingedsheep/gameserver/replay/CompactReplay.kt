@@ -1,10 +1,12 @@
 package com.wingedsheep.gameserver.replay
 
 import com.wingedsheep.engine.core.GameAction
+import com.wingedsheep.engine.state.YieldKind
 import com.wingedsheep.gameserver.protocol.ServerMessage
 import com.wingedsheep.sdk.core.AttackMode
 import com.wingedsheep.sdk.core.Format
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.scripting.AbilityIdentity
 import kotlinx.serialization.Serializable
 
 /**
@@ -38,6 +40,15 @@ data class CompactReplay(
     val setup: ReplaySetup,
     /** The ordered input stream applied to the game, replayed verbatim to reconstruct it. */
     val actions: List<GameAction>,
+    /**
+     * Persistent-yield mutations (MTGO right-click "always yes/no" / "yield" preferences) applied to
+     * the game out-of-band of the [actions] stream. They live on [com.wingedsheep.engine.state.GameState]
+     * and are *consumed* by the pure engine during resolution (auto-answering optional triggers), so a
+     * game where a player set such a yield re-simulates differently unless we re-apply the yields at the
+     * exact point they were set — hence [ReplayYieldEntry.afterActionCount]. Empty for games without any
+     * yields (the overwhelming majority), and for replays recorded before this field existed.
+     */
+    val yields: List<ReplayYieldEntry> = emptyList(),
 ) {
     /** Number of reconstructable frames: the initial state plus one per applied action. */
     val frameCount: Int get() = 1 + actions.size
@@ -47,6 +58,26 @@ data class CompactReplay(
         const val CURRENT_VERSION = 1
     }
 }
+
+/** Which yield mutation a [ReplayYieldEntry] records. */
+@Serializable
+enum class ReplayYieldOp { SET, CLEAR_ABILITY, CLEAR_ALL }
+
+/**
+ * A single persistent-yield mutation captured in turn order against the [actions] stream.
+ * [afterActionCount] is the number of recorded actions that had been applied when the yield was set,
+ * so [ReplayReconstructor] re-applies it at the same point and the engine's auto-answers reproduce
+ * exactly. [identity]/[kind] are populated per [op] (both for SET, [identity] only for CLEAR_ABILITY,
+ * neither for CLEAR_ALL).
+ */
+@Serializable
+data class ReplayYieldEntry(
+    val afterActionCount: Int,
+    val playerId: String,
+    val op: ReplayYieldOp,
+    val identity: AbilityIdentity? = null,
+    val kind: YieldKind? = null,
+)
 
 /** A single seat in a recorded replay, in turn order. */
 @Serializable

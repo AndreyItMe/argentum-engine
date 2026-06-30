@@ -289,6 +289,17 @@ definitions construct these through the facade, e.g. `Costs.additional.Sacrifice
   folded in). The chosen path is recovered at payment time from whether the cast action's
   `additionalCostPayment.exiledCards` is non-empty; the exile path is only offered when the
   graveyard holds at least `exileCount` matching cards.
+- `Costs.additional.SacrificeOrPay(filter = Filters.Any, alternativeManaCost, count = 1)` — "as an
+  additional cost to cast this spell, sacrifice a [filter] or pay {mana}" (Louisoix's Sacrifice:
+  "sacrifice a legendary creature or pay {2}"). The sibling of `ExileFromGraveyardOrPay` /
+  `BlightOrPay` / `BeholdOrPay` for the "sacrifice a permanent or pay mana" shape. The enumerator
+  offers up to two cast paths: the **sacrifice path** (base cost + a battlefield selection of
+  exactly `count` permanents you control matching `filter`, surfaced as a `costType =
+  "SacrificePermanent"` cost — the same on-battlefield picker used by a plain sacrifice cost like
+  Natural Order) and the **pay path** (base cost + `alternativeManaCost` folded in). The chosen path
+  is recovered at payment time from whether the cast action's `additionalCostPayment.sacrificedPermanents`
+  is non-empty; the sacrifice path is only offered when you control at least `count` matching
+  permanents, so with nothing to sacrifice only the pay path is castable.
 
 **`Costs.pay.*`** (wraps `PayCost`) — payable costs used by [`PayOrSufferEffect`](#15-replacement-effects) ("do X
 unless you Y") and by `morphCost` (non-mana face-up cost). Distinct from `AbilityCost` / `Costs.*`
@@ -763,7 +774,9 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   Replicator: "create an X/X creature token of the chosen color and type." (Replaces the old one-off
   `CreateChosenTokenEffect`; under the hood it sets `CreateTokenEffect.colorsFromChoice` /
   `creatureTypesFromChoice`.)
-- `CreateTokenCopyOfSelf(count?, tapped?)` — token copies of source.
+- `CreateTokenCopyOfSelf(count?, overridePower?, overrideToughness?, removeLegendary?)` — token copies
+  of the source. `removeLegendary = true` applies the "except it's not legendary" copy clause (Ran and
+  Shaw), mirroring `CreateTokenCopyOfEquippedCreature`.
 - `CreateTokenCopyOfTarget(target, count?, overridePower?, overrideToughness?, tapped?, attacking?, triggeredAbilities?, addedKeywords?, addedSupertypes?, removedSupertypes?, overrideColors?, addedColors?, overrideSubtypes?, addedSubtypes?, overrideCardTypes?, activatedAbilities?, sacrificeAtStep?, sacrificeOnlyOnControllersTurn?, addCardTypes?, exileAtStep?, exileUnlessSourceIsRingBearer?, controller?)` —
   token copy of another permanent (or a card in any zone — the executor copies the target's `CardComponent`,
   so a graveyard/exile card works; pass `EffectTarget.PipelineTarget("name")` to copy a card a prior pipeline
@@ -1459,6 +1472,11 @@ one-off pipeline belongs inline in the card file via `Effects.Pipeline { }` (§5
 **Reveal patterns**
 
 - `revealUntilNonlandDealDamage(target)` — Bonecrusher Giant shape.
+- `revealUntilMatchToHand(filter, restDestination?, restOrder?)` — Spinner of Souls / Wirewood Herald
+  shape: reveal from the top of your library until you reveal a card matching `filter`; that card goes to
+  hand and the cards revealed before it go to `restDestination` (default: bottom of library) in `restOrder`
+  (default: random). If the library empties before a match, nothing goes to hand and every revealed card
+  goes to the rest destination.
 - `wheelEffect(players)` — each player shuffles hand into library, draws that many.
 - `factOrFiction(count = 5, keepZone, otherZone, ...)` — reveal/look at the top `count`, an
   opponent splits them into two piles, then you choose which pile goes to `keepZone` (hand) and
@@ -1521,7 +1539,8 @@ one-off pipeline belongs inline in the card file via `Effects.Pipeline { }` (§5
 - `forage(afterEffect?)` — Forage cost; choose card-from-hand to play.
 - `loot(draw?, discard?)` — "draw N, discard M" loop.
 - `rummage(count?)` — discard then draw.
-- `connive(target?)` — draw 1, discard 1, then put a +1/+1 counter on `target` if the discard was a nonland (CR 702.166). Also exposed as `Effects.Connive(target)`.
+- `connive(target?)` — draw 1, discard 1, then put a +1/+1 counter on `target` (default Self) if the discard was a nonland (CR 702.166). Also exposed as `Effects.Connive(target)`.
+- `conniveTargeting(requirement, storeAs?)` — connive whose +1/+1 counter lands on a *reflexively chosen* target: "draw a card, then discard a card. When you discard a nonland card this way, put a +1/+1 counter on target creature you control" (Teo, Spirited Glider). The recipient is selected at resolution via `SelectTargetEffect` *inside* the nonland gate — so the player never chooses up front or when the discard is a land. Pass the recipient's `TargetRequirement` (e.g. `Targets.CreatureYouControl`); do **not** also declare it as a cast-time `target(...)`. Exposed as `Effects.ConniveTargeting(requirement)`.
 - `readTheRunes()` — "draw X cards; for each, discard a card unless you sacrifice a permanent." Composes `RepeatDynamicTimesEffect(XValue, ChooseActionEffect(...))` with feasibility guards. Exposed as `Effects.ReadTheRunes()`.
 - `eachOpponentMayPutFromHand(filter?)` — each opponent may dump a matching card.
 - `putFromHand(filter?, count?, entersTapped?, entersAttacking?)` — you may put N from hand onto
@@ -1688,7 +1707,19 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
 
 - `EffectTarget.ContextTarget(i)` — i-th cast-time target.
 - `EffectTarget.Controller` — controller of the source ability.
-- `EffectTarget.Self` — the source permanent.
+- `EffectTarget.Self` — the source permanent. In a *granted* ability (Equipment/Aura "equipped
+  creature has …"), `Self` is the **host** that received the ability — its `{T}` taps the host —
+  not the granting object (CR 113.7).
+- `EffectTarget.GrantingSource` — the permanent whose static ability granted the currently-resolving
+  ability: the Equipment/Aura/permanent bearing the `GrantActivatedAbility` static, as the counterpart
+  to `Self` (the host). Use when a granted ability names the *granting object* — e.g. Trusty
+  Boomerang's "equipped creature has '{1}, {T}: Tap target creature. **Return Trusty Boomerang** to
+  its owner's hand'" (`Effects.ReturnToHand(EffectTarget.GrantingSource)`), or Cranial Plating's
+  "Attach Cranial Plating to target creature". The granter is captured when the ability is put on the
+  stack (threaded `ActivatedAbilityOnStackComponent.granterId` → `EffectContext.granterId`), so it
+  survives the granter leaving play — the referencing effect no-ops if it's gone (CR 113.7a). For an
+  ability whose source already *is* the granter (Territory Forge / Sharkey-style gains), it resolves
+  to the same entity as `Self`.
 - `EffectTarget.TriggeringEntity` — the entity that caused the trigger to fire.
 - `EffectTarget.DiscardedAsCost(index = 0)` — a card discarded to pay this spell's additional discard
   cost (`Costs.additional.DiscardCards(...)`). The discarded card is in its owner's graveyard by
@@ -3763,8 +3794,13 @@ concerns — the `ClientStateTransformer` reveals the top card for `PlayFromTopO
 - `PlayFromTopOfLibrary` — public reveal **and** "play lands and cast spells from the top of your
   library" (all card types). (Future Sight)
 - `PlayLandsAndCastFilteredFromTopOfLibrary(spellFilter)` — like `PlayFromTopOfLibrary` but only
-  spells matching `spellFilter` are castable (lands always playable). (Glarb, Calamity's Augur =
-  `GameObjectFilter.Any.manaValueAtLeast(4)`)
+  spells matching `spellFilter` are castable (lands always playable), and **no public reveal** (pair
+  with `LookAtTopOfLibrary` to let just the controller see). `spellFilter = GameObjectFilter.Any`
+  means "play the top card" of any type non-revealingly. (Glarb, Calamity's Augur =
+  `GameObjectFilter.Any.manaValueAtLeast(4)`; The Lunar Whale = `GameObjectFilter.Any`.) Honors a
+  `ConditionalStaticAbility` wrapper — the play/cast-from-top readers unwrap the conditional and
+  evaluate its gate against the granting permanent, so the permission can be time-restricted (The
+  Lunar Whale: `condition = Conditions.SourceAttackedThisTurn` — only after the Whale attacked).
 - `CastSpellTypesFromTopOfLibrary(filter)` — cast only matching spell types from the top; no land
   play, no full public reveal. (Precognition Field = instants/sorceries)
 - `LookAtTopOfLibrary` — *private*: the controller may look at their own top card any time (revealed
@@ -4614,6 +4650,12 @@ default to "you" so card authors don't need to pass it explicitly.
   checks, e.g. `All(GraveyardContains(Filters.Instant), GraveyardContains(Filters.Sorcery))` =
   "an instant card and a sorcery card in your graveyard" (Flow State). `GraveyardContainsSubtype(subtype)`
   is the subtype-filtered sibling.
+- `CardsInGraveyardMatchingAtLeast(count, filter)` — "there are `count` or more cards matching `filter`
+  in your graveyard" (`Compare(Count(Player.You, Zone.GRAVEYARD, filter), GTE, count)`). The general
+  form behind `CreatureCardsInGraveyardAtLeast(count)`; use for "N or more <kind> cards", e.g. Ran and
+  Shaw's "three or more Dragon and/or Lesson cards" with
+  `GameObjectFilter.Any.withAnySubtype("Dragon", "Lesson")` (a card matching multiple ways is counted
+  once). `CardsInGraveyardAtLeast(count)` is the unfiltered total.
 - `Delirium(count = 4)` — the Delirium ability word: "there are `count` or more card types among
   cards in your graveyard." Composes through `Compare(DynamicAmount.AggregateZone(Player.You,
   Zone.GRAVEYARD, GameObjectFilter.Any, Aggregation.DISTINCT_TYPES), GTE, Fixed(count))` — the

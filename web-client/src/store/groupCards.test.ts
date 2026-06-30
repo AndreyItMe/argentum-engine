@@ -87,6 +87,28 @@ describe('groupCards — token quantity aggregation (display layer)', () => {
     expect(groups.find((g) => g.cardIds.includes(entityId('enchanted')))!.count).toBe(1)
   })
 
+  it('never groups same-named creatures with different P/T (4/4 vs 1/1 token copy)', () => {
+    // Rust-Shield Rampager (4/4, base 4/4) and its Offspring 1/1 token copy (1/1, base 1/1)
+    // share a name and each sits at its own base P/T — they must still render separately.
+    const groups = groupCards([
+      token({ id: 'orig', name: 'Rust-Shield Rampager', power: 4, toughness: 4, basePower: 4, baseToughness: 4 }),
+      token({ id: 'offspring', name: 'Rust-Shield Rampager', power: 1, toughness: 1, basePower: 1, baseToughness: 1 }),
+    ])
+    expect(groups).toHaveLength(2)
+    expect(groups.every((g) => g.count === 1)).toBe(true)
+  })
+
+  it('splits a pumped creature from an unbuffed twin at the same current P/T', () => {
+    // A 2/2 pumped to 3/3 (base 1/1) shows buff indicators; a vanilla 3/3 (base 3/3) does not —
+    // same current P/T, but they must not share a stack.
+    const groups = groupCards([
+      token({ id: 'vanilla', name: 'Bear', power: 3, toughness: 3, basePower: 3, baseToughness: 3 }),
+      token({ id: 'pumped', name: 'Bear', power: 3, toughness: 3, basePower: 1, baseToughness: 1 }),
+    ])
+    expect(groups).toHaveLength(2)
+    expect(groups.every((g) => g.count === 1)).toBe(true)
+  })
+
   it('keeps distinct token kinds in separate groups', () => {
     const groups = groupCards([
       token({ id: 's1', name: 'Saproling' }),

@@ -465,10 +465,16 @@ class PlayLandHandler(
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any {
-                it is PlayFromTopOfLibrary || it is PlayLandsAndCastFilteredFromTopOfLibrary
-            }) {
-                return true
+            for (ability in cardDef.script.staticAbilities) {
+                // Honor a conditional gate (e.g. The Lunar Whale's "as long as it attacked this
+                // turn") against the granting permanent before allowing the land play from top.
+                val unwrapped = if (ability is ConditionalStaticAbility) {
+                    if (!evaluateStaticGate(state, ability.condition, entityId, playerId)) continue
+                    ability.ability
+                } else ability
+                if (unwrapped is PlayFromTopOfLibrary || unwrapped is PlayLandsAndCastFilteredFromTopOfLibrary) {
+                    return true
+                }
             }
         }
         return false

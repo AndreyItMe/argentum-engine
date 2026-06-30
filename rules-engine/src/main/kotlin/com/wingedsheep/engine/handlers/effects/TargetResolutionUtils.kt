@@ -30,6 +30,7 @@ object TargetResolutionUtils {
     fun resolveTarget(effectTarget: EffectTarget, context: EffectContext): EntityId? {
         return when (effectTarget) {
             is EffectTarget.Self -> context.pipeline.iterationTarget ?: context.sourceId
+            is EffectTarget.GrantingSource -> context.granterId
             is EffectTarget.Controller -> context.controllerId
             is EffectTarget.ContextTarget -> context.positionalTarget(effectTarget.index)?.toEntityId()
             is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()

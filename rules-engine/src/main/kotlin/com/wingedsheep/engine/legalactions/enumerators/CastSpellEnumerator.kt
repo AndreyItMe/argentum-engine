@@ -175,6 +175,8 @@ class CastSpellEnumerator : ActionEnumerator {
             var beholdOrPayTargets = emptyList<EntityId>()
             var exileOrPayCost: AdditionalCost.ExileFromGraveyardOrPay? = null
             var exileOrPayTargets = emptyList<EntityId>()
+            var sacOrPayCost: AdditionalCost.SacrificeOrPay? = null
+            var sacOrPayTargets = emptyList<EntityId>()
             var canPayAdditionalCosts = true
             val flattenedCosts = additionalCosts.flatMap {
                 if (it is AdditionalCost.Composite) it.steps else listOf(it)
@@ -319,6 +321,14 @@ class CastSpellEnumerator : ActionEnumerator {
                             state, playerId, cost.filter, Zone.GRAVEYARD
                         )
                     }
+                    is AdditionalCost.SacrificeOrPay -> {
+                        // Always payable: player can always choose the "pay mana" path.
+                        // Surface the permanents you control eligible for the sacrifice path.
+                        sacOrPayCost = cost
+                        sacOrPayTargets = context.costUtils.findSacrificeTargets(
+                            state, playerId, CostAtom.Sacrifice(cost.filter, cost.count)
+                        )
+                    }
                     is AdditionalCost.ChooseEntity -> {
                         // Search each (zone, filter) pair in `cost.zoneFilters`. Battlefield
                         // uses projected state (continuous effects matter); hidden / card
@@ -380,6 +390,12 @@ class CastSpellEnumerator : ActionEnumerator {
             val exileOrPayBaseCost = effectiveCost
             if (exileOrPayCost != null) {
                 effectiveCost = effectiveCost + ManaCost.parse(exileOrPayCost.alternativeManaCost)
+            }
+
+            // Save base cost for sacrifice path, then add extra mana for the "pay" path
+            val sacOrPayBaseCost = effectiveCost
+            if (sacOrPayCost != null) {
+                effectiveCost = effectiveCost + ManaCost.parse(sacOrPayCost.alternativeManaCost)
             }
 
             // Spell-level waterbend additional cost (Avatar: The Last Airbender). A *mandatory*
@@ -502,11 +518,17 @@ class CastSpellEnumerator : ActionEnumerator {
                 context.manaSolver.canPay(state, playerId, exileOrPayBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
             } else false
 
+            // Check sacrifice path affordability (base cost without the extra mana, but needs
+            // enough matching permanents on the battlefield to sacrifice).
+            val canAffordSacOrPayPath = if (sacOrPayCost != null && sacOrPayTargets.size >= sacOrPayCost.count) {
+                context.manaSolver.canPay(state, playerId, sacOrPayBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
+            } else false
+
             // A `MayCastWithoutPayingManaCost` battlefield permission (e.g. Weftwalking) makes the
             // spell affordable for {0} when its gates are open. Emitted by its own branch below;
             // don't continue out before reaching it.
             val canAffordFreeCast = context.freeCastPermissionFor(cardId)
-            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath && !canAffordExileOrPayPath && !canAffordFreeCast) {
+            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath && !canAffordExileOrPayPath && !canAffordSacOrPayPath && !canAffordFreeCast) {
                 // The primary face can't be paid for by any path. Normally we skip it entirely.
                 // But if this is an Adventure/Omen/modal-DFC card whose *secondary* face is
                 // affordable, surface a grayed-out placeholder for the primary face so the
@@ -587,6 +609,24 @@ class CastSpellEnumerator : ActionEnumerator {
                     exileMaxCount = exileOrPayCost.exileCount,
                 )
                 Triple(exileManaCostString, exileAutoTapPreview, exileCostInfo)
+            } else null
+
+            // Compute sacrifice path info (separate legal action with lower mana cost + permanent
+            // selection). Reuses the "SacrificePermanent" cost type so the client drives the same
+            // on-battlefield sacrifice selection used by Natural Order's plain sacrifice cost.
+            val sacOrPayPathInfo = if (canAffordSacOrPayPath && sacOrPayCost != null) {
+                val sacManaCostString = sacOrPayBaseCost.toString()
+                val sacAutoTapPreview = if (context.skipAutoTapPreview) null else {
+                    context.manaSolver.solve(state, playerId, sacOrPayBaseCost, precomputedSources = cachedSources)
+                        ?.sources?.map { it.entityId }
+                }
+                val sacCostInfo = AdditionalCostData(
+                    description = sacOrPayCost.description,
+                    costType = "SacrificePermanent",
+                    validSacrificeTargets = sacOrPayTargets,
+                    sacrificeCount = sacOrPayCost.count,
+                )
+                Triple(sacManaCostString, sacAutoTapPreview, sacCostInfo)
             } else null
 
             // Calculate X cost info if the spell has X in its cost (printed, or the waterbend {X}
@@ -1086,6 +1126,19 @@ class CastSpellEnumerator : ActionEnumerator {
                                 autoTapPreview = exileOrPayPathInfo.second
                             ))
                         }
+                        if (sacOrPayPathInfo != null) {
+                            result.add(LegalAction(
+                                actionType = "CastSpell",
+                                description = "Cast ${cardComponent.name} (Sacrifice)",
+                                action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget)),
+                                additionalCostInfo = sacOrPayPathInfo.third,
+                                manaCostString = sacOrPayPathInfo.first,
+                                requiresDamageDistribution = requiresDamageDistribution,
+                                totalDamageToDistribute = totalDamageToDistribute,
+                                minDamagePerTarget = minDamagePerTarget,
+                                autoTapPreview = sacOrPayPathInfo.second
+                            ))
+                        }
                     } else {
                         if (canAfford) {
                             result.add(LegalAction(
@@ -1290,6 +1343,27 @@ class CastSpellEnumerator : ActionEnumerator {
                                 autoTapPreview = exileOrPayPathInfo.second
                             ))
                         }
+                        if (sacOrPayPathInfo != null) {
+                            result.add(LegalAction(
+                                actionType = "CastSpell",
+                                description = "Cast ${cardComponent.name} (Sacrifice)",
+                                action = CastSpell(playerId, cardId),
+                                validTargets = firstReqInfo.validTargets,
+                                requiresTargets = true,
+                                targetCount = firstReq.count,
+                                minTargets = firstReq.effectiveMinCount,
+                                targetDescription = firstReq.description,
+                                targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                                xConstrainsTargetManaValue = firstReqInfo.xConstrainsManaValue,
+                                xConstrainsTargetCount = firstReqInfo.xConstrainsCount,
+                                additionalCostInfo = sacOrPayPathInfo.third,
+                                manaCostString = sacOrPayPathInfo.first,
+                                requiresDamageDistribution = requiresDamageDistribution,
+                                totalDamageToDistribute = totalDamageToDistribute,
+                                minDamagePerTarget = minDamagePerTarget,
+                                autoTapPreview = sacOrPayPathInfo.second
+                            ))
+                        }
                     }
                 }
             } else {
@@ -1394,6 +1468,16 @@ class CastSpellEnumerator : ActionEnumerator {
                         additionalCostInfo = exileOrPayPathInfo.third,
                         manaCostString = exileOrPayPathInfo.first,
                         autoTapPreview = exileOrPayPathInfo.second
+                    ))
+                }
+                if (sacOrPayPathInfo != null) {
+                    result.add(LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${cardComponent.name} (Sacrifice)",
+                        action = CastSpell(playerId, cardId),
+                        additionalCostInfo = sacOrPayPathInfo.third,
+                        manaCostString = sacOrPayPathInfo.first,
+                        autoTapPreview = sacOrPayPathInfo.second
                     ))
                 }
             }

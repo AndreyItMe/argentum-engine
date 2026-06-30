@@ -24,6 +24,7 @@ data class PersistentGameSession(
     // setup = a game started before this field existed, or an injected dev scenario (not replayable).
     val replaySetup: ReplaySetup? = null,
     val recordedActions: List<GameAction> = emptyList(),
+    val recordedYields: List<com.wingedsheep.gameserver.replay.ReplayYieldEntry> = emptyList(),
     val replayStartedAt: String? = null,  // ISO-8601 instant
 )
 

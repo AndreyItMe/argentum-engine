@@ -37,6 +37,7 @@ fun GameSession.toPersistent(
         lobbyId = lobbyId,
         replaySetup = getReplaySetup(),
         recordedActions = getRecordedActions(),
+        recordedYields = getReplayYields(),
         replayStartedAt = replayStartedAt?.toString(),
     )
 }
@@ -87,6 +88,7 @@ fun restoreGameSession(
         setup = persistent.replaySetup,
         actions = persistent.recordedActions,
         startedAtIso = persistent.replayStartedAt,
+        yields = persistent.recordedYields,
     )
 
     // Restore player persistence info

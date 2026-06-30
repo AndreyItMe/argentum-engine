@@ -219,6 +219,9 @@ class GameSession(
     @Volatile
     private var replaySetup: com.wingedsheep.gameserver.replay.ReplaySetup? = null
     private val recordedActions = CopyOnWriteArrayList<GameAction>()
+    // Persistent-yield mutations applied out-of-band of [recordedActions]. Captured in turn order so
+    // the reconstructor can re-apply each at the action position it was set (see [CompactReplay.yields]).
+    private val recordedYields = CopyOnWriteArrayList<com.wingedsheep.gameserver.replay.ReplayYieldEntry>()
     var replayStartedAt: Instant? = null
         private set
 
@@ -922,9 +925,13 @@ class GameSession(
     // Persistent Yields (MTGO right-click yields — backlog §C)
     // =========================================================================
     //
-    // Yields live on the immutable GameState (not a session-side map), so the pure engine can
-    // consult auto-answers during resolution and they replay deterministically. Mutations are pure
-    // GameState transforms applied under the state lock.
+    // Yields live on the immutable GameState (not a session-side map), so the pure engine can consult
+    // auto-answers during resolution. Because the engine *consumes* them while resolving (it silently
+    // auto-answers an optional trigger's may-question, emitting no GameAction), they are NOT captured
+    // by the [recordedActions] stream — so we also record every yield mutation against the current
+    // action count ([recordedYields]) and re-apply it during reconstruction. Without this, any game in
+    // which a player set an "always answer" yield re-simulates differently and the replay truncates at
+    // the first auto-answered trigger. Mutations are pure GameState transforms applied under the lock.
 
     /** Set a persistent yield for [playerId] against [identity]. */
     fun setAbilityYield(
@@ -933,6 +940,7 @@ class GameSession(
         kind: com.wingedsheep.engine.state.YieldKind
     ) = synchronized(stateLock) {
         gameState = gameState?.withYield(playerId, identity, kind)
+        recordYield(com.wingedsheep.gameserver.replay.ReplayYieldOp.SET, playerId, identity, kind)
     }
 
     /** Revoke every yield [playerId] holds against [identity]. */
@@ -941,11 +949,13 @@ class GameSession(
         identity: com.wingedsheep.sdk.scripting.AbilityIdentity
     ) = synchronized(stateLock) {
         gameState = gameState?.withoutYield(playerId, identity)
+        recordYield(com.wingedsheep.gameserver.replay.ReplayYieldOp.CLEAR_ABILITY, playerId, identity, null)
     }
 
     /** Drop all of [playerId]'s yields. */
     fun clearAllYields(playerId: EntityId) = synchronized(stateLock) {
         gameState = gameState?.withoutYields(playerId)
+        recordYield(com.wingedsheep.gameserver.replay.ReplayYieldOp.CLEAR_ALL, playerId, null, null)
     }
 
     // =========================================================================
@@ -1035,9 +1045,11 @@ class GameSession(
 
         gameState = checkpoint
         // Roll the replay log back to the actions that produced the restored state, so a later
-        // reconstruction replays exactly this history.
+        // reconstruction replays exactly this history. Yields recorded after the rollback point are
+        // dropped too — they were set against actions that no longer exist.
         undoCheckpointActionCount?.let { target ->
             while (recordedActions.size > target) recordedActions.removeAt(recordedActions.size - 1)
+            recordedYields.removeIf { it.afterActionCount > target }
         }
         clearCheckpoint()
         logger.info("Player $playerId undid their last action")
@@ -1224,6 +1236,29 @@ class GameSession(
     }
 
     /**
+     * Capture a persistent-yield mutation against the current action count, but only while the game is
+     * being recorded for replay (a [replaySetup] exists). Injected dev-scenario/hotseat sessions aren't
+     * replayable, so their yields needn't be recorded.
+     */
+    private fun recordYield(
+        op: com.wingedsheep.gameserver.replay.ReplayYieldOp,
+        playerId: EntityId,
+        identity: com.wingedsheep.sdk.scripting.AbilityIdentity?,
+        kind: com.wingedsheep.engine.state.YieldKind?,
+    ) {
+        if (replaySetup == null) return
+        recordedYields.add(
+            com.wingedsheep.gameserver.replay.ReplayYieldEntry(
+                afterActionCount = recordedActions.size,
+                playerId = playerId.value,
+                op = op,
+                identity = identity,
+                kind = kind,
+            )
+        )
+    }
+
+    /**
      * The reproducible setup captured at [startGame], or null for games whose state was injected
      * directly (dev scenarios / hotseat) and therefore can't be re-simulated from inputs.
      */
@@ -1231,6 +1266,9 @@ class GameSession(
 
     /** The ordered input stream applied to this game. */
     fun getRecordedActions(): List<GameAction> = recordedActions.toList()
+
+    /** The persistent-yield mutations applied to this game, in order, for replay reconstruction. */
+    fun getReplayYields(): List<com.wingedsheep.gameserver.replay.ReplayYieldEntry> = recordedYields.toList()
 
     /**
      * Total number of replay frames: the initial state plus one per recorded action. Zero until the
@@ -1405,11 +1443,14 @@ class GameSession(
         setup: com.wingedsheep.gameserver.replay.ReplaySetup?,
         actions: List<GameAction>,
         startedAtIso: String?,
+        yields: List<com.wingedsheep.gameserver.replay.ReplayYieldEntry> = emptyList(),
     ) {
         synchronized(stateLock) {
             replaySetup = setup
             recordedActions.clear()
             recordedActions.addAll(actions)
+            recordedYields.clear()
+            recordedYields.addAll(yields)
             replayStartedAt = startedAtIso?.let { runCatching { Instant.parse(it) }.getOrNull() }
         }
     }

@@ -1526,6 +1526,97 @@
     ]
 }
 
+// Beatrix, Loyal General
+{
+    "name": "Beatrix, Loyal General",
+    "manaCost": "{4}{W}{W}",
+    "typeLine": "Legendary Creature — Human Soldier",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nAt the beginning of combat on your turn, you may attach any number of Equipment you control to target creature you control.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "BattlefieldMatching",
+                                    "filter": "artifact Equipment",
+                                    "player": "You"
+                                },
+                                "storeAs": "gathered0"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "gathered0",
+                                "selection": "ChooseAnyNumber",
+                                "storeSelected": "selected1",
+                                "prompt": "Choose any number of Equipment you control to attach to the target creature",
+                                "useTargetingUI": true
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Collection",
+                                    "collection": "selected1"
+                                },
+                                "body": {
+                                    "type": "AttachTargetEquipmentToCreature",
+                                    "equipmentTarget": "Self",
+                                    "creatureTarget": {
+                                        "type": "BoundVariable",
+                                        "name": "target creature you control"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "target creature you control"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "554",
+        "rarity": "RARE",
+        "artist": "Bachzim",
+        "flavorText": "\"I commend your courage, but I will show you no mercy.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9da83b07-4978-4af7-be51-8aa8f35ec0bb.jpg?1782686128",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "You can't use Beatrix's last ability to try to attach an Equipment to a creature if that Equipment can't legally be attached to that creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Black Mage's Rod
 {
     "name": "Black Mage's Rod",
@@ -8735,6 +8826,61 @@
     ]
 }
 
+// Louisoix's Sacrifice
+{
+    "name": "Louisoix's Sacrifice",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "As an additional cost to cast this spell, sacrifice a legendary creature or pay {2}.\nCounter target activated ability, triggered ability, or noncreature spell.",
+    "script": {
+        "spellEffect": {
+            "type": "Counter",
+            "target": "CounterTarget.SpellOrAbility"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsActivatedOrTriggeredAbility"
+                        ]
+                    },
+                    "zone": "Stack",
+                    "alternatives": [
+                        {
+                            "baseFilter": "noncreature",
+                            "zone": "Stack"
+                        }
+                    ]
+                }
+            }
+        ],
+        "additionalCosts": [
+            {
+                "type": "SacrificeOrPay",
+                "filter": {
+                    "cardPredicates": [
+                        "IsCreature",
+                        "IsLegendary"
+                    ]
+                },
+                "alternativeManaCost": "{2}"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "59",
+        "rarity": "RARE",
+        "artist": "Mintautas Šukys",
+        "flavorText": "\"Thank you... for everything... Pray take your rest, Grandfather... You deserve it.\"\n—Alisaie Leveilleur",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1782686550"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Lunatic Pandora
 {
     "name": "Lunatic Pandora",
@@ -13947,6 +14093,142 @@
     ]
 }
 
+// Sephiroth, Planet's Heir
+{
+    "name": "Sephiroth, Planet's Heir",
+    "manaCost": "{4}{U}{B}",
+    "typeLine": "Legendary Creature — Human Avatar Soldier",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nWhen Sephiroth enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, put a +1/+1 counter on Sephiroth.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": -2
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": -2
+                        },
+                        "target": "Self"
+                    }
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:opponent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "553",
+        "rarity": "MYTHIC",
+        "artist": "Magali Villeneuve",
+        "flavorText": "\"This is the end... for all of you.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/b/abd73e52-62f0-4e89-9dc6-90ff0bc2a9b7.jpg?1782686131"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
+// Seymour Flux
+{
+    "name": "Seymour Flux",
+    "manaCost": "{4}{B}",
+    "typeLine": "Legendary Creature — Spirit Avatar",
+    "oracleText": "At the beginning of your upkeep, you may pay 1 life. If you do, draw a card and put a +1/+1 counter on Seymour Flux.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayLife",
+                            "amount": 1
+                        }
+                    },
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "DrawCards",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "558",
+        "rarity": "RARE",
+        "artist": "K-SUWABE",
+        "flavorText": "\"Your hope ends here. And your meaningless existence with it.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/5/c5fdc78e-0815-443c-8c26-35387b6f4f37.jpg?1782686125"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Shambling Cie'th
 {
     "name": "Shambling Cie'th",
@@ -15452,6 +15734,50 @@
     ]
 }
 
+// Summon: G.F. Cerberus
+{
+    "name": "Summon: G.F. Cerberus",
+    "manaCost": "{2}{R}{R}",
+    "typeLine": "Enchantment Creature — Saga Dog",
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\nII — Double — When you next cast an instant or sorcery spell this turn, copy it. You may choose new targets for the copy.\nIII — Triple — When you next cast an instant or sorcery spell this turn, copy it twice. You may choose new targets for the copies.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "sagaChapters": [
+            {
+                "chapter": 1,
+                "effect": {
+                    "type": "Surveil",
+                    "count": 1
+                }
+            },
+            {
+                "chapter": 2,
+                "effect": "CopyNextSpellCast"
+            },
+            {
+                "chapter": 3,
+                "effect": {
+                    "type": "CopyNextSpellCast",
+                    "copies": 2
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "162",
+        "rarity": "RARE",
+        "artist": "Kevin Glint",
+        "flavorText": "\"Pretty confident. Let's see how you do.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/0/d0e5cbd4-401b-4456-80bf-d90beadfd1f8.jpg?1782686479"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Summon: G.F. Ifrit
 {
     "name": "Summon: G.F. Ifrit",
@@ -15735,6 +16061,129 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Summon: Leviathan
+{
+    "name": "Summon: Leviathan",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Enchantment Creature — Saga Leviathan",
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Return each creature that isn't a Kraken, Leviathan, Merfolk, Octopus, or Serpent to its owner's hand.\nII, III — Until end of turn, whenever a Kraken, Leviathan, Merfolk, Octopus, or Serpent attacks, draw a card.\nWard {2}",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Mana",
+                "manaCost": "{2}"
+            }
+        }
+    ],
+    "script": {
+        "sagaChapters": [
+            {
+                "chapter": 1,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "BattlefieldMatching",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsCreature",
+                                        {
+                                            "type": "NotSubtype",
+                                            "subtype": "Kraken"
+                                        },
+                                        {
+                                            "type": "NotSubtype",
+                                            "subtype": "Leviathan"
+                                        },
+                                        {
+                                            "type": "NotSubtype",
+                                            "subtype": "Merfolk"
+                                        },
+                                        {
+                                            "type": "NotSubtype",
+                                            "subtype": "Octopus"
+                                        },
+                                        {
+                                            "type": "NotSubtype",
+                                            "subtype": "Serpent"
+                                        }
+                                    ]
+                                }
+                            },
+                            "storeAs": "returnAllToHand_gathered"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "returnAllToHand_gathered",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 2,
+                "effect": {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "AttackEvent",
+                            "filter": "creature Kraken|Leviathan|Merfolk|Octopus|Serpent"
+                        }
+                    }
+                }
+            },
+            {
+                "chapter": 3,
+                "effect": {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "AttackEvent",
+                            "filter": "creature Kraken|Leviathan|Merfolk|Octopus|Serpent"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "77",
+        "rarity": "RARE",
+        "artist": "OTUMAMI",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/a/ea7f26a9-b203-4ee7-88f1-3d9c77a25bcb.jpg?1782686537"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -16633,6 +17082,83 @@
     ]
 }
 
+// The Earth Crystal
+{
+    "name": "The Earth Crystal",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Legendary Artifact",
+    "oracleText": "Green spells you cast cost {1} less to cast.\nIf one or more +1/+1 counters would be put on a creature you control, twice that many +1/+1 counters are put on that creature instead.\n{4}{G}{G}, {T}: Distribute two +1/+1 counters among one or two target creatures you control.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}{G}{G}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "DistributeCountersAmongTargets",
+                    "totalCounters": 2
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "count": 2,
+                        "minCount": 1,
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    }
+                ]
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCast",
+                    "filter": "green"
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 1
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "DoubleCounterPlacement",
+                "appliesTo": {
+                    "type": "CounterPlacementEvent",
+                    "counterType": "PlusOnePlusOne",
+                    "recipient": {
+                        "type": "RecipientMatching",
+                        "filter": "creature ctrl:you"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "184",
+        "rarity": "RARE",
+        "artist": "Pablo Mendoza",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d585e218-3dc8-4fbd-8ad2-795fbc9b2155.jpg?1782686462"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // The Final Days
 {
     "name": "The Final Days",
@@ -16851,6 +17377,59 @@
         "imageUri": "https://cards.scryfall.io/normal/front/5/3/5363c881-443d-43df-afd8-f81e1a1741a2.jpg?1748706827"
     },
     "colorIdentityOverride": []
+}
+
+// The Lunar Whale
+{
+    "name": "The Lunar Whale",
+    "manaCost": "{3}{U}",
+    "typeLine": "Legendary Artifact — Vehicle",
+    "oracleText": "Flying\nYou may look at the top card of your library any time.\nAs long as The Lunar Whale attacked this turn, you may play the top card of your library.\nCrew 1",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 1
+        }
+    ],
+    "script": {
+        "staticAbilities": [
+            "LookAtTopOfLibrary",
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "PlayLandsAndCastFilteredFromTopOfLibrary",
+                    "spellFilter": {}
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "AttackedThisTurn"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "60",
+        "rarity": "RARE",
+        "artist": "Fiona Hsieh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/e/ae875471-346c-4a76-b26f-b7205dad5b80.jpg?1782686550"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
 }
 
 // The Prima Vista

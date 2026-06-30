@@ -60,7 +60,7 @@ class ReplayReconstructor(
         val setup = replay.setup
         val seats = setup.players.map { SpectatorSeat(EntityId(it.playerId), it.name) }
 
-        var state = initialState(replay)
+        var state = applyYields(initialState(replay), replay.yields, afterActionCount = 0)
         var previous = spectatorStateBuilder.buildState(state, seats, setup.seatRoster, replay.gameId)
         val initial = previous
         val deltas = ArrayList<SpectatorReplayDelta>(replay.actions.size)
@@ -74,7 +74,9 @@ class ReplayReconstructor(
                 )
                 break
             }
-            state = result.state
+            // Re-apply any yields set right after this action was originally applied, so the engine's
+            // auto-answers reproduce on the next iteration exactly as they did live.
+            state = applyYields(result.state, replay.yields, afterActionCount = index + 1)
             val snapshot = spectatorStateBuilder.buildState(state, seats, setup.seatRoster, replay.gameId)
             deltas.add(SpectatorReplayDiffCalculator.computeDelta(previous, snapshot))
             previous = snapshot
@@ -90,7 +92,7 @@ class ReplayReconstructor(
      */
     fun reconstructStateAt(replay: CompactReplay, frame: Int): GameState? {
         if (frame < 0 || frame > replay.actions.size) return null
-        var state = initialState(replay)
+        var state = applyYields(initialState(replay), replay.yields, afterActionCount = 0)
         for (index in 0 until frame) {
             val action = replay.actions[index]
             val result = actionProcessor.process(state, rebind(action, state)).result
@@ -101,9 +103,30 @@ class ReplayReconstructor(
                 )
                 return null
             }
-            state = result.state
+            state = applyYields(result.state, replay.yields, afterActionCount = index + 1)
         }
         return state
+    }
+
+    /**
+     * Re-apply every recorded yield whose [ReplayYieldEntry.afterActionCount] equals [afterActionCount]
+     * (i.e. it was originally set right after that many actions had been applied). Mirrors
+     * [com.wingedsheep.gameserver.session.GameSession.setAbilityYield] and friends so the engine's
+     * auto-answers reproduce identically. Almost always a no-op (most games carry no yields).
+     */
+    private fun applyYields(state: GameState, yields: List<ReplayYieldEntry>, afterActionCount: Int): GameState {
+        if (yields.isEmpty()) return state
+        var current = state
+        for (entry in yields) {
+            if (entry.afterActionCount != afterActionCount) continue
+            val playerId = EntityId(entry.playerId)
+            current = when (entry.op) {
+                ReplayYieldOp.SET -> current.withYield(playerId, entry.identity!!, entry.kind!!)
+                ReplayYieldOp.CLEAR_ABILITY -> current.withoutYield(playerId, entry.identity!!)
+                ReplayYieldOp.CLEAR_ALL -> current.withoutYields(playerId)
+            }
+        }
+        return current
     }
 
     /**

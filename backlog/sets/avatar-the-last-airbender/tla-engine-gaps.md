@@ -3,11 +3,16 @@
 Cross-reference of the remaining (unimplemented) TLA cards against the engine's actual capabilities.
 Generated to scope what must be built before the set can be completed.
 
-> ## ⚠️ Status update — June 2026: now 231 / 286 (81%)
+> ## ⚠️ Status update — June 2026: now 252 / 286 (88%)
 >
-> **Most of this document's Tier-1/Tier-2 gaps have since been closed.** Every TLA card buildable on
-> the current engine has been implemented; the **55 cards still missing all need new engine/SDK work**.
-> What changed since the original write-up (✅ = now built, so the cards it gated are done):
+> **Most of this document's Tier-1/Tier-2 gaps have since been closed.** Of the **34 cards still
+> missing**, the large majority need new engine/SDK work. The keyword work since the original
+> write-up (activated/spell Waterbend, dynamic Firebending, Equip) unblocked a recent batch, now
+> all implemented: **North Pole Patrol** and **Firebending Student** (plain `add-card`, no engine
+> work); **Trusty Boomerang** (needed `EffectTarget.GrantingSource` — name the Equipment that
+> granted a bearer's ability); **Ran and Shaw** (needed `removeLegendary` on the self-copy token +
+> `CardsInGraveyardMatchingAtLeast`). What changed since the original write-up (✅ = now built, so
+> the cards it gated are done):
 >
 > - ✅ **Firebending** — `firebending(n)` keyword + attack-triggered combat-duration mana
 >   (`AddManaEffect(…, ManaExpiry.END_OF_COMBAT)`); dynamic "Firebending X" hand-wired with a
@@ -24,8 +29,12 @@ Generated to scope what must be built before the set can be completed.
 > - ✅ **Dynamic Earthbend** (`Effects.Earthbend` accepts a `DynamicAmount` for X) + **Sagas /
 >   Transform DFCs** proven across the set (incl. saga→creature transform).
 >
-> **The genuine remaining gaps** (what's still blocking the last 55 cards):
-> - ❌ **Airbend** keyword (~11 cards) — exile + recast-for-{2} fixed-alternative-cost may-play.
+> **The genuine remaining gaps** (what's still blocking most of the last 38 cards):
+> - ✅ **Airbend** keyword (~8 of 11 cards) — exile + recast-for-{2} fixed-alternative-cost may-play
+>   (`Effects.Airbend` / `Effects.AirbendAll`) plus the stack-spell branch
+>   (`Effects.ExileTargetSpell(fixedAlternativeManaCost)`). The 3 remaining Airbend cards are each
+>   blocked by a *different* gap (cast-zone restriction, each-player-choose Saga chapter, four-bend
+>   events + {WUBRG} reduction), not by airbend itself.
 > - ✅ **Exhaust** keyword (8 cards) — `isExhaust = true` → `ActivationRestriction.Once` (per-object,
 >   CR 702.177 "Activate only once"; *not* once-per-game). Plus a strip-on-leave fix so the once-ever
 >   record resets on a new object (CR 400.7). All 8 exhaust cards implemented.
@@ -62,8 +71,9 @@ TLA is built around **four "bending" keyword families** (Earthbend, Waterbend, F
 plus a returning **Exhaust** keyword and a pervasive **"second card drawn each turn"** sub-theme.
 *(Update: Earthbend, Firebending, Exhaust, the draw-count theme, and activated-ability, spell-level,
 and Exhaust—Waterbend cost shapes (incl. waterbend {X}) are now all built — see the status banner
-above. Airbend and the remaining Waterbend cost shapes (Ward—Waterbend, waterbend-as-alternative-cast)
-remain the headline work.)* Once those primitives land, the large majority of the remaining cards (standard creatures,
+above. Airbend and Exhaust are now also done; the remaining Waterbend cost shapes (Ward—Waterbend,
+in-resolution may-pay, waterbend-as-alternative-cast) plus granting/conditional Firebending and the
+Tier-3 one-offs remain the headline work.)* Once those primitives land, the large majority of the remaining cards (standard creatures,
 dual lands, sieges, sagas, lords, modal removal, cycling cards, Food/token makers) are buildable —
 and indeed most now are.
 
@@ -363,10 +373,18 @@ RemoveAllAbilities + SetStats + SetCreatureSubtypes + grant-mana-ability composi
 **Done since this analysis** (✅ no longer on the list): Earthbend (incl. dynamic X), Firebending (§2),
 Vigilance counter (§5), Nth-card-drawn (§6), Surveil (§7), sacrificed-this-turn count (§8),
 activated-ability Waterbend (§1), and spell-level Waterbend additional cost incl. waterbend {X} (the §1
-spell half). The set is now at **231/286**; the order below covers only what's left.
+spell half), plus **Airbend** (§3, keyword + stack branch) and **Exhaust** (§4). The set is now at
+**248/286**; the order below covers only what's left.
 
-1. **Airbend** (§3) — fixed-alternative-cost may-play + stack-spell exile branch. **~11 cards** — the
-   single highest-leverage remaining keyword.
+0. ~~**Now-unblocked recent batch**~~ — ✅ **done**: **North Pole Patrol** (activated Waterbend) and
+   **Firebending Student** (Firebending X = power + prowess) were plain `add-card`; **Trusty Boomerang**
+   added `EffectTarget.GrantingSource` (name the granting Equipment from a granted ability); **Ran and
+   Shaw** added `removeLegendary` on the self-copy token + `CardsInGraveyardMatchingAtLeast`.
+
+1. ~~**Airbend** (§3)~~ — ✅ **done**: fixed-alternative-cost may-play (`Effects.Airbend` /
+   `Effects.AirbendAll`) + stack-spell exile branch (`Effects.ExileTargetSpell`). 8 of 11 cards built;
+   the 3 leftovers are blocked by *other* gaps (cast-zone restriction, each-player-choose Saga chapter,
+   four-bend events + {WUBRG} reduction), not by airbend.
 2. **Remaining Waterbend cost shapes** (the §1 leftovers) — Ward — Waterbend, in-resolution "may pay
    a waterbend cost", and waterbend-as-alternative-cast (Hama). **~7 cards.** (Exhaust — Waterbend done.)
 3. ~~**Exhaust** (§4)~~ — ✅ **done**: `isExhaust` → per-object `ActivationRestriction.Once` (CR
@@ -379,5 +397,5 @@ spell half). The set is now at **231/286**; the order below covers only what's l
    self-scoped untap, shared-creature-type cross-target, flash-rider on play-from-exile) — as the
    relevant legendaries / rares come up.
 
-Airbend, the remaining Waterbend cost shapes, and Exhaust together gate the large majority of the
-remaining 55 cards.
+With Airbend and Exhaust now done, the **remaining Waterbend cost shapes** plus the granting/conditional
+Firebending and Tier-3 one-offs gate the bulk of the remaining 38 cards.

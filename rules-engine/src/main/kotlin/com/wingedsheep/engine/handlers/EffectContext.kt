@@ -34,6 +34,16 @@ data class EffectContext(
      */
     val effectControllerId: EntityId? = null,
     /**
+     * The permanent whose static ability granted the currently-resolving ability (the
+     * Equipment/Aura/permanent bearing the `GrantActivatedAbility` static), captured when the
+     * ability was put on the stack. Resolves [com.wingedsheep.sdk.scripting.targets.EffectTarget.GrantingSource]
+     * so a granted ability can name its granter — e.g. an Equipment that gives its bearer
+     * "...Return [this Equipment] to its owner's hand" (Trusty Boomerang). Null for non-granted
+     * abilities and for spell resolution; the granter may have left play by resolution, so the
+     * referencing effect must tolerate a now-absent entity (CR 113.7a).
+     */
+    val granterId: EntityId? = null,
+    /**
      * Definition-scoped identity of the triggered/activated ability currently resolving, copied
      * from its stack component (see [com.wingedsheep.sdk.scripting.AbilityIdentity]). Lets a
      * resolution-time may-question consult the controller's persistent auto-answer yields without

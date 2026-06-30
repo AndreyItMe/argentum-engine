@@ -2,7 +2,7 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 248 / 286
+**Implemented:** 252 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
 > **Status (June 2026):** 248/286 implemented. The **Exhaust** keyword is now built (`isExhaust = true`
@@ -37,8 +37,8 @@ up by Airbend, not Firebending).
 | Mechanic | Total | Remaining | Notes |
 |----------|------:|----------:|-------|
 | Earthbend | 28 | 6 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). |
-| Waterbend | 25 | 10 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), and **Exhaust—Waterbend** (`isExhaust` + `hasWaterbend`, e.g. Invasion Submersible, Avatar Kuruk) all built. ❌ still needed: **Ward—Waterbend** and **waterbend-as-alternative-cast** (Hama). |
-| Firebending | 28 | 14 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions hand-wired via `AddManaEffect(…, ManaExpiry.END_OF_COMBAT)`. ❌ still missing: **granting** firebending to others / **conditional** "has firebending as long as …" / "gains firebending until EOT". |
+| Waterbend | 25 | 9 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), and **Exhaust—Waterbend** (`isExhaust` + `hasWaterbend`, e.g. Invasion Submersible, Avatar Kuruk) all built. ❌ still needed: **Ward—Waterbend** and **waterbend-as-alternative-cast** (Hama). |
+| Firebending | 28 | 12 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions hand-wired via `AddManaEffect(…, ManaExpiry.END_OF_COMBAT)`. ❌ still missing: **granting** firebending to others / **conditional** "has firebending as long as …" / "gains firebending until EOT". |
 | Airbend | 11 | 3 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` (fixed-alternative-cost may-play from exile) + the spell stack branch (`Effects.ExileTargetSpell(fixedAlternativeManaCost)` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter, so it bypasses can't-be-countered). ❌ remaining 3 blocked by *other* gaps: cast-zone restriction (Avatar's Wrath), each-player-choose Saga chapter (Yangchen), four-bend events + {WUBRG} reduction (Avatar Aang). |
 | Exhaust | 8 | 0 | Activated ability usable only once (per object, CR 702.177). ✅ built — `isExhaust = true` on `activatedAbility` desugars to `ActivationRestriction.Once` (the existing per-object tracker is rules-correct; **not** once-per-game) and renders the "Exhaust — " prefix. **All 8 implemented**: Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work, plus Jeong Jeong (copy-next-Lesson rider), Invasion Submersible (Exhaust—Waterbend → becomes-artifact-creature via `AddCardType`), The Legend of Kuruk (Saga DFC + Exhaust—Waterbend {20} extra turn), and Mai (new **double strike** keyword counter). |
 
@@ -46,16 +46,16 @@ up by Airbend, not Firebending).
 
 | Keyword | Total | Remaining |
 |---------|------:|----------:|
-| Flying | 26 | 10 |
+| Flying | 26 | 9 |
 | Vigilance | 15 | 2 |
 | Scry | 10 | 2 |
 | Flash | 9 | 5 |
 | Transform | 8 | 5 |
 | Mill | 8 | 1 |
 | Reach | 8 | 1 |
-| Prowess | 7 | 2 |
+| Prowess | 7 | 1 |
 | Menace | 6 | 2 |
-| Equip | 5 | 2 |
+| Equip | 5 | 1 |
 | Food | 5 | 1 |
 | Enchant | 5 | 1 |
 | Landcycling | 5 | 0 |
@@ -183,7 +183,7 @@ up by Airbend, not Firebending).
 - [x] Fire Sages
 - [ ] Firebender Ascension
 - [x] Firebending Lesson
-- [ ] Firebending Student
+- [x] Firebending Student
 - [x] First-Time Flyer
 - [x] Flexible Waterbender
 - [x] Flopsie, Bumi's Buddy
@@ -255,7 +255,7 @@ up by Airbend, not Firebending).
 - [x] Mongoose Lizard
 - [x] Mountain
 - [x] North Pole Gates
-- [ ] North Pole Patrol
+- [x] North Pole Patrol
 - [x] Northern Air Temple
 - [x] Obsessive Pursuit
 - [x] Octopus Form
@@ -276,7 +276,7 @@ up by Airbend, not Firebending).
 - [x] Price of Freedom
 - [x] Professor Zei, Anthropologist
 - [x] Rabaroo Troop
-- [ ] Ran and Shaw
+- [x] Ran and Shaw
 - [x] Raucous Audience
 - [x] Raven Eagle
 - [x] Razor Rings
@@ -340,7 +340,7 @@ up by Airbend, not Firebending).
 - [x] Toph, the First Metalbender
 - [x] Treetop Freedom Fighters
 - [x] True Ancestry
-- [ ] Trusty Boomerang
+- [x] Trusty Boomerang
 - [x] Tundra Tank
 - [x] Turtle-Duck
 - [x] Twin Blades

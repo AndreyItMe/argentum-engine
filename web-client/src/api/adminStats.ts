@@ -52,12 +52,21 @@ export interface TournamentSummary {
   readonly winnerName: string | null
 }
 
+/** Coarse connection origin for a seat, resolved from its IP server-side (raw IP never sent). */
+export interface PlayerLocation {
+  readonly country: string | null
+  readonly countryCode: string | null
+  readonly region: string | null
+  readonly city: string | null
+}
+
 /** One seat in a recorded game, for the admin global game list. */
 export interface AdminGamePlayer {
   readonly name: string
   readonly userId: string | null
   readonly isAi: boolean
   readonly won: boolean
+  readonly location: PlayerLocation | null
 }
 
 /** A recorded game in the admin global game list, with every seat. */

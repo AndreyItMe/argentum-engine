@@ -262,7 +262,13 @@ data class CreateTokenCopyOfSourceEffect(
      * it's an artifact in addition to its other types"); any future copy-token effect
      * with the same shape can reuse the same field.
      */
-    val addCardTypes: Set<String> = emptySet()
+    val addCardTypes: Set<String> = emptySet(),
+    /**
+     * If true, the token copy is not legendary — the "except it's not legendary" copy clause
+     * (e.g. Ran and Shaw's "create a token that's a copy of Ran and Shaw, except it's not
+     * legendary"). Mirrors [CreateTokenCopyOfEquippedCreatureEffect.removeLegendary].
+     */
+    val removeLegendary: Boolean = false
 ) : Effect {
     override val description: String = buildString {
         append("Create ")
@@ -271,6 +277,9 @@ data class CreateTokenCopyOfSourceEffect(
         val excepts = mutableListOf<String>()
         if (overridePower != null && overrideToughness != null) {
             excepts.add("it's $overridePower/$overrideToughness")
+        }
+        if (removeLegendary) {
+            excepts.add("it's not legendary")
         }
         if (addCardTypes.isNotEmpty()) {
             val typeWords = addCardTypes.map { it.lowercase() }

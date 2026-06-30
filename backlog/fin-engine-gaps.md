@@ -362,14 +362,14 @@ Implemented (all pure authoring, no engine change):
   "whenever a Mutant you control dies during your turn, draw cards equal to its power"
   (`Triggers.leavesBattlefield` filtered to Mutants + `Conditions.IsYourTurn` + `DynamicAmounts.triggeringPower`).
 
-Deferred (needs `add-feature`, not pure authoring):
-- **The Lunar Whale** (#60) — Vehicle; Flying/Crew 1 + "you may look at the top card" + "as long as it
-  attacked this turn, you may play the top card of your library." The look-at-top and the conditional
-  *cast* permission compose today via `LookAtTopOfLibrary` and
-  `ConditionalStaticAbility(PlayFromTopOfLibrary, Conditions.SourceAttackedThisTurn)`, **but playing a
-  *land* from the top is blocked**: `PlayLandHandler.hasPlayFromTopOfLibrary` only matches a bare
-  `PlayFromTopOfLibrary` static and never unwraps `ConditionalStaticAbility` (it special-cases only
-  `MayPlayLandsFromGraveyard`). Fix is a small reusable engine change — unwrap
-  `ConditionalStaticAbility` around `PlayFromTopOfLibrary`/`PlayLandsAndCastFilteredFromTopOfLibrary`
-  in `PlayLandHandler` (and mirror in `CastPermissionUtils.hasPlayFromTopOfLibrary`), evaluating the
-  gating condition — exactly like the existing graveyard-play conditional handling.
+Resolved (was deferred):
+- **The Lunar Whale** (#60) — ✅ implemented. Vehicle; Flying/Crew 1 + `LookAtTopOfLibrary` +
+  `ConditionalStaticAbility(PlayLandsAndCastFilteredFromTopOfLibrary(GameObjectFilter.Any),
+  Conditions.SourceAttackedThisTurn)`. The non-revealing "play the top card" (any type) is modeled as
+  the filtered play-top permission with an unrestricted `GameObjectFilter.Any` spell filter. The engine
+  change that unblocked it: the four play/cast-from-top readers — `CastPermissionUtils.hasPlayLandsFromTopOfLibrary`
+  / `getCastFilteredFromTopOfLibraryFilter`, `PlayLandHandler.hasPlayFromTopOfLibrary`, and
+  `CastZoneResolver.hasCastFromTopOfLibraryPermission` — now unwrap `ConditionalStaticAbility` and
+  evaluate the gate against the granting permanent (mirroring the existing graveyard-play / equip
+  conditional handling), so the land-play and spell-cast paths both honor the "attacked this turn"
+  gate. Scenario test: `TheLunarWhaleScenarioTest`.
