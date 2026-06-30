@@ -359,11 +359,34 @@ class CastPermissionUtils(
         return false
     }
 
+    /**
+     * Resolve a static ability that may be gated by a [com.wingedsheep.sdk.scripting.ConditionalStaticAbility]
+     * (e.g. The Lunar Whale's "as long as it attacked this turn, you may play the top card of your
+     * library"). Returns the underlying ability when it is currently active: unconditional abilities
+     * pass through unchanged, while a conditional one is honored only while its condition holds
+     * against the granting permanent ([sourceId], controlled by [playerId]). Returns null when a
+     * conditional gate is currently false.
+     */
+    private fun activeStaticAbility(
+        state: GameState,
+        ability: com.wingedsheep.sdk.scripting.StaticAbility,
+        sourceId: EntityId,
+        playerId: EntityId
+    ): com.wingedsheep.sdk.scripting.StaticAbility? = when (ability) {
+        is com.wingedsheep.sdk.scripting.ConditionalStaticAbility -> {
+            val context = EffectContext(sourceId = sourceId, controllerId = playerId)
+            if (conditionEvaluator.evaluate(state, ability.condition, context)) ability.ability else null
+        }
+        else -> ability
+    }
+
     fun hasPlayLandsFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is PlayLandsAndCastFilteredFromTopOfLibrary }) {
+            if (cardDef.script.staticAbilities.any {
+                    activeStaticAbility(state, it, entityId, playerId) is PlayLandsAndCastFilteredFromTopOfLibrary
+                }) {
                 return true
             }
         }
@@ -375,8 +398,9 @@ class CastPermissionUtils(
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.script.staticAbilities) {
-                if (ability is PlayLandsAndCastFilteredFromTopOfLibrary) {
-                    return ability.spellFilter
+                val active = activeStaticAbility(state, ability, entityId, playerId)
+                if (active is PlayLandsAndCastFilteredFromTopOfLibrary) {
+                    return active.spellFilter
                 }
             }
         }

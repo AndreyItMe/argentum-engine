@@ -1526,6 +1526,97 @@
     ]
 }
 
+// Beatrix, Loyal General
+{
+    "name": "Beatrix, Loyal General",
+    "manaCost": "{4}{W}{W}",
+    "typeLine": "Legendary Creature — Human Soldier",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nAt the beginning of combat on your turn, you may attach any number of Equipment you control to target creature you control.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "BattlefieldMatching",
+                                    "filter": "artifact Equipment",
+                                    "player": "You"
+                                },
+                                "storeAs": "gathered0"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "gathered0",
+                                "selection": "ChooseAnyNumber",
+                                "storeSelected": "selected1",
+                                "prompt": "Choose any number of Equipment you control to attach to the target creature",
+                                "useTargetingUI": true
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Collection",
+                                    "collection": "selected1"
+                                },
+                                "body": {
+                                    "type": "AttachTargetEquipmentToCreature",
+                                    "equipmentTarget": "Self",
+                                    "creatureTarget": {
+                                        "type": "BoundVariable",
+                                        "name": "target creature you control"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "target creature you control"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "554",
+        "rarity": "RARE",
+        "artist": "Bachzim",
+        "flavorText": "\"I commend your courage, but I will show you no mercy.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9da83b07-4978-4af7-be51-8aa8f35ec0bb.jpg?1782686128",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "You can't use Beatrix's last ability to try to attach an Equipment to a creature if that Equipment can't legally be attached to that creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Black Mage's Rod
 {
     "name": "Black Mage's Rod",
@@ -8732,6 +8823,61 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Louisoix's Sacrifice
+{
+    "name": "Louisoix's Sacrifice",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "As an additional cost to cast this spell, sacrifice a legendary creature or pay {2}.\nCounter target activated ability, triggered ability, or noncreature spell.",
+    "script": {
+        "spellEffect": {
+            "type": "Counter",
+            "target": "CounterTarget.SpellOrAbility"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsActivatedOrTriggeredAbility"
+                        ]
+                    },
+                    "zone": "Stack",
+                    "alternatives": [
+                        {
+                            "baseFilter": "noncreature",
+                            "zone": "Stack"
+                        }
+                    ]
+                }
+            }
+        ],
+        "additionalCosts": [
+            {
+                "type": "SacrificeOrPay",
+                "filter": {
+                    "cardPredicates": [
+                        "IsCreature",
+                        "IsLegendary"
+                    ]
+                },
+                "alternativeManaCost": "{2}"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "59",
+        "rarity": "RARE",
+        "artist": "Mintautas Šukys",
+        "flavorText": "\"Thank you... for everything... Pray take your rest, Grandfather... You deserve it.\"\n—Alisaie Leveilleur",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1782686550"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -17064,6 +17210,59 @@
         "imageUri": "https://cards.scryfall.io/normal/front/5/3/5363c881-443d-43df-afd8-f81e1a1741a2.jpg?1748706827"
     },
     "colorIdentityOverride": []
+}
+
+// The Lunar Whale
+{
+    "name": "The Lunar Whale",
+    "manaCost": "{3}{U}",
+    "typeLine": "Legendary Artifact — Vehicle",
+    "oracleText": "Flying\nYou may look at the top card of your library any time.\nAs long as The Lunar Whale attacked this turn, you may play the top card of your library.\nCrew 1",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "CREW"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Numeric",
+            "keyword": "CREW",
+            "n": 1
+        }
+    ],
+    "script": {
+        "staticAbilities": [
+            "LookAtTopOfLibrary",
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "PlayLandsAndCastFilteredFromTopOfLibrary",
+                    "spellFilter": {}
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "AttackedThisTurn"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "60",
+        "rarity": "RARE",
+        "artist": "Fiona Hsieh",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/e/ae875471-346c-4a76-b26f-b7205dad5b80.jpg?1782686550"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
 }
 
 // The Prima Vista

@@ -289,6 +289,17 @@ definitions construct these through the facade, e.g. `Costs.additional.Sacrifice
   folded in). The chosen path is recovered at payment time from whether the cast action's
   `additionalCostPayment.exiledCards` is non-empty; the exile path is only offered when the
   graveyard holds at least `exileCount` matching cards.
+- `Costs.additional.SacrificeOrPay(filter = Filters.Any, alternativeManaCost, count = 1)` — "as an
+  additional cost to cast this spell, sacrifice a [filter] or pay {mana}" (Louisoix's Sacrifice:
+  "sacrifice a legendary creature or pay {2}"). The sibling of `ExileFromGraveyardOrPay` /
+  `BlightOrPay` / `BeholdOrPay` for the "sacrifice a permanent or pay mana" shape. The enumerator
+  offers up to two cast paths: the **sacrifice path** (base cost + a battlefield selection of
+  exactly `count` permanents you control matching `filter`, surfaced as a `costType =
+  "SacrificePermanent"` cost — the same on-battlefield picker used by a plain sacrifice cost like
+  Natural Order) and the **pay path** (base cost + `alternativeManaCost` folded in). The chosen path
+  is recovered at payment time from whether the cast action's `additionalCostPayment.sacrificedPermanents`
+  is non-empty; the sacrifice path is only offered when you control at least `count` matching
+  permanents, so with nothing to sacrifice only the pay path is castable.
 
 **`Costs.pay.*`** (wraps `PayCost`) — payable costs used by [`PayOrSufferEffect`](#15-replacement-effects) ("do X
 unless you Y") and by `morphCost` (non-mana face-up cost). Distinct from `AbilityCost` / `Costs.*`
@@ -3778,8 +3789,13 @@ concerns — the `ClientStateTransformer` reveals the top card for `PlayFromTopO
 - `PlayFromTopOfLibrary` — public reveal **and** "play lands and cast spells from the top of your
   library" (all card types). (Future Sight)
 - `PlayLandsAndCastFilteredFromTopOfLibrary(spellFilter)` — like `PlayFromTopOfLibrary` but only
-  spells matching `spellFilter` are castable (lands always playable). (Glarb, Calamity's Augur =
-  `GameObjectFilter.Any.manaValueAtLeast(4)`)
+  spells matching `spellFilter` are castable (lands always playable), and **no public reveal** (pair
+  with `LookAtTopOfLibrary` to let just the controller see). `spellFilter = GameObjectFilter.Any`
+  means "play the top card" of any type non-revealingly. (Glarb, Calamity's Augur =
+  `GameObjectFilter.Any.manaValueAtLeast(4)`; The Lunar Whale = `GameObjectFilter.Any`.) Honors a
+  `ConditionalStaticAbility` wrapper — the play/cast-from-top readers unwrap the conditional and
+  evaluate its gate against the granting permanent, so the permission can be time-restricted (The
+  Lunar Whale: `condition = Conditions.SourceAttackedThisTurn` — only after the Whale attacked).
 - `CastSpellTypesFromTopOfLibrary(filter)` — cast only matching spell types from the top; no land
   play, no full public reveal. (Precognition Field = instants/sorceries)
 - `LookAtTopOfLibrary` — *private*: the controller may look at their own top card any time (revealed

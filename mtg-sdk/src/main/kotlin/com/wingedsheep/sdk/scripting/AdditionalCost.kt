@@ -328,6 +328,53 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
     }
 
     /**
+     * Sacrifice [count] permanent(s) matching [filter] you control, or pay additional mana: the
+     * caster must either sacrifice that many matching permanents, or pay extra mana on top of the
+     * spell's base mana cost. The sibling of [BlightOrPay] / [BeholdOrPay] /
+     * [ExileFromGraveyardOrPay] for the "sacrifice a permanent or pay" shape (e.g. Louisoix's
+     * Sacrifice — "sacrifice a legendary creature or pay {2}").
+     *
+     * The enumerator produces up to two legal actions: one for the sacrifice path (base cost +
+     * permanent selection from the battlefield, surfaced with `costType = "SacrificePermanent"`
+     * like Natural Order's plain sacrifice cost) and one for the pay path (base cost +
+     * [alternativeManaCost]). The sacrifice path is only offered when the caster controls at least
+     * [count] permanents matching [filter]. The chosen path is recovered at payment time from
+     * whether [AdditionalCostPayment.sacrificedPermanents] is non-empty.
+     *
+     * @property filter Which permanents you control qualify (e.g. legendary creature)
+     * @property alternativeManaCost Extra mana to pay instead of sacrificing (e.g. "{2}")
+     * @property count How many matching permanents to sacrifice on the sacrifice path
+     */
+    @SerialName("SacrificeOrPay")
+    @Serializable
+    data class SacrificeOrPay(
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val alternativeManaCost: String,
+        val count: Int = 1,
+    ) : AdditionalCost {
+        override val description: String = buildString {
+            append("Sacrifice ")
+            if (count == 1) {
+                val filterDesc = filter.description
+                val article = if (filterDesc.firstOrNull()?.lowercase() in listOf("a", "e", "i", "o", "u")) "an" else "a"
+                append("$article ")
+                append(filterDesc)
+            } else {
+                append("$count ")
+                append(filter.description)
+                append("s")
+            }
+            append(" or pay ")
+            append(alternativeManaCost)
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
      * Exile cards from a named pipeline collection and optionally link them to the
      * source spell/permanent via LinkedExileComponent.
      *
