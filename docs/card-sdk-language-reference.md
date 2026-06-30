@@ -4115,6 +4115,15 @@ composite abilities).
   shared with `firebending(n)`) via `GrantTriggeredAbilityEffect`, so the affected creature adds the same N {R}
   combat-duration mana on attack while the grant is live. The grant rides `GameState.grantedTriggeredAbilities`
   and is dropped in the cleanup step (EndOfTurn).
+  For a **conditional static** "this creature has firebending N as long as `<condition>`" (Fire Nation Cadets —
+  "… as long as there's a Lesson card in your graveyard"), wrap a *self-scoped* `GrantTriggeredAbility` in a
+  `ConditionalStaticAbility`: `staticAbility { ability = ConditionalStaticAbility(GrantTriggeredAbility(
+  firebendingAttackTrigger(n), filter = GroupFilter.source()), Conditions.GraveyardContainsSubtype(Subtype.LESSON)) }`.
+  `GroupFilter.source()` (i.e. `Scope.Self`) grants the firebending attack trigger to the source itself; the
+  `TriggerAbilityResolver` re-evaluates the gating condition each time triggers are computed, so the trigger
+  toggles live — it fires on attack while the condition holds and not while it's false. (Self-scoped
+  `GrantTriggeredAbility`, plain or conditional, is consulted by `TriggerAbilityResolver.getSelfGrantedTriggeredAbilities`
+  alongside the existing battlefield-scope/lord and attached-aura grant paths.)
 - `Increment` — "Whenever you cast a spell, if the amount of mana you spent is greater than this creature's power
   or toughness, put a +1/+1 counter on this creature." (Secrets of Strixhaven). Display-only; wire the behavior with
   the `card { increment() }` builder helper, which adds the `KeywordAbility.Increment` display marker (surfacing

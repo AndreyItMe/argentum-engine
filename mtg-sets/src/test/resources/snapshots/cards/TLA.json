@@ -6790,6 +6790,85 @@
     ]
 }
 
+// Fire Nation Cadets
+{
+    "name": "Fire Nation Cadets",
+    "manaCost": "{R}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "This creature has firebending 2 as long as there's a Lesson card in your graveyard. (Whenever this creature attacks, add {R}{R}. This mana lasts until end of combat.)\n{2}: This creature gets +1/+0 until end of turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": "Self"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantTriggeredAbility",
+                    "ability": {
+                        "id": "ability_2",
+                        "trigger": "AttackEvent",
+                        "effect": {
+                            "type": "AddMana",
+                            "color": "RED",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "expiry": "END_OF_COMBAT"
+                        },
+                        "descriptionOverride": "Whenever this creature attacks, add {R}{R}. Until end of combat, you don't lose this mana as steps and phases end."
+                    },
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Graveyard",
+                    "filter": "Lesson"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "134",
+        "artist": "Rafater",
+        "flavorText": "Fire Nation training ensures that even the smallest flame burns into a raging inferno.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/a/1a3a862c-9c9a-41cd-94d1-2d0cff22a6cd.jpg?1764120921"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fire Nation Engineer
 {
     "name": "Fire Nation Engineer",
