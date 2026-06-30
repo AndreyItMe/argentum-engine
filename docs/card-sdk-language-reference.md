@@ -5705,8 +5705,16 @@ replacementEffect {
   SourceFilter.Matching(GameObjectFilter.Any.youControl()), damageType = DamageType.NonCombat))` — a
   delirium-gated "double all noncombat damage from sources you control". The doubled damage stays
   attributed to the original source (the engine scales the amount in place).
-- `ModifyDamageAmount(modifier, appliesTo)` — add a flat `modifier` to matching damage (Valley
-  Flamecaller: "deals that much damage plus 1").
+- `ModifyDamageAmount(modifier = 0, dynamicModifier = null, appliesTo)` — add an amount to matching
+  damage. Pass a flat `modifier` (Valley Flamecaller: "deals that much damage plus 1") or a
+  `dynamicModifier: DynamicAmount?` evaluated at damage time against the replacement's **source**
+  permanent (so `DynamicAmount.EntityProperty(Source, …)` / `DynamicAmounts.countersOnSelf(…)` reads
+  the source's own characteristics/counters). Fated Firepower: `dynamicModifier =
+  DynamicAmounts.countersOnSelf(CounterTypeFilter.Named("fire"))` with `appliesTo = DamageEvent(source =
+  SourceFilter.YouControl, recipient = RecipientFilter.OpponentOrPermanentTheyControl)` — "a source you
+  control deals that much damage plus the number of fire counters on this enchantment to an opponent or
+  a permanent an opponent controls". Applied in `DamageUtils.applyStaticDamageAmplification` (both the
+  general and combat damage paths), once per damage event, after `DoubleDamage`.
 - `RedirectDamage(redirectTo, appliesTo, condition = null)` — redirect matching damage to another
   recipient. Now wired as a continuous static replacement (each source applies at most once per damage
   event). `redirectTo` supports `EffectTarget.ControllerOfDamageSource` (the controller of the damaging
@@ -5730,6 +5738,10 @@ replacementEffect {
   predicates: `GameObjectFilter.sharingColorWithRecipient()` (`CardPredicate.SharesColorWithRecipient`,
   Well-Laid Plans — "another creature that shares a color") and `sharingChosenColorWithSource()`
   (`CardPredicate.SharesChosenColorWithSource`, reads the replacement source's `ChosenColorComponent`).
+  `source = SourceFilter.YouControl` matches any source (permanent, spell, ability) controlled by the
+  replacement's controller — "a source you control" (Fated Firepower) — without enumerating a
+  `GameObjectFilter`. `recipient = RecipientFilter.OpponentOrPermanentTheyControl` matches an opponent
+  player **or** any permanent an opponent controls — "an opponent or a permanent an opponent controls".
 - `EntersTapped(unlessCondition?, payLifeCost?)` — "this permanent enters tapped" (`unlessCondition = null`),
   or "enters tapped unless `<condition>`" when an `unlessCondition` is supplied. The "slow land" cycle
   (Deathcap Glade, Dreamroot Cascade, Sundown Pass — "enters tapped unless you control two or more other

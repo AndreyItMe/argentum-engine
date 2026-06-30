@@ -6933,6 +6933,57 @@
     ]
 }
 
+// Fated Firepower
+{
+    "name": "Fated Firepower",
+    "manaCost": "{X}{R}{R}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "Flash\nThis enchantment enters with X fire counters on it.\nIf a source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus an amount of damage equal to the number of fire counters on this enchantment instead.",
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "EntersWithDynamicCounters",
+                "counterType": {
+                    "type": "Named",
+                    "name": "fire"
+                },
+                "count": "XValue"
+            },
+            {
+                "type": "ModifyDamageAmount",
+                "dynamicModifier": {
+                    "type": "EntityProperty",
+                    "entity": "Source",
+                    "numericProperty": {
+                        "type": "CounterCount",
+                        "counterType": {
+                            "type": "Named",
+                            "name": "fire"
+                        }
+                    }
+                },
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "recipient": "OpponentOrPermanentTheyControl",
+                    "source": "SourceYouControl"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "132",
+        "rarity": "MYTHIC",
+        "artist": "Takayama Toshiaki",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/1/51352127-1f86-42e9-b4ca-2fd58b14e86b.jpg?1768375955"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fire Lord Azula
 {
     "name": "Fire Lord Azula",
