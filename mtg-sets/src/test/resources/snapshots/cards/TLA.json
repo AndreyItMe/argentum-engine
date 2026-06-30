@@ -9088,6 +9088,116 @@
     ]
 }
 
+// Iroh, Tea Master
+{
+    "name": "Iroh, Tea Master",
+    "manaCost": "{1}{R}{W}",
+    "typeLine": "Legendary Creature — Human Citizen Ally",
+    "oracleText": "When Iroh enters, create a Food token.\nAt the beginning of combat on your turn, you may have target opponent gain control of target permanent you control. When you do, create a 1/1 white Ally creature token. Put a +1/+1 counter on that token for each permanent you own that your opponents control.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Food"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Gated",
+                        "gate": {
+                            "type": "Gate.DoAction",
+                            "action": {
+                                "type": "GiveControlToTargetPlayer",
+                                "permanent": {
+                                    "type": "BoundVariable",
+                                    "name": "target permanent you control"
+                                },
+                                "newController": {
+                                    "type": "BoundVariable",
+                                    "name": "target opponent"
+                                }
+                            },
+                            "successCriterion": "SuccessCriterion.ControlChanged"
+                        },
+                        "then": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "CreateToken",
+                                    "power": 1,
+                                    "toughness": 1,
+                                    "colors": [
+                                        "WHITE"
+                                    ],
+                                    "creatureTypes": [
+                                        "Ally"
+                                    ]
+                                },
+                                {
+                                    "type": "AddDynamicCounters",
+                                    "counterType": "+1/+1",
+                                    "amount": {
+                                        "type": "AggregateBattlefield",
+                                        "player": "EachOpponent",
+                                        "filter": "permanent own:you"
+                                    },
+                                    "target": {
+                                        "type": "PipelineTarget",
+                                        "collectionName": "createdTokens"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "descriptionOverride": "You may have target opponent gain control of target permanent you control. When you do, create a 1/1 white Ally creature token. Put a +1/+1 counter on that token for each permanent you own that your opponents control."
+                },
+                "targetRequirement": {
+                    "type": "TargetOpponent",
+                    "id": "target opponent"
+                },
+                "additionalTargetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "permanent ctrl:you"
+                        },
+                        "id": "target permanent you control"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "228",
+        "rarity": "RARE",
+        "artist": "Brian Yuen",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/1/d1f5e10d-0a89-4129-9717-a921f20d3616.jpg?1764121673"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
+    ]
+}
+
 // It'll Quench Ya!
 {
     "name": "It'll Quench Ya!",
