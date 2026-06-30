@@ -1688,7 +1688,19 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
 
 - `EffectTarget.ContextTarget(i)` — i-th cast-time target.
 - `EffectTarget.Controller` — controller of the source ability.
-- `EffectTarget.Self` — the source permanent.
+- `EffectTarget.Self` — the source permanent. In a *granted* ability (Equipment/Aura "equipped
+  creature has …"), `Self` is the **host** that received the ability — its `{T}` taps the host —
+  not the granting object (CR 113.7).
+- `EffectTarget.GrantingSource` — the permanent whose static ability granted the currently-resolving
+  ability: the Equipment/Aura/permanent bearing the `GrantActivatedAbility` static, as the counterpart
+  to `Self` (the host). Use when a granted ability names the *granting object* — e.g. Trusty
+  Boomerang's "equipped creature has '{1}, {T}: Tap target creature. **Return Trusty Boomerang** to
+  its owner's hand'" (`Effects.ReturnToHand(EffectTarget.GrantingSource)`), or Cranial Plating's
+  "Attach Cranial Plating to target creature". The granter is captured when the ability is put on the
+  stack (threaded `ActivatedAbilityOnStackComponent.granterId` → `EffectContext.granterId`), so it
+  survives the granter leaving play — the referencing effect no-ops if it's gone (CR 113.7a). For an
+  ability whose source already *is* the granter (Territory Forge / Sharkey-style gains), it resolves
+  to the same entity as `Self`.
 - `EffectTarget.TriggeringEntity` — the entity that caused the trigger to fire.
 - `EffectTarget.DiscardedAsCost(index = 0)` — a card discarded to pay this spell's additional discard
   cost (`Costs.additional.DiscardCards(...)`). The discarded card is in its owner's graveyard by

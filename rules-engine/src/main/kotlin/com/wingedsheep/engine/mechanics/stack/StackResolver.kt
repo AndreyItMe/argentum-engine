@@ -2131,6 +2131,7 @@ class StackResolver(
         val context = EffectContext(
             sourceId = abilityComponent.sourceId,
             controllerId = abilityComponent.controllerId,
+            granterId = abilityComponent.granterId,
             abilityIdentity = abilityComponent.abilityIdentity,
             targets = activatedTargets,
             alignedTargets = alignedActivatedTargets,

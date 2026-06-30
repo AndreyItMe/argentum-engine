@@ -2,7 +2,7 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 250 / 286
+**Implemented:** 251 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
 > **Status (June 2026):** 248/286 implemented. The **Exhaust** keyword is now built (`isExhaust = true`
@@ -55,7 +55,7 @@ up by Airbend, not Firebending).
 | Reach | 8 | 1 |
 | Prowess | 7 | 1 |
 | Menace | 6 | 2 |
-| Equip | 5 | 2 |
+| Equip | 5 | 1 |
 | Food | 5 | 1 |
 | Enchant | 5 | 1 |
 | Landcycling | 5 | 0 |
@@ -340,7 +340,7 @@ up by Airbend, not Firebending).
 - [x] Toph, the First Metalbender
 - [x] Treetop Freedom Fighters
 - [x] True Ancestry
-- [ ] Trusty Boomerang
+- [x] Trusty Boomerang
 - [x] Tundra Tank
 - [x] Turtle-Duck
 - [x] Twin Blades

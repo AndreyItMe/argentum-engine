@@ -1045,6 +1045,7 @@ class ActivateAbilityHandler(
             val context = EffectContext(
                 sourceId = action.sourceId,
                 controllerId = action.playerId,
+                granterId = staticGranterId,
                 targets = action.targets,
                 // Thread the chosen X so X-based mana abilities produce the right amount
                 // ("{X}, {T}, Sacrifice this: Add X mana..." — Wizard's Rockets). Without
@@ -1324,7 +1325,8 @@ class ActivateAbilityHandler(
             descriptionOverride = ability.descriptionOverride,
             abilityIdentity = com.wingedsheep.sdk.scripting.AbilityIdentity(
                 cardComponent.cardDefinitionId, ability.id
-            )
+            ),
+            granterId = staticGranterId
         )
 
         // Apply text-changing effects to the target requirements for resolution-time re-validation
@@ -1409,7 +1411,8 @@ class ActivateAbilityHandler(
                     descriptionOverride = ability.descriptionOverride,
                     abilityIdentity = com.wingedsheep.sdk.scripting.AbilityIdentity(
                         cardComponent.cardDefinitionId, ability.id
-                    )
+                    ),
+                    granterId = staticGranterId
                 )
                 val repeatStackResult = stackResolver.putActivatedAbility(
                     currentState, repeatAbilityOnStack, action.targets,
