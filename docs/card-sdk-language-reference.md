@@ -377,7 +377,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   additively. Read at damage time by the engine's static-amplification path, then cleaned up at end of
   turn. Distinct from the opponent-only, permanent-tied `NoncombatDamageBonus` static. Taii Wakeen,
   Perfect Shot: `{X}, {T}: … it deals that much damage plus X instead.`
-- `Fight(target1, target2)` — two creatures each deal damage equal to their power to each other (CR 701.12).
+- `Fight(target1, target2, excessDamageVariable?)` — two creatures each deal damage equal to their power
+  to each other (CR 701.14). When `excessDamageVariable` is set, the excess damage (CR 120.4a, deathtouch-
+  and marked-damage-aware) that `target1` deals **to `target2`** is stored into that pipeline number
+  variable for a following effect to read via `DynamicAmount.VariableReference` — e.g. The Last Agni Kai:
+  `Fight(yours, theirs, "excess") then AddMana(RED, VariableReference("excess"))`.
 - `DividedDamageEffect(totalDamage, minTargets, maxTargets, dynamicTotal?)` — "N damage divided as you
   choose among target ..." The targets come from the ability's target requirement; pair with
   `TargetCreature(count, minCount)` (Forked Lightning, Skirk Volcanist) or, for "any number of target"
@@ -714,6 +718,12 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   `AnySpend` restricted entry (so it spends like any other mana) and cleared by
   `CombatManager.endCombat`. See [ManaExpiry](#manaexpiry).
 - `AddColorlessMana(amount, restriction?)` — add colorless.
+- `RetainUnspentMana(vararg colors)` — "Until end of turn, you don't lose unspent mana of these colours
+  as steps and phases end." The colour-filtered, single-player, turn-scoped one-shot cousin of the
+  permanent-static `PreventManaPoolEmptying` (Upwelling, which stops *all* emptying for *everyone*).
+  Confers a `RetainUnspentManaComponent` on the resolving controller; at the end-of-turn mana-empty step
+  (`CleanupPhaseManager`) the kept colours survive `ManaPoolComponent.emptyExcept(...)` once, then the
+  marker clears. The Last Agni Kai (`RetainUnspentMana(Color.RED)`).
 - `AddManaOfChoice(colorSet, amount?, restriction?, riders?)` — **unified primitive.** Add N mana of one color the controller picks from a resolved [ManaColorSet](#manacolorset). All "any-color from a constrained pool" cards (any color, commander identity, among permanents, lands could produce, source-chosen color) are expressed as this effect plus a different `ManaColorSet`. `riders` is a `Set<ManaSpellRider>` consumed when the mana pays for a spell (e.g. Path of Ancestry tags its mana with `ScryOnSharedTypeWithCommander`); when riders are set without a `restriction`, the engine stores the entries under `ManaRestriction.AnySpend` to preserve the rider through the pool.
 - `AddAnyColorMana(amount?, restriction?)` — sugar for `AddManaOfChoice(ManaColorSet.AnyColor, amount)`. "Add N mana of any **one** color" (Gilded Lotus): one chosen color, N of it. For "any **combination** of colors" use `AddManaInAnyCombination`.
 - `AddManaOfChosenColor(amount?)` — sugar for `AddManaOfChoice(ManaColorSet.SourceChosenColor, amount)`.

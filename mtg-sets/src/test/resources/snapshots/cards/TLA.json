@@ -17139,6 +17139,73 @@
     ]
 }
 
+// The Last Agni Kai
+{
+    "name": "The Last Agni Kai",
+    "manaCost": "{1}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature you control fights target creature an opponent controls. If the creature the opponent controls is dealt excess damage this way, add that much {R}.\nUntil end of turn, you don't lose unspent red mana as steps and phases end.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Fight",
+                    "target1": {
+                        "type": "BoundVariable",
+                        "name": "target creature you control"
+                    },
+                    "target2": {
+                        "type": "BoundVariable",
+                        "name": "target creature an opponent controls"
+                    },
+                    "excessDamageVariable": "excess"
+                },
+                {
+                    "type": "AddMana",
+                    "color": "RED",
+                    "amount": {
+                        "type": "VariableReference",
+                        "variableName": "excess"
+                    }
+                },
+                {
+                    "type": "RetainUnspentMana",
+                    "colors": [
+                        "RED"
+                    ]
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target creature you control"
+            },
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:opponent"
+                },
+                "id": "target creature an opponent controls"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "144",
+        "rarity": "RARE",
+        "artist": "Pablo Rivera",
+        "flavorText": "Zuko's journey began when he refused to duel his father, but it would end dueling his sister.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/1/61eaebc6-7575-48ed-b212-ff8b0c7ae694.jpg?1764120987"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // The Legend of Kuruk
 {
     "name": "The Legend of Kuruk",

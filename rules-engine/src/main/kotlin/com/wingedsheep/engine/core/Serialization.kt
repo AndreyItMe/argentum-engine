@@ -509,6 +509,7 @@ val engineSerializersModule = SerializersModule {
         subclass(PermanentsEnteredUnderControlThisTurnComponent::class)
         subclass(SpellsCantBeCounteredComponent::class)
         subclass(FlashGrantsThisTurnComponent::class)
+        subclass(RetainUnspentManaComponent::class)
         subclass(PutCounterOnCreatureThisTurnComponent::class)
         subclass(SkipNextTurnComponent::class)
         subclass(PlayerTurnHijackedComponent::class)
