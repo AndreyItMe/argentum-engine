@@ -48,7 +48,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    zIndex: 100,
+    // Above battlefield card-stack ungroup toggles (zIndex 1000) so the
+    // indicator banner isn't obscured by them; still below modal selectors (1500+).
+    zIndex: 1100,
     pointerEvents: 'none',
   },
   spinner: {
