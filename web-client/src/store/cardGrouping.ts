@@ -49,9 +49,17 @@ export function computeCardGroupKey(card: ClientCard): string {
     parts.push(`counters:${JSON.stringify(sortedCounters)}`)
   }
 
-  // Cards with modified P/T are different
-  if (card.power !== card.basePower || card.toughness !== card.baseToughness) {
+  // Creatures with different (projected) P/T render differently and must never share a
+  // stack. Keying off "modified vs own base" alone is wrong: a 4/4 creature and a 1/1 token
+  // copy of it each match their own base P/T, so neither would contribute P/T to the key and
+  // they'd wrongly merge. Key off the *current* P/T directly, then add base P/T when it
+  // diverges so a pumped creature (which shows buff indicators) still splits from an unbuffed
+  // twin sitting at the same current P/T.
+  if (card.power !== null || card.toughness !== null) {
     parts.push(`pt:${card.power}/${card.toughness}`)
+    if (card.power !== card.basePower || card.toughness !== card.baseToughness) {
+      parts.push(`basept:${card.basePower}/${card.baseToughness}`)
+    }
   }
 
   // Cards with attachments (auras/equipment) should never be grouped — use unique ID
