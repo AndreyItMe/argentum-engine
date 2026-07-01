@@ -505,6 +505,50 @@
     ]
 }
 
+// Blanchwood Armor
+{
+    "name": "Blanchwood Armor",
+    "manaCost": "{2}{G}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nEnchanted creature gets +1/+1 for each Forest you control.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantDynamicStats",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                },
+                "powerBonus": {
+                    "type": "AggregateBattlefield",
+                    "player": "You",
+                    "filter": "land Forest"
+                },
+                "toughnessBonus": {
+                    "type": "AggregateBattlefield",
+                    "player": "You",
+                    "filter": "land Forest"
+                }
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "237",
+        "rarity": "UNCOMMON",
+        "artist": "Paolo Parente",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/b/9b5f3776-74f4-4626-833b-e1b0921d3cbc.jpg?1782720658"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Blanchwood Treefolk
 {
     "name": "Blanchwood Treefolk",

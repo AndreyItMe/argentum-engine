@@ -652,6 +652,63 @@
     ]
 }
 
+// Cat Collector
+{
+    "name": "Cat Collector",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Citizen",
+    "oracleText": "When this creature enters, create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\nWhenever you gain life for the first time during each of your turns, create a 1/1 white Cat creature token.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Food"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "LifeGainEvent",
+                    "firstTimeEachTurn": true
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Cat"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/2/8/2885d54c-9fb2-4f01-8937-54f8ac1ce5bc.jpg"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "UNCOMMON",
+        "artist": "Chris Seaman",
+        "flavorText": "\"Why so many? Because they need a home, just like I once did.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/526fe356-bff1-4211-9e88-bf913ac76b1d.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Celestial Armor
 {
     "name": "Celestial Armor",
@@ -4146,6 +4203,50 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Slumbering Cerberus
+{
+    "name": "Slumbering Cerberus",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Dog",
+    "oracleText": "This creature doesn't untap during your untap step.\nMorbid — At the beginning of each end step, if a creature died this turn, untap this creature.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "flags": [
+        "DOESNT_UNTAP"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "TapUntap",
+                    "target": "Self",
+                    "tap": false
+                },
+                "triggerCondition": "CreatureDiedThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "94",
+        "rarity": "UNCOMMON",
+        "artist": "Kari Christensen",
+        "flavorText": "The plan seemed to be going perfectly, until Mino realized the third head was no longer snoring.",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/d/9d06faa8-201d-45db-b398-ad56f7b01848.jpg?1782689185"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 

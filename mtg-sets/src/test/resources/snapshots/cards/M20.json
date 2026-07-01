@@ -1,3 +1,62 @@
+// Angel of Vitality
+{
+    "name": "Angel of Vitality",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flying\nIf you would gain life, you gain that much life plus 1 instead.\nThis creature gets +2/+2 as long as you have 25 or more life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 2,
+                    "toughnessBonus": 2,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "LifeTotal",
+                        "player": "You"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 25
+                    }
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "ModifyLifeGain",
+                "multiplier": 1,
+                "modifier": 1
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "4",
+        "rarity": "UNCOMMON",
+        "artist": "Johannes Voss",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/2/e2f39777-b80a-4618-9310-a9e5b91bb2a2.jpg?1782708391"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Empyrean Eagle
 {
     "name": "Empyrean Eagle",

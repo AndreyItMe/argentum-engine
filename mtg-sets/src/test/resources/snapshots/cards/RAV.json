@@ -1540,6 +1540,60 @@
     ]
 }
 
+// Frenzied Goblin
+{
+    "name": "Frenzied Goblin",
+    "manaCost": "{R}",
+    "typeLine": "Creature — Goblin Berserker",
+    "oracleText": "Whenever this creature attacks, you may pay {R}. If you do, target creature can't block this turn.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayManaCost",
+                            "cost": "{R}"
+                        }
+                    },
+                    "then": {
+                        "type": "CantBlockTargetCreatures",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "creature"
+                        }
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "125",
+        "rarity": "UNCOMMON",
+        "artist": "Carl Critchlow",
+        "flavorText": "The upside to not thinking about the consequences is that you'll always surprise those who do.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/3/d307d8c7-b9b5-4f8f-933d-f1c64cbbf92f.jpg?1782717468"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Glass Golem
 {
     "name": "Glass Golem",
