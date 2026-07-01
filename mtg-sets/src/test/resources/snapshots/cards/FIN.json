@@ -5329,6 +5329,102 @@
     "colorIdentityOverride": []
 }
 
+// Exdeath, Void Warlock
+{
+    "name": "Exdeath, Void Warlock",
+    "manaCost": "{1}{B}{G}",
+    "typeLine": "Legendary Creature — Spirit Warlock",
+    "oracleText": "When Exdeath enters, you gain 3 life.\nAt the beginning of your end step, if there are six or more permanent cards in your graveyard, transform Exdeath.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": "Transform",
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "Count",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "filter": "permanent"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 6
+                    }
+                }
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Neo Exdeath, Dimension's End",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Spirit Avatar",
+        "oracleText": "Trample\nNeo Exdeath's power is equal to the number of permanent cards in your graveyard.",
+        "creatureStats": {
+            "power": {
+                "type": "Dynamic",
+                "source": {
+                    "type": "Count",
+                    "player": "You",
+                    "zone": "Graveyard",
+                    "filter": "permanent"
+                }
+            },
+            "toughness": 3
+        },
+        "keywords": [
+            "TRAMPLE"
+        ],
+        "metadata": {
+            "collectorNumber": "220",
+            "rarity": "UNCOMMON",
+            "artist": "Jessica Fong",
+            "flavorText": "\"All memories . . . dimensions . . . existence . . . All that is shall be returned to nothing.\"",
+            "imageUri": "https://cards.scryfall.io/normal/back/1/b/1b4bab87-4000-461d-8b58-d34928fee305.jpg?1782686429"
+        },
+        "colorIdentityOverride": [
+            "BLACK",
+            "GREEN"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "220",
+        "rarity": "UNCOMMON",
+        "artist": "Jessica Fong",
+        "flavorText": "\"Mwa-hahahaha! Witness what befalls those who stand against me!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/b/1b4bab87-4000-461d-8b58-d34928fee305.jpg?1782686429"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
+
 // Fang, Fearless l'Cie
 {
     "name": "Fang, Fearless l'Cie",
