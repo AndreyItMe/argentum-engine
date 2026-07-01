@@ -239,6 +239,61 @@
     ]
 }
 
+// Groundskeeper
+{
+    "name": "Groundskeeper",
+    "manaCost": "{G}",
+    "typeLine": "Creature — Human Druid",
+    "oracleText": "{1}{G}: Return target basic land card from your graveyard to your hand.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}{G}"
+                    }
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target basic land card"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "basicland own:you",
+                            "zone": "Graveyard"
+                        },
+                        "id": "target basic land card"
+                    }
+                ],
+                "descriptionOverride": "{1}{G}: Return target basic land card from your graveyard to your hand."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "250",
+        "rarity": "UNCOMMON",
+        "artist": "Alan Rabinowitz",
+        "flavorText": "Whereas the rebels fight to defend the land, they work to renew it.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/1/31d9fe16-562a-4a86-84ed-15cd90b8afc0.jpg?1782720265"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Highway Robber
 {
     "name": "Highway Robber",

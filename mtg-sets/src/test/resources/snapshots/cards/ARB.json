@@ -1,0 +1,67 @@
+// Maelstrom Pulse
+{
+    "name": "Maelstrom Pulse",
+    "manaCost": "{1}{B}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy target nonland permanent and all other permanents with the same name as that permanent.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": "ChosenTargets",
+                    "storeAs": "target"
+                },
+                {
+                    "type": "StoreCardName",
+                    "from": "target",
+                    "storeAs": "name"
+                },
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "BattlefieldMatching",
+                        "filter": {
+                            "cardPredicates": [
+                                {
+                                    "type": "NameEqualsChosen",
+                                    "variableName": "name"
+                                }
+                            ]
+                        }
+                    },
+                    "storeAs": "sameNamed"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "sameNamed",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    },
+                    "moveType": "Destroy"
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "nonland permanent"
+                },
+                "id": "target nonland permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "92",
+        "rarity": "RARE",
+        "artist": "Anthony Francisco",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/b/eb651c3a-cb27-4b73-8eb6-b87d65211097.jpg?1782715800"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "GREEN"
+    ]
+}
