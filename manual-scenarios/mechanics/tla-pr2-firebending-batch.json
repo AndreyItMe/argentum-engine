@@ -8,9 +8,11 @@
       "Fire Nation Palace",
       "Fire Nation Cadets",
       "Bender's Waterskin",
-      "Wan Shi Tong, Librarian"
+      "Wan Shi Tong, Librarian",
+      "Enter the Avatar State"
     ],
     "battlefield": [
+      {"name": "Plains"},
       {"name": "Island"},
       {"name": "Island"},
       {"name": "Island"},
