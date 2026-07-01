@@ -1,3 +1,53 @@
+// Abundant Growth
+{
+    "name": "Abundant Growth",
+    "manaCost": "{G}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land has \"{T}: Add one mana of any color.\"",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": "CostTap",
+                    "effect": "AddManaOfChoice"
+                }
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "land"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "167",
+        "artist": "Vincent Proce",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/afbc8fd0-dc15-4ac9-b97b-173f7fb66ed7.jpg?1782714455"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Avacyn, Angel of Hope
 {
     "name": "Avacyn, Angel of Hope",
@@ -31,6 +81,114 @@
         "artist": "Jason Chan",
         "flavorText": "A golden helix streaked skyward from the Helvault. A thunderous explosion shattered the silver monolith and Avacyn emerged, free from her prison at last.",
         "imageUri": "https://cards.scryfall.io/normal/front/b/a/ba149706-cd17-4da6-8403-ccfe2d6cb437.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Blood Artist
+{
+    "name": "Blood Artist",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Vampire",
+    "oracleText": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "player"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetPlayer",
+                    "id": "player"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "86",
+        "rarity": "UNCOMMON",
+        "artist": "Johannes Voss",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/e/2e1fb442-68ff-4249-8e44-87edf6fae211.jpg?1782714502"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Cathars' Crusade
+{
+    "name": "Cathars' Crusade",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever a creature you control enters, put a +1/+1 counter on each creature you control.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "10",
+        "rarity": "RARE",
+        "artist": "Karl Kopinski",
+        "flavorText": "Avacyn's holy warriors kept hope alive in her darkest hours. Now they will carry that hope across Innistrad.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/8/78154978-9e7d-44e9-a03f-c578072a8ff7.jpg"
     },
     "colorIdentityOverride": [
         "WHITE"
@@ -94,6 +252,65 @@
                 "text": "The spell can't be countered if the mana produced by Cavern of Souls is spent to cover any cost of the spell, even an additional cost such as a kicker cost. This is true even if you use the mana to pay an additional cost while casting a spell \"without paying its mana cost.\""
             }
         ]
+    },
+    "colorIdentityOverride": []
+}
+
+// Conjurer's Closet
+{
+    "name": "Conjurer's Closet",
+    "manaCost": "{5}",
+    "typeLine": "Artifact",
+    "oracleText": "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "creature you control"
+                                },
+                                "destination": "Exile"
+                            },
+                            {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "creature you control"
+                                },
+                                "destination": "Battlefield"
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "creature you control"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "214",
+        "rarity": "RARE",
+        "artist": "Jason Felix",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/3/7378e998-0382-42fc-8606-c6e7fc04b6a4.jpg?1782714431"
     },
     "colorIdentityOverride": []
 }
@@ -515,6 +732,83 @@
     ]
 }
 
+// Restoration Angel
+{
+    "name": "Restoration Angel",
+    "manaCost": "{3}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flash\nFlying\nWhen this creature enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "non-Angel creature you control"
+                                },
+                                "destination": "Exile"
+                            },
+                            {
+                                "type": "MoveToZone",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "non-Angel creature you control"
+                                },
+                                "destination": "Battlefield"
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "NotSubtype",
+                                    "subtype": "Angel"
+                                }
+                            ],
+                            "controllerPredicate": "ControlledByYou"
+                        }
+                    },
+                    "id": "non-Angel creature you control"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "32",
+        "rarity": "RARE",
+        "artist": "Johannes Voss",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/2/c2ad8639-e586-47f4-baca-2a1af5aa281b.jpg?1782714532"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Seraph of Dawn
 {
     "name": "Seraph of Dawn",
@@ -634,6 +928,75 @@
     "colorIdentityOverride": [
         "WHITE",
         "RED"
+    ]
+}
+
+// Somberwald Sage
+{
+    "name": "Somberwald Sage",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Human Druid",
+    "oracleText": "{T}: Add three mana of any one color. Spend this mana only to cast creature spells.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 1
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddManaOfChoice",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "restriction": "CreatureSpellsOnly"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "194",
+        "rarity": "RARE",
+        "artist": "Steve Argyle",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/0/409c0272-7a43-4a6c-ab3f-740397b1f5c8.jpg?1782714442"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Temporal Mastery
+{
+    "name": "Temporal Mastery",
+    "manaCost": "{5}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Take an extra turn after this one. Exile Temporal Mastery.\nMiracle {1}{U} (You may cast this card for its miracle cost when you draw it if it's the first card you drew this turn.)",
+    "keywords": [
+        "MIRACLE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Miracle",
+            "cost": "{1}{U}"
+        }
+    ],
+    "script": {
+        "spellEffect": "TakeExtraTurn",
+        "selfExileOnResolve": true
+    },
+    "metadata": {
+        "collectorNumber": "81",
+        "rarity": "MYTHIC",
+        "artist": "Franz Vohwinkel",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/6/266e5267-2288-4bb0-8c54-0c556521cec3.jpg?1782714505"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

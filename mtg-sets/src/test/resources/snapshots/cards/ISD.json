@@ -294,6 +294,71 @@
     ]
 }
 
+// Balefire Dragon
+{
+    "name": "Balefire Dragon",
+    "manaCost": "{5}{R}{R}",
+    "typeLine": "Creature — Dragon",
+    "oracleText": "Flying\nWhenever this creature deals combat damage to a player, it deals that much damage to each creature that player controls.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ],
+                                "controllerPredicate": {
+                                    "type": "ControlledByReferencedPlayer",
+                                    "target": {
+                                        "type": "PlayerRef",
+                                        "player": "TriggeringPlayer"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "ContextProperty",
+                            "key": "TRIGGER_DAMAGE_AMOUNT"
+                        },
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "129",
+        "rarity": "MYTHIC",
+        "artist": "Eric Deschamps",
+        "flavorText": "If it comes for you, die boldly or die swiftly—for die you will.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/0/b0dce4ac-f472-4f3b-b01a-eff0902a578f.jpg?1782714754"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Battleground Geist
 {
     "name": "Battleground Geist",
@@ -375,6 +440,168 @@
     "colorIdentityOverride": [
         "BLACK",
         "RED"
+    ]
+}
+
+// Burning Vengeance
+{
+    "name": "Burning Vengeance",
+    "manaCost": "{2}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever you cast a spell from your graveyard, this enchantment deals 2 damage to any target.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "requires": [
+                        {
+                            "type": "SpellCastFromZone",
+                            "zone": "Graveyard"
+                        }
+                    ]
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "AnyTarget",
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "133",
+        "rarity": "UNCOMMON",
+        "artist": "Raymond Swanland",
+        "flavorText": "Mist is the geists' sorrow. Wind is their pain. Fire is their vengeance.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/d/fd403810-840b-46ac-ae6e-5df23ce16fec.jpg?1782714753"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Butcher's Cleaver
+{
+    "name": "Butcher's Cleaver",
+    "manaCost": "{3}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +3/+0.\nAs long as equipped creature is a Human, it has lifelink.\nEquip {3}",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 3,
+                "toughnessBonus": 0
+            },
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "LIFELINK"
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "EquippedCreature",
+                    "filter": "creature Human"
+                }
+            }
+        ]
+    },
+    "equipCost": "{3}",
+    "metadata": {
+        "collectorNumber": "217",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Felix",
+        "flavorText": "Outside the safety of Thraben, there is little distinction between tool and weapon.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/1/e141fe62-515e-4fe4-b032-81f169ec58d6.jpg?1782714694"
+    },
+    "colorIdentityOverride": []
+}
+
+// Cackling Counterpart
+{
+    "name": "Cackling Counterpart",
+    "manaCost": "{1}{U}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Create a token that's a copy of target creature you control.\nFlashback {5}{U}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{5}{U}{U}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateTokenCopyOfTarget",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature you control"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target creature you control"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "46",
+        "rarity": "RARE",
+        "artist": "David Rapoza",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/a/8a2a2b93-94dc-4285-a6fd-455a796426bc.jpg?1782714807"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -527,6 +754,61 @@
     "colorIdentityOverride": [
         "BLACK"
     ]
+}
+
+// Demonmail Hauberk
+{
+    "name": "Demonmail Hauberk",
+    "manaCost": "{4}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +4/+2.\nEquip—Sacrifice a creature.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 4,
+                "toughnessBonus": 2
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "221",
+        "rarity": "UNCOMMON",
+        "artist": "Jason Felix",
+        "flavorText": "It comes off as easily as your own skin.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/a/aa33caa8-2a07-4f6c-a6c2-d21cf2d61193.jpg?1782714691"
+    },
+    "colorIdentityOverride": []
 }
 
 // Desperate Ravings
@@ -945,6 +1227,40 @@
     ]
 }
 
+// Festerhide Boar
+{
+    "name": "Festerhide Boar",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Boar",
+    "oracleText": "Trample\nMorbid — This creature enters with two +1/+1 counters on it if a creature died this turn.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "count": 2,
+                "selfOnly": true,
+                "condition": "CreatureDiedThisTurn"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "179",
+        "artist": "Nils Hamm",
+        "flavorText": "\"Bury your dead deep. The boars are hungriest while the corpse is still warm.\"\n—Paulin, trapper of Somberwald",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/1/31740fe9-27d2-416e-93de-509ac1a7b7cd.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Forbidden Alchemy
 {
     "name": "Forbidden Alchemy",
@@ -1115,6 +1431,50 @@
     "colorIdentityOverride": [
         "WHITE"
     ]
+}
+
+// Galvanic Juggernaut
+{
+    "name": "Galvanic Juggernaut",
+    "manaCost": "{4}",
+    "typeLine": "Artifact Creature — Juggernaut",
+    "oracleText": "This creature attacks each combat if able.\nThis creature doesn't untap during your untap step.\nWhenever another creature dies, untap this creature.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "flags": [
+        "DOESNT_UNTAP"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "TapUntap",
+                    "target": "Self",
+                    "tap": false
+                }
+            }
+        ],
+        "staticAbilities": [
+            "MustAttack"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "222",
+        "rarity": "UNCOMMON",
+        "artist": "Lucas Graciano",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/1/d14bc109-d5d5-4777-90e4-bef26d106571.jpg?1782714690"
+    },
+    "colorIdentityOverride": []
 }
 
 // Geistcatcher's Rig
@@ -1328,6 +1688,99 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Grimgrin, Corpse-Born
+{
+    "name": "Grimgrin, Corpse-Born",
+    "manaCost": "{3}{U}{B}",
+    "typeLine": "Legendary Creature — Zombie Warrior",
+    "oracleText": "Grimgrin enters tapped and doesn't untap during your untap step.\nSacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it.\nWhenever Grimgrin attacks, destroy target creature defending player controls, then put a +1/+1 counter on Grimgrin.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "flags": [
+        "DOESNT_UNTAP"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "creature defending player controls"
+                            },
+                            "destination": "Graveyard",
+                            "byDestruction": true
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "creature defending player controls"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomSacrifice",
+                        "filter": "creature",
+                        "excludeSelf": true
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "TapUntap",
+                            "target": "Self",
+                            "tap": false
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "descriptionOverride": "Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it."
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "214",
+        "rarity": "MYTHIC",
+        "artist": "Peter Mohrbacher",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/8/a8648734-ed6c-471f-91a1-6b710bbaf370.jpg?1782714696"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
     ]
 }
 
@@ -1800,6 +2253,84 @@
         "artist": "David Palumbo",
         "flavorText": "The secrets she carried could have saved many lives, but they quietly drowned with her.",
         "imageUri": "https://cards.scryfall.io/normal/front/1/e/1e5fc39d-590a-436b-ab90-a1741d2ae3da.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Lumberknot
+{
+    "name": "Lumberknot",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Creature — Treefolk",
+    "oracleText": "Hexproof (This creature can't be the target of spells or abilities your opponents control.)\nWhenever a creature dies, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "HEXPROOF"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "191",
+        "rarity": "UNCOMMON",
+        "artist": "Jason A. Engle",
+        "flavorText": "Animated by geists fused in its oak, it hungers for more life to add to its core.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/c/6c86c84e-9bab-4a2c-b594-7f7b4b6bba88.jpg?1782714711"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Makeshift Mauler
+{
+    "name": "Makeshift Mauler",
+    "manaCost": "{3}{U}",
+    "typeLine": "Creature — Zombie Horror",
+    "oracleText": "As an additional cost to cast this spell, exile a creature card from your graveyard.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 5
+    },
+    "script": {
+        "additionalCosts": [
+            {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomExileFrom",
+                    "zone": "Graveyard",
+                    "filter": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "65",
+        "artist": "James Ryman",
+        "flavorText": "\"It always amazes me what perfectly good things people throw away.\"\n—Ludevic, necro-alchemist",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/8/d869de57-9454-47ff-af14-eaefd387047a.jpg?1782714795"
     },
     "colorIdentityOverride": [
         "BLUE"
@@ -2303,6 +2834,118 @@
     ]
 }
 
+// Olivia Voldaren
+{
+    "name": "Olivia Voldaren",
+    "manaCost": "{2}{B}{R}",
+    "typeLine": "Legendary Creature — Vampire",
+    "oracleText": "Flying\n{1}{R}: Olivia Voldaren deals 1 damage to another target creature. That creature becomes a Vampire in addition to its other types. Put a +1/+1 counter on Olivia Voldaren.\n{3}{B}{B}: Gain control of target Vampire for as long as you control Olivia Voldaren.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}{R}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "another target creature"
+                            }
+                        },
+                        {
+                            "type": "AddSubtype",
+                            "subtype": "Vampire",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "another target creature"
+                            },
+                            "duration": "Permanent"
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature",
+                            "excludeSelf": true
+                        },
+                        "id": "another target creature"
+                    }
+                ],
+                "descriptionOverride": "{1}{R}: Olivia Voldaren deals 1 damage to another target creature. That creature becomes a Vampire in addition to its other types. Put a +1/+1 counter on Olivia Voldaren."
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{B}{B}"
+                    }
+                },
+                "effect": {
+                    "type": "GainControl",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target Vampire"
+                    },
+                    "duration": {
+                        "type": "WhileYouControlSource",
+                        "sourceDescription": "Olivia Voldaren"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature Vampire"
+                        },
+                        "id": "target Vampire"
+                    }
+                ],
+                "descriptionOverride": "{3}{B}{B}: Gain control of target Vampire for as long as you control Olivia Voldaren."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "215",
+        "rarity": "MYTHIC",
+        "artist": "Eric Deschamps",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/d/ed750692-ba6a-4a89-ad6d-92fda7edc2cb.jpg?1782714696"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED"
+    ]
+}
+
 // One-Eyed Scarecrow
 {
     "name": "One-Eyed Scarecrow",
@@ -2602,6 +3245,41 @@
     ]
 }
 
+// Rooftop Storm
+{
+    "name": "Rooftop Storm",
+    "manaCost": "{5}{U}",
+    "typeLine": "Enchantment",
+    "oracleText": "You may pay {0} rather than pay the mana cost for Zombie creature spells you cast.",
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "MayCastWithoutPayingManaCost",
+                "controllerOnly": true,
+                "spellFilter": {
+                    "cardPredicates": [
+                        "IsCreature",
+                        {
+                            "type": "HasSubtype",
+                            "subtype": "Zombie"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "71",
+        "rarity": "RARE",
+        "artist": "John Stanko",
+        "flavorText": "\"Let those idiot priests tremble! A new era in unlife begins here and now. Oglor, raise the lightning vane!\"\n—Stitcher Geralf",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/b/ab01d871-ba50-400a-95e7-09af9e34405f.jpg?1782714792"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Rotting Fensnake
 {
     "name": "Rotting Fensnake",
@@ -2713,6 +3391,82 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Sever the Bloodline
+{
+    "name": "Sever the Bloodline",
+    "manaCost": "{3}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Exile target creature and all other creatures with the same name as that creature.\nFlashback {5}{B}{B} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{5}{B}{B}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": "ChosenTargets",
+                    "storeAs": "target"
+                },
+                {
+                    "type": "StoreCardName",
+                    "from": "target",
+                    "storeAs": "name"
+                },
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "BattlefieldMatching",
+                        "filter": {
+                            "cardPredicates": [
+                                "IsCreature",
+                                {
+                                    "type": "NameEqualsChosen",
+                                    "variableName": "name"
+                                }
+                            ]
+                        }
+                    },
+                    "storeAs": "sameNamed"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "sameNamed",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Exile"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "115",
+        "rarity": "RARE",
+        "artist": "Clint Cearley",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/c/5c6da820-dfb9-4b61-aff8-56dfc9f4894e.jpg?1782714764"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 
@@ -3507,6 +4261,59 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Travel Preparations
+{
+    "name": "Travel Preparations",
+    "manaCost": "{1}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Put a +1/+1 counter on each of up to two target creatures.\nFlashback {1}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{1}{W}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "AddCounters",
+                "counterType": "+1/+1",
+                "count": 1,
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                }
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "count": 2,
+                "optional": true,
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "up to two target creatures"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "206",
+        "artist": "Vincent Proce",
+        "flavorText": "Visiting a shrine at the start of a journey makes the traveler more likely to finish it.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/9/e9654ae7-af2c-4956-be3a-68befa33f523.jpg?1782714701"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "GREEN"
     ]
 }
 

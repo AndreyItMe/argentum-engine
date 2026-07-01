@@ -62,6 +62,50 @@
     ]
 }
 
+// Angelic Purge
+{
+    "name": "Angelic Purge",
+    "manaCost": "{2}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "As an additional cost to cast this spell, sacrifice a permanent.\nExile target artifact, creature, or enchantment.",
+    "script": {
+        "spellEffect": {
+            "type": "MoveToZone",
+            "target": {
+                "type": "ContextTarget",
+                "index": 0
+            },
+            "destination": "Exile"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "artifact|creature|enchantment"
+                }
+            }
+        ],
+        "additionalCosts": [
+            {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomSacrifice",
+                    "filter": "permanent"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "artist": "Zezhou Chen",
+        "flavorText": "\"We must save you from yourselves.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/3/d38bae3e-95f3-413a-bb4d-6a0814112a7a.jpg?1782712158"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Apothecary Geist
 {
     "name": "Apothecary Geist",
@@ -235,6 +279,63 @@
     ]
 }
 
+// Dauntless Cathar
+{
+    "name": "Dauntless Cathar",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "{1}{W}, Exile this card from your graveyard: Create a 1/1 white Spirit creature token with flying. Activate only as a sorcery.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}{W}"
+                            }
+                        },
+                        "CostExileSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Spirit"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ]
+                },
+                "timing": "SorcerySpeed",
+                "activateFromZone": "Graveyard"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "11",
+        "artist": "Zack Stella",
+        "flavorText": "\"The harder they try to extinguish my faith, the brighter it burns in the darkness.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bb1a458a-d3b6-44d9-ac80-a7a46b505805.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Drunau Corpse Trawler
 {
     "name": "Drunau Corpse Trawler",
@@ -360,6 +461,79 @@
         "imageUri": "https://cards.scryfall.io/normal/front/9/3/937aaed7-d9ad-45e0-915c-df61316c606a.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Essence Flux
+{
+    "name": "Essence Flux",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "Exile target creature you control, then return that card to the battlefield under its owner's control. If it's a Spirit, put a +1/+1 counter on it.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    },
+                    "destination": "Exile"
+                },
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    },
+                    "destination": "Battlefield"
+                },
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "EntityMatches",
+                            "entity": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            },
+                            "filter": "Spirit"
+                        }
+                    },
+                    "then": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "creature you control"
+                        }
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "creature you control"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "61",
+        "rarity": "UNCOMMON",
+        "artist": "Seb McKinnon",
+        "flavorText": "A spirit is both fettered and free—bound in some ways to its previous existence, yet able to transcend much of the corporeal.",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/3/639bdbb5-8c2d-439d-bcea-dc54da9686ea.jpg?1782712119"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
 }
 
 // Game Trail
@@ -566,6 +740,72 @@
     ]
 }
 
+// Indulgent Aristocrat
+{
+    "name": "Indulgent Aristocrat",
+    "manaCost": "{B}",
+    "typeLine": "Creature — Vampire Noble",
+    "oracleText": "Lifelink\n{2}, Sacrifice a creature: Put a +1/+1 counter on each Vampire you control.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{2}"
+                            }
+                        },
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "creature"
+                            }
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature Vampire ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "118",
+        "rarity": "UNCOMMON",
+        "artist": "Anna Steinbauer",
+        "flavorText": "\"If you're not surrounded by decadence, my question to you is—why not?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/2/f24200d4-cd98-424c-bc2f-69f8b361d8fc.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Inspiring Captain
 {
     "name": "Inspiring Captain",
@@ -616,6 +856,63 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Intrepid Provisioner
+{
+    "name": "Intrepid Provisioner",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Human Scout",
+    "oracleText": "Trample\nWhen this creature enters, another target Human you control gets +2/+2 until end of turn.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature Human ctrl:you",
+                        "excludeSelf": true
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "213",
+        "artist": "Lius Lasahido",
+        "flavorText": "\"How do I know where aid is needed? Look around you.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/a/da3ac63b-8386-4175-9555-84c54566f5b4.jpg?1782712010"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
@@ -675,6 +972,136 @@
     ]
 }
 
+// Pack Guardian
+{
+    "name": "Pack Guardian",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Creature — Wolf Spirit",
+    "oracleText": "Flash\nWhen this creature enters, you may discard a land card. If you do, create a 2/2 green Wolf creature token.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLASH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Gated",
+                        "gate": {
+                            "type": "Gate.DoAction",
+                            "action": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "FromZone",
+                                            "zone": "Hand",
+                                            "filter": "land"
+                                        },
+                                        "storeAs": "hand"
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "hand",
+                                        "selection": {
+                                            "type": "ChooseExactly",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeSelected": "discarded",
+                                        "prompt": "Choose 1 card to discard"
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "discarded",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Graveyard"
+                                        },
+                                        "moveType": "Discard"
+                                    }
+                                ]
+                            }
+                        },
+                        "then": {
+                            "type": "CreateToken",
+                            "power": 2,
+                            "toughness": 2,
+                            "colors": [
+                                "GREEN"
+                            ],
+                            "creatureTypes": [
+                                "Wolf"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "221",
+        "rarity": "UNCOMMON",
+        "artist": "Filip Burburan",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/4/64dcc129-88c2-4f20-be0b-36c4141688c9.jpg?1782712003"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Rise from the Tides
+{
+    "name": "Rise from the Tides",
+    "manaCost": "{5}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create a tapped 2/2 black Zombie creature token for each instant and sorcery card in your graveyard.",
+    "script": {
+        "spellEffect": {
+            "type": "CreateToken",
+            "count": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Graveyard",
+                "filter": "instant|sorcery"
+            },
+            "power": 2,
+            "toughness": 2,
+            "colors": [
+                "BLACK"
+            ],
+            "creatureTypes": [
+                "Zombie"
+            ],
+            "tapped": true
+        }
+    },
+    "metadata": {
+        "collectorNumber": "83",
+        "rarity": "UNCOMMON",
+        "artist": "Dave Kendall",
+        "flavorText": "\"Dear brother, it's sweet that you have chosen to share your toys with Ludevic, but I too have found some new playmates.\"\n—Ghoulcaller Gisa",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/e/6e099a6a-97c4-42cd-aca6-5e1a2da0d5e5.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Sanitarium Skeleton
 {
     "name": "Sanitarium Skeleton",
@@ -713,6 +1140,585 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Second Harvest
+{
+    "name": "Second Harvest",
+    "manaCost": "{2}{G}{G}",
+    "typeLine": "Instant",
+    "oracleText": "For each token you control, create a token that's a copy of that permanent.",
+    "script": {
+        "spellEffect": {
+            "type": "ForEach",
+            "space": {
+                "type": "IterationSpace.Group",
+                "filter": {
+                    "baseFilter": "token ctrl:you"
+                }
+            },
+            "body": {
+                "type": "CreateTokenCopyOfTarget",
+                "target": "Self"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "227",
+        "rarity": "RARE",
+        "artist": "Matt Stewart",
+        "flavorText": "\"The cornfields promise a good yield this season.\"\n—Radwick, farmer of Gatstaf",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/d/4d0c5127-cd17-4859-8de8-165c4c748e89.jpg?1782712000"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Spectral Shepherd
+{
+    "name": "Spectral Shepherd",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Spirit",
+    "oracleText": "Flying\n{1}{U}: Return target Spirit you control to its owner's hand.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}{U}"
+                    }
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature Spirit ctrl:you"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "38",
+        "rarity": "UNCOMMON",
+        "artist": "Johann Bodin",
+        "flavorText": "The restless geists of common folk often continue their lifelong labors.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/c/ac355ae2-7553-4b51-bcce-1c4168dad0d6.jpg?1782712135"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
+// Strength of Arms
+{
+    "name": "Strength of Arms",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +2/+2 until end of turn. If you control an Equipment, create a 1/1 white Human Soldier creature token.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": {
+                            "type": "Compare",
+                            "left": {
+                                "type": "AggregateBattlefield",
+                                "player": "You",
+                                "filter": "artifact Equipment"
+                            },
+                            "operator": "GTE",
+                            "right": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        }
+                    },
+                    "then": {
+                        "type": "CreateToken",
+                        "power": 1,
+                        "toughness": 1,
+                        "colors": [
+                            "WHITE"
+                        ],
+                        "creatureTypes": [
+                            "Human",
+                            "Soldier"
+                        ]
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "40",
+        "artist": "John Stanko",
+        "flavorText": "\"We fight not for Avacyn, but for her ideals; not for the church, but for its people.\"\n—Thalia, Guardian of Thraben",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/52c5c5cf-0ed6-4953-a03a-af51038e3f54.jpg?1782712132"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Tamiyo's Journal
+{
+    "name": "Tamiyo's Journal",
+    "manaCost": "{5}",
+    "typeLine": "Legendary Artifact — Book",
+    "oracleText": "At the beginning of your upkeep, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\n{T}, Sacrifice three Clues: Search your library for a card, put that card into your hand, then shuffle.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Clue"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        "CostTap",
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomSacrifice",
+                                "filter": "artifact Clue",
+                                "count": 3
+                            }
+                        }
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        },
+                        "ShuffleLibrary"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "265",
+        "rarity": "RARE",
+        "artist": "Chase Stone",
+        "flavorText": "Entry 434: There's more to Avacyn's madness . . .",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b474378c-5fa8-418f-8d76-23e78003ed18.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
+// Thraben Inspector
+{
+    "name": "Thraben Inspector",
+    "manaCost": "{W}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "When this creature enters, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Clue"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "44",
+        "artist": "Matt Stewart",
+        "flavorText": "\"If you've been at this as long as I have, nothing can surprise you. That's the hope, at least.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/1/d140c3b7-ca78-483d-baeb-307b624fea8b.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Traverse the Ulvenwald
+{
+    "name": "Traverse the Ulvenwald",
+    "manaCost": "{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Search your library for a basic land card, reveal it, put it into your hand, then shuffle.\nDelirium — If there are four or more card types among cards in your graveyard, instead search your library for a creature or land card, reveal it, put it into your hand, then shuffle.",
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateZone",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "aggregation": "DISTINCT_TYPES"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            },
+            "then": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "FromZone",
+                            "zone": "Library",
+                            "filter": "creature|land"
+                        },
+                        "storeAs": "searchable"
+                    },
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "searchable",
+                        "selection": {
+                            "type": "ChooseUpTo",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "storeSelected": "found"
+                    },
+                    {
+                        "type": "MoveCollection",
+                        "from": "found",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Hand"
+                        },
+                        "revealed": true
+                    },
+                    "ShuffleLibrary"
+                ]
+            },
+            "otherwise": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "GatherCards",
+                        "source": {
+                            "type": "FromZone",
+                            "zone": "Library",
+                            "filter": "basicland"
+                        },
+                        "storeAs": "searchable"
+                    },
+                    {
+                        "type": "SelectFromCollection",
+                        "from": "searchable",
+                        "selection": {
+                            "type": "ChooseUpTo",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "storeSelected": "found"
+                    },
+                    {
+                        "type": "MoveCollection",
+                        "from": "found",
+                        "destination": {
+                            "type": "ToZone",
+                            "zone": "Hand"
+                        },
+                        "revealed": true
+                    },
+                    "ShuffleLibrary"
+                ]
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "234",
+        "rarity": "RARE",
+        "artist": "Vincent Proce",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bbc69a17-db08-4b4a-bc37-98a12ea108dc.jpg"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Triskaidekaphobia
+{
+    "name": "Triskaidekaphobia",
+    "manaCost": "{3}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "At the beginning of your upkeep, choose one —\n• Each player with exactly 13 life loses the game, then each player gains 1 life.\n• Each player with exactly 13 life loses the game, then each player loses 1 life.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "ForEach",
+                                        "space": {
+                                            "type": "IterationSpace.Players",
+                                            "players": "ActivePlayerFirst"
+                                        },
+                                        "body": {
+                                            "type": "Gated",
+                                            "gate": {
+                                                "type": "Gate.WhenCondition",
+                                                "condition": {
+                                                    "type": "Compare",
+                                                    "left": {
+                                                        "type": "LifeTotal",
+                                                        "player": "You"
+                                                    },
+                                                    "operator": "EQ",
+                                                    "right": {
+                                                        "type": "Fixed",
+                                                        "amount": 13
+                                                    }
+                                                }
+                                            },
+                                            "then": "LoseGame"
+                                        }
+                                    },
+                                    {
+                                        "type": "GainLife",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "Each"
+                                        }
+                                    }
+                                ]
+                            },
+                            "description": "Each player with exactly 13 life loses the game, then each player gains 1 life."
+                        },
+                        {
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "ForEach",
+                                        "space": {
+                                            "type": "IterationSpace.Players",
+                                            "players": "ActivePlayerFirst"
+                                        },
+                                        "body": {
+                                            "type": "Gated",
+                                            "gate": {
+                                                "type": "Gate.WhenCondition",
+                                                "condition": {
+                                                    "type": "Compare",
+                                                    "left": {
+                                                        "type": "LifeTotal",
+                                                        "player": "You"
+                                                    },
+                                                    "operator": "EQ",
+                                                    "right": {
+                                                        "type": "Fixed",
+                                                        "amount": 13
+                                                    }
+                                                }
+                                            },
+                                            "then": "LoseGame"
+                                        }
+                                    },
+                                    {
+                                        "type": "LoseLife",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "Each"
+                                        }
+                                    }
+                                ]
+                            },
+                            "description": "Each player with exactly 13 life loses the game, then each player loses 1 life."
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "141",
+        "rarity": "RARE",
+        "artist": "Willian Murai",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/0/8060b717-94c9-4962-9676-0b1ca6a357a8.jpg?1782712061"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Ulrich's Kindred
+{
+    "name": "Ulrich's Kindred",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Wolf",
+    "oracleText": "Trample\n{3}{G}: Target attacking Wolf or Werewolf gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy it.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{G}"
+                    }
+                },
+                "effect": {
+                    "type": "GrantKeyword",
+                    "keyword": "INDESTRUCTIBLE",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature Wolf|Werewolf attacking"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "187",
+        "rarity": "UNCOMMON",
+        "artist": "Josu Hernaiz",
+        "flavorText": "\"I am not its master. We are of the same pack.\"\n—Ulrich, Krallenhorde alpha",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/6/86d0ee03-a8c6-4f37-9885-60a26a2e2728.jpg?1782712029"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
     ]
 }
 
@@ -766,6 +1772,55 @@
         "artist": "Jason Kang",
         "flavorText": "\"It's right to fear those that you keep locked away.\"\n—Rahilda, Vildin-Pack alpha",
         "imageUri": "https://cards.scryfall.io/normal/front/4/0/40440487-5ff2-43da-aa06-c649bf972ef1.jpg"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Voldaren Duelist
+{
+    "name": "Voldaren Duelist",
+    "manaCost": "{3}{R}",
+    "typeLine": "Creature — Vampire Warrior",
+    "oracleText": "Haste\nWhen this creature enters, target creature can't block this turn.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CantBlockTargetCreatures",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature"
+                    },
+                    "id": "target"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "191",
+        "artist": "Jason Rainville",
+        "flavorText": "\"I have yet to find my equal.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/2/d2ca081d-6771-407e-ae03-3d6b2ec61dff.jpg"
     },
     "colorIdentityOverride": [
         "RED"
