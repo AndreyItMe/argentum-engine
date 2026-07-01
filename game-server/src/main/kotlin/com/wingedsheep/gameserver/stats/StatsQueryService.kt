@@ -44,6 +44,11 @@ data class GameHistoryEntry(
     val selfRating: Int?,
     /** The opponent's ELO at the time of a ranked game; null otherwise (or for multi-seat games). */
     val opponentRating: Int?,
+    /**
+     * How this game changed the player's ELO (`rating_after - rating_before`, rounded), when it was a
+     * ranked game; null otherwise. Positive for a gain, negative for a loss.
+     */
+    val ratingDelta: Int?,
     /** Stable game id, used to open/share the replay. */
     val gameId: String,
     /** True when a compact replay was stored for this game and can be watched/shared. */
@@ -380,6 +385,7 @@ class StatsQueryService(
                         won = rs.getBoolean("won"),
                         selfRating = null,
                         opponentRating = null,
+                        ratingDelta = null,
                         gameId = rs.getString("game_id"),
                         hasReplay = rs.getBoolean("has_replay"),
                     ),
@@ -401,8 +407,9 @@ class StatsQueryService(
                 colors = colors,
                 opponents = opps.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name },
                 opponentList = opps,
-                selfRating = rating?.first,
-                opponentRating = rating?.second,
+                selfRating = rating?.selfRating,
+                opponentRating = rating?.opponentRating,
+                ratingDelta = rating?.delta,
             )
         }
     }
@@ -435,19 +442,23 @@ class StatsQueryService(
         return out
     }
 
+    /** A ranked game's ELO snapshot for the requesting user: pre-game rating, opponent rating, and delta. */
+    private data class GameRating(val selfRating: Int, val opponentRating: Int?, val delta: Int?)
+
     /**
-     * Each player's pre-game ELO and the opponent's ELO for the given ranked games, keyed by game id.
-     * `rating_before` is the rating the player carried into the game and `opponent_rating` is the
-     * opponent's rating at that time — i.e. both players' ELO "at the time the game was played".
-     * Non-ranked games have no row and are simply absent from the map.
+     * Each player's pre-game ELO, the opponent's ELO, and how the game moved the player's rating, for
+     * the given ranked games, keyed by game id. `rating_before` is the rating the player carried into
+     * the game and `opponent_rating` is the opponent's rating at that time — i.e. both players' ELO "at
+     * the time the game was played" — and `delta` (`rating_after - rating_before`) is the change this
+     * game caused. Non-ranked games have no row and are simply absent from the map.
      */
-    private fun ratingsForGames(gameIds: List<String>, userId: UUID): Map<String, Pair<Int, Int?>> {
+    private fun ratingsForGames(gameIds: List<String>, userId: UUID): Map<String, GameRating> {
         if (gameIds.isEmpty()) return emptyMap()
         val placeholders = gameIds.joinToString(",") { "?" }
-        val out = HashMap<String, Pair<Int, Int?>>()
+        val out = HashMap<String, GameRating>()
         jdbc.query(
             """
-            SELECT game_id, rating_before, opponent_rating
+            SELECT game_id, rating_before, opponent_rating, delta
             FROM rating_history
             WHERE user_id = ? AND game_id IN ($placeholders)
             """.trimIndent(),
@@ -456,7 +467,9 @@ class StatsQueryService(
                 val self = Math.round(rs.getDouble("rating_before")).toInt()
                 val oppRaw = rs.getObject("opponent_rating")
                 val opp = if (oppRaw == null) null else Math.round((oppRaw as Number).toDouble()).toInt()
-                out[gameId] = self to opp
+                val deltaRaw = rs.getObject("delta")
+                val delta = if (deltaRaw == null) null else Math.round((deltaRaw as Number).toDouble()).toInt()
+                out[gameId] = GameRating(self, opp, delta)
             },
             *buildList<Any> { add(userId); addAll(gameIds) }.toTypedArray(),
         )

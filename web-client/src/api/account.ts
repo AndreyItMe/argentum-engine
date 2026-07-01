@@ -237,6 +237,11 @@ export interface GameHistoryEntry {
   readonly selfRating: number | null
   /** The opponent's ELO at the time of a ranked game; null otherwise. */
   readonly opponentRating: number | null
+  /**
+   * How this game moved the player's ELO (rating after − before), for ranked games; null otherwise.
+   * Positive for a gain, negative for a loss.
+   */
+  readonly ratingDelta: number | null
   readonly gameId: string
   /** True when a compact replay was stored for this game and can be watched/shared. */
   readonly hasReplay: boolean

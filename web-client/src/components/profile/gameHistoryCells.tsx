@@ -41,12 +41,21 @@ export function OpponentCell({ entry }: { entry: GameHistoryEntry }) {
   )
 }
 
-/** Both players' ELO at the time of a ranked game (you → opponent); a dash for non-ranked games. */
+/**
+ * Both players' ELO at the time of a ranked game (you → opponent), plus how the game moved your
+ * rating (green +N for a gain, red −N for a loss); a dash for non-ranked games.
+ */
 export function EloCell({ entry }: { entry: GameHistoryEntry }) {
   if (entry.selfRating == null) return <span style={styles.dim}>—</span>
+  const delta = entry.ratingDelta
   return (
     <span style={styles.elo}>
       <span style={styles.eloSelf}>{entry.selfRating}</span>
+      {delta != null && delta !== 0 && (
+        <span style={delta > 0 ? styles.eloDeltaUp : styles.eloDeltaDown}>
+          {delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`}
+        </span>
+      )}
       {entry.opponentRating != null && (
         <>
           <span style={styles.eloVs}> vs </span>
@@ -65,6 +74,8 @@ const styles: Record<string, React.CSSProperties> = {
   dim: { color: '#666' },
   elo: { fontVariantNumeric: 'tabular-nums' },
   eloSelf: { color: '#cdd' },
+  eloDeltaUp: { color: '#5fd08a', marginLeft: 4, fontWeight: 600 },
+  eloDeltaDown: { color: '#e2686b', marginLeft: 4, fontWeight: 600 },
   eloVs: { color: '#666' },
   eloOpp: { color: '#9aa0b5' },
 }

@@ -146,7 +146,10 @@ Flyway migration `V5__game_replays.sql` adds durable replays:
 A signed-in player's history (`/api/stats/me/history`) `LEFT JOIN`s `game_replays` on `game_id` to
 flag which past games can be watched/shared (`hasReplay`). Stored replays survive server restarts and
 the 100-game in-memory cache; the unguessable `game_id` doubles as the share token via the public
-`/replay/{gameId}` page.
+`/replay/{gameId}` page. For ranked games each history row also carries `selfRating`/`opponentRating`
+(both players' ELO at game time) plus `ratingDelta` (`rating_after − rating_before` from
+`rating_history`), so the recent-games table can show how each game moved your rating (green +N /
+red −N); non-ranked games leave all three null.
 
 Flyway migration `V6__user_uuid.sql` switches the account primary key from a `BIGINT` identity to a
 **UUID** (`gen_random_uuid()` default). It backfills every existing row and re-points each foreign key
