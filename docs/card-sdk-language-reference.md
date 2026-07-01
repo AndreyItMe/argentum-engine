@@ -3762,6 +3762,11 @@ staticAbility {
   abilities of creatures you control" (Agatha's Soul Cauldron). (Sharkey, Tyrant of the Shire — "Mana
   of any type can be spent to activate Sharkey's abilities" → `GroupFilter.source()`.)
 - `PreventManaPoolEmptying` — mana pools don't empty between steps/phases. (Upwelling)
+- `ConvertEmptyingManaToRed` — "If you would lose unspent mana, that mana becomes red instead."
+  The colour-converting cousin of `PreventManaPoolEmptying`: at the mana-empty point (end-of-turn
+  cleanup, `CleanupPhaseManager`) the *controller's* whole pool becomes that many red mana instead
+  of emptying (CR 500.5 / 703.4q emptying replaced per CR 614). Scoped to the controller of the
+  bearing permanent, unlike Upwelling's all-players prevention. (Ozai, the Phoenix King)
 - `NoMaximumHandSize` — controller has no hand-size limit *while this permanent is on the
   battlefield*. (Thought Vessel, Reliquary Tower) For a one-shot resolution effect that confers a
   *permanent, player-scoped* "no maximum hand size for the rest of the game" (survives the source
@@ -4587,6 +4592,9 @@ answer it and would silently return `false`.
   triggered ability's intervening-if or an "as long as" static. `0` and `1` are not prime; `0` is
   even and a multiple of every nonzero divisor. Used by Zimone, All-Questioning ("if … you control a
   prime number of lands": `AmountIsPrime(AggregateBattlefield(You, Land))`).
+- `YouHaveUnspentManaAtLeast(amount)` — true while your mana pool holds at least `amount` unspent
+  mana. Desugars to `CompareAmounts(UnspentMana(You), GTE, Fixed(amount))`; dual-mode, so it gates an
+  "as long as you have six or more unspent mana" conditional static (Ozai, the Phoenix King).
 - `DifferentCounterKindsAtLeast(count, filter = Creature)` — true when `count` or more *different
   kinds* of counters are among permanents you control matching `filter` (default: creatures). A
   +1/+1 and a finality counter is two kinds; the same kind on several permanents counts once.
@@ -5177,6 +5185,10 @@ Numbers computed at resolution time.
 ### Player & game
 
 - `LifeTotal(player)` — current life total.
+- `UnspentMana(player)` — total unspent mana in that player's mana pool (all colours + colorless +
+  restricted entries, i.e. the pool's `total`). Powers "as long as you have six or more unspent mana"
+  (Ozai, the Phoenix King) via `Conditions.YouHaveUnspentManaAtLeast(n)` /
+  `CompareAmounts(UnspentMana(You), GTE, Fixed(n))`.
 - `HandSize(player)` — cards in hand.
 - `TurnCount(player)` — turn number for that player.
 - `TurnTracking(player, TurnTracker)` — value of a per-turn counter (see below).

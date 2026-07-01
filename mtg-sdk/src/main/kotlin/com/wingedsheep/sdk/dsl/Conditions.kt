@@ -152,6 +152,18 @@ object Conditions {
         NumberMatches(amount, NumberProperty.MultipleOf(divisor))
 
     /**
+     * If you have at least [amount] unspent mana in your mana pool (Ozai, the Phoenix King —
+     * "as long as you have six or more unspent mana"). Reads the pool's total via
+     * [DynamicAmount.UnspentMana].
+     */
+    fun YouHaveUnspentManaAtLeast(amount: Int): ConditionInterface =
+        Compare(
+            DynamicAmount.UnspentMana(Player.You),
+            ComparisonOperator.GTE,
+            DynamicAmount.Fixed(amount)
+        )
+
+    /**
      * If an opponent controls more lands than you.
      */
     val OpponentControlsMoreLands: ConditionInterface =

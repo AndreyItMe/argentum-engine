@@ -80,6 +80,7 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.DamagePersistsThroughCleanup
+import com.wingedsheep.sdk.scripting.ConvertEmptyingManaToRed
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
 
@@ -393,6 +394,26 @@ class CleanupPhaseManager(
     }
 
     /**
+     * Players who control a permanent with the [ConvertEmptyingManaToRed] static ability
+     * (Ozai, the Phoenix King: "If you would lose unspent mana, that mana becomes red instead").
+     * At the mana-empty point their pool is converted to red rather than emptied. Controller is
+     * read from projected state so a control-changed Ozai converts for its new controller.
+     */
+    private fun playersConvertingEmptyingManaToRed(state: GameState): Set<EntityId> {
+        val registry = cardRegistry
+        val projected = state.projectedState
+        val result = mutableSetOf<EntityId>()
+        for (entityId in state.getBattlefield()) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.any { it is ConvertEmptyingManaToRed }) {
+                projected.getController(entityId)?.let { result.add(it) }
+            }
+        }
+        return result
+    }
+
+    /**
      * Clean up end-of-turn effects.
      *
      * This is called at the end of each turn and handles:
@@ -471,16 +492,21 @@ class CleanupPhaseManager(
         // 2. Empty mana pools for all players (unless prevented by a static ability like Upwelling).
         // A player carrying a RetainUnspentManaComponent (The Last Agni Kai) keeps mana of the
         // named colours through this emptying; the marker itself is cleared in step 4 below.
+        // A player controlling a ConvertEmptyingManaToRed permanent (Ozai, the Phoenix King) has
+        // their whole pool turned into that many red mana instead of emptied — CR 500.5 / 703.4q
+        // (unspent mana empties as each step and phase ends), replaced here per CR 614.
         if (!isManaPoolEmptyingPrevented(newState)) {
+            val convertToRedPlayers = playersConvertingEmptyingManaToRed(newState)
             for (playerId in newState.turnOrder) {
                 newState = newState.updateEntity(playerId) { container ->
                     val manaPool = container.get<ManaPoolComponent>()
                     if (manaPool != null && !manaPool.isEmpty) {
                         val retained = container.get<RetainUnspentManaComponent>()?.colors
-                        if (retained != null && retained.isNotEmpty()) {
-                            container.with(manaPool.emptyExcept(retained))
-                        } else {
-                            container.with(manaPool.empty())
+                        when {
+                            playerId in convertToRedPlayers -> container.with(manaPool.convertToRed())
+                            retained != null && retained.isNotEmpty() ->
+                                container.with(manaPool.emptyExcept(retained))
+                            else -> container.with(manaPool.empty())
                         }
                     } else {
                         container

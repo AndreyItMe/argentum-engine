@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.PlayerComponent
+import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.identity.RoomComponent
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
 import com.wingedsheep.sdk.core.Color
@@ -172,6 +173,15 @@ class DynamicAmountEvaluator(
                 val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
                 val playerId = playerIds.firstOrNull() ?: return 0
                 state.getEntity(playerId)?.get<PlayerComponent>()?.startingLifeTotal ?: 20
+            }
+
+            // Total unspent mana in the player's pool (Ozai, the Phoenix King's "six or more
+            // unspent mana"). Reads the base-state ManaPoolComponent.total, which is unaffected by
+            // continuous projection.
+            is DynamicAmount.UnspentMana -> {
+                val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
+                val playerId = playerIds.firstOrNull() ?: return 0
+                state.getEntity(playerId)?.get<ManaPoolComponent>()?.total ?: 0
             }
 
             // Unlocked doors among Rooms the player controls (CR 709.5). Reads per-face door

@@ -125,6 +125,15 @@ data class ManaPoolComponent(
     fun empty(): ManaPoolComponent = ManaPoolComponent()
 
     /**
+     * Convert every would-be-lost mana into an equal amount of red instead of emptying
+     * (Ozai, the Phoenix King: "If you would lose unspent mana, that mana becomes red instead").
+     * The whole pool — all colours, colorless, and restricted entries counted by [total] — becomes
+     * that many plain red mana; treasure and restriction tags do not carry over. An empty pool
+     * stays empty.
+     */
+    fun convertToRed(): ManaPoolComponent = ManaPoolComponent(red = total)
+
+    /**
      * Empty the pool except for mana of [keep] colours, which is retained. Used by the
      * colour-filtered, turn-scoped retention ([RetainUnspentManaComponent], The Last Agni Kai):
      * at end-of-turn cleanup the kept colours' plain counters and any same-colour restricted

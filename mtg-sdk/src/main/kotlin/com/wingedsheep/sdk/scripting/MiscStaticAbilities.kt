@@ -593,6 +593,25 @@ data object PreventManaPoolEmptying : StaticAbility {
 }
 
 /**
+ * Converts the controller's would-be-lost unspent mana into red mana instead of emptying it.
+ * Used for Ozai, the Phoenix King: "If you would lose unspent mana, that mana becomes red instead."
+ *
+ * The colour cousin of [PreventManaPoolEmptying]: where Upwelling *keeps* the mana as-is, this
+ * *replaces* the emptying event (CR 500.5 / 703.4q — any unspent mana left in a player's mana pool
+ * empties as each step and phase ends) with an equal amount of red. Scoped to the controller of the
+ * permanent bearing the ability, unlike Upwelling's all-players prevention.
+ *
+ * The engine checks for this static ability at the single mana-empty point (end-of-turn cleanup in
+ * [com.wingedsheep.engine.core.CleanupPhaseManager]); for each controller of a permanent with this
+ * ability, the pool is replaced by that many red mana rather than emptied.
+ */
+@SerialName("ConvertEmptyingManaToRed")
+@Serializable
+data object ConvertEmptyingManaToRed : StaticAbility {
+    override val description: String = "If you would lose unspent mana, that mana becomes red instead"
+}
+
+/**
  * Removes the maximum hand size limit for the controller.
  * Used for cards like Thought Vessel and Reliquary Tower: "You have no maximum hand size."
  *
