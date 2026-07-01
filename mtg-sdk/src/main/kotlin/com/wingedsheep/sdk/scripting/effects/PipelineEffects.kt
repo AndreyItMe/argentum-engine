@@ -132,10 +132,18 @@ sealed interface CardSource {
          * creatures … with it" triggered effects (Spreading Plague), where "it" is the
          * triggering creature, which itself matches a "shares a [property] with it" filter.
          */
-        val excludeTriggering: Boolean = false
+        val excludeTriggering: Boolean = false,
+        /**
+         * Exclude the spell/ability's chosen targets (`EffectContext.targets`) from the gathered
+         * set. Used by "choose … target [X], then [do something to] all *other* [X]" effects where
+         * "other" is relative to a chosen target rather than the source or triggering entity —
+         * e.g. Avatar's Wrath ("Choose up to one target creature, then airbend all other
+         * creatures."). Harmless when there is no target (nothing to exclude).
+         */
+        val excludeChosenTargets: Boolean = false
     ) : CardSource {
         override val description: String = buildString {
-            if (excludeSelf || excludeTriggering) append("all other ") else append("all ")
+            if (excludeSelf || excludeTriggering || excludeChosenTargets) append("all other ") else append("all ")
             append("${filter.description} permanents on the battlefield")
             if (includeAttachments) append(" and all permanents attached to them")
             if (player != Player.Each) {

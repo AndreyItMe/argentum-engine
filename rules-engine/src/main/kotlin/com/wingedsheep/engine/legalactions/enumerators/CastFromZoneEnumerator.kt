@@ -55,6 +55,13 @@ class CastFromZoneEnumerator : ActionEnumerator {
         val state = context.state
         val playerId = context.playerId
 
+        // Avatar's Wrath: "your opponents can't cast spells from anywhere other than their hands."
+        // Every path this enumerator offers is a non-hand cast (library top, exile, linked exile,
+        // graveyard, flashback, harmonize, command zone), so suppress the whole enumerator while
+        // the player is restricted to hand-only casting. Hand casts (CastSpellEnumerator) are
+        // unaffected; CastSpellHandler re-checks this authoritatively.
+        if (context.restrictedToHandCasting) return result
+
         enumerateTopOfLibrary(context, result)
         val linkedExileCardIds = enumerateExileCards(context, result)
         enumerateLinkedExile(context, result, linkedExileCardIds)

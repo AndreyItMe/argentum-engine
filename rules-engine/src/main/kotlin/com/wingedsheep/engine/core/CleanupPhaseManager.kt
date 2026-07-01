@@ -37,6 +37,7 @@ import com.wingedsheep.engine.state.components.player.AdditionalEndStepsComponen
 import com.wingedsheep.engine.state.components.player.InAdditionalEndStepComponent
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
+import com.wingedsheep.engine.state.components.player.CantCastFromNonHandZonesComponent
 import com.wingedsheep.engine.state.components.player.CantGainLifeComponent
 import com.wingedsheep.engine.state.components.player.DamageBonusComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent
@@ -205,6 +206,17 @@ class CleanupPhaseManager(
             val expiryPlayer = cantPlay.expiresForPlayerId ?: playerId
             if (expiryPlayer == activePlayer) {
                 result = result.updateEntity(playerId) { it.without<PlayerCantPlayFromHandComponent>() }
+            }
+        }
+        // Avatar's Wrath's "your opponents can't cast spells from anywhere other than their hands
+        // until your next turn" expires on the same post-untap hook, keyed off the *casting*
+        // player (every affected opponent's restriction lifts on the caster's next turn).
+        for (playerId in result.turnOrder) {
+            val restricted = result.getEntity(playerId)?.get<CantCastFromNonHandZonesComponent>() ?: continue
+            if (restricted.removeOn != PlayerEffectRemoval.UntilYourNextTurn) continue
+            val expiryPlayer = restricted.expiresForPlayerId ?: playerId
+            if (expiryPlayer == activePlayer) {
+                result = result.updateEntity(playerId) { it.without<CantCastFromNonHandZonesComponent>() }
             }
         }
         return result
@@ -533,6 +545,10 @@ class CleanupPhaseManager(
                 val cantCast = result.get<CantCastSpellsComponent>()
                 if (cantCast?.removeOn == PlayerEffectRemoval.EndOfTurn) {
                     result = result.without<CantCastSpellsComponent>()
+                }
+                val cantCastNonHand = result.get<CantCastFromNonHandZonesComponent>()
+                if (cantCastNonHand?.removeOn == PlayerEffectRemoval.EndOfTurn) {
+                    result = result.without<CantCastFromNonHandZonesComponent>()
                 }
                 val cantGainLife = result.get<CantGainLifeComponent>()
                 if (cantGainLife?.removeOn == PlayerEffectRemoval.EndOfTurn) {

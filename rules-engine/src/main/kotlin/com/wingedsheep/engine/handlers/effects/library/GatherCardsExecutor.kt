@@ -142,10 +142,25 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 val matched = BattlefieldFilterUtils.findMatchingOnBattlefield(
                     state, baseFilter, predicateContext, excludeSelfId
                 )
-                val afterExclusion = if (source.excludeTriggering) {
+                val afterTriggering = if (source.excludeTriggering) {
                     matched.filter { it != context.triggeringEntityId }
                 } else {
                     matched
+                }
+                // Exclude the spell/ability's chosen targets ("airbend all *other* creatures",
+                // where "other" is relative to the chosen target — Avatar's Wrath).
+                val afterExclusion = if (source.excludeChosenTargets) {
+                    val chosenIds = context.targets.mapNotNull { chosen ->
+                        when (chosen) {
+                            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Permanent -> chosen.entityId
+                            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Card -> chosen.cardId
+                            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Spell -> chosen.spellEntityId
+                            is com.wingedsheep.engine.state.components.stack.ChosenTarget.Player -> null
+                        }
+                    }.toSet()
+                    afterTriggering.filter { it !in chosenIds }
+                } else {
+                    afterTriggering
                 }
                 if (source.includeAttachments) {
                     val withAttachments = afterExclusion.toMutableList()

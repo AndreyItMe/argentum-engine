@@ -68,6 +68,7 @@ import com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternative
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
+import com.wingedsheep.engine.state.components.player.CantCastFromNonHandZonesComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.player.ManaSpentOnSpellsThisTurnComponent
 import com.wingedsheep.sdk.core.CardType
@@ -207,6 +208,15 @@ class CastSpellHandler(
         // exile/graveyard granted by a may-play permission still resolve.
         if (inHand && state.getEntity(action.playerId)?.has<PlayerCantPlayFromHandComponent>() == true) {
             return "You can't play cards from your hand"
+        }
+
+        // Avatar's Wrath: "your opponents can't cast spells from anywhere other than their hands."
+        // A per-player, duration-bounded restriction to hand-only casting — any non-hand cast
+        // (flashback/escape from graveyard, foretell/plot/may-play from exile, library top,
+        // command zone) is illegal while the component is present. Ordinary hand casts (inHand)
+        // are untouched.
+        if (!inHand && state.getEntity(action.playerId)?.has<CantCastFromNonHandZonesComponent>() == true) {
+            return "You can't cast spells from anywhere other than your hand right now"
         }
 
         // Single cast-legality chokepoint: per-turn spell limit (Yawgmoth's Agenda),

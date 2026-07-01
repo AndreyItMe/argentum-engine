@@ -324,6 +324,33 @@ data class CantPlayCardsFromHandEffect(
 }
 
 /**
+ * Target player can't cast spells from anywhere other than their **hand** for the specified
+ * [duration] — casts from graveyard (flashback, escape, disturb), exile (foretell, plot, a
+ * may-play permission), library top, or the command zone all become illegal, while normal
+ * hand casts are unaffected.
+ *
+ * The "your opponents can't cast spells from anywhere other than their hands" clause of
+ * Avatar's Wrath. The inverse of [CantPlayCardsFromHandEffect] (which restricts *to* only the
+ * hand): this restricts *away from* every zone except the hand. Enforced at the cast-legality
+ * chokepoint (CastSpellHandler / the non-hand cast enumerators) — see the engine's
+ * `CantCastFromNonHandZonesComponent`.
+ *
+ * @param target The player restricted to hand-only casting (typically each opponent).
+ * @param duration How long the restriction lasts (default: until your next turn, matching
+ *   Avatar's Wrath).
+ */
+@SerialName("CantCastSpellsFromNonHandZones")
+@Serializable
+data class CantCastSpellsFromNonHandZonesEffect(
+    val target: EffectTarget,
+    val duration: Duration = Duration.UntilYourNextTurn
+) : Effect {
+    override val description: String =
+        "${target.description.replaceFirstChar { it.uppercase() }} can't cast spells from anywhere " +
+            "other than their hand ${duration.description}"
+}
+
+/**
  * Target player can't activate planeswalkers' loyalty abilities for the specified duration.
  * Sibling restriction to [CantCastSpellsEffect]; compose the two for cards that forbid both
  * (e.g. Revel in Silence: "Your opponents can't cast spells or activate planeswalkers' loyalty

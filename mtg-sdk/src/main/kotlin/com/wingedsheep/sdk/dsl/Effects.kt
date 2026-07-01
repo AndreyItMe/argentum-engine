@@ -60,6 +60,7 @@ import com.wingedsheep.sdk.scripting.effects.SetSuspectedEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantActivateLoyaltyAbilitiesEffect
 import com.wingedsheep.sdk.scripting.effects.CantCastSpellsEffect
+import com.wingedsheep.sdk.scripting.effects.CantCastSpellsFromNonHandZonesEffect
 import com.wingedsheep.sdk.scripting.effects.CantPlayCardsFromHandEffect
 import com.wingedsheep.sdk.scripting.effects.PreventLandPlaysThisTurnEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -756,14 +757,22 @@ object Effects {
      * the set is gathered from the battlefield by filter rather than from the chosen targets.
      *
      * @param excludeSelf exclude the source permanent (the "other" in "all other creatures").
+     * @param excludeChosenTargets exclude the spell/ability's chosen target(s) — the "other" in
+     *   "Choose up to one target creature, then airbend all *other* creatures" (Avatar's Wrath).
      */
     fun AirbendAll(
         filter: GameObjectFilter,
         excludeSelf: Boolean = true,
+        excludeChosenTargets: Boolean = false,
         cost: ManaCost = AIRBEND_COST
     ): Effect = CompositeEffect(listOf(
         GatherCardsEffect(
-            source = CardSource.BattlefieldMatching(filter = filter, player = Player.Each, excludeSelf = excludeSelf),
+            source = CardSource.BattlefieldMatching(
+                filter = filter,
+                player = Player.Each,
+                excludeSelf = excludeSelf,
+                excludeChosenTargets = excludeChosenTargets
+            ),
             storeAs = "airbendChosen"
         ),
         MoveCollectionEffect(
@@ -3235,6 +3244,18 @@ object Effects {
         target: EffectTarget = EffectTarget.Controller,
         duration: Duration = Duration.UntilYourNextTurn
     ): Effect = CantPlayCardsFromHandEffect(target, duration)
+
+    /**
+     * Target player can't cast spells from anywhere other than their hand for the duration
+     * (default: until your next turn). Casts from graveyard (flashback/escape), exile
+     * (foretell/plot/may-play), library top, or command zone become illegal; ordinary hand
+     * casts are untouched. The "your opponents can't cast spells from anywhere other than
+     * their hands" clause of Avatar's Wrath. Inverse of [CantPlayCardsFromHand].
+     */
+    fun CantCastSpellsFromNonHandZones(
+        target: EffectTarget,
+        duration: Duration = Duration.UntilYourNextTurn
+    ): Effect = CantCastSpellsFromNonHandZonesEffect(target, duration)
 
     /**
      * A player can't play lands for the rest of this turn (sets remaining land drops to 0).

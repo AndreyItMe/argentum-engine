@@ -996,6 +996,15 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   may-play permission stay playable. Facade: `Effects.CantPlayCardsFromHand(target, duration)`. Pairs with an impulse
   grant (`ExilePatterns.impulse`) so a player swaps their hand for the top cards of their library for a turn
   (Memory Vessel). Distinct from `CantCastSpells` (every zone, spells only).
+- `CantCastSpellsFromNonHandZonesEffect(target, duration = UntilYourNextTurn)` — target can't cast spells from any zone
+  **other than their hand** for the duration; ordinary hand casts still resolve, but graveyard (flashback/escape),
+  exile (foretell/plot/a may-play permission), library-top, and command-zone casts all become illegal. The **inverse**
+  of `CantPlayCardsFromHand` (which restricts *to* the hand): this restricts *away from* every zone except the hand.
+  Facade: `Effects.CantCastSpellsFromNonHandZones(target, duration)`. Stamps `CantCastFromNonHandZonesComponent` on the
+  player (with an `expiresForPlayerId` keyed to the *casting* player for the `UntilYourNextTurn` window, like
+  `PlayerCantPlayFromHandComponent`); enforced authoritatively in `CastSpellHandler` and suppressed at enumeration by the
+  non-hand `CastFromZoneEnumerator`. The "your opponents can't cast spells from anywhere other than their hands" clause of
+  Avatar's Wrath (`target = EffectTarget.PlayerRef(Player.EachOpponent)`).
 - `Effects.CantPlayLandsThisTurn(target = Controller)` (`PreventLandPlaysThisTurnEffect`) — the target player can't
   play lands for the rest of this turn (sets remaining land drops to 0). Defaults to the controller (Rock Jockey);
   pass `EffectTarget.ContextTarget(n)` for "target player can't play lands this turn" cards like Turf Wound.
@@ -6315,14 +6324,17 @@ Card authors rarely reference these directly; they are created/updated by the ma
   self-triggers (no fake keyword). `amount` is an `Int` for "Earthbend N" (Earthbending Lesson) or a `DynamicAmount`
   for "Earthbend X, where X is …" (Rockalanche — X = the number of Forests you control), which counts X at resolution
   via `AddDynamicCounters`.
-- **Airbend** (Avatar: The Last Airbender) — `Effects.Airbend(cost = {2})` / `Effects.AirbendAll(filter, excludeSelf, cost = {2})`.
+- **Airbend** (Avatar: The Last Airbender) — `Effects.Airbend(cost = {2})` / `Effects.AirbendAll(filter, excludeSelf, excludeChosenTargets, cost = {2})`.
   *"Airbend target permanent"* = "Exile it. While it's exiled, its owner may cast it for {2} rather than its mana
   cost." Composes a pipeline (no fake keyword): `GatherCards(ChosenTargets)` → `MoveCollection(→ EXILE, storeMovedAs)`
   → `GrantMayPlayFromExile(ownerControls = true, expiry = Permanent, fixedAlternativeManaCost = {2})`. **Target-agnostic
   by design:** the *card* declares the targeting shape via its `TargetRequirement` ("up to one", "any number of",
   "another", "you control", "target nonland permanent"), and `Effects.Airbend()` airbends whatever was chosen — so one
   effect serves every airbend card. `AirbendAll(filter)` swaps the gather to `CardSource.BattlefieldMatching` for "airbend
-  all other creatures" (Avatar's Wrath). The new piece is **`fixedAlternativeManaCost`** on `GrantMayPlayFromExile`: it
+  all other creatures" — pass `excludeChosenTargets = true` (and `excludeSelf = false` for a sorcery) so the spared "other"
+  is the spell's chosen target, backing **Avatar's Wrath** ("Choose up to one target creature, then airbend all other
+  creatures."); `CardSource.BattlefieldMatching.excludeChosenTargets` drops `EffectContext.targets` from the gather, the
+  chosen-target sibling of `excludeSelf`/`excludeTriggering`. The new piece is **`fixedAlternativeManaCost`** on `GrantMayPlayFromExile`: it
   stamps `PlayWithFixedAlternativeManaCostComponent(controllerId, fixedCost)` on each exiled card, which the legal-action
   enumerator (`CastFromZoneEnumerator`) and the cast handler (`CastSpellHandler`) read to *replace* the printed mana cost
   entirely (a 6-drop and a 2-drop both become {2}) — unlike `GrantPlayWithCostIncrease`, which adds on top. The component
