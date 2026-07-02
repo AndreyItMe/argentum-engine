@@ -35,7 +35,13 @@ val AlaniaDivergentStorm = card("Alania, Divergent Storm") {
         triggerCondition = Conditions.Any(
             Conditions.YouCastFirstSpellOfTypeThisTurn(GameObjectFilter.Instant),
             Conditions.YouCastFirstSpellOfTypeThisTurn(GameObjectFilter.Sorcery),
-            Conditions.YouCastFirstSpellOfTypeThisTurn(GameObjectFilter.Any.withSubtype(com.wingedsheep.sdk.core.Subtype("Otter")))
+            // "the first Otter spell OTHER THAN ALANIA you've cast this turn" — Alania herself
+            // neither triggers this branch nor counts toward the first-Otter-spell tracking
+            Conditions.YouCastFirstSpellOfTypeThisTurn(
+                GameObjectFilter.Any
+                    .withSubtype(com.wingedsheep.sdk.core.Subtype("Otter"))
+                    .notNamed("Alania, Divergent Storm")
+            )
         )
         val opponent = target("opponent", Targets.Opponent)
         effect = ReflexiveTriggerEffect(

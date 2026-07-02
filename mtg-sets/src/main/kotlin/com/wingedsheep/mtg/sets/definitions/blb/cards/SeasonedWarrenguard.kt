@@ -7,7 +7,6 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.conditions.Exists
-import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -31,11 +30,11 @@ val SeasonedWarrenguard = card("Seasoned Warrenguard") {
 
     triggeredAbility {
         trigger = Triggers.Attacks
+        // "attacks WHILE you control a token" — checked only when the trigger fires
+        // (attack declaration). Per the printed ruling, losing the token before the
+        // ability resolves must not stop the pump, so there is no resolution-time check.
         triggerCondition = Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Token)
-        effect = ConditionalEffect(
-            condition = Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Token),
-            effect = Effects.ModifyStats(2, 0, EffectTarget.Self)
-        )
+        effect = Effects.ModifyStats(2, 0, EffectTarget.Self)
     }
 
     metadata {

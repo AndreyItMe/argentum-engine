@@ -4440,17 +4440,17 @@
                     "type": "MoveToZone",
                     "target": {
                         "type": "BoundVariable",
-                        "name": "target"
+                        "name": "instant or sorcery card in your graveyard"
                     },
                     "destination": "Hand"
                 },
                 "targetRequirement": {
                     "type": "TargetObject",
                     "filter": {
-                        "baseFilter": "instant|sorcery",
+                        "baseFilter": "instant|sorcery own:you",
                         "zone": "Graveyard"
                     },
-                    "id": "target"
+                    "id": "instant or sorcery card in your graveyard"
                 },
                 "triggerCondition": "WasKicked"
             }

@@ -2720,6 +2720,9 @@ class CastSpellHandler(
                 // way castSpell stamps SpellOnStackComponent.castFromZone. Powers "you haven't cast
                 // a spell from your hand this turn" (Prairie Dog cycle).
                 castFromZone = stackResolver.findCastFromZone(currentState, action.cardId, action.playerId),
+                // Face-down casts hide the card's identity; a face-up cast records the name so
+                // name predicates ("the first Otter spell other than Alania") can match history.
+                name = if (action.castFaceDown) null else cardComponent.name,
             )
             val existing = currentState.spellsCastThisTurnByPlayer[action.playerId] ?: emptyList()
             currentState = currentState.copy(

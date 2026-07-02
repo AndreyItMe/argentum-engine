@@ -288,6 +288,9 @@ object CardLinter {
         // Both are what HasChosenColor / GrantChosenColor-style readers consume.
         "ChooseColorThen" to "COLOR",
         "ChooseColorForTarget" to "COLOR",
+        // Resolution-time opponent choice: writes ChoiceSlot.OPPONENT on the source entity,
+        // read back by Player.ChosenOpponent (gift recipient).
+        "ChooseOpponentForSource" to "OPPONENT",
     )
 
     /** [com.wingedsheep.sdk.scripting.ReplacementEffect] `EntersWithChoice.choiceType` → slot. */

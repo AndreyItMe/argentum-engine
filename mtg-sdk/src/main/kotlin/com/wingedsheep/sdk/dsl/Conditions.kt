@@ -1152,6 +1152,15 @@ object Conditions {
         trackerAtLeast(com.wingedsheep.sdk.scripting.values.TurnTracker.LIFE_LOST, player = Player.EachOpponent)
 
     /**
+     * If [player] lost life this turn (from any source). Use when the wording binds the
+     * check to a specific player rather than "an opponent" — e.g. Thought-Stalker Warlock:
+     * "choose target opponent. If THEY lost life this turn, …" →
+     * `PlayerLostLifeThisTurn(Player.ContextPlayer(0))`.
+     */
+    fun PlayerLostLifeThisTurn(player: Player): ConditionInterface =
+        trackerAtLeast(com.wingedsheep.sdk.scripting.values.TurnTracker.LIFE_LOST, player = player)
+
+    /**
      * If an opponent was dealt combat damage by a legendary creature this turn.
      * Used for cards like Blitzball: "Activate only if an opponent was dealt combat damage by a
      * legendary creature this turn."

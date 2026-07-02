@@ -138,6 +138,33 @@ class AlaniaDivergentStormTest : FunSpec({
         } shouldBe false
     }
 
+    test("'other than Alania': casting Alania doesn't fire, and a later Otter still counts as first") {
+        val driver = createDriver()
+        val (you, _) = driver.setup()
+
+        // Cast a second Alania — an Otter spell, but the printed "other than Alania"
+        // excludes it: the Otter branch must not fire, and it must not consume the
+        // first-Otter-spell slot for the turn.
+        driver.giveMana(you, Color.BLUE, 1)
+        driver.giveMana(you, Color.RED, 1)
+        driver.giveColorlessMana(you, 3)
+        val alania2 = driver.putCardInHand(you, "Alania, Divergent Storm")
+        driver.castAndDidAlaniaFire(you) {
+            driver.castSpell(you, alania2, emptyList()).error shouldBe null
+        } shouldBe false
+        // Legend rule: keep one Alania (the choice surfaces after the stack empties).
+        repeat(3) { if (driver.pendingDecision != null) driver.autoResolveDecision() }
+
+        // A non-Alania Otter cast later the same turn IS the first Otter spell other
+        // than Alania — the trigger must fire. (The old filter counted Alania herself,
+        // so this used to stay silent.)
+        driver.giveMana(you, Color.BLUE, 1)
+        val otter = driver.putCardInHand(you, "Test Otter")
+        driver.castAndDidAlaniaFire(you) {
+            driver.castSpell(you, otter, emptyList()).error shouldBe null
+        } shouldBe true
+    }
+
     test("guard: does NOT fire on a non-matching spell cast after one matching spell") {
         val driver = createDriver()
         val (you, opponent) = driver.setup()

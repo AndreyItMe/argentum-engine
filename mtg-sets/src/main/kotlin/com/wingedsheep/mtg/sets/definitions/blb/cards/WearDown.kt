@@ -42,7 +42,7 @@ val WearDown = card("Wear Down") {
             Mode(
                 effect = Effects.Composite(
                     listOf(
-                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.AnOpponent)),
+                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.ChosenOpponent)),
                         Effects.Destroy(EffectTarget.ContextTarget(0)),
                         Effects.Destroy(EffectTarget.ContextTarget(1)),
                         Effects.GiftGiven()

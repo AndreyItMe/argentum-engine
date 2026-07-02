@@ -48,6 +48,7 @@ class PlayerExecutors(
         CantCastSpellsExecutor(),
         CantPlayCardsFromHandExecutor(),
         ChooseNumberForSourceExecutor(decisionHandler),
+        ChooseOpponentForSourceExecutor(),
         CreateGlobalTriggeredAbilityExecutor(),
         CreatePermanentEmblemExecutor(),
         EachPlayerChoosesCreatureTypeExecutor(),

@@ -277,13 +277,41 @@
                                 {
                                     "type": "EntityMatches",
                                     "entity": "TriggeringEntity",
-                                    "filter": "Otter"
+                                    "filter": {
+                                        "cardPredicates": [
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Otter"
+                                            },
+                                            {
+                                                "type": "Not",
+                                                "predicate": {
+                                                    "type": "NameEquals",
+                                                    "name": "Alania, Divergent Storm"
+                                                }
+                                            }
+                                        ]
+                                    }
                                 },
                                 {
                                     "type": "Not",
                                     "condition": {
                                         "type": "PlayerCastSpellsThisTurn",
-                                        "filter": "Otter",
+                                        "filter": {
+                                            "cardPredicates": [
+                                                {
+                                                    "type": "HasSubtype",
+                                                    "subtype": "Otter"
+                                                },
+                                                {
+                                                    "type": "Not",
+                                                    "predicate": {
+                                                        "type": "NameEquals",
+                                                        "name": "Alania, Divergent Storm"
+                                                    }
+                                                }
+                                            ]
+                                        },
                                         "atLeast": 2
                                     }
                                 }
@@ -1411,33 +1439,42 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreatePredefinedToken",
-                                "tokenType": "Treasure",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 3
-                                },
-                                "target": "TargetController"
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreatePredefinedToken",
+                                        "tokenType": "Treasure",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "DealDamage",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "DealDamage",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 3
+                                        },
+                                        "target": "TargetController"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -3375,54 +3412,63 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Battlefield",
-                                "fromZone": "Graveyard"
-                            },
-                            {
-                                "type": "Gated",
-                                "gate": {
-                                    "type": "Gate.WhenCondition",
-                                    "condition": {
-                                        "type": "EntityMatches",
-                                        "entity": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
                                             "type": "ContextTarget",
                                             "index": 0
                                         },
-                                        "filter": {
-                                            "cardPredicates": [
-                                                "IsCreature",
-                                                "IsNonlegendary"
-                                            ]
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "type": "CreateTokenCopyOfTarget",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
+                                        "destination": "Battlefield",
+                                        "fromZone": "Graveyard"
                                     },
-                                    "overridePower": 1,
-                                    "overrideToughness": 1
-                                }
-                            },
-                            "GiftGiven"
+                                    {
+                                        "type": "Gated",
+                                        "gate": {
+                                            "type": "Gate.WhenCondition",
+                                            "condition": {
+                                                "type": "EntityMatches",
+                                                "entity": {
+                                                    "type": "ContextTarget",
+                                                    "index": 0
+                                                },
+                                                "filter": {
+                                                    "cardPredicates": [
+                                                        "IsCreature",
+                                                        "IsNonlegendary"
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        "then": {
+                                            "type": "CreateTokenCopyOfTarget",
+                                            "target": {
+                                                "type": "ContextTarget",
+                                                "index": 0
+                                            },
+                                            "overridePower": 1,
+                                            "overrideToughness": 1
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -3614,40 +3660,49 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "ForceSacrifice",
-                                "filter": {
-                                    "cardPredicates": [
-                                        "IsCreature"
-                                    ],
-                                    "statePredicates": [
-                                        "HasGreatestPower"
-                                    ]
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                },
-                                "destination": "Hand"
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "ForceSacrifice",
+                                        "filter": {
+                                            "cardPredicates": [
+                                                "IsCreature"
+                                            ],
+                                            "statePredicates": [
+                                                "HasGreatestPower"
+                                            ]
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        },
+                                        "destination": "Hand"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -3936,61 +3991,70 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
-                            "RevealHand",
                             {
-                                "type": "GatherCards",
-                                "source": {
-                                    "type": "FromZone",
-                                    "zone": "Hand",
-                                    "player": {
-                                        "type": "ContextPlayer",
-                                        "index": 0
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
                                     },
-                                    "filter": "nonland"
-                                },
-                                "storeAs": "nonlandCards"
-                            },
-                            {
-                                "type": "SelectFromCollection",
-                                "from": "nonlandCards",
-                                "selection": {
-                                    "type": "ChooseExactly",
-                                    "count": {
-                                        "type": "Fixed",
-                                        "amount": 1
-                                    }
-                                },
-                                "storeSelected": "chosenCard",
-                                "prompt": "Choose a nonland card to exile"
-                            },
-                            {
-                                "type": "MoveCollection",
-                                "from": "chosenCard",
-                                "destination": {
-                                    "type": "ToZone",
-                                    "zone": "Exile",
-                                    "player": {
-                                        "type": "ContextPlayer",
-                                        "index": 0
-                                    }
-                                }
-                            },
-                            {
-                                "type": "GrantMayPlayFromExile",
-                                "from": "chosenCard",
-                                "expiry": "Permanent"
-                            },
-                            "GiftGiven"
+                                    "RevealHand",
+                                    {
+                                        "type": "GatherCards",
+                                        "source": {
+                                            "type": "FromZone",
+                                            "zone": "Hand",
+                                            "player": {
+                                                "type": "ContextPlayer",
+                                                "index": 0
+                                            },
+                                            "filter": "nonland"
+                                        },
+                                        "storeAs": "nonlandCards"
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "nonlandCards",
+                                        "selection": {
+                                            "type": "ChooseExactly",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "storeSelected": "chosenCard",
+                                        "prompt": "Choose a nonland card to exile"
+                                    },
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "chosenCard",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Exile",
+                                            "player": {
+                                                "type": "ContextPlayer",
+                                                "index": 0
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "type": "GrantMayPlayFromExile",
+                                        "from": "chosenCard",
+                                        "expiry": "Permanent"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -4064,37 +4128,46 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreatePredefinedToken",
-                                "tokenType": "Food",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "ModifyStats",
-                                "powerModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "toughnessModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "GrantKeyword",
-                                "keyword": "INDESTRUCTIBLE",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreatePredefinedToken",
+                                        "tokenType": "Food",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "ModifyStats",
+                                        "powerModifier": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        },
+                                        "toughnessModifier": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "GrantKeyword",
+                                        "keyword": "INDESTRUCTIBLE",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -4512,22 +4585,45 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
                                 "type": "Composite",
                                 "effects": [
                                     {
-                                        "type": "GrantEvasionKeyword",
-                                        "keyword": "HEXPROOF"
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "Composite",
+                                        "effects": [
+                                            {
+                                                "type": "GrantEvasionKeyword",
+                                                "keyword": "HEXPROOF"
+                                            },
+                                            {
+                                                "type": "ForEach",
+                                                "space": {
+                                                    "type": "IterationSpace.Group",
+                                                    "filter": {
+                                                        "baseFilter": "permanent ctrl:you"
+                                                    }
+                                                },
+                                                "body": {
+                                                    "type": "GrantKeyword",
+                                                    "keyword": "HEXPROOF",
+                                                    "target": "Self"
+                                                }
+                                            }
+                                        ]
                                     },
                                     {
                                         "type": "ForEach",
@@ -4539,27 +4635,13 @@
                                         },
                                         "body": {
                                             "type": "GrantKeyword",
-                                            "keyword": "HEXPROOF",
+                                            "keyword": "INDESTRUCTIBLE",
                                             "target": "Self"
                                         }
-                                    }
+                                    },
+                                    "GiftGiven"
                                 ]
-                            },
-                            {
-                                "type": "ForEach",
-                                "space": {
-                                    "type": "IterationSpace.Group",
-                                    "filter": {
-                                        "baseFilter": "permanent ctrl:you"
-                                    }
-                                },
-                                "body": {
-                                    "type": "GrantKeyword",
-                                    "keyword": "INDESTRUCTIBLE",
-                                    "target": "Self"
-                                }
-                            },
-                            "GiftGiven"
+                            }
                         ]
                     },
                     "description": "Promise a gift — an opponent draws a card, you and permanents you control gain hexproof until end of turn, permanents you control also gain indestructible until end of turn"
@@ -4690,30 +4772,39 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "ForEach",
-                                "space": "IterationSpace.Targets",
-                                "body": {
-                                    "type": "MoveToZone",
-                                    "target": {
-                                        "type": "ContextTarget",
-                                        "index": 0
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
                                     },
-                                    "destination": "Battlefield",
-                                    "fromZone": "Graveyard"
-                                }
-                            },
-                            "GiftGiven"
+                                    {
+                                        "type": "ForEach",
+                                        "space": "IterationSpace.Targets",
+                                        "body": {
+                                            "type": "MoveToZone",
+                                            "target": {
+                                                "type": "ContextTarget",
+                                                "index": 0
+                                            },
+                                            "destination": "Battlefield",
+                                            "fromZone": "Graveyard"
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -5462,23 +5553,56 @@
                 },
                 {
                     "effect": {
-                        "type": "MoveToZone",
-                        "target": {
-                            "type": "BoundVariable",
-                            "name": "target enchantment to exile"
-                        },
-                        "destination": "Exile"
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Battlefield",
+                                    "player": {
+                                        "type": "ContextPlayer",
+                                        "index": 0
+                                    },
+                                    "filter": "enchantment"
+                                },
+                                "storeAs": "theirEnchantments"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "theirEnchantments",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "chooser": "TargetPlayer",
+                                "storeSelected": "chosenEnchantment",
+                                "prompt": "Choose an enchantment to exile"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "chosenEnchantment",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Exile",
+                                    "player": {
+                                        "type": "ContextPlayer",
+                                        "index": 0
+                                    }
+                                }
+                            }
+                        ]
                     },
                     "targetRequirements": [
                         {
-                            "type": "TargetObject",
-                            "filter": {
-                                "baseFilter": "enchantment ctrl:opponent"
-                            },
-                            "id": "target enchantment to exile"
+                            "type": "TargetOpponent",
+                            "id": "target opponent"
                         }
                     ],
-                    "description": "Exile target enchantment an opponent controls"
+                    "description": "Target opponent exiles an enchantment they control"
                 }
             ]
         }
@@ -9272,31 +9396,40 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreateToken",
-                                "power": 1,
-                                "toughness": 1,
-                                "colors": [
-                                    "BLUE"
-                                ],
-                                "creatureTypes": [
-                                    "Fish"
-                                ],
-                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                },
-                                "tapped": true
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Hand"
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreateToken",
+                                        "power": 1,
+                                        "toughness": 1,
+                                        "colors": [
+                                            "BLUE"
+                                        ],
+                                        "creatureTypes": [
+                                            "Fish"
+                                        ],
+                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        },
+                                        "tapped": true
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Hand"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -10033,21 +10166,30 @@
                                 "type": "Composite",
                                 "effects": [
                                     {
-                                        "type": "DrawCards",
-                                        "count": {
-                                            "type": "Fixed",
-                                            "amount": 1
-                                        },
-                                        "target": {
-                                            "type": "PlayerRef",
-                                            "player": "AnOpponent"
-                                        }
+                                        "type": "ChooseOpponentForSource",
+                                        "prompt": "Choose an opponent to receive the gift"
                                     },
                                     {
-                                        "type": "TapUntap",
-                                        "target": "EnchantedCreature"
-                                    },
-                                    "GiftGiven"
+                                        "type": "Composite",
+                                        "effects": [
+                                            {
+                                                "type": "DrawCards",
+                                                "count": {
+                                                    "type": "Fixed",
+                                                    "amount": 1
+                                                },
+                                                "target": {
+                                                    "type": "PlayerRef",
+                                                    "player": "ChosenOpponent"
+                                                }
+                                            },
+                                            {
+                                                "type": "TapUntap",
+                                                "target": "EnchantedCreature"
+                                            },
+                                            "GiftGiven"
+                                        ]
+                                    }
                                 ]
                             },
                             "description": "Promise a gift — an opponent draws a card, tap enchanted creature"
@@ -10757,18 +10899,27 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
-                            "Counter",
-                            "GiftGiven"
+                            {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    "Counter",
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -10840,43 +10991,52 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreateToken",
-                                "power": 1,
-                                "toughness": 1,
-                                "colors": [
-                                    "BLUE"
-                                ],
-                                "creatureTypes": [
-                                    "Fish"
-                                ],
-                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                },
-                                "tapped": true
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "AddCounters",
-                                "counterType": "+1/+1",
-                                "count": 1,
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "Fight",
-                                "target1": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "target2": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                }
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreateToken",
+                                        "power": 1,
+                                        "toughness": 1,
+                                        "colors": [
+                                            "BLUE"
+                                        ],
+                                        "creatureTypes": [
+                                            "Fish"
+                                        ],
+                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        },
+                                        "tapped": true
+                                    },
+                                    {
+                                        "type": "AddCounters",
+                                        "counterType": "+1/+1",
+                                        "count": 1,
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "Fight",
+                                        "target1": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "target2": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -11716,50 +11876,59 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreateToken",
-                                "power": 1,
-                                "toughness": 1,
-                                "colors": [
-                                    "BLUE"
-                                ],
-                                "creatureTypes": [
-                                    "Fish"
-                                ],
-                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                },
-                                "tapped": true
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 3
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "TapUntap",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                }
-                            },
-                            {
-                                "type": "AddCounters",
-                                "counterType": "stun",
-                                "count": 1,
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                }
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreateToken",
+                                        "power": 1,
+                                        "toughness": 1,
+                                        "colors": [
+                                            "BLUE"
+                                        ],
+                                        "creatureTypes": [
+                                            "Fish"
+                                        ],
+                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        },
+                                        "tapped": true
+                                    },
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 3
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "TapUntap",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        }
+                                    },
+                                    {
+                                        "type": "AddCounters",
+                                        "counterType": "stun",
+                                        "count": 1,
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -12608,23 +12777,32 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreatePredefinedToken",
-                                "tokenType": "Food",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Graveyard",
-                                "byDestruction": true
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreatePredefinedToken",
+                                        "tokenType": "Food",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Graveyard",
+                                        "byDestruction": true
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -13016,31 +13194,40 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreateToken",
-                                "power": 1,
-                                "toughness": 1,
-                                "colors": [
-                                    "BLUE"
-                                ],
-                                "creatureTypes": [
-                                    "Fish"
-                                ],
-                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                },
-                                "tapped": true
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Exile"
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreateToken",
+                                        "power": 1,
+                                        "toughness": 1,
+                                        "colors": [
+                                            "BLUE"
+                                        ],
+                                        "creatureTypes": [
+                                            "Fish"
+                                        ],
+                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        },
+                                        "tapped": true
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Exile"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -13357,33 +13544,42 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Hand"
-                            },
-                            {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                },
-                                "destination": "Hand"
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Hand"
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        },
+                                        "destination": "Hand"
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -15528,49 +15724,58 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreateToken",
-                                "power": 1,
-                                "toughness": 1,
-                                "colors": [
-                                    "BLUE"
-                                ],
-                                "creatureTypes": [
-                                    "Fish"
-                                ],
-                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                },
-                                "tapped": true
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "ModifyStats",
-                                "powerModifier": {
-                                    "type": "Fixed",
-                                    "amount": 2
-                                },
-                                "toughnessModifier": {
-                                    "type": "Fixed",
-                                    "amount": 0
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                }
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreateToken",
+                                        "power": 1,
+                                        "toughness": 1,
+                                        "colors": [
+                                            "BLUE"
+                                        ],
+                                        "creatureTypes": [
+                                            "Fish"
+                                        ],
+                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        },
+                                        "tapped": true
+                                    },
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "ModifyStats",
+                                        "powerModifier": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        },
+                                        "toughnessModifier": {
+                                            "type": "Fixed",
+                                            "amount": 0
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -15879,26 +16084,35 @@
                                 "type": "Composite",
                                 "effects": [
                                     {
-                                        "type": "DrawCards",
-                                        "count": {
-                                            "type": "Fixed",
-                                            "amount": 1
-                                        },
-                                        "target": {
-                                            "type": "PlayerRef",
-                                            "player": "AnOpponent"
-                                        }
+                                        "type": "ChooseOpponentForSource",
+                                        "prompt": "Choose an opponent to receive the gift"
                                     },
                                     {
-                                        "type": "MoveToZone",
-                                        "target": {
-                                            "type": "ContextTarget",
-                                            "index": 0
-                                        },
-                                        "destination": "Graveyard",
-                                        "byDestruction": true
-                                    },
-                                    "GiftGiven"
+                                        "type": "Composite",
+                                        "effects": [
+                                            {
+                                                "type": "DrawCards",
+                                                "count": {
+                                                    "type": "Fixed",
+                                                    "amount": 1
+                                                },
+                                                "target": {
+                                                    "type": "PlayerRef",
+                                                    "player": "ChosenOpponent"
+                                                }
+                                            },
+                                            {
+                                                "type": "MoveToZone",
+                                                "target": {
+                                                    "type": "ContextTarget",
+                                                    "index": 0
+                                                },
+                                                "destination": "Graveyard",
+                                                "byDestruction": true
+                                            },
+                                            "GiftGiven"
+                                        ]
+                                    }
                                 ]
                             },
                             "targetRequirements": [
@@ -16455,28 +16669,16 @@
                 "id": "ability_1",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "Gated",
-                    "gate": {
-                        "type": "Gate.WhenCondition",
-                        "condition": {
-                            "type": "Exists",
-                            "player": "You",
-                            "zone": "Battlefield",
-                            "filter": "token"
-                        }
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
                     },
-                    "then": {
-                        "type": "ModifyStats",
-                        "powerModifier": {
-                            "type": "Fixed",
-                            "amount": 2
-                        },
-                        "toughnessModifier": {
-                            "type": "Fixed",
-                            "amount": 0
-                        },
-                        "target": "Self"
-                    }
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": "Self"
                 },
                 "triggerCondition": {
                     "type": "Exists",
@@ -17523,62 +17725,71 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
                                 "type": "Composite",
                                 "effects": [
                                     {
-                                        "type": "GatherCards",
-                                        "source": {
-                                            "type": "BattlefieldMatching",
-                                            "filter": "creature"
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
                                         },
-                                        "storeAs": "destroyAll_gathered"
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "Composite",
+                                        "effects": [
+                                            {
+                                                "type": "GatherCards",
+                                                "source": {
+                                                    "type": "BattlefieldMatching",
+                                                    "filter": "creature"
+                                                },
+                                                "storeAs": "destroyAll_gathered"
+                                            },
+                                            {
+                                                "type": "MoveCollection",
+                                                "from": "destroyAll_gathered",
+                                                "destination": {
+                                                    "type": "ToZone",
+                                                    "zone": "Graveyard"
+                                                },
+                                                "moveType": "Destroy",
+                                                "storeMovedAs": "destroyed"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "SelectFromCollection",
+                                        "from": "destroyed",
+                                        "selection": {
+                                            "type": "ChooseUpTo",
+                                            "count": {
+                                                "type": "Fixed",
+                                                "amount": 1
+                                            }
+                                        },
+                                        "filter": "creature own:you",
+                                        "storeSelected": "returned",
+                                        "prompt": "Choose a creature card put into your graveyard this way to return to the battlefield"
                                     },
                                     {
                                         "type": "MoveCollection",
-                                        "from": "destroyAll_gathered",
+                                        "from": "returned",
                                         "destination": {
                                             "type": "ToZone",
-                                            "zone": "Graveyard"
-                                        },
-                                        "moveType": "Destroy",
-                                        "storeMovedAs": "destroyed"
-                                    }
+                                            "zone": "Battlefield"
+                                        }
+                                    },
+                                    "GiftGiven"
                                 ]
-                            },
-                            {
-                                "type": "SelectFromCollection",
-                                "from": "destroyed",
-                                "selection": {
-                                    "type": "ChooseUpTo",
-                                    "count": {
-                                        "type": "Fixed",
-                                        "amount": 1
-                                    }
-                                },
-                                "filter": "creature own:you",
-                                "storeSelected": "returned",
-                                "prompt": "Choose a creature card put into your graveyard this way to return to the battlefield"
-                            },
-                            {
-                                "type": "MoveCollection",
-                                "from": "returned",
-                                "destination": {
-                                    "type": "ToZone",
-                                    "zone": "Battlefield"
-                                }
-                            },
-                            "GiftGiven"
+                            }
                         ]
                     },
                     "description": "Promise a gift — an opponent draws a card, then destroy all creatures and return one of yours to the battlefield"
@@ -17634,24 +17845,33 @@
                                 "type": "Composite",
                                 "effects": [
                                     {
-                                        "type": "CreateToken",
-                                        "power": 1,
-                                        "toughness": 1,
-                                        "colors": [
-                                            "BLUE"
-                                        ],
-                                        "creatureTypes": [
-                                            "Fish"
-                                        ],
-                                        "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
-                                        "controller": {
-                                            "type": "PlayerRef",
-                                            "player": "AnOpponent"
-                                        },
-                                        "tapped": true
+                                        "type": "ChooseOpponentForSource",
+                                        "prompt": "Choose an opponent to receive the gift"
                                     },
-                                    "AttachEquipment",
-                                    "GiftGiven"
+                                    {
+                                        "type": "Composite",
+                                        "effects": [
+                                            {
+                                                "type": "CreateToken",
+                                                "power": 1,
+                                                "toughness": 1,
+                                                "colors": [
+                                                    "BLUE"
+                                                ],
+                                                "creatureTypes": [
+                                                    "Fish"
+                                                ],
+                                                "imageUri": "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109",
+                                                "controller": {
+                                                    "type": "PlayerRef",
+                                                    "player": "ChosenOpponent"
+                                                },
+                                                "tapped": true
+                                            },
+                                            "AttachEquipment",
+                                            "GiftGiven"
+                                        ]
+                                    }
                                 ]
                             },
                             "targetRequirements": [
@@ -19667,7 +19887,10 @@
                             "type": "Compare",
                             "left": {
                                 "type": "TurnTracking",
-                                "player": "EachOpponent",
+                                "player": {
+                                    "type": "ContextPlayer",
+                                    "index": 0
+                                },
                                 "tracker": "LIFE_LOST"
                             },
                             "operator": "GTE",
@@ -20690,43 +20913,52 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "CreatePredefinedToken",
-                                "tokenType": "Food",
-                                "controller": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "ForEach",
-                                "space": {
-                                    "type": "IterationSpace.Group",
-                                    "filter": {
-                                        "baseFilter": "creature ctrl:you"
-                                    }
-                                },
-                                "body": {
-                                    "type": "ModifyStats",
-                                    "powerModifier": {
-                                        "type": "Fixed",
-                                        "amount": 2
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "CreatePredefinedToken",
+                                        "tokenType": "Food",
+                                        "controller": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
                                     },
-                                    "toughnessModifier": {
-                                        "type": "Fixed",
-                                        "amount": 0
+                                    {
+                                        "type": "ForEach",
+                                        "space": {
+                                            "type": "IterationSpace.Group",
+                                            "filter": {
+                                                "baseFilter": "creature ctrl:you"
+                                            }
+                                        },
+                                        "body": {
+                                            "type": "ModifyStats",
+                                            "powerModifier": {
+                                                "type": "Fixed",
+                                                "amount": 2
+                                            },
+                                            "toughnessModifier": {
+                                                "type": "Fixed",
+                                                "amount": 0
+                                            },
+                                            "target": "Self"
+                                        }
                                     },
-                                    "target": "Self"
-                                }
-                            },
-                            {
-                                "type": "GrantKeyword",
-                                "keyword": "FIRST_STRIKE",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            "GiftGiven"
+                                    {
+                                        "type": "GrantKeyword",
+                                        "keyword": "FIRST_STRIKE",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -21602,35 +21834,44 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                },
-                                "destination": "Graveyard",
-                                "byDestruction": true
-                            },
-                            {
-                                "type": "MoveToZone",
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 1
-                                },
-                                "destination": "Graveyard",
-                                "byDestruction": true
-                            },
-                            "GiftGiven"
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Graveyard",
+                                        "byDestruction": true
+                                    },
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 1
+                                        },
+                                        "destination": "Graveyard",
+                                        "byDestruction": true
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
@@ -22176,45 +22417,54 @@
                         "type": "Composite",
                         "effects": [
                             {
-                                "type": "DrawCards",
-                                "count": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "PlayerRef",
-                                    "player": "AnOpponent"
-                                }
+                                "type": "ChooseOpponentForSource",
+                                "prompt": "Choose an opponent to receive the gift"
                             },
                             {
-                                "type": "DealDamage",
-                                "amount": {
-                                    "type": "Fixed",
-                                    "amount": 1
-                                },
-                                "target": {
-                                    "type": "ContextTarget",
-                                    "index": 0
-                                }
-                            },
-                            {
-                                "type": "ForEach",
-                                "space": {
-                                    "type": "IterationSpace.Group",
-                                    "filter": {
-                                        "baseFilter": "creature"
-                                    }
-                                },
-                                "body": {
-                                    "type": "DealDamage",
-                                    "amount": {
-                                        "type": "Fixed",
-                                        "amount": 2
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "DrawCards",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "PlayerRef",
+                                            "player": "ChosenOpponent"
+                                        }
                                     },
-                                    "target": "Self"
-                                }
-                            },
-                            "GiftGiven"
+                                    {
+                                        "type": "DealDamage",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "ForEach",
+                                        "space": {
+                                            "type": "IterationSpace.Group",
+                                            "filter": {
+                                                "baseFilter": "creature"
+                                            }
+                                        },
+                                        "body": {
+                                            "type": "DealDamage",
+                                            "amount": {
+                                                "type": "Fixed",
+                                                "amount": 2
+                                            },
+                                            "target": "Self"
+                                        }
+                                    },
+                                    "GiftGiven"
+                                ]
+                            }
                         ]
                     },
                     "targetRequirements": [
