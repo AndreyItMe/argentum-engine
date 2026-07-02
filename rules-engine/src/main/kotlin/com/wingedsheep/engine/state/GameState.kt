@@ -1103,6 +1103,12 @@ data class CastSpellRecord(
     val paidWithTreasureMana: Boolean = false,
     val sourceEntityId: EntityId? = null,
     val castFromZone: Zone? = null,
+    /**
+     * The spell's card name, so name predicates ("the first Otter spell OTHER THAN ALANIA")
+     * can match cast records. Null for records predating name tracking; name predicates
+     * treat a missing name as unknown (NameEquals fails, so its negation matches).
+     */
+    val name: String? = null,
 )
 
 /**

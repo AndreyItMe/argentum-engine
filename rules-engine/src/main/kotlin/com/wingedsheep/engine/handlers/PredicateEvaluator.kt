@@ -1276,8 +1276,9 @@ class PredicateEvaluator {
             is CardPredicate.PowerLessThanEntity,
             CardPredicate.ToughnessGreaterThanPower -> false
 
-            // Name / printing predicates — not stored in record
-            is CardPredicate.NameEquals -> false
+            // Name predicates — matched against the record's card name; a record without a
+            // name (predating name tracking) is unknown and never equals a given name.
+            is CardPredicate.NameEquals -> record.name == predicate.name
             is CardPredicate.NameEqualsChosen -> false
             CardPredicate.NameNotSharedWithControlledRoom -> false
             is CardPredicate.OriginallyPrintedInSet -> false

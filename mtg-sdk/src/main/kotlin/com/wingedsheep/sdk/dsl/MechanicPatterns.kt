@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.CreatePredefinedTokenEffect
 import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.Chooser
 import com.wingedsheep.sdk.scripting.effects.ChooseActionEffect
+import com.wingedsheep.sdk.scripting.effects.ChooseOpponentForSourceEffect
 import com.wingedsheep.sdk.scripting.effects.CollectionFilter
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -273,6 +274,12 @@ object MechanicPatterns {
      * [com.wingedsheep.sdk.dsl.Effects.GiftGiven]). The flag `countsAsModalSpell = false`
      * keeps "Whenever you cast a modal spell" triggers from misreading Gift as modal.
      *
+     * The gift branch is prefixed with a
+     * [com.wingedsheep.sdk.scripting.effects.ChooseOpponentForSourceEffect]: the promising
+     * player picks WHICH opponent receives the gift (forced, promptless with a single
+     * opponent), and the gift effect addresses the recipient through
+     * [com.wingedsheep.sdk.scripting.references.Player.ChosenOpponent].
+     *
      * Standard usage:
      * ```kotlin
      * spell {
@@ -283,9 +290,17 @@ object MechanicPatterns {
      *     )
      * }
      * ```
+     * where `opponentDraws` targets `Player.ChosenOpponent`.
      */
     fun giftSpell(noGiftMode: Mode, giftMode: Mode): ModalEffect =
-        ModalEffect.chooseOne(noGiftMode, giftMode, countsAsModalSpell = false)
+        ModalEffect.chooseOne(
+            noGiftMode,
+            giftMode.copy(
+                effect = ChooseOpponentForSourceEffect(prompt = "Choose an opponent to receive the gift")
+                    .then(giftMode.effect)
+            ),
+            countsAsModalSpell = false
+        )
 
     // =========================================================================
     // Incubate Pattern (CR 701.53)

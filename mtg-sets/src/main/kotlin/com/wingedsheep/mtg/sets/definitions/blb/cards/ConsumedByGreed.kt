@@ -47,7 +47,7 @@ val ConsumedByGreed = card("Consumed by Greed") {
             Mode(
                 effect = Effects.Composite(
                     listOf(
-                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.AnOpponent)),
+                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.ChosenOpponent)),
                         sacrificeEffect,
                         Effects.ReturnToHand(EffectTarget.ContextTarget(1)),
                         Effects.GiftGiven()

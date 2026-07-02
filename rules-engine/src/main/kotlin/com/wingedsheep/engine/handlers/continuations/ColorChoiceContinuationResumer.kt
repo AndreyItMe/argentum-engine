@@ -19,6 +19,7 @@ class ColorChoiceContinuationResumer(
         resumer(ChooseColorThenContinuation::class, ::resumeChooseColorThen),
         resumer(ChooseNumberThenContinuation::class, ::resumeChooseNumberThen),
         resumer(ChooseNumberForSourceContinuation::class, ::resumeChooseNumberForSource),
+        resumer(ChooseOpponentForSourceContinuation::class, ::resumeChooseOpponentForSource),
         resumer(ChooseManaColorContinuation::class, ::resumeChooseManaColor),
         resumer(ChooseColorForTargetContinuation::class, ::resumeChooseColorForTarget),
         resumer(ChooseAnyColorTapBonusContinuation::class, ::resumeChooseAnyColorTapBonus)
@@ -90,6 +91,28 @@ class ColorChoiceContinuationResumer(
         }
         val newState = state.updateEntity(continuation.sourceId) { container ->
             container.withCastChoice(continuation.slot, ChoiceValue.NumberChoice(response.number))
+        }
+        return checkForMore(newState, emptyList())
+    }
+
+    fun resumeChooseOpponentForSource(
+        state: GameState,
+        continuation: ChooseOpponentForSourceContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is OptionChosenResponse) {
+            return ExecutionResult.error(state, "Expected option choice response for ChooseOpponentForSource effect")
+        }
+        val chosen = continuation.opponentIds.getOrNull(response.optionIndex)
+            ?: return ExecutionResult.error(state, "Opponent choice index ${response.optionIndex} out of range")
+        // Record the chosen opponent durably on the source (spell or permanent) so
+        // Player.ChosenOpponent reads it for the rest of the resolution and beyond.
+        if (state.getEntity(continuation.sourceId) == null) {
+            return checkForMore(state, emptyList())
+        }
+        val newState = state.updateEntity(continuation.sourceId) { container ->
+            container.withCastChoice(ChoiceSlot.OPPONENT, ChoiceValue.EntityChoice(chosen))
         }
         return checkForMore(newState, emptyList())
     }

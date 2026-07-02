@@ -48,7 +48,7 @@ val WildfireHowl = card("Wildfire Howl") {
             Mode.withTarget(
                 Effects.Composite(
                     listOf(
-                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.AnOpponent)),
+                        DrawCardsEffect(1, EffectTarget.PlayerRef(Player.ChosenOpponent)),
                         DealDamageEffect(1, EffectTarget.ContextTarget(0)),
                         damageToEachCreature,
                         Effects.GiftGiven()

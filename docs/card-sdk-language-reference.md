@@ -1402,6 +1402,14 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   (replacement at entry + this effect each upkeep), whose P/T is a
   `SetBasePowerToughnessDynamicStatic(power = CastChoice(CHOSEN_NUMBER), toughness = Subtract(Fixed(7),
   CastChoice(CHOSEN_NUMBER)))` CDA — power = last chosen number, toughness = 7 − it.
+- `Effects.ChooseOpponent(prompt)` — the controller picks an opponent, **stored durably on the
+  source entity** under `ChoiceSlot.OPPONENT` (a `ChoiceValue.EntityChoice` in its
+  `CastChoicesComponent`) and read back through `Player.ChosenOpponent`. Forced (promptless) with a
+  single opponent, so 2-player games see no extra decision. The source may be a spell on the stack
+  (the choice lives on the spell entity for its resolution) or a permanent (recorded durably).
+  `Patterns.Mechanic.giftSpell` prefixes its gift mode with this automatically — gift recipients
+  address `Player.ChosenOpponent`. The *as-enters* analogue is `EntersWithChoice(ChoiceType.OPPONENT)`,
+  which writes the same slot (Jihad, The Rack).
 - `GrantHexproofFromChosenColorEffect(target)` — hexproof from chosen color.
 - `GrantProtectionFromChosenColorEffect(target)` — protection from chosen color. Must run inside `ChooseColorThen`; wrap in `ForEachInGroup` for the group case (Akroma's Blessing: "Creatures you control gain protection from the chosen color").
 - `Effects.GrantProtectionFromChosenCardType(target, duration)` — "gains protection from the card type of your choice" (Pippin, Guard of the Citadel). The card-type analogue of `GrantProtectionFromChosenColor`, but **self-contained**: its executor owns the choice — it presents a `ChooseOptionDecision` over the fixed protectable card-type set (Artifact, Creature, Enchantment, Instant, Land, Planeswalker, Sorcery, Battle) and, on response, grants a floating `PROTECTION_FROM_CARDTYPE_<TYPE>` keyword for `duration`. The targeting validator, `StackResolver` spell-targeting, `DamageUtils`, the combat-damage pipeline/manager, and a `ProtectionFromCardTypeRule` block-evasion rule all match the protected keyword against the source's projected card types. (The "can't be enchanted/equipped by that type" clause is reminder text and unenforced at attach time, mirroring color/subtype protection.)
@@ -4556,6 +4564,10 @@ answer it and would silently return `false`.
 - `APlayerLifeAtMost(n)` — *some* player in the game has ≤N life (existential over `state.turnOrder`; distinct from `LifeAtMost`, which is `Player.You`). Used by enters-tapped-unless lands like Razortrap Gorge.
 - `YouLostLife` — you lost life this turn.
 - `OpponentLostLife` — an opponent lost life this turn.
+- `PlayerLostLifeThisTurn(player)` — a specific player lost life this turn. Use when the wording
+  binds the check to a particular player rather than "an opponent" — Thought-Stalker Warlock's
+  "choose target opponent. If THEY lost life this turn, …" is
+  `PlayerLostLifeThisTurn(Player.ContextPlayer(0))` (the chosen target, not any opponent).
 - `YouGainedLifeThisTurn` — you gained ≥1 life this turn (intervening-if / static gate; backed by the
   `LIFE_GAINED` turn tracker). Used by Ulna Alley Shopkeep's Infusion buff.
 - `YouGainedLifeThisTurnAtLeast(n)` — you gained ≥`n` life this turn. The threshold form of

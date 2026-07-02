@@ -47,7 +47,7 @@ val CoilingRebirth = card("Coiling Rebirth") {
             ),
             // Mode 2: Gift a card — opponent draws, return creature, then if nonlegendary create 1/1 copy
             Mode(
-                effect = DrawCardsEffect(1, EffectTarget.PlayerRef(Player.AnOpponent))
+                effect = DrawCardsEffect(1, EffectTarget.PlayerRef(Player.ChosenOpponent))
                     .then(returnEffect)
                     .then(
                         ConditionalEffect(

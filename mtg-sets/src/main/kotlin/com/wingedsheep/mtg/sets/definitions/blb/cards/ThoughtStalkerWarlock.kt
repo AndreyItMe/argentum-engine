@@ -50,7 +50,9 @@ val ThoughtStalkerWarlock = card("Thought-Stalker Warlock") {
         trigger = Triggers.EntersBattlefield
         val opponent = target("opponent", Targets.Opponent)
         effect = ConditionalEffect(
-            condition = Conditions.OpponentLostLifeThisTurn,
+            // "If THEY lost life this turn" — bound to the chosen target opponent,
+            // not any opponent (matters in multiplayer)
+            condition = Conditions.PlayerLostLifeThisTurn(Player.ContextPlayer(0)),
             // If they lost life: reveal hand, controller chooses nonland, discard it
             effect = Effects.Composite(
                 listOf(

@@ -742,3 +742,24 @@ data class ChooseNumberForSourceEffect(
 ) : Effect {
     override val description: String = "choose a number between $minValue and $maxValue"
 }
+
+/**
+ * The controller chooses an opponent; the choice is written durably onto the source entity's
+ * cast-choices bag under [com.wingedsheep.sdk.scripting.ChoiceSlot.OPPONENT], where downstream
+ * effects read it back through [com.wingedsheep.sdk.scripting.references.Player.ChosenOpponent].
+ *
+ * With a single opponent the choice is forced and resolves without a prompt, so two-player
+ * games see no extra decision. The source may be a spell on the stack (gift instants and
+ * sorceries — the choice lives on the spell entity for the rest of its resolution) or a
+ * permanent (gift ETB triggers — the choice is recorded durably on the permanent).
+ *
+ * Used by the gift mechanic ([com.wingedsheep.sdk.dsl.MechanicPatterns.giftSpell]): "promise
+ * an opponent a gift" — the promising player picks which opponent receives it.
+ */
+@SerialName("ChooseOpponentForSource")
+@Serializable
+data class ChooseOpponentForSourceEffect(
+    val prompt: String = "Choose an opponent"
+) : Effect {
+    override val description: String = "choose an opponent"
+}

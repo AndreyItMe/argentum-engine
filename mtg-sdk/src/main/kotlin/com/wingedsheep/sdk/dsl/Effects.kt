@@ -2234,6 +2234,16 @@ object Effects {
     )
 
     /**
+     * The controller chooses an opponent, stored durably on the source entity under
+     * [com.wingedsheep.sdk.scripting.ChoiceSlot.OPPONENT] and read back through
+     * [com.wingedsheep.sdk.scripting.references.Player.ChosenOpponent]. Forced (no prompt)
+     * with a single opponent, so 2-player games see no extra decision. Powers the gift
+     * mechanic's "promise AN OPPONENT a gift" recipient choice.
+     */
+    fun ChooseOpponent(prompt: String = "Choose an opponent"): Effect =
+        com.wingedsheep.sdk.scripting.effects.ChooseOpponentForSourceEffect(prompt)
+
+    /**
      * Grant Toxic N to a target until end of turn.
      *
      * Composes [GrantKeywordEffect] with the `TOXIC_<n>` string keyword — the same projected

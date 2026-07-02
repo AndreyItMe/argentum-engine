@@ -1445,7 +1445,8 @@ class ConditionEvaluator(
             typeLine = card.typeLine,
             manaValue = card.manaValue,
             colors = card.colors,
-            isFaceDown = entity.has<com.wingedsheep.engine.state.components.identity.FaceDownComponent>()
+            isFaceDown = entity.has<com.wingedsheep.engine.state.components.identity.FaceDownComponent>(),
+            name = card.name
         )
         return PredicateEvaluator().matchesFilter(triggeringRecord, filter)
     }
