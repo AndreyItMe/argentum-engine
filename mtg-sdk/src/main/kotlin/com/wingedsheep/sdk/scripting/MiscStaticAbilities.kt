@@ -846,12 +846,20 @@ data class AdditionalETBOrLTBTriggers(
  * @property sourceFilter Which permanents' triggers get doubled (matched via projected state).
  * @property excludeSelf When true, the static ability's own source is excluded from the filter
  *   (matches the "another" wording in oracle text). Defaults to true.
+ * @property alsoSource When true, the doubler *also* doubles its own source's triggered abilities,
+ *   independently of [sourceFilter]/[excludeSelf]. Used for "a triggered ability of ~ **or** …"
+ *   wordings where the source itself is one of the doubled objects (Cloud, Midgar Mercenary:
+ *   "a triggered ability of Cloud or an Equipment attached to it"). Defaults to false.
+ * @property condition Optional gate evaluated against the doubler source; the whole ability applies
+ *   only while it holds ("As long as Cloud is equipped, …"). A `null` condition always applies.
  */
 @SerialName("AdditionalSourceTriggers")
 @Serializable
 data class AdditionalSourceTriggers(
     val sourceFilter: GameObjectFilter,
     val excludeSelf: Boolean = true,
+    val alsoSource: Boolean = false,
+    val condition: Condition? = null,
     override val description: String = "If a triggered ability of another permanent matching the filter you control triggers, it triggers an additional time"
 ) : StaticAbility {
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
@@ -987,4 +995,21 @@ data class ReduceEquipCost(
     override val description: String =
         if (onlyIfTargetIsSource) "Equip abilities you activate that target this permanent cost {$amount} less to activate"
         else "Equip abilities you activate cost {$amount} less to activate"
+}
+
+/**
+ * Marked damage isn't removed from this permanent during cleanup steps — an exception to the
+ * CR 514.2 turn-based action that normally removes all marked damage. Models Ancient
+ * Adamantoise ("Damage isn't removed from this creature during cleanup steps"), whose damage
+ * accumulates turn over turn until it becomes lethal.
+ *
+ * This is a *turn-based read*, not a Rule 613 continuous effect: the cleanup step consults it
+ * directly (see [com.wingedsheep.engine.core.CleanupPhaseManager]) rather than projecting a
+ * component. Only the CR 514.2 cleanup removal is suppressed — other damage-removal effects
+ * (regeneration, "remove all damage") still work, per the card's ruling.
+ */
+@SerialName("DamagePersistsThroughCleanup")
+@Serializable
+data object DamagePersistsThroughCleanup : StaticAbility {
+    override val description: String = "Damage isn't removed from this permanent during cleanup steps"
 }

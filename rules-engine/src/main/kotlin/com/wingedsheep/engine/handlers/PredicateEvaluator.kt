@@ -1106,6 +1106,14 @@ class PredicateEvaluator {
                 attachedTo == entityId
             }
 
+            // Mirror of IsAttachedToBySource: the candidate is an Aura/Equipment attached TO the
+            // source (static on the host, e.g. Cloud's "an Equipment attached to it").
+            StatePredicate.IsAttachedToSource -> {
+                val sourceId = context?.sourceId ?: return false
+                val attachedTo = state.getEntity(entityId)?.get<AttachedToComponent>()?.targetId
+                attachedTo == sourceId
+            }
+
             // Source-relative: the candidate card was exiled by the effect's source permanent, i.e.
             // its id is recorded in the source's LinkedExileComponent. Backs "target card exiled
             // with ~" reanimation (The Darkness Crystal). Inert with no source context.

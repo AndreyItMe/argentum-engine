@@ -34,7 +34,7 @@ class DiscardAndDrawContinuationResumer(
         // actions. Finish them now — otherwise marked damage (notably deathtouch damage that an
         // expiring "until end of turn" indestructible had suppressed) persists into the next turn
         // and kills the creature on the following turn's state-based-action check.
-        val cleanedState = CleanupPhaseManager.applyCleanupTurnBasedActions(result.state)
+        val cleanedState = CleanupPhaseManager.applyCleanupTurnBasedActions(result.state, services.cardRegistry)
         return checkForMore(cleanedState, result.events)
     }
 

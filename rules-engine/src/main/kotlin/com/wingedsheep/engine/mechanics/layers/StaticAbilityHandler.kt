@@ -100,6 +100,7 @@ import com.wingedsheep.sdk.scripting.CantBlockUnless
 import com.wingedsheep.sdk.scripting.CantBlockUnlessCoBlocker
 import com.wingedsheep.sdk.scripting.CantCastSpellsSharingColorWithLastCast
 import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.DamagePersistsThroughCleanup
 import com.wingedsheep.sdk.scripting.DampLandManaProduction
 import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import com.wingedsheep.sdk.scripting.ExtraLoyaltyActivation
@@ -872,6 +873,7 @@ class StaticAbilityHandler(
             is SuppressEntersTriggers,
 
             // Turn-based actions (BeginningPhaseManager / CleanupPhaseManager):
+            is DamagePersistsThroughCleanup,
             is NoMaximumHandSize,
             is SetMaximumHandSize,
             is PreventManaPoolEmptying,

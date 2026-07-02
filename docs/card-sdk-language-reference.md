@@ -2399,6 +2399,12 @@ work for abilities-on-stack (which carry no `CardComponent`).
   `PreventActivatedAbilities(GameObjectFilter.Permanent.attachedToBySource())`. Resolves
   against `PredicateContext.sourceId`; inert with no source / unattached source, and never matches in
   group-static projection or trigger-gating contexts (no source there).
+- `IsAttachedToSource` (filter builder `attachedToSource()`) — the *mirror* of `IsAttachedToBySource`:
+  matches an Aura/Equipment currently attached **to** the effect's source, read from the candidate's
+  `AttachedToComponent.targetId == sourceId`. Use it to scope a static ability on the *host* to its own
+  attachments — Cloud, Midgar Mercenary's "an Equipment attached to it" via
+  `GameObjectFilter.Artifact.withSubtype("Equipment").attachedToSource()`. Source-relative; inert with no
+  source context.
 - `HasGreatestPower` (filter builder `hasGreatestPower()`) / `HasLeastPower` (filter builder
   `hasLeastPower()`) — has the greatest / least projected power among creatures *its controller*
   controls (ties all qualify). Used for "creature with the greatest/least power" target and edict
@@ -3582,10 +3588,16 @@ staticAbility {
   `mustBeYouControl = false` drops the "X you control" restriction on the cause (Starfield
   Vocalist); adding `BattlefieldDirection.LEAVING` covers Gandalf the White's "entering or leaving
   the battlefield" wording. `TriggerDetector.duplicateETBOrLTBTriggers`; additive across copies.
-- `AdditionalSourceTriggers(sourceFilter, excludeSelf = true)` — Twinflame Travelers: all triggered
-  abilities of permanents matching `sourceFilter` you control trigger an additional time (not just ETB).
-  Set `excludeSelf = false` for "a permanent you control" wording that includes the source itself
-  (Fractured Realm). `TriggerDetector.duplicateSourceTriggers`.
+- `AdditionalSourceTriggers(sourceFilter, excludeSelf = true, alsoSource = false, condition = null)` —
+  Twinflame Travelers: all triggered abilities of permanents matching `sourceFilter` you control trigger
+  an additional time (not just ETB). Set `excludeSelf = false` for "a permanent you control" wording that
+  includes the source itself (Fractured Realm). `alsoSource = true` *also* doubles the doubler's own
+  triggers regardless of the filter — the "a triggered ability of ~ **or** …" wording where the source is
+  one of the doubled objects. `condition` gates the whole ability against the doubler source ("As long as
+  ~ is equipped, …"); a `null` condition always applies. Cloud, Midgar Mercenary combines all three:
+  `AdditionalSourceTriggers(sourceFilter = Artifact.withSubtype("Equipment").attachedToSource(),
+  alsoSource = true, condition = Conditions.SourceMatches(GameObjectFilter.Any.equipped()))`.
+  `TriggerDetector.duplicateSourceTriggers` (and `ActivateAbilityHandler` for triggered mana abilities).
 - `AdditionalAttackTriggers(attackerFilter = GameObjectFilter.Any)` — Windcrag Siege (Mardu): the
   attack-cause analogue of `AdditionalETBOrLTBTriggers`. If a creature matching `attackerFilter`
   being declared as an attacker causes an attack-related triggered ability ("whenever a creature
@@ -3754,6 +3766,12 @@ staticAbility {
   battlefield*. (Thought Vessel, Reliquary Tower) For a one-shot resolution effect that confers a
   *permanent, player-scoped* "no maximum hand size for the rest of the game" (survives the source
   leaving play), use the effect `Effects.RemoveMaximumHandSize(target)` instead — see §4. (Wisdom of Ages)
+- `DamagePersistsThroughCleanup` — marked damage isn't removed from this permanent during cleanup
+  steps, an exception to the CR 514.2 turn-based damage removal, so damage accumulates turn over turn
+  until it becomes lethal (Ancient Adamantoise). A turn-based read consulted directly by
+  `CleanupPhaseManager` (via `RoomFaceStatics` for the printed case, plus granted instances), not a
+  Rule 613 projection. Only the cleanup removal is suppressed — regeneration and "remove all damage"
+  effects still clear the damage. Add with `staticAbility { ability = DamagePersistsThroughCleanup }`.
 - `GrantCantLoseGame` — controller "can't lose the game" while this permanent is on the battlefield
   (Lich's Mastery, Platinum Angel). Suppresses *all* loss conditions for that player (0-or-less life,
   poison, empty-library draw, effect losses); opponents can still win via "you win the game" effects.
