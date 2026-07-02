@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.effects.IfYouDoEffect
 import com.wingedsheep.sdk.scripting.effects.MayEffect
+import com.wingedsheep.sdk.scripting.effects.SuccessCriterion
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -72,7 +73,10 @@ val SauronTheDarkLord = card("Sauron, the Dark Lord") {
         effect = MayEffect(
             IfYouDoEffect(
                 action = Patterns.Hand.discardHand(EffectTarget.Controller),
-                ifYouDo = Effects.DrawCards(4)
+                ifYouDo = Effects.DrawCards(4),
+                // Discarding your hand always succeeds, even with zero cards in it — Auto's
+                // "graveyard grew" probe would wrongly skip the draw on an empty hand.
+                successCriterion = SuccessCriterion.Always
             )
         )
         description = "You may discard your hand. If you do, draw four cards."

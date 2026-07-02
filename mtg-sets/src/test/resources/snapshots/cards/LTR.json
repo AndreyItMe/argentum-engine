@@ -15140,7 +15140,8 @@
                                         "moveType": "Discard"
                                     }
                                 ]
-                            }
+                            },
+                            "successCriterion": "SuccessCriterion.Always"
                         },
                         "then": {
                             "type": "DrawCards",

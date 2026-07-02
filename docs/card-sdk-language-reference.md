@@ -1213,7 +1213,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
     enforced corpus-wide by `SuccessCriterionValidationTest`) rejects an Auto criterion on any other
     action — non-zone-move actions (deal damage, gain life, …) must state `SuccessCriterion.Always`,
     `CollectionNonEmpty(name, min)`, or `DamageDealt(recipient)` explicitly instead of silently
-    inheriting a fail-open "it happened". `SuccessCriterion.DamageDealt(recipient = Controller|Any)`
+    inheriting a fail-open "it happened". Auto's zone-grew probe is also **wrong for zone-move
+    actions that succeed vacuously**: "discard your hand" discards zero cards from an empty hand yet
+    still counts as performed (Narset, Jeskai Waymaster ruling 2025-04-04 — "You may choose to
+    discard your hand even if your hand contains zero cards"), so gate it with
+    `SuccessCriterion.Always`, never Auto (Vaultguard Trooper, Narset, Sauron the Dark Lord). `SuccessCriterion.DamageDealt(recipient = Controller|Any)`
     gates on whether the action **actually dealt damage** from the effect's source (a positive-amount
     `DamageDealtEvent` sourced from it) — damage that was fully prevented or replaced (a Circle of
     Protection, a prevention shield, redirection) emits no such event and counts as "didn't happen".

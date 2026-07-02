@@ -76,6 +76,32 @@ class NarsetJeskaiWaymasterScenarioTest : FunSpec({
         driver.getHand(controller).size shouldBe 2
     }
 
+    test("empty hand can still be discarded — the draw fires (ruling 2025-04-04)") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Mountain" to 40), startingLife = 20)
+        val controller = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        driver.putPermanentOnBattlefield(controller, "Narset, Jeskai Waymaster")
+
+        // Cast one spell this turn, then empty the hand entirely.
+        driver.giveMana(controller, Color.RED, 1)
+        val boltCard = driver.putCardInHand(controller, "Test Bolt")
+        driver.submit(CastSpell(playerId = controller, cardId = boltCard))
+        driver.resolveStack()
+        driver.getHand(controller).forEach { driver.moveToGraveyard(it) }
+        driver.getHand(controller).size shouldBe 0
+
+        driver.passPriorityUntil(Step.END)
+        var guard = 0
+        while (driver.state.pendingDecision == null && guard < 20) { driver.bothPass(); guard++ }
+        driver.submitYesNo(controller, true)
+        driver.resolveStack()
+
+        // Discarding zero cards still counts as "if you do" — draw one (one spell cast).
+        driver.getHand(controller).size shouldBe 1
+    }
+
     test("declining the end-step ability keeps the hand and draws nothing") {
         val driver = createDriver()
         driver.initMirrorMatch(deck = Deck.of("Mountain" to 40), startingLife = 20)

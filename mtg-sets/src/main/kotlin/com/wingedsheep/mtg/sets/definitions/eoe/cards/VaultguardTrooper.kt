@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.scripting.conditions.Compare
 import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
 import com.wingedsheep.sdk.scripting.effects.IfYouDoEffect
 import com.wingedsheep.sdk.scripting.effects.MayEffect
+import com.wingedsheep.sdk.scripting.effects.SuccessCriterion
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -42,7 +43,10 @@ val VaultguardTrooper = card("Vaultguard Trooper") {
         effect = MayEffect(
             IfYouDoEffect(
                 action = Patterns.Hand.discardHand(EffectTarget.Controller),
-                ifYouDo = Effects.DrawCards(2)
+                ifYouDo = Effects.DrawCards(2),
+                // Discarding your hand always succeeds, even with zero cards in it — Auto's
+                // "graveyard grew" probe would wrongly skip the draw on an empty hand.
+                successCriterion = SuccessCriterion.Always
             )
         )
     }

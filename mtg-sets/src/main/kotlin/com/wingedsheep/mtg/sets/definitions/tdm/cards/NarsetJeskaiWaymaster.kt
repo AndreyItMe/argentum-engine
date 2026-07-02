@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.dsl.Patterns
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.effects.IfYouDoEffect
 import com.wingedsheep.sdk.scripting.effects.MayEffect
+import com.wingedsheep.sdk.scripting.effects.SuccessCriterion
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -39,7 +40,10 @@ val NarsetJeskaiWaymaster = card("Narset, Jeskai Waymaster") {
         effect = MayEffect(
             IfYouDoEffect(
                 action = Patterns.Hand.discardHand(EffectTarget.Controller),
-                ifYouDo = Effects.DrawCards(DynamicAmount.SpellsCastThisTurn(Player.You))
+                ifYouDo = Effects.DrawCards(DynamicAmount.SpellsCastThisTurn(Player.You)),
+                // Discarding your hand always succeeds, even with zero cards in it (official
+                // ruling 2025-04-04) — Auto's "graveyard grew" probe would skip the empty-hand draw.
+                successCriterion = SuccessCriterion.Always
             )
         )
         description = "You may discard your hand. If you do, draw cards equal to the number of spells you've cast this turn."
