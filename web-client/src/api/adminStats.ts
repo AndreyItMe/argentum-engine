@@ -102,6 +102,9 @@ export const fetchOverview = (auth: AdminAuth) => getAdminStats<GlobalOverview>(
 export const fetchGamesPerDay = (auth: AdminAuth, days = 30) =>
   getAdminStats<DailyCount[]>(auth, `/games-per-day?days=${days}`)
 export const fetchModeDistribution = (auth: AdminAuth) => getAdminStats<StatBucket[]>(auth, '/modes')
+/** Sets played most across recorded tournaments (counted once per tournament that used each set). */
+export const fetchTournamentSets = (auth: AdminAuth) =>
+  getAdminStats<StatBucket[]>(auth, '/tournament-sets')
 export const fetchColorDistribution = (auth: AdminAuth) => getAdminStats<StatBucket[]>(auth, '/colors')
 export const fetchGeo = (auth: AdminAuth) => getAdminStats<GeoBucket[]>(auth, '/geo')
 export const fetchTopCards = (auth: AdminAuth, limit = 50) =>

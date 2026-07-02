@@ -66,11 +66,13 @@ export function AdminScreen({
 
 export function Panel({
   title,
+  subtitle,
   action,
   children,
   span2,
 }: {
   title?: string
+  subtitle?: string
   action?: React.ReactNode
   children: React.ReactNode
   span2?: boolean
@@ -79,7 +81,10 @@ export function Panel({
     <div style={span2 ? { ...panelStyle.panel, gridColumn: '1 / -1' } : panelStyle.panel}>
       {(title || action) && (
         <div style={panelStyle.panelHead}>
-          {title && <h2 style={panelStyle.panelTitle}>{title}</h2>}
+          <div style={panelStyle.panelTitleBlock}>
+            {title && <h2 style={panelStyle.panelTitle}>{title}</h2>}
+            {subtitle && <p style={panelStyle.panelSubtitle}>{subtitle}</p>}
+          </div>
           {action}
         </div>
       )}
@@ -191,7 +196,9 @@ const panelStyle: Record<string, React.CSSProperties> = {
     gap: 12,
     marginBottom: 14,
   },
+  panelTitleBlock: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 },
   panelTitle: { margin: 0, color: adminTheme.text, fontSize: 15, fontWeight: 600 },
+  panelSubtitle: { margin: 0, color: adminTheme.textMuted, fontSize: 12 },
   metric: {
     flex: '1 1 130px',
     backgroundColor: adminTheme.panel,

@@ -894,12 +894,37 @@ class StatsQueryService(
         days,
     )
 
+    /**
+     * Global game-mode distribution, most-played first. The label is a composite `"<gameMode>~<format>"`
+     * (format may be empty) mirroring the per-user [modeBreakdown], so the admin dashboard can render each
+     * mode as a hierarchy (e.g. "Tournament › Draft" vs "Tournament › Sealed") via the shared
+     * `mergeModeBuckets` prettifier rather than a flat, opaque `TOURNAMENT`. `~` never occurs in the enum
+     * names being concatenated.
+     */
     fun modeDistribution(): List<StatBucket> = jdbc.query(
         """
-        SELECT COALESCE(game_mode, 'UNKNOWN') AS label, count(*) AS n
+        SELECT COALESCE(game_mode, 'UNKNOWN') || '~' || COALESCE(format, '') AS label, count(*) AS n
         FROM match_results
-        GROUP BY COALESCE(game_mode, 'UNKNOWN')
+        GROUP BY COALESCE(game_mode, 'UNKNOWN') || '~' || COALESCE(format, '')
         ORDER BY n DESC
+        """.trimIndent(),
+    ) { rs, _ -> StatBucket(rs.getString("label"), rs.getLong("n")) }
+
+    /**
+     * Which card sets appear most across recorded tournaments, most-played first. Each set is counted
+     * once per tournament that used it (splitting the tournament's comma-separated `set_codes`), so this
+     * reflects how often a set is *chosen* for a tournament rather than raw per-game volume — a 4-player
+     * and a 32-player event using DSK both count once. Tournaments with no recorded sets (e.g.
+     * premade-deck events) are omitted since we genuinely don't know which sets they drew from.
+     */
+    fun tournamentSetDistribution(): List<StatBucket> = jdbc.query(
+        """
+        SELECT trim(s) AS label, count(*) AS n
+        FROM tournaments t
+        CROSS JOIN LATERAL unnest(string_to_array(t.set_codes, ',')) AS s
+        WHERE t.set_codes IS NOT NULL AND t.set_codes <> '' AND trim(s) <> ''
+        GROUP BY trim(s)
+        ORDER BY n DESC, label ASC
         """.trimIndent(),
     ) { rs, _ -> StatBucket(rs.getString("label"), rs.getLong("n")) }
 

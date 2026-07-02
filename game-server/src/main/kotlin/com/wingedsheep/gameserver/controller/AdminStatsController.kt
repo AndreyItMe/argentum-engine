@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Admin-only global stats for the dashboard: totals, games-per-day, mode/color distributions, and an
- * IP-based geolocation estimate. Auth uses the shared `X-Admin-Password` / admin-account gate.
+ * Admin-only global stats for the dashboard: totals, games-per-day, mode/color distributions, the
+ * sets played most in tournaments, and an IP-based geolocation estimate. Auth uses the shared
+ * `X-Admin-Password` / admin-account gate.
  * Mounted only when accounts are enabled (the stats live in Postgres); the geolocation endpoint
  * resolves raw IPs server-side and returns only aggregated locations — raw IPs never reach the client.
  */
@@ -55,6 +56,14 @@ class AdminStatsController(
         @RequestHeader("X-Admin-Password", required = false) password: String?,
         @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
     ): ResponseEntity<Any> = adminAuth.guard(password, authorization) { ResponseEntity.ok(statsQuery.modeDistribution()) }
+
+    @GetMapping("/tournament-sets")
+    fun tournamentSets(
+        @RequestHeader("X-Admin-Password", required = false) password: String?,
+        @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
+    ): ResponseEntity<Any> = adminAuth.guard(password, authorization) {
+        ResponseEntity.ok(statsQuery.tournamentSetDistribution())
+    }
 
     @GetMapping("/colors")
     fun colors(

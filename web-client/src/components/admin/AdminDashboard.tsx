@@ -1,7 +1,8 @@
 /**
  * Admin Stats: global, cross-user stats served from `/api/stats/admin/*`. Headline totals, a
- * games-per-day chart, mode/color distributions, the most-played cards and per-card win rates,
- * recorded tournaments, and an IP-based geolocation estimate of where players connect from.
+ * games-per-day chart, mode (broken down by format) / color distributions, the most-played cards and
+ * per-card win rates, the sets played most in tournaments, recorded tournaments, and an IP-based
+ * geolocation estimate of where players connect from.
  *
  * Read-only and gated behind the dashboard's shared {@link AdminAuth}. Raw IPs are never returned —
  * the server resolves them to coarse locations server-side. The screen scrolls itself (see AdminScreen).
@@ -33,13 +34,14 @@ import {
   fetchModeDistribution,
   fetchOverview,
   fetchTopCards,
+  fetchTournamentSets,
   fetchTournaments,
 } from '@/api/adminStats'
 import type { AdminAuth } from '@/api/adminAuth'
 import type { StatBucket } from '@/api/account'
 import { TournamentDetailModal } from '@/components/profile/TournamentDetailModal'
 import { TournamentStatusBadge } from '@/components/tournament/TournamentStatusBadge'
-import { colorLabel } from './statFormat'
+import { colorLabel, gameModeLabel, mergeModeBuckets } from './statFormat'
 import { GeoMap } from './GeoMap'
 import { AdminScreen, Panel, StatCard, Table, adminTheme, cellStyle, chartTooltipStyle } from './adminUi'
 
@@ -54,6 +56,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
   const [cards, setCards] = useState<CardStat[]>([])
   const [winRates, setWinRates] = useState<CardWinRate[]>([])
   const [tournaments, setTournaments] = useState<TournamentSummary[]>([])
+  const [tournamentSets, setTournamentSets] = useState<StatBucket[]>([])
   const [geo, setGeo] = useState<GeoBucket[]>([])
   const [showAllCards, setShowAllCards] = useState(false)
   const [showAllWinRates, setShowAllWinRates] = useState(false)
@@ -64,7 +67,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
     let cancelled = false
     async function load() {
       try {
-        const [ov, pd, md, cl, cs, wr, tn] = await Promise.all([
+        const [ov, pd, md, cl, cs, wr, tn, ts] = await Promise.all([
           fetchOverview(auth),
           fetchGamesPerDay(auth, 30),
           fetchModeDistribution(auth),
@@ -72,6 +75,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
           fetchTopCards(auth, 100),
           fetchCardWinRates(auth, 5, 100),
           fetchTournaments(auth, 25),
+          fetchTournamentSets(auth),
         ])
         if (cancelled) return
         setOverview(ov)
@@ -81,6 +85,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
         setCards(cs)
         setWinRates(wr)
         setTournaments(tn)
+        setTournamentSets(ts)
         // Geo can be slow (external lookups) — load it separately so the rest renders first.
         fetchGeo(auth).then((g) => !cancelled && setGeo(g)).catch(() => {})
       } catch (e) {
@@ -119,8 +124,8 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
       </Panel>
 
       <div style={styles.twoCol}>
-        <Panel title="Game modes">
-          <BucketBars data={modes} fill="#5b9ee1" />
+        <Panel title="Game modes" subtitle="Broken down by format — e.g. Tournament › Draft vs Sealed">
+          <BucketBars data={mergeModeBuckets(modes)} fill="#5b9ee1" />
         </Panel>
         <Panel title="Colors played">
           <BucketBars data={colors.map((c) => ({ label: colorLabel(c.label), count: c.count }))} fill="#e1a35b" />
@@ -158,6 +163,10 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
         </Panel>
       </div>
 
+      <Panel title="Sets played most in tournaments" subtitle="Counted once per tournament that used each set">
+        <BucketBars data={tournamentSets} fill="#8f7ad9" />
+      </Panel>
+
       <Panel title="Tournaments">
         {tournaments.length === 0 ? (
           <p style={cellStyle.muted}>No tournaments recorded yet.</p>
@@ -167,7 +176,7 @@ export function AdminDashboard({ auth, onBack }: { auth: AdminAuth; onBack: () =
               <tr key={t.id} style={styles.clickableRow} onClick={() => setOpenTournament(t.id)}>
                 <td style={cellStyle.td}>{t.endedAt.slice(0, 10)}</td>
                 <td style={cellStyle.td}>{t.name ?? '—'}</td>
-                <td style={cellStyle.td}>{t.gameMode ?? '—'}</td>
+                <td style={cellStyle.td}>{tournamentModeLabel(t.gameMode, t.format)}</td>
                 <td style={cellStyle.td}>
                   <TournamentStatusBadge status={t.status} />
                 </td>
@@ -202,6 +211,12 @@ function ShowMoreToggle({ total, expanded, onToggle }: { total: number; expanded
       {expanded ? `Show top ${CARD_PREVIEW}` : `Show all ${total}`}
     </button>
   )
+}
+
+/** A tournament's mode + deck format as a "Tournament › Draft"-style label (falls back to a dash). */
+function tournamentModeLabel(gameMode: string | null, format: string | null): string {
+  const { primary, variant } = gameModeLabel(gameMode, format)
+  return variant ? `${primary} › ${variant}` : primary
 }
 
 function BucketBars({ data, fill }: { data: StatBucket[]; fill: string }) {
