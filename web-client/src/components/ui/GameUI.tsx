@@ -22,6 +22,7 @@ import { useAuthStore } from '@/store/authStore'
 import { AuthWidget } from '@/components/auth/AuthWidget'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { DeckMigrationPrompt } from '@/components/auth/DeckMigrationPrompt'
+import { AccountBenefitsCallout } from '@/components/auth/AccountBenefitsCallout'
 import styles from './GameUI.module.css'
 
 type GameMode = 'normal' | 'tournament'
@@ -350,8 +351,8 @@ function ConnectionOverlay({
                   >
                     Create a free account
                   </button>{' '}
-                  — one magic link, no password — to save decks across devices, track your stats, and
-                  rewatch your games.
+                  — one magic link, no password — to save decks across devices, add friends, play
+                  ranked, track your stats, and rewatch your games.
                 </p>
               )}
             </div>
@@ -437,6 +438,7 @@ function ConnectionOverlay({
                 </button>
               </div>
 
+              <AccountBenefitsCallout onCreateAccount={() => setLoginOpen(true)} />
               <DeckMigrationPrompt />
 
               <div className={styles.secondaryButtonRow}>
