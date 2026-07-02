@@ -2802,7 +2802,8 @@ class TriggerDetector(
             val doublerSourceId: EntityId,
             val controllerId: EntityId,
             val filter: GameObjectFilter,
-            val excludeSelf: Boolean
+            val excludeSelf: Boolean,
+            val alsoSource: Boolean
         )
         val doublers = mutableListOf<SourceDoubler>()
 
@@ -2816,12 +2817,21 @@ class TriggerDetector(
             // (CR 709.5) is honoured, not just one in the card's top-level script.
             for (ability in RoomFaceStatics.activeStaticAbilities(container, cardDef)) {
                 if (ability is AdditionalSourceTriggers) {
+                    // Optional gate ("As long as Cloud is equipped, …") — evaluated against the
+                    // doubler source. When it fails, the whole doubler is inert this batch.
+                    val gate = ability.condition
+                    if (gate != null && !conditionEvaluator.evaluate(
+                            state, gate,
+                            EffectContext(sourceId = permanentId, controllerId = controllerId)
+                        )
+                    ) continue
                     doublers.add(
                         SourceDoubler(
                             doublerSourceId = permanentId,
                             controllerId = controllerId,
                             filter = ability.sourceFilter,
-                            excludeSelf = ability.excludeSelf
+                            excludeSelf = ability.excludeSelf,
+                            alsoSource = ability.alsoSource
                         )
                     )
                 }
@@ -2837,6 +2847,13 @@ class TriggerDetector(
             for (trigger in originals) {
                 if (trigger.controllerId != doubler.controllerId) continue
                 val triggerSourceId = trigger.sourceId
+                // `alsoSource` doubles the doubler's own triggered abilities regardless of the
+                // filter — the "or ~ itself" leg of "a triggered ability of ~ or an Equipment
+                // attached to it" (Cloud, Midgar Mercenary).
+                if (doubler.alsoSource && triggerSourceId == doubler.doublerSourceId) {
+                    duplicates.add(trigger)
+                    continue
+                }
                 if (doubler.excludeSelf && triggerSourceId == doubler.doublerSourceId) continue
                 if (!predicateEvaluator.matches(
                         state, projected, triggerSourceId, doubler.filter,

@@ -757,6 +757,103 @@
     ]
 }
 
+// Ancient Adamantoise
+{
+    "name": "Ancient Adamantoise",
+    "manaCost": "{5}{G}{G}{G}",
+    "typeLine": "Creature — Turtle",
+    "oracleText": "Vigilance, ward {3}\nDamage isn't removed from this creature during cleanup steps.\nAll damage that would be dealt to you and other permanents you control is dealt to this creature instead.\nWhen this creature dies, exile it and create ten tapped Treasure tokens.",
+    "creatureStats": {
+        "power": 8,
+        "toughness": 20
+    },
+    "keywords": [
+        "VIGILANCE",
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Mana",
+                "manaCost": "{3}"
+            }
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": "Self",
+                            "destination": "Exile"
+                        },
+                        {
+                            "type": "CreatePredefinedToken",
+                            "tokenType": "Treasure",
+                            "count": 10,
+                            "tapped": true
+                        }
+                    ]
+                },
+                "activeZone": "Graveyard"
+            }
+        ],
+        "staticAbilities": [
+            "DamagePersistsThroughCleanup"
+        ],
+        "replacementEffects": [
+            {
+                "type": "RedirectDamage",
+                "redirectTo": "Self",
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "recipient": "You"
+                }
+            },
+            {
+                "type": "RedirectDamage",
+                "redirectTo": "Self",
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "recipient": {
+                        "type": "RecipientMatching",
+                        "filter": "permanent ctrl:you"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "172",
+        "rarity": "MYTHIC",
+        "artist": "Kevin Glint",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/c/4c139f30-5ecd-48fd-ae7c-ec2cc98889ff.jpg?1782686472",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "If you control more than one Ancient Adamantoise, you choose which redirection effect to apply. You can't divide damage dealt by a single source between them, and you can't choose to take the damage yourself."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "Effects that remove all damage from a permanent (such as regeneration) will still remove damage from Ancient Adamantoise."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Ardyn, the Usurper
 {
     "name": "Ardyn, the Usurper",
@@ -3795,6 +3892,109 @@
     "colorIdentityOverride": [
         "BLACK",
         "GREEN"
+    ]
+}
+
+// Cloud, Midgar Mercenary
+{
+    "name": "Cloud, Midgar Mercenary",
+    "manaCost": "{W}{W}",
+    "typeLine": "Legendary Creature — Human Soldier Mercenary",
+    "oracleText": "When Cloud enters, search your library for an Equipment card, reveal it, put it into your hand, then shuffle.\nAs long as Cloud is equipped, if a triggered ability of Cloud or an Equipment attached to it triggers, that ability triggers an additional time.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Library",
+                                "filter": "artifact Equipment"
+                            },
+                            "storeAs": "searchable"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "searchable",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "found"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "found",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            },
+                            "revealed": true
+                        },
+                        "ShuffleLibrary",
+                        "EmitLibrarySearchedEvent"
+                    ]
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "AdditionalSourceTriggers",
+                "sourceFilter": {
+                    "cardPredicates": [
+                        "IsArtifact",
+                        {
+                            "type": "HasSubtype",
+                            "subtype": "Equipment"
+                        }
+                    ],
+                    "statePredicates": [
+                        "IsAttachedToSource"
+                    ]
+                },
+                "alsoSource": true,
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": {
+                        "statePredicates": [
+                            "IsEquipped"
+                        ]
+                    }
+                },
+                "description": "As long as Cloud is equipped, if a triggered ability of Cloud or an Equipment attached to it triggers, that ability triggers an additional time"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "10",
+        "rarity": "MYTHIC",
+        "artist": "Kazto Furuya",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/c/2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5.jpg?1782686592",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "Cloud's last ability doesn't copy the triggered ability; it just causes the ability to trigger an additional time. Any choices made as you put the ability onto the stack, such as modes and targets, are made separately for each instance of the ability. Any choices made on resolution are also made individually."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 

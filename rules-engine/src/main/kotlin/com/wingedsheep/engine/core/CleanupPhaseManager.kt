@@ -26,6 +26,7 @@ import com.wingedsheep.engine.state.components.combat.MustAttackThisTurnComponen
 import com.wingedsheep.engine.state.components.combat.PlayerAttackedThisTurnComponent
 import com.wingedsheep.engine.state.components.combat.PlayerAttackersThisTurnComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.identity.RoomFaceStatics
 import com.wingedsheep.engine.state.components.identity.CopyOfComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.identity.RevertCopyAtEndOfTurnComponent
@@ -77,6 +78,7 @@ import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.DamagePersistsThroughCleanup
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
 
@@ -152,7 +154,7 @@ class CleanupPhaseManager(
         // expire with the cleanup step. The hand-size discard (CR 514.1) above early-returns
         // *before* this point; its continuation re-runs the same actions via
         // [applyCleanupTurnBasedActions], so this block must stay side-effect-equivalent there.
-        newState = applyCleanupTurnBasedActions(newState)
+        newState = applyCleanupTurnBasedActions(newState, cardRegistry)
 
         // No priority during cleanup (normally)
         newState = newState.copy(priorityPlayerId = null)
@@ -870,17 +872,23 @@ class CleanupPhaseManager(
          * indestructible (e.g. Saved by the Shell) had been suppressing, which then kills the
          * creature on the following turn's state-based-action check.
          */
-        fun applyCleanupTurnBasedActions(state: GameState): GameState {
+        fun applyCleanupTurnBasedActions(
+            state: GameState,
+            cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
+        ): GameState {
             var newState = state
 
             // Remove damage from all permanents on the battlefield (Rule 514.2).
             // Includes vehicles that reverted from creature status this turn — their damage
-            // (and P/T from the expired floating effect) must be cleared.
+            // (and P/T from the expired floating effect) must be cleared. Permanents with a
+            // [DamagePersistsThroughCleanup] static ability (Ancient Adamantoise) are the
+            // exception — their marked damage is left in place and accumulates.
             val battlefield = newState.getBattlefield().toSet()
             val permanentsWithDamage = newState.entities.filter { (entityId, container) ->
                 entityId in battlefield && container.has<DamageComponent>()
             }.keys
             for (entityId in permanentsWithDamage) {
+                if (damagePersistsThroughCleanup(newState, cardRegistry, entityId)) continue
                 newState = newState.updateEntity(entityId) { it.without<DamageComponent>() }
             }
 
@@ -913,6 +921,28 @@ class CleanupPhaseManager(
             }
 
             return newState
+        }
+
+        /**
+         * True when [entityId]'s permanent has a [DamagePersistsThroughCleanup] static ability —
+         * either printed on its (face-aware) script or granted to it — so the CR 514.2 cleanup
+         * damage removal must skip it (Ancient Adamantoise).
+         */
+        private fun damagePersistsThroughCleanup(
+            state: GameState,
+            cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
+            entityId: EntityId,
+        ): Boolean {
+            val container = state.getEntity(entityId) ?: return false
+            val cardDef = container.get<CardComponent>()
+                ?.let { cardRegistry.getCard(it.cardDefinitionId) }
+            val printed = cardDef != null &&
+                RoomFaceStatics.activeStaticAbilities(container, cardDef)
+                    .any { it is DamagePersistsThroughCleanup }
+            if (printed) return true
+            return state.grantedStaticAbilities.any {
+                it.entityId == entityId && it.ability is DamagePersistsThroughCleanup
+            }
         }
     }
 }

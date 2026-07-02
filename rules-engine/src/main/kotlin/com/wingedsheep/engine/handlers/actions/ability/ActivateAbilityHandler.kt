@@ -1919,6 +1919,17 @@ class ActivateAbilityHandler(
             val classLevel = container.get<ClassLevelComponent>()?.currentLevel
             for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
                 if (ability !is AdditionalSourceTriggers) continue
+                // Optional gate ("as long as ~ is equipped") — evaluated against the doubler source.
+                val gate = ability.condition
+                if (gate != null && !conditionEvaluator.evaluate(
+                        state, gate, EffectContext(sourceId = permanentId, controllerId = controllerId)
+                    )
+                ) continue
+                // `alsoSource` doubles the doubler's own triggers regardless of the filter.
+                if (ability.alsoSource && permanentId == triggerSourceId) {
+                    count++
+                    continue
+                }
                 if (ability.excludeSelf && permanentId == triggerSourceId) continue
                 if (!predicateEvaluator.matches(
                         state, projected, triggerSourceId, ability.sourceFilter,

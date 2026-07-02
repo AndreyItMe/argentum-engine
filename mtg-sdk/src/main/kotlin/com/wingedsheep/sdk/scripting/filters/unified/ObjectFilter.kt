@@ -673,6 +673,15 @@ data class GameObjectFilter(
     )
 
     /**
+     * Must BE an Aura/Equipment attached to the effect's source permanent — the mirror of
+     * [attachedToBySource]. Source-relative — scopes a static ability on the *host* to its own
+     * attachments, e.g. Cloud, Midgar Mercenary's "an Equipment attached to it".
+     */
+    fun attachedToSource() = copy(
+        statePredicates = statePredicates + StatePredicate.IsAttachedToSource
+    )
+
+    /**
      * Must be attached to a permanent matching [hostFilter] (general form of attachment matching —
      * the host filter may carry a controller predicate, e.g. "a creature you control"). Used by
      * Stolen Uniform's reflexive "if it's attached to a creature you control" guard.

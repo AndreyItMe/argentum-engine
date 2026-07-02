@@ -1665,6 +1665,7 @@ class TriggerMatcher(
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsWarpExiled,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.NotTargetedByAbilityFromSameNamedSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttachedToBySource,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttachedToSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.ExiledWithSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasCastForWarp,
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedToCardType -> true

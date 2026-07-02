@@ -508,6 +508,19 @@ sealed interface StatePredicate {
     }
 
     /**
+     * The candidate is an Aura/Equipment currently *attached to* the effect's source permanent —
+     * the mirror of [IsAttachedToBySource]. Reads the candidate's `AttachedToComponent` and compares
+     * its target to the source id. Source-relative; false with no source context or an unattached
+     * candidate. Backs "an Equipment attached to it"-style filters where the static ability lives on
+     * the *host* (Cloud, Midgar Mercenary), not on the attachment.
+     */
+    @SerialName("IsAttachedToSource")
+    @Serializable
+    data object IsAttachedToSource : Entity {
+        override val description: String = "attached to this permanent"
+    }
+
+    /**
      * The candidate card is one this effect's source permanent exiled — i.e. its entity id is
      * recorded in the source's `LinkedExileComponent` (the same linkage set by
      * `RedirectZoneChange(linkToSource = true)`, `RedirectZoneChangeWithEffect(linkToSource = true)`,
