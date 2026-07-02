@@ -2,15 +2,19 @@ package com.wingedsheep.engine.mechanics.mana
 
 import com.wingedsheep.engine.core.EffectResult
 import com.wingedsheep.engine.core.GameEvent
+import com.wingedsheep.engine.core.LifeChangeReason
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.tap
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.effects.DamageUtils
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.ActivatedAbility
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaSpendOnChosenTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
@@ -95,16 +99,32 @@ class ManaAbilitySideEffectExecutor(
             .firstOrNull { abilityProducesColor(it, producedColor) }
             ?: return state to emptyList()
 
+        var currentState = state
+        val events = mutableListOf<GameEvent>()
+
+        // Pain modeled as part of the ability's *cost* (e.g. Starting Town's
+        // "{T}, Pay 1 life: Add one mana of any color") — the auto-tap fast path only
+        // pays the tap, so any life-payment cost atom would otherwise be silently skipped.
+        // (Pain modeled as an *effect*, like Adarkar Wastes, is handled by the sub-effect
+        // loop below.) The solver already tracks these via ManaSource.hasPainCost for tap
+        // priority, but never deducts the life.
+        val lifeCost = payLifeCost(matchingAbility.cost)
+        if (lifeCost > 0) {
+            val (afterLife, lifeEvent) = DamageUtils.loseLife(
+                currentState, controllerId, lifeCost, LifeChangeReason.PAYMENT
+            )
+            currentState = afterLife
+            lifeEvent?.let(events::add)
+        }
+
         val sideEffects = nonManaSubEffects(matchingAbility.effect)
-        if (sideEffects.isEmpty()) return state to emptyList()
+        if (sideEffects.isEmpty()) return currentState to events
 
         val context = EffectContext(
             sourceId = sourceId,
             controllerId = controllerId,
         )
 
-        var currentState = state
-        val events = mutableListOf<GameEvent>()
         for (sub in sideEffects) {
             val result = effectExecutor(currentState, sub, context)
             currentState = result.state
@@ -115,6 +135,17 @@ class ManaAbilitySideEffectExecutor(
             // effect is fully resolved with controller info alone.
         }
         return currentState to events
+    }
+
+    /**
+     * Sum of life-payment ([CostAtom.PayLife]) amounts in a mana ability's cost, recursing
+     * through composite costs (e.g. `{T}, Pay 1 life`). Returns 0 when the cost has no
+     * life component.
+     */
+    private fun payLifeCost(cost: AbilityCost): Int = when (cost) {
+        is AbilityCost.Atom -> (cost.atom as? CostAtom.PayLife)?.amount ?: 0
+        is AbilityCost.Composite -> cost.costs.sumOf { payLifeCost(it) }
+        else -> 0
     }
 
     private fun abilityProducesColor(ability: ActivatedAbility, color: Color?): Boolean =

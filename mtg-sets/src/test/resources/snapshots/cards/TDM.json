@@ -7880,12 +7880,11 @@
             "type": "Composite",
             "effects": [
                 {
-                    "type": "MoveToZone",
+                    "type": "ReturnSpellOrPermanentToOwnersHand",
                     "target": {
                         "type": "BoundVariable",
                         "name": "target spell or permanent"
-                    },
-                    "destination": "Hand"
+                    }
                 },
                 {
                     "type": "DealDamage",

@@ -31,7 +31,7 @@ val JeskaiRevelation = card("Jeskai Revelation") {
         val bounceTarget = target("target spell or permanent", TargetSpellOrPermanent())
         val damageTarget = target("any target", Targets.Any)
         effect = Effects.Composite(
-            Effects.ReturnToHand(bounceTarget),
+            Effects.ReturnSpellOrPermanentToOwnersHand(bounceTarget),
             Effects.DealDamage(4, damageTarget),
             Effects.CreateToken(
                 power = 1,

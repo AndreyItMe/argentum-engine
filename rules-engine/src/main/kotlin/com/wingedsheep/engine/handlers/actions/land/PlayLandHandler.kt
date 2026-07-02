@@ -218,6 +218,13 @@ class PlayLandHandler(
             newState = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
                 .unlinkFromAllLinkedExiles(newState, action.cardId)
         }
+        // A generic per-card may-play permission (Tablet of Discovery's "you may play that card
+        // this turn") can also leave the card in the graveyard. Lands bypass the stack, so clean
+        // up the permission here too — otherwise it would silently re-authorize the card if it
+        // returned to the graveyard later this turn. No-op when no per-card permission exists.
+        if (fromZone == Zone.GRAVEYARD) {
+            newState = newState.removeMayPlayPermissionsForCard(action.cardId)
+        }
 
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
 
@@ -507,6 +514,12 @@ class PlayLandHandler(
     ): Boolean {
         val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
         if (cardId !in state.getZone(graveyardZone)) return false
+        // Generic per-card may-play permission (e.g. Tablet of Discovery's "mill a card. You
+        // may play that card this turn." — the milled card sits in the graveyard). Mirrors the
+        // exile path in [isInExileWithPlayPermission] and CastFromZoneEnumerator, which already
+        // offers the PlayLand action for such a card; without this the handler would reject the
+        // very action the enumerator advertised.
+        if (state.hasMayPlayFor(cardId, playerId, conditionEvaluator)) return true
         if (hasLandGraveyardPlayPermission(state, playerId)) return true
         return findGraveyardPlayPermissionSource(state, playerId, CardType.LAND.name) != null
     }
