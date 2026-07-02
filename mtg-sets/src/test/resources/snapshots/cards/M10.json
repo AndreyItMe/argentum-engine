@@ -80,6 +80,67 @@
     ]
 }
 
+// Mold Adder
+{
+    "name": "Mold Adder",
+    "manaCost": "{G}",
+    "typeLine": "Creature — Fungus Snake",
+    "oracleText": "Whenever an opponent casts a blue or black spell, you may put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    {
+                                        "type": "HasColor",
+                                        "color": "BLUE"
+                                    },
+                                    {
+                                        "type": "HasColor",
+                                        "color": "BLACK"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "player": "EachOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "AddCounters",
+                        "counterType": "+1/+1",
+                        "count": 1,
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "194",
+        "rarity": "UNCOMMON",
+        "artist": "Matt Cavotta",
+        "flavorText": "The more you struggle against its coils, the tighter they get.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/2/a216a729-6283-4c2b-90fe-ec8f3b9c570f.jpg?1782715707"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Rootbound Crag
 {
     "name": "Rootbound Crag",

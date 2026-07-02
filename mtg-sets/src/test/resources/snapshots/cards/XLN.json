@@ -389,6 +389,53 @@
     ]
 }
 
+// River's Rebuke
+{
+    "name": "River's Rebuke",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Return all nonland permanents target player controls to their owner's hand.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "BattlefieldMatching",
+                        "filter": "nonland permanent ctrl:target-player"
+                    },
+                    "storeAs": "returnAllToHand_gathered"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "returnAllToHand_gathered",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetPlayer",
+                "id": "target player"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "71",
+        "rarity": "RARE",
+        "artist": "Raymond Swanland",
+        "flavorText": "Carefully following the thaumatic compass Bolas had given her, Vraska blundered straight into the River Heralds' trap.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/d/fda8ef30-bbfa-4857-9750-0dd0def8b13f.jpg?1782710457"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Sailor of Means
 {
     "name": "Sailor of Means",
@@ -492,6 +539,59 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Storm Fleet Spy
+{
+    "name": "Storm Fleet Spy",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "Raid — When this creature enters, if you attacked this turn, draw a card.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "PLAYER_ATTACKED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "84",
+        "rarity": "UNCOMMON",
+        "artist": "Scott Murphy",
+        "flavorText": "\"They're searching in the same direction we are. And for the same thing, I'll wager.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/7/f7c33ef4-60bb-4f95-92a5-7abedaac6767.jpg?1782710448"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

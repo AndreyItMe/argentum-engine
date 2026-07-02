@@ -66,6 +66,77 @@
     "colorIdentityOverride": []
 }
 
+// Mindsparker
+{
+    "name": "Mindsparker",
+    "manaCost": "{1}{R}{R}",
+    "typeLine": "Creature — Elemental",
+    "oracleText": "First strike\nWhenever an opponent casts a white or blue instant or sorcery spell, this creature deals 2 damage to that player.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "FIRST_STRIKE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsInstant",
+                                    "IsSorcery"
+                                ]
+                            },
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    {
+                                        "type": "HasColor",
+                                        "color": "WHITE"
+                                    },
+                                    {
+                                        "type": "HasColor",
+                                        "color": "BLUE"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "player": "EachOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "TriggeringPlayer"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "146",
+        "rarity": "RARE",
+        "artist": "Wayne Reynolds",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/9/a94295dc-d078-4f3f-9856-bd0a1899a9ca.jpg?1782713919"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Primeval Bounty
 {
     "name": "Primeval Bounty",
