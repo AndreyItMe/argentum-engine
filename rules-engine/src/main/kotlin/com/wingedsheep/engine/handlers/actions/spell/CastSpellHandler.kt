@@ -68,6 +68,7 @@ import com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternative
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
+import com.wingedsheep.engine.state.components.player.CantCastFromNonHandZonesComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.player.ManaSpentOnSpellsThisTurnComponent
 import com.wingedsheep.sdk.core.CardType
@@ -207,6 +208,15 @@ class CastSpellHandler(
         // exile/graveyard granted by a may-play permission still resolve.
         if (inHand && state.getEntity(action.playerId)?.has<PlayerCantPlayFromHandComponent>() == true) {
             return "You can't play cards from your hand"
+        }
+
+        // Avatar's Wrath: "your opponents can't cast spells from anywhere other than their hands."
+        // A per-player, duration-bounded restriction to hand-only casting — any non-hand cast
+        // (flashback/escape from graveyard, foretell/plot/may-play from exile, library top,
+        // command zone) is illegal while the component is present. Ordinary hand casts (inHand)
+        // are untouched.
+        if (!inHand && state.getEntity(action.playerId)?.has<CantCastFromNonHandZonesComponent>() == true) {
+            return "You can't cast spells from anywhere other than your hand right now"
         }
 
         // Single cast-legality chokepoint: per-turn spell limit (Yawgmoth's Agenda),
@@ -420,8 +430,11 @@ class CastSpellHandler(
         } else if (faceManaCostOverride != null && cardDef != null) {
             costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, faceManaCostOverride, action.playerId)
         } else if (action.useAlternativeCost && cardDef != null) {
-            // Check flashback cost first (printed on the card, or granted at runtime by Archmage's Newt).
-            val flashbackAbility = FlashbackGrants.effectiveFlashback(state, action.cardId, cardDef)
+            // Check flashback cost first (printed, granted per-entity by Archmage's Newt, or
+            // granted to the whole graveyard by a battlefield static — Iroh, Grand Lotus).
+            val flashbackAbility = FlashbackGrants.effectiveFlashback(
+                state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+            )
             // Harmonize may be printed on the card or granted at runtime (Songcrafter Mage).
             val harmonizeAbility = HarmonizeGrants.effectiveHarmonize(state, action.cardId, cardDef)
             // Each branch is gated by [CastSpell.altAllows] so an explicit player choice (e.g.
@@ -618,13 +631,17 @@ class CastSpellHandler(
             effectiveCost
         }
 
-        // Account for spell-level waterbend (Avatar): tapped artifacts/creatures reduce the
-        // waterbend generic, capped at the waterbend amount.
-        val costAfterWaterbend = if (cardDef != null && !playForFree && action.alternativePayment != null &&
-            action.alternativePayment.waterbendPermanents.isNotEmpty()
+        // Account for waterbend (Avatar): tapped artifacts/creatures reduce the waterbend generic,
+        // capped at the waterbend amount. Two sources: a spell-level `waterbend {N}` additional cost
+        // (capped so taps never eat the printed generic) and Hama's fixed-alternative waterbend cost
+        // (the whole {mana value} is reducible). Only one is ever non-zero for a given cast.
+        val validateWaterbendCap = (if (cardDef != null) spellWaterbendAmount(cardDef, action) else 0) +
+            fixedAltWaterbendAmount(state, action, playForFree)
+        val costAfterWaterbend = if (!playForFree && action.alternativePayment != null &&
+            action.alternativePayment.waterbendPermanents.isNotEmpty() && validateWaterbendCap > 0
         ) {
             alternativePaymentHandler.calculateReducedCostForWaterbend(
-                costAfterAltPayment, action.alternativePayment, spellWaterbendAmount(cardDef, action)
+                costAfterAltPayment, action.alternativePayment, validateWaterbendCap
             )
         } else {
             costAfterAltPayment
@@ -778,6 +795,27 @@ class CastSpellHandler(
         val paid = !wb.optional || action.wasWaterbendPaid
         if (!paid) return 0
         return if (wb.isX) (action.xValue ?: 0) else wb.amount
+    }
+
+    /**
+     * The generic amount of a waterbend-flagged *fixed alternative* cost this cast can pay by
+     * tapping artifacts/creatures, or 0 when the cast has no such cost. Hama, the Bloodbender exiles
+     * a card and grants a `PlayWithFixedAlternativeManaCostComponent(waterbend = true)` whose whole
+     * fixed cost is `{mana value}` generic and entirely waterbend-reducible (CR 701.67). Unlike a
+     * spell-level `waterbend {N}` additional cost — which is capped so taps never eat the printed
+     * generic — the fixed alternative cost *replaces* the printed cost, so the cap is the whole cost.
+     */
+    private fun fixedAltWaterbendAmount(
+        state: GameState,
+        action: CastSpell,
+        playForFree: Boolean,
+    ): Int {
+        if (playForFree) return 0
+        val comp = state.getEntity(action.cardId)
+            ?.get<PlayWithFixedAlternativeManaCostComponent>()
+            ?.takeIf { it.controllerId == action.playerId && it.waterbend }
+            ?: return 0
+        return comp.fixedCost.genericAmount
     }
 
     private fun harmonizePaymentXValue(
@@ -1706,8 +1744,11 @@ class CastSpellHandler(
         } else if (faceManaCostOverrideExecute != null && cardDef != null) {
             costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, faceManaCostOverrideExecute, action.playerId)
         } else if (action.useAlternativeCost && cardDef != null) {
-            // Check flashback cost first (printed on the card, or granted at runtime by Archmage's Newt).
-            val flashbackAbility = FlashbackGrants.effectiveFlashback(currentState, action.cardId, cardDef)
+            // Check flashback cost first (printed, granted per-entity by Archmage's Newt, or
+            // granted to the whole graveyard by a battlefield static — Iroh, Grand Lotus).
+            val flashbackAbility = FlashbackGrants.effectiveFlashback(
+                currentState, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+            )
             // Harmonize may be printed on the card or granted at runtime (Songcrafter Mage).
             val harmonizeAbility = HarmonizeGrants.effectiveHarmonize(currentState, action.cardId, cardDef)
             // Branches gated by [CastSpell.altAllows] — mirrors validate(); honors the player's
@@ -2490,12 +2531,14 @@ class CastSpellHandler(
             events.addAll(altPaymentResult.events)
         }
 
-        // Apply spell-level waterbend (Avatar): tap the chosen artifacts/creatures, each paying
-        // {1} of the waterbend generic, bounded by the waterbend amount.
-        if (cardDef != null && action.alternativePayment != null &&
+        // Apply waterbend (Avatar): tap the chosen artifacts/creatures, each paying {1} of the
+        // waterbend generic, bounded by the waterbend amount. Sums the spell-level `waterbend {N}`
+        // additional cost and Hama's fixed-alternative waterbend cost (only one is ever non-zero).
+        if (action.alternativePayment != null &&
             action.alternativePayment.waterbendPermanents.isNotEmpty()
         ) {
-            val waterbendAmount = spellWaterbendAmount(cardDef, action)
+            val waterbendAmount = (if (cardDef != null) spellWaterbendAmount(cardDef, action) else 0) +
+                fixedAltWaterbendAmount(currentState, action, playForFreeInExecute)
             if (waterbendAmount > 0) {
                 val waterbendResult = alternativePaymentHandler.applyWaterbendForSpell(
                     currentState, effectiveCost, action.alternativePayment, action.playerId, waterbendAmount

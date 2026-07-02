@@ -29,6 +29,9 @@ import com.wingedsheep.sdk.scripting.effects.SetLandTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersToCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
+import com.wingedsheep.sdk.scripting.effects.Gate
+import com.wingedsheep.sdk.scripting.effects.GatedEffect
+import com.wingedsheep.sdk.scripting.effects.PayManaCostEffect
 import com.wingedsheep.sdk.scripting.effects.ExploreEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.BecomePreparedEffect
@@ -57,6 +60,7 @@ import com.wingedsheep.sdk.scripting.effects.SetSuspectedEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantActivateLoyaltyAbilitiesEffect
 import com.wingedsheep.sdk.scripting.effects.CantCastSpellsEffect
+import com.wingedsheep.sdk.scripting.effects.CantCastSpellsFromNonHandZonesEffect
 import com.wingedsheep.sdk.scripting.effects.CantPlayCardsFromHandEffect
 import com.wingedsheep.sdk.scripting.effects.PreventLandPlaysThisTurnEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -524,6 +528,30 @@ object Effects {
     )
 
     /**
+     * "[otherwise] unless you waterbend [amount]." — an in-resolution waterbend payment gate
+     * (Avatar: The Last Airbender). While the effect resolves the controller may pay a waterbend
+     * {amount} cost, paying the generic with mana and/or by tapping their untapped artifacts and
+     * creatures (each {1}, the shared waterbend tap-to-help path). If they pay, nothing else
+     * happens; if they decline or cannot pay, [otherwise] runs.
+     *
+     * Lowers to a [GatedEffect] with a [Gate.MayPay] over a waterbend-flagged [PayManaCostEffect]
+     * (`{amount}` generic), an empty `then` (paying is its own reward) and [otherwise] as the
+     * failure branch — the gated executor recognizes the waterbend flag and surfaces a
+     * tap-to-help mana-source decision instead of a plain "pay?" yes/no. Waterbend is generic-only,
+     * so [amount] carries no colored pips.
+     *
+     * (Waterbending Lesson: "Draw three cards. Then discard a card unless you waterbend {2}.")
+     */
+    fun UnlessYouWaterbend(amount: Int, otherwise: Effect): Effect =
+        GatedEffect(
+            gate = Gate.MayPay(PayManaCostEffect(ManaCost.parse("{$amount}"), waterbend = true)),
+            then = Composite(),
+            otherwise = otherwise,
+            descriptionOverride =
+                "${otherwise.description.replaceFirstChar { it.uppercase() }} unless you waterbend {$amount}"
+        )
+
+    /**
      * Connive (CR 702.166): draw a card, then discard a card. If the discarded card
      * is a nonland, put a +1/+1 counter on [target].
      *
@@ -729,14 +757,22 @@ object Effects {
      * the set is gathered from the battlefield by filter rather than from the chosen targets.
      *
      * @param excludeSelf exclude the source permanent (the "other" in "all other creatures").
+     * @param excludeChosenTargets exclude the spell/ability's chosen target(s) — the "other" in
+     *   "Choose up to one target creature, then airbend all *other* creatures" (Avatar's Wrath).
      */
     fun AirbendAll(
         filter: GameObjectFilter,
         excludeSelf: Boolean = true,
+        excludeChosenTargets: Boolean = false,
         cost: ManaCost = AIRBEND_COST
     ): Effect = CompositeEffect(listOf(
         GatherCardsEffect(
-            source = CardSource.BattlefieldMatching(filter = filter, player = Player.Each, excludeSelf = excludeSelf),
+            source = CardSource.BattlefieldMatching(
+                filter = filter,
+                player = Player.Each,
+                excludeSelf = excludeSelf,
+                excludeChosenTargets = excludeChosenTargets
+            ),
             storeAs = "airbendChosen"
         ),
         MoveCollectionEffect(
@@ -1028,6 +1064,28 @@ object Effects {
         landEntersTapped = landEntersTapped,
         onPlayRider = onPlayRider,
         exileAfterResolve = exileAfterResolve
+    )
+
+    /**
+     * Grant a "may cast from exile by waterbending {its mana value}" permission to every card in a
+     * named collection (the cards must already be in exile). The alternative cost *replaces* each
+     * card's printed cost with `{its mana value}` generic, paid as a **waterbend** (CR 701.67) — its
+     * whole generic may be paid by tapping untapped artifacts/creatures, each {1} — instead of mana.
+     * Models Hama, the Bloodbender: "For as long as you control Hama, you may cast the exiled card
+     * during your turn by waterbending {X} rather than paying its mana cost, where X is its mana
+     * value." The permission is granted to the effect's controller (not the card's owner), persists
+     * while the card stays exiled, and is gated by [condition] (e.g. `IsYourTurn AND YouControlSource`
+     * — "during your turn, for as long as you control Hama"), re-checked on every query.
+     */
+    fun WaterbendCastFromExile(
+        from: String,
+        condition: com.wingedsheep.sdk.scripting.conditions.Condition? = null,
+    ): Effect = GrantMayPlayFromExileEffect(
+        from = from,
+        expiry = com.wingedsheep.sdk.scripting.effects.MayPlayExpiry.Permanent,
+        condition = condition,
+        fixedAlternativeCostIsManaValue = true,
+        waterbend = true,
     )
 
     /**
@@ -3208,6 +3266,18 @@ object Effects {
         target: EffectTarget = EffectTarget.Controller,
         duration: Duration = Duration.UntilYourNextTurn
     ): Effect = CantPlayCardsFromHandEffect(target, duration)
+
+    /**
+     * Target player can't cast spells from anywhere other than their hand for the duration
+     * (default: until your next turn). Casts from graveyard (flashback/escape), exile
+     * (foretell/plot/may-play), library top, or command zone become illegal; ordinary hand
+     * casts are untouched. The "your opponents can't cast spells from anywhere other than
+     * their hands" clause of Avatar's Wrath. Inverse of [CantPlayCardsFromHand].
+     */
+    fun CantCastSpellsFromNonHandZones(
+        target: EffectTarget,
+        duration: Duration = Duration.UntilYourNextTurn
+    ): Effect = CantCastSpellsFromNonHandZonesEffect(target, duration)
 
     /**
      * A player can't play lands for the rest of this turn (sets remaining land drops to 0).

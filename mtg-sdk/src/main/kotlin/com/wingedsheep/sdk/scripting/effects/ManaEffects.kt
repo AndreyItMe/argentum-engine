@@ -16,11 +16,20 @@ import kotlinx.serialization.Serializable
 /**
  * Non-optional mana payment during resolution.
  * Auto-taps lands and deducts the cost from the controller's mana pool.
+ *
+ * @property waterbend When true this is a **waterbend** payment (Avatar: The Last Airbender):
+ *   while paying the generic portion the payer may tap their untapped artifacts and creatures to
+ *   help, each paying {1} (the shared waterbend tap-to-help path). Only meaningful as the cost of
+ *   a [Gate.MayPay] resolved during resolution — e.g. "discard a card unless you waterbend {2}"
+ *   ([com.wingedsheep.sdk.dsl.Effects.UnlessYouWaterbend]) — where the gated executor surfaces a
+ *   tap-to-help mana-source decision and routes payment through the shared waterbend machinery.
+ *   Defaults to false (an ordinary mana payment; auto-tap only). Waterbend is generic-only, so the
+ *   flagged cost should carry no colored pips.
  */
 @SerialName("PayManaCost")
 @Serializable
-data class PayManaCostEffect(val cost: ManaCost) : Effect {
-    override val description: String = "Pay $cost"
+data class PayManaCostEffect(val cost: ManaCost, val waterbend: Boolean = false) : Effect {
+    override val description: String = if (waterbend) "Waterbend $cost" else "Pay $cost"
 }
 
 /**

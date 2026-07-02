@@ -55,6 +55,13 @@ class CastFromZoneEnumerator : ActionEnumerator {
         val state = context.state
         val playerId = context.playerId
 
+        // Avatar's Wrath: "your opponents can't cast spells from anywhere other than their hands."
+        // Every path this enumerator offers is a non-hand cast (library top, exile, linked exile,
+        // graveyard, flashback, harmonize, command zone), so suppress the whole enumerator while
+        // the player is restricted to hand-only casting. Hand casts (CastSpellEnumerator) are
+        // unaffected; CastSpellHandler re-checks this authoritatively.
+        if (context.restrictedToHandCasting) return result
+
         enumerateTopOfLibrary(context, result)
         val linkedExileCardIds = enumerateExileCards(context, result)
         enumerateLinkedExile(context, result, linkedExileCardIds)
@@ -427,8 +434,19 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
                     }
                     val costString = if (playForFree) "{0}" else effectiveCost.toString()
+                    // Hama, the Bloodbender: the fixed alternative cost is a *waterbend* cost, so its
+                    // whole generic can be paid by tapping artifacts/creatures. Fold the tap help into
+                    // affordability (CR 701.67); the tap metadata is attached to the emitted actions
+                    // by the post-pass at the end of this method.
+                    val fixedAltWaterbend = runtimeFixedAltCost?.takeIf { !playForFree && it.waterbend }
                     val canAfford = playForFree ||
-                        context.manaSolver.canPay(state, playerId, effectiveCost, precomputedSources = context.availableManaSources)
+                        context.manaSolver.canPay(state, playerId, effectiveCost, precomputedSources = context.availableManaSources) ||
+                        (fixedAltWaterbend != null && context.costUtils.canAffordWithWaterbend(
+                            state, playerId, effectiveCost,
+                            context.costUtils.findWaterbendPermanents(state, playerId)
+                                .take(fixedAltWaterbend.fixedCost.genericAmount),
+                            precomputedSources = context.availableManaSources
+                        ))
 
                     // Calculate X cost info if the spell has X in its cost (cost still paid even with may-play)
                     val hasXCost = !playForFree && effectiveCost.hasX
@@ -625,6 +643,25 @@ class CastFromZoneEnumerator : ActionEnumerator {
                     }
                 }
             }
+        }
+
+        // Hama, the Bloodbender: attach waterbend tap metadata to every from-exile cast whose fixed
+        // alternative cost is a waterbend cost, so the client surfaces the tap-to-help option and the
+        // eligible permanents (mirrors CastSpellEnumerator.applySpellWaterbendMetadata for spell-level
+        // waterbend). The handler reads the waterbend flag off the card component, so no action-field
+        // change is needed beyond the display metadata.
+        for (i in result.indices) {
+            val la = result[i]
+            val cs = la.action as? CastSpell ?: continue
+            if (la.actionType != "CastSpell") continue
+            val fixedAlt = state.getEntity(cs.cardId)
+                ?.get<PlayWithFixedAlternativeManaCostComponent>()
+                ?.takeIf { it.controllerId == playerId && it.waterbend } ?: continue
+            result[i] = la.copy(
+                hasWaterbend = true,
+                waterbendPermanents = context.costUtils.findWaterbendPermanents(state, playerId),
+                waterbendAmount = fixedAlt.fixedCost.genericAmount
+            )
         }
 
         return linkedExileCardIds
@@ -1145,8 +1182,11 @@ class CastFromZoneEnumerator : ActionEnumerator {
             val cardComponent = container.get<CardComponent>() ?: continue
             val cardDef = context.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
 
-            // Flashback may be printed on the card or granted at runtime (Archmage's Newt).
-            val flashback = FlashbackGrants.effectiveFlashback(state, cardId, cardDef) ?: continue
+            // Flashback may be printed, granted per-entity (Archmage's Newt), or granted to the
+            // whole graveyard by a battlefield static (Iroh, Grand Lotus).
+            val flashback = FlashbackGrants.effectiveFlashback(
+                state, cardId, cardDef, playerId, context.cardRegistry, context.predicateEvaluator
+            ) ?: continue
 
             // Check timing: instants at instant speed, sorceries at sorcery speed
             val isInstant = cardComponent.typeLine.isInstant

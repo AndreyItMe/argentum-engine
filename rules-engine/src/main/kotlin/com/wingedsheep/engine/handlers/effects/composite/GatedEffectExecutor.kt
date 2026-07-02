@@ -5,9 +5,12 @@ import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
+import com.wingedsheep.engine.legalactions.utils.CostEnumerationUtils
+import com.wingedsheep.engine.mechanics.mana.CostCalculator
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
@@ -132,6 +135,15 @@ class GatedEffectExecutor(
         val playerId = effect.decisionMaker
             ?.let { TargetResolutionUtils.resolvePlayerTarget(it, context, state) }
             ?: context.controllerId
+
+        // Gate.MayPay over a waterbend-flagged PayManaCostEffect (Avatar: The Last Airbender): an
+        // in-resolution "you may waterbend {N}. Otherwise, <otherwise>" gate. Instead of the plain
+        // "pay?" yes/no + auto-tap composite, surface a mana-source decision that ALSO lists the
+        // untapped artifacts/creatures the player may tap to help (each {1}), routing payment
+        // through the shared waterbend machinery. Declining (or being unable to pay) runs `otherwise`.
+        (gate as? Gate.MayPay)?.cost?.let { it as? PayManaCostEffect }?.takeIf { it.waterbend }?.let { pay ->
+            return executeWaterbendPayment(state, playerId, pay.cost, effect.then, effect.otherwise, context)
+        }
 
         // Persistent auto-answer yield (backlog §C): if the decision-maker has remembered a yes/no
         // for this ability, resolve the "you may" question without prompting and run the matching
@@ -274,6 +286,106 @@ class GatedEffectExecutor(
                     decisionId = decisionId,
                     playerId = playerId,
                     decisionType = "YES_NO",
+                    prompt = decision.prompt
+                )
+            )
+        )
+    }
+
+    /**
+     * Resolve an in-resolution **waterbend** payment gate (Avatar: The Last Airbender):
+     * "you may waterbend [manaCost]. Otherwise, [otherwise]." Surfaces a [SelectManaSourcesDecision]
+     * that also lists the untapped artifacts/creatures the player may tap to help pay the generic
+     * (each {1}, via [CostEnumerationUtils.findWaterbendPermanents]); the shared
+     * [MayPayManaSelectionContinuation] resumer then taps them, pays the remainder with mana, and
+     * runs [then] on payment or [otherwise] on decline. If the player can't possibly pay (no mana
+     * and no tappable permanents), [otherwise] runs immediately with no pointless prompt — mirroring
+     * the Ward—Waterbend "can't pay → counter" short-circuit.
+     */
+    private fun executeWaterbendPayment(
+        state: GameState,
+        playerId: EntityId,
+        manaCost: ManaCost,
+        then: Effect,
+        otherwise: Effect?,
+        context: EffectContext
+    ): EffectResult {
+        val costUtils = CostEnumerationUtils(
+            manaSolver, CostCalculator(cardRegistry), PredicateEvaluator(), cardRegistry
+        )
+        val waterbendPermanents = costUtils.findWaterbendPermanents(state, playerId)
+        val affordable = manaSolver.canPay(state, playerId, manaCost) ||
+            costUtils.canAffordWithWaterbend(state, playerId, manaCost, waterbendPermanents)
+        if (!affordable) {
+            // Can't pay → the "unless" fires (e.g. discard a card).
+            return otherwise?.let { effectExecutor(state, it, context) } ?: EffectResult.success(state)
+        }
+
+        val sourceName = context.sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name }
+
+        val sources = manaSolver.findAvailableManaSources(state, playerId)
+        val sourceOptions = sources.map { source ->
+            ManaSourceOption(
+                entityId = source.entityId,
+                name = source.name,
+                producesColors = source.producesColors,
+                producesColorless = source.producesColorless,
+                requiresSacrifice = source.requiresSacrifice,
+                requiresTappingAnotherPermanent = source.tapPermanentsSubCost != null
+            )
+        }
+        val solution = manaSolver.solve(state, playerId, manaCost)
+        val autoPaySuggestion = solution?.sources?.map { it.entityId } ?: emptyList()
+        val waterbendOptions = waterbendPermanents.map {
+            WaterbendPermanentChoice(it.entityId, it.name, it.isCreature)
+        }
+
+        val decisionId = UUID.randomUUID().toString()
+        val declineText = otherwise?.description?.replaceFirstChar { it.lowercase() }
+        val decision = SelectManaSourcesDecision(
+            id = decisionId,
+            playerId = playerId,
+            prompt = if (declineText != null) {
+                "Waterbend $manaCost (tap artifacts/creatures to help), or $declineText"
+            } else {
+                "Waterbend $manaCost (tap artifacts/creatures to help)"
+            },
+            context = DecisionContext(
+                sourceId = context.sourceId,
+                sourceName = sourceName,
+                phase = DecisionPhase.RESOLUTION,
+                triggeringEntityId = context.triggeringEntityId
+            ),
+            availableSources = sourceOptions,
+            requiredCost = manaCost.toString(),
+            autoPaySuggestion = autoPaySuggestion,
+            canDecline = true,
+            waterbendPermanents = waterbendOptions
+        )
+
+        val continuation = MayPayManaSelectionContinuation(
+            decisionId = decisionId,
+            playerId = playerId,
+            sourceName = sourceName,
+            manaCost = manaCost,
+            effect = then,
+            effectContext = context,
+            availableSources = sourceOptions,
+            autoPaySuggestion = autoPaySuggestion,
+            waterbend = true,
+            otherwise = otherwise
+        )
+
+        val stateWithContinuation = state.withPendingDecision(decision).pushContinuation(continuation)
+
+        return EffectResult.paused(
+            stateWithContinuation,
+            decision,
+            listOf(
+                DecisionRequestedEvent(
+                    decisionId = decisionId,
+                    playerId = playerId,
+                    decisionType = "SELECT_MANA_SOURCES",
                     prompt = decision.prompt
                 )
             )
