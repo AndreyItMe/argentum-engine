@@ -44,6 +44,97 @@
     ]
 }
 
+// Charming Prince
+{
+    "name": "Charming Prince",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Human Noble",
+    "oracleText": "When this creature enters, choose one —\n• Scry 2.\n• You gain 3 life.\n• Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Modal",
+                    "modes": [
+                        {
+                            "effect": {
+                                "type": "Scry",
+                                "count": 2
+                            },
+                            "description": "Scry 2."
+                        },
+                        {
+                            "effect": {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            },
+                            "description": "You gain 3 life."
+                        },
+                        {
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "MoveToZone",
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        },
+                                        "destination": "Exile"
+                                    },
+                                    {
+                                        "type": "CreateDelayedTrigger",
+                                        "step": "END",
+                                        "effect": {
+                                            "type": "MoveToZone",
+                                            "target": {
+                                                "type": "ContextTarget",
+                                                "index": 0
+                                            },
+                                            "destination": "Battlefield"
+                                        }
+                                    }
+                                ]
+                            },
+                            "targetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "filter": {
+                                        "baseFilter": "creature own:you",
+                                        "excludeSelf": true
+                                    }
+                                }
+                            ],
+                            "description": "Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step."
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "8",
+        "rarity": "RARE",
+        "artist": "Randy Vargas",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/c/dcb94950-3f3e-4876-84f8-d5e4d9cfecee.jpg?1782707930"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Raging Redcap
 {
     "name": "Raging Redcap",

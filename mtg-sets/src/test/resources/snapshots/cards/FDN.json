@@ -630,6 +630,59 @@
     ]
 }
 
+// Bulk Up
+{
+    "name": "Bulk Up",
+    "manaCost": "{1}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Double target creature's power until end of turn.\nFlashback {4}{R}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{4}{R}{R}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "ModifyStats",
+            "powerModifier": {
+                "type": "EntityProperty",
+                "entity": "Target",
+                "numericProperty": "Power"
+            },
+            "toughnessModifier": {
+                "type": "Fixed",
+                "amount": 0
+            },
+            "target": {
+                "type": "BoundVariable",
+                "name": "creature"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "80",
+        "rarity": "UNCOMMON",
+        "artist": "Warren Mahy",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/7/977dcc50-da10-4281-b522-9240c1204f5d.jpg?1782689196"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Cackling Prowler
 {
     "name": "Cackling Prowler",
@@ -1731,6 +1784,63 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Faebloom Trick
+{
+    "name": "Faebloom Trick",
+    "manaCost": "{2}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Create two 1/1 blue Faerie creature tokens with flying. When you do, tap target creature an opponent controls.",
+    "script": {
+        "spellEffect": {
+            "type": "ReflexiveTrigger",
+            "action": {
+                "type": "CreateToken",
+                "count": {
+                    "type": "Fixed",
+                    "amount": 2
+                },
+                "power": 1,
+                "toughness": 1,
+                "colors": [
+                    "BLUE"
+                ],
+                "creatureTypes": [
+                    "Faerie"
+                ],
+                "keywords": [
+                    "FLYING"
+                ],
+                "imageUri": "https://cards.scryfall.io/normal/front/d/1/d1c0556e-ba3c-4a8e-b704-8eaa7c4dba1c.jpg?1782727481"
+            },
+            "optional": false,
+            "reflexiveEffect": {
+                "type": "TapUntap",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                }
+            },
+            "reflexiveTargetRequirements": [
+                {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "38",
+        "rarity": "UNCOMMON",
+        "artist": "Annie Stegg",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/c/0c3bee8f-f5be-4404-a696-c902637799c3.jpg?1782689233"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
