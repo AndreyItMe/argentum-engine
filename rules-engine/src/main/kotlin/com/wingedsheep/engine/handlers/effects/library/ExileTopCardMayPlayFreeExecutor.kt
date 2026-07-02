@@ -136,14 +136,23 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
             // Airbend: each granted card is castable for a fixed cost (e.g. {2}) instead of its
             // printed mana cost, by the grantee, for as long as it stays exiled. Stamp the cost
             // component the enumerator / cast handler read when computing the spell's cost.
-            val fixedCost = effect.fixedAlternativeManaCost
-            if (fixedCost != null) {
+            //
+            // Hama, the Bloodbender: the fixed cost is `{its mana value}` computed per card
+            // ([fixedAlternativeCostIsManaValue]) and paid as a waterbend ([waterbend]) — its whole
+            // generic may be paid by tapping artifacts/creatures. A literal fixed cost and the
+            // mana-value cost are mutually exclusive.
+            if (effect.fixedAlternativeManaCost != null || effect.fixedAlternativeCostIsManaValue) {
                 for (cardId in cardIds) {
+                    val fixedCost = effect.fixedAlternativeManaCost
+                        ?: com.wingedsheep.sdk.core.ManaCost.parse(
+                            "{${newState.getEntity(cardId)?.get<CardComponent>()?.manaCost?.cmc ?: 0}}"
+                        )
                     newState = newState.updateEntity(cardId) { container ->
                         container.with(
                             PlayWithFixedAlternativeManaCostComponent(
                                 controllerId = grantee,
-                                fixedCost = fixedCost
+                                fixedCost = fixedCost,
+                                waterbend = effect.waterbend
                             )
                         )
                     }

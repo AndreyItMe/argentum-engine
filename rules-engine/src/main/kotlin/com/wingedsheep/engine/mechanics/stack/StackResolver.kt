@@ -1633,7 +1633,9 @@ class StackResolver(
                 // — Songcrafter Mage): a graveyard cast exiles on resolution instead of returning
                 // to the graveyard.
                 val pausedFlashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-                    (FlashbackGrants.effectiveFlashback(state, spellId, pausedCardDef) != null ||
+                    (FlashbackGrants.effectiveFlashback(
+                        state, spellId, pausedCardDef, spellComponent.casterId, cardRegistry, predicateEvaluator
+                    ) != null ||
                         HarmonizeGrants.effectiveHarmonize(state, spellId, pausedCardDef) != null)
                 val pausedExileAfterResolveComp = effectResult.state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
                 val pausedExileAfterResolve = pausedExileAfterResolveComp != null
@@ -1750,7 +1752,9 @@ class StackResolver(
         // Songcrafter Mage): a graveyard cast exiles on resolution instead of returning to the
         // graveyard.
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-            (FlashbackGrants.effectiveFlashback(state, spellId, cardDef) != null ||
+            (FlashbackGrants.effectiveFlashback(
+                state, spellId, cardDef, spellComponent.casterId, cardRegistry, predicateEvaluator
+            ) != null ||
                 HarmonizeGrants.effectiveHarmonize(state, spellId, cardDef) != null)
         val exileAfterResolveComp = newState.getEntity(spellId)?.get<ExileAfterResolveComponent>()
         val exileAfterResolve = exileAfterResolveComp != null
@@ -1939,7 +1943,9 @@ class StackResolver(
         // Songcrafter Mage): a graveyard cast exiles on resolution instead of returning to the
         // graveyard.
         val flashbackExile = spellComponent.castFromZone == Zone.GRAVEYARD &&
-            (FlashbackGrants.effectiveFlashback(state, spellId, cardDef) != null ||
+            (FlashbackGrants.effectiveFlashback(
+                state, spellId, cardDef, spellComponent.casterId, cardRegistry, predicateEvaluator
+            ) != null ||
                 HarmonizeGrants.effectiveHarmonize(state, spellId, cardDef) != null)
         val exileAfterResolveComp = state.getEntity(spellId)?.get<ExileAfterResolveComponent>()
         // Goliath Daydreamer-style components only exile on actual resolution; if the spell

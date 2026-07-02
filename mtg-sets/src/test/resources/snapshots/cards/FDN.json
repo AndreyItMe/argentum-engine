@@ -4169,6 +4169,62 @@
     ]
 }
 
+// Skyship Buccaneer
+{
+    "name": "Skyship Buccaneer",
+    "manaCost": "{3}{U}{U}",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "Flying\nRaid — When this creature enters, if you attacked this turn, draw a card.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "PLAYER_ATTACKED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "50",
+        "rarity": "UNCOMMON",
+        "artist": "Javier Charro",
+        "flavorText": "\"It's a pirate's nature to be free of law. Gravity is no exception.\"\n—Kari Zev, skyship captain",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/2/62958fc3-55dc-4b97-a070-490d6ed27820.jpg?1782689223"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Slumbering Cerberus
 {
     "name": "Slumbering Cerberus",

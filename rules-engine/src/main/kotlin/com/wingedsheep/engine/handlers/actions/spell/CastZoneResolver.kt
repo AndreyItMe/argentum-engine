@@ -243,7 +243,9 @@ class CastZoneResolver(
         if (cardId !in state.getZone(graveyardZone)) return false
         val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
-        return FlashbackGrants.effectiveFlashback(state, cardId, cardDef) != null
+        return FlashbackGrants.effectiveFlashback(
+            state, cardId, cardDef, playerId, cardRegistry, predicateEvaluator
+        ) != null
     }
 
     /**
@@ -269,7 +271,11 @@ class CastZoneResolver(
     fun getFlashbackCost(cardId: EntityId, state: GameState): com.wingedsheep.sdk.core.ManaCost? {
         val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return null
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
-        return FlashbackGrants.effectiveFlashback(state, cardId, cardDef)?.cost
+        // A graveyard card's controller is its owner — enough to resolve a whole-graveyard
+        // group grant (Iroh, Grand Lotus) in addition to printed / per-entity flashback.
+        return FlashbackGrants.effectiveFlashback(
+            state, cardId, cardDef, cardComponent.ownerId, cardRegistry, predicateEvaluator
+        )?.cost
     }
 
     /**

@@ -821,13 +821,42 @@ class ManaPaymentContinuationResumer(
             return ExecutionResult.error(state, "Expected mana sources selected response")
         }
 
-        // Declined — do nothing
-        if (!response.autoPay && response.selectedSources.isEmpty()) {
-            return checkForMore(state, emptyList())
+        val playerId = continuation.playerId
+
+        // Declined — no mana sources, no auto-pay, and (for a waterbend gate) no taps to help. Run
+        // the "unless" branch (e.g. "discard a card") if one is attached, otherwise nothing happens.
+        if (!response.autoPay && response.selectedSources.isEmpty() && response.waterbendPermanents.isEmpty()) {
+            val otherwise = continuation.otherwise
+                ?: return checkForMore(state, emptyList())
+            val otherwiseResult = services.effectExecutorRegistry
+                .execute(state, otherwise, continuation.effectContext).toExecutionResult()
+            if (otherwiseResult.error != null || otherwiseResult.isPaused) return otherwiseResult
+            return checkForMore(otherwiseResult.state, otherwiseResult.events)
         }
 
-        val playerId = continuation.playerId
-        val playerEntity = state.getEntity(playerId)
+        var currentState = state
+        val events = mutableListOf<GameEvent>()
+
+        // Waterbend (Avatar: The Last Airbender): tap the chosen artifacts/creatures first, each
+        // paying {1} of the generic through the shared waterbend machinery. The remaining (reduced)
+        // cost is then paid with mana sources exactly as a plain payment.
+        var effectiveCost = continuation.manaCost
+        if (continuation.waterbend && response.waterbendPermanents.isNotEmpty()) {
+            val waterbendResult = com.wingedsheep.engine.mechanics.mana.AlternativePaymentHandler()
+                .applyWaterbendForAbility(
+                    currentState,
+                    continuation.manaCost,
+                    com.wingedsheep.sdk.scripting.AlternativePaymentChoice(
+                        waterbendPermanents = response.waterbendPermanents
+                    ),
+                    playerId
+                )
+            currentState = waterbendResult.newState
+            effectiveCost = waterbendResult.reducedCost
+            events.addAll(waterbendResult.events)
+        }
+
+        val playerEntity = currentState.getEntity(playerId)
             ?: return ExecutionResult.error(state, "Paying player not found")
 
         val manaPoolComponent = playerEntity.get<ManaPoolComponent>()
@@ -838,11 +867,9 @@ class ManaPaymentContinuationResumer(
             manaPoolComponent.red, manaPoolComponent.green, manaPoolComponent.colorless
         )
 
-        val partialResult = manaPool.payPartial(continuation.manaCost)
+        val partialResult = manaPool.payPartial(effectiveCost)
         val remainingCost = partialResult.remainingCost
         var currentPool = manaPool
-        var currentState = state
-        val events = mutableListOf<GameEvent>()
 
         if (!remainingCost.isEmpty()) {
             if (response.autoPay) {
@@ -876,7 +903,7 @@ class ManaPaymentContinuationResumer(
             }
         }
 
-        val newPool = currentPool.pay(continuation.manaCost)
+        val newPool = currentPool.pay(effectiveCost)
             ?: return ExecutionResult.error(state, "Cannot pay mana cost after tapping sources")
 
         currentState = currentState.updateEntity(playerId) { container ->

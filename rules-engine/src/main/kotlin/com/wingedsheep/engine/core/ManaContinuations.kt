@@ -87,7 +87,22 @@ data class MayPayManaSelectionContinuation(
     val effect: Effect,
     val effectContext: EffectContext,
     val availableSources: List<ManaSourceOption>,
-    val autoPaySuggestion: List<EntityId>
+    val autoPaySuggestion: List<EntityId>,
+    /**
+     * True when this is a **waterbend** payment (Avatar: The Last Airbender): before paying the
+     * remainder with mana sources, the resumer taps any
+     * [ManaSourcesSelectedResponse.waterbendPermanents] the player chose (each paying {1} of the
+     * generic, via the shared waterbend payment machinery). Mirrors
+     * [CounterUnlessPaysManaSelectionContinuation.waterbend].
+     */
+    val waterbend: Boolean = false,
+    /**
+     * The "unless" branch — run when the player declines the payment (no mana sources, no auto-pay,
+     * and no waterbend taps). Models the in-resolution "you may pay <cost>. Otherwise, <otherwise>"
+     * gate (Waterbending Lesson: "discard a card unless you waterbend {2}"). Null for a plain
+     * optional payment where declining simply does nothing.
+     */
+    val otherwise: Effect? = null
 ) : ContinuationFrame
 
 /**

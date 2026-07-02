@@ -559,6 +559,31 @@ data class PlayerCantPlayFromHandComponent(
 ) : Component
 
 /**
+ * Marks a player as unable to cast spells from any zone **other than their hand** — the inverse
+ * of [PlayerCantPlayFromHandComponent]. Ordinary hand casts still resolve; casts from graveyard
+ * (flashback/escape), exile (foretell/plot/may-play), library top, or the command zone are all
+ * illegal while this component is present.
+ *
+ * Applied by Avatar's Wrath's "your opponents can't cast spells from anywhere other than their
+ * hands" clause (via [com.wingedsheep.sdk.scripting.effects.CantCastSpellsFromNonHandZonesEffect]).
+ * Read at legal-action enumeration (the non-hand [com.wingedsheep.engine.legalactions.enumerators.CastFromZoneEnumerator])
+ * and re-checked authoritatively in [com.wingedsheep.engine.handlers.actions.spell.CastSpellHandler].
+ * Defaults to the [PlayerEffectRemoval.UntilYourNextTurn] lifecycle, expired in the same post-untap
+ * hook as [PlayerCantPlayFromHandComponent] and floating `UntilYourNextTurn` effects.
+ *
+ * @param removeOn When this component is removed.
+ * @param expiresForPlayerId For a [PlayerEffectRemoval.UntilYourNextTurn] lifecycle, whose "next
+ *   turn" closes the window. Null → the component's own owner. Avatar's Wrath sets this to the
+ *   *casting* player so every affected opponent's restriction lifts on the caster's next turn
+ *   (not on each opponent's own next turn, which would end it a full turn early).
+ */
+@Serializable
+data class CantCastFromNonHandZonesComponent(
+    val removeOn: PlayerEffectRemoval = PlayerEffectRemoval.UntilYourNextTurn,
+    val expiresForPlayerId: EntityId? = null
+) : Component
+
+/**
  * Marks a player as having the city's blessing (CR 702.131 / 700.5).
  *
  * Granted by Ascend triggers when their controller controls 10+ permanents on

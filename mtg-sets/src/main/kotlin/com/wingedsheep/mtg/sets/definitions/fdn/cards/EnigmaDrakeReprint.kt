@@ -4,11 +4,8 @@ import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity
 
 /**
- * Enigma Drake reprint in FDN.
- *
- * The canonical [com.wingedsheep.sdk.model.CardDefinition] lives in AKH's `cards/` package
- * (the card's earliest real printing). This file contributes only the FDN presentation row —
- * picked up automatically by `CardDiscovery.findPrintingsIn` and surfaced via the set's `printings`.
+ * Enigma Drake reprint in Foundations. Canonical CardDefinition lives in Amonkhet
+ * (its earliest real printing); this file contributes only presentation data.
  */
 val EnigmaDrakeReprint = Printing(
     oracleId = "62007675-8a0d-4211-83b2-0daf3641dedc",

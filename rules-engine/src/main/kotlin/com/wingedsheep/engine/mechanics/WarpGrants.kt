@@ -81,7 +81,7 @@ object WarpGrants {
         val context = PredicateContext(controllerId = playerId)
         // Controlled view — not the ownership-keyed zone map — so the grant follows whoever
         // currently controls the source permanent (Mind Control, Act of Treason, etc.) rather
-        // than its owner. CR 109.4: "you" in an ability refers to the object's controller.
+        // than its owner. CR 109.5: "you" in an ability refers to the object's controller.
         for (entityId in state.controlledBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val def = cardRegistry.getCard(card.cardDefinitionId) ?: continue

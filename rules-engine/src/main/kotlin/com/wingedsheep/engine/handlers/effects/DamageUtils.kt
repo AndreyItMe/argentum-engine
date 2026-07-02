@@ -28,6 +28,8 @@ import com.wingedsheep.engine.state.components.battlefield.HasDealtDamageCompone
 import com.wingedsheep.engine.state.components.battlefield.WasDealtDamageThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.ReplacementEffectSourceComponent
 import com.wingedsheep.engine.state.components.stack.SpellGrantedKeywordsComponent
+import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
+import com.wingedsheep.engine.mechanics.mana.GrantedKeywordResolver
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
@@ -360,9 +362,13 @@ object DamageUtils {
         // (Alhammarret's Archive, Leyline of Hope) replaces the actual amount gained.
         if (sourceId != null) {
             val projected = newState.projectedState
-            if (projected.hasKeyword(sourceId, Keyword.LIFELINK.name)) {
+            if (projected.hasKeyword(sourceId, Keyword.LIFELINK.name) ||
+                sourceHasGrantedLifelink(newState, sourceId)
+            ) {
                 val controllerId = projected.getController(sourceId)
                     ?: newState.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                    // A spell source carries no ControllerComponent; its controller is the caster.
+                    ?: newState.getEntity(sourceId)?.get<SpellOnStackComponent>()?.casterId
                 if (controllerId != null) {
                     val (gainedState, gainEvent) = gainLife(newState, controllerId, effectiveAmount)
                     newState = gainedState
@@ -498,6 +504,37 @@ object DamageUtils {
         var newState = state.withLifeTotal(playerId, newLife)
         newState = markLifeLostThisTurn(newState, playerId)
         return newState to LifeChangedEvent(playerId, currentLife, newLife, reason)
+    }
+
+    /**
+     * Lifelink (and other damage keywords) can be granted onto a spell *object on the stack*, not
+     * just printed on or projected onto a battlefield source. Static keyword projection
+     * ([StateProjector]/[AffectsFilterResolver]) only reaches battlefield permanents, so a spell
+     * that "has lifelink" via a grant is invisible to `projected.hasKeyword`. This mirrors the
+     * wither treatment above by consulting the two spell-grant channels for the noncombat-damage
+     * lifelink check:
+     *  - [SpellGrantedKeywordsComponent] — a one-shot keyword stamped onto this specific spell
+     *    (e.g. a copy that "gains lifelink").
+     *  - [GrantKeywordToOwnSpells] — a continuous "<type> spells you control have lifelink" static
+     *    on a permanent the spell's current controller controls (e.g. Lo and Li, Twin Tutors →
+     *    Lesson spells). Resolved live via [GrantedKeywordResolver].
+     *
+     * Only spells on the stack qualify (gated on [SpellOnStackComponent]); battlefield sources are
+     * already covered by projected keywords.
+     */
+    private fun sourceHasGrantedLifelink(state: GameState, sourceId: EntityId): Boolean {
+        val container = state.getEntity(sourceId) ?: return false
+        if (container.get<SpellGrantedKeywordsComponent>()?.keywords?.contains(Keyword.LIFELINK.name) == true) {
+            return true
+        }
+        // A resolving spell is popped from `state.stack` *before* its effects run, but keeps its
+        // [SpellOnStackComponent] until it leaves the stack zone — so gate on the component, not
+        // stack membership.
+        val spellOnStack = container.get<SpellOnStackComponent>() ?: return false
+        val controllerId = container.get<ControllerComponent>()?.playerId ?: spellOnStack.casterId
+        val cardDef = container.get<CardComponent>()
+            ?.let { cardRegistry.getCard(it.cardDefinitionId) } ?: return false
+        return GrantedKeywordResolver(cardRegistry).hasKeyword(state, controllerId, cardDef, Keyword.LIFELINK)
     }
 
     /**

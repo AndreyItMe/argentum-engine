@@ -15,6 +15,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.player.CantActivateLoyaltyAbilitiesComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
+import com.wingedsheep.engine.state.components.player.CantCastFromNonHandZonesComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.player.PlayerCantPlayFromHandComponent
 import com.wingedsheep.sdk.core.ManaCost
@@ -107,6 +108,14 @@ class EnumerationContext(
     // with a may-play permission are unaffected. Read by CastSpellEnumerator + PlayLandEnumerator.
     val cantPlayCardsFromHand: Boolean by lazy {
         state.getEntity(playerId)?.has<PlayerCantPlayFromHandComponent>() == true
+    }
+
+    // Hand-only casting restriction (Avatar's Wrath's "your opponents can't cast spells from
+    // anywhere other than their hands"). The inverse of [cantPlayCardsFromHand]: blocks casts
+    // from every zone EXCEPT the hand. Read by the non-hand CastFromZoneEnumerator to suppress
+    // graveyard/exile/library-top/command-zone casts; hand casts stay available.
+    val restrictedToHandCasting: Boolean by lazy {
+        state.getEntity(playerId)?.has<CantCastFromNonHandZonesComponent>() == true
     }
 
     // Whether any per-spell cast restriction (Mana Maze, PlayersCantCastSpells) is in play at all —

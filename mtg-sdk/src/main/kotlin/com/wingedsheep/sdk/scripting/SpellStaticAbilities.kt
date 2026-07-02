@@ -297,6 +297,50 @@ data class MayCastFromGraveyard(
 }
 
 /**
+ * A continuous grant of flashback (CR 702.34) to *every* card in the controller's graveyard that
+ * matches [filter] — a whole-graveyard group grant, not a single-card grant like
+ * [com.wingedsheep.sdk.scripting.effects.GrantFlashbackEffect] (Archmage's Newt). While the
+ * granting permanent is on the battlefield (and, if [duringYourTurnOnly], during its controller's
+ * turn), each matching graveyard card may be cast for its flashback cost and is exiled on
+ * resolution, exactly as if it had printed flashback.
+ *
+ * The flashback cost is [cost] when set, otherwise the card's own mana cost (`null` = "equal to
+ * that card's mana cost").
+ *
+ * Used for Iroh, Grand Lotus:
+ *  - `GraveyardCardsHaveFlashback(InstantOrSorcery.notSubtype(Lesson), duringYourTurnOnly = true)`
+ *    — "During your turn, each non-Lesson instant and sorcery card in your graveyard has flashback.
+ *    The flashback cost is equal to that card's mana cost."
+ *  - `GraveyardCardsHaveFlashback(InstantOrSorcery.withSubtype(Lesson), cost = {1}, duringYourTurnOnly = true)`
+ *    — "During your turn, each Lesson card in your graveyard has flashback {1}."
+ *
+ * Read by [com.wingedsheep.engine.mechanics.FlashbackGrants], the single source of truth every
+ * flashback read site routes through (enumeration, cast cost, permission, and exile-on-resolution),
+ * so a group-granted flashback behaves identically to a printed one.
+ *
+ * @property filter Which graveyard cards gain flashback (matched against the card's characteristics).
+ * @property cost The granted flashback cost, or null for "equal to that card's mana cost".
+ * @property duringYourTurnOnly If true, the grant is active only during the controller's turn.
+ */
+@SerialName("GraveyardCardsHaveFlashback")
+@Serializable
+data class GraveyardCardsHaveFlashback(
+    val filter: GameObjectFilter,
+    val cost: ManaCost? = null,
+    val duringYourTurnOnly: Boolean = false
+) : StaticAbility {
+    override val description: String = buildString {
+        if (duringYourTurnOnly) append("During your turn, e") else append("E")
+        append("ach ${filter.description} card in your graveyard has flashback")
+        if (cost != null) append(" $cost")
+    }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
  * "Creature cards in your graveyard have sneak [cost]. You may cast creature spells from your
  * graveyard using their sneak abilities." (Ninja Teen level 3.)
  *

@@ -151,11 +151,19 @@ data class PlayWithCostIncreaseComponent(
  *
  * @param controllerId The player who may cast the card for [fixedCost].
  * @param fixedCost The whole mana cost paid in place of the card's printed cost.
+ * @param waterbend When true, [fixedCost] is paid as a **waterbend** cost (Avatar: The Last
+ *   Airbender, CR 701.67): while paying its generic the caster may tap untapped artifacts and
+ *   creatures they control, each paying {1}. Because the whole fixed cost is generic (e.g. Hama,
+ *   the Bloodbender exiles a card and lets you recast it by waterbending {its mana value}), the
+ *   entire cost is waterbend-reducible. The cast handler and enumerator surface the tap-to-help
+ *   option and reduce the cost by the tapped permanents through the shared
+ *   [com.wingedsheep.engine.mechanics.mana.AlternativePaymentHandler] machinery.
  */
 @Serializable
 data class PlayWithFixedAlternativeManaCostComponent(
     val controllerId: EntityId,
-    val fixedCost: com.wingedsheep.sdk.core.ManaCost
+    val fixedCost: com.wingedsheep.sdk.core.ManaCost,
+    val waterbend: Boolean = false
 ) : Component
 
 /**

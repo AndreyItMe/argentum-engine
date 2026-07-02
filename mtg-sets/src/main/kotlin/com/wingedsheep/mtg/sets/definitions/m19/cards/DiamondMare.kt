@@ -17,10 +17,15 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
  * As this creature enters, choose a color.
  * Whenever you cast a spell of the chosen color, you gain 1 life.
  *
- * The chosen color is stored at ETB via [EntersWithChoice] (ChoiceType.COLOR →
- * CastChoicesComponent). The cast trigger reads it back through
- * [GameObjectFilter.sharingChosenColorWithSource] (CardPredicate.SharesChosenColorWithSource),
- * so the source permanent's chosen color gates which spells pay off.
+ * The color is stored at ETB via [EntersWithChoice] (ChoiceType.COLOR →
+ * CastChoicesComponent), the same primitive Teferi's Moat / Harsh Judgment use.
+ * The lifegain trigger is a `youCastSpell` filtered by
+ * [GameObjectFilter.sharingChosenColorWithSource] — the spell must include the color
+ * stored on this permanent (CardPredicate.SharesChosenColorWithSource reads the trigger
+ * source's chosen color). Any spell of that color qualifies, so no type restriction.
+ *
+ * Canonical printing lives here (Core Set 2019, the earliest real printing); later
+ * sets (Foundations, …) contribute only [com.wingedsheep.sdk.model.Printing] rows.
  */
 val DiamondMare = card("Diamond Mare") {
     manaCost = "{2}"

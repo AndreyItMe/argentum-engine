@@ -46,6 +46,7 @@ class PlayerExecutors(
         AnyPlayerMayPayExecutor(executeEffect = effectExecutor),
         CantActivateLoyaltyAbilitiesExecutor(),
         CantCastSpellsExecutor(),
+        CantCastSpellsFromNonHandZonesExecutor(),
         CantPlayCardsFromHandExecutor(),
         ChooseNumberForSourceExecutor(decisionHandler),
         ChooseOpponentForSourceExecutor(),
