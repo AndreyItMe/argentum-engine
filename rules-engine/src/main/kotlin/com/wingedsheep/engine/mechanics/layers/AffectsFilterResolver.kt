@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.mechanics.layers
 
+import com.wingedsheep.engine.state.components.battlefield.chosenColor
 import com.wingedsheep.engine.state.components.battlefield.chosenCreatureType
 import com.wingedsheep.engine.state.components.battlefield.CastChoicesComponent
 import com.wingedsheep.engine.state.components.battlefield.ChoiceValue
@@ -282,6 +283,14 @@ internal class AffectsFilterResolver {
                 ?: return emptySet()
         } else null
 
+        // If the base filter keys off the source's durably-chosen color (Heraldic Banner:
+        // "creatures you control of the chosen color"), resolve it once from the source's
+        // CastChoicesComponent. Fail closed (match nothing) when no color has been chosen yet.
+        val needsChosenColor = baseFilter.cardPredicates.any { it == CardPredicate.HasChosenColor }
+        val sourceChosenColor = if (needsChosenColor) {
+            state.getEntity(sourceId)?.chosenColor() ?: return emptySet()
+        } else null
+
         return state.getBattlefield().filter { entityId ->
             if (groupFilter.excludeSelf && entityId == sourceId) return@filter false
 
@@ -323,6 +332,10 @@ internal class AffectsFilterResolver {
                 // applied as a separate constraint below — skip it in the generic projection loop,
                 // which has no source in scope and would fail it closed.
                 if (predicate is CardPredicate.NameEqualsChosenComponent) continue
+                // HasChosenColor is resolved once above (sourceChosenColor) and applied as a
+                // separate constraint below; the generic projection has no source in scope and
+                // would fail it closed.
+                if (predicate == CardPredicate.HasChosenColor) continue
                 if (!matchesCardPredicateForProjection(predicate, card, container, projected, types, subtypes, colors, keywords, isFaceDown)) {
                     return@filter false
                 }
@@ -330,6 +343,11 @@ internal class AffectsFilterResolver {
 
             // Source-chosen card name constraint (from source's CastChoicesComponent).
             if (sourceChosenName != null && !card.name.equals(sourceChosenName, ignoreCase = true)) {
+                return@filter false
+            }
+
+            // Source-chosen color constraint (from source's CastChoicesComponent).
+            if (sourceChosenColor != null && sourceChosenColor.name !in colors) {
                 return@filter false
             }
 

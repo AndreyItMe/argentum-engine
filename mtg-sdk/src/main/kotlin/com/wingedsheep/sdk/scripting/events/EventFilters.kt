@@ -133,6 +133,17 @@ sealed interface SourceFilter {
         override val description = "any source"
     }
 
+    /**
+     * The permanent that owns the effect — i.e. damage dealt *by this permanent*. Mirror of
+     * [RecipientFilter.Self] for the source side. Used by static foggers like Fog Bank
+     * ("prevent all combat damage that would be dealt to and dealt by this creature").
+     */
+    @SerialName("SourceSelf")
+    @Serializable
+    data object Self : SourceFilter {
+        override val description = "this permanent"
+    }
+
     @SerialName("SourceCombat")
     @Serializable
     data object Combat : SourceFilter {

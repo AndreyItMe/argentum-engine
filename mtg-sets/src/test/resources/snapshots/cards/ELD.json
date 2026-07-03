@@ -135,6 +135,57 @@
     ]
 }
 
+// Heraldic Banner
+{
+    "name": "Heraldic Banner",
+    "manaCost": "{3}",
+    "typeLine": "Artifact",
+    "oracleText": "As this artifact enters, choose a color.\nCreatures you control of the chosen color get +1/+0.\n{T}: Add one mana of the chosen color.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddManaOfChoice",
+                    "colorSet": "ManaColorSet.SourceChosenColor"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 0,
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            "HasChosenColor"
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithChoice",
+                "choiceType": "COLOR"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "222",
+        "rarity": "UNCOMMON",
+        "artist": "Ravenna Tran",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/e/2e349af5-3f25-46d3-908e-83b2f6028b95.jpg?1782707787"
+    },
+    "colorIdentityOverride": []
+}
+
 // Raging Redcap
 {
     "name": "Raging Redcap",

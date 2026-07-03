@@ -237,6 +237,66 @@
     "colorIdentityOverride": []
 }
 
+// Into the Roil
+{
+    "name": "Into the Roil",
+    "manaCost": "{1}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card.",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{1}{U}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "ContextTarget",
+                        "index": 0
+                    },
+                    "destination": "Hand"
+                },
+                {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.WhenCondition",
+                        "condition": "WasKicked"
+                    },
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "nonland permanent"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "48",
+        "artist": "Kieran Yanner",
+        "flavorText": "\"Roil tide! Roil tide! Tie yourselves down!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/d/5dba9972-dd8b-407b-9374-a8f0ed1a96db.jpg?1782715668"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Kor Cartographer
 {
     "name": "Kor Cartographer",

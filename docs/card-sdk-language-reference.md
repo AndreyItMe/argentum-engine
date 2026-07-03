@@ -2188,6 +2188,10 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
 - `.withChosenColor()` — `CardPredicate.HasChosenColor`: matches the color chosen during the current
   effect's resolution (read from `EffectContext.chosenColor`, set by `Effects.ChooseColorThen`). Use with
   `AggregateBattlefield(Player.Each, …)` for "for each permanent of that color" (Coalition Dragon cycle).
+  In a **static ability** (a continuous lord), the chosen color is read from the source permanent's
+  `CastChoicesComponent` (set by `EntersWithChoice(ChoiceType.COLOR)`), so `ModifyStats(filter =
+  GroupFilter(GameObjectFilter.Creature.youControl().withChosenColor()))` expresses "creatures you
+  control of the chosen color get +X/+Y" (Heraldic Banner). Fails closed until a color is chosen.
 - `.sharingCreatureTypeWith(entity)` — `CardPredicate.SharesCreatureTypeWith(entity)`: shares ≥1 (projected)
   creature subtype with a referenced entity. `entity` may be `EntityReference.AffectedEntity`, which resolves
   to the creature a continuous effect is being applied to during projection — combine with
@@ -5935,6 +5939,11 @@ replacementEffect {
   replacement's controller — "a source you control" (Fated Firepower) — without enumerating a
   `GameObjectFilter`. `recipient = RecipientFilter.OpponentOrPermanentTheyControl` matches an opponent
   player **or** any permanent an opponent controls — "an opponent or a permanent an opponent controls".
+  `recipient = RecipientFilter.Self` / `source = SourceFilter.Self` match the permanent that owns the
+  replacement — "damage dealt *to* / *by* this permanent" — for source-relative static foggers like
+  Fog Bank (`DamageEvent(recipient = RecipientFilter.Self, damageType = Combat)` +
+  `DamageEvent(source = SourceFilter.Self, damageType = Combat)` = "prevent all combat damage that would
+  be dealt to and dealt by this creature").
 - `EntersTapped(unlessCondition?, payLifeCost?)` — "this permanent enters tapped" (`unlessCondition = null`),
   or "enters tapped unless `<condition>`" when an `unlessCondition` is supplied. The "slow land" cycle
   (Deathcap Glade, Dreamroot Cascade, Sundown Pass — "enters tapped unless you control two or more other

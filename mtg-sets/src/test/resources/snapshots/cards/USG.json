@@ -2092,6 +2092,57 @@
     ]
 }
 
+// Fog Bank
+{
+    "name": "Fog Bank",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Wall",
+    "oracleText": "Defender (This creature can't attack.)\nFlying\nPrevent all combat damage that would be dealt to and dealt by this creature.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 2
+    },
+    "keywords": [
+        "DEFENDER",
+        "FLYING"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "PreventDamage",
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "recipient": "RecipientSelf",
+                    "damageType": "DamageCombat"
+                }
+            },
+            {
+                "type": "PreventDamage",
+                "appliesTo": {
+                    "type": "DamageEvent",
+                    "source": "SourceSelf",
+                    "damageType": "DamageCombat"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "75",
+        "rarity": "UNCOMMON",
+        "artist": "Scott Kirschner",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/a/6ade0d30-5a57-439e-95e8-5f865880031f.jpg?1782720730",
+        "rulings": [
+            {
+                "date": "2004-10-04",
+                "text": "As of the Champions of Kamigawa rules update, the Wall creature type no longer inherently prevents attacking. All Walls printed before this update received errata granting the defender keyword."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Gaea's Bounty
 {
     "name": "Gaea's Bounty",

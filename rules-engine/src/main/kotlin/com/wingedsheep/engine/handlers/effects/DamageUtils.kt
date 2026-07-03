@@ -1238,6 +1238,7 @@ object DamageUtils {
                 // Check if the damage source matches the source filter
                 val sourceMatches = when (val source = damageEvent.source) {
                     is SourceFilter.Any -> true
+                    is SourceFilter.Self -> sourceId != null && sourceId == entityId
                     is SourceFilter.EnchantedCreature -> {
                         val attachedTo = container.get<AttachedToComponent>()?.targetId
                         sourceId != null && sourceId == attachedTo
