@@ -3,6 +3,7 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.core.CardsSelectedResponse
 import com.wingedsheep.engine.core.ChooseNumberDecision
 import com.wingedsheep.engine.core.ChooseOptionDecision
+import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.core.NumberChosenResponse
 import com.wingedsheep.engine.core.OptionChosenResponse
 import com.wingedsheep.engine.core.SelectCardsDecision
@@ -13,8 +14,10 @@ import com.wingedsheep.mtg.sets.definitions.tla.cards.TheRiseOfSozin
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
+import com.wingedsheep.sdk.model.EntityId
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -116,59 +119,83 @@ class TheRiseOfSozinScenarioTest : FunSpec({
         }
     }
 
-    test("chapter III transforms into Fire Lord Sozin, whose combat damage reanimates under your control") {
+    test("chapter III transforms into Fire Lord Sozin, whose combat damage targets and reanimates graveyard creatures under your control") {
         val driver = createDriver()
         val me = driver.activePlayer!!
         val opp = driver.getOpponent(me)
-        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+        val sozin = driver.transformAndReadySozinForAttack(me, opp)
 
-        val saga = driver.putCardInHand(me, "The Rise of Sozin")
-        driver.giveSagaMana(me)
-        driver.castSpell(me, saga)
-        driver.resolveAllSozin()
-
-        // Accrue lore to 3 → chapter III exiles and returns transformed.
-        var guard = 0
-        while (driver.findPermanent(me, "Fire Lord Sozin") == null && guard++ < 8) {
-            driver.advanceToNextMainAndResolve()
-        }
-
-        val sozin = driver.findPermanent(me, "Fire Lord Sozin")
-        withClue("chapter III returns the Saga transformed into Fire Lord Sozin") {
-            sozin shouldNotBe null
-        }
-        withClue("Fire Lord Sozin is a 5/5 creature under your control") {
-            driver.state.projectedState.isCreature(sozin!!) shouldBe true
+        withClue("chapter III returns the Saga transformed into a 5/5 Fire Lord Sozin you control") {
+            driver.state.projectedState.isCreature(sozin) shouldBe true
             driver.state.projectedState.getPower(sozin) shouldBe 5
             driver.state.projectedState.getToughness(sozin) shouldBe 5
         }
 
-        // Advance to my next turn so Fire Lord Sozin can attack (it entered transformed last turn).
-        driver.advanceToNextMainAndResolve() // opponent's turn
-        driver.advanceToNextMainAndResolve() // my turn — Fire Lord Sozin is no longer summoning sick
+        // Two Grizzly Bears (mana value 2 each) in the opponent's graveyard to reanimate.
+        val bear1 = driver.putCardInGraveyard(opp, "Grizzly Bears")
+        val bear2 = driver.putCardInGraveyard(opp, "Grizzly Bears")
 
-        val sozinNow = driver.findPermanent(me, "Fire Lord Sozin")!!
-        driver.removeSummoningSickness(sozinNow)
-
-        // Seed two Grizzly Bears (mana value 2 each) in the opponent's graveyard to reanimate.
-        repeat(2) { driver.putCardInGraveyard(opp, "Grizzly Bears") }
-        driver.giveColorlessMana(me, 6)
-
-        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
-        driver.declareAttackers(me, listOf(sozinNow), opp)
-        driver.resolveStackSozin() // firebending attack trigger etc.
-
-        // Advance into the combat damage step, then pass priority until the "deals combat damage to
-        // a player" trigger resolves and pauses on the pay-{X} chooser. Pay {X} = 4 and reanimate.
-        driver.passPriorityUntil(Step.COMBAT_DAMAGE)
-        var g = 0
-        while (driver.pendingDecision == null && driver.state.step != Step.POSTCOMBAT_MAIN && g++ < 40) {
-            driver.bothPass()
+        // Attack, deal combat damage, pay {X} = 4 → the reflexive presents its target selection.
+        val targetDecision = driver.attackAndPayX(me, opp, sozin, payX = 4)
+        withClue("both bears in the damaged player's graveyard are legal targets") {
+            targetDecision.legalTargets[0]!! shouldContain bear1
+            targetDecision.legalTargets[0]!! shouldContain bear2
         }
-        driver.resolveAllSozin(payX = 4)
+        // Target both — total mana value 4 ≤ X (4).
+        driver.submitTargetSelection(me, listOf(bear1, bear2)).error shouldBe null
+        driver.resolveAllSozin()
 
-        withClue("paying {X}=4 reanimates both Grizzly Bears (total mana value 4 ≤ 4) under your control") {
+        withClue("targeting both bears (total mana value 4 ≤ 4) reanimates them under your control") {
             driver.countControlled(me, "Grizzly Bears") shouldBe 2
+        }
+    }
+
+    test("the total-mana-value cap trims: targeting creatures whose combined mana value exceeds X is rejected") {
+        val driver = createDriver()
+        val me = driver.activePlayer!!
+        val opp = driver.getOpponent(me)
+        val sozin = driver.transformAndReadySozinForAttack(me, opp)
+
+        // Three Grizzly Bears (mana value 2 each = 6 total) in the opponent's graveyard.
+        val bears = List(3) { driver.putCardInGraveyard(opp, "Grizzly Bears") }
+
+        val targetDecision = driver.attackAndPayX(me, opp, sozin, payX = 4)
+        withClue("all three bears are individually legal targets") {
+            bears.forEach { targetDecision.legalTargets[0]!! shouldContain it }
+        }
+        // Targeting all three (total mana value 6) exceeds X = 4 and must be rejected.
+        val rejected = driver.submitTargetSelection(me, bears)
+        withClue("an over-cap target set (total mana value 6 > X 4) is rejected, nothing reanimated") {
+            rejected.error shouldNotBe null
+            driver.countControlled(me, "Grizzly Bears") shouldBe 0
+        }
+        // The decision is still pending — a two-bear set (total mana value 4) is within the cap.
+        driver.submitTargetSelection(me, bears.take(2)).error shouldBe null
+        driver.resolveAllSozin()
+        withClue("only the two bears within the mana-value cap are reanimated") {
+            driver.countControlled(me, "Grizzly Bears") shouldBe 2
+        }
+    }
+
+    test("only the damaged player's graveyard is targetable, not your own") {
+        val driver = createDriver()
+        val me = driver.activePlayer!!
+        val opp = driver.getOpponent(me)
+        val sozin = driver.transformAndReadySozinForAttack(me, opp)
+
+        // A creature in YOUR graveyard and one in the opponent's.
+        val myBear = driver.putCardInGraveyard(me, "Grizzly Bears")
+        val oppBear = driver.putCardInGraveyard(opp, "Grizzly Bears")
+
+        val targetDecision = driver.attackAndPayX(me, opp, sozin, payX = 2)
+        withClue("only the damaged player's graveyard creature is a legal target") {
+            targetDecision.legalTargets[0]!! shouldContain oppBear
+            targetDecision.legalTargets[0]!! shouldNotContain myBear
+        }
+        driver.submitTargetSelection(me, listOf(oppBear)).error shouldBe null
+        driver.resolveAllSozin()
+        withClue("the opponent's bear is reanimated under your control") {
+            driver.countControlled(me, "Grizzly Bears") shouldBe 1
         }
     }
 })
@@ -181,6 +208,63 @@ private fun GameTestDriver.resolveStackSozin() {
     while (state.stack.isNotEmpty() && guard++ < 50) {
         bothPass()
     }
+}
+
+/**
+ * Cast The Rise of Sozin, accrue lore through chapter III so it transforms into Fire Lord Sozin,
+ * then advance to a later turn and clear summoning sickness so it can attack. Returns Fire Lord
+ * Sozin's entity id.
+ */
+private fun GameTestDriver.transformAndReadySozinForAttack(me: EntityId, opp: EntityId): EntityId {
+    passPriorityUntil(Step.PRECOMBAT_MAIN)
+    val saga = putCardInHand(me, "The Rise of Sozin")
+    // The Rise of Sozin front face costs {4}{B}{B}.
+    giveColorlessMana(me, 4)
+    giveMana(me, Color.BLACK, 2)
+    castSpell(me, saga)
+    resolveAllSozin()
+
+    // Accrue lore to 3 → chapter III exiles and returns transformed.
+    var guard = 0
+    while (findPermanent(me, "Fire Lord Sozin") == null && guard++ < 8) {
+        advanceToNextMainAndResolve()
+    }
+    // Advance to my next turn so Fire Lord Sozin can attack (it entered transformed last turn).
+    advanceToNextMainAndResolve() // opponent's turn
+    advanceToNextMainAndResolve() // my turn
+    val sozin = findPermanent(me, "Fire Lord Sozin")!!
+    removeSummoningSickness(sozin)
+    return sozin
+}
+
+/**
+ * Attack with Fire Lord Sozin, resolve the firebending attack trigger, deal combat damage, and pay
+ * {X} = [payX] on the resulting reflexive's pay-{X} chooser. Returns the [ChooseTargetsDecision] the
+ * reflexive then presents for "any number of target creature cards with total mana value X or less".
+ */
+private fun GameTestDriver.attackAndPayX(
+    me: EntityId,
+    opp: EntityId,
+    sozin: EntityId,
+    payX: Int
+): ChooseTargetsDecision {
+    // Mana to pay {X} (firebending also adds {R}{R}{R} live in combat). Given up front, as in the
+    // proven combat-damage flow above.
+    giveColorlessMana(me, payX + 2)
+    passPriorityUntil(Step.DECLARE_ATTACKERS)
+    declareAttackers(me, listOf(sozin), opp)
+    resolveStackSozin() // firebending attack trigger
+
+    passPriorityUntil(Step.COMBAT_DAMAGE)
+    var g = 0
+    while (pendingDecision == null && state.step != Step.POSTCOMBAT_MAIN && g++ < 40) {
+        bothPass()
+    }
+    val payDecision = pendingDecision as? ChooseNumberDecision
+        ?: error("Expected pay-{X} ChooseNumberDecision, got ${pendingDecision}")
+    submitDecision(me, NumberChosenResponse(payDecision.id, payX))
+    return pendingDecision as? ChooseTargetsDecision
+        ?: error("Expected a ChooseTargetsDecision after paying {X}, got ${pendingDecision}")
 }
 
 /**

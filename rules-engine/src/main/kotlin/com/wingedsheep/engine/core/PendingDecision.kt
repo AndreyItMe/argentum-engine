@@ -120,7 +120,16 @@ data class TargetRequirementInfo(
      * player — "from a single graveyard" (Arashin Sunshield). Enforced against each
      * selected card's owner in [DecisionValidators.validateTargets].
      */
-    val sameOwner: Boolean = false
+    val sameOwner: Boolean = false,
+    /**
+     * When non-null, the combined mana value of the chosen card targets for this requirement may
+     * not exceed this cap — "any number of target creature cards with total mana value X or less"
+     * (Fire Lord Sozin). Already resolved to a concrete integer at decision-build time (so a
+     * `DynamicAmount.XValue` cap reflects the X just paid); the interactive
+     * [DecisionValidators.validateTargets] rejects a selection whose summed `manaValue` exceeds it.
+     * `null` imposes no aggregate cap.
+     */
+    val totalManaValueAtMost: Int? = null
 )
 
 /**

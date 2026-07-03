@@ -383,7 +383,19 @@ data class TargetObject(
      * types via continuous effects count); a no-op for single-target requirements and for
      * non-permanent targets. Defaults to false.
      */
-    val sameCreatureType: Boolean = false
+    val sameCreatureType: Boolean = false,
+    /**
+     * When non-null, the chosen card targets for this requirement must have a **combined mana
+     * value no greater than this amount** — "any number of target creature cards with total mana
+     * value X or less" (Fire Lord Sozin). The [DynamicAmount] is resolved once the ability is
+     * being put on the stack (so `DynamicAmount.XValue` reads the X just paid) and enforced
+     * cross-target against the summed `manaValue` of the chosen cards by both `TargetValidator`
+     * (authoritative) and the interactive `DecisionValidators` (which sees the resolved integer
+     * cap baked into the decision). Pair with `unlimited = true` for the "any number … with total
+     * mana value N or less" shape. `null` (the default) imposes no aggregate cap. Distinct from
+     * `dynamicMaxCount`, which caps the *count* of targets, not their summed mana value.
+     */
+    val totalManaValueAtMost: DynamicAmount? = null
 ) : TargetRequirement {
     override val description: String = run {
         val base = if (id != null) {
@@ -413,11 +425,16 @@ data class TargetObject(
                 }
             }
         }
-        when {
+        val qualified = when {
             sameController -> "$base controlled by the same player"
             sameOwner -> "$base from a single graveyard"
             sameCreatureType -> "$base that share a creature type"
             else -> base
+        }
+        if (totalManaValueAtMost != null) {
+            "$qualified with total mana value ${totalManaValueAtMost.description} or less"
+        } else {
+            qualified
         }
     }
 

@@ -19127,41 +19127,42 @@
                         "type": "Gated",
                         "gate": "Gate.MayPayX",
                         "then": {
-                            "type": "Composite",
-                            "effects": [
-                                {
-                                    "type": "GatherCards",
-                                    "source": {
-                                        "type": "FromZone",
-                                        "zone": "Graveyard",
-                                        "player": "TriggeringPlayer",
-                                        "filter": "creature"
+                            "type": "ReflexiveTrigger",
+                            "action": {
+                                "type": "Composite",
+                                "effects": []
+                            },
+                            "optional": false,
+                            "reflexiveEffect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "GatherCards",
+                                        "source": "ChosenTargets",
+                                        "storeAs": "sozinReanimated"
                                     },
-                                    "storeAs": "sozinReanimate"
-                                },
-                                {
-                                    "type": "SelectFromCollection",
-                                    "from": "sozinReanimate",
-                                    "selection": "ChooseAnyNumber",
-                                    "storeSelected": "sozinReanimated",
-                                    "prompt": "Put any number of creature cards with total mana value X or less onto the battlefield under your control",
-                                    "selectedLabel": "Put onto the battlefield",
-                                    "restrictions": [
-                                        {
-                                            "type": "TotalManaValueAtMost",
-                                            "maxAmount": "XValue"
+                                    {
+                                        "type": "MoveCollection",
+                                        "from": "sozinReanimated",
+                                        "destination": {
+                                            "type": "ToZone",
+                                            "zone": "Battlefield"
                                         }
-                                    ]
-                                },
-                                {
-                                    "type": "MoveCollection",
-                                    "from": "sozinReanimated",
-                                    "destination": {
-                                        "type": "ToZone",
-                                        "zone": "Battlefield"
                                     }
+                                ]
+                            },
+                            "reflexiveTargetRequirements": [
+                                {
+                                    "type": "TargetObject",
+                                    "unlimited": true,
+                                    "filter": {
+                                        "baseFilter": "creature own:triggering-player",
+                                        "zone": "Graveyard"
+                                    },
+                                    "totalManaValueAtMost": "XValue"
                                 }
-                            ]
+                            ],
+                            "descriptionOverride": "put any number of target creature cards with total mana value X or less from that player's graveyard onto the battlefield under your control"
                         }
                     }
                 }

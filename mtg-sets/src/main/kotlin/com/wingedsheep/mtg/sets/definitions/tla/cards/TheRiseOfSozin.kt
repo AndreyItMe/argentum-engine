@@ -15,12 +15,14 @@ import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.effects.MayPayXForEffect
 import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
+import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
-import com.wingedsheep.sdk.scripting.effects.SelectionRestriction
 import com.wingedsheep.sdk.scripting.effects.ShuffleLibraryEffect
+import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.targets.TargetObject
 import com.wingedsheep.sdk.scripting.targets.TargetOpponent
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
@@ -52,12 +54,15 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * ([Effects.ExileAndReturnTransformed], as on The Legend of Roku / Kuruk).
  *
  * The back face reuses [firebending] (the display keyword + attack-triggered "add {R}{R}{R} until end
- * of combat") and [Keyword.MENACE], plus a pay-{X} reflexive reanimation: [MayPayXForEffect] gates the
- * follow-up on paying X, then a gather → `ChooseAnyNumber` select (capped by the *dynamic*
- * [SelectionRestriction.TotalManaValueAtMost] `maxAmount = DynamicAmount.XValue`, i.e. total mana value
- * X or less) → move-to-battlefield reanimates the chosen creature cards from the damaged player's
- * ([Player.TriggeringPlayer]) graveyard under your control ([CardDestination.ToZone] battlefield sets
- * the controller to you while ownership stays with the opponent).
+ * of combat") and [Keyword.MENACE], plus a pay-{X} *targeted* reflexive reanimation. Because the
+ * reanimation targets "any number of target creature cards with total mana value X or less"
+ * (CR 115.1a / 601.2c), the targets are chosen after X is paid: [MayPayXForEffect] gates on paying X,
+ * and its post-payment `then` is a [ReflexiveTriggerEffect] whose [TargetObject] is `unlimited` (any
+ * number) with the new [TargetObject.totalManaValueAtMost]` = DynamicAmount.XValue` aggregate cap —
+ * resolved against the X in scope, and scoped to the damaged player's graveyard via the new
+ * `GameObjectFilter.ownedByTriggeringPlayer()`. The chosen cards are then reanimated under your control
+ * ([CardDestination.ToZone] battlefield sets the controller to you while ownership stays with the
+ * damaged player).
  */
 private val FireLordSozin = card("Fire Lord Sozin") {
     manaCost = ""
@@ -77,38 +82,41 @@ private val FireLordSozin = card("Fire Lord Sozin") {
     // Whenever Fire Lord Sozin deals combat damage to a player, you may pay {X}. When you do, put
     // any number of target creature cards with total mana value X or less from that player's
     // graveyard onto the battlefield under your control.
+    //
+    // The reflexive ability is *targeted* (CR 115.1a / 601.2c): once you pay {X}, you announce which
+    // creature cards you're reanimating, subject to their combined mana value not exceeding X. We
+    // model this by nesting the target selection inside [MayPayXForEffect]'s post-payment `then`, so
+    // the `X` just paid is in scope when the reflexive [TargetObject.totalManaValueAtMost] cap
+    // resolves. The [ReflexiveTriggerEffect] wrapper is borrowed only for its mid-resolution target
+    // selection — its `action` is an empty composite because the "when you do" is already the pay-{X}
+    // gate. `ownedByTriggeringPlayer()` scopes the graveyard to the player Sozin just damaged.
     triggeredAbility {
         trigger = Triggers.DealsCombatDamageToPlayer
         effect = MayPayXForEffect(
-            effect = Effects.Composite(
-                listOf(
-                    // Gather the damaged player's graveyard creature cards.
-                    GatherCardsEffect(
-                        source = CardSource.FromZone(
-                            zone = Zone.GRAVEYARD,
-                            player = Player.TriggeringPlayer,
-                            filter = GameObjectFilter.Creature
+            effect = ReflexiveTriggerEffect(
+                action = Effects.Composite(emptyList()),
+                optional = false,
+                reflexiveTargetRequirements = listOf(
+                    TargetObject(
+                        unlimited = true,
+                        filter = TargetFilter(
+                            GameObjectFilter.Creature.ownedByTriggeringPlayer(),
+                            zone = Zone.GRAVEYARD
                         ),
-                        storeAs = "sozinReanimate"
-                    ),
-                    // Choose any number of them with total mana value X or less.
-                    SelectFromCollectionEffect(
-                        from = "sozinReanimate",
-                        selection = SelectionMode.ChooseAnyNumber,
-                        restrictions = listOf(
-                            SelectionRestriction.TotalManaValueAtMost(maxAmount = DynamicAmount.XValue)
-                        ),
-                        storeSelected = "sozinReanimated",
-                        prompt = "Put any number of creature cards with total mana value X or less " +
-                            "onto the battlefield under your control",
-                        selectedLabel = "Put onto the battlefield"
-                    ),
-                    // Put them onto the battlefield under your control (owner stays the opponent).
+                        totalManaValueAtMost = DynamicAmount.XValue
+                    )
+                ),
+                // Put the chosen cards onto the battlefield under your control (owner stays the
+                // damaged player).
+                reflexiveEffect = Effects.Composite(
+                    GatherCardsEffect(source = CardSource.ChosenTargets, storeAs = "sozinReanimated"),
                     MoveCollectionEffect(
                         from = "sozinReanimated",
                         destination = CardDestination.ToZone(Zone.BATTLEFIELD, Player.You)
                     )
-                )
+                ),
+                descriptionOverride = "put any number of target creature cards with total mana " +
+                    "value X or less from that player's graveyard onto the battlefield under your control"
             )
         )
     }

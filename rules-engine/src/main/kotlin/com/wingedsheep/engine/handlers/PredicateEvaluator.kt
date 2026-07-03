@@ -721,6 +721,15 @@ class PredicateEvaluator {
                 val targetPlayer = context.targetPlayerId
                 card?.ownerId != null && targetPlayer != null && card.ownerId == targetPlayer
             }
+            ControllerPredicate.OwnedByTriggeringPlayer -> {
+                val card = container.get<CardComponent>()
+                // Mirror TargetResolutionUtils' Player.TriggeringPlayer resolution: for a damage
+                // trigger the damaged player rides on triggeringEntityId (triggeringPlayerId is only
+                // set by triggers that name a distinct player), so fall back to it. A non-player
+                // triggeringEntityId (e.g. a creature) can never equal a card's owner, so it's safe.
+                val triggeringPlayer = context.triggeringPlayerId ?: context.triggeringEntityId
+                card?.ownerId != null && triggeringPlayer != null && card.ownerId == triggeringPlayer
+            }
             else -> {
                 // Use projected controller if available; otherwise fall back to the base
                 // ControllerComponent or, for stack objects (spells and abilities), the
@@ -749,6 +758,7 @@ class PredicateEvaluator {
                     }
                     // Already handled above
                     ControllerPredicate.OwnedByYou, ControllerPredicate.OwnedByOpponent,
+                    ControllerPredicate.OwnedByTriggeringPlayer,
                     is ControllerPredicate.And, is ControllerPredicate.Or, is ControllerPredicate.Not -> true
                 }
             }

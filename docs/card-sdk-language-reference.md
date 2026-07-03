@@ -1197,7 +1197,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   regardless of when the effect resolved.
 - `Effects.AddCombatPhaseRestrictedTo(attackerRestriction: GameObjectFilter)` — the same atomic extra
   combat phase, but **only creatures matching `attackerRestriction` may be declared as attackers
-  during that inserted phase** (CR 508.1a; Bumi, Unleashed: "there is an additional combat phase. Only
+  during that inserted phase** (CR 508.1c; Bumi, Unleashed: "there is an additional combat phase. Only
   land creatures can attack during that combat phase" ⇒
   `AddCombatPhaseRestrictedTo(GameObjectFilter.Creature and GameObjectFilter.Land)`). The filter rides
   on the `QueuedPhase` and is copied onto `InAdditionalCombatPhaseComponent` when the phase begins, so
@@ -2037,6 +2037,20 @@ Every `TargetRequirement` carries count semantics (defaults shown):
   the battlefield — can never share, so the set is rejected. A no-op for single-target requirements and for
   non-permanent targets. E.g. `TargetCreature(count = 2, filter = TargetFilter.CreatureYouControl,
   sameCreatureType = true)` (Secret Tunnel).
+- `totalManaValueAtMost = null` — on `TargetObject`; when set to a `DynamicAmount`, the **combined
+  mana value** of the chosen **card** targets may not exceed the resolved amount ("**any number of
+  target creature cards with total mana value X or less**"). The amount is resolved once the ability
+  is put on the stack — for a reflexive after a pay-`{X}` (`DynamicAmount.XValue` reads the X just
+  paid) — and enforced cross-target against the summed `manaValue` by both `TargetValidator`
+  (authoritative, resolving the `DynamicAmount` against `xValue`) and, on the interactive target
+  decision, `DecisionValidators` (which sees the cap already baked to a concrete int in
+  `TargetRequirementInfo`). Pair with `unlimited = true` for the "any number … with total mana value
+  N or less" shape. Distinct from `dynamicMaxCount`, which caps the target *count*, not their summed
+  mana value. The web-client's graveyard target picker enforces the same cap eagerly (blocks a pick
+  that would exceed it). E.g. `TargetObject(unlimited = true, filter =
+  TargetFilter(GameObjectFilter.Creature.ownedByTriggeringPlayer(), zone = Zone.GRAVEYARD),
+  totalManaValueAtMost = DynamicAmount.XValue)` — **Fire Lord Sozin** (back face of The Rise of Sozin),
+  reanimating post-payment via a `MayPayXForEffect(ReflexiveTriggerEffect(...))`.
 - `chooser = TargetChooser.Controller` — **who selects this requirement's target(s)**. Set to
   `TargetChooser.Opponent` for "**… of an opponent's choice**" wording (Cuombajj Witches). The chosen
   target is still a real target of *your* spell/ability — announced together with your own targets,
@@ -2143,6 +2157,15 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   ChosenTargets)` → `MoveCollectionEffect(destination = ToZone(LIBRARY, player = Player.TargetPlayer,
   placement = Top), order = CardOrder.ControllerChooses)` to put the chosen cards on top of *their*
   (the target player's) library in a player-chosen order.
+- `.ownedByTriggeringPlayer()` (`ControllerPredicate.OwnedByTriggeringPlayer`, FQL
+  `own:triggering-player`) — owned by the trigger's associated player: the damaged player for a
+  combat/damage trigger, the event's player otherwise. The *non-targeted* "that player" sibling of
+  `.ownedByTargetPlayer()`, matching the card's immutable owner against `context.triggeringPlayerId`.
+  Use for "…from **that player's** graveyard" where the ability doesn't target the player — Fire Lord
+  Sozin's "put any number of target creature cards … from that player's graveyard" reads "that player"
+  as whoever Sozin just damaged. Works at target-validation/finding time in a graveyard zone:
+  `TargetObject(unlimited = true, filter = TargetFilter(GameObjectFilter.Creature.ownedByTriggeringPlayer(),
+  zone = Zone.GRAVEYARD), totalManaValueAtMost = DynamicAmount.XValue)`.
 - `.withControllerPredicate(p)` — set any `ControllerPredicate` directly; the entry point for the
   **composed** predicates `ControllerPredicate.And(list)` / `Or(list)` / `Not(p)`, which express
   heterogeneous controller/owner relationships in one filter — e.g. "creatures you own but don't

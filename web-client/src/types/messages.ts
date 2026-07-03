@@ -400,6 +400,14 @@ export interface TargetRequirementInfo {
   readonly minTargets: number
   readonly maxTargets: number
   readonly description: string
+  /** When true, every chosen card target must be owned by the same player ("from a single graveyard"). */
+  readonly sameOwner?: boolean
+  /**
+   * When set, the combined mana value of the chosen card targets may not exceed this cap
+   * ("any number of target creature cards with total mana value X or less" — Fire Lord Sozin).
+   * Already resolved to a concrete number server-side.
+   */
+  readonly totalManaValueAtMost?: number | null
 }
 
 /**

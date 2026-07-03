@@ -113,6 +113,23 @@ sealed interface ControllerPredicate {
         override val description: String = "target player owns"
     }
 
+    /**
+     * Owned by the player associated with the current trigger — the damaged player for a
+     * combat/damage trigger, the event's player otherwise (resolved from the effect context's
+     * `triggeringPlayerId`).
+     *
+     * The owner sibling of [ControlledByTargetPlayer] for the *non-targeted* "that player"
+     * wording: Fire Lord Sozin's "put any number of target creature cards … from **that
+     * player's** graveyard" reads "that player" as the player Sozin just damaged, without the
+     * ability targeting them. Matches the card's immutable `ownerId`, so it works for cards in a
+     * graveyard (which have no controller).
+     */
+    @SerialName("OwnedByTriggeringPlayer")
+    @Serializable
+    data object OwnedByTriggeringPlayer : ControllerPredicate {
+        override val description: String = "that player owns"
+    }
+
     // =============================================================================
     // Composite / Logical Combinators
     // =============================================================================
