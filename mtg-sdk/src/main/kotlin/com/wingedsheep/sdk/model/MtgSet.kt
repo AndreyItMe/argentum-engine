@@ -72,6 +72,15 @@ interface MtgSet {
     val sealedSupported: Boolean get() = false
 
     /**
+     * True for extension sets — bonus sheets and other supplemental releases (e.g. The Big Score
+     * alongside Outlaws of Thunder Junction) whose pool is too thin to carry a sealed/draft pool
+     * on its own. Extension sets are still fully selectable, but only *in combination with* at
+     * least one regular set: lobbies reject a selection consisting solely of extension sets, and
+     * random-set rolls never land on one.
+     */
+    val extensionSet: Boolean get() = false
+
+    /**
      * Probability in `[0.0, 1.0]` that an individual card rolled into a booster is shown with one
      * of its alternate-frame printings (showcase / borderless) instead of its canonical art. The
      * roll is per card and only fires for cards that actually have an alternate-frame [Printing]

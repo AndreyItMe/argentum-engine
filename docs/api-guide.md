@@ -150,6 +150,10 @@ Optional overrides commonly used by real sets:
   deck building).
 - `printings: List<Printing>` — register reprints whose canonical `CardDefinition` lives in an
   earlier set.
+- `extensionSet = true` — mark a bonus sheet / supplemental release (e.g. The Big Score alongside
+  Outlaws of Thunder Junction) whose pool is too thin to play alone. Extension sets stay fully
+  selectable in the tournament lobby but only together with at least one regular set; single-set
+  pickers and random-set rolls skip them.
 
 ### Step 3: Register in `MtgSetCatalog`
 

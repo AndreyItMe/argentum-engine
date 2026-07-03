@@ -74,6 +74,7 @@ class ConnectionHandler(
             code = config.setCode,
             name = config.setName,
             partial = !config.fullyImplemented,
+            extensionSet = config.extensionSet,
             block = config.block,
             implementedCount = config.distinctCardCount,
             releaseDate = config.releaseDate

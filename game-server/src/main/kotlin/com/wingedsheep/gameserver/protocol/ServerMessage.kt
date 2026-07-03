@@ -428,6 +428,12 @@ sealed interface ServerMessage {
          * clients only need this coarser "is it fully ready" signal.)
          */
         val partial: Boolean = false,
+        /**
+         * True for extension sets (bonus sheets like The Big Score): fully implemented but too thin
+         * to play alone. Clients only allow them alongside at least one regular set, and the server
+         * rejects a selection consisting solely of extension sets.
+         */
+        val extensionSet: Boolean = false,
         val block: String? = null,
         val implementedCount: Int? = null,
         val releaseDate: String? = null

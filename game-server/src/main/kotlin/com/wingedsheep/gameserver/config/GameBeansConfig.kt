@@ -168,6 +168,7 @@ private fun MtgSet.toBoosterSetConfig(cards: List<CardDefinition>): BoosterGener
         basicLands = (basicLandsFallback ?: this).basicLands,
         incomplete = incomplete,
         sealedSupported = sealedSupported,
+        extensionSet = extensionSet,
         block = block,
         releaseDate = releaseDate,
         boosterStrategy = boosterStrategy,

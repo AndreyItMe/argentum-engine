@@ -1814,6 +1814,20 @@
   border-radius: 999px;
 }
 
+/* Extension sets (bonus sheets like The Big Score) — playable only alongside a regular set. */
+.setExtensionBadge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 999px;
+}
+
 .setPickerEmpty {
   font-size: var(--font-sm);
   color: var(--text-disabled);

@@ -45,6 +45,12 @@ class BoosterGenerator(
          * callers that hand-build configs keep their prior behaviour.
          */
         val sealedSupported: Boolean = true,
+        /**
+         * True for extension sets (bonus sheets like The Big Score) that are fully implemented but
+         * too thin to carry a sealed/draft pool alone. See [com.wingedsheep.sdk.model.MtgSet.extensionSet];
+         * lobbies require at least one non-extension set in any selection containing one.
+         */
+        val extensionSet: Boolean = false,
         val block: String? = null,
         /** Set release date in ISO `YYYY-MM-DD` form, or null if unknown. Used by clients to sort sets chronologically. */
         val releaseDate: String? = null,

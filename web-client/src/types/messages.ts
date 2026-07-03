@@ -1241,6 +1241,11 @@ export interface AvailableSet {
    * incomplete). The lobby set picker hides partial sets behind a default-off toggle.
    */
   readonly partial?: boolean
+  /**
+   * True for extension sets (bonus sheets like The Big Score): fully implemented but too thin to
+   * play alone — only selectable together with at least one regular set.
+   */
+  readonly extensionSet?: boolean
   readonly block?: string
   readonly implementedCount?: number
   /** Set release date in ISO `YYYY-MM-DD` form, or undefined if unknown. */

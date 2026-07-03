@@ -822,6 +822,11 @@ function LobbyOverlay({
   const isAnyDraft = isDraft || isWinston || isGridDraft || isCommanderDraft
   const isAnySealed = isSealed || isCommanderSealed
   const hasSelectedSets = lobbyState.settings.setCodes.length > 0
+  // Extension sets (bonus sheets like The Big Score) can't carry a pool alone — the selection
+  // needs at least one regular set. Unknown codes count as regular; the server re-validates.
+  const hasBaseSet = lobbyState.settings.setCodes.some(
+    (code) => !lobbyState.settings.availableSets.find((s) => s.code === code)?.extensionSet,
+  )
   const playerCount = lobbyState.players.length
   const canSwitchToNormalDraft = playerCount <= 8
   const canSwitchToWinston = playerCount <= 2
@@ -842,7 +847,7 @@ function LobbyOverlay({
     .every((p) => p.deckSubmitted)
   const canStart = isPremade
     ? playerCheck && allConnectedDecksSubmitted
-    : playerCheck && hasSelectedSets
+    : playerCheck && hasSelectedSets && hasBaseSet
 
   const copyLobbyId = () => {
     navigator.clipboard.writeText(lobbyState.lobbyId)
@@ -866,6 +871,16 @@ function LobbyOverlay({
       ? lobbyState.settings.setCodes.filter((c) => c !== code)
       : [...lobbyState.settings.setCodes, code]
     updateLobbySettings({ setCodes: newCodes })
+  }
+
+  // "Random Set" in the picker: add one random complete, standalone set to the selection.
+  // Partial sets stay opt-in and extension sets can't anchor a pool, so neither is rolled.
+  const addRandomSet = () => {
+    const candidates = allSets.filter(
+      (s) => !s.partial && !s.extensionSet && !lobbyState.settings.setCodes.includes(s.code),
+    )
+    const pick = candidates[Math.floor(Math.random() * candidates.length)]
+    if (pick) updateLobbySettings({ setCodes: [...lobbyState.settings.setCodes, pick.code] })
   }
 
   return (
@@ -1218,7 +1233,11 @@ function LobbyOverlay({
                       <span
                         key={set.code}
                         className={`${styles.setChip} ${isAnyDraft ? styles.setChipDraft : ''} ${set.partial ? styles.setChipPartial : ''}`}
-                        title={set.partial ? `${set.name} — partial (reduced card pool)` : set.name}
+                        title={set.partial
+                          ? `${set.name} — partial (reduced card pool)`
+                          : set.extensionSet
+                            ? `${set.name} — extension set (needs a regular set alongside)`
+                            : set.name}
                       >
                         <SetIcon code={set.code} className={styles.setChipIcon} />
                         <span className={styles.setChipName}>{set.name}</span>
@@ -1233,6 +1252,11 @@ function LobbyOverlay({
                   </div>
                 ) : (
                   <span className={styles.setSelectionEmpty}>No sets selected yet</span>
+                )}
+                {hasSelectedSets && !hasBaseSet && (
+                  <span className={styles.setSelectionEmpty}>
+                    Extension sets need a regular set alongside them.
+                  </span>
                 )}
                 <button
                   type="button"
@@ -1690,7 +1714,9 @@ function LobbyOverlay({
                       : undefined
                   : !hasSelectedSets
                     ? 'Select at least one set'
-                    : isWinston && lobbyState.players.length !== 2
+                    : !hasBaseSet
+                      ? 'Extension sets need a regular set alongside them — add one'
+                      : isWinston && lobbyState.players.length !== 2
                       ? 'Winston Draft requires exactly 2 players'
                       : lobbyState.players.length < 2
                         ? 'Need at least 2 players'
@@ -1718,6 +1744,7 @@ function LobbyOverlay({
           sets={allSets}
           selectedCodes={lobbyState.settings.setCodes}
           onToggleSet={toggleSet}
+          onSelectRandom={addRandomSet}
           onClose={() => setShowSetPicker(false)}
         />
       )}

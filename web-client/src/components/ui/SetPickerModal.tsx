@@ -4,10 +4,14 @@
  *
  * Every set (complete + partial) lives behind this one modal. It supports two modes:
  *   - `multi`  (default): clicking a row toggles it and the modal stays open. The host builds a
- *               multi-set pool (tournament lobby).
+ *               multi-set pool (tournament lobby). With `onSelectRandom` a top "Random Set" row
+ *               asks the parent to add a random set to the selection.
  *   - `single`: clicking a row selects it and closes the modal. With `onSelectRandom` a top
  *               "Random Set" row clears the selection so the server rolls a random set
  *               (Quick Game random sealed pool).
+ *
+ * Extension sets (bonus sheets like The Big Score) carry an "extension" badge and are only
+ * playable alongside a regular set, so single mode hides them entirely.
  *
  * Visuals come from `GameUI.module.css` (the shared lobby stylesheet — `QuickGameLobbyOverlay`
  * already reuses it) so both lobbies look identical.
@@ -31,8 +35,9 @@ export interface SetPickerModalProps {
    */
   mode?: 'single' | 'multi'
   /**
-   * Single mode only — when provided, a "Random Set" row is shown at the top that clears the
-   * selection (the server then rolls a random set). Selecting it closes the modal.
+   * When provided, a "Random Set" row is shown at the top. In single mode it clears the selection
+   * (the server then rolls a random set) and closes the modal; in multi mode the parent picks a
+   * random set to add to the selection and the modal stays open.
    */
   onSelectRandom?: () => void
   /** Modal heading. Defaults to "Choose sets". */
@@ -87,8 +92,11 @@ export function SetPickerModal({
   //    near-empty sets you'd otherwise see once partial sets are shown).
   const partialSetCount = sets.filter((s) => s.partial).length
   const pickerSets = sets.filter((s) => {
+    // Single mode picks exactly one set, and an extension set can't be played on its own.
+    if (isSingle && s.extensionSet) return false
     if (isSelected(s.code)) return true
     if (s.partial && !showPartialSets) return false
+    if (s.extensionSet) return true // full bonus sheets stay visible despite a thin card count
     if ((s.implementedCount ?? 0) < minCards) return false
     return true
   })
@@ -110,7 +118,7 @@ export function SetPickerModal({
 
   const handleRandom = () => {
     onSelectRandom?.()
-    onClose()
+    if (isSingle) onClose()
   }
 
   // One toggle row inside the picker modal. Incomplete sets get a "partial" tag so the user knows
@@ -129,6 +137,7 @@ export function SetPickerModal({
         <SetIcon code={set.code} className={styles.setPickerIcon} />
         <span className={styles.setPickerName}>{set.name}</span>
         {set.partial && <span className={styles.setPartialBadge}>partial</span>}
+        {set.extensionSet && <span className={styles.setExtensionBadge}>extension</span>}
         {released && <span className={styles.setReleaseDate}>{released}</span>}
         {set.implementedCount != null && (
           <span className={styles.setButtonCardCount}>{set.implementedCount} cards</span>
@@ -191,8 +200,8 @@ export function SetPickerModal({
     )
   }
 
-  const showRandomRow = isSingle && onSelectRandom != null
-  const randomActive = selectedCodes.length === 0
+  const showRandomRow = onSelectRandom != null
+  const randomActive = isSingle && selectedCodes.length === 0
 
   return (
     <div className={styles.deckViewerBackdrop} onClick={onClose}>
@@ -251,6 +260,12 @@ export function SetPickerModal({
           <p className={styles.setPickerNote}>
             Sets tagged <span className={styles.setPartialBadge}>partial</span> aren't fully
             implemented — their boosters draw from a reduced pool of the cards that exist.
+            {!isSingle && pickerSets.some((s) => s.extensionSet) && (
+              <>
+                {' '}Sets tagged <span className={styles.setExtensionBadge}>extension</span> are
+                bonus sheets — pick them together with at least one regular set.
+              </>
+            )}
           </p>
           <div className={styles.setPickerList}>
             {showRandomRow && (

@@ -20,6 +20,10 @@ object TheBigScoreSet : MtgSet {
     // All 30 cards of the bonus sheet are implemented — surface it as complete, not "partial".
     override val sealedSupported = true
 
+    // A 30-card bonus sheet can't sustain a sealed/draft pool by itself — it is only playable
+    // together with at least one regular set.
+    override val extensionSet = true
+
     override val cards: List<CardDefinition> by lazy {
         CardDiscovery.findIn(CARDS_PACKAGE)
     }

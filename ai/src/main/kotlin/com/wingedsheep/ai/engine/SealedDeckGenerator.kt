@@ -25,19 +25,22 @@ class SealedDeckGenerator(
     /**
      * Picks a random set code that can actually produce a sealed deck.
      *
-     * Eligible sets must be both [BoosterGenerator.SetConfig.fullyImplemented] *and* large enough to
-     * open 8 boosters on their own. A partial set, or a small supplementary set like "The Big Score"
-     * (BIG, ~30 cards), has a pool too thin for the single-set booster strategy and throws
-     * `No cards available for booster generation`. Random quick/AI games have no host to opt into a
-     * partial set, so they must draw from a full standalone set. The fallbacks widen the pool only if
-     * — unexpectedly — nothing qualifies, so this never throws on an empty pool.
+     * Eligible sets must be [BoosterGenerator.SetConfig.fullyImplemented], not an
+     * [BoosterGenerator.SetConfig.extensionSet] (bonus sheets like "The Big Score" are only playable
+     * alongside a regular set), *and* large enough to open 8 boosters on their own — a pool that is
+     * too thin for the single-set booster strategy throws `No cards available for booster
+     * generation`. Random quick/AI games have no host to opt into a partial set, so they must draw
+     * from a full standalone set. The fallbacks widen the pool only if — unexpectedly — nothing
+     * qualifies, so this never throws on an empty pool.
      */
     fun randomSetCode(): String {
-        val sets = boosterGenerator.availableSets.values
+        val sets = boosterGenerator.availableSets.values.filter { !it.extensionSet }.ifEmpty {
+            boosterGenerator.availableSets.values.toList()
+        }
         val standalone = sets.filter { it.fullyImplemented && it.distinctCardCount >= MIN_STANDALONE_SET_SIZE }
         val pool = standalone
             .ifEmpty { sets.filter { it.fullyImplemented } }
-            .ifEmpty { sets.toList() }
+            .ifEmpty { sets }
         return pool.random().setCode
     }
 

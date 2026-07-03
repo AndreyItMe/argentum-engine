@@ -46,7 +46,13 @@ class SealedDeckGeneratorTest : FunSpec({
             (1..40).map { card("$prefix Uncommon $it", Rarity.UNCOMMON) } +
             (1..20).map { card("$prefix Rare $it", Rarity.RARE) }
 
-    fun config(code: String, cards: List<CardDefinition>, sealedSupported: Boolean, incomplete: Boolean = false) =
+    fun config(
+        code: String,
+        cards: List<CardDefinition>,
+        sealedSupported: Boolean,
+        incomplete: Boolean = false,
+        extensionSet: Boolean = false,
+    ) =
         BoosterGenerator.SetConfig(
             setCode = code,
             setName = "Set $code",
@@ -54,6 +60,7 @@ class SealedDeckGeneratorTest : FunSpec({
             basicLands = emptyList(),
             sealedSupported = sealedSupported,
             incomplete = incomplete,
+            extensionSet = extensionSet,
         )
 
     test("randomSetCode only returns fully-implemented sets") {
@@ -88,6 +95,33 @@ class SealedDeckGeneratorTest : FunSpec({
 
         val drawn = (1..500).map { gen.randomSetCode() }.toSet()
         drawn.toList() shouldContainExactly listOf("FULL")
+    }
+
+    test("randomSetCode never lands on an extension set, whatever its size") {
+        // An extension set (bonus sheet) is only playable alongside a regular set, so a random
+        // roll — which yields a single set — must never pick one, even a hypothetical large one.
+        val gen = SealedDeckGenerator(
+            BoosterGenerator(
+                mapOf(
+                    "FULL" to config("FULL", largePool("FULL"), sealedSupported = true),
+                    "EXT" to config("EXT", largePool("EXT"), sealedSupported = true, extensionSet = true),
+                )
+            )
+        )
+
+        val drawn = (1..500).map { gen.randomSetCode() }.toSet()
+        drawn.toList() shouldContainExactly listOf("FULL")
+    }
+
+    test("falls back to an extension set only when nothing else exists at all") {
+        // Pathological catalog with a single extension set: still return something rather than throw.
+        val gen = SealedDeckGenerator(
+            BoosterGenerator(
+                mapOf("EXT" to config("EXT", viablePool("EXT"), sealedSupported = true, extensionSet = true))
+            )
+        )
+
+        gen.randomSetCode() shouldBe "EXT"
     }
 
     test("falls back to any complete set when none meet the standalone size threshold") {

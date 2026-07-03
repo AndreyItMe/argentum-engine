@@ -106,6 +106,8 @@ class LlmTournamentController(
         val code: String,
         val name: String,
         val partial: Boolean,
+        /** Extension sets (bonus sheets) can't play alone; the single-set picker hides them. */
+        val extensionSet: Boolean,
         val block: String?,
         val implementedCount: Int,
         val releaseDate: String?
@@ -172,6 +174,7 @@ class LlmTournamentController(
                 code = config.setCode,
                 name = config.setName,
                 partial = !config.fullyImplemented,
+                extensionSet = config.extensionSet,
                 block = config.block,
                 implementedCount = config.distinctCardCount,
                 releaseDate = config.releaseDate

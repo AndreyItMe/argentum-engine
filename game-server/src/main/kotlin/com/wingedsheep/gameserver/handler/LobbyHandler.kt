@@ -223,6 +223,7 @@ class LobbyHandler(
             boosterGenerator.getSetConfig(code)
                 ?: error("Unknown set code: $code")
         }
+        extensionOnlyError(setConfigs)?.let { error(it) }
 
         val codes = setConfigs.map { it.setCode }
         val boosterCount = 6
@@ -361,6 +362,10 @@ class LobbyHandler(
                 sender.sendError(session, ErrorCode.INVALID_ACTION, "Unknown set code: $setCode")
                 return
             }
+        }
+        extensionOnlyError(setConfigs)?.let { error ->
+            sender.sendError(session, ErrorCode.INVALID_ACTION, error)
+            return
         }
 
         val sealedSession = SealedSession(
@@ -534,6 +539,18 @@ class LobbyHandler(
     // Lobby CRUD
     // =========================================================================
 
+    /**
+     * Rejection message when a non-empty selection consists solely of extension sets (bonus sheets
+     * like The Big Score) — those supplement a regular set's boosters and can't carry a sealed/draft
+     * pool on their own. Returns null when the selection is fine.
+     */
+    private fun extensionOnlyError(setConfigs: List<BoosterGenerator.SetConfig>): String? {
+        if (setConfigs.isEmpty() || setConfigs.any { !it.extensionSet }) return null
+        val names = setConfigs.joinToString { it.setName }
+        val verb = if (setConfigs.size == 1) "is an extension set" else "are extension sets"
+        return "$names $verb — add at least one regular set to play with"
+    }
+
     private fun handleCreateTournamentLobby(session: WebSocketSession, message: ClientMessage.CreateTournamentLobby) {
         val playerSession = sessionRegistry.getPlayerSession(session.id)
         if (playerSession == null) {
@@ -550,6 +567,10 @@ class LobbyHandler(
         if (setConfigs.size != message.setCodes.size) {
             val invalidCodes = message.setCodes.filter { boosterGenerator.getSetConfig(it) == null }
             sender.sendError(session, ErrorCode.INVALID_ACTION, "Unknown set codes: ${invalidCodes.joinToString()}")
+            return
+        }
+        extensionOnlyError(setConfigs)?.let { error ->
+            sender.sendError(session, ErrorCode.INVALID_ACTION, error)
             return
         }
 
@@ -1147,6 +1168,16 @@ class LobbyHandler(
         if (lobby.playerCount < 2) {
             sender.sendError(session, ErrorCode.INVALID_ACTION, "Need at least 2 players")
             return
+        }
+
+        // Booster-based formats can't run on extension sets alone (Premade brings its own decks
+        // and ignores the set selection). The lobby may hold an extension-only selection while
+        // the host is still assembling it, so this start gate is where the rule is enforced.
+        if (lobby.format != TournamentFormat.PREMADE_DECKS) {
+            extensionOnlyError(lobby.setCodes.mapNotNull { boosterGenerator.getSetConfig(it) })?.let { error ->
+                sender.sendError(session, ErrorCode.INVALID_ACTION, error)
+                return
+            }
         }
 
         // Ranked tournaments adjust ELO, so they only count when every seat is a signed-in account
@@ -1956,6 +1987,8 @@ class LobbyHandler(
         // Update sets if provided (can be empty to disable start)
         message.setCodes?.let { newSetCodes ->
             // Allow empty setCodes to disable start button (but won't be able to start)
+            // An extension-only selection is allowed here as an intermediate state (the host may
+            // add the extension set first, then the base set) — the start handler is the gate.
             if (newSetCodes.isNotEmpty() && !lobby.updateSets(newSetCodes)) {
                 val invalidCodes = newSetCodes.filter { boosterGenerator.getSetConfig(it) == null }
                 sender.sendError(session, ErrorCode.INVALID_ACTION, "Invalid set codes: ${invalidCodes.joinToString()}")
