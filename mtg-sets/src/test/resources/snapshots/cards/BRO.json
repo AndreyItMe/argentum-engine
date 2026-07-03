@@ -206,6 +206,52 @@
     ]
 }
 
+// Giant Cindermaw
+{
+    "name": "Giant Cindermaw",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Dinosaur Beast",
+    "oracleText": "Trample\nPlayers can't gain life.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "replacementEffects": [
+            {
+                "type": "PreventLifeGain",
+                "appliesTo": {
+                    "type": "LifeGainEvent",
+                    "player": "Each"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "136",
+        "rarity": "UNCOMMON",
+        "artist": "Edgar Sánchez Hidalgo",
+        "flavorText": "\"Don't excavate too far into those canyons. I promised your parents I'd return you in one piece.\"\n—Tocasia",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/3/1349465f-d29f-4d4b-a653-f4388574c336.jpg?1782699769",
+        "rulings": [
+            {
+                "date": "2022-10-14",
+                "text": "Spells and abilities that cause players to gain life still resolve while Giant Cindermaw is on the battlefield. No player will gain life, but any other effects of that spell or ability will happen."
+            },
+            {
+                "date": "2022-10-14",
+                "text": "If an effect says to set a player's life total to a number that's higher than the player's current life total while Giant Cindermaw is on the battlefield, the player's life total doesn't change."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Goblin Firebomb
 {
     "name": "Goblin Firebomb",
