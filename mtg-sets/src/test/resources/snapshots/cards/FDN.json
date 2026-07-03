@@ -1571,6 +1571,68 @@
     ]
 }
 
+// Divine Resilience
+{
+    "name": "Divine Resilience",
+    "manaCost": "{W}",
+    "typeLine": "Instant",
+    "oracleText": "Kicker {2}{W} (You may pay an additional {2}{W} as you cast this spell.)\nTarget creature you control gains indestructible until end of turn. If this spell was kicked, instead any number of target creatures you control gain indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy them.)",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{2}{W}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "GrantKeyword",
+            "keyword": "INDESTRUCTIBLE",
+            "target": {
+                "type": "ContextTarget",
+                "index": 0
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            }
+        ],
+        "kickerTargetRequirements": [
+            {
+                "type": "TargetObject",
+                "unlimited": true,
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            }
+        ],
+        "kickerSpellEffect": {
+            "type": "ForEach",
+            "space": "IterationSpace.Targets",
+            "body": {
+                "type": "GrantKeyword",
+                "keyword": "INDESTRUCTIBLE",
+                "target": {
+                    "type": "ContextTarget",
+                    "index": 0
+                }
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "10",
+        "rarity": "UNCOMMON",
+        "artist": "Svetlin Velinov",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/3/f3a08245-a535-4d24-b8c0-78759bb9c4b0.jpg?1782689256"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Dragon Trainer
 {
     "name": "Dragon Trainer",
@@ -3434,6 +3496,95 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Inspiration from Beyond
+{
+    "name": "Inspiration from Beyond",
+    "manaCost": "{2}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Mill three cards, then return an instant or sorcery card from your graveyard to your hand.\nFlashback {5}{U}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{5}{U}{U}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "TopOfLibrary",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "isMill": true
+                    },
+                    "storeAs": "milled"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "milled",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    }
+                },
+                {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Graveyard",
+                                "filter": "instant|sorcery"
+                            },
+                            "storeAs": "graveyardSpells"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "graveyardSpells",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "returned",
+                            "prompt": "Return an instant or sorcery card to your hand"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "returned",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "43",
+        "rarity": "UNCOMMON",
+        "artist": "Xavier Ribeiro",
+        "flavorText": "When seeking spiritual enlightenment, best to go directly to the source.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/6/b636fe95-664f-4fb1-aab9-28856edeccd6.jpg?1782689228"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
