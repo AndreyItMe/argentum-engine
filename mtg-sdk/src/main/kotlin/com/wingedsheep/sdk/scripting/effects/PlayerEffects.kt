@@ -97,8 +97,9 @@ data class PlayAdditionalLandsEffect(
  * phase(s) after the postcombat main phase.
  *
  * [attackerRestriction] optionally constrains *which creatures may be declared as attackers during
- * that inserted combat phase* (CR 508.1a — declaring an attacker checks all applicable attacking
- * restrictions). When non-null, only creatures matching the filter can attack in the added phase
+ * that inserted combat phase* (CR 508.1c — the active player checks each creature for attacking
+ * restrictions, and an illegal one voids the declaration). When non-null, only creatures matching
+ * the filter can attack in the added phase
  * (Bumi, Unleashed: "Only land creatures can attack during that combat phase" ⇒
  * `GameObjectFilter.Creature and GameObjectFilter.Land`). The restriction is scoped to the added
  * phase alone — the natural combat phase and any other added phase are unaffected. `null` (the

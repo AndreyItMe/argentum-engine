@@ -136,8 +136,9 @@ class CantAttackProjectedRule : AttackRestrictionRule {
 /**
  * During an *inserted* combat phase that carries an attacker restriction (Bumi, Unleashed: "there is
  * an additional combat phase. Only land creatures can attack during that combat phase"), a creature
- * may be declared as an attacker only if it matches that phase's filter (CR 508.1a — declaring an
- * attacker must satisfy every applicable attacking restriction). The restriction lives on the active
+ * may be declared as an attacker only if it matches that phase's filter (CR 508.1c — the active
+ * player checks each creature for attacking restrictions, and an illegal one voids the declaration).
+ * The restriction lives on the active
  * player's [InAdditionalCombatPhaseComponent] and is scoped to exactly that phase, so the natural
  * combat phase (which never sets the marker) and any unrestricted extra combat impose nothing here.
  *

@@ -3368,7 +3368,7 @@ object Effects {
      * may be declared as attackers** (Bumi, Unleashed: "there is an additional combat phase. Only land
      * creatures can attack during that combat phase" ⇒
      * `AddCombatPhaseRestrictedTo(GameObjectFilter.Creature and GameObjectFilter.Land)`). Combat only,
-     * no trailing main phase; the restriction is scoped to just this added phase (CR 500.8 / 508.1a).
+     * no trailing main phase; the restriction is scoped to just this added phase (CR 500.8 / 508.1c).
      * The same shape covers Aang, Destined Savior and Bumi, King of Three Trials' sibling. A property
      * and function can't share a name in Kotlin, so the unrestricted atom stays the [AddCombatPhase]
      * value and the restricted variant is this factory.
