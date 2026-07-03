@@ -3696,6 +3696,51 @@
     ]
 }
 
+// Self-Reflection
+{
+    "name": "Self-Reflection",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create a token that's a copy of target creature you control.\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{3}{U}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateTokenCopyOfTarget",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature you control"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target creature you control"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "74",
+        "rarity": "UNCOMMON",
+        "artist": "Henry Peters",
+        "flavorText": "Some Echoes remember every moment of their past lives and spend their existence contemplating past choices.",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/2/1242203d-c9b5-4ab6-802e-e222f92291e9.jpg?1782694551"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Sentinel of the Nameless City
 {
     "name": "Sentinel of the Nameless City",
