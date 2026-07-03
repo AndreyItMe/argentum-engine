@@ -3860,6 +3860,13 @@ staticAbility {
   source's controller. (Winter, Misanthropic Guide — `ConditionalStaticAbility(SetMaximumHandSize(
   EachOpponent, Subtract(Fixed(7), AggregateZone(You, GRAVEYARD, Any, DISTINCT_TYPES))), Delirium())`.)
 - `DampLandManaProduction` — a land tapped for 2+ mana produces `{C}` instead. (Damping Sphere)
+- `WinCoinFlips(firstFlipEachTurn = false)` — a coin-flip result replacement (CR 705.3): the
+  controller's coin flips come up heads / are won. `firstFlipEachTurn = true` restricts it to the
+  controller's *first* coin-flip event each turn (Edgar, King of Figaro — "the first time you flip
+  one or more coins each turn, those coins come up heads and you win those flips"); `false` forces
+  every coin flip the controller makes. Heads is modeled as a won flip, so this forces the win. Not a
+  Rule 613 continuous effect — the coin-flip executors query it via `CoinFlipModifiers`, and a
+  per-player `FlippedCoinsThisTurnComponent` (cleared at cleanup) tracks the "first each turn" gate.
 - `RestrictSpellsCastPerTurn(maxPerTurn, eachPlayer = false)` — a per-turn cap on spells cast.
   `eachPlayer = false` (default) limits only the source's controller (Yawgmoth's Agenda: "You can't
   cast more than one spell each turn."); `eachPlayer = true` is a *global* restriction binding every

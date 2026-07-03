@@ -1059,6 +1059,16 @@ data class TurnedPermanentFaceUpThisTurnComponent(val count: Int = 0) : Componen
 data class PlayerDescendedThisTurnComponent(val count: Int = 0) : Component
 
 /**
+ * Marks that this player has flipped one or more coins already this turn. Presence alone is the
+ * signal — it is set the first time the player flips (regardless of who controls any coin-flip
+ * replacement) so that a "the first time you flip one or more coins each turn" effect
+ * ([com.wingedsheep.sdk.scripting.WinCoinFlips] with `firstFlipEachTurn = true`) can tell whether
+ * the current flip is that first flip. Cleared at end of turn by CleanupPhaseManager.
+ */
+@Serializable
+data object FlippedCoinsThisTurnComponent : Component
+
+/**
  * Tracks which card types have entered the battlefield under this player's control this turn.
  * Populated by `BattlefieldEntry.place` (via `PermanentEntryTracker.record`) from the projected
  * types at the moment of entry, so a permanent that's an artifact-by-effect at ETB is recorded

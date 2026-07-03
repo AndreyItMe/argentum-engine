@@ -691,6 +691,33 @@ data object RevealFirstDrawEachTurn : StaticAbility {
 }
 
 /**
+ * The controller wins the coin flips they make — their flips "come up heads and you win those
+ * flips" (CR 705.3, an effect that dictates the result of a flip). Heads is modeled as a won flip
+ * throughout the coin-flip plumbing, so this simply forces every affected flip to a win.
+ *
+ * Queried by the coin-flip executors ([com.wingedsheep] `FlipCoinExecutor` / `FlipTwoCoinsExecutor` /
+ * `FlipCoinsExecutor`) via `CoinFlipModifiers`; it is not a Rule 613 continuous effect, so it maps to
+ * no layer (classified as no-op in `StaticAbilityHandler`) — mirroring [RevealFirstDrawEachTurn].
+ *
+ * @property firstFlipEachTurn When true (Edgar, King of Figaro's Two-Headed Coin — "the first time
+ *   you flip one or more coins each turn"), only the controller's *first* coin-flip event of each
+ *   turn is forced; later flips that turn are genuinely random. When false, every coin flip the
+ *   controller makes is a win ("you win all coin flips").
+ */
+@SerialName("WinCoinFlips")
+@Serializable
+data class WinCoinFlips(
+    val firstFlipEachTurn: Boolean = false,
+) : StaticAbility {
+    override val description: String =
+        if (firstFlipEachTurn) {
+            "The first time you flip one or more coins each turn, those coins come up heads and you win those flips"
+        } else {
+            "You win all coin flips"
+        }
+}
+
+/**
  * Replaces land mana production when a land would produce two or more mana.
  * Used for Damping Sphere: "If a land is tapped for two or more mana, it produces {C} instead
  * of any other type and amount."

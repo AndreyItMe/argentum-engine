@@ -148,6 +148,7 @@ import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
 import com.wingedsheep.sdk.scripting.ReplaceLandManaColor
 import com.wingedsheep.sdk.scripting.RestrictSpellsCastPerTurn
 import com.wingedsheep.sdk.scripting.RevealFirstDrawEachTurn
+import com.wingedsheep.sdk.scripting.WinCoinFlips
 import com.wingedsheep.sdk.scripting.RevealTopOfLibrary
 import com.wingedsheep.sdk.scripting.SuppressHexproofForGroup
 import com.wingedsheep.sdk.scripting.SuppressWardForGroup
@@ -890,6 +891,10 @@ class StaticAbilityHandler(
             is OpponentsPlayWithHandsRevealed,
             is RevealFirstDrawEachTurn,
             is RevealTopOfLibrary,
+
+            // Coin-flip result replacement (CR 705.3), queried by the coin-flip executors via
+            // CoinFlipModifiers — not a Rule 613 continuous effect:
+            is WinCoinFlips,
 
             // Stamped as marker components by addContinuousEffectComponent in this
             // handler and read from those components by their subsystems:

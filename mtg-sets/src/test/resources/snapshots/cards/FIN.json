@@ -5729,6 +5729,54 @@
     "colorIdentityOverride": []
 }
 
+// Edgar, King of Figaro
+{
+    "name": "Edgar, King of Figaro",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Legendary Creature — Human Artificer Noble",
+    "oracleText": "When Edgar enters, draw a card for each artifact you control.\nTwo-Headed Coin — The first time you flip one or more coins each turn, those coins come up heads and you win those flips.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "artifact"
+                    }
+                },
+                "descriptionOverride": "When Edgar enters, draw a card for each artifact you control."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "WinCoinFlips",
+                "firstFlipEachTurn": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "51",
+        "rarity": "RARE",
+        "artist": "Jake Murray",
+        "flavorText": "\"Sabin...let's settle this with the toss of a coin.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/5/950ee302-5512-43c5-ac7c-b2b06f4177bf.jpg?1782686557"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Eject
 {
     "name": "Eject",
@@ -16006,6 +16054,233 @@
         "artist": "Joshua Raphael",
         "flavorText": "\"Fate is not to be taken lightly, Cloud.\"",
         "imageUri": "https://cards.scryfall.io/normal/front/c/f/cf7df82f-937a-443f-813f-2bcc6944c5c0.jpg"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Sephiroth, Fabled SOLDIER
+{
+    "name": "Sephiroth, Fabled SOLDIER",
+    "manaCost": "{2}{B}",
+    "typeLine": "Legendary Creature — Human Avatar Soldier",
+    "oracleText": "Whenever Sephiroth enters or attacks, you may sacrifice another creature. If you do, draw a card.\nWhenever another creature dies, target opponent loses 1 life and you gain 1 life. If this is the fourth time this ability has resolved this turn, transform Sephiroth.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "Sacrifice",
+                            "filter": "creature",
+                            "excludeSource": true
+                        }
+                    },
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                },
+                "descriptionOverride": "Whenever Sephiroth enters, you may sacrifice another creature. If you do, draw a card."
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "Sacrifice",
+                            "filter": "creature",
+                            "excludeSource": true
+                        }
+                    },
+                    "then": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                },
+                "descriptionOverride": "Whenever Sephiroth attacks, you may sacrifice another creature. If you do, draw a card."
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target opponent"
+                            }
+                        },
+                        {
+                            "type": "GainLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        "IncrementAbilityResolutionCount",
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "SourceAbilityResolvedNTimesThisTurn",
+                                    "count": 4
+                                }
+                            },
+                            "then": "Transform"
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetOpponent",
+                    "id": "target opponent"
+                },
+                "descriptionOverride": "Whenever another creature dies, target opponent loses 1 life and you gain 1 life. If this is the fourth time this ability has resolved this turn, transform Sephiroth."
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Sephiroth, One-Winged Angel",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Angel Nightmare Avatar",
+        "oracleText": "Flying\nSuper Nova — As this creature transforms into Sephiroth, One-Winged Angel, you get an emblem with \"Whenever a creature dies, target opponent loses 1 life and you gain 1 life.\"\nWhenever Sephiroth attacks, you may sacrifice any number of other creatures. If you do, draw that many cards.",
+        "creatureStats": {
+            "power": 5,
+            "toughness": 5
+        },
+        "keywords": [
+            "FLYING"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_4",
+                    "trigger": {
+                        "type": "TransformEvent",
+                        "intoBackFace": true
+                    },
+                    "effect": {
+                        "type": "CreateGlobalTriggeredAbility",
+                        "ability": {
+                            "id": "ability_5",
+                            "trigger": {
+                                "type": "ZoneChangeEvent",
+                                "filter": "creature",
+                                "from": "Battlefield",
+                                "to": "Graveyard"
+                            },
+                            "binding": "ANY",
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "LoseLife",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        },
+                                        "target": {
+                                            "type": "ContextTarget",
+                                            "index": 0
+                                        }
+                                    },
+                                    {
+                                        "type": "GainLife",
+                                        "amount": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    }
+                                ]
+                            },
+                            "targetRequirement": "TargetOpponent",
+                            "descriptionOverride": "Whenever a creature dies, target opponent loses 1 life and you gain 1 life."
+                        },
+                        "descriptionOverride": "Whenever a creature dies, target opponent loses 1 life and you gain 1 life."
+                    },
+                    "descriptionOverride": "Super Nova — As this creature transforms into Sephiroth, One-Winged Angel, you get an emblem with \"Whenever a creature dies, target opponent loses 1 life and you gain 1 life.\""
+                },
+                {
+                    "id": "ability_6",
+                    "trigger": "AttackEvent",
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "Sacrifice",
+                                "filter": "creature",
+                                "any": true,
+                                "excludeSource": true
+                            },
+                            {
+                                "type": "DrawCards",
+                                "count": "PermanentsSacrificedThisWay"
+                            }
+                        ]
+                    },
+                    "descriptionOverride": "Whenever Sephiroth attacks, you may sacrifice any number of other creatures. If you do, draw that many cards."
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "115",
+            "rarity": "MYTHIC",
+            "artist": "Wisnu Tan",
+            "imageUri": "https://cards.scryfall.io/normal/back/8/5/85eaf5e7-77dc-4842-a70c-ce4ac7f724df.jpg?1782686512"
+        },
+        "colorIdentityOverride": [
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "115",
+        "rarity": "MYTHIC",
+        "artist": "Wisnu Tan",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/5/85eaf5e7-77dc-4842-a70c-ce4ac7f724df.jpg?1782686512",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "If Sephiroth, Fabled SOLDIER and one or more other creatures die at the same time, its last ability will trigger for each of those other creatures. (It won't transform, though.)"
+            },
+            {
+                "date": "2025-06-06",
+                "text": "If this card somehow enters the battlefield with its back face up, it didn't transform, so you won't get an emblem."
+            }
+        ]
     },
     "colorIdentityOverride": [
         "BLACK"

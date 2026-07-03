@@ -408,3 +408,36 @@ Screened but deferred (each needs `add-feature`, not pure authoring — confirme
   Joshua → any-number total-MV reanimation; Edgar → coin-flip-win replacement; Esper Origins →
   spell-becomes-permanent; Kefka/Sephiroth/Zenos/Terra transform backs → per-card chapter/emblem/win-rider
   primitives). All are `add-feature` scope.
+
+## Implementation pass — 2026-07-03 (Sephiroth + stale-gap corrections)
+
+Two of this doc's "gaps" had already closed on `main` by the time of this pass — the doc above is
+stale on both:
+- **Ultima** (*End the turn*) — **already implemented and shipped**. `EndTheTurnEffect`
+  (`Effects.EndTheTurn`) + `TurnManager.performEndTheTurn` (CR 722) exist; `Ultima.kt` is a live FIN card.
+- **Sephiroth, Fabled SOLDIER** — **NOT `add-feature` scope after all; pure authoring, now implemented.**
+  The transform back is a plain creature//creature in-place `TransformEffect` (Cecil precedent), *not* a
+  Saga back, so it needs no chapter primitives. Every piece already exists:
+  - "enters or attacks" → two sibling triggered abilities (Gilgamesh/Frodo shape).
+  - "you may sacrifice another creature. If you do, draw" → `OptionalCostEffect(cost = SacrificeEffect(
+    excludeSource), ifPaid = DrawCards(1))`; the back's "sacrifice any number of other creatures, draw
+    that many" → `SacrificeEffect(any = true, excludeSource = true)` + `DrawCards(permanentsSacrificedThisWay)`.
+  - "whenever another creature dies, target opponent loses 1 / you gain 1" → `leavesBattlefield(Creature,
+    to = GRAVEYARD, binding = OTHER)` + drain (Al Bhed Salvagers precedent).
+  - "if this is the fourth time this ability has resolved this turn, transform" →
+    `IncrementAbilityResolutionCountEffect` + `Conditions.SourceAbilityResolvedNTimes(4)` +
+    `TransformEffect(Self)` (Harvestrite Host precedent). A simultaneous death of Sephiroth + others
+    still counts each other creature but no-ops the Self transform — matching the ruling.
+  - "Super Nova" back emblem → transform-to-back trigger → `CreateGlobalTriggeredAbility(duration =
+    Permanent, ability = "whenever a creature dies, target opponent loses 1 / you gain 1")` (Death Frenzy
+    precedent). Covered by `SephirothFabledSoldierScenarioTest` (drain, fourth-resolution transform,
+    emblem still draining post-transform).
+- **Edgar, King of Figaro** — implemented; needed one small, reusable engine addition (closes the §10
+  coin-flip-win gap). The ETB "draw a card for each artifact you control" is pure authoring; the
+  Two-Headed Coin static is a new `WinCoinFlips(firstFlipEachTurn)` static ability — a coin-flip
+  **result replacement** (CR 705.3, not a Rule 613 layer effect). The three coin-flip executors query
+  it through a shared `CoinFlipModifiers` utility (mirroring `LifeGainModifiers`); a per-player
+  `FlippedCoinsThisTurnComponent` (cleared at cleanup) implements the "first time each turn" gate. The
+  primitive is general: `firstFlipEachTurn = false` gives a plain "you win all coin flips". Covered by
+  `EdgarKingOfFigaroScenarioTest` (forced first-flip win via The Gold Saucer, the once-per-turn gate,
+  and the artifact-count ETB draw).

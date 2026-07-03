@@ -27,7 +27,7 @@ class FlipCoinsEffectTest : FunSpec({
         // Seed the RNG so the run is reproducible.
         driver.replaceState(driver.state.copy(rng = GameRng.seeded(12345L)))
 
-        val executor = FlipCoinsExecutor()
+        val executor = FlipCoinsExecutor(driver.cardRegistry)
         val context = EffectContext(sourceId = null, controllerId = player)
         val result = executor.execute(driver.state, FlipCoinsEffect(5, "heads"), context)
 
@@ -45,7 +45,7 @@ class FlipCoinsEffectTest : FunSpec({
         driver.initMirrorMatch(deck = Deck.of("Island" to 40))
         val player = driver.activePlayer!!
 
-        val executor = FlipCoinsExecutor()
+        val executor = FlipCoinsExecutor(driver.cardRegistry)
         val context = EffectContext(sourceId = null, controllerId = player)
         val result = executor.execute(driver.state, FlipCoinsEffect(0, "heads"), context)
 

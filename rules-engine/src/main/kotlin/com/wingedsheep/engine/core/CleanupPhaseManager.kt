@@ -42,6 +42,7 @@ import com.wingedsheep.engine.state.components.player.CantCastFromNonHandZonesCo
 import com.wingedsheep.engine.state.components.player.CantGainLifeComponent
 import com.wingedsheep.engine.state.components.player.DamageBonusComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedFromArtifactsThisTurnComponent
+import com.wingedsheep.engine.state.components.player.FlippedCoinsThisTurnComponent
 import com.wingedsheep.engine.state.components.player.DamageReceivedThisTurnComponent
 import com.wingedsheep.engine.state.components.player.RetainUnspentManaComponent
 import com.wingedsheep.engine.state.components.player.FlashGrantsThisTurnComponent
@@ -610,6 +611,9 @@ class CleanupPhaseManager(
                 }
                 if (result.has<PlayerDescendedThisTurnComponent>()) {
                     result = result.without<PlayerDescendedThisTurnComponent>()
+                }
+                if (result.has<FlippedCoinsThisTurnComponent>()) {
+                    result = result.without<FlippedCoinsThisTurnComponent>()
                 }
                 if (result.has<PermanentsSacrificedThisTurnComponent>()) {
                     result = result.without<PermanentsSacrificedThisTurnComponent>()
