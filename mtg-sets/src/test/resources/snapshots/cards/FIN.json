@@ -18406,6 +18406,120 @@
     }
 }
 
+// Summon: Brynhildr
+{
+    "name": "Summon: Brynhildr",
+    "manaCost": "{1}{R}",
+    "typeLine": "Enchantment Creature — Saga Knight",
+    "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Chain — Exile the top card of your library. During any turn you put a lore counter on this Saga, you may play that card.\nII, III — Gestalt Mode — When you next cast a creature spell this turn, it gains haste until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "sagaChapters": [
+            {
+                "chapter": 1,
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeAs": "chainedCard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "chainedCard",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Exile"
+                            }
+                        },
+                        {
+                            "type": "GrantMayPlayFromExile",
+                            "from": "chainedCard",
+                            "expiry": "Permanent",
+                            "condition": {
+                                "type": "All",
+                                "conditions": [
+                                    "IsYourTurn",
+                                    {
+                                        "type": "Exists",
+                                        "player": "You",
+                                        "zone": "Battlefield",
+                                        "filter": "enchantment name:Summon: Brynhildr"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "chapter": 2,
+                "effect": {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "GrantKeyword",
+                        "keyword": "HASTE",
+                        "target": "TriggeringEntity"
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "SpellCastEvent",
+                            "spellFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ]
+                            }
+                        }
+                    },
+                    "fireOnce": true
+                }
+            },
+            {
+                "chapter": 3,
+                "effect": {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "GrantKeyword",
+                        "keyword": "HASTE",
+                        "target": "TriggeringEntity"
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "SpellCastEvent",
+                            "spellFilter": {
+                                "cardPredicates": [
+                                    "IsCreature"
+                                ]
+                            }
+                        }
+                    },
+                    "fireOnce": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "160",
+        "rarity": "RARE",
+        "artist": "Kevin Glint",
+        "flavorText": "A name in blood, a pact of flame.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/a/8ab5429a-1075-49aa-9608-0610080fbf7a.jpg?1782686481"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Summon: Choco/Mog
 {
     "name": "Summon: Choco/Mog",

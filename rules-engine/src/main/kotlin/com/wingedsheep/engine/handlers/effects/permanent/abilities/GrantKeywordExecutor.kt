@@ -22,6 +22,14 @@ import kotlin.reflect.KClass
  * The granted keyword lands in the projected keyword set either way; the layer that consumes it
  * decides whether it does anything. So the executor only requires that the target be a permanent
  * on the battlefield, not specifically a creature.
+ *
+ * The target may also be a **permanent spell on the stack** (e.g. "when you next cast a creature
+ * spell this turn, it gains haste until end of turn" — Summon: Brynhildr's Gestalt Mode). A
+ * permanent spell keeps its entity id as it resolves onto the battlefield (see
+ * [com.wingedsheep.engine.mechanics.stack.StackResolver.resolvePermanentSpell]), and the projector
+ * keeps floating effects whose affected entity is on the battlefield *or* the stack, so a keyword
+ * granted while the object is on the stack applies once it becomes a permanent. On a non-permanent
+ * spell the floating effect simply never has anything to apply to.
  */
 class GrantKeywordExecutor : EffectExecutor<GrantKeywordEffect> {
 
@@ -41,8 +49,12 @@ class GrantKeywordExecutor : EffectExecutor<GrantKeywordEffect> {
             ?: return EffectResult.error(state, "Target permanent no longer exists")
         val cardComponent = targetContainer.get<CardComponent>()
             ?: return EffectResult.error(state, "Target is not a card")
-        if (targetId !in state.getBattlefield()) {
-            return EffectResult.error(state, "Target is no longer on the battlefield")
+        // Battlefield permanents get the keyword immediately. A permanent spell still on the stack
+        // is also accepted: it keeps its entity id when it resolves, so the floating effect keyed to
+        // that id starts applying the moment it becomes a permanent (used by "the next creature spell
+        // you cast this turn gains …" delayed triggers).
+        if (targetId !in state.getBattlefield() && targetId !in state.stack) {
+            return EffectResult.error(state, "Target is no longer on the battlefield or stack")
         }
 
         // Create a floating effect for the keyword grant
