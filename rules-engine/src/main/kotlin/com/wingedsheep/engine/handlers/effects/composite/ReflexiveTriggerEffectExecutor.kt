@@ -308,7 +308,11 @@ class ReflexiveTriggerEffectExecutor(
                 index = index,
                 description = req.description,
                 minTargets = req.effectiveMinCount,
-                maxTargets = resolveReflexiveMaxCount(state, req, context)
+                maxTargets = resolveReflexiveMaxCount(state, req, context),
+                // "with total mana value X or less" — resolve against the live pipeline context,
+                // which now carries the X the preceding pay-{X} action set, so the aggregate cap
+                // reflects the amount actually paid (Fire Lord Sozin).
+                totalManaValueAtMost = resolveReflexiveTotalManaCap(state, req, context)
             )
         }
 
@@ -372,6 +376,27 @@ class ReflexiveTriggerEffectExecutor(
             amountEvaluator.evaluate(state, dyn, context).coerceAtLeast(0)
         } catch (_: Exception) {
             req.count
+        }
+    }
+
+    /**
+     * Resolve the aggregate "total mana value N or less" cap for a reflexive requirement to a
+     * concrete integer, evaluated against the resolving ability's [context] so a
+     * [com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue] cap reads the X the preceding
+     * pay-{X} action set. Baked onto the decision so the interactive validator sees a fixed cap.
+     * `null` when the requirement carries no aggregate cap.
+     */
+    private fun resolveReflexiveTotalManaCap(
+        state: GameState,
+        req: TargetRequirement,
+        context: EffectContext
+    ): Int? {
+        val dyn = (req as? com.wingedsheep.sdk.scripting.targets.TargetObject)?.totalManaValueAtMost
+            ?: return null
+        return try {
+            amountEvaluator.evaluate(state, dyn, context).coerceAtLeast(0)
+        } catch (_: Exception) {
+            null
         }
     }
 

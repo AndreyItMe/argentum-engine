@@ -3,6 +3,7 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.core.StepChangedEvent
 import com.wingedsheep.engine.state.components.player.AdditionalPhasesComponent
 import com.wingedsheep.engine.state.components.player.ExtraPhaseKind
+import com.wingedsheep.engine.state.components.player.QueuedPhase
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Step
@@ -39,7 +40,9 @@ class AdditionalCombatPhaseTest : FunSpec({
     /** Queue the given extra phases on [player] at the start of the active player's main phase. */
     fun GameTestDriver.queuePhases(player: EntityId, vararg phases: ExtraPhaseKind) {
         passPriorityUntil(Step.PRECOMBAT_MAIN)
-        replaceState(state.updateEntity(player) { it.with(AdditionalPhasesComponent(phases.toList())) })
+        replaceState(state.updateEntity(player) {
+            it.with(AdditionalPhasesComponent(phases.map { kind -> QueuedPhase(kind) }))
+        })
     }
 
     /**

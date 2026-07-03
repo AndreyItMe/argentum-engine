@@ -54,7 +54,7 @@ class BalthierAndFranScenarioTest : FunSpec({
     }
 
     fun GameTestDriver.queuedPhases(player: EntityId): List<ExtraPhaseKind> =
-        state.getEntity(player)?.get<AdditionalPhasesComponent>()?.phases ?: emptyList()
+        state.getEntity(player)?.get<AdditionalPhasesComponent>()?.phases?.map { it.kind } ?: emptyList()
 
     // --- Static lord ---------------------------------------------------------------------------
 
@@ -103,11 +103,13 @@ class BalthierAndFranScenarioTest : FunSpec({
         driver.submitSuccess(CrewVehicle(me, wagon, listOf(balthier)))
         driver.bothPass() // resolve the crew ability (Vehicle becomes a creature)
 
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        // mana added here — unspent mana empties as each step/phase ends (CR 500.5); it must be
+        // present at the attack trigger's optional {1}{R}{G} payment
         driver.giveColorlessMana(me, 1)
         driver.giveMana(me, Color.RED, 1)
         driver.giveMana(me, Color.GREEN, 1)
 
-        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
         driver.declareAttackers(me, listOf(wagon), opp)
         driver.bothPass() // resolve the attack trigger → optional {1}{R}{G} payment
 
@@ -133,11 +135,13 @@ class BalthierAndFranScenarioTest : FunSpec({
         driver.submitSuccess(CrewVehicle(me, wagon, listOf(balthier)))
         driver.bothPass()
 
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        // mana added here — unspent mana empties as each step/phase ends (CR 500.5); it must be
+        // present at the attack trigger's optional {1}{R}{G} payment
         driver.giveColorlessMana(me, 1)
         driver.giveMana(me, Color.RED, 1)
         driver.giveMana(me, Color.GREEN, 1)
 
-        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
         driver.declareAttackers(me, listOf(wagon), opp)
         driver.bothPass()
 

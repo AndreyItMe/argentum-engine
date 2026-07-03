@@ -260,12 +260,16 @@ class CastSpellHandler(
         if (!effectiveTypeLine.isInstant) {
             val hasFlash = cardDef?.keywords?.contains(Keyword.FLASH) == true
             val grantedFlash = hasFlash || zoneResolver.hasGrantedFlash(state, action.cardId)
+            // A from-exile may-play permission with an "as though it had flash" rider (Azula,
+            // Cunning Usurper) lets a non-instant exiled card be cast at instant speed (CR 702.8).
+            val mayPlayFlash = state.activeMayPlayFor(action.cardId, action.playerId, conditionEvaluator)
+                .any { it.asThoughFlash }
             // A flash-timing kicker unlocks instant-speed casting when paid — whether the
             // optional cost is mana (Ghitu Fire) or a non-mana cost like Behold (Molten Exhale).
             val flashTimingKicker = action.wasKicked && cardDef?.keywordAbilities
                 ?.filterIsInstance<KeywordAbility.OptionalAdditionalCost>()
                 ?.any { it.grantsFlashTiming } == true
-            if (!grantedFlash && !flashTimingKicker && !castingForSneak &&
+            if (!grantedFlash && !mayPlayFlash && !flashTimingKicker && !castingForSneak &&
                 !turnManager.canPlaySorcerySpeed(state, action.playerId)
             ) {
                 return "You can only cast sorcery-speed spells during your main phase with an empty stack"

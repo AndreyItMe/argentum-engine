@@ -880,6 +880,13 @@ data class GameObjectFilter(
     fun ownedByTargetPlayer() = copy(controllerPredicate = ControllerPredicate.OwnedByTargetPlayer)
 
     /**
+     * Must be owned by the trigger's associated player — the damaged player for a combat/damage
+     * trigger (Fire Lord Sozin — "creature cards … from that player's graveyard"). Matches the
+     * card's immutable owner, so it captures cards in a graveyard the triggering player owns.
+     */
+    fun ownedByTriggeringPlayer() = copy(controllerPredicate = ControllerPredicate.OwnedByTriggeringPlayer)
+
+    /**
      * Must match [predicate] on the controller/owner axis. The entry point for *composed*
      * predicates ([ControllerPredicate.And] / [ControllerPredicate.Or] / [ControllerPredicate.Not])
      * — e.g. "permanents you own but don't control":

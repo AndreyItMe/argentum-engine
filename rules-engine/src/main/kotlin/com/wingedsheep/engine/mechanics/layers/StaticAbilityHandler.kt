@@ -143,6 +143,7 @@ import com.wingedsheep.sdk.scripting.PlayersCantCastSpells
 import com.wingedsheep.sdk.scripting.PreventActivatedAbilities
 import com.wingedsheep.sdk.scripting.PreventCycling
 import com.wingedsheep.sdk.scripting.SuppressEntersTriggers
+import com.wingedsheep.sdk.scripting.ConvertEmptyingManaToRed
 import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
 import com.wingedsheep.sdk.scripting.ReplaceLandManaColor
 import com.wingedsheep.sdk.scripting.RestrictSpellsCastPerTurn
@@ -877,6 +878,7 @@ class StaticAbilityHandler(
             is NoMaximumHandSize,
             is SetMaximumHandSize,
             is PreventManaPoolEmptying,
+            is ConvertEmptyingManaToRed,
             is UntapDuringOtherUntapSteps,
             is UntapFilteredDuringOtherUntapSteps,
             is UntapSelfDuringOtherUntapSteps,

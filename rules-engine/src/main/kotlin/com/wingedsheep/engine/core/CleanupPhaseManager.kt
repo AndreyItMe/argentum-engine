@@ -471,16 +471,21 @@ class CleanupPhaseManager(
         // 2. Empty mana pools for all players (unless prevented by a static ability like Upwelling).
         // A player carrying a RetainUnspentManaComponent (The Last Agni Kai) keeps mana of the
         // named colours through this emptying; the marker itself is cleared in step 4 below.
+        // A player controlling a ConvertEmptyingManaToRed permanent (Ozai, the Phoenix King) has
+        // their whole pool turned into that many red mana instead of emptied — CR 500.5 / 703.4q
+        // (unspent mana empties as each step and phase ends), replaced here per CR 614.
         if (!isManaPoolEmptyingPrevented(newState)) {
+            val convertToRedPlayers = playersConvertingEmptyingManaToRed(newState, cardRegistry)
             for (playerId in newState.turnOrder) {
                 newState = newState.updateEntity(playerId) { container ->
                     val manaPool = container.get<ManaPoolComponent>()
                     if (manaPool != null && !manaPool.isEmpty) {
                         val retained = container.get<RetainUnspentManaComponent>()?.colors
-                        if (retained != null && retained.isNotEmpty()) {
-                            container.with(manaPool.emptyExcept(retained))
-                        } else {
-                            container.with(manaPool.empty())
+                        when {
+                            playerId in convertToRedPlayers -> container.with(manaPool.convertToRed())
+                            retained != null && retained.isNotEmpty() ->
+                                container.with(manaPool.emptyExcept(retained))
+                            else -> container.with(manaPool.empty())
                         }
                     } else {
                         container

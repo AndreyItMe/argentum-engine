@@ -12,6 +12,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.state.components.player.InAdditionalCombatPhaseComponent
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.CanAttackDespiteDefender
@@ -129,6 +130,43 @@ class CantAttackProjectedRule : AttackRestrictionRule {
             return "$name can't attack"
         }
         return null
+    }
+}
+
+/**
+ * During an *inserted* combat phase that carries an attacker restriction (Bumi, Unleashed: "there is
+ * an additional combat phase. Only land creatures can attack during that combat phase"), a creature
+ * may be declared as an attacker only if it matches that phase's filter (CR 508.1c — the active
+ * player checks each creature for attacking restrictions, and an illegal one voids the declaration).
+ * The restriction lives on the active
+ * player's [InAdditionalCombatPhaseComponent] and is scoped to exactly that phase, so the natural
+ * combat phase (which never sets the marker) and any unrestricted extra combat impose nothing here.
+ *
+ * The filter is matched with projected state so animated lands read as the land *creatures* they are
+ * ("land creatures" = `GameObjectFilter.Creature and GameObjectFilter.Land`).
+ */
+class AdditionalCombatPhaseAttackerRule : AttackRestrictionRule {
+    override fun check(ctx: AttackCheckContext): String? {
+        val activePlayer = ctx.state.activePlayerId ?: return null
+        val restriction = ctx.state.getEntity(activePlayer)
+            ?.get<InAdditionalCombatPhaseComponent>()
+            ?.attackerRestriction ?: return null
+
+        val matches = predicateEvaluator.matches(
+            ctx.state,
+            ctx.projected,
+            ctx.attackerId,
+            restriction,
+            PredicateContext(controllerId = ctx.attackingPlayer, sourceId = ctx.attackerId)
+        )
+        if (matches) return null
+
+        val name = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>()?.name ?: "Creature"
+        return "$name can't attack this combat phase: only ${restriction.description} can attack"
+    }
+
+    companion object {
+        private val predicateEvaluator = PredicateEvaluator()
     }
 }
 
@@ -275,6 +313,7 @@ fun defaultAttackRestrictionRules(): List<AttackRestrictionRule> = listOf(
     SummoningSicknessAttackRule(),
     DefenderAttackRule(),
     CantAttackProjectedRule(),
+    AdditionalCombatPhaseAttackerRule(),
     NotAlreadyAttackingRule()
 )
 

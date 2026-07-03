@@ -48,6 +48,14 @@ data class MayPlayPermission(
     val sourceId: EntityId? = null,
     val condition: Condition? = null,
     val withAnyManaType: Boolean = false,
+    /**
+     * If true, cards played via this permission may be cast at instant speed — "as though they
+     * had flash" (CR 702.8) — even if they are sorceries, creatures, or other non-instant cards.
+     * Read by the from-exile cast enumerator and the cast handler's timing check; combined with a
+     * turn-scoped [condition] this expresses "During your turn, you may cast … as though they had
+     * flash" (Azula, Cunning Usurper). Does not waive any cost.
+     */
+    val asThoughFlash: Boolean = false,
     val landEntersTapped: Boolean = false,
     val permanent: Boolean = false,
     val expiresAfterTurn: Int? = null,

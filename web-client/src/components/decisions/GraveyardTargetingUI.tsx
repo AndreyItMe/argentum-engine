@@ -68,6 +68,7 @@ export function GraveyardTargetingUI({
       typeLine: card.typeLine,
       manaCost: card.manaCost,
       imageUri: card.imageUri,
+      manaValue: card.manaValue,
     }))
   }, [currentCards])
 
@@ -238,6 +239,7 @@ export function GraveyardTargetingUI({
         onSelectedCardsChange={setSelectedCards}
         minSelections={minTargets}
         maxSelections={maxTargets}
+        totalManaValueAtMost={targetReq?.totalManaValueAtMost ?? null}
         responsive={responsive}
         onConfirm={handleConfirm}
         onMinimize={() => setMinimized(true)}
@@ -259,6 +261,7 @@ function GraveyardCardSelection({
   onSelectedCardsChange,
   minSelections,
   maxSelections,
+  totalManaValueAtMost,
   responsive,
   onConfirm,
   onMinimize,
@@ -271,6 +274,7 @@ function GraveyardCardSelection({
   onSelectedCardsChange: (cards: EntityId[]) => void
   minSelections: number
   maxSelections: number
+  totalManaValueAtMost?: number | null
   responsive: ResponsiveSizes
   onConfirm: (selectedCards: EntityId[]) => void
   onMinimize: () => void
@@ -314,10 +318,21 @@ function GraveyardCardSelection({
     60
   )
 
+  // Running "total mana value ≤ cap" limit (Fire Lord Sozin). Selecting a card that would push the
+  // summed mana value over the cap is blocked, mirroring the server-side aggregate target rule.
+  const manaValueOf = (id: EntityId) => cards.find((c) => c.id === id)?.manaValue ?? 0
+  const selectedManaValue = selectedCards.reduce((sum, id) => sum + manaValueOf(id), 0)
+
   const toggleCard = (cardId: EntityId) => {
     if (selectedCards.includes(cardId)) {
       onSelectedCardsChange(selectedCards.filter((id) => id !== cardId))
     } else if (selectedCards.length < maxSelections) {
+      if (
+        totalManaValueAtMost != null &&
+        selectedManaValue + manaValueOf(cardId) > totalManaValueAtMost
+      ) {
+        return
+      }
       onSelectedCardsChange([...selectedCards, cardId])
     }
   }
@@ -356,6 +371,14 @@ function GraveyardCardSelection({
           {' / '}
           {maxSelections}
         </span>
+        {totalManaValueAtMost != null && (
+          <span>
+            {' · '}Total mana value:{' '}
+            <span className={styles.selectionCount}>{selectedManaValue}</span>
+            {' / '}
+            {totalManaValueAtMost}
+          </span>
+        )}
       </div>
 
       {/* Card ribbon */}

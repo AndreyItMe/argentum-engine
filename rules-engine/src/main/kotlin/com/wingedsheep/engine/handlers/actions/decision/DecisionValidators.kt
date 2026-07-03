@@ -40,6 +40,7 @@ import com.wingedsheep.engine.core.TargetsResponse
 import com.wingedsheep.engine.core.YesNoDecision
 import com.wingedsheep.engine.core.YesNoResponse
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.model.EntityId
 
@@ -209,6 +210,18 @@ object DecisionValidators {
                     }
                     if (owners.toSet().size > 1) {
                         return "Targets for requirement $reqIndex must be from a single graveyard"
+                    }
+                }
+                // "... with total mana value N or less" — the summed mana value of the chosen card
+                // targets may not exceed the resolved cap (Fire Lord Sozin's "total mana value X or
+                // less"; the cap was baked to a concrete int at decision-build time). CR 601.2c.
+                val manaCap = req.totalManaValueAtMost
+                if (manaCap != null && state != null) {
+                    val totalManaValue = selectedIds.sumOf { id ->
+                        state.getEntity(id)?.get<CardComponent>()?.manaValue ?: 0
+                    }
+                    if (totalManaValue > manaCap) {
+                        return "Targets for requirement $reqIndex exceed total mana value $manaCap"
                     }
                 }
             }

@@ -201,10 +201,15 @@ class TurnManager(
             state.updateEntity(activePlayer) { it.with(AdditionalPhasesComponent(remaining)) }
         }
 
-        val (step, phase) = when (next) {
+        val (step, phase) = when (next.kind) {
             ExtraPhaseKind.COMBAT -> {
+                // Copy the entry's attacker restriction onto the marker so the declare-attackers
+                // legality check (AdditionalCombatPhaseAttackerRule) can enforce it for the
+                // duration of this inserted phase. `null` yields an ordinary unrestricted combat.
                 redirectedState = redirectedState
-                    .updateEntity(activePlayer) { it.with(InAdditionalCombatPhaseComponent) }
+                    .updateEntity(activePlayer) {
+                        it.with(InAdditionalCombatPhaseComponent(next.attackerRestriction))
+                    }
                 Step.BEGIN_COMBAT to Phase.COMBAT
             }
             ExtraPhaseKind.MAIN -> {

@@ -295,6 +295,17 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * The total amount of unspent mana currently in a player's mana pool (all colours plus
+     * colorless plus any restricted-mana entries — the pool's `total`). Used for
+     * "as long as you have six or more unspent mana" (Ozai, the Phoenix King).
+     */
+    @SerialName("UnspentMana")
+    @Serializable
+    data class UnspentMana(val player: Player) : DynamicAmount {
+        override val description: String = "${player.possessive} unspent mana"
+    }
+
+    /**
      * Fixed amount (for consistency in the type system).
      */
     @SerialName("Fixed")

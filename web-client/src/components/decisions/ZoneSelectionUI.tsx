@@ -13,6 +13,8 @@ export interface ZoneCardInfo {
   typeLine?: string | undefined
   manaCost?: string | undefined
   imageUri?: string | null | undefined
+  /** Card's mana value, used to enforce an aggregate "total mana value ≤ cap" selection limit. */
+  manaValue?: number | undefined
 }
 
 interface ZoneSelectionUIProps {

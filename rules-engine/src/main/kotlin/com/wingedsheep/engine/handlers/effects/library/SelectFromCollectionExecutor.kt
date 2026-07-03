@@ -50,6 +50,11 @@ class SelectFromCollectionExecutor(
         effect: SelectFromCollectionEffect,
         context: EffectContext
     ): EffectResult {
+        // Resolve any dynamic selection restriction (e.g. TotalManaValueAtMost bound to X on a
+        // pay-{X} reflexive) to a concrete integer cap up front, so the ceiling calc, the
+        // decision, the continuation, and response normalization all see a fixed value.
+        @Suppress("NAME_SHADOWING")
+        val effect = effect.resolveDynamicRestrictions(state, context)
         val cards = context.pipeline.storedCollections[effect.from]
             ?: return EffectResult.error(state, "No collection named '${effect.from}' in storedCollections")
 
@@ -266,6 +271,36 @@ class SelectFromCollectionExecutor(
             colors += state.getEntity(entityId)?.get<CardComponent>()?.colors ?: emptySet()
         }
         return colors
+    }
+
+    /**
+     * Replace any dynamic-capped [SelectionRestriction.TotalManaValueAtMost] (one carrying a
+     * [SelectionRestriction.TotalManaValueAtMost.maxAmount], e.g. `DynamicAmount.XValue`) with a
+     * fixed-integer cap resolved against the current context. No-op when nothing is dynamic, so
+     * the common case allocates nothing.
+     */
+    private fun SelectFromCollectionEffect.resolveDynamicRestrictions(
+        state: GameState,
+        context: EffectContext
+    ): SelectFromCollectionEffect {
+        if (restrictions.none {
+                it is SelectionRestriction.TotalManaValueAtMost && it.maxAmount != null
+            }
+        ) {
+            return this
+        }
+        return copy(
+            restrictions = restrictions.map { restriction ->
+                val dynamic = (restriction as? SelectionRestriction.TotalManaValueAtMost)?.maxAmount
+                if (dynamic != null) {
+                    SelectionRestriction.TotalManaValueAtMost(
+                        max = amountEvaluator.evaluate(state, dynamic, context)
+                    )
+                } else {
+                    restriction
+                }
+            }
+        )
     }
 
     private fun restrictionCeiling(

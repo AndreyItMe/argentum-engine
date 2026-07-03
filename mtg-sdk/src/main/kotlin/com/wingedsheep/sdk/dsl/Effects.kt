@@ -3361,7 +3361,20 @@ object Effects {
      * an additional combat phase"). Compose with [AddMainPhase] for the Aggravated-Assault shape
      * ("an additional combat phase followed by an additional main phase"). CR 500.8.
      */
-    val AddCombatPhase: Effect = com.wingedsheep.sdk.scripting.effects.AddCombatPhaseEffect
+    val AddCombatPhase: Effect = com.wingedsheep.sdk.scripting.effects.AddCombatPhaseEffect()
+
+    /**
+     * Insert a single additional combat phase in which **only creatures matching [attackerRestriction]
+     * may be declared as attackers** (Bumi, Unleashed: "there is an additional combat phase. Only land
+     * creatures can attack during that combat phase" ⇒
+     * `AddCombatPhaseRestrictedTo(GameObjectFilter.Creature and GameObjectFilter.Land)`). Combat only,
+     * no trailing main phase; the restriction is scoped to just this added phase (CR 500.8 / 508.1c).
+     * The same shape covers Aang, Destined Savior and Bumi, King of Three Trials' sibling. A property
+     * and function can't share a name in Kotlin, so the unrestricted atom stays the [AddCombatPhase]
+     * value and the restricted variant is this factory.
+     */
+    fun AddCombatPhaseRestrictedTo(attackerRestriction: com.wingedsheep.sdk.scripting.GameObjectFilter): Effect =
+        com.wingedsheep.sdk.scripting.effects.AddCombatPhaseEffect(attackerRestriction)
 
     /**
      * Insert a single additional (postcombat) main phase. The atomic counterpart to [AddCombatPhase];

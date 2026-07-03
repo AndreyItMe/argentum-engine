@@ -124,6 +124,7 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
                     sourceId = context.sourceId,
                     condition = effect.condition,
                     withAnyManaType = effect.withAnyManaType,
+                    asThoughFlash = effect.asThoughFlash,
                     landEntersTapped = effect.landEntersTapped,
                     permanent = isPermanent,
                     expiresAfterTurn = expiresAfterTurn,

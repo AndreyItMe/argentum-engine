@@ -3,6 +3,7 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.player.AdditionalPhasesComponent
 import com.wingedsheep.engine.state.components.player.ExtraPhaseKind
+import com.wingedsheep.engine.state.components.player.QueuedPhase
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.mtg.sets.definitions.tdm.cards.AllOutAssault
@@ -73,7 +74,7 @@ class AllOutAssaultTest : FunSpec({
 
         // The extra combat phase followed by an extra main phase is queued on the controller.
         driver.state.getEntity(attacker)?.get<AdditionalPhasesComponent>() shouldBe
-            AdditionalPhasesComponent(listOf(ExtraPhaseKind.COMBAT, ExtraPhaseKind.MAIN))
+            AdditionalPhasesComponent(listOf(QueuedPhase(ExtraPhaseKind.COMBAT), QueuedPhase(ExtraPhaseKind.MAIN)))
 
         // Exactly one event-based, one-shot delayed trigger ("when you next attack this turn").
         val delayed = driver.state.delayedTriggers

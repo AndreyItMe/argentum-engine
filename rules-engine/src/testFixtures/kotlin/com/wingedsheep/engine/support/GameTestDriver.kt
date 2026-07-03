@@ -593,12 +593,14 @@ class GameTestDriver {
         playerId: EntityId,
         color: com.wingedsheep.sdk.core.Color?,
         amount: Int,
-        restriction: com.wingedsheep.sdk.scripting.effects.ManaRestriction
+        restriction: com.wingedsheep.sdk.scripting.effects.ManaRestriction,
+        expiry: com.wingedsheep.sdk.scripting.effects.ManaExpiry =
+            com.wingedsheep.sdk.scripting.effects.ManaExpiry.END_OF_TURN
     ) {
         _state = _state.updateEntity(playerId) { container ->
             val pool = container.get<com.wingedsheep.engine.state.components.player.ManaPoolComponent>()
                 ?: com.wingedsheep.engine.state.components.player.ManaPoolComponent()
-            container.with(pool.addRestricted(color, amount, restriction))
+            container.with(pool.addRestricted(color, amount, restriction, expiry = expiry))
         }
     }
 

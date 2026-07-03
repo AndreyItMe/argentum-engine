@@ -95,12 +95,32 @@ data class PlayAdditionalLandsEffect(
  *
  * Per CR 500.8 extra phases are added after the specified phase; the engine inserts the queued
  * phase(s) after the postcombat main phase.
+ *
+ * [attackerRestriction] optionally constrains *which creatures may be declared as attackers during
+ * that inserted combat phase* (CR 508.1c — the active player checks each creature for attacking
+ * restrictions, and an illegal one voids the declaration). When non-null, only creatures matching
+ * the filter can attack in the added phase
+ * (Bumi, Unleashed: "Only land creatures can attack during that combat phase" ⇒
+ * `GameObjectFilter.Creature and GameObjectFilter.Land`). The restriction is scoped to the added
+ * phase alone — the natural combat phase and any other added phase are unaffected. `null` (the
+ * default, and every prior caller) means the ordinary "any creature can attack" phase.
  */
 @SerialName("AddCombatPhase")
 @Serializable
-data object AddCombatPhaseEffect : Effect {
-    override val description: String =
-        "After this phase, there is an additional combat phase"
+data class AddCombatPhaseEffect(
+    val attackerRestriction: GameObjectFilter? = null
+) : Effect {
+    override val description: String = buildString {
+        append("After this phase, there is an additional combat phase")
+        if (attackerRestriction != null) {
+            append(". Only ${attackerRestriction.description} can attack during that combat phase")
+        }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val replaced = attackerRestriction?.applyTextReplacement(replacer)
+        return if (replaced !== attackerRestriction) copy(attackerRestriction = replaced) else this
+    }
 }
 
 /**

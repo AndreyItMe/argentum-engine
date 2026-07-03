@@ -507,17 +507,28 @@ sealed interface SelectionRestriction {
     }
 
     /**
-     * The sum of selected cards' mana values must not exceed [max]. {X} contributes 0
+     * The sum of selected cards' mana values must not exceed the cap. {X} contributes 0
      * (per CR 202.3e for cards not on the stack). Used for "with total mana value N or
      * less" wording like Scout for Survivors.
      *
-     * The executor enforces this server-side: any selection whose total exceeds [max]
+     * The cap is normally the fixed [max]. When [maxAmount] is non-null it supplies a
+     * *dynamic* cap instead (e.g. `DynamicAmount.XValue` for "with total mana value X or
+     * less", where X is the amount just paid) — the executor resolves it against the
+     * resolution context before building the decision and re-wraps this restriction with
+     * the concrete [max], so every downstream consumer (decision, continuation, response
+     * normalization) only ever sees a fixed integer.
+     *
+     * The executor enforces this server-side: any selection whose total exceeds the cap
      * has cards trimmed (in response order) until the cap is met.
      */
     @SerialName("TotalManaValueAtMost")
     @Serializable
-    data class TotalManaValueAtMost(val max: Int) : SelectionRestriction {
-        override val description: String = "with total mana value $max or less"
+    data class TotalManaValueAtMost(
+        val max: Int = 0,
+        val maxAmount: DynamicAmount? = null
+    ) : SelectionRestriction {
+        override val description: String =
+            "with total mana value ${maxAmount?.description ?: max} or less"
     }
 
     /**
@@ -1322,7 +1333,17 @@ data class GrantMayPlayFromExileEffect(
      * stamped onto `PlayWithFixedAlternativeManaCostComponent.waterbend`. Models Hama, the
      * Bloodbender's "by waterbending {X}".
      */
-    val waterbend: Boolean = false
+    val waterbend: Boolean = false,
+    /**
+     * When true, the granted cards may be cast at instant speed — "as though they had flash"
+     * (CR 702.8 / 601.3e) — regardless of their card type. A sorcery or creature card exiled
+     * this way becomes castable whenever the grantee has priority (subject to [condition]),
+     * not only during their main phase with an empty stack. Pair with [condition] = `IsYourTurn`
+     * for the "During your turn, you may cast … as though they had flash" wording (Azula, Cunning
+     * Usurper). The timing rider is honored by both the from-exile cast enumerator and the
+     * authoritative cast handler; it does not waive any cost.
+     */
+    val asThoughFlash: Boolean = false
 ) : Effect {
     override val description: String = buildString {
         val who = if (ownerControls) "its owner" else "you"
@@ -1336,6 +1357,7 @@ data class GrantMayPlayFromExileEffect(
             append(" ")
             append(condition.description)
         }
+        if (asThoughFlash) append(", as though they had flash")
         if (withAnyManaType) append(", and mana of any type can be spent to cast them")
         if (landEntersTapped) append(". Each land played this way enters tapped")
         if (exileAfterResolve) append(". If a spell cast this way would be put into a graveyard, exile it instead")

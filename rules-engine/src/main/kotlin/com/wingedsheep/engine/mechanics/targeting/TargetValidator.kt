@@ -189,6 +189,31 @@ class TargetValidator {
                     return "Targets must share a creature type"
                 }
             }
+
+            // "... with total mana value N or less" — the summed mana value of the chosen card
+            // targets may not exceed the resolved cap (Fire Lord Sozin's "total mana value X or
+            // less"; XValue resolves against the paid [xValue]). CR 601.2c. No-op for non-card
+            // targets, which contribute 0.
+            val totalManaCap = (requirement as? TargetObject)?.totalManaValueAtMost
+            if (totalManaCap != null && targetsForReq.isNotEmpty()) {
+                val cap = try {
+                    DynamicAmountEvaluator().evaluate(
+                        state,
+                        totalManaCap,
+                        EffectContext(sourceId = sourceId, controllerId = casterId, xValue = xValue)
+                    ).coerceAtLeast(0)
+                } catch (_: Exception) {
+                    Int.MAX_VALUE
+                }
+                val summedManaValue = targetsForReq.sumOf { target ->
+                    (target as? ChosenTarget.Card)?.let { card ->
+                        state.getEntity(card.cardId)?.get<CardComponent>()?.manaValue ?: 0
+                    } ?: 0
+                }
+                if (summedManaValue > cap) {
+                    return "Targets must have total mana value $cap or less"
+                }
+            }
         }
 
         return null

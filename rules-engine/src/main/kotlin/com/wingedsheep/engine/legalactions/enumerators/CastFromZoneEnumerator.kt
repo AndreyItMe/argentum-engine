@@ -405,7 +405,10 @@ class CastFromZoneEnumerator : ActionEnumerator {
                     val effectiveScript = prepareFace?.script ?: cardDef?.script
                     val effectiveTypeLine = prepareFace?.typeLine ?: cardComponent.typeLine
                     val isInstant = effectiveTypeLine.isInstant
-                    val hasCorrectTiming = isInstant || context.canPlaySorcerySpeed
+                    // A may-play permission with an "as though it had flash" rider (Azula, Cunning
+                    // Usurper) unlocks instant-speed casting of even a sorcery/creature exiled with it.
+                    val grantsFlashTiming = permissions.any { it.asThoughFlash }
+                    val hasCorrectTiming = isInstant || grantsFlashTiming || context.canPlaySorcerySpeed
                     val castRestrictions = effectiveScript?.castRestrictions ?: emptyList()
                     val meetsRestrictions = context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)
                     val baseEffectiveCost = if (cardDef != null && prepareFace != null) {

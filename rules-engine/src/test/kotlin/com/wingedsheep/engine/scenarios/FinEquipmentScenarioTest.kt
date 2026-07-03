@@ -281,7 +281,7 @@ class FinEquipmentScenarioTest : ScenarioTestBase() {
             }
             withClue("An additional combat phase was queued for the active player") {
                 val extra = game.state.getEntity(game.player1Id)?.get<AdditionalPhasesComponent>()
-                (extra?.phases?.contains(ExtraPhaseKind.COMBAT)) shouldBe true
+                (extra?.phases?.any { it.kind == ExtraPhaseKind.COMBAT }) shouldBe true
             }
         }
 
