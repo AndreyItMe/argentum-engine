@@ -6367,6 +6367,69 @@
     ]
 }
 
+// Firion, Wild Rose Warrior
+{
+    "name": "Firion, Wild Rose Warrior",
+    "manaCost": "{2}{R}",
+    "typeLine": "Legendary Creature — Human Rebel Warrior",
+    "oracleText": "Equipped creatures you control have haste.\nWhenever a nontoken Equipment you control enters, create a token that's a copy of it, except it has \"This Equipment's equip abilities cost {2} less to activate.\" Sacrifice that token at the beginning of the next upkeep.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "artifact Equipment nontoken ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateTokenCopyOfTarget",
+                    "target": "TriggeringEntity",
+                    "addedStaticAbilities": [
+                        {
+                            "type": "ReduceEquipCost",
+                            "amount": 2,
+                            "onlyOwnEquip": true
+                        }
+                    ],
+                    "sacrificeAtStep": "UPKEEP"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "HASTE",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ],
+                        "statePredicates": [
+                            "IsEquipped"
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "137",
+        "rarity": "RARE",
+        "artist": "Elizabeth Peiró",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/8/98366937-d15b-4a66-b9f6-878d50b63871.jpg?1782686498"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Freya Crescent
 {
     "name": "Freya Crescent",

@@ -505,8 +505,13 @@ class CastPermissionUtils(
      * every controlled [ReduceEquipCost] grant whose condition (if any) currently holds
      * (Éowyn, Lady of Rohan). Multiple sources stack additively. Returns 0 when none apply.
      */
-    fun equipCostReduction(state: GameState, playerId: EntityId, equipTargetId: EntityId? = null): Int =
-        sumActiveEquipReductions(state, playerId, equipTargetId)
+    fun equipCostReduction(
+        state: GameState,
+        playerId: EntityId,
+        equipTargetId: EntityId? = null,
+        abilitySourceId: EntityId? = null
+    ): Int =
+        sumActiveEquipReductions(state, playerId, equipTargetId, abilitySourceId)
 
     /**
      * Reduce the generic portion of [cost] when [ability] is an equip ability and [playerId] has
@@ -519,16 +524,22 @@ class CastPermissionUtils(
      * the permanent bearing the grant. Pass the chosen target at payment time so the paid cost is
      * exact; pass `null` at enumeration (before the target is chosen) to offer the discount
      * optimistically.
+     *
+     * [abilitySourceId] is the permanent whose equip ability is being activated. A self-restricted
+     * grant ([ReduceEquipCost.onlyOwnEquip], Firion's token) only reduces its own bearer's equip
+     * abilities, so it counts only when its bearer equals [abilitySourceId]. Pass the ability's
+     * source at both enumeration and payment.
      */
     fun applyEquipCostReduction(
         cost: AbilityCost,
         ability: ActivatedAbility,
         state: GameState,
         playerId: EntityId,
-        equipTargetId: EntityId? = null
+        equipTargetId: EntityId? = null,
+        abilitySourceId: EntityId? = null
     ): AbilityCost {
         if (!ability.isEquipAbility) return cost
-        val reduction = equipCostReduction(state, playerId, equipTargetId)
+        val reduction = equipCostReduction(state, playerId, equipTargetId, abilitySourceId)
         if (reduction <= 0) return cost
         return when (cost) {
             is AbilityCost.Atom -> cost.manaCostOrNull
@@ -611,17 +622,35 @@ class CastPermissionUtils(
      * [ConditionalStaticAbility] and evaluating its condition against the granting permanent.
      * Mirrors [hasActiveEquipPermission] but accumulates an amount instead of short-circuiting.
      */
-    private fun sumActiveEquipReductions(state: GameState, playerId: EntityId, equipTargetId: EntityId?): Int {
+    private fun sumActiveEquipReductions(
+        state: GameState,
+        playerId: EntityId,
+        equipTargetId: EntityId?,
+        abilitySourceId: EntityId? = null
+    ): Int {
         var total = 0
         for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            // A self-restricted grant (onlyOwnEquip) only discounts its own bearer's equip
+            // abilities: skip the whole entity when it isn't the equip ability's source. At
+            // enumeration the source is known (the permanent whose ability is listed), so this
+            // stays exact.
+            fun countsForSource(ability: com.wingedsheep.sdk.scripting.ReduceEquipCost): Boolean =
+                !ability.onlyOwnEquip || abilitySourceId == null || entityId == abilitySourceId
+            // Printed static abilities (from the card definition), plus any granted to this entity
+            // via GameState.grantedStaticAbilities (tokens have no CardDefinition — Firion's copy).
+            val card = state.getEntity(entityId)?.get<CardComponent>()
             val classLevel = state.getEntity(entityId)
                 ?.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
-            for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
+            val printed = card?.let { cardRegistry.getCard(it.cardDefinitionId) }
+                ?.script?.effectiveStaticAbilities(classLevel).orEmpty()
+            val granted = state.grantedStaticAbilities
+                .filter { it.entityId == entityId }
+                .map { it.ability }
+            for (ability in printed + granted) {
                 when (ability) {
                     is com.wingedsheep.sdk.scripting.ConditionalStaticAbility -> {
                         val inner = ability.ability as? com.wingedsheep.sdk.scripting.ReduceEquipCost ?: continue
+                        if (!countsForSource(inner)) continue
                         if (!equipReductionApplies(state, entityId, inner, equipTargetId)) continue
                         val context = com.wingedsheep.engine.handlers.EffectContext(
                             sourceId = entityId,
@@ -630,7 +659,8 @@ class CastPermissionUtils(
                         if (conditionEvaluator.evaluate(state, ability.condition, context)) total += inner.amount
                     }
                     is com.wingedsheep.sdk.scripting.ReduceEquipCost ->
-                        if (equipReductionApplies(state, entityId, ability, equipTargetId)) total += ability.amount
+                        if (countsForSource(ability) &&
+                            equipReductionApplies(state, entityId, ability, equipTargetId)) total += ability.amount
                     else -> {}
                 }
             }

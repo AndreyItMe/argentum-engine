@@ -827,7 +827,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `CreateTokenCopyOfSelf(count?, overridePower?, overrideToughness?, removeLegendary?)` — token copies
   of the source. `removeLegendary = true` applies the "except it's not legendary" copy clause (Ran and
   Shaw), mirroring `CreateTokenCopyOfEquippedCreature`.
-- `CreateTokenCopyOfTarget(target, count?, overridePower?, overrideToughness?, tapped?, attacking?, triggeredAbilities?, addedKeywords?, addedSupertypes?, removedSupertypes?, overrideColors?, addedColors?, overrideSubtypes?, addedSubtypes?, overrideCardTypes?, activatedAbilities?, sacrificeAtStep?, sacrificeOnlyOnControllersTurn?, addCardTypes?, exileAtStep?, exileUnlessSourceIsRingBearer?, controller?)` —
+- `CreateTokenCopyOfTarget(target, count?, overridePower?, overrideToughness?, tapped?, attacking?, triggeredAbilities?, addedKeywords?, addedSupertypes?, removedSupertypes?, overrideColors?, addedColors?, overrideSubtypes?, addedSubtypes?, overrideCardTypes?, activatedAbilities?, addedStaticAbilities?, sacrificeAtStep?, sacrificeOnlyOnControllersTurn?, addCardTypes?, exileAtStep?, exileUnlessSourceIsRingBearer?, controller?)` —
   token copy of another permanent (or a card in any zone — the executor copies the target's `CardComponent`,
   so a graveyard/exile card works; pass `EffectTarget.PipelineTarget("name")` to copy a card a prior pipeline
   step exiled/stored, as Nexus of Becoming and Mardu Siegebreaker do).
@@ -845,6 +845,12 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   other card types" → `setOf(CardType.ARTIFACT)`; `activatedAbilities` grants extra activated abilities to
   the copy (the Food "{2}, {T}, Sacrifice this token: You gain 3 life") — together model Shelob, Child of
   Ungoliant's death-trigger Food token.
+  `addedStaticAbilities` grants extra static abilities to the copy — the "except it has \"[static ability]\""
+  copy clause — via `GameState.grantedStaticAbilities` (the same channel as `activatedAbilities`, since
+  tokens have no `CardDefinition`). Firion, Wild Rose Warrior's token copy of an entering Equipment adds
+  `ReduceEquipCost(amount = 2, onlyOwnEquip = true)` ("This Equipment's equip abilities cost {2} less to
+  activate"). Any static reader that a granted ability must reach has to union `grantedStaticAbilities` with
+  printed statics (as the equip-cost reducer and combat managers already do).
   `attacking` only applies to copies whose printed type line is a creature (a copy of a non-creature card
   still enters tapped but never attacking). `sacrificeAtStep` schedules one delayed `SacrificeTargetEffect`
   per created copy at that step (the sacrifice sibling of `CreateTokenEffect.sacrificeAtStep`);
@@ -3921,7 +3927,7 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   cost (colored pips included) of the turn's first equip while the per-player
   `EquipActivationsThisTurnComponent.count == 0`, and increments that counter on every equip
   activation (reset at turn start by `TurnManager`).
-- `ReduceEquipCost(amount, onlyIfTargetIsSource = false)` — the controller's equip abilities cost
+- `ReduceEquipCost(amount, onlyIfTargetIsSource = false, onlyOwnEquip = false)` — the controller's equip abilities cost
   `{amount}` generic mana less to activate (Éowyn, Lady of Rohan: "Equip abilities you activate cost
   {1} less to activate"). The engine reduces only the generic portion of the equip cost (floored at
   {0}); colored pips are untouched, and multiple sources stack additively. Controller-scoped — it
@@ -3936,6 +3942,12 @@ riders, matching how the engine already treats e.g. City of Brass's damage durin
   (the chosen target is threaded into `applyEquipCostReduction`); at enumeration, before a target is
   chosen, the discount is offered optimistically whenever the source is currently a creature, so the
   ability is never withheld for want of the discount.
+  Set `onlyOwnEquip = true` for the self-restricted form — "**This permanent's** equip abilities cost
+  `{amount}` less to activate" (Firion, Wild Rose Warrior's token copy): the reduction applies only to
+  the equip abilities of the permanent bearing this static, matched at the reduction site against the
+  equip ability's source. Because it is typically granted to a token (via
+  `CreateTokenCopyOfTargetEffect.addedStaticAbilities`), the equip-cost reader unions
+  `grantedStaticAbilities` with printed statics.
 - `ReduceActivatedAbilityCost(filter, amount, manaFloor = 0)` — the activated abilities of permanents
   matching `filter` cost `{amount}` generic mana less to activate, with the mana in each cost floored
   at `manaFloor` *total* mana (generic + colored). The activated-ability sibling of `ReduceEquipCost`,

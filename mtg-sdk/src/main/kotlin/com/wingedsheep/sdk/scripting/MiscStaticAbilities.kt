@@ -1009,11 +1009,20 @@ data object FreeFirstEquipEachTurn : StaticAbility {
 @Serializable
 data class ReduceEquipCost(
     val amount: Int,
-    val onlyIfTargetIsSource: Boolean = false
+    val onlyIfTargetIsSource: Boolean = false,
+    /**
+     * When true, the reduction applies only to the equip abilities of the permanent bearing this
+     * static — "This Equipment's equip abilities cost {amount} less to activate" (Firion, Wild Rose
+     * Warrior's token) — rather than every equip ability the controller activates (Éowyn). Scoped
+     * at the reduction site by matching the grant's bearer against the equip ability's source.
+     */
+    val onlyOwnEquip: Boolean = false
 ) : StaticAbility {
-    override val description: String =
-        if (onlyIfTargetIsSource) "Equip abilities you activate that target this permanent cost {$amount} less to activate"
-        else "Equip abilities you activate cost {$amount} less to activate"
+    override val description: String = when {
+        onlyOwnEquip -> "This permanent's equip abilities cost {$amount} less to activate"
+        onlyIfTargetIsSource -> "Equip abilities you activate that target this permanent cost {$amount} less to activate"
+        else -> "Equip abilities you activate cost {$amount} less to activate"
+    }
 }
 
 /**

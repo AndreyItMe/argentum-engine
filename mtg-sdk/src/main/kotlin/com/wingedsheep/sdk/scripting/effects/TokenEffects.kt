@@ -412,6 +412,16 @@ data class CreateTokenCopyOfTargetEffect(
      */
     val activatedAbilities: List<ActivatedAbility> = emptyList(),
     /**
+     * Static abilities granted to the token copy in addition to those copied from the source —
+     * the "except it has \"[static ability]\"" copy clause. First used for Firion, Wild Rose
+     * Warrior ("create a token that's a copy of it, except it has \"This Equipment's equip
+     * abilities cost {2} less to activate\""), where the added static is
+     * [com.wingedsheep.sdk.scripting.ReduceEquipCost] with `onlyOwnEquip = true`. Granted to the
+     * token via `GameState.grantedStaticAbilities` (tokens have no CardDefinition), the same
+     * channel as [activatedAbilities] / [triggeredAbilities]. Mirrors [CreateTokenEffect.staticAbilities].
+     */
+    val addedStaticAbilities: List<StaticAbility> = emptyList(),
+    /**
      * If set, create delayed triggers to sacrifice each created token copy at this step
      * (the sacrifice sibling of [CreateTokenEffect.sacrificeAtStep]). Used for "create a
      * tapped token copy ... at the beginning of your next end step, sacrifice those tokens"

@@ -160,7 +160,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                 applyAbilityGenericCostReduction(rawCost, ability, state, entityId, playerId, context),
                                 state, entityId
                             ),
-                            ability, state, playerId
+                            ability, state, playerId, abilitySourceId = entityId
                         ),
                         ability, state, playerId
                     )

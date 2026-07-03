@@ -9,6 +9,7 @@ import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.event.DelayedTriggeredAbility
 import com.wingedsheep.engine.event.GrantedActivatedAbility
+import com.wingedsheep.engine.event.GrantedStaticAbility
 import com.wingedsheep.engine.event.GrantedTriggeredAbility
 import com.wingedsheep.engine.state.Component
 import com.wingedsheep.engine.state.ComponentContainer
@@ -183,6 +184,22 @@ class CreateTokenCopyOfTargetExecutor(
                 )
                 newState = newState.copy(
                     grantedActivatedAbilities = newState.grantedActivatedAbilities + grant
+                )
+            }
+
+            // Static abilities granted to the copy — the "except it has \"[static ability]\"" copy
+            // clause (Firion, Wild Rose Warrior: "except it has \"This Equipment's equip abilities
+            // cost {2} less to activate\""). Like triggered/activated grants, these live in
+            // GameState.grantedStaticAbilities since tokens have no CardDefinition; each static
+            // reader (e.g. the equip-cost reducer) unions granted statics with printed ones.
+            for (ability in effect.addedStaticAbilities) {
+                val grant = GrantedStaticAbility(
+                    entityId = tokenId,
+                    ability = ability,
+                    duration = Duration.Permanent
+                )
+                newState = newState.copy(
+                    grantedStaticAbilities = newState.grantedStaticAbilities + grant
                 )
             }
 

@@ -234,7 +234,8 @@ class ActivateAbilityHandler(
                         applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
                         state, action.sourceId
                     ),
-                    ability, state, action.playerId, equipTargetIdForCost
+                    ability, state, action.playerId, equipTargetIdForCost,
+                    abilitySourceId = action.sourceId
                 ),
                 ability, state, action.playerId
             )
@@ -482,7 +483,8 @@ class ActivateAbilityHandler(
                         applyGenericCostReduction(rawCost, ability, state, action.sourceId, action.playerId, action.targets),
                         state, action.sourceId
                     ),
-                    ability, state, action.playerId, equipTargetIdForCost
+                    ability, state, action.playerId, equipTargetIdForCost,
+                    abilitySourceId = action.sourceId
                 ),
                 ability, state, action.playerId
             )
