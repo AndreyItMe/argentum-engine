@@ -180,6 +180,47 @@
     ]
 }
 
+// Kitesail Corsair
+{
+    "name": "Kitesail Corsair",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Pirate",
+    "oracleText": "This creature has flying as long as it's attacking.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FLYING",
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "Self",
+                    "filter": "attacking"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "41",
+        "artist": "Greg Opalinski",
+        "flavorText": "\"Why perch in the crow's nest when I can fly like the crows?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/b/4b8d0e8d-c2d4-4682-8095-827ffd79539b.jpg?1782710294"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Moment of Craving
 {
     "name": "Moment of Craving",

@@ -1523,6 +1523,45 @@
     ]
 }
 
+// Mocking Sprite
+{
+    "name": "Mocking Sprite",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Faerie Rogue",
+    "oracleText": "Flying\nInstant and sorcery spells you cast cost {1} less to cast.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ModifySpellCost",
+                "target": {
+                    "type": "YouCast",
+                    "filter": "instant|sorcery"
+                },
+                "modification": {
+                    "type": "ReduceGeneric",
+                    "amount": 1
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "62",
+        "artist": "Ben Hill",
+        "flavorText": "\"Look at me, everyone! I'm a High Fae! Watch me do important High Fae things!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/5/e595014d-4ff4-4561-b7f2-a9bd56300b01.jpg?1782696613"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Moment of Valor
 {
     "name": "Moment of Valor",

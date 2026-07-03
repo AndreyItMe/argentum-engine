@@ -1977,6 +1977,67 @@
     ]
 }
 
+// Firespitter Whelp
+{
+    "name": "Firespitter Whelp",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Dragon",
+    "oracleText": "Flying\nWhenever you cast a noncreature or Dragon spell, this creature deals 1 damage to each opponent.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    "IsNoncreature",
+                                    {
+                                        "type": "HasSubtype",
+                                        "subtype": "Dragon"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "761",
+        "rarity": "UNCOMMON",
+        "artist": "David Álvarez",
+        "flavorText": "In subsequent terms, first-year students were prohibited from enrolling in Introduction to Dragonkeeping.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/d/ddcc3c1b-b564-4444-9a1a-0f62f8e6b8bb.jpg?1782683456"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Fleeting Flight
 {
     "name": "Fleeting Flight",
