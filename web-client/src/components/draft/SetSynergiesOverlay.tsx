@@ -805,6 +805,72 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       },
     ],
   },
+  FDN: {
+    setCode: 'FDN',
+    setName: 'Foundations',
+    archetypes: [
+      {
+        name: 'Flyers',
+        colors: ['W', 'U'],
+        keyCard: 'Empyrean Eagle',
+        description: "Efficient flying creatures backed by anthem effects and tempo plays. Hold the ground with cheap defenders while an evasive air force races the opponent's clock.",
+      },
+      {
+        name: 'Threshold',
+        colors: ['U', 'B'],
+        keyCard: 'Dreadwing Scavenger',
+        description: 'Fill your graveyard to seven cards to switch on threshold payoffs. A control-tempo deck that trades early, stocks the bin with card selection, and takes over with upgraded threats.',
+      },
+      {
+        name: 'Lifegain',
+        colors: ['W', 'B'],
+        keyCard: 'Fiendish Panda',
+        description: 'Gain life through normal gameplay and convert it into growing threats and drain effects. A resilient midrange deck that pulls ahead in every exchange.',
+      },
+      {
+        name: 'Sacrifice',
+        colors: ['B', 'R'],
+        keyCard: 'Garna, Bloodfist of Keld',
+        description: 'Feed expendable creatures and tokens to sacrifice outlets for damage and card advantage. An aggressive attrition deck that turns every death into value.',
+      },
+      {
+        name: 'Power 4+',
+        colors: ['R', 'G'],
+        keyCard: 'Ruby, Daring Tracker',
+        description: 'Ramp into creatures with power four or greater and cash in ferocious payoffs. A stompy midrange deck that wins through raw combat dominance.',
+      },
+      {
+        name: '+1/+1 Counters',
+        colors: ['G', 'W'],
+        keyCard: 'Good-Fortune Unicorn',
+        description: 'Stack +1/+1 counters on your team and reward every counter placed. A go-tall midrange deck whose creatures outgrow anything blocking them.',
+      },
+      {
+        name: 'Spells',
+        colors: ['U', 'R'],
+        keyCard: 'Balmor, Battlemage Captain',
+        description: 'Cast instants and sorceries to trigger prowess-style payoffs and pump your team. A spell-velocity tempo deck that turns cantrips and burn into combat wins.',
+      },
+      {
+        name: 'Morbid',
+        colors: ['B', 'G'],
+        keyCard: 'Wardens of the Cycle',
+        description: 'Make creatures die — yours or theirs — to unlock morbid bonuses and graveyard value. A grindy midrange deck that profits from a full graveyard.',
+      },
+      {
+        name: 'Go-Wide Aggro',
+        colors: ['R', 'W'],
+        keyCard: 'Heroic Reinforcements',
+        description: "Flood the board with cheap creatures and token makers, then push damage through with mass pump and combat tricks. The format's fastest aggro deck.",
+      },
+      {
+        name: 'Ramp Value',
+        colors: ['G', 'U'],
+        keyCard: 'Tatyova, Benthic Druid',
+        description: 'Ramp with extra lands and mana creatures while landfall-style triggers convert each land drop into cards and life. A value-ramp deck that buries opponents in resources.',
+      },
+    ],
+  },
 }
 
 /**

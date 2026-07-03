@@ -357,6 +357,32 @@ object SetArchetypes {
                     "Trigger landfall every time a land enters, turning even late-game land draws into damage with angry Chocobos and big beaters. A ramp-and-aggro deck that overwhelms with raw board presence."),
             )
         ),
+        "FDN" to SetSynergies(
+            setCode = "FDN",
+            setName = "Foundations",
+            archetypes = listOf(
+                Archetype("Flyers", listOf(Color.WHITE, Color.BLUE),
+                    "Efficient flying creatures backed by anthem effects and tempo plays. Hold the ground with cheap defenders while an evasive air force races the opponent's clock."),
+                Archetype("Threshold", listOf(Color.BLUE, Color.BLACK),
+                    "Fill your graveyard to seven cards to switch on threshold payoffs. A control-tempo deck that trades early, stocks the bin with card selection, and takes over with upgraded threats."),
+                Archetype("Lifegain", listOf(Color.WHITE, Color.BLACK),
+                    "Gain life through normal gameplay and convert it into growing threats and drain effects. A resilient midrange deck that pulls ahead in every exchange."),
+                Archetype("Sacrifice", listOf(Color.BLACK, Color.RED),
+                    "Feed expendable creatures and tokens to sacrifice outlets for damage and card advantage. An aggressive attrition deck that turns every death into value."),
+                Archetype("Power 4+", listOf(Color.RED, Color.GREEN),
+                    "Ramp into creatures with power four or greater and cash in ferocious payoffs. A stompy midrange deck that wins through raw combat dominance."),
+                Archetype("+1/+1 Counters", listOf(Color.GREEN, Color.WHITE),
+                    "Stack +1/+1 counters on your team and reward every counter placed. A go-tall midrange deck whose creatures outgrow anything blocking them."),
+                Archetype("Spells", listOf(Color.BLUE, Color.RED),
+                    "Cast instants and sorceries to trigger prowess-style payoffs and pump your team. A spell-velocity tempo deck that turns cantrips and burn into combat wins."),
+                Archetype("Morbid", listOf(Color.BLACK, Color.GREEN),
+                    "Make creatures die — yours or theirs — to unlock morbid bonuses and graveyard value. A grindy midrange deck that profits from a full graveyard."),
+                Archetype("Go-Wide Aggro", listOf(Color.RED, Color.WHITE),
+                    "Flood the board with cheap creatures and token makers, then push damage through with mass pump and combat tricks. The format's fastest aggro deck."),
+                Archetype("Ramp Value", listOf(Color.GREEN, Color.BLUE),
+                    "Ramp with extra lands and mana creatures while landfall-style triggers convert each land drop into cards and life. A value-ramp deck that buries opponents in resources."),
+            )
+        ),
     )
 
     /** Get archetypes for a specific set code, or null if not found. */
