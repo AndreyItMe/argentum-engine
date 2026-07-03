@@ -1096,6 +1096,35 @@
     ]
 }
 
+// Confiscate
+{
+    "name": "Confiscate",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant permanent\nYou control enchanted permanent.",
+    "script": {
+        "staticAbilities": [
+            "ControlEnchantedPermanent"
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "permanent"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "66",
+        "rarity": "UNCOMMON",
+        "artist": "Adam Rex",
+        "flavorText": "\"I don't understand why he works so hard on a device to duplicate a sound so easily made with hand and armpit.\"\n—Barrin, progress report",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/c/7cba6d4a-58d0-42d6-b49b-65c72b86007f.jpg?1782720734"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Coral Merfolk
 {
     "name": "Coral Merfolk",

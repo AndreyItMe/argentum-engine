@@ -261,6 +261,56 @@
     "colorIdentityOverride": []
 }
 
+// Fumigate
+{
+    "name": "Fumigate",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Sorcery",
+    "oracleText": "Destroy all creatures. You gain 1 life for each creature destroyed this way.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "BattlefieldMatching",
+                        "filter": "creature"
+                    },
+                    "storeAs": "destroyAll_gathered"
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "destroyAll_gathered",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Graveyard"
+                    },
+                    "moveType": "Destroy",
+                    "storeMovedAs": "destroyed"
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "VariableReference",
+                        "variableName": "destroyed_count"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "15",
+        "rarity": "RARE",
+        "artist": "Svetlin Velinov",
+        "flavorText": "\"Ghirapur's gremlin population poses a threat to the infrastructure of the fairgrounds. Threats must be eliminated.\"\n—Sram, senior edificer",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/0/f00f27a7-9e92-4fbf-baa8-f47a5eee48a6.jpg?1782711619"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Workshop Assistant
 {
     "name": "Workshop Assistant",
