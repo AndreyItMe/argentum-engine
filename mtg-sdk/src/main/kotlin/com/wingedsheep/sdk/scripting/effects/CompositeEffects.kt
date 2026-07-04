@@ -787,23 +787,32 @@ fun MayPayXForEffect(effect: Effect): GatedEffect =
  *
  * Supported costs: [PayCost.Sacrifice] (card selection) and [PayCost.PayLife] (yes/no).
  *
+ * [eligiblePlayers] scopes *which* players are offered the choice, relative to the source's
+ * controller: [Player.Each] (default) asks every player, [Player.EachOpponent] asks only the
+ * controller's opponents ("any opponent may sacrifice a creature" — Desecration Demon). Only
+ * multi-player group references are meaningful here; single-player refs fall back to that one
+ * player.
+ *
  * @property cost The cost any player may choose to pay
  * @property consequence The effect that happens if a player pays (null = nothing)
  * @property consequenceIfNonePaid The effect that happens if no player pays (null = nothing)
+ * @property eligiblePlayers Which players are offered the choice, relative to the controller
  */
 @SerialName("AnyPlayerMayPay")
 @Serializable
 data class AnyPlayerMayPayEffect(
     val cost: PayCost,
     val consequence: Effect? = null,
-    val consequenceIfNonePaid: Effect? = null
+    val consequenceIfNonePaid: Effect? = null,
+    val eligiblePlayers: Player = Player.Each
 ) : Effect {
     override val description: String = buildString {
+        val who = if (eligiblePlayers == Player.EachOpponent) "opponent" else "player"
         when {
             consequenceIfNonePaid != null && consequence == null ->
-                append("${consequenceIfNonePaid.description} unless any player ${cost.description}")
+                append("${consequenceIfNonePaid.description} unless any $who ${cost.description}")
             else -> {
-                append("Any player may ${cost.description}.")
+                append("Any $who may ${cost.description}.")
                 if (consequence != null) append(" If a player does, ${consequence.description}.")
                 if (consequenceIfNonePaid != null) append(" If no player does, ${consequenceIfNonePaid.description}.")
             }

@@ -21,3 +21,55 @@
         "BLACK"
     ]
 }
+
+// Painful Quandary
+{
+    "name": "Painful Quandary",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever an opponent casts a spell, that player loses 5 life unless they discard a card.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "player": "EachOpponent"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "PayOrSuffer",
+                    "cost": {
+                        "type": "PayAtom",
+                        "atom": "AtomDiscard"
+                    },
+                    "suffer": {
+                        "type": "LoseLife",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 5
+                        },
+                        "target": {
+                            "type": "PlayerRef",
+                            "player": "TriggeringPlayer"
+                        }
+                    },
+                    "player": {
+                        "type": "PlayerRef",
+                        "player": "TriggeringPlayer"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "73",
+        "rarity": "RARE",
+        "artist": "Whit Brachna",
+        "flavorText": "\"For each word spoken, one forgotten. For each thought, a memory rotten.\"\n—Moriok incantation",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/e/fecf3dae-1a0c-4cf3-b9bd-ec2ad6acaa1b.jpg?1782715326"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}

@@ -1380,7 +1380,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   Supported costs: `Costs.pay.Sacrifice` (card selection) and `Costs.pay.PayLife` (yes/no). The
   surrounding pipeline's stored collections are carried into whichever consequence fires, so the
   consequence can reference cards gathered earlier in the same resolution (e.g. the discarded card,
-  via `MoveCollection(from = "discarded", …)`).
+  via `MoveCollection(from = "discarded", …)`). The optional `eligiblePlayers: Player` field scopes
+  *which* players are offered the choice, relative to the source's controller: `Player.Each`
+  (default) asks everyone; `Player.EachOpponent` asks only the controller's opponents — "any
+  opponent may sacrifice a creature… if a player does, tap this and put a +1/+1 counter on it"
+  (Desecration Demon). APNAP order is preserved within the scoped subset.
 - `RepeatWhileEffect(body, repeatCondition)` (facade `Effects.RepeatWhile(body, repeatCondition)`) — do-while loop: run `body` once, then repeat while `repeatCondition` holds. `repeatCondition` is `RepeatCondition.PlayerChooses(decider, prompt)` (a yes/no each iteration) or `RepeatCondition.WhileCondition(condition)` (a game-state `Condition`). A `WhileCondition` is evaluated against the **body's own pipeline outputs from that iteration** (the collections/values it just stored), then the next iteration's body runs from the pristine pre-loop context — so a loop can branch on what it just produced without stale state leaking forward. Models "do X. Repeat this process [if …]" — e.g. **The Tale of Tamiyo** I–III: `RepeatWhile(body = Composite(Patterns.Library.mill(2), ConditionalEffect(CollectionSharesCardType("milled"), DrawCards(1))), repeatCondition = WhileCondition(CollectionSharesCardType("milled")))` mills two, and while the two milled cards share a card type both draws and repeats.
 
 ### Sequencing & conditional

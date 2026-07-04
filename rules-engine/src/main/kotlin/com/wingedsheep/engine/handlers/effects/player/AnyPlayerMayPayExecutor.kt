@@ -15,6 +15,7 @@ import com.wingedsheep.sdk.scripting.effects.AnyPlayerMayPayEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.costs.PayCost
+import com.wingedsheep.sdk.scripting.references.Player
 import java.util.UUID
 import kotlin.reflect.KClass
 
@@ -55,9 +56,19 @@ class AnyPlayerMayPayExecutor(
         // Get players in APNAP order
         val activePlayer = state.activePlayerId
             ?: return EffectResult.error(state, "No active player")
-        val playerOrder = listOf(activePlayer) + state.turnOrder.filter { it != activePlayer }
+        val apnapOrder = listOf(activePlayer) + state.turnOrder.filter { it != activePlayer }
 
-        return askNextPlayer(state, effect, context, sourceId, sourceCard.name, playerOrder, 0)
+        // Scope to the players the effect offers the choice to ("any opponent may…" vs
+        // "any player may…"), preserving APNAP order. Opponents are relative to the controller.
+        val eligible = when (effect.eligiblePlayers) {
+            Player.Each, Player.ActivePlayerFirst -> apnapOrder
+            Player.EachOpponent -> state.getOpponents(context.controllerId).toSet()
+                .let { opponents -> apnapOrder.filter { it in opponents } }
+            Player.You -> apnapOrder.filter { it == context.controllerId }
+            else -> apnapOrder
+        }
+
+        return askNextPlayer(state, effect, context, sourceId, sourceCard.name, eligible, 0)
     }
 
     /**

@@ -43,6 +43,69 @@
     ]
 }
 
+// Desecration Demon
+{
+    "name": "Desecration Demon",
+    "manaCost": "{2}{B}{B}",
+    "typeLine": "Creature — Demon",
+    "oracleText": "Flying\nAt the beginning of each combat, any opponent may sacrifice a creature of their choice. If a player does, tap this creature and put a +1/+1 counter on it.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AnyPlayerMayPay",
+                    "cost": {
+                        "type": "PayAtom",
+                        "atom": {
+                            "type": "AtomSacrifice",
+                            "filter": "creature"
+                        }
+                    },
+                    "consequence": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "TapUntap",
+                                "target": "Self"
+                            },
+                            {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 1,
+                                "target": "Self"
+                            }
+                        ]
+                    },
+                    "eligiblePlayers": "EachOpponent"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "63",
+        "rarity": "RARE",
+        "artist": "Jason Chan",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/2/8242fade-754c-4404-b3fb-f3cccf84b3b6.jpg?1782714261"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Dryad Militant
 {
     "name": "Dryad Militant",
