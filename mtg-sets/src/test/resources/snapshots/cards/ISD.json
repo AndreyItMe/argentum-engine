@@ -4389,6 +4389,53 @@
     "colorIdentityOverride": []
 }
 
+// Tribute to Hunger
+{
+    "name": "Tribute to Hunger",
+    "manaCost": "{2}{B}",
+    "typeLine": "Instant",
+    "oracleText": "Target opponent sacrifices a creature of their choice. You gain life equal to that creature's toughness.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ForceSacrifice",
+                    "filter": "creature",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "EntityProperty",
+                        "entity": "Sacrificed",
+                        "numericProperty": "Toughness"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetOpponent",
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "119",
+        "rarity": "UNCOMMON",
+        "artist": "Dave Kendall",
+        "flavorText": "Marella was delighted. The ball had attracted so many suitors for her daughter, including that handsome stranger. She wondered where the two were now . . . .",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/7/f77e0f88-2285-4b59-9165-9948c75d77a3.jpg?1782714761"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Typhoid Rats
 {
     "name": "Typhoid Rats",
