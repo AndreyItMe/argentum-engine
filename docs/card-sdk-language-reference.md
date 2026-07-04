@@ -3576,11 +3576,18 @@ staticAbility {
   names a smaller `max` (most restrictive per filter wins). Inert when the player has `≤ max` matching
   permanents tapped.
 - `MustBlock(filter = source())` — matching creatures must block each combat if able (Grand Melee).
-- `MustBeBlocked(allCreatures = false)` — static: the source creature must be blocked while active —
-  "if able" (≥1 blocker, default) or by **all** able blockers (`allCreatures = true`, Lure-style).
-  Static counterpart of `MustBeBlockedEffect`; `BlockPhaseManager` honors it alongside the floating
-  must-be-blocked modifications. Wrap in `ConditionalStaticAbility(_, condition)` for the gated form
-  (Frodo Baggins: `ConditionalStaticAbility(MustBeBlocked(), Conditions.SourceIsRingBearer)`).
+- `MustBeBlocked(allCreatures = false, filter = null)` — static: a creature must be blocked while
+  active — "if able" (≥1 blocker, default) or by **all** able blockers (`allCreatures = true`,
+  Lure-style). Static counterpart of `MustBeBlockedEffect`; `BlockPhaseManager` honors it alongside
+  the floating must-be-blocked modifications. With `filter = null` (default) the requirement applies
+  to the ability's own **source**; wrap in `ConditionalStaticAbility(_, condition)` for the gated
+  form (Frodo Baggins: `ConditionalStaticAbility(MustBeBlocked(), Conditions.SourceIsRingBearer)`).
+  Set `filter` to project the requirement onto a **different** creature, resolved relative to the
+  static's source — e.g. an Equipment: "equipped creature … must be blocked if able" (The Masamune)
+  uses `MustBeBlocked(filter = GroupFilter.attachedCreature())`. Source-relative scopes
+  (`attachedCreature()`, `source()`) resolve correctly; a `Battlefield`-scope filter matches every
+  attacker. No separate "while attacking" gate is needed — must-be-blocked only bites while the
+  creature attacks.
 - `CantBeBlockedByMoreThan(maxBlockers)` — static cap on how many creatures may block the source (CR
   509.1b). For the **turn-scoped, granted** form (Glorfindel, Dauntless Rescuer: "can't be blocked by
   more than one creature each combat this turn"), grant `AbilityFlag.CANT_BE_BLOCKED_BY_MORE_THAN_ONE`
@@ -3661,6 +3668,19 @@ staticAbility {
   being declared as an attacker causes an attack-related triggered ability ("whenever a creature
   attacks" / "whenever you attack") of a permanent you control to trigger, that ability triggers an
   additional time. `TriggerDetector.duplicateAttackTriggers`; additive across copies.
+- `AdditionalDeathTriggers(attachedCreature = false, permanentsYouControl = null, includeEmblems = false)`
+  — the **death-cause** analogue: if a creature dying (put into a graveyard from the battlefield,
+  continuous effects included) causes a **death/leave-the-battlefield** triggered ability within
+  scope to trigger, that ability triggers an additional time. Scope: `permanentsYouControl` (a
+  filter) for "a permanent you control" (Teysa Karlov = `AdditionalDeathTriggers(permanentsYouControl
+  = GameObjectFilter.Any)`); `attachedCreature = true` for "this creature" on an Equipment/Aura (The
+  Masamune, modelled as an equipment-level doubler scoped to the equipped creature); `includeEmblems
+  = true` for "an emblem you own". Only death/leave triggers are doubled — abilities responding to the
+  event that *caused* the death (e.g. "whenever you sacrifice a creature") are not (their EventPattern
+  isn't a battlefield-exit `ZoneChangeEvent`). `TriggerDetector.duplicateDeathTriggers`; additive
+  across copies (N doublers → N+1 firings). Limitation: a scoped source's own "when this creature
+  dies" trigger fired by *itself* dying isn't doubled (post-death trigger detection no longer exposes
+  the doubler's attachment) — the same constraint `AdditionalSourceTriggers` has.
 
 **Spell cost statics — `ModifySpellCost`**
 

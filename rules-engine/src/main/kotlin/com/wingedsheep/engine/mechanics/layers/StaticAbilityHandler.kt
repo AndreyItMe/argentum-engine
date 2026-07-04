@@ -75,6 +75,7 @@ import com.wingedsheep.sdk.scripting.GrantProtectionToController
 import com.wingedsheep.sdk.scripting.GrantShroudToController
 import com.wingedsheep.sdk.scripting.StationUsingToughness
 import com.wingedsheep.sdk.scripting.AdditionalAttackTriggers
+import com.wingedsheep.sdk.scripting.AdditionalDeathTriggers
 import com.wingedsheep.sdk.scripting.AdditionalETBOrLTBTriggers
 import com.wingedsheep.sdk.scripting.AdditionalManaOnSourceTap
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
@@ -778,6 +779,7 @@ class StaticAbilityHandler(
 
             // Trigger system (TriggerDetector / TriggerAbilityResolver / TriggerIndex):
             is AdditionalAttackTriggers,
+            is AdditionalDeathTriggers,
             is AdditionalETBOrLTBTriggers,
             is AdditionalSourceTriggers,
             is GrantTriggeredAbility,
