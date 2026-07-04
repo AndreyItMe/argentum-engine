@@ -2,23 +2,24 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 284 / 286
+**Implemented:** 286 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
-> **Status (July 2026):** 284/286 implemented — **2 cards remain** in the checklist:
-> **Firebender Ascension** and **Koh, the Face Stealer**. All four **"bending" keyword families** are
-> built (Earthbend incl. dynamic X, Waterbend as activated/spell/Exhaust cost incl. waterbend {X},
-> Firebending, and Airbend — permanent form plus the *airbend-a-spell* stack branch), along with
-> **Exhaust**, the **four-bend event system** (`Triggers.YouBend` + `TurnTracker.DISTINCT_BENDS`, which
-> with `CostModification.ReduceColoredPerUnit` completed **Avatar Aang**), the **Vigilance/double-strike
+> **Status (July 2026):** 286/286 implemented — **the set is complete**. All four **"bending" keyword
+> families** are built (Earthbend incl. dynamic X, Waterbend as activated/spell/Exhaust cost incl.
+> waterbend {X}, Firebending, and Airbend — permanent form plus the *airbend-a-spell* stack branch),
+> along with **Exhaust**, the **four-bend event system** (`Triggers.YouBend` + `TurnTracker.DISTINCT_BENDS`,
+> which with `CostModification.ReduceColoredPerUnit` completed **Avatar Aang**), the **Vigilance/double-strike
 > keyword counters**, the **Nth-card-drawn** and **Surveil** triggers, **Sagas**, and the recent
 > reconciliation batch (Avatar's Wrath, The Legend of Yangchen, The Rise of Sozin, Bumi Unleashed, …).
 >
-> The remaining 3 are each blocked by a *distinct* engine gap (see [`tla-engine-gaps.md`](tla-engine-gaps.md)),
-> not by a bending keyword. Broader still-open primitives that no longer block a *specific* TLA card but
-> are noted there: **granting/conditional Firebending**, remaining **Waterbend cost shapes**
-> (Ward—Waterbend, in-resolution may-pay, waterbend-as-alternative-cast), **Foretell**, and the **Fire
-> counter** type.
+> The last two cards are now done: **Firebender Ascension** (its *copy-an-attacker's-triggered-ability
+> quest* — a new attack-caused `AbilityTriggeredEvent` meta-trigger + the shared
+> `Effects.CopyTargetTriggeredAbility`) and **Koh, the Face Stealer** (chosen-linked-exile ability grant).
+> Broader still-open primitives that no longer block a *specific* TLA card but are noted in
+> [`tla-engine-gaps.md`](tla-engine-gaps.md): **granting/conditional Firebending**, remaining **Waterbend
+> cost shapes** (Ward—Waterbend, in-resolution may-pay, waterbend-as-alternative-cast), **Foretell**, and
+> the **Fire counter** type.
 
 ## Mechanics needed to complete the set
 
@@ -34,7 +35,7 @@ up by Airbend, not Firebending).
 |----------|------:|----------:|-------|
 | Earthbend | 28 | 0 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). All implemented. |
 | Waterbend | 25 | 0 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), **Exhaust—Waterbend**, and the **four-bend "whenever you waterbend" trigger** (CR 701.67c, emitted at cost payment) all built. **Secret of Bloodbending** (the last waterbend card) is now implemented — its *take-control-during-your-opponent's-turn* payoff is the new combat-phase-scoped hijack (`Effects.HijackNextCombatPhase`, waterbend upgrades it to a whole turn). |
-| Firebending | 28 | 1 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions + the "whenever you firebend" trigger. ❌ the 1 remaining firebending card, **Firebender Ascension**, is blocked by its *copy-an-attacker's-triggered-ability quest* mechanic (the token's firebending itself is supported). Broader still-open: **granting/conditional** firebending. |
+| Firebending | 28 | 0 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions + the "whenever you firebend" trigger. **Firebender Ascension** (the last firebending card) is now implemented — its *copy-an-attacker's-triggered-ability quest* is the new attack-caused `AbilityTriggeredEvent` meta-trigger (`Triggers.AttackCausesYourCreaturesTriggeredAbility`) feeding the shared `Effects.CopyTargetTriggeredAbility`. Broader still-open: **granting/conditional** firebending. |
 | Airbend | 11 | 0 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` + the spell stack branch (`Effects.AirbendSpell` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter). Both the permanent and spell branches fire the "whenever you airbend" trigger once ≥1 object is exiled (CR 701.65b). All 11 implemented (Avatar's Wrath and Yangchen since resolved). |
 | Exhaust | 8 | 0 | Activated ability usable only once (per object, CR 702.177). ✅ built — `isExhaust = true` on `activatedAbility` desugars to `ActivationRestriction.Once` (the existing per-object tracker is rules-correct; **not** once-per-game) and renders the "Exhaust — " prefix. **All 8 implemented**: Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work, plus Jeong Jeong (copy-next-Lesson rider), Invasion Submersible (Exhaust—Waterbend → becomes-artifact-creature via `AddCardType`), The Legend of Kuruk (Saga DFC + Exhaust—Waterbend {20} extra turn), and Mai (new **double strike** keyword counter). |
 
@@ -42,44 +43,44 @@ up by Airbend, not Firebending).
 
 | Keyword | Total | Remaining |
 |---------|------:|----------:|
-| Flying | 26 | 9 |
-| Vigilance | 15 | 2 |
-| Scry | 10 | 2 |
-| Flash | 9 | 5 |
-| Transform | 8 | 5 |
-| Mill | 8 | 1 |
-| Reach | 8 | 1 |
-| Prowess | 7 | 1 |
-| Menace | 6 | 2 |
-| Equip | 5 | 1 |
-| Food | 5 | 1 |
-| Enchant | 5 | 1 |
+| Flying | 26 | 0 |
+| Vigilance | 15 | 0 |
+| Scry | 10 | 0 |
+| Flash | 9 | 0 |
+| Transform | 8 | 0 |
+| Mill | 8 | 0 |
+| Reach | 8 | 0 |
+| Prowess | 7 | 0 |
+| Menace | 6 | 0 |
+| Equip | 5 | 0 |
+| Food | 5 | 0 |
+| Enchant | 5 | 0 |
 | Landcycling | 5 | 0 |
 | Typecycling | 5 | 0 |
 | Cycling | 5 | 0 |
-| Crew | 5 | 1 |
-| Trample | 5 | 3 |
+| Crew | 5 | 0 |
+| Trample | 5 | 0 |
 | Kicker | 4 | 0 |
 | Defender | 4 | 0 |
-| Ward | 3 | 1 |
+| Ward | 3 | 0 |
 | Deathtouch | 3 | 0 |
 | Raid | 3 | 0 |
 | Flashback | 3 | 0 |
-| Haste | 3 | 1 |
+| Haste | 3 | 0 |
 | First strike | 2 | 0 |
 | Landfall | 2 | 0 |
 | Lifelink | 2 | 0 |
-| Fight | 2 | 1 |
+| Fight | 2 | 0 |
 | Plainscycling | 1 | 0 |
 | Islandcycling | 1 | 0 |
 | Swampcycling | 1 | 0 |
 | Surveil | 1 | 0 |
 | Mountaincycling | 1 | 0 |
-| Foretell | 1 | 1 |
+| Foretell | 1 | 0 |
 | Affinity | 1 | 0 |
 | Forestcycling | 1 | 0 |
 
-**Sagas:** 7 total / 3 remaining (chapter abilities + final-chapter transform — ✅ engine-supported).
+**Sagas:** 7 total / 0 remaining (chapter abilities + final-chapter transform — ✅ engine-supported).
 
 ---
 
@@ -177,7 +178,7 @@ up by Airbend, not Firebending).
 - [x] Fire Nation Warship
 - [x] Fire Navy Trebuchet
 - [x] Fire Sages
-- [ ] Firebender Ascension
+- [x] Firebender Ascension
 - [x] Firebending Lesson
 - [x] Firebending Student
 - [x] First-Time Flyer
@@ -227,7 +228,7 @@ up by Airbend, not Firebending).
 - [x] Katara, Water Tribe's Hope
 - [x] Katara, the Fearless
 - [x] Knowledge Seeker
-- [ ] Koh, the Face Stealer
+- [x] Koh, the Face Stealer
 - [x] Kyoshi Battle Fan
 - [x] Kyoshi Island Plaza
 - [x] Kyoshi Village

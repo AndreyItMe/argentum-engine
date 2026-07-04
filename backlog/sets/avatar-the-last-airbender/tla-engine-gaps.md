@@ -3,6 +3,24 @@
 Cross-reference of the remaining (unimplemented) TLA cards against the engine's actual capabilities.
 Generated to scope what must be built before the set can be completed.
 
+> ## ✅ Status update — July 2026: 286 / 286 (100%) — SET COMPLETE
+>
+> **Every card in the set is implemented; no gaps remain open as a blocker.** This document is retained
+> as a historical record of what had to be built. The last three cards, each gated by a *non-bending*
+> primitive, are all done:
+> - **Secret of Bloodbending** — combat-phase-scoped player hijack (`Effects.HijackNextCombatPhase`;
+>   waterbend upgrades it to a whole turn).
+> - **Koh, the Face Stealer** — chosen-linked-exile ability grant (gain all activated/triggered abilities
+>   of a chosen exiled creature card).
+> - **Firebender Ascension** — the attack-caused `AbilityTriggeredEvent` meta-trigger
+>   (`Triggers.AttackCausesYourCreaturesTriggeredAbility`) feeding the shared
+>   `Effects.CopyTargetTriggeredAbility`, gated behind the quest-counter payoff.
+>
+> Broader primitives noted below (granting/conditional Firebending, remaining Waterbend cost shapes,
+> Foretell, Fire counter, assorted Tier-3 one-offs) no longer block any TLA card but remain useful
+> engine work. Treat every "remaining"/"still open"/"N cards remain" statement further down as
+> superseded by this banner.
+
 > ## ⚠️ Status update — June 2026: now 252 / 286 (88%)
 >
 > **Most of this document's Tier-1/Tier-2 gaps have since been closed.** Of the **34 cards still
@@ -382,8 +400,9 @@ Vigilance counter (§5), Nth-card-drawn (§6), Surveil (§7), sacrificed-this-tu
 activated-ability Waterbend (§1), and spell-level Waterbend additional cost incl. waterbend {X} (the §1
 spell half), plus **Airbend** (§3, keyword + stack branch), **Exhaust** (§4), and the **four-bend event
 system** (`Triggers.YouBend` + `TurnTracker.DISTINCT_BENDS`, which with `ReduceColoredPerUnit` completed
-**Avatar Aang**). The set is now at **283/286** — only **3 cards remain** (Firebender Ascension, Koh the
-Face Stealer, Secret of Bloodbending), each blocked by a *non-bending* gap noted below.
+**Avatar Aang**). The set is now **286/286 — complete** (see the top banner); the three cards that were
+last to fall — Firebender Ascension, Koh the Face Stealer, and Secret of Bloodbending — were each gated
+by a *non-bending* gap, all since resolved.
 
 0. ~~**Now-unblocked recent batch**~~ — ✅ **done**: **North Pole Patrol** (activated Waterbend) and
    **Firebending Student** (Firebending X = power + prowess) were plain `add-card`; **Trusty Boomerang**
@@ -412,9 +431,10 @@ Face Stealer, Secret of Bloodbending), each blocked by a *non-bending* gap noted
    self-scoped untap, shared-creature-type cross-target, flash-rider on play-from-exile) — as the
    relevant legendaries / rares come up.
 
-Only **3 cards** now remain, each gated by a *non-bending* engine primitive: **Secret of Bloodbending**
-(control target opponent during their next turn), **Koh, the Face Stealer** (gain all activated/triggered
-abilities of a chosen exiled creature card), and **Firebender Ascension** (copy an attacker's triggered
-ability once four quest counters accrue). The broader open primitives above (granting/conditional
-Firebending, remaining Waterbend cost shapes, Foretell, Fire counter, Tier-3 one-offs) no longer block a
-specific TLA card but remain useful engine work.
+**All cards are now implemented (286/286).** The three that fell last, each gated by a *non-bending*
+engine primitive: **Secret of Bloodbending** (control target opponent during their next turn — combat-
+phase-scoped hijack), **Koh, the Face Stealer** (gain all activated/triggered abilities of a chosen
+exiled creature card), and **Firebender Ascension** (copy an attacker's triggered ability once four quest
+counters accrue — the attack-caused `AbilityTriggeredEvent` meta-trigger). The broader open primitives
+above (granting/conditional Firebending, remaining Waterbend cost shapes, Foretell, Fire counter, Tier-3
+one-offs) no longer block a specific TLA card but remain useful engine work.
