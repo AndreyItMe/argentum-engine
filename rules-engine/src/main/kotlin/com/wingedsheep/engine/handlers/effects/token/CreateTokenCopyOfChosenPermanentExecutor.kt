@@ -156,7 +156,13 @@ class CreateTokenCopyOfChosenPermanentExecutor(
                 newState, tokenId, controllerId
             )
 
-            return EffectResult.success(stateWithCounters, listOf(event) + counterEvents)
+            // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga with its on-enter lore
+            // counter. BattlefieldEntry.place skips enters-with-counters setup, so apply the shared
+            // Saga-entry helper (as the standard moveToZone pipeline does). No-op for non-Sagas.
+            val (sagaState, sagaEvents) = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+                .applySagaEntryIfNeeded(stateWithCounters, tokenId)
+
+            return EffectResult.success(sagaState, listOf(event) + counterEvents + sagaEvents)
         }
     }
 }

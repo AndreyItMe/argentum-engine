@@ -142,6 +142,14 @@ class CreateTokenCopyOfSourceExecutor(
             )
             newState = nextState
             counterEvents.addAll(events)
+
+            // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga and gets its on-enter lore
+            // counter. BattlefieldEntry.place skips enters-with-counters setup, so apply the shared
+            // Saga-entry helper (as the standard moveToZone pipeline does). No-op for non-Sagas.
+            val (sagaState, sagaEvents) = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+                .applySagaEntryIfNeeded(newState, tokenId)
+            newState = sagaState
+            counterEvents.addAll(sagaEvents)
         }
 
         // If exileAtStep is set, create delayed triggers to exile each created token
