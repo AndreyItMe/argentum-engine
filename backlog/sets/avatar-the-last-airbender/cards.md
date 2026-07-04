@@ -2,28 +2,23 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 253 / 286
+**Implemented:** 283 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
-> **Status (June 2026):** 248/286 implemented. The **Exhaust** keyword is now built (`isExhaust = true`
-> → the per-object `ActivationRestriction.Once`), and the **Airbend** keyword (permanent form) before it —
-> a fixed-alternative-cost may-play-from-exile primitive (`Effects.Airbend` / `Effects.AirbendAll`),
-> which unlocked Airbending Lesson, Glider Staff, Aang the Last Airbender, Airbender Ascension,
-> Airbender's Reversal, and both Appa. Earlier work landed **Firebending**, the **Vigilance keyword
-> counter**, the **Nth-card-drawn** and **Surveil** triggers, **`PERMANENTS_SACRIFICED`**, **dynamic
-> Earthbend**, and the **spell-level Waterbend additional cost** (incl. **waterbend {X}**).
+> **Status (July 2026):** 283/286 implemented — **3 cards remain**: **Firebender Ascension**,
+> **Koh, the Face Stealer**, and **Secret of Bloodbending**. All four **"bending" keyword families** are
+> built (Earthbend incl. dynamic X, Waterbend as activated/spell/Exhaust cost incl. waterbend {X},
+> Firebending, and Airbend — permanent form plus the *airbend-a-spell* stack branch), along with
+> **Exhaust**, the **four-bend event system** (`Triggers.YouBend` + `TurnTracker.DISTINCT_BENDS`, which
+> with `CostModification.ReduceColoredPerUnit` completed **Avatar Aang**), the **Vigilance/double-strike
+> keyword counters**, the **Nth-card-drawn** and **Surveil** triggers, **Sagas**, and the recent
+> reconciliation batch (Avatar's Wrath, The Legend of Yangchen, The Rise of Sozin, Bumi Unleashed, …).
 >
-> The **airbend stack branch** (airbend *a spell* — *exile* from the stack + {2}-recast-to-owner; not
-> a counter, so it works on can't-be-countered spells — via
-> `Effects.ExileTargetSpell(fixedAlternativeManaCost)` + `Conditions.TargetIsSpellOnStack`)
-> is also built, which completed **Aang, Swift Savior**. The 3 remaining Airbend cards are each blocked
-> by a *distinct* further gap (not the keyword): **Avatar's Wrath** needs a **cast-zone restriction**
-> (Tier-3 §D) atop `AirbendAll`; **The Legend of Yangchen** is blocked by its Saga **chapter I** ("each
-> player chooses up to one permanent … exile those" — no each-player-chooses-permanent primitive yet),
-> not by airbend. **Avatar Aang** is now built — the **four-bend event system** (`Triggers.YouBend` +
-> `TurnTracker.DISTINCT_BENDS`) plus the existing **{W}{U}{B}{R}{G} reduction**
-> (`CostModification.ReduceColoredPerUnit`). Other headline holdouts: **Exhaust**, **Foretell**, the **Fire counter** type, the
-> remaining **Waterbend cost shapes**, **granting/conditional Firebending**, and Tier-3 one-offs.
+> The remaining 3 are each blocked by a *distinct* engine gap (see [`tla-engine-gaps.md`](tla-engine-gaps.md)),
+> not by a bending keyword. Broader still-open primitives that no longer block a *specific* TLA card but
+> are noted there: **granting/conditional Firebending**, remaining **Waterbend cost shapes**
+> (Ward—Waterbend, in-resolution may-pay, waterbend-as-alternative-cast), **Foretell**, and the **Fire
+> counter** type.
 
 ## Mechanics needed to complete the set
 
@@ -37,10 +32,10 @@ up by Airbend, not Firebending).
 
 | Mechanic | Total | Remaining | Notes |
 |----------|------:|----------:|-------|
-| Earthbend | 28 | 6 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). |
-| Waterbend | 25 | 9 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), and **Exhaust—Waterbend** (`isExhaust` + `hasWaterbend`, e.g. Invasion Submersible, Avatar Kuruk) all built. ❌ still needed: **Ward—Waterbend** and **waterbend-as-alternative-cast** (Hama). |
-| Firebending | 28 | 12 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions hand-wired via `AddManaEffect(…, ManaExpiry.END_OF_COMBAT)`. ❌ still missing: **granting** firebending to others / **conditional** "has firebending as long as …" / "gains firebending until EOT". |
-| Airbend | 11 | 3 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` (fixed-alternative-cost may-play from exile) + the spell stack branch (`Effects.ExileTargetSpell(fixedAlternativeManaCost)` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter, so it bypasses can't-be-countered). ❌ remaining 2 blocked by *other* gaps: cast-zone restriction (Avatar's Wrath), each-player-choose Saga chapter (Yangchen). (Avatar Aang's four-bend events + {WUBRG} reduction are now built.) |
+| Earthbend | 28 | 0 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). All implemented. |
+| Waterbend | 25 | 1 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), **Exhaust—Waterbend**, and the **four-bend "whenever you waterbend" trigger** (CR 701.67c, emitted at cost payment) all built. ❌ the 1 remaining waterbend card, **Secret of Bloodbending**, is blocked by its *take-control-during-your-opponent's-turn* payoff, not by waterbend. |
+| Firebending | 28 | 1 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions + the "whenever you firebend" trigger. ❌ the 1 remaining firebending card, **Firebender Ascension**, is blocked by its *copy-an-attacker's-triggered-ability quest* mechanic (the token's firebending itself is supported). Broader still-open: **granting/conditional** firebending. |
+| Airbend | 11 | 0 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` + the spell stack branch (`Effects.ExileTargetSpell(fixedAlternativeManaCost)` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter). All 11 implemented (Avatar's Wrath and Yangchen since resolved). |
 | Exhaust | 8 | 0 | Activated ability usable only once (per object, CR 702.177). ✅ built — `isExhaust = true` on `activatedAbility` desugars to `ActivationRestriction.Once` (the existing per-object tracker is rules-correct; **not** once-per-game) and renders the "Exhaust — " prefix. **All 8 implemented**: Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work, plus Jeong Jeong (copy-next-Lesson rider), Invasion Submersible (Exhaust—Waterbend → becomes-artifact-creature via `AddCardType`), The Legend of Kuruk (Saga DFC + Exhaust—Waterbend {20} extra turn), and Mai (new **double strike** keyword counter). |
 
 ### Other keywords present (evergreen + returning)
@@ -110,9 +105,9 @@ up by Airbend, not Firebending).
 - [x] Avatar Aang
 - [x] Avatar Destiny
 - [x] Avatar Enthusiasts
-- [ ] Avatar's Wrath
+- [x] Avatar's Wrath
 - [x] Azula Always Lies
-- [ ] Azula, Cunning Usurper
+- [x] Azula, Cunning Usurper
 - [x] Azula, On the Hunt
 - [x] Ba Sing Se
 - [x] Badgermole
@@ -120,7 +115,7 @@ up by Airbend, not Firebending).
 - [x] Barrels of Blasting Jelly
 - [x] Beetle-Headed Merchants
 - [x] Beifong's Bounty Hunters
-- [ ] Bender's Waterskin
+- [x] Bender's Waterskin
 - [x] Benevolent River Spirit
 - [x] Bitter Work
 - [x] Boar-q-pine
@@ -128,14 +123,14 @@ up by Airbend, not Firebending).
 - [x] Boiling Rock Rioter
 - [x] Boomerang Basics
 - [x] Bumi Bash
-- [ ] Bumi, King of Three Trials
-- [ ] Bumi, Unleashed
+- [x] Bumi, King of Three Trials
+- [x] Bumi, Unleashed
 - [x] Buzzard-Wasp Colony
 - [x] Callous Inspector
 - [x] Canyon Crawler
 - [x] Cat-Gator
 - [x] Cat-Owl
-- [ ] Combustion Man
+- [x] Combustion Man
 - [x] Combustion Technique
 - [x] Compassionate Healer
 - [x] Corrupt Court Official
@@ -150,7 +145,7 @@ up by Airbend, not Firebending).
 - [x] Day of Black Sun
 - [x] Deadly Precision
 - [x] Deserter's Disciple
-- [ ] Destined Confrontation
+- [x] Destined Confrontation
 - [x] Diligent Zookeeper
 - [x] Dragonfly Swarm
 - [x] Earth King's Lieutenant
@@ -163,7 +158,7 @@ up by Airbend, not Firebending).
 - [x] Earth Village Ruffians
 - [x] Earthbender Ascension
 - [x] Earthbending Lesson
-- [ ] Earthen Ally
+- [x] Earthen Ally
 - [x] Elemental Teachings
 - [x] Ember Island Production
 - [x] Energybending
@@ -171,13 +166,13 @@ up by Airbend, not Firebending).
 - [x] Epic Downfall
 - [x] Fancy Footwork
 - [x] Fatal Fissure
-- [ ] Fated Firepower
+- [x] Fated Firepower
 - [x] Fire Lord Azula
 - [x] Fire Lord Zuko
 - [x] Fire Nation Attacks
-- [ ] Fire Nation Cadets
+- [x] Fire Nation Cadets
 - [x] Fire Nation Engineer
-- [ ] Fire Nation Palace
+- [x] Fire Nation Palace
 - [x] Fire Nation Raider
 - [x] Fire Nation Warship
 - [x] Fire Navy Trebuchet
@@ -204,21 +199,21 @@ up by Airbend, not Firebending).
 - [x] Great Divide Guide
 - [x] Guru Pathik
 - [x] Hakoda, Selfless Commander
-- [ ] Hama, the Bloodbender
+- [x] Hama, the Bloodbender
 - [x] Haru, Hidden Talent
-- [ ] Heartless Act
+- [x] Heartless Act
 - [x] Hei Bai, Spirit of Balance
 - [x] Hermitic Herbalist
 - [x] Hog-Monkey
-- [ ] Honest Work
+- [x] Honest Work
 - [x] How to Start a Riot
 - [x] Iguana Parrot
 - [x] Invasion Reinforcements
 - [x] Invasion Submersible
 - [x] Invasion Tactics
 - [x] Iroh's Demonstration
-- [ ] Iroh, Grand Lotus
-- [ ] Iroh, Tea Master
+- [x] Iroh, Grand Lotus
+- [x] Iroh, Tea Master
 - [x] Island
 - [x] It'll Quench Ya!
 - [x] Jasmine Dragon Tea Shop
@@ -239,7 +234,7 @@ up by Airbend, not Firebending).
 - [x] Kyoshi Warriors
 - [x] Leaves from the Vine
 - [x] Lightning Strike
-- [ ] Lo and Li, Twin Tutors
+- [x] Lo and Li, Twin Tutors
 - [x] Long Feng, Grand Secretariat
 - [x] Lost Days
 - [x] Mai, Jaded Edge
@@ -265,7 +260,7 @@ up by Airbend, not Firebending).
 - [x] Ostrich-Horse
 - [x] Otter-Penguin
 - [x] Ozai's Cruelty
-- [ ] Ozai, the Phoenix King
+- [x] Ozai, the Phoenix King
 - [x] Path to Redemption
 - [x] Phoenix Fleet Airship
 - [x] Pillar Launch
@@ -293,7 +288,7 @@ up by Airbend, not Firebending).
 - [x] Saber-Tooth Moose-Lion
 - [x] Sandbender Scavengers
 - [x] Sandbenders' Storm
-- [ ] Secret Tunnel
+- [x] Secret Tunnel
 - [ ] Secret of Bloodbending
 - [x] Seismic Sense
 - [x] Serpent of the Pass
@@ -307,7 +302,7 @@ up by Airbend, not Firebending).
 - [x] Solstice Revelations
 - [x] South Pole Voyager
 - [x] Southern Air Temple
-- [ ] Sozin's Comet
+- [x] Sozin's Comet
 - [x] Sparring Dummy
 - [x] Spirit Water Revival
 - [x] Suki, Courageous Rescuer
@@ -322,16 +317,16 @@ up by Airbend, not Firebending).
 - [x] The Cave of Two Lovers
 - [x] The Earth King
 - [x] The Fire Nation Drill
-- [ ] The Last Agni Kai
+- [x] The Last Agni Kai
 - [x] The Legend of Kuruk
 - [x] The Legend of Kyoshi
 - [x] The Legend of Roku
-- [ ] The Legend of Yangchen
+- [x] The Legend of Yangchen
 - [x] The Lion-Turtle
 - [x] The Mechanist, Aerial Artisan
-- [ ] The Rise of Sozin
+- [x] The Rise of Sozin
 - [x] The Spirit Oasis
-- [ ] The Unagi of Kyoshi Island
+- [x] The Unagi of Kyoshi Island
 - [x] The Walls of Ba Sing Se
 - [x] Tiger-Dillo
 - [x] Tiger-Seal
@@ -353,25 +348,25 @@ up by Airbend, not Firebending).
 - [x] Vengeful Villagers
 - [x] Vindictive Warden
 - [x] Walltop Sentries
-- [ ] Wan Shi Tong, Librarian
+- [x] Wan Shi Tong, Librarian
 - [x] Wandering Musicians
-- [ ] War Balloon
+- [x] War Balloon
 - [x] Wartime Protestors
 - [x] Water Tribe Captain
 - [x] Water Tribe Rallier
 - [x] Waterbender Ascension
-- [ ] Waterbending Lesson
+- [x] Waterbending Lesson
 - [x] Waterbending Scroll
 - [x] Watery Grasp
 - [x] White Lotus Hideout
 - [x] White Lotus Reinforcements
-- [ ] White Lotus Tile
+- [x] White Lotus Tile
 - [x] Wolfbat
 - [x] Yip Yip!
 - [x] Yue, the Moon Spirit
 - [x] Yuyan Archers
-- [ ] Zhao, Ruthless Admiral
-- [ ] Zhao, the Moon Slayer
+- [x] Zhao, Ruthless Admiral
+- [x] Zhao, the Moon Slayer
 - [x] Zuko's Conviction
 - [x] Zuko's Exile
 - [x] Zuko, Conflicted
