@@ -21145,6 +21145,98 @@
     ]
 }
 
+// The Masamune
+{
+    "name": "The Masamune",
+    "manaCost": "{3}",
+    "typeLine": "Legendary Artifact — Equipment",
+    "oracleText": "As long as equipped creature is attacking, it has first strike and must be blocked if able.\nEquipped creature has \"If a creature dying causes a triggered ability of this creature or an emblem you own to trigger, that ability triggers an additional time.\"\nEquip {2}",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "FIRST_STRIKE"
+                },
+                "condition": {
+                    "type": "EntityMatches",
+                    "entity": "EquippedCreature",
+                    "filter": "attacking"
+                }
+            },
+            {
+                "type": "MustBeBlockedStatic",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                }
+            },
+            {
+                "type": "AdditionalDeathTriggers",
+                "attachedCreature": true,
+                "includeEmblems": true
+            }
+        ]
+    },
+    "equipCost": "{2}",
+    "metadata": {
+        "collectorNumber": "264",
+        "rarity": "RARE",
+        "artist": "Masateru Ikeda",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/c/fc408575-8ef7-4043-b6b7-b38cef7c97d1.jpg?1782686391",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "An ability that triggers on an event that causes a creature to die doesn't trigger twice. For example, an ability that triggers \"whenever you sacrifice a creature\" triggers only once."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "The granted ability's effect doesn't copy the triggered ability; it just causes the ability to trigger twice. Choices such as modes and targets are made separately for each instance of the ability."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "An ability of the equipped creature or an emblem you own that triggers when a creature \"leaves the battlefield\" will trigger twice if that creature leaves by dying."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "If you control two of The Masamune and they're equipped to creatures you control, a creature dying causes abilities of emblems you own to trigger three times, not four."
+            }
+        ]
+    },
+    "colorIdentityOverride": []
+}
+
 // The Prima Vista
 {
     "name": "The Prima Vista",
