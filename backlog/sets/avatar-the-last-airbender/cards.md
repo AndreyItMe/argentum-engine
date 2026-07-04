@@ -2,11 +2,11 @@
 
 **Set Size:** 286 draft/booster cards (excluding basic lands beyond the set's own, tokens, and special variants)
 **Release Date:** November 21, 2025
-**Implemented:** 283 / 286
+**Implemented:** 284 / 286
 **Engine gap analysis:** [`tla-engine-gaps.md`](tla-engine-gaps.md)
 
-> **Status (July 2026):** 283/286 implemented — **3 cards remain**: **Firebender Ascension**,
-> **Koh, the Face Stealer**, and **Secret of Bloodbending**. All four **"bending" keyword families** are
+> **Status (July 2026):** 284/286 implemented — **2 cards remain** in the checklist:
+> **Firebender Ascension** and **Koh, the Face Stealer**. All four **"bending" keyword families** are
 > built (Earthbend incl. dynamic X, Waterbend as activated/spell/Exhaust cost incl. waterbend {X},
 > Firebending, and Airbend — permanent form plus the *airbend-a-spell* stack branch), along with
 > **Exhaust**, the **four-bend event system** (`Triggers.YouBend` + `TurnTracker.DISTINCT_BENDS`, which
@@ -33,7 +33,7 @@ up by Airbend, not Firebending).
 | Mechanic | Total | Remaining | Notes |
 |----------|------:|----------:|-------|
 | Earthbend | 28 | 0 | Target land you control becomes a 0/0 haste creature-land; put N +1/+1 counters on it. ✅ built (`Effects.Earthbend`, incl. dynamic X). All implemented. |
-| Waterbend | 25 | 1 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), **Exhaust—Waterbend**, and the **four-bend "whenever you waterbend" trigger** (CR 701.67c, emitted at cost payment) all built. ❌ the 1 remaining waterbend card, **Secret of Bloodbending**, is blocked by its *take-control-during-your-opponent's-turn* payoff, not by waterbend. |
+| Waterbend | 25 | 0 | Convoke+improvise-style alt cost (tap artifacts/creatures to help pay). ✅ **activated-ability** cost (`hasWaterbend = true`), **spell-level additional cost** (incl. **waterbend {X}**), **Exhaust—Waterbend**, and the **four-bend "whenever you waterbend" trigger** (CR 701.67c, emitted at cost payment) all built. **Secret of Bloodbending** (the last waterbend card) is now implemented — its *take-control-during-your-opponent's-turn* payoff is the new combat-phase-scoped hijack (`Effects.HijackNextCombatPhase`, waterbend upgrades it to a whole turn). |
 | Firebending | 28 | 1 | Attack-triggered combat-duration red mana. ✅ built — `firebending(n)` keyword + dynamic versions + the "whenever you firebend" trigger. ❌ the 1 remaining firebending card, **Firebender Ascension**, is blocked by its *copy-an-attacker's-triggered-ability quest* mechanic (the token's firebending itself is supported). Broader still-open: **granting/conditional** firebending. |
 | Airbend | 11 | 0 | Exile target permanent; owner may recast it for {2}. ✅ built — `Effects.Airbend` / `Effects.AirbendAll` + the spell stack branch (`Effects.AirbendSpell` + `Conditions.TargetIsSpellOnStack` — *exile* from the stack, not a counter). Both the permanent and spell branches fire the "whenever you airbend" trigger once ≥1 object is exiled (CR 701.65b). All 11 implemented (Avatar's Wrath and Yangchen since resolved). |
 | Exhaust | 8 | 0 | Activated ability usable only once (per object, CR 702.177). ✅ built — `isExhaust = true` on `activatedAbility` desugars to `ActivationRestriction.Once` (the existing per-object tracker is rules-correct; **not** once-per-game) and renders the "Exhaust — " prefix. **All 8 implemented**: Hog-Monkey, Rough Rhino Cavalry, Rebellious Captives, Bitter Work, plus Jeong Jeong (copy-next-Lesson rider), Invasion Submersible (Exhaust—Waterbend → becomes-artifact-creature via `AddCardType`), The Legend of Kuruk (Saga DFC + Exhaust—Waterbend {20} extra turn), and Mai (new **double strike** keyword counter). |
@@ -289,7 +289,7 @@ up by Airbend, not Firebending).
 - [x] Sandbender Scavengers
 - [x] Sandbenders' Storm
 - [x] Secret Tunnel
-- [ ] Secret of Bloodbending
+- [x] Secret of Bloodbending
 - [x] Seismic Sense
 - [x] Serpent of the Pass
 - [x] Serpent's Pass

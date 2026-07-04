@@ -3368,11 +3368,20 @@ object Effects {
         SkipNextDrawStepEffect(target)
 
     /**
-     * Controller controls the target player during that player's next turn (Mindslaver-style).
-     * Used by The Dominion Bracelet. PR 1 ships as a no-op event; full mechanic lands later.
+     * Controller controls the target player during that player's next **turn**
+     * (Mindslaver-style). Used by The Dominion Bracelet.
      */
     fun HijackNextTurn(target: EffectTarget = EffectTarget.PlayerRef(com.wingedsheep.sdk.scripting.references.Player.TargetOpponent)): Effect =
-        HijackNextTurnEffect(target)
+        HijackNextTurnEffect(target, com.wingedsheep.sdk.scripting.effects.HijackScope.NextTurn)
+
+    /**
+     * Controller controls the target player during that player's next **combat phase** only
+     * (Secret of Bloodbending, base mode). Input authority moves for the single combat phase
+     * and reverts when it ends; scheduled hijacks wait for a combat phase the player actually
+     * takes if the next one is skipped.
+     */
+    fun HijackNextCombatPhase(target: EffectTarget = EffectTarget.PlayerRef(com.wingedsheep.sdk.scripting.references.Player.TargetOpponent)): Effect =
+        HijackNextTurnEffect(target, com.wingedsheep.sdk.scripting.effects.HijackScope.NextCombatPhase)
 
     /**
      * Grant a flat damage bonus to a player's sources this turn.

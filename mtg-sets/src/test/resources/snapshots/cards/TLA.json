@@ -16585,6 +16585,58 @@
     }
 }
 
+// Secret of Bloodbending
+{
+    "name": "Secret of Bloodbending",
+    "manaCost": "{U}{U}{U}{U}",
+    "typeLine": "Sorcery — Lesson",
+    "oracleText": "As an additional cost to cast this spell, you may waterbend {10}.\nYou control target opponent during their next combat phase. If this spell's additional cost was paid, you control that player during their next turn instead. (You see all cards that player could see and make all decisions for them.)\nExile Secret of Bloodbending.",
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "WaterbendWasPaid"
+            },
+            "then": {
+                "type": "HijackNextTurn",
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target opponent"
+                }
+            },
+            "otherwise": {
+                "type": "HijackNextTurn",
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target opponent"
+                },
+                "scope": "NextCombatPhase"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetOpponent",
+                "id": "target opponent"
+            }
+        ],
+        "spellWaterbend": {
+            "amount": 10,
+            "optional": true
+        },
+        "selfExileOnResolve": true
+    },
+    "metadata": {
+        "collectorNumber": "69",
+        "rarity": "MYTHIC",
+        "artist": "Olena Richards",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/b/9bb928ae-f636-4aee-9146-a7885e6a8976.jpg?1764120426"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Seismic Sense
 {
     "name": "Seismic Sense",
