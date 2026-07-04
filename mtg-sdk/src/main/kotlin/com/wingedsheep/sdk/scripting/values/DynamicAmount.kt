@@ -551,6 +551,25 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * Number of distinct *card types* among the cards in the named pipeline collections (the
+     * union of every collection, de-duplicated by card type). An artifact creature contributes
+     * both "artifact" and "creature". Cards are read by entity id, so the value is correct even
+     * after the collection has been moved to another zone — e.g. after being discarded into a
+     * graveyard.
+     *
+     * Used for "draw a card for each card type among cards discarded this way" (Kefka, Court Mage):
+     * multiple players each discard into a separate collection and the payoff counts distinct card
+     * types across all of them. This is the collection-scoped sibling of
+     * [ContextPropertyKey.LINKED_EXILE_DISTINCT_CARD_TYPE_COUNT] (which reads linked-exile cards)
+     * and of [SpellsCastThisTurn] with `countDistinctCardTypes = true` (which reads cast history).
+     */
+    @SerialName("DistinctCardTypesInCollections")
+    @Serializable
+    data class DistinctCardTypesInCollections(val collections: List<String>) : DynamicAmount {
+        override val description: String = "the number of card types among those cards"
+    }
+
+    /**
      * Sum of the mana values of *every* card in a named pipeline collection.
      *
      * Unlike [StoredCardManaValue] (which reads only the first card), this totals the mana value

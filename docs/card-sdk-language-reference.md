@@ -3093,7 +3093,7 @@ Triggers.youCastSpell(
 - `AnyPlayerGainsLife` — anyone gains life.
 - `YouLoseLife` — you lose any life.
 - `AnyPlayerLosesLife` — anyone loses life.
-- `AnOpponentLosesLife` — an opponent loses life (fires per opponent life-loss event; read the amount via `ContextPropertyKey.TRIGGER_LIFE_LOST`). Bloodthirsty Conqueror.
+- `AnOpponentLosesLife` — an opponent loses life (fires per opponent life-loss event; read the amount via `ContextPropertyKey.TRIGGER_LIFE_LOST`). Bloodthirsty Conqueror; Kefka, Ruler of Ruin (pair with `triggerCondition = Conditions.IsYourTurn` for "during your turn").
 - `YouGainOrLoseLife` — combined life-change.
 
 ### The Ring
@@ -5564,6 +5564,13 @@ Army just amassed by a sibling/action effect, or any cost-chosen entity. The plu
   e.g. Call the Spirit Dragons puts a +1/+1 counter on a chosen Dragon of each color (one `SelectTarget`
   per color, each stored under its own key) and wins if five *different* Dragons received counters, so a
   multicolored Dragon chosen for two colors counts once.
+- `DistinctCardTypesInCollections(collections)` — number of *distinct card types* among the cards in
+  the named pipeline collections (union, de-duplicated by card type; an artifact creature counts for
+  two). Facade: `DynamicAmounts.distinctCardTypesIn(vararg)`. Cards are read by entity id, so counting
+  stays correct after the cards move zones (e.g. after being discarded into a graveyard). For "draw a
+  card for each card type among cards discarded this way" (Kefka, Court Mage) — collection-scoped
+  sibling of the `LINKED_EXILE_DISTINCT_CARD_TYPE_COUNT` context property and of
+  `SpellsCastThisTurn(countDistinctCardTypes = true)`.
 - `StoredCardManaValue(collectionName)` — mana value of the **first** card in a named pipeline
   collection (Erratic Explosion-style "that card's mana value").
 - `ManaValueSumOfCollection(collectionName)` — **total** mana value of *every* card in a named

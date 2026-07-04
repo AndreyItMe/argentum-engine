@@ -1575,7 +1575,8 @@ object Triggers {
      * Whenever an opponent loses life. Fires once per life-loss event of any opponent
      * (CR "whenever" per-event templating). The lost amount is exposed via
      * [com.wingedsheep.sdk.scripting.values.ContextPropertyKey.TRIGGER_LIFE_LOST].
-     * Used by cards like Bloodthirsty Conqueror.
+     * Used by cards like Bloodthirsty Conqueror and Kefka, Ruler of Ruin (pair with a
+     * `triggerCondition = Conditions.IsYourTurn` gate for "during your turn" riders).
      */
     val AnOpponentLosesLife: TriggerSpec = TriggerSpec(
         event = LifeLossEvent(Player.EachOpponent),
