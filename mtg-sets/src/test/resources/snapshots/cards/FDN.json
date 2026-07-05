@@ -1912,6 +1912,93 @@
     ]
 }
 
+// Dropkick Bomber
+{
+    "name": "Dropkick Bomber",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Goblin Warrior",
+    "oracleText": "Other Goblins you control get +1/+1.\n{R}: Until end of turn, another target Goblin you control gains flying and \"When this creature deals combat damage, sacrifice it.\"",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{R}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "FLYING",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "another target Goblin you control"
+                            }
+                        },
+                        {
+                            "type": "GrantTriggeredAbility",
+                            "ability": {
+                                "id": "ability_2",
+                                "trigger": {
+                                    "type": "DealsDamageEvent",
+                                    "damageType": "DamageCombat"
+                                },
+                                "effect": "SacrificeSelf",
+                                "descriptionOverride": "When this creature deals combat damage, sacrifice it."
+                            },
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "another target Goblin you control"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature Goblin ctrl:you",
+                            "excludeSelf": true
+                        },
+                        "id": "another target Goblin you control"
+                    }
+                ],
+                "descriptionOverride": "Until end of turn, another target Goblin you control gains flying and \"When this creature deals combat damage, sacrifice it.\""
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1,
+                "filter": {
+                    "baseFilter": "creature Goblin ctrl:you",
+                    "excludeSelf": true
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "537",
+        "rarity": "RARE",
+        "artist": "Quintin Gleim",
+        "flavorText": "\"I've always enjoyed kicking stuff, so this was an ideal career opportunity.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b44f758e-716a-408e-96d4-b58403591c2a.jpg?1782688798"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Eager Trufflesnout
 {
     "name": "Eager Trufflesnout",
@@ -4555,6 +4642,92 @@
     ]
 }
 
+// Perforating Artist
+{
+    "name": "Perforating Artist",
+    "manaCost": "{1}{B}{R}",
+    "typeLine": "Creature — Devil",
+    "oracleText": "Deathtouch\nRaid — At the beginning of your end step, if you attacked this turn, each opponent loses 3 life unless that player sacrifices a nonland permanent of their choice or discards a card.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "DEATHTOUCH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "PayOrSuffer",
+                        "cost": {
+                            "type": "Choice",
+                            "options": [
+                                {
+                                    "type": "PayAtom",
+                                    "atom": {
+                                        "type": "AtomSacrifice",
+                                        "filter": "nonland"
+                                    }
+                                },
+                                {
+                                    "type": "PayAtom",
+                                    "atom": "AtomDiscard"
+                                }
+                            ]
+                        },
+                        "suffer": {
+                            "type": "LoseLife",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 3
+                            },
+                            "target": "Controller"
+                        }
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "PLAYER_ATTACKED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "Raid — At the beginning of your end step, if you attacked this turn, each opponent loses 3 life unless that player sacrifices a nonland permanent of their choice or discards a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "124",
+        "rarity": "UNCOMMON",
+        "artist": "Arif Wijaya",
+        "flavorText": "The first three rows of the audience are marketed as the \"slash zone.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/2/72980409-53f0-43c1-965e-06f22e7bb608.jpg?1782689158"
+    },
+    "colorIdentityOverride": [
+        "BLACK",
+        "RED"
+    ]
+}
+
 // Preposterous Proportions
 {
     "name": "Preposterous Proportions",
@@ -6631,6 +6804,75 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Valkyrie's Call
+{
+    "name": "Valkyrie's Call",
+    "manaCost": "{3}{W}{W}",
+    "typeLine": "Enchantment",
+    "oracleText": "Whenever a nontoken, non-Angel creature you control dies, return that card to the battlefield under its owner's control with a +1/+1 counter on it. It has flying and is an Angel in addition to its other types.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            "IsNontoken",
+                            {
+                                "type": "NotSubtype",
+                                "subtype": "Angel"
+                            }
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    },
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "MoveToZone",
+                            "target": "TriggeringEntity",
+                            "destination": "Battlefield"
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "TriggeringEntity"
+                        },
+                        {
+                            "type": "AddCreatureType",
+                            "subtype": "Angel",
+                            "target": "TriggeringEntity"
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "FLYING",
+                            "target": "TriggeringEntity",
+                            "duration": "Permanent"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "27",
+        "rarity": "MYTHIC",
+        "artist": "Scott Murphy",
+        "flavorText": "\"Welcome, worthy one.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/e/0e1f1ff2-fa8f-4d38-b631-2d6e08e614c8.jpg?1782689241"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
