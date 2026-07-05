@@ -457,6 +457,14 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.TargetIsPlayer(targetIndex)
 
     /**
+     * The player who triggered this ability is [player]. Narrows a broad "whenever a player …"
+     * trigger to a specific player — e.g. Shinryu, Transcendent Rival gates "When the chosen
+     * player loses the game, you win the game" with `TriggeringPlayerIs(Player.ChosenOpponent)`.
+     */
+    fun TriggeringPlayerIs(player: Player): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.TriggeringPlayerIs(player)
+
+    /**
      * If the context target at [targetIndex] is a tapped battlefield permanent. Branch on a
      * target's tapped state at resolution — e.g. Shackle Slinger's "If it's tapped, put a stun
      * counter on it. Otherwise, tap it."

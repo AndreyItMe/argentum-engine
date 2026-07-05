@@ -1572,6 +1572,18 @@ object Triggers {
     )
 
     /**
+     * Whenever a player loses the game (CR 104.3). Fires for every player's loss; pair with a
+     * `triggerCondition` to narrow to a specific player (e.g. Shinryu, Transcendent Rival's
+     * "When the chosen player loses the game, you win the game" gates on
+     * [com.wingedsheep.sdk.dsl.Conditions.TriggeringPlayerIs]`(Player.ChosenOpponent)`).
+     * `Player.TriggeringPlayer` inside the effect resolves to the player who lost.
+     */
+    val AnyPlayerLosesGame: TriggerSpec = TriggerSpec(
+        event = PlayerLostGameEvent(Player.Each),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever an opponent loses life. Fires once per life-loss event of any opponent
      * (CR "whenever" per-event templating). The lost amount is exposed via
      * [com.wingedsheep.sdk.scripting.values.ContextPropertyKey.TRIGGER_LIFE_LOST].

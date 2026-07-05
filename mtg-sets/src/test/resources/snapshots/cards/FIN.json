@@ -25913,6 +25913,164 @@
     ]
 }
 
+// Zenos yae Galvus
+{
+    "name": "Zenos yae Galvus",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Legendary Creature — Human Noble Warrior",
+    "oracleText": "My First Friend — When Zenos yae Galvus enters, choose a creature an opponent controls. Until end of turn, creatures other than Zenos yae Galvus and the chosen creature get -2/-2.\nWhen the chosen creature leaves the battlefield, transform Zenos yae Galvus.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature",
+                                    "excludeSelf": true,
+                                    "excludeTarget": true
+                                }
+                            },
+                            "body": {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": -2
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": -2
+                                },
+                                "target": "Self"
+                            }
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "EntityMatches",
+                                    "entity": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "filter": "creature"
+                                }
+                            },
+                            "then": {
+                                "type": "CreateDelayedTrigger",
+                                "effect": "Transform",
+                                "trigger": {
+                                    "event": {
+                                        "type": "ZoneChangeEvent",
+                                        "from": "Battlefield"
+                                    }
+                                },
+                                "watchedTarget": {
+                                    "type": "BoundVariable",
+                                    "name": "creature an opponent controls"
+                                },
+                                "expiry": "DelayedTriggerExpiry.Never",
+                                "fireOnce": true
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "creature an opponent controls"
+                },
+                "descriptionOverride": "My First Friend — When Zenos yae Galvus enters, choose a creature an opponent controls. Until end of turn, creatures other than Zenos yae Galvus and the chosen creature get -2/-2. When the chosen creature leaves the battlefield, transform Zenos yae Galvus."
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Shinryu, Transcendent Rival",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Dragon",
+        "oracleText": "Flying\nAs this creature transforms into Shinryu, choose an opponent.\nBurning Chains — When the chosen player loses the game, you win the game.",
+        "creatureStats": {
+            "power": 8,
+            "toughness": 8
+        },
+        "keywords": [
+            "FLYING"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_2",
+                    "trigger": {
+                        "type": "TransformEvent",
+                        "intoBackFace": true
+                    },
+                    "effect": "ChooseOpponentForSource",
+                    "descriptionOverride": "As this creature transforms into Shinryu, choose an opponent."
+                },
+                {
+                    "id": "ability_3",
+                    "trigger": "PlayerLostGameEvent",
+                    "binding": "ANY",
+                    "effect": {
+                        "type": "WinGame",
+                        "message": "Shinryu, Transcendent Rival — the chosen player lost the game"
+                    },
+                    "triggerCondition": {
+                        "type": "TriggeringPlayerIs",
+                        "player": "ChosenOpponent"
+                    },
+                    "descriptionOverride": "Burning Chains — When the chosen player loses the game, you win the game."
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "127",
+            "rarity": "RARE",
+            "artist": "Alexander Mokhov",
+            "imageUri": "https://cards.scryfall.io/normal/back/b/6/b65ffce4-bb58-418a-9bad-81533a5f2ba2.jpg?1782686503"
+        },
+        "colorIdentityOverride": [
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "127",
+        "rarity": "RARE",
+        "artist": "Alexander Mokhov",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/6/b65ffce4-bb58-418a-9bad-81533a5f2ba2.jpg?1782686503",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "In the case where you can't choose a creature an opponent controls for Zenos's first ability (probably because your opponents control no creatures), other creatures will still get -2/-2 until end of turn when Zenos's first ability resolves."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "If this card somehow enters the battlefield with its back face up, it didn't transform, so you won't choose an opponent."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Zidane, Tantalus Thief
 {
     "name": "Zidane, Tantalus Thief",

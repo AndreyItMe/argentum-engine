@@ -347,6 +347,24 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     }
 
     /**
+     * When a player loses the game (CR 104.3 — life 0, drawing from an empty library, poison,
+     * commander damage, or a "loses the game" effect). Fires from the engine's `PlayerLostEvent`,
+     * which is emitted by the state-based-action / turn-based checks when a player loses.
+     *
+     * Use [player] to filter which player's loss is relevant (default [Player.Each] — any player).
+     * For "when the chosen player loses the game" (Shinryu, Transcendent Rival) pair
+     * [Player.Each] with a `triggerCondition` comparing the triggering player to the source's
+     * chosen opponent, so `Player.TriggeringPlayer` inside the effect resolves to the loser.
+     */
+    @SerialName("PlayerLostGameEvent")
+    @Serializable
+    data class PlayerLostGameEvent(
+        val player: Player = Player.Each
+    ) : EventPattern {
+        override val description: String = "${player.description} loses the game"
+    }
+
+    /**
      * Whenever the Ring tempts a player (CR 701.54d). Fires after the temptee completes
      * the "the Ring tempts you" action, even if some or all of it was impossible.
      * Used by cards with "Whenever the Ring tempts you, ...".

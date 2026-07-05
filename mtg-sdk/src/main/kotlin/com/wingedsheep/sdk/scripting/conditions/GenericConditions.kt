@@ -13,6 +13,24 @@ import kotlinx.serialization.Serializable
 // =============================================================================
 
 /**
+ * Condition: "the player who triggered this ability is [player]".
+ *
+ * Compares the triggering player (the one carried in the trigger context — e.g. the player who
+ * lost the game, gained life, cast the spell) against another resolved player reference. Used to
+ * narrow a broad "whenever a player does X" trigger to a specific player without a bespoke event
+ * filter: Shinryu, Transcendent Rival gates "When the chosen player loses the game, you win the
+ * game" as `triggerCondition = TriggeringPlayerIs(Player.ChosenOpponent)`. Both sides resolve via
+ * the engine's shared player resolver, so any [Player] reference works on the right-hand side.
+ */
+@SerialName("TriggeringPlayerIs")
+@Serializable
+data class TriggeringPlayerIs(
+    val player: Player
+) : Condition {
+    override val description: String = "if the triggering player is ${player.description}"
+}
+
+/**
  * Condition: "if a card in the named collection matches [filter]"
  * Checks whether any entity in a stored pipeline collection matches the given filter.
  * Used for "if you did X this way" patterns where the card selected/milled/returned

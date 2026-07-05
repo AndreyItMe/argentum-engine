@@ -528,6 +528,10 @@ class TriggerMatcher(
                     event.oldLife != event.newLife &&
                     matchesPlayer(trigger.player, event.playerId, controllerId)
             }
+            is EventPattern.PlayerLostGameEvent -> {
+                event is com.wingedsheep.engine.core.PlayerLostEvent &&
+                    matchesPlayer(trigger.player, event.playerId, controllerId)
+            }
             is EventPattern.DiscardEvent -> {
                 event is CardsDiscardedEvent &&
                     matchingDiscardCount(trigger, event, sourceId, controllerId, state) > 0
@@ -1503,6 +1507,7 @@ class TriggerMatcher(
                 sourceId = trigger.sourceId,
                 controllerId = trigger.controllerId,
                 triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+                triggeringPlayerId = trigger.triggerContext.triggeringPlayerId,
                 triggerDamageAmount = trigger.triggerContext.damageAmount,
                 triggerCounterCount = trigger.triggerContext.counterCount,
                 triggerTotalCounterCount = trigger.triggerContext.totalCounterCount,

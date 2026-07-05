@@ -3107,6 +3107,7 @@ Triggers.youCastSpell(
 - `AnyPlayerLosesLife` — anyone loses life.
 - `AnOpponentLosesLife` — an opponent loses life (fires per opponent life-loss event; read the amount via `ContextPropertyKey.TRIGGER_LIFE_LOST`). Bloodthirsty Conqueror; Kefka, Ruler of Ruin (pair with `triggerCondition = Conditions.IsYourTurn` for "during your turn").
 - `YouGainOrLoseLife` — combined life-change.
+- `AnyPlayerLosesGame` — a player loses the game (CR 104.3; backed by `EventPattern.PlayerLostGameEvent`, matched against the engine's `PlayerLostEvent`). Fires for every player's loss; `Player.TriggeringPlayer` inside the effect is the loser. Narrow to one player with a `triggerCondition` — Shinryu, Transcendent Rival's "When the chosen player loses the game, you win the game" uses `triggerCondition = Conditions.TriggeringPlayerIs(Player.ChosenOpponent)` + `Effects.WinGame()`.
 
 ### The Ring
 
@@ -3322,6 +3323,14 @@ Dominant back faces that "stay" instead self-exile on their final chapter, dodgi
     control on your next attack). With `fireOnce = false` (default) it fires on every matching event
     until expiry (double-strike combat damage). One-shot consumption happens when the trigger goes
     on the stack (`TriggerProcessor`), so a second matching event the same turn won't re-fire it.
+  - `expiry` — when the resident delayed trigger is removed. `DelayedTriggerExpiry.EndOfTurn`
+    (default) drops it in the end-of-turn cleanup ("this turn" riders). `DelayedTriggerExpiry.Never`
+    keeps it across turns until it fires (pair with `fireOnce = true`) or the game ends — for
+    watch-a-permanent-until-it-leaves reflexive triggers that aren't turn-scoped, e.g. Zenos yae
+    Galvus's "When the chosen creature leaves the battlefield, transform Zenos yae Galvus"
+    (`trigger = Triggers.LeavesBattlefield, watchedTarget = <chosen>, fireOnce = true,
+    expiry = DelayedTriggerExpiry.Never`). `EffectTarget.Self` inside the effect resolves to the
+    delayed trigger's source (the permanent that created it).
   - `targetRequirement = <TargetRequirement>` — a target chosen **each time** the delayed trigger
     fires, exposed to `effect` as `EffectTarget.ContextTarget`. Use for delayed triggers whose payoff
     targets: Rediscover the Way chapter III installs
@@ -4743,6 +4752,11 @@ answer it and would silently return `false`.
   the dedicated check for "any target" effects with a player-only follow-up. Used by Sonic Shrieker
   ("If a player is dealt damage this way, they discard a card"); pair with
   `EffectTarget.ContextTarget(index)` to make that same player the subject of the follow-up.
+- `TriggeringPlayerIs(player)` — the player who triggered this ability equals another resolved
+  `Player` reference. Narrows a broad "whenever a player …" trigger to one player without a bespoke
+  event filter; both sides resolve through the shared player resolver. Shinryu, Transcendent Rival
+  gates "When the chosen player loses the game, you win the game" with
+  `triggerCondition = TriggeringPlayerIs(Player.ChosenOpponent)` on `Triggers.AnyPlayerLosesGame`.
 - `TargetIsCreatureCard(targetIndex = 0)` — the context target is a creature *card*, tested by the
   underlying card's printed types rather than projected state. Unlike `TargetMatchesFilter(Creature)`
   (which reads projection, where a face-down permanent always projects as a typeless 2/2 Creature),
