@@ -2039,6 +2039,55 @@
     ]
 }
 
+// Electroduplicate
+{
+    "name": "Electroduplicate",
+    "manaCost": "{2}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Create a token that's a copy of target creature you control, except it has haste and \"At the beginning of the end step, sacrifice this token.\"\nFlashback {2}{R}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{2}{R}{R}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "CreateTokenCopyOfTarget",
+            "target": {
+                "type": "BoundVariable",
+                "name": "target creature you control"
+            },
+            "addedKeywords": [
+                "HASTE"
+            ],
+            "sacrificeAtStep": "END"
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                },
+                "id": "target creature you control"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "85",
+        "rarity": "RARE",
+        "artist": "Warren Mahy",
+        "flavorText": "The dragon roared and the storm thundered back.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/b/abb06b1c-5d4e-49b9-9c4a-e60ab656a257.jpg?1782689192"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Elementalist Adept
 {
     "name": "Elementalist Adept",
@@ -3375,6 +3424,41 @@
     ]
 }
 
+// High Fae Trickster
+{
+    "name": "High Fae Trickster",
+    "manaCost": "{3}{U}",
+    "typeLine": "Creature — Faerie Wizard",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\nYou may cast spells as though they had flash.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING"
+    ],
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "GrantFlashToSpellType",
+                "filter": {},
+                "controllerOnly": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "40",
+        "rarity": "RARE",
+        "artist": "Justyna Dura",
+        "flavorText": "To the High Fae, spells that take a human years to master come as easily as breathing.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/f/7f1b93ea-1ec1-4010-9343-765742f5088b.jpg?1782689229"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // High-Society Hunter
 {
     "name": "High-Society Hunter",
@@ -4529,6 +4613,56 @@
     },
     "colorIdentityOverride": [
         "GREEN"
+    ]
+}
+
+// Niv-Mizzet, Visionary
+{
+    "name": "Niv-Mizzet, Visionary",
+    "manaCost": "{4}{U}{R}",
+    "typeLine": "Legendary Creature — Dragon Wizard",
+    "oracleText": "Flying\nYou have no maximum hand size.\nWhenever a source you control deals noncombat damage to an opponent, you draw that many cards.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageNonCombat",
+                    "recipient": "RecipientOpponent",
+                    "sourceFilter": "ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "DrawCards",
+                    "count": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_DAMAGE_AMOUNT"
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            "NoMaximumHandSize"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "123",
+        "rarity": "MYTHIC",
+        "artist": "Dan Murayama Scott",
+        "flavorText": "Ravnica's sharpest mind and its biggest ego.",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/a/7a69a618-d588-4745-8ede-0ff0a9f356f1.jpg?1782689159"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "RED"
     ]
 }
 
