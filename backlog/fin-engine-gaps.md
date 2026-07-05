@@ -465,5 +465,15 @@ stale on both:
     accrues lore each turn. Previously such tokens were inert. Tested by `TokenCopyOfSagaEntryScenarioTest`
     (generally) and `TerraMagicalAdeptScenarioTest` (via the card). Covered by `TerraMagicalAdeptScenarioTest`
     (ETB mill-take, Trance transform, chapter copy with/without the Saga lore prompt).
-- Remaining missing FIN cards (5): Emet-Selch, Unsundered; Esper Origins; Gogo, Master of Mimicry;
-  Ultima, Origin of Oblivion; Zenos yae Galvus — all still `add-feature` scope (see Tier-3 above).
+- **Zenos yae Galvus // Shinryu, Transcendent Rival — DONE.** Front's "My First Friend" ETB is an
+  optional `target(CreatureOpponentControls, optional = true)` + `ForEachInGroup(AllCreatures
+  .other().otherThanTarget(), ModifyStats(-2,-2))` (the -2/-2 still resolves when no creature is
+  chosen, per the ruling), plus a persistent reflexive delayed trigger (`Triggers.LeavesBattlefield`
+  + `watchedTarget` + new `DelayedTriggerExpiry.Never`) that transforms Zenos when the chosen
+  creature leaves. Shinryu's win-rider uses the new `Triggers.AnyPlayerLosesGame`
+  (`EventPattern.PlayerLostGameEvent` → engine `PlayerLostEvent`) gated by the new
+  `Conditions.TriggeringPlayerIs(Player.ChosenOpponent)` + `Effects.WinGame()`. Also fixed
+  `TriggerMatcher.filterByTriggerCondition` to thread `triggeringPlayerId` into the intervening-if
+  context (previously null). Covered by `ZenosYaeGalvusScenarioTest` (incl. a 3-player win-con pod).
+- Remaining missing FIN cards (4): Emet-Selch, Unsundered; Esper Origins; Gogo, Master of Mimicry;
+  Ultima, Origin of Oblivion — all still `add-feature` scope (see Tier-3 above).

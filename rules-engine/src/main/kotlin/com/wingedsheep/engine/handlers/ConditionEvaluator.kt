@@ -130,6 +130,7 @@ import com.wingedsheep.sdk.scripting.conditions.PermanentTypeEnteredBattlefieldT
 import com.wingedsheep.sdk.scripting.conditions.PlayerCastSpellsThisTurn
 import com.wingedsheep.sdk.scripting.conditions.PlayerCommittedCrimeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.PlayerHasCitysBlessing
+import com.wingedsheep.sdk.scripting.conditions.TriggeringPlayerIs
 import com.wingedsheep.sdk.scripting.conditions.RingHasTemptedPlayerAtLeast
 import com.wingedsheep.sdk.scripting.conditions.CreatureDiedThisTurnCondition
 import com.wingedsheep.sdk.scripting.conditions.ControlledCreatureDiedThisTurnCondition
@@ -366,6 +367,12 @@ class ConditionEvaluator(
                 count > 0
             }
             is PlayerHasCitysBlessing -> evaluateHasCitysBlessingCtx(state, condition, ctx)
+
+            is TriggeringPlayerIs -> {
+                val triggeringPlayer = resolvePlayer(state, Player.TriggeringPlayer, ctx)
+                val expected = resolvePlayer(state, condition.player, ctx)
+                triggeringPlayer != null && expected != null && triggeringPlayer == expected
+            }
 
             is RingHasTemptedPlayerAtLeast -> {
                 val playerId = resolvePlayer(state, condition.player, ctx)
