@@ -2157,6 +2157,64 @@
     ]
 }
 
+// Hidden Courtyard
+{
+    "name": "Hidden Courtyard",
+    "manaCost": "",
+    "typeLine": "Land — Cave",
+    "oracleText": "This land enters tapped.\n{T}: Add {W}.\n{4}{W}, {T}, Sacrifice this land: Discover 4. Activate only as a sorcery.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "WHITE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}{W}"
+                            }
+                        },
+                        "CostTap",
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "Discover",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                },
+                "timing": "SorcerySpeed"
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "274",
+        "artist": "Josu Solano",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/8/b8685d46-99fc-44b3-be95-707a4b7b8327.jpg?1782694392"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Hotfoot Gnome
 {
     "name": "Hotfoot Gnome",
