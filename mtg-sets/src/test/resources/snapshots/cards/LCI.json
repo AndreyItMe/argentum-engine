@@ -4581,6 +4581,44 @@
     ]
 }
 
+// Waterwind Scout
+{
+    "name": "Waterwind Scout",
+    "manaCost": "{2}{U}",
+    "typeLine": "Creature — Merfolk Scout",
+    "oracleText": "Flying\nWhen this creature enters, create a Map token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.\")",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Map"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "84",
+        "artist": "Alix Branwyn",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/a/8a7738fb-0a1b-4010-b8c0-e1129739c765.jpg?1782694543"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Waylaying Pirates
 {
     "name": "Waylaying Pirates",

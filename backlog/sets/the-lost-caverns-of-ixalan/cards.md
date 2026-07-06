@@ -284,7 +284,7 @@
 - [ ] Walk with the Ancestors
 - [ ] Warden of the Inner Sky
 - [ ] Waterlogged Hulk
-- [ ] Waterwind Scout
+- [x] Waterwind Scout
 - [x] Waylaying Pirates
 - [ ] Zoetic Glyph
 - [ ] Zoyowa Lava-Tongue
