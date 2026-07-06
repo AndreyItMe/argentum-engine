@@ -102,12 +102,42 @@ class SubmitDecisionHandler(
 
             // Check SBAs after continuation completes
             if (result.isSuccess && !result.isPaused) {
+                // Detect triggers from the resumed resolution's events BEFORE SBAs run, so an
+                // enters-the-battlefield trigger on a permanent that an SBA immediately removes —
+                // e.g. the legend rule putting a just-entered duplicate legendary into the
+                // graveyard, or a Gishath/Ghalta chain that puts a second copy onto the
+                // battlefield — is still queued (CR 603.6a: the ability triggers the moment the
+                // permanent enters; the SBA that removes it happens afterward). Mirrors
+                // PassPriorityHandler.resolveTopOfStack, which handles the non-decision path.
+                // Skipped when the resumed chain already ran detection on its own emitted events
+                // (see the post-SBA note below).
+                val preSbaTriggers = if (result.triggersAlreadyProcessed) {
+                    emptyList()
+                } else {
+                    triggerDetector.detectTriggers(result.state, result.events)
+                }
+
+                val preSbaStackSize = result.state.continuationStack.size
                 val sbaResult = sbaChecker.checkAndApply(result.state)
 
-                // If SBA needs player input (e.g., legend rule), return paused
+                // If SBA needs player input (e.g., legend rule), return paused — but first queue
+                // preSbaTriggers beneath the SBA's continuation frames so they fire after the SBA
+                // decision resolves, instead of being silently dropped.
                 if (sbaResult.isPaused) {
+                    var pausedState = sbaResult.state
+                    if (preSbaTriggers.isNotEmpty()) {
+                        val pendingTriggers = PendingTriggersContinuation(
+                            decisionId = "submit-sba-deferred-triggers-${java.util.UUID.randomUUID()}",
+                            remainingTriggers = preSbaTriggers
+                        )
+                        val stack = pausedState.continuationStack
+                        val newStack = stack.subList(0, preSbaStackSize) +
+                            pendingTriggers +
+                            stack.subList(preSbaStackSize, stack.size)
+                        pausedState = pausedState.copy(continuationStack = newStack)
+                    }
                     return ExecutionResult.paused(
-                        sbaResult.state,
+                        pausedState,
                         sbaResult.pendingDecision!!,
                         listOf(submittedEvent) + result.events + sbaResult.events
                     )
@@ -119,17 +149,19 @@ class SubmitDecisionHandler(
                     return ExecutionResult.success(sbaResult.newState, combinedEvents)
                 }
 
-                // Process triggers. When the resumed chain re-entered an action handler
-                // that already ran detection on its own emitted events (e.g.,
-                // `CastSpellHandler` re-entered via `finalizeModalCast` after a cast-time
-                // mode picker), skip those events here — re-detecting would double-queue
-                // battlefield triggers like Riku of Many Paths.
-                val eventsToDetect = if (result.triggersAlreadyProcessed) {
+                // Detect the remaining triggers on the post-SBA state: the submitted decision and
+                // any SBA events (e.g. death triggers). The resumed resolution's own events were
+                // already captured pre-SBA above. When the resumed chain re-entered an action
+                // handler that already ran detection on its own emitted events (e.g.,
+                // `CastSpellHandler` re-entered via `finalizeModalCast` after a cast-time mode
+                // picker), preSbaTriggers is empty and re-detecting result.events would
+                // double-queue battlefield triggers like Riku of Many Paths — so those are
+                // deliberately excluded here.
+                val postSbaTriggers = triggerDetector.detectTriggers(
+                    sbaResult.newState,
                     listOf(submittedEvent) + sbaResult.events
-                } else {
-                    combinedEvents
-                }
-                val triggers = triggerDetector.detectTriggers(sbaResult.newState, eventsToDetect)
+                )
+                val triggers = preSbaTriggers + postSbaTriggers
                 if (triggers.isNotEmpty()) {
                     val triggerResult = triggerProcessor.processTriggers(sbaResult.newState, triggers)
 
@@ -157,7 +189,7 @@ class SubmitDecisionHandler(
             // The chain paused (or errored). When paused, events emitted during the
             // chain (e.g., BecomesTargetEvent from putting a triggered ability on the
             // stack mid-chain) may fire additional triggers (e.g., Valiant) that the
-            // success path's trigger-detection at line 108 would catch — but the paused
+            // success branch's trigger-detection above would catch — but the paused
             // path returns before reaching it, so those triggers would be lost.
             // Detect them here and queue as a PendingTriggersContinuation BENEATH the frames
             // this resume left in flight, so they fire only after the whole in-flight resolution
