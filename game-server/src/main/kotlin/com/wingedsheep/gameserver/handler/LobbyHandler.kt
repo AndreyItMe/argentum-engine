@@ -558,20 +558,26 @@ class LobbyHandler(
             return
         }
 
-        // Validate all set codes
+        // Validate all set codes. Random-set placeholders (RANDOM_SET_CODE) are deferred — they're
+        // kept in the selection as-is and rolled to a concrete set at start (see resolveRandomSets).
         if (message.setCodes.isEmpty()) {
             sender.sendError(session, ErrorCode.INVALID_ACTION, "At least one set code is required")
             return
         }
-        val setConfigs = message.setCodes.mapNotNull { boosterGenerator.getSetConfig(it) }
-        if (setConfigs.size != message.setCodes.size) {
-            val invalidCodes = message.setCodes.filter { boosterGenerator.getSetConfig(it) == null }
+        val hasRandomSet = message.setCodes.any { TournamentLobby.isRandomSetCode(it) }
+        val concreteCodes = message.setCodes.filterNot { TournamentLobby.isRandomSetCode(it) }
+        val setConfigs = concreteCodes.mapNotNull { boosterGenerator.getSetConfig(it) }
+        if (setConfigs.size != concreteCodes.size) {
+            val invalidCodes = concreteCodes.filter { boosterGenerator.getSetConfig(it) == null }
             sender.sendError(session, ErrorCode.INVALID_ACTION, "Unknown set codes: ${invalidCodes.joinToString()}")
             return
         }
-        extensionOnlyError(setConfigs)?.let { error ->
-            sender.sendError(session, ErrorCode.INVALID_ACTION, error)
-            return
+        // A random slot always resolves to a regular set, so it satisfies the "needs a base set" rule.
+        if (!hasRandomSet) {
+            extensionOnlyError(setConfigs)?.let { error ->
+                sender.sendError(session, ErrorCode.INVALID_ACTION, error)
+                return
+            }
         }
 
         val token = sessionRegistry.getTokenByWsId(session.id)
@@ -642,7 +648,13 @@ class LobbyHandler(
             TournamentFormat.PREMADE_DECKS -> 0
         }
 
-        val codes = setConfigs.map { it.setCode }
+        // Preserve the selection order and any random placeholders; names line up index-for-index
+        // (placeholders show as "Random Set" until resolveRandomSets reveals them at start).
+        val codes = message.setCodes
+        val names = message.setCodes.map { code ->
+            if (TournamentLobby.isRandomSetCode(code)) TournamentLobby.RANDOM_SET_NAME
+            else boosterGenerator.getSetConfig(code)?.setName ?: code
+        }
         // Pick-2 is the default for Draft and Commander Draft — speeds the draft and matches the
         // paper Commander Legends template. Other formats stay at the lobby's pick-1 default.
         val initialPicksPerRound = when (format) {
@@ -651,7 +663,7 @@ class LobbyHandler(
         }
         val lobby = TournamentLobby(
             setCodes = codes,
-            setNames = setConfigs.map { it.setName },
+            setNames = names,
             boosterGenerator = boosterGenerator,
             format = format,
             boosterCount = boosterCount,
@@ -1169,6 +1181,11 @@ class LobbyHandler(
             sender.sendError(session, ErrorCode.INVALID_ACTION, "Need at least 2 players")
             return
         }
+
+        // Reveal any deferred "Random Set" placeholders now that the game is starting — the concrete
+        // sets stay hidden in the lobby until this moment (mirrors the Quick Game deferred roll). Done
+        // before the extension gate and pool generation so both see concrete, validated set codes.
+        lobby.resolveRandomSets()
 
         // Booster-based formats can't run on extension sets alone (Premade brings its own decks
         // and ignores the set selection). The lobby may hold an extension-only selection while
