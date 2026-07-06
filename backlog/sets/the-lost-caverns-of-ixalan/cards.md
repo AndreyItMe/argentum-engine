@@ -205,7 +205,7 @@
 - [ ] Restless Ridgeline
 - [ ] Restless Vents
 - [ ] River Herald Guide
-- [ ] River Herald Scout
+- [x] River Herald Scout
 - [ ] Roaming Throne
 - [x] Ruin-Lurker Bat
 - [ ] Rumbling Rockslide

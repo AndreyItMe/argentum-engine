@@ -3286,6 +3286,42 @@
     ]
 }
 
+// River Herald Scout
+{
+    "name": "River Herald Scout",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Merfolk Scout",
+    "oracleText": "When this creature enters, it explores. (Reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on this creature, then put the card back or put it into your graveyard.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Explore",
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "72",
+        "artist": "Josu Hernaiz",
+        "flavorText": "\"Don't worry, little swimmers. I'm here for the ruins, not you.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/a/8ae8ab66-5840-4b2e-bd4e-94ead0c79b61.jpg?1782694553"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Ruin-Lurker Bat
 {
     "name": "Ruin-Lurker Bat",
