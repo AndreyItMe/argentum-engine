@@ -8795,6 +8795,332 @@
     ]
 }
 
+// Ray of Ruin
+{
+    "name": "Ray of Ruin",
+    "manaCost": "{4}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Exile target creature, Vehicle, or nonbasic land. Scry 1.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    },
+                    "destination": "Exile"
+                },
+                {
+                    "type": "Scry",
+                    "count": 1
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "Or",
+                                "predicates": [
+                                    {
+                                        "type": "Or",
+                                        "predicates": [
+                                            "IsCreature",
+                                            {
+                                                "type": "And",
+                                                "predicates": [
+                                                    "IsPermanent",
+                                                    {
+                                                        "type": "HasSubtype",
+                                                        "subtype": "Vehicle"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "And",
+                                        "predicates": [
+                                            "IsLand",
+                                            {
+                                                "type": "Not",
+                                                "predicate": "IsBasicLand"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "117",
+        "artist": "Sam Rowan",
+        "flavorText": "\"We know Chimil's light as a warming, healing presence, but make no mistake: to those who would desecrate her lands, it is a terrible force of scouring fury.\"\n—Akal Pakal, First Steward of Oteclan",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/4/d440d90e-ac7e-4715-971a-700c977c7fde.jpg?1782694518"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Relic's Roar
+{
+    "name": "Relic's Roar",
+    "manaCost": "{U}",
+    "typeLine": "Instant",
+    "oracleText": "Until end of turn, target artifact or creature becomes a Dinosaur artifact creature with base power and toughness 4/3 in addition to its other types.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "BecomeCreature",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target artifact or creature"
+                    },
+                    "power": {
+                        "type": "Fixed",
+                        "amount": 4
+                    },
+                    "toughness": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "addTypes": [
+                        "ARTIFACT"
+                    ]
+                },
+                {
+                    "type": "AddSubtype",
+                    "subtype": "DINOSAUR",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target artifact or creature"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature|artifact"
+                },
+                "id": "target artifact or creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "71",
+        "artist": "Nino Vecia",
+        "flavorText": "\"Well, that's one less share to divide up.\"\n—Dranach, Dire Fleet boatswain",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/5/35096eb3-ad7b-4b6e-b799-cb4cc447883e.jpg?1782694553"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Restless Anchorage
+{
+    "name": "Restless Anchorage",
+    "manaCost": "",
+    "typeLine": "Land",
+    "oracleText": "This land enters tapped.\n{T}: Add {W} or {U}.\n{1}{W}{U}: Until end of turn, this land becomes a 2/3 white and blue Bird creature with flying. It's still a land.\nWhenever this land attacks, create a Map token.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "CreatePredefinedToken",
+                    "tokenType": "Map"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "WHITE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_3",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "BLUE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_4",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}{W}{U}"
+                    }
+                },
+                "effect": {
+                    "type": "BecomeCreature",
+                    "power": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughness": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "creatureTypes": [
+                        "Bird"
+                    ],
+                    "colors": [
+                        "WHITE",
+                        "BLUE"
+                    ]
+                }
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "280",
+        "rarity": "RARE",
+        "artist": "Leon Tukker",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/3/e3cab352-734e-454b-8b58-733165f4b3b3.jpg?1782694389"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLUE"
+    ]
+}
+
+// Restless Prairie
+{
+    "name": "Restless Prairie",
+    "manaCost": "",
+    "typeLine": "Land",
+    "oracleText": "This land enters tapped.\n{T}: Add {G} or {W}.\n{2}{G}{W}: This land becomes a 3/3 green and white Llama creature until end of turn. It's still a land.\nWhenever this land attacks, other creatures you control get +1/+1 until end of turn.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you",
+                            "excludeSelf": true
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": "Self"
+                    }
+                },
+                "descriptionOverride": "Whenever this land attacks, other creatures you control get +1/+1 until end of turn."
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "GREEN"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_3",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "AddMana",
+                    "color": "WHITE"
+                },
+                "timing": "ManaAbility",
+                "isManaAbility": true
+            },
+            {
+                "id": "ability_4",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}{G}{W}"
+                    }
+                },
+                "effect": {
+                    "type": "BecomeCreature",
+                    "power": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "toughness": {
+                        "type": "Fixed",
+                        "amount": 3
+                    },
+                    "creatureTypes": [
+                        "Llama"
+                    ],
+                    "colors": [
+                        "GREEN",
+                        "WHITE"
+                    ]
+                }
+            }
+        ],
+        "replacementEffects": [
+            "EntersTapped"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "281",
+        "rarity": "RARE",
+        "artist": "Randy Gallegos",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/9/f94ef116-6aff-4f53-a7f9-be5e21c7afa4.jpg?1782694388"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "WHITE"
+    ]
+}
+
 // River Herald Guide
 {
     "name": "River Herald Guide",

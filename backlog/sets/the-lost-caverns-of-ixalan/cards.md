@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 171 / 286
+**Implemented:** 176 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -196,11 +196,11 @@
 - [x] Quintorius Kand
 - [x] Rampaging Ceratops
 - [x] Rampaging Spiketail
-- [ ] Ray of Ruin
-- [ ] Relic's Roar
-- [ ] Resplendent Angel
-- [ ] Restless Anchorage
-- [ ] Restless Prairie
+- [x] Ray of Ruin
+- [x] Relic's Roar
+- [x] Resplendent Angel
+- [x] Restless Anchorage
+- [x] Restless Prairie
 - [ ] Restless Reef
 - [ ] Restless Ridgeline
 - [ ] Restless Vents
