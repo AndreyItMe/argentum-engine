@@ -661,6 +661,183 @@
     ]
 }
 
+// Another Chance
+{
+    "name": "Another Chance",
+    "manaCost": "{2}{B}",
+    "typeLine": "Instant",
+    "oracleText": "You may mill two cards. Then return up to two creature cards from your graveyard to your hand. (To mill two cards, put the top two cards of your library into your graveyard.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    },
+                                    "isMill": true
+                                },
+                                "storeAs": "milled"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "milled",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Graveyard",
+                        "filter": "creature"
+                    },
+                    "storeAs": "graveyardCreatures"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "graveyardCreatures",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    },
+                    "storeSelected": "chosen",
+                    "prompt": "Return up to two creature cards from your graveyard to your hand",
+                    "selectedLabel": "Return to hand",
+                    "remainderLabel": "Leave in graveyard",
+                    "showAllCards": true
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "chosen",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "90",
+        "artist": "Irina Nordsol",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/0/20d9eb9f-2fcc-49f0-99c1-bad748239466.jpg?1782694539"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Armored Kincaller
+{
+    "name": "Armored Kincaller",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Dinosaur",
+    "oracleText": "When this creature enters, you may reveal a Dinosaur card from your hand. If you do or if you control another Dinosaur, you gain 3 life.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Hand",
+                                "filter": "Dinosaur"
+                            },
+                            "storeAs": "kincallerDinos"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "kincallerDinos",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "kincallerRevealed",
+                            "prompt": "You may reveal a Dinosaur card from your hand"
+                        },
+                        {
+                            "type": "RevealCollection",
+                            "from": "kincallerRevealed",
+                            "fromZone": "Hand"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Any",
+                                    "conditions": [
+                                        {
+                                            "type": "CollectionContainsMatch",
+                                            "collection": "kincallerRevealed"
+                                        },
+                                        {
+                                            "type": "Exists",
+                                            "player": "You",
+                                            "zone": "Battlefield",
+                                            "filter": "creature Dinosaur",
+                                            "excludeSelf": true
+                                        }
+                                    ]
+                                }
+                            },
+                            "then": {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "174",
+        "artist": "John Tedrick",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/7/b76a46a1-a63e-460a-98c5-699dd1c827aa.jpg?1782694471"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Attentive Sunscribe
 {
     "name": "Attentive Sunscribe",
@@ -735,6 +912,149 @@
     "colorIdentityOverride": [
         "WHITE",
         "BLACK"
+    ]
+}
+
+// Basking Capybara
+{
+    "name": "Basking Capybara",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Capybara",
+    "oracleText": "Descend 4 — This creature gets +3/+0 as long as there are four or more permanent cards in your graveyard.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "ModifyStats",
+                    "powerBonus": 3,
+                    "toughnessBonus": 0,
+                    "filter": {
+                        "baseFilter": "permanent",
+                        "scope": "Self"
+                    }
+                },
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "Count",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "filter": "permanent"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "175",
+        "artist": "Ilse Gort",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/ff0a2ba4-dfa8-49d6-95e9-04b7a14d0c6c.jpg?1782694470"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Bedrock Tortoise
+{
+    "name": "Bedrock Tortoise",
+    "manaCost": "{3}{G}",
+    "typeLine": "Creature — Turtle",
+    "oracleText": "During your turn, creatures you control have hexproof.\nEach creature you control with toughness greater than its power assigns combat damage equal to its toughness rather than its power.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 6
+    },
+    "script": {
+        "staticAbilities": [
+            {
+                "type": "ConditionalStaticAbility",
+                "ability": {
+                    "type": "GrantKeyword",
+                    "keyword": "HEXPROOF",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    }
+                },
+                "condition": "IsYourTurn"
+            },
+            {
+                "type": "AssignDamageEqualToToughness",
+                "filter": {
+                    "baseFilter": "creature ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "176",
+        "rarity": "RARE",
+        "artist": "Maxime Minard",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/0/701bd623-3100-44dc-adec-53fa3a95ab19.jpg?1782694468"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Belligerent Yearling
+{
+    "name": "Belligerent Yearling",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Dinosaur",
+    "oracleText": "Trample\nWhenever another Dinosaur you control enters, you may have this creature's base power become equal to that creature's power until end of turn.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 2
+    },
+    "keywords": [
+        "TRAMPLE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature Dinosaur ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "SetBaseStats",
+                        "target": "Self",
+                        "power": {
+                            "type": "EntityProperty",
+                            "entity": "Triggering",
+                            "numericProperty": "Power"
+                        },
+                        "duration": "EndOfTurn"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "133",
+        "rarity": "UNCOMMON",
+        "artist": "Maxime Minard",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/b/0b2debca-8535-4cf6-a461-c268faaacaae.jpg?1782694502"
+    },
+    "colorIdentityOverride": [
+        "RED"
     ]
 }
 

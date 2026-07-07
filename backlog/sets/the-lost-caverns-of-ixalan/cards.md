@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 116 / 286
+**Implemented:** 121 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -17,14 +17,14 @@
 - [x] Ancestors' Aid
 - [x] Ancestral Reminiscence
 - [x] Anim Pakal, Thousandth Moon
-- [ ] Another Chance
-- [ ] Armored Kincaller
+- [x] Another Chance
+- [x] Armored Kincaller
 - [x] Attentive Sunscribe
 - [x] Bartolomé del Presidio
-- [ ] Basking Capybara
+- [x] Basking Capybara
 - [ ] Bat Colony
-- [ ] Bedrock Tortoise
-- [ ] Belligerent Yearling
+- [x] Bedrock Tortoise
+- [x] Belligerent Yearling
 - [x] Bitter Triumph
 - [x] Bloodletter of Aclazotz
 - [ ] Bloodthorn Flail
