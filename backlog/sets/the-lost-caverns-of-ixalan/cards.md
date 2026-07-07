@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 126 / 286
+**Implemented:** 131 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -38,10 +38,10 @@
 - [x] Broodrage Mycoid
 - [x] Buried Treasure
 - [x] Burning Sun Cavalry
-- [ ] Calamitous Cave-In
-- [ ] Canonized in Blood
+- [x] Calamitous Cave-In
+- [x] Canonized in Blood
 - [x] Caparocti Sunborn
-- [ ] Captain Storm, Cosmium Raider
+- [x] Captain Storm, Cosmium Raider
 - [x] Captivating Cave
 - [x] Careening Mine Cart
 - [x] Cartographer's Companion
@@ -50,11 +50,11 @@
 - [ ] Cavernous Maw
 - [x] Cenote Scout
 - [x] Chart a Course
-- [ ] Child of the Volcano
+- [x] Child of the Volcano
 - [x] Chimil, the Inner Sun
 - [x] Chupacabra Echo
 - [ ] Clay-Fired Bricks
-- [ ] Coati Scavenger
+- [x] Coati Scavenger
 - [x] Cogwork Wrestler
 - [x] Colossadactyl
 - [x] Compass Gnome
