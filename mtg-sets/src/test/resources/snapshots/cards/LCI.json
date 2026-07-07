@@ -3990,6 +3990,45 @@
     ]
 }
 
+// Primordial Gnawer
+{
+    "name": "Primordial Gnawer",
+    "manaCost": "{4}{B}",
+    "typeLine": "Creature — Insect Horror",
+    "oracleText": "When this creature dies, discover 3.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "Discover",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 3
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "114",
+        "artist": "Maxime Minard",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/1/a18f5ad0-e9c1-4e45-b245-2946e29baecb.jpg?1782694519"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Promising Vein
 {
     "name": "Promising Vein",

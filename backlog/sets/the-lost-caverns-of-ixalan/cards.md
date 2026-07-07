@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 103 / 286
+**Implemented:** 104 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -188,7 +188,7 @@
 - [ ] Poetic Ingenuity
 - [x] Poison Dart Frog
 - [ ] Preacher of the Schism
-- [ ] Primordial Gnawer
+- [x] Primordial Gnawer
 - [x] Promising Vein
 - [ ] Pugnacious Hammerskull
 - [ ] Queen's Bay Paladin
