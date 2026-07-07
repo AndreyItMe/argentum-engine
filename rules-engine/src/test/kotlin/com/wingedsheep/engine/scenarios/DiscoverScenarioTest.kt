@@ -41,6 +41,13 @@ class DiscoverScenarioTest : FunSpec({
         typeLine = "Sorcery"
         spell { effect = Effects.GainLife(1) }
     }
+    // MV 11 nonland — above even "Discover 10", so a library of these decks out with the final
+    // card's mana value > N, i.e. no discovered card at all (CR 701.57c).
+    val colossus = card("Colossus") {
+        manaCost = "{11}"
+        typeLine = "Sorcery"
+        spell { effect = Effects.GainLife(1) }
+    }
     val discoverFour = card("Discover Four") {
         manaCost = "{1}"
         typeLine = "Sorcery"
@@ -178,9 +185,29 @@ class DiscoverScenarioTest : FunSpec({
         driver.getHand(me).map { driver.getCardName(it) } shouldContain "Pebble"
     }
 
-    test("Mother Lode whiff — no discovered card means no Treasures (thenEffect skipped)") {
+    test("Mother Lode decks out on lands — final card (a land, MV 0) is still the discovered card, so 10 Treasures (CR 701.57c)") {
         val driver = driverWith()
+        // All-land library: Discover 10 exiles the whole library without a castable nonland ≤ 10,
+        // so there is no cast/hand decision. But the final card exiled is a Forest (mana value 0),
+        // which is the discovered card per CR 701.57c — so the follow-up still makes 10 - 0 Treasures.
         driver.initMirrorMatch(deck = Deck.of("Forest" to 40), startingLife = 20)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+        val me = driver.activePlayer!!
+
+        driver.castDiscover(me, "Test Mother Lode")
+
+        driver.isPaused shouldBe false // no castable stopping card, so no decision
+        val treasures = driver.state.getBattlefield()
+            .mapNotNull { driver.state.getEntity(it)?.get<CardComponent>() }
+            .count { it.name == "Treasure" }
+        treasures shouldBe 10
+    }
+
+    test("Mother Lode true whiff — final card is a nonland with MV > N, so no discovered card and no Treasures") {
+        val driver = driverWith(colossus)
+        // Library is all MV-11 nonlands: Discover 10 exiles everything, and the final card exiled
+        // has mana value 11 > 10, so nothing is discovered (CR 701.57c) and the follow-up is skipped.
+        driver.initMirrorMatch(deck = Deck.of("Colossus" to 40), startingLife = 20)
         driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
         val me = driver.activePlayer!!
 

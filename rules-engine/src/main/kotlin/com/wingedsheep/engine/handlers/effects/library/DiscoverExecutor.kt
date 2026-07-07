@@ -8,6 +8,7 @@ import com.wingedsheep.engine.core.GameEvent as EngineGameEvent
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.state.GameState
@@ -16,6 +17,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.DiscoverEffect
+import com.wingedsheep.sdk.scripting.effects.Effect
 import kotlin.reflect.KClass
 
 /**
@@ -30,13 +32,20 @@ import kotlin.reflect.KClass
  *    [com.wingedsheep.engine.handlers.continuations.LibraryAndZoneContinuationResumer]
  *    bottom-randomizes the other exiled cards, then either free-casts the discovered
  *    card or moves it to hand, then runs any [DiscoverEffect.thenEffect].
- *  - **No qualifying card** (library exhausted) → every exiled card is bottom-randomized
- *    here; no decision and no `thenEffect` (there is no discovered card, CR 701.57c).
+ *  - **No nonland ≤ N found** (library exhausted) → every exiled card is bottom-randomized
+ *    here, and no cast/hand decision is offered (there is no castable stopping card). But per
+ *    CR 701.57c the *final* card exiled is still the "discovered card" if its mana value is ≤ N
+ *    (a land at the bottom of the library has mana value 0), so a [DiscoverEffect.thenEffect]
+ *    keyed on the discovered card still runs, reading that card's mana value (Hit the Mother Lode
+ *    decking itself out still makes its Treasures). If the final card's mana value exceeds N,
+ *    nothing was discovered and no `thenEffect` runs.
  *
  * Mirrors [CascadeExecutor] (they share the bottom-randomize helper) but uses an explicit
  * ≤ threshold and keeps the discovered card on the non-cast branch.
  */
 class DiscoverExecutor(
+    /** Runs a [DiscoverEffect.thenEffect] through the registry (the late-bound recursion entry). */
+    private val runEffect: (GameState, Effect, EffectContext) -> EffectResult,
     private val decisionHandler: DecisionHandler = DecisionHandler()
 ) : EffectExecutor<DiscoverEffect> {
 
@@ -97,12 +106,37 @@ class DiscoverExecutor(
         }
 
         if (discoveredCard == null) {
-            // Library exhausted without a qualifying card — bottom-randomize everything
-            // exiled this way. No discovered card, so no may-cast and no thenEffect.
+            // Library exhausted without exiling a nonland card with mana value ≤ N — no castable
+            // stopping card, so no may-cast/hand decision; every exiled card is bottom-randomized.
             val bottomEvents = CascadeExecutor.bottomRandomize(currentState, controllerId, exiledCards) { newState ->
                 currentState = newState
             }
-            return EffectResult.success(currentState, allEvents + bottomEvents)
+            // CR 701.57c: the final card exiled is still the "discovered card" if its mana value is
+            // ≤ N (a land at the bottom of the library has mana value 0). When so, a thenEffect keyed
+            // on the discovered card still runs (Hit the Mother Lode decking itself out on lands still
+            // makes Treasures); otherwise nothing was discovered and there is no follow-up.
+            val finalCardMv = currentState.getEntity(exiledCards.last())?.get<CardComponent>()?.manaValue
+            val thenEffect = effect.thenEffect
+            if (thenEffect == null || finalCardMv == null || finalCardMv > threshold) {
+                return EffectResult.success(currentState, allEvents + bottomEvents)
+            }
+            val discoveredCollections = effect.storeDiscoveredAs
+                ?.let { mapOf(it to listOf(exiledCards.last())) }
+                ?: emptyMap()
+            val thenResult = runEffect(
+                currentState,
+                thenEffect,
+                EffectContext(
+                    sourceId = context.sourceId,
+                    controllerId = controllerId,
+                    pipeline = PipelineState.EMPTY.copy(storedCollections = discoveredCollections)
+                )
+            )
+            return if (thenResult.isPaused) {
+                EffectResult.paused(thenResult.state, thenResult.pendingDecision!!, allEvents + bottomEvents + thenResult.events)
+            } else {
+                EffectResult.success(thenResult.state, allEvents + bottomEvents + thenResult.events)
+            }
         }
 
         val discoveredName = currentState.getEntity(discoveredCard)
