@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 110 / 286
+**Implemented:** 111 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -40,7 +40,7 @@
 - [ ] Burning Sun Cavalry
 - [ ] Calamitous Cave-In
 - [ ] Canonized in Blood
-- [ ] Caparocti Sunborn
+- [x] Caparocti Sunborn
 - [ ] Captain Storm, Cosmium Raider
 - [x] Captivating Cave
 - [x] Careening Mine Cart
