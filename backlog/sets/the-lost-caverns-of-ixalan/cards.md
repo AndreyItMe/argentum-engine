@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 105 / 286
+**Implemented:** 106 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -269,7 +269,7 @@
 - [ ] Tithing Blade
 - [ ] Treasure Map
 - [ ] Triumphant Chomp
-- [ ] Trumpeting Carnosaur
+- [x] Trumpeting Carnosaur
 - [ ] Twists and Turns
 - [ ] Uchbenbak, the Great Mistake
 - [ ] Unlucky Drop
