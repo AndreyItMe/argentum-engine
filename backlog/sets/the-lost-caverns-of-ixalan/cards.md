@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 107 / 286
+**Implemented:** 108 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -51,7 +51,7 @@
 - [x] Cenote Scout
 - [x] Chart a Course
 - [ ] Child of the Volcano
-- [ ] Chimil, the Inner Sun
+- [x] Chimil, the Inner Sun
 - [x] Chupacabra Echo
 - [ ] Clay-Fired Bricks
 - [ ] Coati Scavenger
