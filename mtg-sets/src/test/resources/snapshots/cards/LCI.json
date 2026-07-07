@@ -82,6 +82,51 @@
     ]
 }
 
+// Abyssal Gorestalker
+{
+    "name": "Abyssal Gorestalker",
+    "manaCost": "{4}{B}{B}",
+    "typeLine": "Creature — Horror",
+    "oracleText": "When this creature enters, each player sacrifices two creatures of their choice.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "Each"
+                    },
+                    "body": {
+                        "type": "ForceSacrifice",
+                        "filter": "creature",
+                        "count": 2,
+                        "target": "Controller"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "87",
+        "rarity": "UNCOMMON",
+        "artist": "Maxime Minard",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/5/a559f77f-1f10-475b-9361-7f297d50f254.jpg?1782694541"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Acolyte of Aclazotz
 {
     "name": "Acolyte of Aclazotz",
@@ -211,6 +256,212 @@
     ]
 }
 
+// Adaptive Gemguard
+{
+    "name": "Adaptive Gemguard",
+    "manaCost": "{3}{W}",
+    "typeLine": "Artifact Creature — Gnome",
+    "oracleText": "Tap two untapped artifacts and/or creatures you control: Put a +1/+1 counter on this creature. Activate only as a sorcery.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomTapPermanents",
+                        "count": 2,
+                        "filter": "artifact|creature"
+                    }
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                },
+                "timing": "SorcerySpeed"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "3",
+        "artist": "Anthony Devine",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/3/83c91e24-b7e8-4040-80cb-d1b375002c10.jpg?1782694608"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Akal Pakal, First Among Equals
+{
+    "name": "Akal Pakal, First Among Equals",
+    "manaCost": "{2}{U}",
+    "typeLine": "Legendary Creature — Human Advisor",
+    "oracleText": "At the beginning of each player's end step, if an artifact entered the battlefield under your control this turn, look at the top two cards of your library. Put one of them into your hand and the other into your graveyard.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 5
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            "storeAs": "looked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "looked",
+                            "selection": {
+                                "type": "ChooseExactly",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "kept",
+                            "storeRemainder": "rest",
+                            "selectedLabel": "Put in hand",
+                            "remainderLabel": "Put in graveyard"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "kept",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "rest",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "PermanentTypeEnteredBattlefieldThisTurn",
+                    "cardType": "ARTIFACT"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "44",
+        "rarity": "RARE",
+        "artist": "Ryan Pancoast",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/b/ab9f6a1b-8467-4584-affd-8c71d3e34d2f.jpg?1782694575"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Amalia Benavides Aguirre
+{
+    "name": "Amalia Benavides Aguirre",
+    "manaCost": "{W}{B}",
+    "typeLine": "Legendary Creature — Vampire Scout",
+    "oracleText": "Ward—Pay 3 life.\nWhenever you gain life, Amalia Benavides Aguirre explores. Then destroy all other creatures if its power is exactly 20. (To have this creature explore, reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on this creature, then put the card back or put it into your graveyard.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "keywords": [
+        "WARD"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Ward",
+            "cost": {
+                "type": "WardCost.Life",
+                "amount": 3
+            }
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "LifeGainEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Explore",
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "EntityMatches",
+                                    "entity": "Self",
+                                    "filter": "creature pow=20"
+                                }
+                            },
+                            "then": {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature",
+                                        "excludeSelf": true
+                                    }
+                                },
+                                "body": {
+                                    "type": "MoveToZone",
+                                    "target": "Self",
+                                    "destination": "Graveyard",
+                                    "byDestruction": true
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "221",
+        "rarity": "RARE",
+        "artist": "Alix Branwyn",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/a/9acf80a5-f2ca-45b4-aca8-fbc690e35401.jpg?1782694434"
+    },
+    "colorIdentityOverride": [
+        "WHITE",
+        "BLACK"
+    ]
+}
+
 // Ancestors' Aid
 {
     "name": "Ancestors' Aid",
@@ -334,6 +585,79 @@
     },
     "colorIdentityOverride": [
         "BLUE"
+    ]
+}
+
+// Anim Pakal, Thousandth Moon
+{
+    "name": "Anim Pakal, Thousandth Moon",
+    "manaCost": "{1}{R}{W}",
+    "typeLine": "Legendary Creature — Human Soldier",
+    "oracleText": "Whenever you attack with one or more non-Gnome creatures, put a +1/+1 counter on Anim Pakal, then create X 1/1 colorless Gnome artifact creature tokens that are tapped and attacking, where X is the number of +1/+1 counters on Anim Pakal.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "YouAttackEvent",
+                    "attackerFilter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "NotSubtype",
+                                "subtype": "Gnome"
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "CreateToken",
+                            "count": {
+                                "type": "EntityProperty",
+                                "entity": "Source",
+                                "numericProperty": {
+                                    "type": "CounterCount",
+                                    "counterType": "PlusOnePlusOne"
+                                }
+                            },
+                            "power": 1,
+                            "toughness": 1,
+                            "colors": [],
+                            "creatureTypes": [
+                                "Gnome"
+                            ],
+                            "tapped": true,
+                            "attacking": true,
+                            "artifactToken": true
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "223",
+        "rarity": "RARE",
+        "artist": "Chris Rahn",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/6/868856b7-8875-43c1-8249-0f8fb2c8319b.jpg?1782694432"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "WHITE"
     ]
 }
 
