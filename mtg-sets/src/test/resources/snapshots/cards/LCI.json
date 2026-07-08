@@ -11451,6 +11451,54 @@
     ]
 }
 
+// Sunshot Militia
+{
+    "name": "Sunshot Militia",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Soldier",
+    "oracleText": "Tap two untapped artifacts and/or creatures you control: This creature deals 1 damage to each opponent. Activate only as a sorcery.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomTapPermanents",
+                        "count": 2,
+                        "filter": "artifact|creature"
+                    }
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                },
+                "timing": "SorcerySpeed"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "168",
+        "artist": "Torgeir Fjereide",
+        "flavorText": "As the Legion of Dusk closed in, Oltec citizens rallied to support the Thousand Moons and drive off the invaders.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/3/d3114f5c-21e9-43c3-abe3-3cf1da20916f.jpg?1782694475"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Swashbuckler's Whip
 {
     "name": "Swashbuckler's Whip",
@@ -11565,6 +11613,273 @@
         "imageUri": "https://cards.scryfall.io/normal/front/2/4/24a85c52-e5b5-4d65-931c-eacc0cf0fb31.jpg?1782694401"
     },
     "colorIdentityOverride": []
+}
+
+// Synapse Necromage
+{
+    "name": "Synapse Necromage",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Fungus Wizard",
+    "oracleText": "When this creature dies, create two 1/1 black Fungus creature tokens with \"This token can't block.\"",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "count": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Fungus"
+                    ],
+                    "staticAbilities": [
+                        "CantBlock"
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "125",
+        "rarity": "UNCOMMON",
+        "artist": "Piotr Foksowicz",
+        "flavorText": "\"It's no good killing them? Then what do we do? Distract them with a tea party?\"\n—Mervin, Brazen Coalition prospector",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/f/efeb22a4-37bf-487a-9cf4-74de4cbbc0a3.jpg?1782694510"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Tarrian's Soulcleaver
+{
+    "name": "Tarrian's Soulcleaver",
+    "manaCost": "{1}",
+    "typeLine": "Legendary Artifact — Equipment",
+    "oracleText": "Equipped creature has vigilance.\nWhenever another artifact or creature is put into a graveyard from the battlefield, put a +1/+1 counter on equipped creature.\nEquip {2}",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "artifact|creature",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "EquippedCreature"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "VIGILANCE"
+            }
+        ]
+    },
+    "equipCost": "{2}",
+    "metadata": {
+        "collectorNumber": "264",
+        "rarity": "RARE",
+        "artist": "Nereida",
+        "flavorText": "Tarrian's holy weapon still holds a fragment of his dark power... and his hunger.",
+        "imageUri": "https://cards.scryfall.io/normal/front/9/9/99413817-1218-4947-b12f-9a952b095a89.jpg?1782694400"
+    },
+    "colorIdentityOverride": []
+}
+
+// Tectonic Hazard
+{
+    "name": "Tectonic Hazard",
+    "manaCost": "{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Tectonic Hazard deals 1 damage to each opponent and each creature they control.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:opponent"
+                        }
+                    },
+                    "body": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        },
+                        "target": "Self"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "169",
+        "artist": "Jarel Threat",
+        "flavorText": "\"The ground is on fire, the ceiling's made of spears, and I think a mushroom tried to curse me. Don't tell me not to panic!\"\n—Jino Grag, Brazen Coalition scout",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/2/5204c781-f568-4c7f-b3f7-ce4dd678689b.jpg?1782694475"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Tendril of the Mycotyrant
+{
+    "name": "Tendril of the Mycotyrant",
+    "manaCost": "{1}{G}",
+    "typeLine": "Creature — Fungus Wizard",
+    "oracleText": "{5}{G}{G}: Put seven +1/+1 counters on target noncreature land you control. It becomes a 0/0 Fungus creature with haste. It's still a land.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{5}{G}{G}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 7,
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target noncreature land you control"
+                            }
+                        },
+                        {
+                            "type": "BecomeCreature",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target noncreature land you control"
+                            },
+                            "power": {
+                                "type": "Fixed",
+                                "amount": 0
+                            },
+                            "toughness": {
+                                "type": "Fixed",
+                                "amount": 0
+                            },
+                            "keywords": [
+                                "HASTE"
+                            ],
+                            "creatureTypes": [
+                                "Fungus"
+                            ],
+                            "duration": "Permanent"
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsLand",
+                                    {
+                                        "type": "Not",
+                                        "predicate": "IsCreature"
+                                    }
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "id": "target noncreature land you control"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "215",
+        "rarity": "UNCOMMON",
+        "artist": "Maxime Minard",
+        "flavorText": "Every mycoid carries within itself the makings of an entire colony.",
+        "imageUri": "https://cards.scryfall.io/normal/front/a/f/afa464fe-978f-43de-ac35-79be4b12f0d9.jpg?1782694437"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
 }
 
 // Terror Tide

@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 191 / 286
+**Implemented:** 196 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -243,13 +243,13 @@
 - [ ] Sunbird Standard
 - [ ] Sunfire Torch
 - [ ] Sunken Citadel
-- [ ] Sunshot Militia
+- [x] Sunshot Militia
 - [x] Swashbuckler's Whip
-- [ ] Synapse Necromage
+- [x] Synapse Necromage
 - [ ] Tarrian's Journal
-- [ ] Tarrian's Soulcleaver
-- [ ] Tectonic Hazard
-- [ ] Tendril of the Mycotyrant
+- [x] Tarrian's Soulcleaver
+- [x] Tectonic Hazard
+- [x] Tendril of the Mycotyrant
 - [x] Terror Tide
 - [ ] The Ancient One
 - [ ] The Belligerent
