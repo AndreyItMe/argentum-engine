@@ -216,9 +216,15 @@ object ZoneTransitionService {
         }
         val actualDestZone = redirectResult.destinationZone
 
-        // Determine controller and destination zone key
+        // Determine controller and destination zone key. Control-changing effects (Threaten,
+        // Empress Galina) live in Layer 2 of the projection and never touch the base
+        // ControllerComponent, so a battlefield exit must read the projected controller first —
+        // it becomes the last-known controller (CR 608.2h) carried on the snapshot and credited
+        // by the per-player LTB/death trackers below.
         val controllerId = if (leavingBattlefield) {
-            container.get<ControllerComponent>()?.playerId ?: ownerId
+            state.projectedState.getController(entityId)
+                ?: container.get<ControllerComponent>()?.playerId
+                ?: ownerId
         } else {
             ownerId
         }
@@ -229,6 +235,30 @@ object ZoneTransitionService {
         } else {
             ZoneKey(ownerId, actualDestZone)
         }
+
+        // One frozen snapshot of the permanent as it last existed on the battlefield
+        // (CR 113.7a / 603.10 / 608.2h), or null when this transition doesn't leave the
+        // battlefield. Carried on the ZoneChangeEvent for trigger resolution AND stashed on the
+        // entity itself (LastKnownPermanentComponent) for resolution-time reads that outlive the
+        // permanent ("Destroy target creature. Its controller creates two Map tokens.").
+        val lastKnownSnapshot = if (leavingBattlefield) {
+            com.wingedsheep.engine.state.components.stack.EntitySnapshot(
+                entityId = entityId,
+                power = lastKnownPower,
+                toughness = lastKnownToughness,
+                controllerId = controllerId,
+                counters = lastKnownCounters,
+                keywords = lastKnownKeywords,
+                lostAllAbilities = lastKnownLostAllAbilities,
+                typeLine = lastKnownTypeLine,
+                cardDefinitionId = cardComponent.cardDefinitionId,
+                attachedTo = lastKnownAttachedTo,
+                blockingOrBlockedByIds = lastKnownBlockingOrBlockedByIds,
+                wasToken = lastKnownWasToken,
+                damageDealtByPlayers = lastKnownDamageDealtByPlayers,
+                damageSources = lastKnownDamageSources,
+            )
+        } else null
 
         var newState = state
         val events = mutableListOf<EngineGameEvent>()
@@ -333,6 +363,21 @@ object ZoneTransitionService {
                     c.with(preStripNotedExile)
                 }
             }
+            // Stash the battlefield-exit snapshot on the entity so resolution-time reads that
+            // outlive the permanent use last-known information (CR 608.2h) — e.g. TargetController
+            // after an earlier step of the same effect destroyed the target. Skipped when a
+            // redirect keeps the object on the battlefield (it stays live there).
+            if (lastKnownSnapshot != null && actualDestZone != Zone.BATTLEFIELD) {
+                newState = newState.updateEntity(entityId) { c ->
+                    c.with(LastKnownPermanentComponent(lastKnownSnapshot))
+                }
+            }
+        } else {
+            // Any further zone change makes a new object (CR 400.7): information about the old
+            // battlefield incarnation must not survive it. No-op when the component is absent.
+            newState = newState.updateEntity(entityId) { c ->
+                c.without<LastKnownPermanentComponent>()
+            }
         }
 
         // 7. ENTRY SETUP based on destination
@@ -434,28 +479,9 @@ object ZoneTransitionService {
                 fromZone = fromZone,
                 toZone = actualDestZone,
                 ownerId = ownerId,
-                // One frozen snapshot of the permanent as it last existed on the battlefield
-                // (CR 113.7a / 603.10 / 608.2h), or null when this transition didn't leave the
-                // battlefield. The former ~16 lastKnown* scalars are now its fields; the counter
+                // The former ~16 lastKnown* scalars are now the snapshot's fields; the counter
                 // counts derive from its `counters` map (plusOnePlusOneCounters / etc.).
-                lastKnown = if (leavingBattlefield) {
-                    com.wingedsheep.engine.state.components.stack.EntitySnapshot(
-                        entityId = entityId,
-                        power = lastKnownPower,
-                        toughness = lastKnownToughness,
-                        controllerId = controllerId,
-                        counters = lastKnownCounters,
-                        keywords = lastKnownKeywords,
-                        lostAllAbilities = lastKnownLostAllAbilities,
-                        typeLine = lastKnownTypeLine,
-                        cardDefinitionId = cardComponent.cardDefinitionId,
-                        attachedTo = lastKnownAttachedTo,
-                        blockingOrBlockedByIds = lastKnownBlockingOrBlockedByIds,
-                        wasToken = lastKnownWasToken,
-                        damageDealtByPlayers = lastKnownDamageDealtByPlayers,
-                        damageSources = lastKnownDamageSources,
-                    )
-                } else null,
+                lastKnown = lastKnownSnapshot,
                 xValue = lastKnownCastX,
                 wasSacrificed = wasSacrificed
             )

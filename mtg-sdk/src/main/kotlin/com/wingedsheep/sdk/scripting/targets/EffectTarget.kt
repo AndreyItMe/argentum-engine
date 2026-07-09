@@ -73,7 +73,15 @@ sealed interface EffectTarget {
         override val description: String = "the source that granted this ability"
     }
 
-    /** The controller of the target (used for effects like "its controller gains 4 life") */
+    /**
+     * The controller of the target (used for effects like "its controller gains 4 life").
+     *
+     * Resolves through the projected controller (Layer-2 control changes are honored) and, once
+     * the target has left the battlefield — typically because an earlier step of the same effect
+     * destroyed or exiled it ("Destroy target creature. Its controller creates two Map tokens.")
+     * — through the controller it last had on the battlefield (CR 608.2h last-known information),
+     * before finally falling back to the card's owner.
+     */
     @SerialName("TargetController")
     @Serializable
     data object TargetController : EffectTarget {

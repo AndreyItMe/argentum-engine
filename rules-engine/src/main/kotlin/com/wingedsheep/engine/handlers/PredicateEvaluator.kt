@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.EnteredThisTurnComponent
+import com.wingedsheep.engine.state.components.battlefield.LastKnownPermanentComponent
 import com.wingedsheep.engine.state.components.battlefield.DealtCombatDamageToPlayersThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtCombatDamageToPlayerComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtDamageComponent
@@ -781,9 +782,13 @@ class PredicateEvaluator {
             val triggeringId = context.triggeringEntityId ?: return null
             projected.getController(triggeringId)
                 ?: state.getEntity(triggeringId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(triggeringId)
+                    ?.get<LastKnownPermanentComponent>()?.snapshot?.controllerId
         }
         // The controller of the spell/ability's first chosen target — lets a filter scope to
-        // "creatures with the same controller as the target" (Fear, Fire, Foes!).
+        // "creatures with the same controller as the target" (Fear, Fire, Foes!). A target the
+        // effect itself has already moved off the battlefield reads its last-known controller
+        // (CR 608.2h).
         EffectTarget.TargetController -> {
             val targetId = when (val first = context.targets.firstOrNull()) {
                 is ChosenTarget.Permanent -> first.entityId
@@ -792,6 +797,8 @@ class PredicateEvaluator {
             } ?: return null
             projected.getController(targetId)
                 ?: state.getEntity(targetId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(targetId)
+                    ?.get<LastKnownPermanentComponent>()?.snapshot?.controllerId
         }
         else -> null
     }

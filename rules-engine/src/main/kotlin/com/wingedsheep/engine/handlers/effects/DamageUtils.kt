@@ -1075,6 +1075,9 @@ object DamageUtils {
         is EffectTarget.TargetController ->
             state.projectedState.getController(originalTargetId)
                 ?: state.getEntity(originalTargetId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(originalTargetId)
+                    ?.get<com.wingedsheep.engine.state.components.battlefield.LastKnownPermanentComponent>()
+                    ?.snapshot?.controllerId
         is EffectTarget.Self -> replacementOwnerId
         else -> null
     }

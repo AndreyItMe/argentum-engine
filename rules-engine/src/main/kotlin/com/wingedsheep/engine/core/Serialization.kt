@@ -383,6 +383,7 @@ val engineSerializersModule = SerializersModule {
         subclass(AttachedToComponent::class)
         subclass(AttachmentsComponent::class)
         subclass(AttachmentHostLeftComponent::class)
+        subclass(LastKnownPermanentComponent::class)
         subclass(EnteredThisTurnComponent::class)
         subclass(WasDealtDamageThisTurnComponent::class)
         subclass(HasDealtDamageComponent::class)

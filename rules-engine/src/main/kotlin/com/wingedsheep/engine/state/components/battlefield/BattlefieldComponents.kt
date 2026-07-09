@@ -397,6 +397,25 @@ data class AttachmentHostLeftComponent(
 ) : Component
 
 /**
+ * The [EntitySnapshot] captured when this entity most recently left the battlefield, carried on
+ * the card entity itself so resolution-time reads that outlive the permanent — "Destroy target
+ * creature. Its controller creates two Map tokens." — can use last-known information (CR 608.2h:
+ * an effect that needs information from an object it moved out of the expected zone uses the
+ * object's last known information).
+ *
+ * Set by [ZoneTransitionService.moveToZone] on every battlefield exit (the same snapshot that
+ * rides on [com.wingedsheep.engine.core.ZoneChangeEvent.lastKnown]) and stripped again on the
+ * entity's next zone change — a later move makes a new object (CR 400.7), so the old battlefield
+ * incarnation's information must not leak past it. While the component is present, controller
+ * reads fall back to [EntitySnapshot.controllerId] before the owner, so a Threaten-stolen
+ * permanent destroyed by an effect credits its controller-at-death, not its owner.
+ */
+@Serializable
+data class LastKnownPermanentComponent(
+    val snapshot: com.wingedsheep.engine.state.components.stack.EntitySnapshot
+) : Component
+
+/**
  * Permanent entered the battlefield this turn.
  */
 @Serializable

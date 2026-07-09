@@ -1875,6 +1875,12 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
   ability whose source already *is* the granter (Territory Forge / Sharkey-style gains), it resolves
   to the same entity as `Self`.
 - `EffectTarget.TriggeringEntity` — the entity that caused the trigger to fire.
+- `EffectTarget.TargetController` — the controller of the spell/ability's first chosen target
+  ("its controller creates two Map tokens", "its controller gains 4 life"). Control-change effects
+  are honored (projected controller first), and a target that has already left the battlefield —
+  typically destroyed/exiled by an earlier step of the same effect (Get Lost, Beast Within) —
+  resolves to the controller it last had on the battlefield (CR 608.2h last-known information,
+  carried by the engine's `LastKnownPermanentComponent`), falling back to the card's owner.
 - `EffectTarget.DiscardedAsCost(index = 0)` — a card discarded to pay this spell's additional discard
   cost (`Costs.additional.DiscardCards(...)`). The discarded card is in its owner's graveyard by
   resolution (CR 608.2), so this resolves to that card's id; pair it with an `EntityMatches` (facade
