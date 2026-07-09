@@ -5,7 +5,6 @@ import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 
 /**
  * Guardian of the Great Door
@@ -35,17 +34,7 @@ val GuardianOfTheGreatDoor = card("Guardian of the Great Door") {
     additionalCost(
         Costs.additional.TapPermanents(
             count = 4,
-            filter = GameObjectFilter(
-                cardPredicates = listOf(
-                    CardPredicate.Or(
-                        listOf(
-                            CardPredicate.IsArtifact,
-                            CardPredicate.IsCreature,
-                            CardPredicate.IsLand
-                        )
-                    )
-                )
-            )
+            filter = GameObjectFilter.Artifact or GameObjectFilter.Creature or GameObjectFilter.Land
         )
     )
 
