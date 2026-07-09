@@ -359,3 +359,39 @@ data object CascadeEffect : Effect {
             "mana cost. Put the exiled cards on the bottom in a random order."
 }
 
+/**
+ * Discover N (CR 701.57). Exile cards from the top of the controller's library
+ * until a nonland card with mana value [amount] **or less** is exiled — the
+ * "discovered card" (CR 701.57c). The controller may cast that card without paying
+ * its mana cost; if they don't (or can't), it is put into their hand. The remaining
+ * exiled cards go on the bottom of the library in a random order.
+ *
+ * Differs from [CascadeEffect] on three axes, which is why it's its own primitive
+ * rather than a parameter on cascade:
+ *  - **Threshold source**: an explicit [amount] (fixed for "Discover 4/5/10", or a
+ *    [DynamicAmount] for "Discover X, where X is that spell's mana value" — Hurl into
+ *    History), instead of the triggering spell's mana value.
+ *  - **Comparison**: mana value *≤ N*, not strictly less-than.
+ *  - **Non-cast branch**: the discovered card is kept (put into hand), never bottomed.
+ *
+ * @property amount The threshold N.
+ * @property storeDiscoveredAs When set, the discovered card's entity id is published
+ *   to this pipeline collection before [thenEffect] runs, so the follow-up can read it
+ *   (e.g. its mana value via [com.wingedsheep.sdk.scripting.values.DynamicAmount.StoredCardManaValue]).
+ * @property thenEffect Optional effect resolved immediately after the discover
+ *   completes, and **only when a card was actually discovered** (CR 701.57c — no
+ *   discovered card means no follow-up). Used for "Discover 10. If the discovered
+ *   card's mana value is less than 10, create that many fewer than ten tapped Treasure
+ *   tokens" (Hit the Mother Lode). Runs after the discovered card is cast / put into
+ *   hand, so it may reference the discovered card via [storeDiscoveredAs].
+ */
+@SerialName("Discover")
+@Serializable
+data class DiscoverEffect(
+    val amount: DynamicAmount,
+    val storeDiscoveredAs: String? = null,
+    val thenEffect: Effect? = null,
+) : Effect {
+    override val description: String = "Discover ${amount.description}"
+}
+

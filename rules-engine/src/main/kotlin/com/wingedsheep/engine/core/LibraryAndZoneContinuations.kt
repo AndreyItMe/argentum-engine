@@ -305,6 +305,43 @@ data class CascadeMayCastContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after the controller answers "cast the discovered card for free, or put it
+ * into your hand?" during the resolution of a [com.wingedsheep.sdk.scripting.effects.DiscoverEffect]
+ * (CR 701.57a).
+ *
+ * The discover executor has already exiled cards from the top of the controller's
+ * library and found a nonland card with mana value ≤ N (the discovered card). The
+ * resumer then, per CR 701.57a:
+ *
+ *  - bottom-randomizes every *other* exiled card;
+ *  - **Cast**: grants the discovered card a free cast (reusing
+ *    [com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect])
+ *    so target / X / mode prompts flow through the normal cast machinery. If the cast
+ *    can't initiate, the card falls back to the controller's hand ("if you don't cast it,
+ *    put that card into your hand").
+ *  - **Hand**: moves the discovered card to the controller's hand;
+ *  - then runs [thenEffect] (if any), with the discovered card published to
+ *    [storeDiscoveredAs] so the follow-up can read it (Hit the Mother Lode's Treasures).
+ *
+ * @property playerId The discovering player (also the decision-maker)
+ * @property sourceId The discovering source; null only for synthetic sources
+ * @property exiledCards Every card exiled by the discover walk, in exile order
+ * @property discoveredCardId The nonland card with mana value ≤ N
+ * @property storeDiscoveredAs Pipeline collection to publish [discoveredCardId] to before [thenEffect]
+ * @property thenEffect Follow-up effect resolved after the discover completes
+ */
+@Serializable
+data class DiscoverMayCastContinuation(
+    override val decisionId: String,
+    val playerId: EntityId,
+    val sourceId: EntityId?,
+    val exiledCards: List<EntityId>,
+    val discoveredCardId: EntityId,
+    val storeDiscoveredAs: String? = null,
+    val thenEffect: com.wingedsheep.sdk.scripting.effects.Effect? = null,
+) : ContinuationFrame
+
+/**
  * Resume after the controller picks targets for a spell being cast for free by
  * [com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect].
  *

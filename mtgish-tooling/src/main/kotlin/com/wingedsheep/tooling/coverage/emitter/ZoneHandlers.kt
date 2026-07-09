@@ -375,6 +375,12 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
         (findInteger(args) as? Int)?.let { call("Patterns.Library.surveil", arg("$it")) }
     }
 
+    on("Discover") { _, args, _ ->  // "Discover N" (CR 701.57) -> native DiscoverEffect
+        // Only the fixed-integer threshold renders; a dynamic _GameNumber (e.g.
+        // TheGreatestPowerAmongPermanents) declines -> SCAFFOLD rather than guess.
+        (findInteger(args) as? Int)?.let { call("Effects.Discover", arg("$it")) }
+    }
+
     // "Manifest dread" -> the fixed look-top-two / manifest-one / bin-the-rest pipeline (no args).
     simple("ManifestDread", dsl = "Patterns.Library.manifestDread()")
 

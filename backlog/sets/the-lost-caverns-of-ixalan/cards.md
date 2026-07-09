@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 91 / 286
+**Implemented:** 111 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -36,11 +36,11 @@
 - [ ] Breeches, Eager Pillager
 - [x] Bringer of the Last Gift
 - [ ] Broodrage Mycoid
-- [ ] Buried Treasure
+- [x] Buried Treasure
 - [ ] Burning Sun Cavalry
 - [ ] Calamitous Cave-In
 - [ ] Canonized in Blood
-- [ ] Caparocti Sunborn
+- [x] Caparocti Sunborn
 - [ ] Captain Storm, Cosmium Raider
 - [x] Captivating Cave
 - [x] Careening Mine Cart
@@ -51,7 +51,7 @@
 - [x] Cenote Scout
 - [x] Chart a Course
 - [ ] Child of the Volcano
-- [ ] Chimil, the Inner Sun
+- [x] Chimil, the Inner Sun
 - [x] Chupacabra Echo
 - [ ] Clay-Fired Bricks
 - [ ] Coati Scavenger
@@ -65,7 +65,7 @@
 - [ ] Cosmium Confluence
 - [ ] Council of Echoes
 - [ ] Curator of Sun's Creation
-- [ ] Daring Discovery
+- [x] Daring Discovery
 - [ ] Dauntless Dismantler
 - [x] Dead Weight
 - [x] Deathcap Marionette
@@ -77,7 +77,7 @@
 - [ ] Defossilize
 - [ ] Diamond Pick-Axe
 - [ ] Didact Echo
-- [ ] Digsite Conservator
+- [x] Digsite Conservator
 - [x] Dinotomaton
 - [ ] Dire Flail
 - [x] Disruptor Wanderglyph
@@ -91,7 +91,7 @@
 - [ ] Echoing Deeps
 - [x] Enterprising Scallywag
 - [x] Envoy of Okinec Ahau
-- [ ] Etali's Favor
+- [x] Etali's Favor
 - [ ] Explorer's Cache
 - [ ] Fabrication Foundry
 - [x] Family Reunion
@@ -100,7 +100,7 @@
 - [ ] Frilled Cave-Wurm
 - [ ] Fungal Fortitude
 - [ ] Gargantuan Leech
-- [ ] Geological Appraiser
+- [x] Geological Appraiser
 - [ ] Get Lost
 - [x] Ghalta, Stampede Tyrant
 - [x] Gishath, Sun's Avatar
@@ -115,19 +115,19 @@
 - [ ] Guardian of the Great Door
 - [ ] Helping Hand
 - [x] Hermitic Nautilus
-- [ ] Hidden Cataract
-- [ ] Hidden Courtyard
-- [ ] Hidden Necropolis
-- [ ] Hidden Nursery
-- [ ] Hidden Volcano
-- [ ] Hit the Mother Lode
+- [x] Hidden Cataract
+- [x] Hidden Courtyard
+- [x] Hidden Necropolis
+- [x] Hidden Nursery
+- [x] Hidden Volcano
+- [x] Hit the Mother Lode
 - [x] Hotfoot Gnome
 - [x] Hoverstone Pilgrim
 - [x] Huatli's Final Strike
 - [ ] Huatli, Poet of Unity
 - [ ] Hulking Raptor
 - [ ] Hunter's Blowgun
-- [ ] Hurl into History
+- [x] Hurl into History
 - [ ] Idol of the Deep King
 - [ ] In the Presence of Ages
 - [ ] Inti, Seneschal of the Sun
@@ -188,12 +188,12 @@
 - [ ] Poetic Ingenuity
 - [x] Poison Dart Frog
 - [ ] Preacher of the Schism
-- [ ] Primordial Gnawer
+- [x] Primordial Gnawer
 - [x] Promising Vein
 - [ ] Pugnacious Hammerskull
 - [ ] Queen's Bay Paladin
 - [x] Quicksand Whirlpool
-- [ ] Quintorius Kand
+- [x] Quintorius Kand
 - [x] Rampaging Ceratops
 - [x] Rampaging Spiketail
 - [ ] Ray of Ruin
@@ -244,7 +244,7 @@
 - [ ] Sunfire Torch
 - [ ] Sunken Citadel
 - [ ] Sunshot Militia
-- [ ] Swashbuckler's Whip
+- [x] Swashbuckler's Whip
 - [ ] Synapse Necromage
 - [ ] Tarrian's Journal
 - [ ] Tarrian's Soulcleaver
@@ -269,7 +269,7 @@
 - [ ] Tithing Blade
 - [ ] Treasure Map
 - [ ] Triumphant Chomp
-- [ ] Trumpeting Carnosaur
+- [x] Trumpeting Carnosaur
 - [ ] Twists and Turns
 - [ ] Uchbenbak, the Great Mistake
 - [ ] Unlucky Drop
@@ -281,11 +281,11 @@
 - [ ] Volatile Fault
 - [x] Volatile Wanderglyph
 - [ ] Wail of the Forgotten
-- [ ] Walk with the Ancestors
+- [x] Walk with the Ancestors
 - [ ] Warden of the Inner Sky
 - [ ] Waterlogged Hulk
 - [x] Waterwind Scout
 - [x] Waylaying Pirates
-- [ ] Zoetic Glyph
+- [x] Zoetic Glyph
 - [ ] Zoyowa Lava-Tongue
 - [ ] Zoyowa's Justice

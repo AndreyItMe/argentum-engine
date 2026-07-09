@@ -594,6 +594,18 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `Effects.Cascade` — CR 702.85a (`CascadeEffect`). Exile from the top of the controller's library
   until a nonland card with mana value **strictly less than** the triggering spell's is exiled,
   offer to cast it for free, bottom-randomize every exiled card that isn't cast.
+- `Effects.Discover(amount, storeDiscoveredAs?, thenEffect?)` — Discover N, CR 701.57 (`DiscoverEffect`).
+  Exile from the top of the controller's library until a nonland card with mana value **≤ N** is exiled
+  (the "discovered card"), then present a two-option prompt: **cast it for free** or **put it into your
+  hand** (if the cast can't initiate, it falls back to hand); bottom-randomize the rest. `amount` is an
+  `Int` (fixed, "Discover 4/5/10") or a `DynamicAmount` ("Discover X, where X is that spell's mana value"
+  — **Hurl into History**, pass `EntityProperty(Target(0), ManaValue)`). Differs from `Cascade` on three
+  axes: explicit threshold (not the triggering spell's MV), ≤ vs strict <, and the non-cast branch keeps
+  the card (hand) rather than bottoming it — hence a distinct primitive. Set `storeDiscoveredAs` to publish
+  the discovered card's id to a pipeline collection and `thenEffect` to resolve a follow-up **only when a
+  card was discovered** (CR 701.57c); the follow-up runs after the cast/hand step and can read the
+  discovered card — e.g. **Hit the Mother Lode** (`Effects.Discover(10, storeDiscoveredAs = "discovered",
+  thenEffect = Effects.CreateTreasure(count = IfPositive(Subtract(Fixed(10), StoredCardManaValue("discovered"))), tapped = true))`).
 - `RevealAndMayCastFromLibraryEffect(count, maxManaValue, player?)` — Sunbird's Invocation
   shape. Reveal top `count` cards of `player`'s library, present a `SELECT_CARDS` prompt over
   the revealed nonland cards with mana value ≤ `maxManaValue` (player picks 0 or 1), free-cast

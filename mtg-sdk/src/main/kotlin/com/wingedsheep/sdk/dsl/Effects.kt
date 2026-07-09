@@ -1283,6 +1283,35 @@ object Effects {
      */
     val Cascade: Effect = com.wingedsheep.sdk.scripting.effects.CascadeEffect
 
+    /**
+     * Discover N (CR 701.57). Exile from the top of your library until a nonland card
+     * with mana value [amount] or less is exiled; cast it for free or put it into your
+     * hand; bottom the rest in a random order. Fixed-threshold form ("Discover 4/5/10").
+     *
+     * @param storeDiscoveredAs publish the discovered card to this pipeline collection.
+     * @param thenEffect resolved after the discover, only if a card was discovered
+     *   (Hit the Mother Lode's "…create Treasure tokens equal to the difference").
+     */
+    fun Discover(
+        amount: Int,
+        storeDiscoveredAs: String? = null,
+        thenEffect: Effect? = null,
+    ): Effect = com.wingedsheep.sdk.scripting.effects.DiscoverEffect(
+        DynamicAmount.Fixed(amount), storeDiscoveredAs, thenEffect
+    )
+
+    /**
+     * Discover N with a dynamic threshold ("Discover X, where X is that spell's mana
+     * value" — Hurl into History). See the fixed-threshold overload for the parameters.
+     */
+    fun Discover(
+        amount: DynamicAmount,
+        storeDiscoveredAs: String? = null,
+        thenEffect: Effect? = null,
+    ): Effect = com.wingedsheep.sdk.scripting.effects.DiscoverEffect(
+        amount, storeDiscoveredAs, thenEffect
+    )
+
     // =========================================================================
     // Stat Modification Effects
     // =========================================================================

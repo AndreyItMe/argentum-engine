@@ -1,7 +1,9 @@
 # The Lost Caverns of Ixalan (LCI) — Mechanics
 
 Counts are over the 286 booster cards (excluding basic lands), by front-face + back-face
-oracle text. "Unimpl" = not yet implemented as of this document (72 cards done).
+oracle text. "Unimpl" = not yet implemented as of this document (111 cards done). The Discover
+row is freshly recounted; the other per-mechanic Unimpl counts predate the latest card batch
+and are approximate.
 
 Engine-support column reflects whether the SDK/rules-engine already models the mechanic
 (so cards using *only* supported mechanics need **no backend change** — pure `add-card` work).
@@ -11,7 +13,7 @@ Engine-support column reflects whether the SDK/rules-engine already models the m
 | Mechanic | Total | Unimpl | Engine support | Notes |
 |----------|------:|-------:|----------------|-------|
 | **Explore** | 25 | 24 | ✅ `ExploreEffect` | Creature reveals top card; land → hand, nonland → +1/+1 counter + may mill. |
-| **Discover N** | 11 | 11 | ❌ **NOT supported** | No SDK type exists (no effect / dynamic amount / condition). **Needs `add-feature`** — all 11 cards blocked until then. |
+| **Discover N** | 19 | 0 | ✅ `DiscoverEffect` | Exile from top until nonland MV ≤ N; cast free or to hand; rest bottomed random (CR 701.57). Fixed or dynamic threshold + optional discovered-card follow-up. All 19 discover cards implemented. |
 | **Craft** | 19 | 19 | ✅ `Craft*` + DFC transform | Activate from battlefield (exile materials), transform to back face. All Craft cards are DFCs. |
 | **Descend (4 / 8 / fathomless)** | 28 | 27 | ✅ `descended` tracking | Cares about permanent cards in your graveyard; "descend N" / "fathomless descent". |
 | **Map token** | 7 | 6 | ✅ `MapToken` | Artifact token; `{1}, {T}, Sacrifice: target creature you control explores.` |
@@ -30,17 +32,20 @@ Mill (12), Scry (11), Surveil (1), Enchant (7), Fight (1). **All engine-supporte
 
 ## Backend-change assessment
 
-Every headline LCI mechanic **except Discover** is already modelled by the engine (72 LCI cards,
-including a Craft DFC — `SaheelisLattice.kt` — are implemented). Therefore **most remaining cards
-are pure `add-card` authoring**. The known backend gap:
+Every headline LCI mechanic is now modelled by the engine (111 LCI cards, including a Craft DFC
+— `SaheelisLattice.kt` — are implemented). Therefore **the remaining cards are pure `add-card`
+authoring** unless an individual card needs a novel one-off ability. The former backend gap is
+closed:
 
-- **Discover N (11 cards)** — no SDK primitive exists. Needs `add-feature` (a `DiscoverEffect`
-  modelling "exile from top until nonland MV ≤ N; cast free or hand; rest to bottom random").
-  Until then every Discover card is blocked, e.g. Primordial Gnawer, Geological Appraiser,
-  Daring Discovery, Chimil the Inner Sun, Hurl into History, Walk with the Ancestors.
+- **Discover N (19 cards)** — ✅ implemented via `DiscoverEffect` (`Effects.Discover(N)`, CR 701.57):
+  exile from the top until a nonland card with mana value ≤ N; cast it free or put it into hand;
+  bottom the rest at random. Supports a dynamic threshold (Hurl into History — X = the countered
+  spell's mana value) and a follow-up keyed on the discovered card (Hit the Mother Lode's Treasures).
+  All 19 discover cards are done, e.g. Primordial Gnawer, Geological Appraiser, Daring Discovery,
+  Quintorius Kand, Hurl into History, Walk with the Ancestors.
 
 Beyond that, individual cards may need `add-feature` for a novel one-off ability — flagged
-per-card during implementation. The 214 unimplemented cards break down as 179 single-faced + 35 DFCs.
+per-card during implementation. 175 cards remain unimplemented.
 
 Implementation order: single-faced cards using only supported mechanics first (explore / Map /
 discover / standard effects), then DFCs (Craft, MDFC lands, god flips), deferring any card that

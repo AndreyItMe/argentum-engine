@@ -41,6 +41,9 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("ShuffleHandIntoLibrary", "MoveCollection hand->library + ShuffleLibrary", composes = listOf("MoveCollection", "ShuffleLibrary"))
     composed("ShuffleGraveyardIntoLibrary", "Patterns.Library.shuffleGraveyardIntoLibrary -> Gather + MoveCollection (shuffled)", composes = listOf("MoveCollection"))
 
+    // Discover N (CR 701.57) — native DiscoverEffect. The emitter renders the fixed-integer form
+    // (`Effects.Discover(N)`); a dynamic threshold (e.g. TheGreatestPowerAmongPermanents) declines -> SCAFFOLD.
+    effect("Discover", "Discover", "CR 701.57 — Effects.Discover(N)")
     composed("Surveil", "Patterns.Library.surveil -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
     composed("Scry", "Patterns.Library.scry -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
     composed("ManifestDread", "Patterns.Library.manifestDread -> Gather/Select/MoveCollection(face-down MANIFEST)", composes = listOf("MoveCollection"))
