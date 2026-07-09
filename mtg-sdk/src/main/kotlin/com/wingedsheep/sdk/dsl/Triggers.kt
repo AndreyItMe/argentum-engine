@@ -255,6 +255,20 @@ object Triggers {
     )
 
     /**
+     * When this creature attacks a player (i.e. attacks an opponent). (SELF.)
+     *
+     * Does **not** fire when the creature attacks a planeswalker or a battle — a creature only
+     * ever attacks an opponent when it attacks a player (CR 508.1). This is the "attacks an
+     * opponent" wording (Kaalia of the Vast, whose 2024 ruling clarifies the ability doesn't
+     * trigger on attacking a planeswalker or battle). Sugar for
+     * `attacks(requires = setOf(AttackPredicate.DefenderIsPlayer))`.
+     */
+    val AttacksAnOpponent: TriggerSpec = TriggerSpec(
+        event = AttackEvent(requires = setOf(AttackPredicate.DefenderIsPlayer)),
+        binding = TriggerBinding.SELF
+    )
+
+    /**
      * Generic "attacks" trigger factory. Use [Attacks] for the SELF-only
      * unfiltered case; reach for this factory for any other combination.
      *
@@ -276,6 +290,9 @@ object Triggers {
      *            binding = TriggerBinding.ANY)`
      * - "Battalion — whenever ~ and at least two other creatures attack":
      *   `attacks(requires = setOf(AttackPredicate.AttackerCountAtLeast(3)))`
+     * - "Whenever this creature attacks a player / an opponent"
+     *   (prefer the [AttacksAnOpponent] sugar):
+     *   `attacks(requires = setOf(AttackPredicate.DefenderIsPlayer))`
      * - "Whenever this creature attacks for the first time each turn"
      *   (prefer the [AttacksFirstTimeEachTurn] sugar):
      *   `attacks(requires = setOf(AttackPredicate.FirstTimeEachTurn))`

@@ -566,7 +566,8 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
          *
          * Current cases: [AttackPredicate.Alone],
          * [AttackPredicate.AttackerCountAtLeast],
-         * [AttackPredicate.FirstTimeEachTurn].
+         * [AttackPredicate.FirstTimeEachTurn],
+         * [AttackPredicate.DefenderIsPlayer].
          */
         val requires: Set<AttackPredicate> = emptySet(),
     ) : EventPattern {

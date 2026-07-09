@@ -643,6 +643,12 @@ data class TargetsChosenEvent(
  * per-turn attacker set already includes the just-declared attacker by detection time, so
  * the "first time" fact is captured on the event at declaration (mirroring
  * `LifeChangeEvent.firstThisTurn` / `BecomesTargetEvent.firstTimeByThisController`).
+ *
+ * [attackersAgainstPlayer] is the subset of [attackers] declared as attacking a **player**
+ * (CR 508.1), as opposed to a planeswalker or battle. It backs
+ * `AttackPredicate.DefenderIsPlayer` ("attacks an opponent"): the defender kind is fixed at
+ * declaration and the event doesn't otherwise carry per-attacker defender identity, so the
+ * player-vs-permanent fact is stamped here rather than re-derived downstream.
  */
 @Serializable
 @SerialName("AttackersDeclaredEvent")
@@ -650,7 +656,8 @@ data class AttackersDeclaredEvent(
     val attackers: List<EntityId>,
     val attackerNames: List<String> = emptyList(),
     val attackingPlayerId: EntityId? = null,
-    val firstTimeAttackers: Set<EntityId> = emptySet()
+    val firstTimeAttackers: Set<EntityId> = emptySet(),
+    val attackersAgainstPlayer: Set<EntityId> = emptySet()
 ) : GameEvent
 
 /**

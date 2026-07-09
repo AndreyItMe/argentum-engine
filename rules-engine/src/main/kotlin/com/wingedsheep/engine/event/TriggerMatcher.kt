@@ -1454,6 +1454,9 @@ class TriggerMatcher(
         // creatures attacking for the first time this turn. Stamped on the event at declaration
         // (post-declaration state can't tell, since the per-turn attacker set already includes it).
         AttackPredicate.FirstTimeEachTurn -> boundEntityId in event.firstTimeAttackers
+        // Per-attacker: the trigger's own source was declared as attacking a player (not a
+        // planeswalker or battle). Stamped on the event at declaration (CR 508.1 defender kind).
+        AttackPredicate.DefenderIsPlayer -> boundEntityId in event.attackersAgainstPlayer
     }
 
     private fun matchesSpellCastPredicate(

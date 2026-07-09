@@ -8,6 +8,7 @@ import com.wingedsheep.tooling.coverage.Raw
 import com.wingedsheep.tooling.coverage.Registry
 import com.wingedsheep.tooling.coverage.amountNode
 import com.wingedsheep.tooling.coverage.arg
+import com.wingedsheep.tooling.coverage.argWordsTagged
 import com.wingedsheep.tooling.coverage.asArr
 import com.wingedsheep.tooling.coverage.asInt
 import com.wingedsheep.tooling.coverage.asStr
@@ -577,13 +578,42 @@ internal val zoneHandlers: Map<String, ActionHandler> = actionHandlers {
 
     on("PutACardFromHandOnBattlefield") { _, args, _ ->  // "you may put a [basic land] card from your hand …"
         val arr = args.asArr ?: return@on null
-        val blob = compact(arr.getOrNull(0))
+        val filterNode = arr.getOrNull(0)
+        val blob = compact(filterNode)
+        val flagBlob = compact(arr.getOrNull(1))
+
+        // "…onto the battlefield tapped and attacking that player" — the EntersAttackingPlayer flag
+        // (Kaalia of the Vast, paired with the attacks-a-player trigger above). Maps to
+        // `Patterns.Hand.putFromHand(entersAttacking = true)`, which places the card tapped and attacking
+        // the defending player (the engine's single-opponent read of "that opponent"). Only a creature
+        // filter carrying just a subtype clause renders exactly: `And(Or(IsCreatureType …), IsCardtype
+        // Creature)` -> `GameObjectFilter.Creature.withAnySubtype(…)`. Any other filter predicate (color,
+        // power, "Other", a non-creature card type) can't round-trip, so it declines -> SCAFFOLD rather
+        // than widen the eligible pool.
+        if ("EntersAttackingPlayer" in flagBlob) {
+            val subtypes = filterNode.argWordsTagged("IsCreatureType")
+            val onlyCreatureSubtypeFilter = subtypes.isNotEmpty() &&
+                "\"Creature\"" in blob && "IsCardtype" in blob &&
+                "IsCreatureType" in blob && "_Color" !in blob &&
+                "PowerIs" !in blob && "\"Other\"" !in blob && "ControlledByAPlayer" !in blob
+            if (!onlyCreatureSubtypeFilter) return@on null
+            val subtypeArgs = subtypes.joinToString(", ") { "\"$it\"" }
+            val filterExpr = if (subtypes.size == 1)
+                "GameObjectFilter.Creature.withSubtype($subtypeArgs)"
+            else
+                "GameObjectFilter.Creature.withAnySubtype($subtypeArgs)"
+            return@on Call("Patterns.Hand.putFromHand", listOf(
+                arg("filter", filterExpr),
+                arg("entersAttacking", "true"),
+            ))
+        }
+
         val filter = when {
             "IsSupertype" in blob && "\"Basic\"" in blob && "\"Land\"" in blob -> "GameObjectFilter.BasicLand"
             "\"Land\"" in blob && "IsSupertype" !in blob && "IsLandType" !in blob -> "GameObjectFilter.Land"
             else -> return@on null
         }
-        val entersTapped = "EntersTapped" in compact(arr.getOrNull(1))
+        val entersTapped = "EntersTapped" in flagBlob
         val parts = mutableListOf(arg("filter", filter))
         if (entersTapped) parts.add(arg("entersTapped", "true"))
         Call("Patterns.Hand.putFromHand", parts)

@@ -17,6 +17,12 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // declines -> SCAFFOLD.
     supported("WhenAnyNumberOfCountersOfTypeArePutOnAPermanent", "trigger: one or more counters of a type put on this permanent (CountersPlacedEvent, SELF)")
     supported("WhenACreatureAttacks", "trigger: attacks")
+    // "Whenever this creature attacks a player, …" — the attacks-a-player trigger, gated on the declared
+    // defender being a player (not a planeswalker or battle; CR 508.1 + Kaalia of the Vast's 2024-06-07
+    // ruling). Maps to AttackPredicate.DefenderIsPlayer / Triggers.AttacksAnOpponent for the SELF subject
+    // over a bare "a player" (Opponent / AnyPlayer) scope; the emitter renders that shape and declines a
+    // non-self attacker or a constrained player scope (attacks-you / life-total / controls-N).
+    supported("WhenACreatureAttacksAPlayer", "trigger: this creature attacks a player (Triggers.AttacksAnOpponent)")
     // "Whenever this creature attacks for the first time each turn, …" — SELF attack trigger gated on
     // the per-turn attacker set (AttackPredicate.FirstTimeEachTurn / Triggers.AttacksFirstTimeEachTurn,
     // Fear of Missing Out). Fires once on the first attack and not on a later combat phase the same turn.

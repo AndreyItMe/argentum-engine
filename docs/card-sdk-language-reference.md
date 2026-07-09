@@ -2736,6 +2736,15 @@ Adding a new attack-time mechanic is one new sealed-case + one matcher branch
   at declaration — post-declaration state can't tell, since the per-turn attacker set
   already includes the just-declared attacker. Prefer the `AttacksFirstTimeEachTurn`
   sugar.
+- `AttackPredicate.DefenderIsPlayer` — the trigger's own attacker was declared as
+  attacking a **player**, not a planeswalker or a battle (CR 508.1). A creature only
+  ever attacks a player who is its controller's opponent, so on a `SELF` binding this is
+  exactly the "attacks an opponent" wording (Kaalia of the Vast — whose 2024 ruling
+  clarifies the ability "doesn't trigger if it attacks a planeswalker or battle").
+  Per-attacker, so use it on a `SELF` binding (or an ANY-binding attacker filter that
+  already scopes to one creature). The defender kind is fixed at declaration, so it's
+  captured on `AttackersDeclaredEvent.attackersAgainstPlayer` rather than re-derived
+  from post-declaration state. Prefer the `AttacksAnOpponent` sugar.
 
 Examples:
 
@@ -2745,6 +2754,11 @@ Triggers.attacks(requires = setOf(AttackPredicate.Alone))
 
 // "Whenever this creature attacks for the first time each turn" (prefer the sugar)
 Triggers.AttacksFirstTimeEachTurn
+
+// "Whenever this creature attacks a player / an opponent" — does NOT fire on attacking a
+// planeswalker or battle (Kaalia of the Vast). Prefer the sugar:
+Triggers.AttacksAnOpponent
+// equivalent to: Triggers.attacks(requires = setOf(AttackPredicate.DefenderIsPlayer))
 
 // "Whenever a nontoken creature you control attacks"
 Triggers.attacks(

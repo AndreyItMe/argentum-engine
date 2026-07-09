@@ -570,6 +570,25 @@ sealed interface AttackPredicate {
     data object FirstTimeEachTurn : AttackPredicate {
         override val description = "for the first time each turn"
     }
+
+    /**
+     * The attacker was declared as attacking a **player** — not a planeswalker or a battle.
+     * (CR 508.1: an attacker is declared as attacking a player, planeswalker, or battle.)
+     *
+     * A creature can only attack a player who is its controller's opponent, so on a `SELF`
+     * binding this is exactly "attacks an opponent" (Kaalia of the Vast — whose 2024 ruling
+     * clarifies the ability "doesn't trigger if it attacks a planeswalker or battle"). The
+     * defender kind is fixed at declaration, so the matcher reads it from the stamped
+     * `AttackersDeclaredEvent.attackersAgainstPlayer` set rather than post-declaration state.
+     *
+     * Per-attacker by design: it gates against the trigger's own source, so use it with a
+     * `SELF` binding (or an ANY-binding attacker filter that already scopes to one creature).
+     */
+    @SerialName("AttacksDefenderIsPlayer")
+    @Serializable
+    data object DefenderIsPlayer : AttackPredicate {
+        override val description = "a player"
+    }
 }
 
 // =============================================================================

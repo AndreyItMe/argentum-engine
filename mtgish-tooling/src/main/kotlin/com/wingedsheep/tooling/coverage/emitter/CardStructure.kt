@@ -2892,6 +2892,21 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenACreatureAttacks") && isPlainCreatureFilter(trig))
         return "Triggers.attacks(binding = TriggerBinding.ANY)"
 
+    // "Whenever this creature attacks a player" (SELF) — the attacks-a-player trigger gated on the
+    // declared defender being a *player*, not a planeswalker or battle (AttackPredicate.DefenderIsPlayer
+    // / Triggers.AttacksAnOpponent; Kaalia of the Vast, CR 508.1 + Kaalia's 2024-06-07 ruling). The args
+    // are [subject, defending-player scope]; only the SELF subject over a bare Opponent / AnyPlayer scope
+    // ("a player") renders — both mean "attacks a player" for a single attacker, exactly what
+    // DefenderIsPlayer gates. A `SinglePlayer(You)` scope ("attacks you") or a constrained scope
+    // (LifeTotalIs / ControlsNum — a player at a life total / controlling N permanents; Preacher of the
+    // Schism, Owlbear Cub) has no calibrated Triggers.* constant, so it declines -> SCAFFOLD rather than
+    // widen the trigger. A non-self attacker (the batched "whenever a creature attacks a player" cursed-
+    // land cards) also declines, since the SELF sugar can't express an ANY-binding defender-player scope.
+    if (jsonContains(trig, "_Trigger", "WhenACreatureAttacksAPlayer") && isSelf(trig)) {
+        val scope = castScope(trig["args"].asArr?.getOrNull(1) as? JsonObject)
+        return if (scope == CastScope.OPPONENT || scope == CastScope.ANY) "Triggers.AttacksAnOpponent" else null
+    }
+
     // "Whenever you attack with N or more creatures" — WhenAPlayerAttacksWithANumberOfCreatures scoped to
     // You + a `>= N` comparison + a plain creature filter (Overwhelming Instinct). Only the
     // greater-than-or-equal (N-or-more) shape maps to YouAttackEvent(minAttackers); any other comparison
