@@ -1175,6 +1175,225 @@
     ]
 }
 
+// Bonehoard Dracosaur
+{
+    "name": "Bonehoard Dracosaur",
+    "manaCost": "{3}{R}{R}",
+    "typeLine": "Creature — Dinosaur Dragon",
+    "oracleText": "Flying, first strike\nAt the beginning of your upkeep, exile the top two cards of your library. You may play them this turn. If you exiled a land card this way, create a 3/1 red Dinosaur creature token. If you exiled a nonland card this way, create a Treasure token.",
+    "creatureStats": {
+        "power": 5,
+        "toughness": 5
+    },
+    "keywords": [
+        "FLYING",
+        "FIRST_STRIKE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 2
+                                        }
+                                    },
+                                    "storeAs": "dracosaurExiled"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "dracosaurExiled",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Exile"
+                                    }
+                                },
+                                {
+                                    "type": "GrantMayPlayFromExile",
+                                    "from": "dracosaurExiled"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "CollectionContainsMatch",
+                                    "collection": "dracosaurExiled",
+                                    "filter": "land"
+                                }
+                            },
+                            "then": {
+                                "type": "CreateToken",
+                                "power": 3,
+                                "toughness": 1,
+                                "colors": [
+                                    "RED"
+                                ],
+                                "creatureTypes": [
+                                    "Dinosaur"
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "CollectionContainsMatch",
+                                    "collection": "dracosaurExiled",
+                                    "filter": "nonland"
+                                }
+                            },
+                            "then": {
+                                "type": "CreatePredefinedToken",
+                                "tokenType": "Treasure"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "134",
+        "rarity": "MYTHIC",
+        "artist": "Mark Zug",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/2/2220ed60-3f8f-4dd2-8319-6a06896a5350.jpg?1782694501"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
+// Brackish Blunder
+{
+    "name": "Brackish Blunder",
+    "manaCost": "{1}{U}",
+    "typeLine": "Instant",
+    "oracleText": "Return target creature to its owner's hand. If it was tapped, create a Map token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Target creature you control explores. Activate only as a sorcery.\")",
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "TargetIsTapped"
+            },
+            "then": {
+                "type": "Composite",
+                "effects": [
+                    {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target creature"
+                        },
+                        "destination": "Hand"
+                    },
+                    {
+                        "type": "CreatePredefinedToken",
+                        "tokenType": "Map"
+                    }
+                ]
+            },
+            "otherwise": {
+                "type": "MoveToZone",
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target creature"
+                },
+                "destination": "Hand"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target creature"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "46",
+        "artist": "Daarken",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/e/dea3d0f4-76f5-416f-93ba-8b003b967816.jpg?1782694573"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
+// Brazen Blademaster
+{
+    "name": "Brazen Blademaster",
+    "manaCost": "{2}{R}",
+    "typeLine": "Creature — Orc Pirate",
+    "oracleText": "Whenever this creature attacks while you control two or more artifacts, it gets +2/+1 until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "artifact"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "136",
+        "artist": "Jarel Threat",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/e/8e9e0c66-f64a-428c-be13-a52691833df1.jpg?1782694500"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Bringer of the Last Gift
 {
     "name": "Bringer of the Last Gift",
@@ -1259,6 +1478,79 @@
     ]
 }
 
+// Broodrage Mycoid
+{
+    "name": "Broodrage Mycoid",
+    "manaCost": "{3}{B}",
+    "typeLine": "Creature — Fungus",
+    "oracleText": "At the beginning of your end step, if you descended this turn, create a 1/1 black Fungus creature token with \"This token can't block.\" (You descended if a permanent card was put into your graveyard from anywhere.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Fungus"
+                    ],
+                    "staticAbilities": [
+                        "CantBlock"
+                    ]
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "DESCENDED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "95",
+        "artist": "Domenico Cava",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/8/08318a16-a9ed-42c8-9433-876b7a72e368.jpg?1782694534",
+        "rulings": [
+            {
+                "date": "2023-11-10",
+                "text": "Some cards refer to a player who has \"descended this turn.\" This means that a permanent card has been put into that player's graveyard from anywhere this turn."
+            },
+            {
+                "date": "2023-11-10",
+                "text": "A permanent card is an artifact, battle, creature, enchantment, land, or planeswalker card. Tokens are not cards, and while tokens are put into the graveyard before ceasing to exist, that action doesn't count as a player having descended."
+            },
+            {
+                "date": "2023-11-10",
+                "text": "Abilities that begin with \"At the beginning of your end step, if you descended this turn\" will trigger only once during your end step, no matter how many times you descended this turn. However, if you haven't descended this turn as your end step begins, the ability won't trigger at all. It's not possible to put a permanent card into your graveyard during the end step in time to have the ability trigger."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Buried Treasure
 {
     "name": "Buried Treasure",
@@ -1311,6 +1603,74 @@
         "artist": "Jarel Threat",
         "imageUri": "https://cards.scryfall.io/normal/front/4/c/4c9c45b6-dedd-4481-a06a-c83ace2f18fa.jpg?1782694415"
     }
+}
+
+// Burning Sun Cavalry
+{
+    "name": "Burning Sun Cavalry",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Human Knight",
+    "oracleText": "Whenever this creature attacks or blocks while you control a Dinosaur, this creature gets +1/+1 until end of turn.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature Dinosaur"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "BlockEvent",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                },
+                "triggerCondition": {
+                    "type": "Exists",
+                    "player": "You",
+                    "zone": "Battlefield",
+                    "filter": "creature Dinosaur"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "138",
+        "artist": "Josu Hernaiz",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/c/0c491ac0-4752-47a7-967e-456b6e4245de.jpg?1782694499"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
 }
 
 // Caparocti Sunborn

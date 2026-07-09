@@ -1995,12 +1995,14 @@ object Effects {
         legendary: Boolean = false,
         tapped: Boolean = false,
         artifactToken: Boolean = false,
-        enchantmentToken: Boolean = false
+        enchantmentToken: Boolean = false,
+        staticAbilities: List<com.wingedsheep.sdk.scripting.StaticAbility> = emptyList()
     ): Effect = CreateTokenEffect(
         count = DynamicAmount.Fixed(count), power = power, toughness = toughness,
         colors = colors, creatureTypes = creatureTypes, keywords = keywords,
         controller = controller, imageUri = imageUri, legendary = legendary, tapped = tapped,
-        artifactToken = artifactToken, enchantmentToken = enchantmentToken
+        artifactToken = artifactToken, enchantmentToken = enchantmentToken,
+        staticAbilities = staticAbilities
     )
 
     /**

@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 121 / 286
+**Implemented:** 126 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -28,16 +28,16 @@
 - [x] Bitter Triumph
 - [x] Bloodletter of Aclazotz
 - [ ] Bloodthorn Flail
-- [ ] Bonehoard Dracosaur
-- [ ] Brackish Blunder
+- [x] Bonehoard Dracosaur
+- [x] Brackish Blunder
 - [ ] Braided Net
 - [ ] Brass's Tunnel-Grinder
-- [ ] Brazen Blademaster
+- [x] Brazen Blademaster
 - [ ] Breeches, Eager Pillager
 - [x] Bringer of the Last Gift
-- [ ] Broodrage Mycoid
+- [x] Broodrage Mycoid
 - [x] Buried Treasure
-- [ ] Burning Sun Cavalry
+- [x] Burning Sun Cavalry
 - [ ] Calamitous Cave-In
 - [ ] Canonized in Blood
 - [x] Caparocti Sunborn

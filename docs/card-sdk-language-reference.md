@@ -811,7 +811,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 
 ### Tokens & emblems
 
-- `CreateToken(p, t, colors?, creatureTypes, keywords?, count?, controller?, imageUri?, legendary?, tapped?, artifactToken?, enchantmentToken?)` — make N creature tokens.
+- `CreateToken(p, t, colors?, creatureTypes, keywords?, count?, controller?, imageUri?, legendary?, tapped?, artifactToken?, enchantmentToken?, staticAbilities?)` — make N creature tokens.
   `artifactToken = true` makes them **artifact** creatures and `enchantmentToken = true` makes them **enchantment**
   creatures (both may be set at once); the extra card type is unioned onto the token's `Creature` type line (e.g.
   Duskmourn's Glimmer cards create a "1/1 white Glimmer enchantment creature token" via `enchantmentToken = true`).
@@ -832,9 +832,11 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   set `colorIdentity = "<symbols>"` on the token's `CardDefinition` — both predefined-token executors read
   `colorIdentityOverride ?: colors` for the token's color (a bare `colors` is mana-cost-derived and would be
   colorless). Example: the `Frog` token (`PredefinedTokens.Frog`, a 1/1 green Frog created by Quina, Qu Gourmet).
-  For an *inline* token (not a registered `CardDefinition`) that has its own abilities, the raw
-  `CreateTokenEffect` constructor exposes `staticAbilities`, `triggeredAbilities`, **and**
-  `activatedAbilities` — each list is granted to every created token at resolution (permanent
+  For an *inline* token (not a registered `CardDefinition`) that has its own abilities, the facade's
+  `staticAbilities?` parameter covers the common static-only case (e.g. a token with "This token can't
+  block" — Broodrage Mycoid's `CantBlock(GroupFilter.source())`). For `triggeredAbilities` **and**
+  `activatedAbilities`, drop to the raw `CreateTokenEffect` constructor, which exposes all three —
+  each list is granted to every created token at resolution (permanent
   duration) via `GameState.granted{Static,Triggered,Activated}Abilities`, so the legal-action
   enumerator and `ActivateAbilityHandler` pick them up like any other granted ability. Example:
   Mourner's Surprise's "1/1 red Mercenary creature token with \"{T}: Target creature you control
