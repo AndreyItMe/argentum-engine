@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 131 / 286
+**Implemented:** 136 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -60,19 +60,19 @@
 - [x] Compass Gnome
 - [x] Confounding Riddle
 - [ ] Contested Game Ball
-- [ ] Corpses of the Lost
+- [x] Corpses of the Lost
 - [x] Cosmium Blast
-- [ ] Cosmium Confluence
-- [ ] Council of Echoes
+- [x] Cosmium Confluence
+- [x] Council of Echoes
 - [ ] Curator of Sun's Creation
 - [x] Daring Discovery
-- [ ] Dauntless Dismantler
+- [x] Dauntless Dismantler
 - [x] Dead Weight
 - [x] Deathcap Marionette
 - [ ] Deconstruction Hammer
 - [x] Deep Goblin Skulltaker
 - [x] Deep-Cavern Bat
-- [ ] Deepfathom Echo
+- [x] Deepfathom Echo
 - [ ] Deeproot Pilgrimage
 - [ ] Defossilize
 - [ ] Diamond Pick-Axe

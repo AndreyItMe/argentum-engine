@@ -74,6 +74,10 @@ class TapEventEnforcementTest : FunSpec({
             // Shock-land "pay life or enter tapped": declining to pay makes the land/permanent
             // *enter* tapped (CR 614 replacement on entry), which is not a tap transition.
             "com/wingedsheep/engine/handlers/continuations/ModalAndCloneContinuationResumer.kt",
+            // Global "[filter] enter tapped/untapped" replacements applied to a token as it enters
+            // (shared helper called by every token executor) — entering tapped/untapped on entry is
+            // not a tap transition, so it emits no TappedEvent/UntappedEvent.
+            "com/wingedsheep/engine/handlers/effects/EnterTappedReplacements.kt",
         )
 
         private data class RawTapMutation(

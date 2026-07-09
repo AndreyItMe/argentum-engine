@@ -217,6 +217,11 @@ object TokenCreationReplacementHelper {
                     newState = newState.withEntity(tokenId, tokenContainer)
                     newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                         .place(newState, tokenControllerId, tokenId)
+                    // Honor global "[filter] enter tapped" replacements on the added token too.
+                    newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                        .applyCreatedTokenEntryTap(
+                            newState, tokenId, tokenControllerId, definedTapped = tapped,
+                        )
 
                     events.add(
                         ZoneChangeEvent(
@@ -387,6 +392,9 @@ object TokenCreationReplacementHelper {
             newState = newState.withEntity(tokenId, container)
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, controllerId, tokenId)
+            // Honor global "[filter] enter tapped" replacements on the copy too.
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
 
             // Apply the attached permanent's printed enters-with-counters replacement
             // effects (and any global ones from other permanents).

@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.BattlefieldEntry
+import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
 import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
 import com.wingedsheep.engine.handlers.effects.PermanentEntryReplacements
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
@@ -98,6 +99,7 @@ object TokenFromDefinition {
 
         // As-enters: enters tapped (CR 614). The payLifeCost (shock-land) form is land-only.
         val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
+        var enteredTapped = false
         if (entersTapped != null && entersTapped.payLifeCost == null) {
             val shouldEnterTapped = entersTapped.unlessCondition?.let { condition ->
                 !conditionEvaluator.evaluate(
@@ -106,8 +108,16 @@ object TokenFromDefinition {
             } ?: true
             if (shouldEnterTapped) {
                 newState = newState.updateEntity(tokenId) { c -> c.with(TappedComponent) }
+                enteredTapped = true
             }
         }
+
+        // As-enters: global "[filter] enter tapped/untapped" replacements from OTHER permanents
+        // (Authority of the Consuls taps an opponent's minted creature token). Passing the self
+        // enters-tapped result lets an "enters untapped" replacement override it per CR 614.
+        newState = EnterTappedReplacements.applyCreatedTokenEntryTap(
+            newState, tokenId, controllerId, definedTapped = enteredTapped,
+        )
 
         // As-enters: the token's own + global "enters with counters" (CR 614).
         val (stateWithCounters, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(

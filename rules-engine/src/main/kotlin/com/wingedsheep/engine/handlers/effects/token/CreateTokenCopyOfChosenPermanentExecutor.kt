@@ -142,6 +142,11 @@ class CreateTokenCopyOfChosenPermanentExecutor(
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, controllerId, tokenId)
 
+            // A token copy honors global "[filter] enter tapped" replacements (Authority of the
+            // Consuls taps an opponent's token copy of a creature).
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
+
             val event = ZoneChangeEvent(
                 entityId = tokenId,
                 entityName = tokenCard.name,

@@ -2650,6 +2650,113 @@
     ]
 }
 
+// Corpses of the Lost
+{
+    "name": "Corpses of the Lost",
+    "manaCost": "{2}{B}",
+    "typeLine": "Enchantment",
+    "oracleText": "Skeletons you control get +1/+0 and have haste.\nWhen this enchantment enters, create a 2/2 black Skeleton Pirate creature token.\nAt the beginning of your end step, if you descended this turn, you may pay 1 life. If you do, return this enchantment to its owner's hand. (You descended if a permanent card was put into your graveyard from anywhere.)",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 2,
+                    "toughness": 2,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Skeleton",
+                        "Pirate"
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayLife",
+                            "amount": 1
+                        }
+                    },
+                    "then": {
+                        "type": "MoveToZone",
+                        "target": "Self",
+                        "destination": "Hand"
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "DESCENDED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 0,
+                "filter": {
+                    "baseFilter": "creature Skeleton ctrl:you"
+                }
+            },
+            {
+                "type": "GrantKeyword",
+                "keyword": "HASTE",
+                "filter": {
+                    "baseFilter": "creature Skeleton ctrl:you"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "98",
+        "rarity": "RARE",
+        "artist": "Izzy",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/f/5f661095-3645-4e44-ac39-752e417c2174.jpg?1782694532",
+        "rulings": [
+            {
+                "date": "2023-11-10",
+                "text": "Some cards refer to a player who has \"descended this turn.\" This means that a permanent card has been put into that player's graveyard from anywhere this turn."
+            },
+            {
+                "date": "2023-11-10",
+                "text": "A permanent card is an artifact, battle, creature, enchantment, land, or planeswalker card. Tokens are not cards, and while tokens are put into the graveyard before ceasing to exist, that action doesn't count as a player having descended."
+            },
+            {
+                "date": "2023-11-10",
+                "text": "Abilities that begin with \"At the beginning of your end step, if you descended this turn\" will trigger only once during your end step, no matter how many times you descended this turn. However, if you haven't descended this turn as your end step begins, the ability won't trigger at all. It's not possible to put a permanent card into your graveyard during the end step in time to have the ability trigger."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Cosmium Blast
 {
     "name": "Cosmium Blast",
@@ -2702,6 +2809,209 @@
     ]
 }
 
+// Cosmium Confluence
+{
+    "name": "Cosmium Confluence",
+    "manaCost": "{4}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Choose three. You may choose the same mode more than once.\n• Search your library for a Cave card, put it onto the battlefield tapped, then shuffle.\n• Put three +1/+1 counters on a Cave you control. It becomes a 0/0 Elemental creature with haste. It's still a land.\n• Destroy target enchantment.",
+    "script": {
+        "spellEffect": {
+            "type": "Modal",
+            "modes": [
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Library",
+                                    "filter": "land Cave"
+                                },
+                                "storeAs": "searchable"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "searchable",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "found"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "found",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield",
+                                    "placement": "Tapped"
+                                }
+                            },
+                            "ShuffleLibrary",
+                            "EmitLibrarySearchedEvent"
+                        ]
+                    },
+                    "description": "Search your library for a Cave card, put it onto the battlefield tapped, then shuffle"
+                },
+                {
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "AddCounters",
+                                "counterType": "+1/+1",
+                                "count": 3,
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "a Cave you control"
+                                }
+                            },
+                            {
+                                "type": "BecomeCreature",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "a Cave you control"
+                                },
+                                "power": {
+                                    "type": "Fixed",
+                                    "amount": 0
+                                },
+                                "toughness": {
+                                    "type": "Fixed",
+                                    "amount": 0
+                                },
+                                "keywords": [
+                                    "HASTE"
+                                ],
+                                "creatureTypes": [
+                                    "Elemental"
+                                ],
+                                "duration": "Permanent"
+                            }
+                        ]
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "land Cave ctrl:you"
+                            },
+                            "id": "a Cave you control"
+                        }
+                    ],
+                    "description": "Put three +1/+1 counters on a Cave you control. It becomes a 0/0 Elemental creature with haste. It's still a land"
+                },
+                {
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "BoundVariable",
+                            "name": "target enchantment"
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "enchantment"
+                            },
+                            "id": "target enchantment"
+                        }
+                    ],
+                    "description": "Destroy target enchantment"
+                }
+            ],
+            "chooseCount": 3,
+            "allowRepeat": true
+        }
+    },
+    "metadata": {
+        "collectorNumber": "181",
+        "rarity": "RARE",
+        "artist": "Kasia 'Kafis' Zielińska",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/9/490a5054-0607-4e4a-a0a9-0e9eea7adb00.jpg?1782694465"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
+// Council of Echoes
+{
+    "name": "Council of Echoes",
+    "manaCost": "{4}{U}{U}",
+    "typeLine": "Creature — Spirit Advisor",
+    "oracleText": "Flying\nDescend 4 — When this creature enters, if there are four or more permanent cards in your graveyard, return up to one target nonland permanent other than this creature to its owner's hand.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "up to one target nonland permanent other than this creature"
+                    },
+                    "destination": "Hand"
+                },
+                "targetRequirement": {
+                    "type": "TargetOther",
+                    "baseRequirement": {
+                        "type": "TargetObject",
+                        "optional": true,
+                        "filter": {
+                            "baseFilter": "nonland permanent"
+                        }
+                    },
+                    "id": "up to one target nonland permanent other than this creature"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "Count",
+                        "player": "You",
+                        "zone": "Graveyard",
+                        "filter": "permanent"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "51",
+        "rarity": "UNCOMMON",
+        "artist": "Fariba Khamseh",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/5/85ad358d-a520-4d57-82b0-d2297da1fbde.jpg?1782694568"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Daring Discovery
 {
     "name": "Daring Discovery",
@@ -2751,6 +3061,84 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Dauntless Dismantler
+{
+    "name": "Dauntless Dismantler",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Human Artificer",
+    "oracleText": "Artifacts your opponents control enter tapped.\n{X}{X}{W}, Sacrifice this creature: Destroy each artifact with mana value X.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 4
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{X}{X}{W}"
+                            }
+                        },
+                        "CostSacrificeSelf"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "BattlefieldMatching",
+                                "filter": {
+                                    "cardPredicates": [
+                                        "IsArtifact",
+                                        "ManaValueEqualsX"
+                                    ]
+                                }
+                            },
+                            "storeAs": "destroyAll_gathered"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "destroyAll_gathered",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            },
+                            "moveType": "Destroy"
+                        }
+                    ]
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "PermanentsEnterTapped",
+                "appliesTo": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "artifact ctrl:opponent",
+                    "to": "Battlefield"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "8",
+        "rarity": "UNCOMMON",
+        "artist": "Dibujante Nocturno",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/d/3d771631-0aab-4f09-b9a6-49b6b2d8d2aa.jpg?1782694606"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 
@@ -2992,6 +3380,78 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Deepfathom Echo
+{
+    "name": "Deepfathom Echo",
+    "manaCost": "{2}{G}{U}",
+    "typeLine": "Creature — Merfolk Spirit",
+    "oracleText": "At the beginning of combat on your turn, this creature explores. Then you may have it become a copy of another creature you control until end of turn. (To have this creature explore, reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on this creature, then put the card back or put it into your graveyard.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "BEGIN_COMBAT"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Explore",
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": "Gate.MayDecide",
+                            "then": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "SelectTarget",
+                                        "requirement": {
+                                            "type": "TargetObject",
+                                            "filter": {
+                                                "baseFilter": "creature ctrl:you",
+                                                "excludeSelf": true
+                                            }
+                                        },
+                                        "storeAs": "copySource"
+                                    },
+                                    {
+                                        "type": "EachPermanentBecomesCopyOfTarget",
+                                        "target": {
+                                            "type": "PipelineTarget",
+                                            "collectionName": "copySource"
+                                        },
+                                        "duration": "EndOfTurn",
+                                        "affected": "Self"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "228",
+        "rarity": "RARE",
+        "artist": "Matt Stewart",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/7/c7c7fb87-8448-49f4-a9ed-db97f6a41d98.jpg?1782694427"
+    },
+    "colorIdentityOverride": [
+        "GREEN",
+        "BLUE"
     ]
 }
 

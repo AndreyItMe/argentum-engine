@@ -6122,7 +6122,8 @@ replacementEffect {
   which is a self-replacement consumed once as the source enters, this is a *runtime* replacement
   stamped into the source's `ReplacementEffectSourceComponent` (`StaticAbilityHandler.isRuntimeReplacementEffect`)
   and consulted from the battlefield against OTHER permanents as they enter — so `appliesTo.filter`
-  describes the *affected* permanents. The entry-tap paths (`PlayLandHandler`, `ZoneTransitionService`)
+  describes the *affected* permanents. The entry-tap paths (`PlayLandHandler`, `ZoneTransitionService`,
+  `StackResolver`, and `CreateTokenExecutor` for created tokens)
   ask `EnterUntappedReplacements.entersUntapped(...)` before marking a permanent tapped and skip the
   tap when it matches. Per CR 614 ordering this collapses "would enter tapped via another replacement"
   (controller chooses untapped) and "simply put onto the battlefield tapped" (no replacement → untapped)
@@ -6136,11 +6137,13 @@ replacementEffect {
   Imposing Sovereign / Authority of the Consuls "creatures your opponents control enter tapped"). Like
   `EntersUntapped`, it is a *runtime* replacement stamped into the source's `ReplacementEffectSourceComponent`
   and consulted from the battlefield against OTHER permanents as they enter, so `appliesTo.filter` describes
-  the *affected* permanents. The entry paths (`PlayLandHandler`, `ZoneTransitionService`) call
+  the *affected* permanents. The entry paths (`PlayLandHandler`, `ZoneTransitionService`, `StackResolver`,
+  and `CreateTokenExecutor` for created tokens) call
   `EnterTappedReplacements.entersTapped(...)` and mark the permanent tapped — **after** consulting
-  `EnterUntappedReplacements`, so per CR 614 an applicable `EntersUntapped` still wins. (Creature ETBs via
-  the stack are not yet wired to the global scan — `StackResolver` only consults the entering card's own
-  `EntersTapped` — so the opponent-creature variants would additionally need that hook.)
+  `EnterUntappedReplacements`, so per CR 614 an applicable `EntersUntapped` still wins. Created tokens are
+  covered too: e.g. Dauntless Dismantler's "Artifacts your opponents control enter tapped" taps an
+  opponent's Map/Treasure/Clue token, and Authority of the Consuls taps opponents' creature tokens (a token
+  entering attacking keeps its tapped state and is not overridden).
 - `RedirectZoneChange(newDestination, appliesTo, linkToSource = false)` — redirect a zone change to a
   different destination (Rest in Peace / Leyline of the Void: graveyard → exile). `appliesTo` is an
   `EventPattern.ZoneChangeEvent(filter, from?, to?)`; the `filter`'s `controllerPredicate` scopes it

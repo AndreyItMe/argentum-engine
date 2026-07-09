@@ -129,6 +129,13 @@ class CreatePredefinedTokenExecutor(
 
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, tokenControllerId, tokenId)
+
+            // Predefined Map/Treasure/Clue/etc. tokens honor global "[filter] enter tapped"
+            // replacements (Dauntless Dismantler taps an opponent's artifact token).
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(
+                    newState, tokenId, tokenControllerId, definedTapped = effect.tapped,
+                )
         }
 
         val events = createdTokenIds.map { tokenId ->
