@@ -9,6 +9,7 @@ import com.wingedsheep.engine.handlers.effects.BattlefieldEntry
 import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
 import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
 import com.wingedsheep.engine.handlers.effects.PermanentEntryReplacements
+import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
@@ -149,6 +150,12 @@ object TokenFromDefinition {
                 if (paused != null) return EffectResult.from(paused)
             }
         }
+        // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga and gets its on-enter lore
+        // counter (chapter I then triggers). BattlefieldEntry.place is the ad-hoc insertion path
+        // and intentionally skips enters-with-counters setup, so apply the shared Saga-entry
+        // helper here — the same one the standard moveToZone pipeline uses. No-op for non-Sagas.
+        val (sagaState, sagaEvents) = ZoneMovementUtils.applySagaEntryIfNeeded(newState, tokenId)
+        newState = sagaState
 
         val event = ZoneChangeEvent(
             entityId = tokenId,
@@ -158,6 +165,6 @@ object TokenFromDefinition {
             ownerId = controllerId
         )
 
-        return EffectResult.success(newState, listOf(event) + counterEvents)
+        return EffectResult.success(newState, listOf(event) + counterEvents + sagaEvents)
     }
 }
