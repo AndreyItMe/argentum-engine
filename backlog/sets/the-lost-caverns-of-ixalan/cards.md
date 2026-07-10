@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 176 / 286
+**Implemented:** 181 / 286
 - [x] Abrade
 - [ ] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -201,18 +201,18 @@
 - [x] Resplendent Angel
 - [x] Restless Anchorage
 - [x] Restless Prairie
-- [ ] Restless Reef
-- [ ] Restless Ridgeline
-- [ ] Restless Vents
+- [x] Restless Reef
+- [x] Restless Ridgeline
+- [x] Restless Vents
 - [x] River Herald Guide
 - [x] River Herald Scout
 - [ ] Roaming Throne
 - [x] Ruin-Lurker Bat
 - [x] Rumbling Rockslide
 - [x] Runaway Boulder
-- [ ] Sage of Days
+- [x] Sage of Days
 - [x] Saheeli's Lattice
-- [ ] Saheeli, the Sun's Brilliance
+- [x] Saheeli, the Sun's Brilliance
 - [ ] Sanguine Evangelist
 - [x] Scampering Surveyor
 - [x] Screaming Phantom
