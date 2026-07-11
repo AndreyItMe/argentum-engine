@@ -1194,48 +1194,20 @@ class TriggerMatcher(
         // Valiant: check if this is the first time this turn
         if (trigger.firstTimeEachTurn && !event.firstTimeByThisController) return false
 
-        // Check targetFilter against the targeted entity
+        // Check targetFilter against the targeted entity. The target is live (a battlefield
+        // permanent, or a spell on the stack for includeSpellTargets), so evaluate the whole
+        // filter through PredicateEvaluator: card predicates read projected types when the
+        // entity has a battlefield projection — an animated land IS "a creature you control"
+        // while the effect lasts — and fall back to base card data for stack objects; the
+        // controller predicate likewise falls back to the spell's caster (Surrak, Elusive
+        // Hunter). Targeted abilities on the stack carry no card data and never match.
         if (trigger.targetFilter != GameObjectFilter.Any) {
-            val projected = state.projectedState
             val targetContainer = state.getEntity(event.targetEntityId) ?: return false
-            val targetCard = targetContainer.get<CardComponent>() ?: return false
-
-            // Check card predicates
-            for (predicate in trigger.targetFilter.cardPredicates) {
-                if (!matchesCardPredicate(predicate, targetCard, projected, event.targetEntityId)) return false
-            }
-
-            // Check state predicates (e.g. "with a +1/+1 counter on it" — Elrond, Master of
-            // Healing). The targeted permanent is on the battlefield, so projected/base state
-            // applies. (A spell-on-stack target has no such state, so the filter simply won't match.)
-            if (trigger.targetFilter.statePredicates.isNotEmpty()) {
-                val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
-                    controllerId = controllerId, sourceId = sourceId
-                )
-                val statePredicateEvaluator = PredicateEvaluator()
-                for (predicate in trigger.targetFilter.statePredicates) {
-                    if (!statePredicateEvaluator.matchesStatePredicate(
-                            state, event.targetEntityId, predicate, predicateContext
-                        )) return false
-                }
-            }
-
-            // Check controller predicate. Spells on the stack aren't in projected state
-            // (only battlefield permanents are), so fall back to the spell's own controller
-            // component for spell-target events (Surrak, Elusive Hunter).
-            trigger.targetFilter.controllerPredicate?.let { pred ->
-                val targetController = projected.getController(event.targetEntityId)
-                    ?: targetContainer.get<SpellOnStackComponent>()?.casterId
-                    ?: return false
-                val controllerMatches = pred.evaluateWith { leaf ->
-                    when (leaf) {
-                        is ControllerPredicate.ControlledByYou -> targetController == controllerId
-                        is ControllerPredicate.ControlledByOpponent -> targetController != controllerId
-                        else -> null // leaf kinds this site can't evaluate don't constrain
-                    }
-                }
-                if (!controllerMatches) return false
-            }
+            if (!targetContainer.has<CardComponent>()) return false
+            val predicateContext = PredicateContext(controllerId = controllerId, sourceId = sourceId)
+            if (!PredicateEvaluator().matches(
+                    state, state.projectedState, event.targetEntityId, trigger.targetFilter, predicateContext
+                )) return false
         }
 
         return true
