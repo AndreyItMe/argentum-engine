@@ -3317,6 +3317,47 @@ class CastSpellHandler(
     }
 
     /**
+     * Mana-affordability gate for cast-time mode selection: can the caster still pay
+     * the spell's total cost if [chosenIndices] end up being the chosen modes? Chosen
+     * modes' additional mana costs stack (rule 700.2h), so a pick that is affordable
+     * alone can become unpayable combined with earlier picks — and by the time payment
+     * runs (after target selection) the only way out is cancelling the whole cast.
+     *
+     * Uses the plain effective-cost pipeline for the base cost; a "without paying its
+     * mana cost" cast still owes the stacked per-mode additional costs (CR 601.2b,
+     * 601.2f — additional costs apply on top of an alternative cost).
+     */
+    private fun canPayModeSelection(
+        state: GameState,
+        action: CastSpell,
+        modes: List<com.wingedsheep.sdk.scripting.effects.Mode>,
+        chosenIndices: List<Int>
+    ): Boolean {
+        val extraCosts = chosenIndices.mapNotNull { modes.getOrNull(it)?.additionalManaCost }
+        // Nothing stacks — base-cost affordability was already validated on the cast action.
+        if (extraCosts.isEmpty()) return true
+        val cardComponent = state.getEntity(action.cardId)?.get<CardComponent>() ?: return true
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return true
+        val playForFree = zoneResolver.hasPlayWithoutPayingCost(state, action.playerId, action.cardId) ||
+            action.useWithoutPayingManaCost
+        var cost = if (playForFree) {
+            ManaCost.ZERO
+        } else {
+            costCalculator.calculateEffectiveCost(
+                state,
+                cardDef,
+                action.playerId,
+                action.targets.map { it.toEntityId() },
+                fromZone = castSourceZone(state, action.cardId)
+            )
+        }
+        for (extra in extraCosts) {
+            cost = cost + ManaCost.parse(extra)
+        }
+        return validatePayment(state, action, cost) == null
+    }
+
+    /**
      * Build a ChooseOptionDecision + CastModalModeSelectionContinuation for the next
      * mode pick. Shared between the initial pause (here) and the iterative resumer.
      */
@@ -3331,7 +3372,20 @@ class CastSpellHandler(
         availableIndices: List<Int>?,
         repeatAvailableIndices: List<Int>?
     ): ExecutionResult {
-        val offerIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        val candidateIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        // Rule 700.2h — only offer a mode the caster can still pay for on top of the
+        // modes already picked. Without this gate an unpayable combination sails
+        // through mode + target selection and dead-ends at payment, where the pending
+        // decision can never be answered legally (only cancelled).
+        val offerIndices = candidateIndices.filter { candidate ->
+            canPayModeSelection(state, baseCastAction, modalEffect.modes, selectedModeIndices + candidate)
+        }
+        if (offerIndices.isEmpty() && selectedModeIndices.size < modalEffect.minChooseCount) {
+            return ExecutionResult.error(
+                state,
+                "Cannot afford the additional cost of any remaining mode for $cardName"
+            )
+        }
         val doneOffered = selectedModeIndices.size >= modalEffect.minChooseCount &&
             selectedModeIndices.size < modalEffect.chooseCount
 
