@@ -10,7 +10,7 @@ import com.wingedsheep.engine.core.TargetRequirementInfo
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.TargetFinder
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.handlers.effects.LibraryPlacement
 import com.wingedsheep.engine.handlers.effects.ZoneEntryOptions
 import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
@@ -110,7 +110,7 @@ class MoveToZoneEffectExecutor(
         // creatures with no replacement effects from their face-up identity.
         val actualDestZone = transitionResult.actualDestination
         if (actualDestZone == Zone.BATTLEFIELD && effect.faceDown == null) {
-            val (counterState, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
+            val (counterState, counterEvents) = EntersWithReplacements.applyOnEntry(
                 resultState, targetId, controllerId, cardRegistry
             )
             resultState = counterState

@@ -4,7 +4,7 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.TargetFinder
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.registry.CardRegistry
@@ -686,7 +686,7 @@ class MoveCollectionExecutor(
             // play, Hideaway's free-cast pile). Face-down entries skip this — morphed creatures
             // enter as 2/2 nameless with no replacement effects from their face-up identity.
             if (destZone == Zone.BATTLEFIELD && faceDown == null) {
-                val (counterState, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
+                val (counterState, counterEvents) = EntersWithReplacements.applyOnEntry(
                     newState, cardId, actualDestPlayerId, cardRegistry
                 )
                 newState = counterState

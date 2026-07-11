@@ -1,12 +1,10 @@
 package com.wingedsheep.mtg.sets.definitions.fdn.cards
 
-import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.dsl.Conditions
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.EntersWithCounters
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
  * Goblin Boarders
@@ -16,9 +14,9 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  *
  * Raid — This creature enters with a +1/+1 counter on it if you attacked this turn.
  *
- * Raid enters-with-counter follows the engine's established convention (War-Name
- * Aspirant): an enters-the-battlefield trigger gated by the intervening-if condition
- * [Conditions.YouAttackedThisTurn], adding one +1/+1 counter to itself.
+ * "Enters with a counter" is a replacement effect (rule 614.1c), not a trigger:
+ * it never uses the stack and the creature is a 4/3 from the moment it enters
+ * (Frilled Sparkshooter follows the same pattern).
  */
 val GoblinBoarders = card("Goblin Boarders") {
     manaCost = "{2}{R}"
@@ -28,11 +26,12 @@ val GoblinBoarders = card("Goblin Boarders") {
     toughness = 2
     oracleText = "Raid — This creature enters with a +1/+1 counter on it if you attacked this turn."
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = Conditions.YouAttackedThisTurn
-        effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
-    }
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 1,
+        selfOnly = true,
+        condition = Conditions.YouAttackedThisTurn
+    ))
 
     metadata {
         rarity = Rarity.COMMON

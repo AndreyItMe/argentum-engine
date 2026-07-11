@@ -6,7 +6,7 @@ import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.state.Component
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
@@ -244,7 +244,7 @@ class CreateTokenExecutor(
         // (e.g., Gev, Scaled Scorch granting +1/+1 counters to tokens entering under your control).
         val counterEvents = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
         for (tokenId in createdTokens) {
-            val (nextState, events) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+            val (nextState, events) = EntersWithReplacements.applyGlobal(
                 newState, tokenId, tokenControllerId
             )
             newState = nextState

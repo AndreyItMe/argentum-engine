@@ -443,6 +443,50 @@ data class EntersWithDynamicCounters(
     }
 }
 
+/**
+ * Permanent enters the battlefield with [keywords] (CR 614.1c) — the keyword counterpart of
+ * [EntersWithCounters]. Example: Kavu Titan "If this creature was kicked, it enters with three
+ * +1/+1 counters on it and with trample" — an [EntersWithCounters] plus an [EntersWithKeywords],
+ * both gated on the same [condition].
+ *
+ * The grant happens as the permanent enters: no trigger, no stack, no response window. It is
+ * entry-timestamped for Rule 613 layer ordering (a later "loses all abilities" effect removes
+ * it) and lasts as long as the permanent remains on the battlefield — it is cleaned up when the
+ * permanent leaves (a new object per CR 400.7) and does NOT re-apply if the keyword is removed.
+ *
+ * @param keywords The keywords the entering permanent has from the moment it enters.
+ * @param condition When non-null, the keywords are only granted if this condition evaluates true
+ *                  at the moment the permanent enters (e.g. [conditions.WasKicked], read from the
+ *                  durable cast-choices bag).
+ * @param selfOnly When true, only applies to the permanent carrying this effect as it enters,
+ *                 never to other permanents matching [appliesTo] (mirrors [EntersWithCounters]).
+ */
+@SerialName("EntersWithKeywords")
+@Serializable
+data class EntersWithKeywords(
+    val keywords: List<Keyword>,
+    val condition: Condition? = null,
+    val selfOnly: Boolean = false,
+    override val appliesTo: EventPattern = EventPattern.ZoneChangeEvent(
+        filter = GameObjectFilter.Creature.youControl(),
+        to = Zone.BATTLEFIELD
+    )
+) : ReplacementEffect {
+    override val description: String = buildString {
+        append("If ${appliesTo.description}, it enters with ")
+        append(keywords.joinToString(" and ") { it.displayName.lowercase() })
+        if (condition != null) append(" if ${condition.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newCondition = condition?.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newCondition !== condition)
+            copy(appliesTo = newAppliesTo, condition = newCondition)
+        else this
+    }
+}
+
 // =============================================================================
 // Damage Replacement Effects
 // =============================================================================

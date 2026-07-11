@@ -1,15 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.inv.cards
 
-import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.Duration
+import com.wingedsheep.sdk.scripting.EntersWithCounters
+import com.wingedsheep.sdk.scripting.EntersWithKeywords
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
  * Kavu Titan
@@ -30,14 +28,19 @@ val KavuTitan = card("Kavu Titan") {
 
     keywordAbility(KeywordAbility.kicker("{2}{G}"))
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = WasKicked
-        effect = Effects.Composite(
-            Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 3, EffectTarget.Self),
-            Effects.GrantKeyword(Keyword.TRAMPLE, EffectTarget.Self, Duration.Permanent),
-        )
-    }
+    // "Enters with … counters … and with trample" is a replacement effect (rule 614.1c),
+    // not an ETB trigger: a kicked Titan is a 5/5 trampler from the moment it enters.
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 3,
+        selfOnly = true,
+        condition = WasKicked
+    ))
+    replacementEffect(EntersWithKeywords(
+        keywords = listOf(Keyword.TRAMPLE),
+        selfOnly = true,
+        condition = WasKicked
+    ))
 
     metadata {
         rarity = Rarity.RARE

@@ -1,15 +1,12 @@
 package com.wingedsheep.mtg.sets.definitions.ktk.cards
 
 import com.wingedsheep.sdk.dsl.Conditions
-
-import com.wingedsheep.sdk.core.Counters
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.CantBeBlockedBy
+import com.wingedsheep.sdk.scripting.EntersWithCounters
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
  * War-Name Aspirant
@@ -28,11 +25,12 @@ val WarNameAspirant = card("War-Name Aspirant") {
     toughness = 1
     oracleText = "Raid — This creature enters with a +1/+1 counter on it if you attacked this turn.\nThis creature can't be blocked by creatures with power 1 or less."
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = Conditions.YouAttackedThisTurn
-        effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
-    }
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 1,
+        selfOnly = true,
+        condition = Conditions.YouAttackedThisTurn
+    ))
 
     staticAbility {
         ability = CantBeBlockedBy(GameObjectFilter.Creature.powerAtMost(1))

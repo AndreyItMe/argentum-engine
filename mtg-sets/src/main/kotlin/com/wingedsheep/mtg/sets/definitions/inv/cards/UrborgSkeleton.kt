@@ -1,14 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.inv.cards
 
-import com.wingedsheep.sdk.scripting.KeywordAbility
-import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.EntersWithCounters
+import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
 import com.wingedsheep.sdk.scripting.effects.RegenerateEffect
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -35,11 +34,13 @@ val UrborgSkeleton = card("Urborg Skeleton") {
         effect = RegenerateEffect(EffectTarget.Self)
     }
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = WasKicked
-        effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
-    }
+    // "Enters with a counter" is a replacement effect (rule 614.1c), not an ETB trigger
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 1,
+        selfOnly = true,
+        condition = WasKicked
+    ))
 
     metadata {
         rarity = Rarity.COMMON

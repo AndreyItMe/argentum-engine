@@ -7,7 +7,7 @@ import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.BattlefieldEntry
 import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.handlers.effects.PermanentEntryReplacements
 import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
@@ -47,7 +47,7 @@ import com.wingedsheep.sdk.scripting.EntersWithChoice
  *    `payLifeCost` form is land-only, so a minted creature only ever has the simple form.
  *  - **self + global [EntersWithCounters]/[EntersWithDynamicCounters]** add counters (a creature
  *    that "enters with N +1/+1 counters", plus grants from other permanents) via
- *    [EntersWithCountersHelper].
+ *    [EntersWithReplacements].
  *  - **[EntersWithChoice]** (Alloy Golem, "as this enters, choose a color") pauses for a player
  *    decision via [PermanentEntryReplacements]; the chosen value is recorded in
  *    `CastChoicesComponent` and the token's ETB triggers fire from the resumer afterward.
@@ -121,7 +121,7 @@ object TokenFromDefinition {
         )
 
         // As-enters: the token's own + global "enters with counters" (CR 614).
-        val (stateWithCounters, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
+        val (stateWithCounters, counterEvents) = EntersWithReplacements.applyOnEntry(
             newState, tokenId, controllerId, cardRegistry
         )
         newState = stateWithCounters

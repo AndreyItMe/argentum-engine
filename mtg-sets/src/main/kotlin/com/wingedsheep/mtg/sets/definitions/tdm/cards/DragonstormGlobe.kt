@@ -33,7 +33,7 @@ val DragonstormGlobe = card("Dragonstorm Globe") {
         EntersWithDynamicCounters(
             count = DynamicAmount.Fixed(1),
             // otherOnly = true routes this through the battlefield-scan path in
-            // EntersWithCountersHelper, so the artifact grants counters to *other*
+            // EntersWithReplacements, so the artifact grants counters to *other*
             // permanents (Dragons you control) as they enter, not to itself.
             otherOnly = true,
             appliesTo = EventPattern.ZoneChangeEvent(

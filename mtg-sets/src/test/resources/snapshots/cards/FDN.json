@@ -2896,20 +2896,12 @@
         "toughness": 2
     },
     "script": {
-        "triggeredAbilities": [
+        "replacementEffects": [
             {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 1,
-                    "target": "Self"
-                },
-                "triggerCondition": {
+                "type": "EntersWithCounters",
+                "count": 1,
+                "selfOnly": true,
+                "condition": {
                     "type": "Compare",
                     "left": {
                         "type": "TurnTracking",

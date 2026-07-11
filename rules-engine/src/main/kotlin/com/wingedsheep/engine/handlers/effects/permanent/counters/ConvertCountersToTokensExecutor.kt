@@ -6,7 +6,7 @@ import com.wingedsheep.engine.core.EffectResult
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -35,7 +35,7 @@ class ConvertCountersToTokensExecutor(
         val sourceId = context.sourceId ?: return EffectResult.success(state)
         val sourceEntity = state.getEntity(sourceId) ?: return EffectResult.success(state)
 
-        val counterType = EntersWithCountersHelper.resolveCounterType(effect.counterType)
+        val counterType = EntersWithReplacements.resolveCounterType(effect.counterType)
         val available = sourceEntity.get<CountersComponent>()?.getCount(counterType) ?: 0
         if (available <= 0) return EffectResult.success(state)
 

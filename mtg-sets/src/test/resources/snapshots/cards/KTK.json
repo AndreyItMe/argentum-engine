@@ -13227,34 +13227,6 @@
         "toughness": 1
     },
     "script": {
-        "triggeredAbilities": [
-            {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 1,
-                    "target": "Self"
-                },
-                "triggerCondition": {
-                    "type": "Compare",
-                    "left": {
-                        "type": "TurnTracking",
-                        "player": "You",
-                        "tracker": "PLAYER_ATTACKED"
-                    },
-                    "operator": "GTE",
-                    "right": {
-                        "type": "Fixed",
-                        "amount": 1
-                    }
-                }
-            }
-        ],
         "staticAbilities": [
             {
                 "type": "CantBeBlockedBy",
@@ -13266,6 +13238,26 @@
                             "max": 1
                         }
                     ]
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "count": 1,
+                "selfOnly": true,
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "PLAYER_ATTACKED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
                 }
             }
         ]

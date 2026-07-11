@@ -2,10 +2,14 @@ package com.wingedsheep.engine.handlers.effects
 
 import com.wingedsheep.engine.core.CountersAddedEvent
 import com.wingedsheep.engine.core.GameEvent
+import com.wingedsheep.engine.core.KeywordGrantedEvent
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
+import com.wingedsheep.engine.mechanics.layers.Layer
+import com.wingedsheep.engine.mechanics.layers.SerializableModification
+import com.wingedsheep.engine.mechanics.layers.addFloatingEffect
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
@@ -16,99 +20,62 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.EntersWithCounters
 import com.wingedsheep.sdk.scripting.EntersWithDynamicCounters
+import com.wingedsheep.sdk.scripting.EntersWithKeywords
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
- * Applies "enters with counters" replacement effects sourced from *other* battlefield
- * permanents (e.g., Gev, Scaled Scorch granting +1/+1 counters to creatures you control
- * that enter the battlefield).
+ * Applies "enters with …" replacement effects (CR 614.1c) — counters
+ * ([EntersWithCounters] / [EntersWithDynamicCounters]) and keywords ([EntersWithKeywords]) —
+ * both the entering permanent's own effects and global ones sourced from *other* battlefield
+ * permanents (e.g., Gev, Scaled Scorch granting +1/+1 counters to creatures you control that
+ * enter the battlefield).
  *
- * Used both by [com.wingedsheep.engine.mechanics.stack.StackResolver] when a spell
- * resolves onto the battlefield, and by token-creation executors when tokens enter
- * (tokens have no cast step but Rule 614 replacement effects still apply to them).
+ * Used by [com.wingedsheep.engine.mechanics.stack.StackResolver] when a spell resolves onto the
+ * battlefield, by token-creation executors when tokens enter (tokens have no cast step but
+ * Rule 614 replacement effects still apply to them), and by non-stack entry paths such as
+ * [com.wingedsheep.engine.handlers.effects.zones.MoveToZoneEffectExecutor] (reanimation).
  */
-object EntersWithCountersHelper {
+object EntersWithReplacements {
 
     private val dynamicAmountEvaluator = DynamicAmountEvaluator()
     private val predicateEvaluator = PredicateEvaluator()
     private val conditionEvaluator = com.wingedsheep.engine.handlers.ConditionEvaluator()
 
     /**
-     * Apply both the entering entity's own [EntersWithCounters] / [EntersWithDynamicCounters]
-     * replacement effects (from its [CardDefinition]) and any global ones sourced from other
+     * Apply both the entering entity's own enters-with replacement effects (from its
+     * [CardDefinition], looked up via [cardRegistry]) and any global ones sourced from other
      * battlefield permanents. Used by callers that put a permanent on the battlefield from a
-     * non-stack zone (e.g., [com.wingedsheep.engine.handlers.effects.zones.MoveToZoneEffectExecutor]
-     * when reanimating from graveyard).
+     * non-stack zone.
      *
      * Stack resolution has its own pre-battlefield application path
-     * ([com.wingedsheep.engine.mechanics.stack.StackResolver.applyEntersWithCounters]) and should
-     * not call this method; it would double-apply.
+     * ([com.wingedsheep.engine.mechanics.stack.StackResolver.applyEntersWithReplacements],
+     * which passes the resolving spell's card definition and cast context explicitly) and
+     * should not call this method; it would double-apply.
      */
-    fun applyEntersWithCounters(
+    fun applyOnEntry(
         state: GameState,
         enteringEntityId: EntityId,
         enteringControllerId: EntityId,
         cardRegistry: CardRegistry,
         xValue: Int? = null
     ): Pair<GameState, List<GameEvent>> {
+        val container = state.getEntity(enteringEntityId) ?: return state to emptyList()
+        val cardComponent = container.get<CardComponent>() ?: return state to emptyList()
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return state to emptyList()
+
         var newState = state
         val events = mutableListOf<GameEvent>()
-        val container = newState.getEntity(enteringEntityId) ?: return newState to events
-        val cardComponent = container.get<CardComponent>() ?: return newState to events
-        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return newState to events
-        val entityName = cardComponent.name
 
-        for (effect in cardDef.script.replacementEffects) {
-            when (effect) {
-                is EntersWithCounters -> {
-                    if (effect.condition != null) {
-                        val condContext = EffectContext(
-                            sourceId = enteringEntityId,
-                            controllerId = enteringControllerId,
-                        )
-                        if (!conditionEvaluator.evaluate(newState, effect.condition!!, condContext)) continue
-                    }
-                    val counterType = resolveCounterType(effect.counterType)
-                    val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
-                        newState, enteringEntityId, counterType, effect.count, placerId = enteringControllerId
-                    )
-                    val current = newState.getEntity(enteringEntityId)?.get<CountersComponent>() ?: CountersComponent()
-                    newState = newState.updateEntity(enteringEntityId) { c ->
-                        c.with(current.withAdded(counterType, modifiedCount))
-                    }
-                    val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, enteringEntityId)
-                    newState = afterMark
-                    events.add(CountersAddedEvent(enteringEntityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn, placedBy = enteringControllerId))
-                }
-                is EntersWithDynamicCounters -> {
-                    if (effect.otherOnly) continue
-                    val counterType = resolveCounterType(effect.counterType)
-                    val context = EffectContext(
-                        sourceId = enteringEntityId,
-                        controllerId = enteringControllerId,
-                        xValue = xValue
-                    )
-                    val count = dynamicAmountEvaluator.evaluate(newState, effect.count, context)
-                    if (count > 0) {
-                        val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
-                            newState, enteringEntityId, counterType, count, placerId = enteringControllerId
-                        )
-                        val current = newState.getEntity(enteringEntityId)?.get<CountersComponent>() ?: CountersComponent()
-                        newState = newState.updateEntity(enteringEntityId) { c ->
-                            c.with(current.withAdded(counterType, modifiedCount))
-                        }
-                        val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, enteringEntityId)
-                        newState = afterMark
-                        events.add(CountersAddedEvent(enteringEntityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn, placedBy = enteringControllerId))
-                    }
-                }
-                else -> { /* Other replacement effects handled elsewhere */ }
-            }
-        }
+        val (ownState, ownEvents) = applyFromDefinition(
+            newState, enteringEntityId, cardDef, enteringControllerId, xValue
+        )
+        newState = ownState
+        events.addAll(ownEvents)
 
-        val (globalState, globalEvents) = applyGlobalEntersWithCounters(
+        val (globalState, globalEvents) = applyGlobal(
             newState, enteringEntityId, enteringControllerId
         )
         newState = globalState
@@ -118,14 +85,95 @@ object EntersWithCountersHelper {
     }
 
     /**
-     * Scan battlefield permanents for [EntersWithCounters] / [EntersWithDynamicCounters]
-     * replacement effects that apply to the entering entity, and add the counters.
+     * Apply the entering entity's *own* enters-with replacement effects from [cardDef].
+     * Shared by [applyOnEntry] and the stack-resolution path (which has the resolving
+     * spell's definition and cast context — [xValue] / [totalManaSpent] — at hand).
+     */
+    fun applyFromDefinition(
+        state: GameState,
+        entityId: EntityId,
+        cardDef: CardDefinition,
+        controllerId: EntityId,
+        xValue: Int? = null,
+        totalManaSpent: Int = 0
+    ): Pair<GameState, List<GameEvent>> {
+        var newState = state
+        val events = mutableListOf<GameEvent>()
+        val entityName = newState.getEntity(entityId)?.get<CardComponent>()?.name ?: ""
+
+        for (effect in cardDef.script.replacementEffects) {
+            when (effect) {
+                is EntersWithCounters -> {
+                    if (effect.condition != null) {
+                        val condContext = EffectContext(
+                            sourceId = entityId,
+                            controllerId = controllerId,
+                        )
+                        if (!conditionEvaluator.evaluate(newState, effect.condition!!, condContext)) continue
+                    }
+                    val counterType = resolveCounterType(effect.counterType)
+                    val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
+                        newState, entityId, counterType, effect.count, placerId = controllerId
+                    )
+                    val current = newState.getEntity(entityId)?.get<CountersComponent>() ?: CountersComponent()
+                    newState = newState.updateEntity(entityId) { c ->
+                        c.with(current.withAdded(counterType, modifiedCount))
+                    }
+                    val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, entityId)
+                    newState = afterMark
+                    events.add(CountersAddedEvent(entityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn, placedBy = controllerId))
+                }
+                is EntersWithDynamicCounters -> {
+                    // Skip "other only" effects when applying to self (e.g., Gev)
+                    if (effect.otherOnly) continue
+                    val counterType = resolveCounterType(effect.counterType)
+                    val context = EffectContext(
+                        sourceId = entityId,
+                        controllerId = controllerId,
+                        xValue = xValue,
+                        totalManaSpent = totalManaSpent
+                    )
+                    val count = dynamicAmountEvaluator.evaluate(newState, effect.count, context)
+                    if (count > 0) {
+                        val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
+                            newState, entityId, counterType, count, placerId = controllerId
+                        )
+                        val current = newState.getEntity(entityId)?.get<CountersComponent>() ?: CountersComponent()
+                        newState = newState.updateEntity(entityId) { c ->
+                            c.with(current.withAdded(counterType, modifiedCount))
+                        }
+                        val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, entityId)
+                        newState = afterMark
+                        events.add(CountersAddedEvent(entityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn, placedBy = controllerId))
+                    }
+                }
+                is EntersWithKeywords -> {
+                    val context = EffectContext(
+                        sourceId = entityId,
+                        controllerId = controllerId,
+                    )
+                    if (effect.condition != null &&
+                        !conditionEvaluator.evaluate(newState, effect.condition!!, context)
+                    ) continue
+                    val (grantState, grantEvents) = grantKeywords(newState, effect, entityId, entityName, context)
+                    newState = grantState
+                    events.addAll(grantEvents)
+                }
+                else -> { /* Other replacement effects handled elsewhere */ }
+            }
+        }
+        return newState to events
+    }
+
+    /**
+     * Scan battlefield permanents for enters-with replacement effects that apply to the
+     * entering entity, and apply them (counters added / keywords granted).
      *
      * @param state The game state after the entering entity has been added to the battlefield.
      * @param enteringEntityId The entity that just entered the battlefield.
      * @param enteringControllerId The controller of the entering entity.
      */
-    fun applyGlobalEntersWithCounters(
+    fun applyGlobal(
         state: GameState,
         enteringEntityId: EntityId,
         enteringControllerId: EntityId,
@@ -177,10 +225,10 @@ object EntersWithCountersHelper {
                         // An "enters with N counters" count always describes the ENTERING object,
                         // not the replacement source — the counters go on the entering permanent and
                         // any "it" in the count refers to it (CR 121.6 / 614). Mirror the self path
-                        // (StackResolver.applyEntersWithCounters uses sourceId = the entering entity)
-                        // so amounts like DistinctColorsManaSpent ("...colors of mana spent to cast
-                        // IT") read the entering creature's own cast, not the source's. controllerId
-                        // stays the source's controller so player-scoped counts (Gev's
+                        // (StackResolver.applyEntersWithReplacements uses sourceId = the entering
+                        // entity) so amounts like DistinctColorsManaSpent ("...colors of mana spent
+                        // to cast IT") read the entering creature's own cast, not the source's.
+                        // controllerId stays the source's controller so player-scoped counts (Gev's
                         // TurnTracking(Player.You)) keep reading the source controller's trackers.
                         val context = EffectContext(
                             sourceId = enteringEntityId,
@@ -201,9 +249,70 @@ object EntersWithCountersHelper {
                             events.add(CountersAddedEvent(enteringEntityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn, placedBy = enteringControllerId))
                         }
                     }
+                    is EntersWithKeywords -> {
+                        if (effect.selfOnly) continue
+                        if (!matchesEnterFilter(effect.appliesTo, enteringEntityId, sourceControllerId, newState)) continue
+                        // Like the counters branch above: the condition describes the ENTERING
+                        // permanent; controllerId stays the source's controller.
+                        if (effect.condition != null) {
+                            val condContext = EffectContext(
+                                sourceId = enteringEntityId,
+                                controllerId = sourceControllerId,
+                                affectedEntityId = enteringEntityId,
+                            )
+                            if (!conditionEvaluator.evaluate(newState, effect.condition!!, condContext)) continue
+                        }
+                        // The grant itself is credited to the replacement's source permanent.
+                        val grantContext = EffectContext(
+                            sourceId = sourceId,
+                            controllerId = sourceControllerId,
+                            affectedEntityId = enteringEntityId,
+                        )
+                        val (grantState, grantEvents) = grantKeywords(newState, effect, enteringEntityId, entityName, grantContext)
+                        newState = grantState
+                        events.addAll(grantEvents)
+                    }
                     else -> { /* Other replacement effects handled elsewhere */ }
                 }
             }
+        }
+        return newState to events
+    }
+
+    /**
+     * Grant [effect]'s keywords to [enteringEntityId] as permanent floating effects. The grant
+     * is entry-timestamped (Rule 613 layer ordering: a later "loses all abilities" removes it)
+     * and cleaned up when the permanent leaves the battlefield
+     * ([ZoneMovementUtils.removeFloatingEffectsTargeting], CR 400.7).
+     */
+    private fun grantKeywords(
+        state: GameState,
+        effect: EntersWithKeywords,
+        enteringEntityId: EntityId,
+        enteringEntityName: String,
+        context: EffectContext,
+    ): Pair<GameState, List<GameEvent>> {
+        var newState = state
+        val events = mutableListOf<GameEvent>()
+        val sourceName = context.sourceId
+            ?.let { newState.getEntity(it)?.get<CardComponent>()?.name }
+            ?: enteringEntityName
+        for (keyword in effect.keywords) {
+            newState = newState.addFloatingEffect(
+                layer = Layer.ABILITY,
+                modification = SerializableModification.GrantKeyword(keyword.name),
+                affectedEntities = setOf(enteringEntityId),
+                duration = Duration.Permanent,
+                context = context
+            )
+            events.add(
+                KeywordGrantedEvent(
+                    targetId = enteringEntityId,
+                    targetName = enteringEntityName,
+                    keyword = keyword.name.lowercase().replace('_', ' '),
+                    sourceName = sourceName
+                )
+            )
         }
         return newState to events
     }

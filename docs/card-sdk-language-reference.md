@@ -6225,6 +6225,19 @@ replacementEffect {
     `DistinctColorsManaSpent` reads the new creature's own cast (and a token / reanimated creature that
     wasn't cast spent no mana → 0). Player-scoped counts (`TurnTracking(Player.You)`, Gev) still read
     the replacement source's controller.
+- `EntersWithKeywords(keywords, condition?, selfOnly?, appliesTo?)` — "[permanent] enters with
+  [keywords]" (CR 614.1c), the keyword counterpart of `EntersWithCounters`. The grant happens as the
+  permanent enters — no trigger, no stack, no response window — as a permanent, entry-timestamped
+  Layer-6 floating effect: a later "loses all abilities" removes it, it does not re-apply if stripped,
+  and it is cleaned up when the permanent leaves the battlefield (new object, CR 400.7). Kicker riders
+  are the canonical use (Kavu Titan "If this creature was kicked, it enters with three +1/+1 counters
+  on it and with trample" = an `EntersWithCounters` **plus** an `EntersWithKeywords`, both
+  `selfOnly = true, condition = WasKicked`; also Benalish Lancer / Duskwalker / Faerie Squadron /
+  Pouncing Kavu). `condition` is evaluated at the moment of entry against the entering permanent
+  (cast-choice conditions like `WasKicked` read the durable cast-choices bag, so a token copy or
+  reanimated body — never kicked — correctly gets nothing). Like `EntersWithCounters`, a
+  non-`selfOnly` instance stamped on a battlefield permanent applies to *other* permanents matching
+  `appliesTo` as they enter.
 - `EntersWithDevour(multiplier, sacrificeFilter, counterType, variant)` — Devour (CR 702.82) and its
   printed variants. As the permanent resolves from the stack, the controller is prompted to pick any
   number of their own permanents matching `sacrificeFilter`. Those permanents are sacrificed and the

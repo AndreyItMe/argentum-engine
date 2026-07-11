@@ -5,7 +5,7 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.DelayedTriggeredAbility
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.Component
@@ -142,7 +142,7 @@ class CreateTokenCopyOfSourceExecutor(
         // (e.g., Gev, Scaled Scorch granting +1/+1 counters to Offspring token copies).
         val counterEvents = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
         for (tokenId in createdTokens) {
-            val (nextState, events) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+            val (nextState, events) = EntersWithReplacements.applyGlobal(
                 newState, tokenId, controllerId
             )
             newState = nextState

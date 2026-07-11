@@ -35,7 +35,11 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // addition to its other types"): set base power/toughness (Layer 7b) and add a creature subtype
     // (Layer 4). Both map to standing SDK effects with Duration.Permanent. Capability-only — the
     // EntersWithLayerEffect/PutEachExiledCardOntoTheBattlefield host shape is card-specific, so the
-    // emitter declines -> SCAFFOLD.
+    // emitter declines -> SCAFFOLD. (A *plain-keyword* AddAbility under EntersWithLayerEffect is now
+    // expressible as the EntersWithKeywords replacement — the INV/DOM kicker "enters with … and with
+    // trample" cycle — but every corpus card with this tag also carries SetPT / activated-ability /
+    // until-EOT riders the shape doesn't cover, so there is no calibrated card to render and the
+    // emitter keeps declining.)
     effect("SetPT", "SetBasePowerToughness", "set base power/toughness via an enters-with layer effect (Ghost Vacuum)")
     effect("AddCreatureType", "AddCreatureType", "add a creature subtype in addition to other types (Ghost Vacuum)")
     // The mtgish IR routes every put-counter action through a `PutCounters` envelope whose nested

@@ -584,7 +584,7 @@ class MiscContinuationResumer(
             return ExecutionResult.error(state, "Expected number response for convert-counters-to-tokens")
         }
 
-        val counterType = com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+        val counterType = com.wingedsheep.engine.handlers.effects.EntersWithReplacements
             .resolveCounterType(continuation.counterType)
         val available = state.getEntity(continuation.sourceId)
             ?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
