@@ -4,6 +4,7 @@ import com.wingedsheep.engine.core.ChooseTargetsDecision
 import com.wingedsheep.engine.core.TargetsResponse
 import com.wingedsheep.engine.core.YesNoDecision
 import com.wingedsheep.engine.core.YesNoResponse
+import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.support.ScenarioTestBase
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContain
@@ -103,6 +104,17 @@ class DiscoverCastTargetedSpellScenarioTest : ScenarioTestBase() {
                 withClue("Nothing named Zombify is on the stack or resolved") {
                     game.isInGraveyard(1, "Zombify") shouldBe false
                 }
+
+                // The abandoned cast must not leak its free-cast grant: the stamp is zone-agnostic
+                // and lives until end-of-turn cleanup, so a leftover one would let the player cast
+                // Zombify from hand for {0} later this turn.
+                val zombify = game.findCardsInHand(1, "Zombify").single()
+                withClue("The card in hand carries no free-cast stamp") {
+                    game.state.getEntity(zombify)?.has<PlayWithoutPayingCostComponent>() shouldBe false
+                }
+                withClue("No may-play permission is left covering the card") {
+                    game.state.mayPlayPermissions.none { zombify in it.cardIds } shouldBe true
+                }
             }
 
             test("cascade hitting a targeted spell prompts for a target too") {
@@ -136,7 +148,7 @@ class DiscoverCastTargetedSpellScenarioTest : ScenarioTestBase() {
                 withClue("Submitting the target should succeed: ${picked.error}") {
                     picked.error shouldBe null
                 }
-                game.resolveStack() // Zombify, then Annoyed Altisaur, resolve.
+                game.resolveStack() // Zombify, then Quandrix, resolve.
 
                 withClue("Zombify returned the targeted creature card to the battlefield") {
                     game.isOnBattlefield("Grizzly Bears") shouldBe true

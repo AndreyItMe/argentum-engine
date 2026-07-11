@@ -358,6 +358,11 @@ data class DiscoverMayCastContinuation(
  * @property casterId The controller of the effect (also the decision-maker)
  * @property storeCastTo When set, the cast card's id is published to this pipeline collection
  *   once the cast initiates, so an enclosing `IfYouDoEffect` can gate a follow-up.
+ * @property grantedPermissionId The [com.wingedsheep.engine.state.permissions.MayPlayPermission]
+ *   created for this synthesized cast, so a failed cast can revoke exactly that grant (a blanket
+ *   per-card removal could clobber an unrelated permission covering the same card).
+ * @property onCastFailure Where the card goes if the cast still can't initiate with the chosen
+ *   targets. The free-cast grant is revoked either way.
  */
 @Serializable
 data class CastFromCollectionTargetsContinuation(
@@ -365,7 +370,25 @@ data class CastFromCollectionTargetsContinuation(
     val cardId: EntityId,
     val casterId: EntityId,
     val storeCastTo: String? = null,
+    val grantedPermissionId: EntityId? = null,
+    val onCastFailure: FreeCastFallback = FreeCastFallback.LEAVE,
 ) : ContinuationFrame
+
+/**
+ * Disposition of the card when a synthesized free cast fails to initiate after target
+ * selection ([CastFromCollectionTargetsContinuation.onCastFailure]).
+ */
+@Serializable
+enum class FreeCastFallback {
+    /** The card stays where it is (CastFromCollection effects — the card simply stays put). */
+    LEAVE,
+
+    /** Discover (CR 701.57a) — "If you don't cast it, put that card into your hand." */
+    HAND,
+
+    /** Cascade (CR 702.85a) — uncast exiled cards go to the bottom of the library. */
+    BOTTOM_OF_LIBRARY,
+}
 
 /**
  * Resume after the controller picks (or declines) the next card to cast for free during a

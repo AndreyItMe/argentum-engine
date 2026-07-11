@@ -18,6 +18,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.permissions.MayPlayPermission
 import com.wingedsheep.engine.state.permissions.addMayPlayPermission
+import com.wingedsheep.engine.state.permissions.removeMayPlayPermission
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.ModalEffect
@@ -70,46 +71,43 @@ class CastFromCollectionWithoutPayingCostExecutor(
         val cardId = cards.first()
         val controllerId = context.controllerId
 
+        // Check targeting *before* granting: a grant made ahead of a cast that never happens
+        // would follow the card out of exile and stay live until end-of-turn cleanup.
+        val prep = prepareTargetSelection(state, cardId, controllerId, cardRegistry, targetFinder, effect.storeCastTo)
+        if (prep is TargetPrep.NoLegalTargets) {
+            // CR 601.2c — if no legal targets exist for a required slot, the cast can't
+            // initiate; the chosen card simply stays where it is.
+            return EffectResult.success(state)
+        }
+
         // payManaCost casts route through the normal cost (Kaervek, the Punisher — "you may cast
         // the copy"); only the free-cast path stamps PlayWithoutPayingCostComponent. Both grant a
         // MayPlayPermission so the card is castable from its current (e.g. exile) zone.
-        var newState = if (effect.payManaCost) state else state.updateEntity(cardId) { container ->
-            container.with(PlayWithoutPayingCostComponent(controllerId = controllerId))
-        }
-        val (permId, stateWithPerm) = newState.newEntity()
-        newState = stateWithPerm.addMayPlayPermission(
-            MayPlayPermission(
-                id = permId,
-                cardIds = setOf(cardId),
-                controllerId = controllerId,
-                sourceId = context.sourceId,
-                timestamp = newState.timestamp,
-            )
+        val (permId, newState) = grantFreeCast(
+            state = state,
+            cardId = cardId,
+            controllerId = controllerId,
+            sourceId = context.sourceId,
+            withoutPayingCost = !effect.payManaCost,
         )
 
-        when (val prep = prepareTargetSelection(newState, cardId, controllerId, cardRegistry, targetFinder, effect.storeCastTo)) {
-            TargetPrep.NoLegalTargets ->
-                // CR 601.2c — if no legal targets exist for a required slot, the cast can't
-                // initiate; the chosen card simply stays where it is.
-                return EffectResult.success(newState)
-            is TargetPrep.NeedsTargets -> {
-                val pausedState = newState
-                    .pushContinuation(prep.continuation)
-                    .withPendingDecision(prep.decision)
-                    .withPriority(controllerId)
-                return EffectResult.paused(pausedState, prep.decision, listOf(prep.event))
-            }
-            TargetPrep.NotNeeded -> {}
+        if (prep is TargetPrep.NeedsTargets) {
+            val pausedState = newState
+                .pushContinuation(prep.continuation.copy(grantedPermissionId = permId))
+                .withPendingDecision(prep.decision)
+                .withPriority(controllerId)
+            return EffectResult.paused(pausedState, prep.decision, listOf(prep.event))
         }
 
         // No targets needed (or modal — CastSpellHandler will handle per-mode targets).
-        return invokeCast(newState, controllerId, cardId, emptyList(), effect.storeCastTo)
+        return invokeCast(newState, controllerId, cardId, permId, emptyList(), effect.storeCastTo)
     }
 
     private fun invokeCast(
         state: GameState,
         casterId: EntityId,
         cardId: EntityId,
+        grantedPermissionId: EntityId,
         targets: List<com.wingedsheep.engine.state.components.stack.ChosenTarget>,
         storeCastTo: String?,
     ): EffectResult {
@@ -120,7 +118,7 @@ class CastFromCollectionWithoutPayingCostExecutor(
         )
 
         if (castResult.error != null) {
-            return EffectResult.success(state)
+            return EffectResult.success(revokeFreeCast(state, cardId, grantedPermissionId))
         }
 
         // The cast initiated (synchronously or pausing for X / further input). Publish the cast
@@ -165,6 +163,49 @@ class CastFromCollectionWithoutPayingCostExecutor(
     }
 
     companion object {
+        /**
+         * Grant [controllerId] a one-shot cast of [cardId] from its current zone: a
+         * [MayPlayPermission] covering the card and — unless [withoutPayingCost] is false
+         * (Kaervek's "you may cast the copy", paying its cost) — a [PlayWithoutPayingCostComponent]
+         * making the cast free. Returns the permission id so a cast that never happens can revoke
+         * exactly this grant via [revokeFreeCast].
+         *
+         * Callers must only grant once the cast is known to be attemptable
+         * ([prepareTargetSelection] first): the component is zone-agnostic and lives until
+         * end-of-turn cleanup, so a leftover grant would let the card be cast for free from
+         * wherever it lands (hand, library, exile).
+         */
+        fun grantFreeCast(
+            state: GameState,
+            cardId: EntityId,
+            controllerId: EntityId,
+            sourceId: EntityId?,
+            withoutPayingCost: Boolean = true,
+        ): Pair<EntityId, GameState> {
+            val stamped = if (!withoutPayingCost) state else state.updateEntity(cardId) { container ->
+                container.with(PlayWithoutPayingCostComponent(controllerId = controllerId))
+            }
+            val (permId, stateWithPerm) = stamped.newEntity()
+            val granted = stateWithPerm.addMayPlayPermission(
+                MayPlayPermission(
+                    id = permId,
+                    cardIds = setOf(cardId),
+                    controllerId = controllerId,
+                    sourceId = sourceId,
+                    timestamp = stateWithPerm.timestamp,
+                )
+            )
+            return permId to granted
+        }
+
+        /** Undo [grantFreeCast] when the synthesized cast didn't happen after all. */
+        fun revokeFreeCast(state: GameState, cardId: EntityId, permissionId: EntityId?): GameState {
+            val withoutPermission = permissionId?.let { state.removeMayPlayPermission(it) } ?: state
+            return withoutPermission.updateEntity(cardId) { container ->
+                container.without<PlayWithoutPayingCostComponent>()
+            }
+        }
+
         /**
          * Determine whether a synthesized cast of [cardId] must pause for target selection first.
          *
