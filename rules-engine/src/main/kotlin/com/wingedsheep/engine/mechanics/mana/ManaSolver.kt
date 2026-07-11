@@ -34,6 +34,7 @@ import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfChoiceEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
+import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.Gate
 import com.wingedsheep.sdk.scripting.effects.GatedEffect
@@ -48,6 +49,8 @@ import com.wingedsheep.sdk.scripting.DampLandManaProduction
 import com.wingedsheep.sdk.scripting.GrantActivatedAbility
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
+import com.wingedsheep.sdk.scripting.references.Player
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
@@ -122,6 +125,22 @@ data class ManaSource(
      * Colors not present in this map can be produced for free (or not at all).
      */
     val colorActivationManaCost: Map<Color, Int> = emptyMap(),
+    /**
+     * Life required to produce each color, from the *cheapest* ability producing that color.
+     * Covers both pain modeled as a cost atom (Starting Town's "{T}, Pay 1 life: Add one mana
+     * of any color") and pain modeled as a self-damage side effect (Battlefield Forge's
+     * "{T}: Add {R} or {W}. This land deals 1 damage to you."). Colors not in this map are
+     * pain-free. Unlike the source-level [hasPainCost]/[painAmount] pair — which only flags a
+     * source whose *every* ability pains — this lets the solver see that a mixed source (free
+     * "{T}: Add {C}" alongside a painful colored ability) charges life for its colors but not
+     * for colorless, so auto-pay can route generic pips through the free ability.
+     */
+    val colorPainCost: Map<Color, Int> = emptyMap(),
+    /**
+     * Life required to produce colorless via the cheapest colorless-producing ability
+     * (0 = free, the overwhelmingly common case). Only meaningful when [producesColorless].
+     */
+    val colorlessPainCost: Int = 0,
     /**
      * Tapping this source also requires sacrificing it (e.g. Treasure tokens —
      * "{T}, Sacrifice this artifact: Add one mana of any color"). The auto-pay
@@ -560,8 +579,10 @@ class ManaSolver(
                         source2 == null -> source1
                         else -> {
                             // Pick the source with lower priority (tap it first)
-                            val priority1 = calculateTapPriority(source1, handRequirements, availableSourcesByColor)
-                            val priority2 = calculateTapPriority(source2, handRequirements, availableSourcesByColor)
+                            val priority1 = calculateTapPriority(source1, handRequirements, availableSourcesByColor) +
+                                painPenalty(source1, source1.colorPainCost[symbol.color1] ?: 0)
+                            val priority2 = calculateTapPriority(source2, handRequirements, availableSourcesByColor) +
+                                painPenalty(source2, source2.colorPainCost[symbol.color2] ?: 0)
                             if (priority1 <= priority2) source1 else source2
                         }
                     }
@@ -595,7 +616,10 @@ class ManaSolver(
                     // Sort colorless sources by priority
                     val source = remainingSources
                         .filter { it.producesColorless }
-                        .minByOrNull { calculateTapPriority(it, handRequirements, availableSourcesByColor) }
+                        .minByOrNull {
+                            calculateTapPriority(it, handRequirements, availableSourcesByColor) +
+                                painPenalty(it, it.colorlessPainCost)
+                        }
                         ?: return null
 
                     manaProduced[source.entityId] = ManaProduction(colorless = source.manaAmount)
@@ -726,9 +750,22 @@ class ManaSolver(
                 remainingSources.minByOrNull { calculateTapPriority(it, handRequirements, availableSourcesByColor) }
             } ?: return null
 
-            // For generic costs, prefer unrestricted colors, then colorless
-            val colorToUse = source.availableColorsFor(spellContext).firstOrNull()
-                ?: source.producesColors.firstOrNull()
+            // For generic costs any mana works, so pick the cheapest production: prefer
+            // unrestricted colors, then colorless — but never pay a color's extra cost
+            // (pain or activation mana) when a cheaper colorless ability exists. Without
+            // this, a Starting Town tapped for generic would route through "{T}, Pay
+            // 1 life: Add one mana of any color" instead of its free "{T}: Add {C}".
+            fun coloredExtraCost(color: Color): Int =
+                (source.colorPainCost[color] ?: 0) + (source.colorActivationManaCost[color] ?: 0)
+            val cheapestColor = source.availableColorsFor(spellContext)
+                .ifEmpty { source.producesColors }
+                .minByOrNull(::coloredExtraCost)
+            val colorToUse = when {
+                cheapestColor == null -> null
+                source.producesColorless &&
+                    coloredExtraCost(cheapestColor) > source.colorlessPainCost -> null
+                else -> cheapestColor
+            }
             manaProduced[source.entityId] = if (colorToUse != null) {
                 ManaProduction(color = colorToUse, amount = source.manaAmount)
             } else {
@@ -1019,6 +1056,10 @@ class ManaSolver(
             val perColorRestrictions = mutableMapOf<Color, ManaRestriction?>()
             // Track the minimum mana-cost-to-activate per color (cheapest ability producing it)
             val perColorActivationCost = mutableMapOf<Color, Int>()
+            // Track the minimum life cost (pain) per color, and for colorless production,
+            // across the abilities producing each — see ManaSource.colorPainCost.
+            val perColorPainCost = mutableMapOf<Color, Int>()
+            var cheapestColorlessPain = Int.MAX_VALUE
             // Track which colors are produceable WITHOUT sacrificing the source. A color is
             // sacrifice-free if any accepted ability producing it has no SacrificeSelf cost.
             // Colors in `combinedColors` but not here can only be made by sacrificing — the
@@ -1037,7 +1078,10 @@ class ManaSolver(
             landSubtypeSeedColors?.let { seed ->
                 combinedColors.addAll(seed)
                 sacrificeFreeColors.addAll(seed)
-                for (color in seed) perColorRestrictions[color] = null
+                for (color in seed) {
+                    perColorRestrictions[color] = null
+                    perColorPainCost[color] = 0
+                }
                 hasUnrestrictedAbility = true
             }
 
@@ -1140,6 +1184,15 @@ class ManaSolver(
                     }
                 }
 
+                // Pain modeled as a self-damage side effect in the ability's effect chain
+                // (Battlefield Forge: "{T}: Add {R} or {W}. This land deals 1 damage to you.")
+                // counts the same as a PayLife cost atom.
+                val effectPain = selfDamageAmount(ability.effect)
+                if (effectPain > 0) {
+                    abilityHasPainCost = true
+                    abilityPainAmount += effectPain
+                }
+
                 if (!abilityHasPainCost) anyAbilityHasNoPainCost = true
                 if (abilityHasPainCost) minPainAmount = minOf(minPainAmount, abilityPainAmount)
 
@@ -1238,6 +1291,16 @@ class ManaSolver(
                     else minOf(existing, abilityActivationManaCost)
                 }
 
+                // Record the cheapest pain per color / for colorless this ability produces.
+                for (color in effectColors) {
+                    val existing = perColorPainCost[color]
+                    perColorPainCost[color] = if (existing == null) abilityPainAmount
+                    else minOf(existing, abilityPainAmount)
+                }
+                if (manaEffect is AddColorlessManaEffect) {
+                    cheapestColorlessPain = minOf(cheapestColorlessPain, abilityPainAmount)
+                }
+
                 // Record which colors this ability can produce without sacrifice.
                 if (!abilityRequiresSacrifice) {
                     sacrificeFreeColors.addAll(effectColors)
@@ -1297,6 +1360,10 @@ class ManaSolver(
                 val colorActivationCosts = perColorActivationCost
                     .filter { (_, cost) -> cost > 0 }
 
+                // Only record pain > 0 (the default is "pain-free").
+                val colorPainCosts = perColorPainCost
+                    .filter { (_, pain) -> pain > 0 }
+
                 // Mark the source as sacrifice-required only when every accepted ability
                 // demanded sacrifice. If any non-sac ability was accepted, that path is
                 // preferred and the source is offered without sacrifice.
@@ -1348,6 +1415,10 @@ class ManaSolver(
                     colorRiders = perColorRiders.mapValues { (_, v) -> v.toSet() },
                     colorRestrictions = restrictedColors,
                     colorActivationManaCost = colorActivationCosts,
+                    colorPainCost = colorPainCosts,
+                    colorlessPainCost = if (producesColorless && cheapestColorlessPain != Int.MAX_VALUE) {
+                        cheapestColorlessPain
+                    } else 0,
                     requiresSacrifice = requiresSacrifice,
                     colorsRequiringSacrifice = colorsRequiringSacrifice,
                     hasContextSensitiveAbilities = hasMixedRestrictions,
@@ -1490,6 +1561,22 @@ class ManaSolver(
             else -> effect
         }
         else -> effect
+    }
+
+    /**
+     * Total fixed self-damage a mana ability's effect chain deals to its controller
+     * (Battlefield Forge: `AddMana(RED).then(DealDamage(1, PlayerRef(You)))`). Dynamic
+     * amounts are ignored (no printed mana ability self-damages a dynamic amount).
+     */
+    private fun selfDamageAmount(effect: Effect): Int = when (effect) {
+        is CompositeEffect -> effect.effects.sumOf { selfDamageAmount(it) }
+        is DealDamageEffect -> {
+            val target = effect.target
+            if (target is EffectTarget.PlayerRef && target.player == Player.You) {
+                (effect.amount as? DynamicAmount.Fixed)?.amount ?: 0
+            } else 0
+        }
+        else -> 0
     }
 
     private fun extractManaRestriction(
@@ -1816,8 +1903,21 @@ class ManaSolver(
     ): ManaSource? {
         return sources
             .filter { it.availableColorsFor(spellContext).contains(color) }
-            .minByOrNull { calculateTapPriority(it, handRequirements, availableSourcesByColor) }
+            .minByOrNull {
+                calculateTapPriority(it, handRequirements, availableSourcesByColor) +
+                    painPenalty(it, it.colorPainCost[color] ?: 0)
+            }
     }
+
+    /**
+     * Extra tap-priority penalty for producing mana that costs [pain] life from [source].
+     * Mirrors the pain-land rule in [calculateTapPriority], which already charges a source
+     * whose *every* ability pains ([ManaSource.hasPainCost]) — such sources are skipped here
+     * so the penalty isn't applied twice. This covers mixed sources (a free colorless ability
+     * alongside painful colored ones) where the demanded color specifically costs life.
+     */
+    private fun painPenalty(source: ManaSource, pain: Int): Int =
+        if (pain > 0 && !source.hasPainCost) 15 + pain else 0
 
     /**
      * Checks if a player can pay a mana cost (from floating mana pool + auto-pay).

@@ -5,6 +5,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
+import com.wingedsheep.mtg.sets.definitions.apc.cards.BattlefieldForge
 import com.wingedsheep.mtg.sets.definitions.fin.cards.StartingTown
 import com.wingedsheep.mtg.sets.definitions.tla.AvatarTheLastAirbenderSet
 import com.wingedsheep.mtg.sets.definitions.tla.cards.BadgermoleCub
@@ -65,12 +66,21 @@ class AutoTapPainAndBonusReproTest : FunSpec({
         spell { effect = Effects.DrawCards(1) }
     }
 
+    // A {2}{G} sorcery used to force an auto-tap with generic pips (the Surrak repro shape).
+    val twoGenericGreenSpell = card("Generic Green Test Spell") {
+        manaCost = "{2}{G}"
+        colorIdentity = "G"
+        typeLine = "Sorcery"
+        oracleText = "Draw a card."
+        spell { effect = Effects.DrawCards(1) }
+    }
+
     fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
         driver.registerCards(
             TestCards.all + AvatarTheLastAirbenderSet.cards + listOf(
-                TestForest, BadgermoleCub, StartingTown,
-                tapForGreenCreature, greenGreenSpell, whiteSpell
+                TestForest, BadgermoleCub, StartingTown, BattlefieldForge,
+                tapForGreenCreature, greenGreenSpell, whiteSpell, twoGenericGreenSpell
             )
         )
         return driver
@@ -80,8 +90,8 @@ class AutoTapPainAndBonusReproTest : FunSpec({
         val registry = CardRegistry()
         registry.register(
             TestCards.all + AvatarTheLastAirbenderSet.cards + listOf(
-                TestForest, BadgermoleCub, StartingTown,
-                tapForGreenCreature, greenGreenSpell, whiteSpell
+                TestForest, BadgermoleCub, StartingTown, BattlefieldForge,
+                tapForGreenCreature, greenGreenSpell, whiteSpell, twoGenericGreenSpell
             )
         )
         return registry
@@ -103,6 +113,72 @@ class AutoTapPainAndBonusReproTest : FunSpec({
         result.isSuccess shouldBe true
 
         driver.isTapped(town) shouldBe true
+        driver.getLifeTotal(activePlayer) shouldBe (before - 1)
+    }
+
+    test("Starting Town generic: auto-paying generic pips uses the free colorless ability, no life loss") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 20, "Forest" to 20), startingLife = 20)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val activePlayer = driver.activePlayer!!
+        // The Surrak repro: Forest pays the {G}, the two Starting Towns pay the {2}.
+        // Generic mana must flow through "{T}: Add {C}", not "{T}, Pay 1 life: Add one
+        // mana of any color".
+        val forest = driver.putLandOnBattlefield(activePlayer, "Forest")
+        val town1 = driver.putPermanentOnBattlefield(activePlayer, "Starting Town")
+        val town2 = driver.putPermanentOnBattlefield(activePlayer, "Starting Town")
+        val spell = driver.putCardInHand(activePlayer, "Generic Green Test Spell")
+
+        val before = driver.getLifeTotal(activePlayer)
+        val result = driver.castSpell(activePlayer, spell)
+        result.isSuccess shouldBe true
+
+        driver.isTapped(forest) shouldBe true
+        driver.isTapped(town1) shouldBe true
+        driver.isTapped(town2) shouldBe true
+        driver.getLifeTotal(activePlayer) shouldBe before
+    }
+
+    test("Battlefield Forge generic: auto-paying generic pips uses the free colorless ability, no damage") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 20, "Forest" to 20), startingLife = 20)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val activePlayer = driver.activePlayer!!
+        // Same shape as Starting Town but with pain modeled as a self-damage side effect
+        // ("{T}: Add {R} or {W}. This land deals 1 damage to you.") instead of a cost atom.
+        val forest = driver.putLandOnBattlefield(activePlayer, "Forest")
+        val forge1 = driver.putPermanentOnBattlefield(activePlayer, "Battlefield Forge")
+        val forge2 = driver.putPermanentOnBattlefield(activePlayer, "Battlefield Forge")
+        val spell = driver.putCardInHand(activePlayer, "Generic Green Test Spell")
+
+        val before = driver.getLifeTotal(activePlayer)
+        val result = driver.castSpell(activePlayer, spell)
+        result.isSuccess shouldBe true
+
+        driver.isTapped(forest) shouldBe true
+        driver.isTapped(forge1) shouldBe true
+        driver.isTapped(forge2) shouldBe true
+        driver.getLifeTotal(activePlayer) shouldBe before
+    }
+
+    test("Battlefield Forge colored pip: pain still applies when the colored ability is required") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Forest" to 20, "Forest" to 20), startingLife = 20)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val activePlayer = driver.activePlayer!!
+        // The forge is the only white source, so its painful "{T}: Add {R} or {W}" ability
+        // must be used — and its self-damage side effect must still land.
+        val forge = driver.putPermanentOnBattlefield(activePlayer, "Battlefield Forge")
+        val spell = driver.putCardInHand(activePlayer, "White Test Spell")
+
+        val before = driver.getLifeTotal(activePlayer)
+        val result = driver.castSpell(activePlayer, spell)
+        result.isSuccess shouldBe true
+
+        driver.isTapped(forge) shouldBe true
         driver.getLifeTotal(activePlayer) shouldBe (before - 1)
     }
 
