@@ -495,6 +495,11 @@ object Triggers {
      *   `dealsDamage(binding = TriggerBinding.ATTACHED)`
      * - "Whenever this deals combat damage to a player or planeswalker":
      *   `dealsDamage(DamageType.Combat, RecipientFilter.AnyPlayerOrPlaneswalker)`
+     * - "Whenever one or more creatures your opponents control are dealt excess
+     *   noncombat damage" (batch wording, CR 603.2c — fires once per event batch,
+     *   not once per damaged creature; ANY binding only):
+     *   `dealsDamage(DamageType.NonCombat, RecipientFilter.CreatureOpponentControls,
+     *                binding = TriggerBinding.ANY, requireExcess = true, batch = true)`
      */
     fun dealsDamage(
         damageType: DamageType = DamageType.Any,
@@ -502,12 +507,14 @@ object Triggers {
         sourceFilter: GameObjectFilter? = null,
         binding: TriggerBinding = TriggerBinding.SELF,
         requireExcess: Boolean = false,
+        batch: Boolean = false,
     ): TriggerSpec = TriggerSpec(
         event = DealsDamageEvent(
             damageType = damageType,
             recipient = recipient,
             sourceFilter = sourceFilter,
             requireExcess = requireExcess,
+            batch = batch,
         ),
         binding = binding,
     )
@@ -1044,10 +1051,22 @@ object Triggers {
     )
 
     /**
-     * Whenever you discard a card.
+     * Whenever you discard a card. Fires once per card discarded — discarding 3 cards in
+     * one resolution fires this 3 times. For "one or more cards" wording use
+     * [YouDiscardOneOrMore].
      */
     val YouDiscard: TriggerSpec = TriggerSpec(
         event = DiscardEvent(player = Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever you discard one or more cards — batch wording (CR 603.2c): fires once per
+     * discard event no matter how many cards it contained (Inti, Seneschal of the Sun).
+     * Sequential discards in the same resolution are separate events and fire separately.
+     */
+    val YouDiscardOneOrMore: TriggerSpec = TriggerSpec(
+        event = DiscardEvent(player = Player.You, batch = true),
         binding = TriggerBinding.ANY
     )
 
@@ -1064,13 +1083,15 @@ object Triggers {
      *
      * Note: fires once per card discarded — e.g. an opponent discarding 3 cards
      * in one resolution fires this 3 times. Mirrors how [YouDraw] handles
-     * multi-card draws.
+     * multi-card draws. For "one or more cards" batch wording (fires once per
+     * discard event, CR 603.2c) pass `batch = true` — see [YouDiscardOneOrMore].
      */
     fun discards(
         player: Player = Player.Each,
         cardFilter: GameObjectFilter? = null,
+        batch: Boolean = false,
     ): TriggerSpec = TriggerSpec(
-        event = DiscardEvent(player = player, cardFilter = cardFilter),
+        event = DiscardEvent(player = player, cardFilter = cardFilter, batch = batch),
         binding = TriggerBinding.ANY,
     )
 

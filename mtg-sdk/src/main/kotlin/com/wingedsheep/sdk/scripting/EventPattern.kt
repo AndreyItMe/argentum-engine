@@ -497,15 +497,25 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
     @Serializable
     data class DiscardEvent(
         val player: Player = Player.You,
-        val cardFilter: GameObjectFilter? = null
+        val cardFilter: GameObjectFilter? = null,
+        /**
+         * Batch ("one or more") semantics — CR 603.2c: an ability triggers only once each time
+         * its trigger event occurs. When true, discarding several matching cards in one discard
+         * event fires the trigger once per event instead of once per card — "Whenever you
+         * discard one or more cards" (Inti, Seneschal of the Sun) vs the per-card "Whenever
+         * you discard a card" (Cool but Rude). Sequential discards ("discard a card, then
+         * discard a card") are separate events and still fire separately.
+         */
+        val batch: Boolean = false
     ) : EventPattern {
         override val description: String = buildString {
             append(player.description)
             append(" would discard ")
+            if (batch) append("one or more ")
             if (cardFilter != null) {
                 append(cardFilter.description)
             } else {
-                append("a card")
+                append(if (batch) "cards" else "a card")
             }
         }
 
@@ -791,23 +801,51 @@ sealed interface EventPattern : TextReplaceable<EventPattern> {
          *  requireExcess = true)` and reads the excess via
          * `ContextPropertyKey.TRIGGER_EXCESS_DAMAGE_AMOUNT`.
          */
-        val requireExcess: Boolean = false
+        val requireExcess: Boolean = false,
+        /**
+         * Batch ("one or more") semantics — CR 603.2c: an ability triggers only once each time
+         * its trigger event occurs. When true, simultaneous damage to several matching
+         * recipients (a sweeper, combat damage to multiple blockers) fires the trigger once per
+         * event batch instead of once per damaged recipient — "Whenever one or more creatures
+         * your opponents control are dealt excess noncombat damage" (Magmatic Galleon) vs the
+         * per-recipient "Whenever a creature is dealt excess noncombat damage" (Fall of Cair
+         * Andros). Only honored for `TriggerBinding.ANY` observer triggers; SELF/ATTACHED
+         * damage triggers are inherently per-source-event.
+         */
+        val batch: Boolean = false
     ) : EventPattern {
         override val description: String = buildString {
-            if (sourceFilter != null) {
-                append(describeObjectForEvent(sourceFilter))
-                append(" ")
-            }
-            append("deals ")
-            if (requireExcess) append("excess ")
-            if (damageType != DamageType.Any) {
-                append(damageType.description)
-                append(" ")
-            }
-            append("damage")
-            if (recipient != RecipientFilter.Any) {
-                append(" to ")
-                append(recipient.description)
+            if (batch) {
+                // Recipient-side batch wording: "one or more [recipients] are dealt … damage".
+                append("one or more ")
+                append(if (recipient != RecipientFilter.Any) recipient.description else "permanents or players")
+                append(" are dealt ")
+                if (requireExcess) append("excess ")
+                if (damageType != DamageType.Any) {
+                    append(damageType.description)
+                    append(" ")
+                }
+                append("damage")
+                if (sourceFilter != null) {
+                    append(" by ")
+                    append(describeObjectForEvent(sourceFilter))
+                }
+            } else {
+                if (sourceFilter != null) {
+                    append(describeObjectForEvent(sourceFilter))
+                    append(" ")
+                }
+                append("deals ")
+                if (requireExcess) append("excess ")
+                if (damageType != DamageType.Any) {
+                    append(damageType.description)
+                    append(" ")
+                }
+                append("damage")
+                if (recipient != RecipientFilter.Any) {
+                    append(" to ")
+                    append(recipient.description)
+                }
             }
         }
 

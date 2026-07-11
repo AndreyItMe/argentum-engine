@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.event
 
 import com.wingedsheep.engine.core.DamageDealtEvent
+import com.wingedsheep.engine.core.GameEvent as EngineGameEvent
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -237,6 +238,9 @@ class DamageTriggerDetector(
             for (ability in entry.abilities) {
                 val trigger = ability.trigger
                 if (trigger is EventPattern.DealsDamageEvent && ability.binding == TriggerBinding.ANY) {
+                    // Batch ("one or more") observers fire once per event batch, not once per
+                    // damage event — handled by detectDamageObserverBatchTriggers.
+                    if (trigger.batch) continue
                     if (matcher.matchesDealsDamageTrigger(trigger, event, state, entry.controllerId)) {
                         // When the trigger has a sourceFilter (e.g., "creature you control deals
                         // combat damage"), the triggering entity is the damage SOURCE (the creature),
@@ -270,6 +274,54 @@ class DamageTriggerDetector(
                             )
                         )
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Detect batch ("one or more") damage observer triggers — `DealsDamageEvent(batch = true)`
+     * with ANY binding, e.g. Magmatic Galleon's "Whenever one or more creatures your opponents
+     * control are dealt excess noncombat damage, create a Treasure token."
+     *
+     * Runs once over the whole event batch (CR 603.2c: an ability triggers only once each time
+     * its trigger event occurs): a sweeper dealing excess damage to several matching creatures
+     * simultaneously fires the trigger once, not once per creature — the over-counting the
+     * per-event [detectDamageObserverTriggers] path would produce. Each observer's filters
+     * (damageType / recipient / sourceFilter / requireExcess) are evaluated per damage event via
+     * the canonical [TriggerMatcher.matchesDealsDamageTrigger]; one matching event suffices.
+     *
+     * `triggeringEntityId` is the first matching recipient — batch triggers don't dispatch per
+     * recipient, so cards needing per-recipient context use the singular (non-batch) trigger.
+     */
+    fun detectDamageObserverBatchTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>,
+        index: TriggerIndex
+    ) {
+        val damageEvents = events.filterIsInstance<DamageDealtEvent>()
+        if (damageEvents.isEmpty()) return
+
+        for (entry in index.damageObservers) {
+            for (ability in entry.abilities) {
+                val trigger = ability.trigger
+                if (trigger !is EventPattern.DealsDamageEvent || !trigger.batch) continue
+                if (ability.binding != TriggerBinding.ANY) continue
+
+                val firstMatching = damageEvents.firstOrNull { event ->
+                    matcher.matchesDealsDamageTrigger(trigger, event, state, entry.controllerId)
+                }
+                if (firstMatching != null) {
+                    triggers.add(
+                        PendingTrigger(
+                            ability = ability,
+                            sourceId = entry.entityId,
+                            sourceName = entry.cardComponent.name,
+                            controllerId = entry.controllerId,
+                            triggerContext = TriggerContext.fromEvent(firstMatching)
+                        )
+                    )
                 }
             }
         }

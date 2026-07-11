@@ -279,6 +279,12 @@ class TriggerDetector(
         // and fires the trigger at most once per observer.
         detectCombatDamageBatchTriggers(state, events, triggers, state.projectedState, index)
 
+        // Detect recipient-side "whenever one or more [creatures] are dealt [excess] damage"
+        // batching triggers (DealsDamageEvent(batch = true), e.g. Magmatic Galleon). Fires the
+        // trigger at most once per observer regardless of how many recipients were damaged
+        // simultaneously; the per-event observer path skips batch triggers.
+        damageDetector.detectDamageObserverBatchTriggers(state, events, triggers, index)
+
         // Detect "whenever one or more creatures you control leave the battlefield without dying"
         // batching triggers (e.g., Dour Port-Mage). Groups zone changes from battlefield to
         // non-graveyard zones and fires the trigger at most once per observer.
@@ -1212,16 +1218,21 @@ class TriggerDetector(
                     }
                     // Same shape for "whenever an opponent discards a card" — discarding N cards
                     // through one effect creates N separate trigger firings. A card filter narrows
-                    // that to the matching cards, so defer to the matcher for the count.
+                    // that to the matching cards, so defer to the matcher for the count. Batch
+                    // wording ("whenever you discard one or more cards", CR 603.2c) collapses the
+                    // whole event to a single firing — CardsDiscardedEvent is already one event
+                    // per discard action, so the cap is exactly the printed once-per-event.
                     else if (ability.trigger is EventPattern.DiscardEvent &&
                         event is CardsDiscardedEvent) {
-                        val firings = matcher.matchingDiscardCount(
-                            ability.trigger as EventPattern.DiscardEvent,
+                        val discardTrigger = ability.trigger as EventPattern.DiscardEvent
+                        val matchingCards = matcher.matchingDiscardCount(
+                            discardTrigger,
                             event,
                             entityId,
                             controllerId,
                             state
                         )
+                        val firings = if (discardTrigger.batch) minOf(matchingCards, 1) else matchingCards
                         repeat(firings) {
                             triggers.add(
                                 PendingTrigger(
