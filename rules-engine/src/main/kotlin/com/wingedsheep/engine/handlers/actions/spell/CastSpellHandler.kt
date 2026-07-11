@@ -424,243 +424,9 @@ class CastSpellHandler(
             }
         }
         val playForFree = playForFreeFromComponent || action.useWithoutPayingManaCost
-        // Split-layout (CR 709.3a) — only the chosen half is evaluated for legality. When
-        // `faceIndex` is set, the cost is the face's printed mana cost passed through the
-        // standard battlefield cost-modifier pipeline (CR 118.9a applies cost modifiers to
-        // the chosen half just like to a normal cast).
-        val faceManaCostOverride: ManaCost? = action.faceIndex?.let { idx ->
-            cardDef?.cardFaces?.getOrNull(idx)?.manaCost
-        }
-        var effectiveCost = if (playForFree) {
-            ManaCost.ZERO
-        } else if (faceManaCostOverride != null && cardDef != null) {
-            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, faceManaCostOverride, action.playerId)
-        } else if (action.useAlternativeCost && cardDef != null) {
-            // Check flashback cost first (printed, granted per-entity by Archmage's Newt, or
-            // granted to the whole graveyard by a battlefield static — Iroh, Grand Lotus).
-            val flashbackAbility = FlashbackGrants.effectiveFlashback(
-                state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
-            )
-            // Harmonize may be printed on the card or granted at runtime (Songcrafter Mage).
-            val harmonizeAbility = HarmonizeGrants.effectiveHarmonize(state, action.cardId, cardDef)
-            // Each branch is gated by [CastSpell.altAllows] so an explicit player choice (e.g.
-            // evoke) isn't overridden by a higher-priority cost that also happens to be legal
-            // (e.g. a granted warp). With no choice recorded, every gate is open and this falls
-            // back to the original priority order.
-            if (action.altAllows(AlternativeCostType.FLASHBACK) && flashbackAbility != null && zoneResolver.hasFlashbackPermission(state, action.playerId, action.cardId)) {
-                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, flashbackAbility.cost, action.playerId)
-            } else if (action.altAllows(AlternativeCostType.HARMONIZE) && harmonizeAbility != null && zoneResolver.hasHarmonizePermission(state, action.playerId, action.cardId)) {
-                // Harmonize cost (printed or granted). The per-creature power reduction is
-                // applied afterward via alternativePayment.
-                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, harmonizeAbility.cost, action.playerId)
-            } else {
-                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular
-                // mana cost. Printed warp wins; a battlefield grant ([GrantWarpToCardsInHand])
-                // supplies the cost when the card has no printed warp.
-                val warpAbility = WarpGrants.effectiveWarp(
-                    state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
-                )
-                if (action.altAllows(AlternativeCostType.WARP) && warpAbility != null && zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)) {
-                    costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, warpAbility.cost, action.playerId)
-                } else {
-                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately).
-                    // The effective sneak cost is the printed Sneak, or a granted graveyard sneak
-                    // (Ninja Teen: "creature cards in your graveyard have sneak {3}{B}").
-                    val sneakCost = SneakWindow.effectiveSneakCost(state, cardDef, action.cardId, action.playerId, cardRegistry)
-                    // Check evoke cost
-                    val evokeAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Evoke>().firstOrNull()
-                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakCost != null) {
-                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, sneakCost, action.playerId)
-                    } else if (action.altAllows(AlternativeCostType.EVOKE) && evokeAbility != null) {
-                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, evokeAbility.cost, action.playerId)
-                    } else {
-                        // Check impending cost
-                        val impendingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Impending>().firstOrNull()
-                        // Check miracle cost (CR 702.94 — printed or granted in hand, window-gated).
-                        // The window component must be present (opened when drawn as the first card
-                        // this turn); without it, the miracle alternative cost is unavailable.
-                        val miracleWindowOpen = state.getEntity(action.cardId)
-                            ?.has<com.wingedsheep.engine.state.components.identity.MiracleWindowComponent>() == true
-                        val miracleAbility = if (miracleWindowOpen) MiracleGrants.effectiveMiracle(
-                            state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
-                        ) else null
-                        if (action.altAllows(AlternativeCostType.IMPENDING) && impendingAbility != null) {
-                            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, impendingAbility.cost, action.playerId)
-                        } else if (action.altAllows(AlternativeCostType.MIRACLE) && miracleAbility != null) {
-                            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, miracleAbility.cost, action.playerId)
-                        } else {
-                            // Check self-alternative cost (e.g., Zahid's {3}{U} + tap artifact)
-                            val selfAltCost = cardDef.script.selfAlternativeCost
-                            if (action.altAllows(AlternativeCostType.SELF_ALTERNATIVE) && selfAltCost != null) {
-                                val altMana = selfAltCost.manaCost
-                                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altMana, action.playerId)
-                            } else {
-                                // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
-                                val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
-                                if (altCosts.isEmpty()) return "No alternative casting cost available"
-                                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (cardDef != null) {
-            costCalculator.calculateEffectiveCost(
-                state,
-                cardDef,
-                action.playerId,
-                action.targets.map { it.toEntityId() },
-                fromZone = if (hasCommanderCast) Zone.COMMAND else castSourceZone(state, action.cardId),
-            )
-        } else {
-            cardComponent.manaCost
-        }
-
-        // Add kicker/offspring mana cost if kicked (only for mana-based kicker/offspring)
-        if (action.wasKicked && !playForFree && !action.useAlternativeCost && cardDef != null) {
-            val kickerManaCost = cardDef.keywordAbilities
-                .filterIsInstance<KeywordAbility.OptionalAdditionalCost>()
-                .firstOrNull { it.manaCost != null }
-                ?.manaCost
-            if (kickerManaCost != null) {
-                effectiveCost = ManaCost(effectiveCost.symbols + kickerManaCost.symbols)
-            }
-        }
-
-        // Apply BlightOrPay "pay mana" adjustment in validation
-        if (cardDef != null && !playForFree) {
-            val blightOrPay = cardDef.script.additionalCosts
-                .filterIsInstance<AdditionalCost.BlightOrPay>()
-                .firstOrNull()
-            if (blightOrPay != null) {
-                val choseBlight = action.additionalCostPayment?.blightTargets?.isNotEmpty() == true
-                if (!choseBlight) {
-                    effectiveCost = effectiveCost + ManaCost.parse(blightOrPay.alternativeManaCost)
-                }
-            }
-        }
-
-        // Apply BeholdOrPay "pay mana" adjustment in validation
-        if (cardDef != null && !playForFree) {
-            val beholdOrPay = cardDef.script.additionalCosts
-                .filterIsInstance<AdditionalCost.BeholdOrPay>()
-                .firstOrNull()
-            if (beholdOrPay != null) {
-                val choseBehold = action.additionalCostPayment?.beheldCards?.isNotEmpty() == true
-                if (!choseBehold) {
-                    effectiveCost = effectiveCost + ManaCost.parse(beholdOrPay.alternativeManaCost)
-                }
-            }
-        }
-
-        // Apply ExileFromGraveyardOrPay "pay mana" adjustment in validation
-        if (cardDef != null && !playForFree) {
-            val exileOrPay = cardDef.script.additionalCosts
-                .filterIsInstance<AdditionalCost.ExileFromGraveyardOrPay>()
-                .firstOrNull()
-            if (exileOrPay != null) {
-                val choseExile = action.additionalCostPayment?.exiledCards?.isNotEmpty() == true
-                if (!choseExile) {
-                    effectiveCost = effectiveCost + ManaCost.parse(exileOrPay.alternativeManaCost)
-                }
-            }
-        }
-
-        // Apply SacrificeOrPay "pay mana" adjustment in validation
-        if (cardDef != null && !playForFree) {
-            val sacOrPay = cardDef.script.additionalCosts
-                .filterIsInstance<AdditionalCost.SacrificeOrPay>()
-                .firstOrNull()
-            if (sacOrPay != null) {
-                val choseSacrifice = action.additionalCostPayment?.sacrificedPermanents?.isNotEmpty() == true
-                if (!choseSacrifice) {
-                    effectiveCost = effectiveCost + ManaCost.parse(sacOrPay.alternativeManaCost)
-                }
-            }
-        }
-
-        // Apply spell-level waterbend additional cost (Avatar: The Last Airbender). Adds the
-        // waterbend amount {N} (or {X}) as generic mana; the tapped artifacts/creatures in
-        // alternativePayment reduce that generic below, capped at N.
-        if (cardDef != null && !playForFree) {
-            val waterbendAmount = spellWaterbendAmount(cardDef, action)
-            if (waterbendAmount > 0) {
-                effectiveCost = effectiveCost + ManaCost.parse("{$waterbendAmount}")
-            }
-        }
-
-        // Airbend: a fixed alternative cost ({2}) is paid *instead of* the printed cost — it
-        // replaces the base. A cost increase (e.g. Soul Partition's tax, or a Thalia-style "costs
-        // {1} more") is not part of the cost it replaces, so it still applies on top: an airbended
-        // card cast under a {1}-tax costs {3}, not {2}.
-        if (!playForFree) {
-            val fixedAltCost = state.getEntity(action.cardId)
-                ?.get<PlayWithFixedAlternativeManaCostComponent>()
-                ?.takeIf { it.controllerId == action.playerId }
-            if (fixedAltCost != null) {
-                effectiveCost = fixedAltCost.fixedCost
-            }
-            // Apply runtime mana tax from exile permissions (e.g., Soul Partition) on top of
-            // whichever base applies (printed cost, or the fixed alternative above).
-            val runtimeCostIncrease = state.getEntity(action.cardId)
-                ?.get<PlayWithCostIncreaseComponent>()
-                ?.takeIf { it.controllerId == action.playerId }
-            if (runtimeCostIncrease != null) {
-                effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
-            }
-        }
-
-        // Apply sacrifice-for-cost-reduction before validating payment
-        if (cardDef != null && action.additionalCostPayment != null) {
-            for (cost in cardDef.script.additionalCosts) {
-                if (cost is AdditionalCost.SacrificeCreaturesForCostReduction) {
-                    val sacrificeCount = action.additionalCostPayment.sacrificedPermanents.size
-                    val reduction = sacrificeCount * cost.costReductionPerCreature
-                    if (reduction > 0) {
-                        effectiveCost = effectiveCost.reduceGeneric(reduction)
-                    }
-                }
-            }
-        }
-
-        // Account for Delve/Convoke reduction before validating payment
-        val costAfterAltPayment = if (action.alternativePayment != null && !action.alternativePayment.isEmpty && cardDef != null) {
-            alternativePaymentHandler.calculateReducedCost(
-                effectiveCost,
-                action.alternativePayment,
-                cardDef,
-                state,
-                action.playerId,
-                action.cardId
-            )
-        } else {
-            effectiveCost
-        }
-
-        // Account for waterbend (Avatar): tapped artifacts/creatures reduce the waterbend generic,
-        // capped at the waterbend amount. Two sources: a spell-level `waterbend {N}` additional cost
-        // (capped so taps never eat the printed generic) and Hama's fixed-alternative waterbend cost
-        // (the whole {mana value} is reducible). Only one is ever non-zero for a given cast.
-        val validateWaterbendCap = (if (cardDef != null) spellWaterbendAmount(cardDef, action) else 0) +
-            fixedAltWaterbendAmount(state, action, playForFree)
-        val costAfterWaterbend = if (!playForFree && action.alternativePayment != null &&
-            action.alternativePayment.waterbendPermanents.isNotEmpty() && validateWaterbendCap > 0
-        ) {
-            alternativePaymentHandler.calculateReducedCostForWaterbend(
-                costAfterAltPayment, action.alternativePayment, validateWaterbendCap
-            )
-        } else {
-            costAfterAltPayment
-        }
-
-        // Validate payment. For an X-cost Harmonize cast where a creature is tapped, the
-        // creature's power reduces generic mana — and {X} is generic (TDM release notes) —
-        // so the leftover reduction beyond any printed generic comes off the X mana paid.
-        // For a "waterbend {X}" spell the X is already materialized as generic in the cost
-        // (and reduced by the waterbend taps), so it must NOT also be charged as {X} mana.
-        val paymentXValue = if (cardDef?.script?.spellWaterbend?.isX == true) 0
-            else harmonizePaymentXValue(state, action, cardDef, effectiveCost)
-        val paymentError = validatePayment(state, action, costAfterWaterbend, paymentXValue)
+        val computedCost = computeTotalCastCost(state, action, cardDef, cardComponent, playForFree, hasCommanderCast)
+            ?: return "No alternative casting cost available"
+        val paymentError = validatePayment(state, action, computedCost.cost, computedCost.paymentXValue)
         if (paymentError != null) {
             return paymentError
         }
@@ -883,6 +649,268 @@ class CastSpellHandler(
         val leftover = (power - harmonizeCost.genericAmount).coerceAtLeast(0)
         val xCount = harmonizeCost.xCount.coerceAtLeast(1)
         return ((xValue * xCount - leftover).coerceAtLeast(0)) / xCount
+    }
+
+    /** The [cost] and adjusted X actually charged as mana at payment time for a cast. */
+    private data class ComputedCastCost(val cost: ManaCost, val paymentXValue: Int)
+
+    /**
+     * The full mana-cost pipeline for a cast (CR 601.2f): alternative-cost base selection
+     * (flashback/harmonize/warp/sneak/evoke/impending/miracle/…), kicker, Or-Pay additional
+     * costs, waterbend, airbend fixed-alternative plus runtime cost increases,
+     * sacrifice-for-reduction, and delve/convoke/waterbend alternative-payment reductions —
+     * plus the harmonize/waterbend adjustment to the X actually paid as mana.
+     *
+     * Shared by [validate] and the cast-time modal affordability gate
+     * ([canPayModeSelection]) so mode offers can never diverge from what payment will
+     * actually charge. Returns null when the action requests an alternative cost but none
+     * is available.
+     */
+    private fun computeTotalCastCost(
+        state: GameState,
+        action: CastSpell,
+        cardDef: com.wingedsheep.sdk.model.CardDefinition?,
+        cardComponent: CardComponent,
+        playForFree: Boolean,
+        castingFromCommandZone: Boolean
+    ): ComputedCastCost? {
+        // Split-layout (CR 709.3a) — only the chosen half is evaluated for legality. When
+        // `faceIndex` is set, the cost is the face's printed mana cost passed through the
+        // standard battlefield cost-modifier pipeline (CR 118.9a applies cost modifiers to
+        // the chosen half just like to a normal cast).
+        val faceManaCostOverride: ManaCost? = action.faceIndex?.let { idx ->
+            cardDef?.cardFaces?.getOrNull(idx)?.manaCost
+        }
+        var effectiveCost = if (playForFree) {
+            ManaCost.ZERO
+        } else if (faceManaCostOverride != null && cardDef != null) {
+            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, faceManaCostOverride, action.playerId)
+        } else if (action.useAlternativeCost && cardDef != null) {
+            // Check flashback cost first (printed, granted per-entity by Archmage's Newt, or
+            // granted to the whole graveyard by a battlefield static — Iroh, Grand Lotus).
+            val flashbackAbility = FlashbackGrants.effectiveFlashback(
+                state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+            )
+            // Harmonize may be printed on the card or granted at runtime (Songcrafter Mage).
+            val harmonizeAbility = HarmonizeGrants.effectiveHarmonize(state, action.cardId, cardDef)
+            // Each branch is gated by [CastSpell.altAllows] so an explicit player choice (e.g.
+            // evoke) isn't overridden by a higher-priority cost that also happens to be legal
+            // (e.g. a granted warp). With no choice recorded, every gate is open and this falls
+            // back to the original priority order.
+            if (action.altAllows(AlternativeCostType.FLASHBACK) && flashbackAbility != null && zoneResolver.hasFlashbackPermission(state, action.playerId, action.cardId)) {
+                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, flashbackAbility.cost, action.playerId)
+            } else if (action.altAllows(AlternativeCostType.HARMONIZE) && harmonizeAbility != null && zoneResolver.hasHarmonizePermission(state, action.playerId, action.cardId)) {
+                // Harmonize cost (printed or granted). The per-creature power reduction is
+                // applied afterward via alternativePayment.
+                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, harmonizeAbility.cost, action.playerId)
+            } else {
+                // Check warp cost (hand only — CR 702.185a). Re-casts from exile pay the regular
+                // mana cost. Printed warp wins; a battlefield grant ([GrantWarpToCardsInHand])
+                // supplies the cost when the card has no printed warp.
+                val warpAbility = WarpGrants.effectiveWarp(
+                    state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+                )
+                if (action.altAllows(AlternativeCostType.WARP) && warpAbility != null && zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)) {
+                    costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, warpAbility.cost, action.playerId)
+                } else {
+                    // Check sneak cost (CR 702.190 — mana portion; the bounce is paid separately).
+                    // The effective sneak cost is the printed Sneak, or a granted graveyard sneak
+                    // (Ninja Teen: "creature cards in your graveyard have sneak {3}{B}").
+                    val sneakCost = SneakWindow.effectiveSneakCost(state, cardDef, action.cardId, action.playerId, cardRegistry)
+                    // Check evoke cost
+                    val evokeAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Evoke>().firstOrNull()
+                    if (action.altAllows(AlternativeCostType.SNEAK) && sneakCost != null) {
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, sneakCost, action.playerId)
+                    } else if (action.altAllows(AlternativeCostType.EVOKE) && evokeAbility != null) {
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, evokeAbility.cost, action.playerId)
+                    } else {
+                        // Check impending cost
+                        val impendingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Impending>().firstOrNull()
+                        // Check miracle cost (CR 702.94 — printed or granted in hand, window-gated).
+                        // The window component must be present (opened when drawn as the first card
+                        // this turn); without it, the miracle alternative cost is unavailable.
+                        val miracleWindowOpen = state.getEntity(action.cardId)
+                            ?.has<com.wingedsheep.engine.state.components.identity.MiracleWindowComponent>() == true
+                        val miracleAbility = if (miracleWindowOpen) MiracleGrants.effectiveMiracle(
+                            state, action.cardId, cardDef, action.playerId, cardRegistry, predicateEvaluator
+                        ) else null
+                        if (action.altAllows(AlternativeCostType.IMPENDING) && impendingAbility != null) {
+                            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, impendingAbility.cost, action.playerId)
+                        } else if (action.altAllows(AlternativeCostType.MIRACLE) && miracleAbility != null) {
+                            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, miracleAbility.cost, action.playerId)
+                        } else {
+                            // Check self-alternative cost (e.g., Zahid's {3}{U} + tap artifact)
+                            val selfAltCost = cardDef.script.selfAlternativeCost
+                            if (action.altAllows(AlternativeCostType.SELF_ALTERNATIVE) && selfAltCost != null) {
+                                val altMana = selfAltCost.manaCost
+                                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altMana, action.playerId)
+                            } else {
+                                // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
+                                val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
+                                if (altCosts.isEmpty()) return null
+                                costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (cardDef != null) {
+            costCalculator.calculateEffectiveCost(
+                state,
+                cardDef,
+                action.playerId,
+                action.targets.map { it.toEntityId() },
+                fromZone = if (castingFromCommandZone) Zone.COMMAND else castSourceZone(state, action.cardId),
+            )
+        } else {
+            cardComponent.manaCost
+        }
+
+        // Add kicker/offspring mana cost if kicked (only for mana-based kicker/offspring)
+        if (action.wasKicked && !playForFree && !action.useAlternativeCost && cardDef != null) {
+            val kickerManaCost = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.OptionalAdditionalCost>()
+                .firstOrNull { it.manaCost != null }
+                ?.manaCost
+            if (kickerManaCost != null) {
+                effectiveCost = ManaCost(effectiveCost.symbols + kickerManaCost.symbols)
+            }
+        }
+
+        // Apply BlightOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val blightOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.BlightOrPay>()
+                .firstOrNull()
+            if (blightOrPay != null) {
+                val choseBlight = action.additionalCostPayment?.blightTargets?.isNotEmpty() == true
+                if (!choseBlight) {
+                    effectiveCost = effectiveCost + ManaCost.parse(blightOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply BeholdOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val beholdOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.BeholdOrPay>()
+                .firstOrNull()
+            if (beholdOrPay != null) {
+                val choseBehold = action.additionalCostPayment?.beheldCards?.isNotEmpty() == true
+                if (!choseBehold) {
+                    effectiveCost = effectiveCost + ManaCost.parse(beholdOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply ExileFromGraveyardOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val exileOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.ExileFromGraveyardOrPay>()
+                .firstOrNull()
+            if (exileOrPay != null) {
+                val choseExile = action.additionalCostPayment?.exiledCards?.isNotEmpty() == true
+                if (!choseExile) {
+                    effectiveCost = effectiveCost + ManaCost.parse(exileOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply SacrificeOrPay "pay mana" adjustment in validation
+        if (cardDef != null && !playForFree) {
+            val sacOrPay = cardDef.script.additionalCosts
+                .filterIsInstance<AdditionalCost.SacrificeOrPay>()
+                .firstOrNull()
+            if (sacOrPay != null) {
+                val choseSacrifice = action.additionalCostPayment?.sacrificedPermanents?.isNotEmpty() == true
+                if (!choseSacrifice) {
+                    effectiveCost = effectiveCost + ManaCost.parse(sacOrPay.alternativeManaCost)
+                }
+            }
+        }
+
+        // Apply spell-level waterbend additional cost (Avatar: The Last Airbender). Adds the
+        // waterbend amount {N} (or {X}) as generic mana; the tapped artifacts/creatures in
+        // alternativePayment reduce that generic below, capped at N.
+        if (cardDef != null && !playForFree) {
+            val waterbendAmount = spellWaterbendAmount(cardDef, action)
+            if (waterbendAmount > 0) {
+                effectiveCost = effectiveCost + ManaCost.parse("{$waterbendAmount}")
+            }
+        }
+
+        // Airbend: a fixed alternative cost ({2}) is paid *instead of* the printed cost — it
+        // replaces the base. A cost increase (e.g. Soul Partition's tax, or a Thalia-style "costs
+        // {1} more") is not part of the cost it replaces, so it still applies on top: an airbended
+        // card cast under a {1}-tax costs {3}, not {2}.
+        if (!playForFree) {
+            val fixedAltCost = state.getEntity(action.cardId)
+                ?.get<PlayWithFixedAlternativeManaCostComponent>()
+                ?.takeIf { it.controllerId == action.playerId }
+            if (fixedAltCost != null) {
+                effectiveCost = fixedAltCost.fixedCost
+            }
+            // Apply runtime mana tax from exile permissions (e.g., Soul Partition) on top of
+            // whichever base applies (printed cost, or the fixed alternative above).
+            val runtimeCostIncrease = state.getEntity(action.cardId)
+                ?.get<PlayWithCostIncreaseComponent>()
+                ?.takeIf { it.controllerId == action.playerId }
+            if (runtimeCostIncrease != null) {
+                effectiveCost = effectiveCost + ManaCost.parse("{${runtimeCostIncrease.amount}}")
+            }
+        }
+
+        // Apply sacrifice-for-cost-reduction before validating payment
+        if (cardDef != null && action.additionalCostPayment != null) {
+            for (cost in cardDef.script.additionalCosts) {
+                if (cost is AdditionalCost.SacrificeCreaturesForCostReduction) {
+                    val sacrificeCount = action.additionalCostPayment.sacrificedPermanents.size
+                    val reduction = sacrificeCount * cost.costReductionPerCreature
+                    if (reduction > 0) {
+                        effectiveCost = effectiveCost.reduceGeneric(reduction)
+                    }
+                }
+            }
+        }
+
+        // Account for Delve/Convoke reduction before validating payment
+        val costAfterAltPayment = if (action.alternativePayment != null && !action.alternativePayment.isEmpty && cardDef != null) {
+            alternativePaymentHandler.calculateReducedCost(
+                effectiveCost,
+                action.alternativePayment,
+                cardDef,
+                state,
+                action.playerId,
+                action.cardId
+            )
+        } else {
+            effectiveCost
+        }
+
+        // Account for waterbend (Avatar): tapped artifacts/creatures reduce the waterbend generic,
+        // capped at the waterbend amount. Two sources: a spell-level `waterbend {N}` additional cost
+        // (capped so taps never eat the printed generic) and Hama's fixed-alternative waterbend cost
+        // (the whole {mana value} is reducible). Only one is ever non-zero for a given cast.
+        val validateWaterbendCap = (if (cardDef != null) spellWaterbendAmount(cardDef, action) else 0) +
+            fixedAltWaterbendAmount(state, action, playForFree)
+        val costAfterWaterbend = if (!playForFree && action.alternativePayment != null &&
+            action.alternativePayment.waterbendPermanents.isNotEmpty() && validateWaterbendCap > 0
+        ) {
+            alternativePaymentHandler.calculateReducedCostForWaterbend(
+                costAfterAltPayment, action.alternativePayment, validateWaterbendCap
+            )
+        } else {
+            costAfterAltPayment
+        }
+
+        // For an X-cost Harmonize cast where a creature is tapped, the
+        // creature's power reduces generic mana — and {X} is generic (TDM release notes) —
+        // so the leftover reduction beyond any printed generic comes off the X mana paid.
+        // For a "waterbend {X}" spell the X is already materialized as generic in the cost
+        // (and reduced by the waterbend taps), so it must NOT also be charged as {X} mana.
+        val paymentXValue = if (cardDef?.script?.spellWaterbend?.isX == true) 0
+            else harmonizePaymentXValue(state, action, cardDef, effectiveCost)
+        return ComputedCastCost(costAfterWaterbend, paymentXValue)
     }
 
     private fun validatePayment(state: GameState, action: CastSpell, cost: ManaCost, paymentXValue: Int = action.xValue ?: 0): String? {
@@ -3317,6 +3345,47 @@ class CastSpellHandler(
     }
 
     /**
+     * Mana-affordability gate for cast-time mode selection: can the caster still pay
+     * the spell's total cost if [chosenIndices] end up being the chosen modes? Chosen
+     * modes' additional mana costs stack (rule 700.2h), so a pick that is affordable
+     * alone can become unpayable combined with earlier picks — and by the time payment
+     * runs (after target selection) the only way out is cancelling the whole cast.
+     *
+     * The base cost comes from [computeTotalCastCost] — the same pipeline payment uses —
+     * so alternative costs, cost modifiers, and alternative payments (convoke/delve)
+     * can't make the gate disagree with payment. A "without paying its mana cost" cast
+     * still owes the stacked per-mode additional costs (CR 601.2b, 601.2f — additional
+     * costs apply on top of an alternative cost).
+     */
+    private fun canPayModeSelection(
+        state: GameState,
+        action: CastSpell,
+        modes: List<com.wingedsheep.sdk.scripting.effects.Mode>,
+        chosenIndices: List<Int>
+    ): Boolean {
+        val extraCosts = chosenIndices.mapNotNull { modes.getOrNull(it)?.additionalManaCost }
+        // Nothing stacks — base-cost affordability was already validated on the cast action.
+        if (extraCosts.isEmpty()) return true
+        val cardComponent = state.getEntity(action.cardId)?.get<CardComponent>() ?: return true
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return true
+        val playForFree = zoneResolver.hasPlayWithoutPayingCost(state, action.playerId, action.cardId) ||
+            action.useWithoutPayingManaCost
+        val computed = computeTotalCastCost(
+            state,
+            action,
+            cardDef,
+            cardComponent,
+            playForFree,
+            castingFromCommandZone = zoneResolver.hasCommanderCastPermission(state, action.playerId, action.cardId)
+        ) ?: return false
+        var cost = computed.cost
+        for (extra in extraCosts) {
+            cost = cost + ManaCost.parse(extra)
+        }
+        return validatePayment(state, action, cost, computed.paymentXValue) == null
+    }
+
+    /**
      * Build a ChooseOptionDecision + CastModalModeSelectionContinuation for the next
      * mode pick. Shared between the initial pause (here) and the iterative resumer.
      */
@@ -3331,7 +3400,20 @@ class CastSpellHandler(
         availableIndices: List<Int>?,
         repeatAvailableIndices: List<Int>?
     ): ExecutionResult {
-        val offerIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        val candidateIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        // Rule 700.2h — only offer a mode the caster can still pay for on top of the
+        // modes already picked. Without this gate an unpayable combination sails
+        // through mode + target selection and dead-ends at payment, where the pending
+        // decision can never be answered legally (only cancelled).
+        val offerIndices = candidateIndices.filter { candidate ->
+            canPayModeSelection(state, baseCastAction, modalEffect.modes, selectedModeIndices + candidate)
+        }
+        if (offerIndices.isEmpty() && selectedModeIndices.size < modalEffect.minChooseCount) {
+            return ExecutionResult.error(
+                state,
+                "Cannot afford the additional cost of any remaining mode for $cardName"
+            )
+        }
         val doneOffered = selectedModeIndices.size >= modalEffect.minChooseCount &&
             selectedModeIndices.size < modalEffect.chooseCount
 
