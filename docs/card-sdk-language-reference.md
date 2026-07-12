@@ -796,6 +796,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `AddDynamicMana(amount, allowedColors, restriction?)` — split X across a fixed color set, distinct from `AddManaOfChoice` because it distributes the full X total across multiple colors rather than producing X copies of one chosen color.
 - `AddManaInAnyCombination(amount, allowedColors?, restriction?)` — "Add N mana in any combination of colors" (Wizard's Rockets, Thornvault Forager, Interdimensional Web Watch). Sugar for `AddDynamicMana`; `allowedColors` defaults to all five. The controller colors **each** pip independently at resolution (3+ colors → pip-by-pip color choice; 2 colors → one "how much of the first" prompt; ≤0 → no mana, no prompt), so the result can mix colors — distinct from `AddAnyColorMana`, where all N share one color.
 - `AddOneManaOfEachColorAmong(filter)` — one mana of *each* color found among matching permanents (Bloom Tender shape).
+- `AddOneManaOfEachCraftedMaterialColor()` — one mana of *each* printed color among the exiled cards used to craft the source (`AddOneManaOfEachColorAmongEffect(colorSource = ManaColorSource.CraftedMaterials)`; Sunbird Effigy).
 - `PayDynamicMana(amount, payer?, color?)` — pay a dynamically-computed amount of mana at resolution; the
   dynamic, payer-parametric twin of the flat `PayManaCostEffect`. `amount` is a [DynamicAmount](#dynamicamount)
   evaluated at resolution (0 pays nothing and succeeds); `payer` is a `Player` reference defaulting to the
@@ -5521,6 +5522,16 @@ Numbers computed at resolution time.
   permanent (CR 702.167c). Reads the source's `CraftedFromExiledComponent`. Used for the
   `*`-power CDA on Mastercraft Raptor (Saheeli's Lattice back face). Evaluates to 0 when the
   source has no recorded materials.
+- `CraftedMaterialsTotalManaValue` — mana-value sibling of `CraftedMaterialsTotalPower`: total
+  printed mana value of the crafted materials. Exact-one crafts read it as the single material's
+  mana value (Jadeheart Attendant's "gain life equal to the mana value of the exiled card used to
+  craft it"). 0 when not crafted.
+- `CraftedMaterialsColorCount` — number of distinct printed colors (0–5) among the crafted
+  materials (Sunbird Effigy's `*/*` P/T CDA). Pairs with the
+  `Effects.AddOneManaOfEachCraftedMaterialColor()` mana effect (§4 mana effects) —
+  `AddOneManaOfEachColorAmongEffect(colorSource = ManaColorSource.CraftedMaterials)` — for
+  "for each color among the exiled cards used to craft this creature, add one mana of that
+  color". 0 when not crafted.
 - `CreaturesThatCrewedOrSaddledThisTurn` (facade `DynamicAmounts.creaturesThatCrewedOrSaddledThisTurn()`)
   — number of distinct creatures that crewed (CR 702.122) or saddled (CR 702.171) the source
   permanent this turn. Source-relative: reads the source's `CrewSaddleContributorsComponent` and
