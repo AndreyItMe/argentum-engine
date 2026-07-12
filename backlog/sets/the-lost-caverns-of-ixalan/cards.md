@@ -132,7 +132,7 @@
 - [x] In the Presence of Ages
 - [x] Inti, Seneschal of the Sun
 - [ ] Intrepid Paleontologist
-- [ ] Inverted Iceberg
+- [x] Inverted Iceberg
 - [x] Ironpaw Aspirant
 - [x] Itzquinth, Firstborn of Gishath
 - [x] Ixalli's Lorekeeper
