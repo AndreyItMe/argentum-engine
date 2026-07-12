@@ -5,6 +5,7 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.BattlefieldEntryTimestampComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.WarpExiledComponent
 import com.wingedsheep.engine.state.permissions.MayPlayPermission
@@ -53,7 +54,7 @@ class WarpExileExecutor : EffectExecutor<WarpExileEffect> {
         // when the trigger was created.
         if (effect.enteredBattlefieldTimestamp != null) {
             val currentEntry = container
-                .get<com.wingedsheep.engine.state.components.battlefield.BattlefieldEntryTimestampComponent>()
+                .get<BattlefieldEntryTimestampComponent>()
                 ?.timestamp
             if (currentEntry != effect.enteredBattlefieldTimestamp) {
                 return EffectResult.success(state)

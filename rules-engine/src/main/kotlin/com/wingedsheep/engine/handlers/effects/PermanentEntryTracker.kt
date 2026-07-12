@@ -48,11 +48,13 @@ object PermanentEntryTracker {
         // this is where the entering permanent gets its entry timestamp. Delayed triggers that
         // track a specific permanent (CR 603.7c) snapshot this value and compare it at
         // resolution — a mismatch means the entity left and re-entered as a new object.
-        // Distinct entries always differ: the global timestamp ticks at the end of every
-        // resolution, and an entry and re-entry can never share one resolution.
+        // Stamp, then tick: resolutions do NOT advance the global timestamp (only puts on the
+        // stack, land plays, and similar actions do), so two back-to-back resolutions can share
+        // a value — a blink resolving at the same timestamp as the original entry would collide
+        // with the snapshot. Ticking here makes every entry stamp unique unconditionally.
         val stamped = state.updateEntity(entityId) { container ->
             container.with(BattlefieldEntryTimestampComponent(state.timestamp))
-        }
+        }.tick()
         val cardTypes = projectedCardTypes(stamped, entityId)
         if (cardTypes.isEmpty()) return stamped
         val subtypes = stamped.projectedState.getSubtypes(entityId)
