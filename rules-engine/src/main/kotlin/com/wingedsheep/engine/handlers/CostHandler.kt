@@ -1197,6 +1197,14 @@ class CostHandler(
                 "Craft requires at least ${cost.minCount} ${cost.filter.description}(s) to exile"
             )
         }
+        val maxCount = cost.maxCount
+        if (maxCount != null && chosen.size > maxCount) {
+            // Exact-count crafts ("Craft with artifact") exile exactly maxCount materials —
+            // costs are paid exactly as written (CR 118.8), no over-payment.
+            return CostPaymentResult.failure(
+                "Craft accepts at most $maxCount ${cost.filter.description}(s) to exile"
+            )
+        }
         if (chosen.any { it !in candidates }) {
             return CostPaymentResult.failure("Craft material is not a legal candidate")
         }

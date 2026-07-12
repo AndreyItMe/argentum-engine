@@ -237,9 +237,12 @@ excluded.
   additional cost (Feed the Cycle), and the graveyard-cast permission (Osteomancer Adept, where the
   card being cast is excluded from the exile pool). For a "you may forage" *effect* (not a cost) use
   `Patterns.Mechanic.forage(afterEffect?)` instead.
-- `Costs.Craft(filter, minCount = 1)` — Craft material cost (CR 702.167a): exile this permanent
-  **and** exile at least `minCount` cards matching `filter` selected from the combined pool of
-  permanents you control and cards in your graveyard. Atomic because CR 702.167a pairs the
+- `Costs.Craft(filter, minCount = 1, maxCount = null)` — Craft material cost (CR 702.167a): exile
+  this permanent **and** exile at least `minCount` (and, when `maxCount` is set, at most `maxCount`)
+  cards matching `filter` selected from the combined pool of
+  permanents you control and cards in your graveyard. Exact-count crafts ("Craft with artifact" =
+  exactly one, "Craft with two creatures" = exactly two) set `maxCount == minCount`; "... or more"
+  wordings leave `maxCount = null`. Atomic because CR 702.167a pairs the
   self-exile with the materials-exile in one clause. Records the chosen materials on the source's
   `CraftedFromExiledComponent` so the back face's CDA can read them after the source returns
   transformed. Always combined with `Mana(...)` and used with the
@@ -4656,11 +4659,14 @@ composite abilities).
   original stays in exile; each cast copy is a phantom that ceases to exist (CR 707.10a / 112.3b), so there is no
   exponential growth. The `Lesson` spell subtype (`Subtype.LESSON`) is a plain, non-functional subtype (no Learn
   mechanic in the set), but the type line must parse it.
-- `Craft(filter, cost)` — `card { craft(filter, cost) }` builder helper (CR 702.167, The Lost Caverns of
+- `Craft(filter, cost)` — `card { craft(filter, cost, materialDescription?, minCount = 1, maxCount = null) }`
+  builder helper (CR 702.167, The Lost Caverns of
   Ixalan). On the front face of a transforming DFC: "Craft with [filter] [cost] ([cost], Exile this permanent,
   Exile [filter] you control and/or [filter] cards from your graveyard: Return this card to the battlefield
-  transformed under its owner's control. Activate only as a sorcery.)" Composes entirely from existing primitives
-  — `AbilityCost.Composite(Mana(cost), AbilityCost.Craft(filter))` (the atomic `Craft` sub-cost handles both the
+  transformed under its owner's control. Activate only as a sorcery.)" `minCount`/`maxCount` bound the material
+  count: exact-count wordings ("Craft with artifact" = exactly one, "Craft with two creatures" = exactly two)
+  pass `maxCount = minCount`; "one or more [filter]s" leaves `maxCount = null`. Composes entirely from existing primitives
+  — `AbilityCost.Composite(Mana(cost), AbilityCost.Craft(filter, minCount, maxCount))` (the atomic `Craft` sub-cost handles both the
   self-exile and the materials-exile because CR 702.167a defines them as one paired clause), plus
   `Effects.ReturnSelfFromExileTransformed` as the resolution effect, and `timing = TimingRule.SorcerySpeed`.
   Records the exiled materials on the source's `CraftedFromExiledComponent` so the back face's CDA
@@ -4668,7 +4674,7 @@ composite abilities).
   can read them via `DynamicAmount.CraftedMaterialsTotalPower`. Declares `Keyword.CRAFT` for display.
 
   Material selection: the engine surfaces the combined BF + GY candidate pool on each Craft activation as
-  `AdditionalCostData.validCraftMaterials` / `craftMinCount`. The web client renders both zones side-by-side
+  `AdditionalCostData.validCraftMaterials` / `craftMinCount` / `craftMaxCount`. The web client renders both zones side-by-side
   via the dedicated `CraftMaterialOverlay` (routed by the `Craft` cost-type branch in `pipelinePhases`) and
   submits the picked IDs back as `ActivateAbility.costPayment.exiledCards`. Headless / game-server callers can
   supply the chosen IDs directly. The cost handler validates that every chosen entity is either a permanent

@@ -1030,6 +1030,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 costType = "Craft",
                 validCraftMaterials = craftMaterials,
                 craftMinCount = craftCost.minCount,
+                craftMaxCount = craftCost.maxCount,
                 counterRemovalCreatures = counterRemovalCreatures
             )
         }

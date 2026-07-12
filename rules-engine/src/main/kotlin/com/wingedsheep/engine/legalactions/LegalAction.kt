@@ -325,7 +325,9 @@ data class AdditionalCostData(
      * `ActivateAbility.costPayment.exiledCards`.
      */
     val validCraftMaterials: List<EntityId> = emptyList(),
-    val craftMinCount: Int = 1
+    val craftMinCount: Int = 1,
+    /** Cap on material count for exact-count crafts ("Craft with artifact"); null = unbounded. */
+    val craftMaxCount: Int? = null
 )
 
 /**

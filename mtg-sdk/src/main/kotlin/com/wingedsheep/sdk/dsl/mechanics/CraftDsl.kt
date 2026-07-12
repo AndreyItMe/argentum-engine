@@ -25,24 +25,33 @@ import com.wingedsheep.sdk.scripting.costs.CostAtom
  * Marks the front face with the [Keyword.CRAFT] tag for client display.
  *
  * ```kotlin
- * craft(filter = Filters.Dinosaur, cost = "{4}{R}")
+ * craft(filter = Filters.Dinosaur, cost = "{4}{R}")                             // one or more
+ * craft(filter = Filters.Artifact, cost = "{2}{W}", minCount = 1, maxCount = 1) // exactly one
  * ```
  *
  * @param filter The material filter (the [filter] in "Craft with [filter]").
  * @param cost The mana portion of the craft cost.
  * @param materialDescription Optional override for the filter's name in the rendered cost
  *   description — e.g. "one or more Dinosaurs". Defaults to the filter's own description.
+ * @param minCount Minimum number of materials (CR 702.167a).
+ * @param maxCount Maximum number of materials, or `null` for "... or more" wordings. Exact-count
+ *   crafts ("Craft with artifact", "Craft with two creatures") set `maxCount == minCount`.
  */
 fun CardBuilder.craft(
     filter: GameObjectFilter,
     cost: String,
-    materialDescription: String? = null
+    materialDescription: String? = null,
+    minCount: Int = 1,
+    maxCount: Int? = null
 ) {
     val materials = materialDescription ?: "one or more ${filter.description}s"
     activatedAbilities.add(
         ActivatedAbility(
             cost = AbilityCost.Composite(
-                listOf(AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))), AbilityCost.Craft(filter))
+                listOf(
+                    AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))),
+                    AbilityCost.Craft(filter, minCount = minCount, maxCount = maxCount)
+                )
             ),
             effect = com.wingedsheep.sdk.scripting.effects.ReturnSelfFromExileTransformedEffect,
             targetRequirements = emptyList(),

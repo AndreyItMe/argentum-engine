@@ -800,7 +800,7 @@ export function enterPhase(
           // dedicated cross-zone overlay rather than the single-zone targeting flow.
           validTargets = [...(costInfo.validCraftMaterials ?? [])]
           minTargets = costInfo.craftMinCount ?? 1
-          maxTargets = validTargets.length
+          maxTargets = costInfo.craftMaxCount ?? validTargets.length
           flags.isCraftMaterialSelection = true
           flags.targetDescription = costInfo.description
           flags.sourceCardName = actionInfo.description

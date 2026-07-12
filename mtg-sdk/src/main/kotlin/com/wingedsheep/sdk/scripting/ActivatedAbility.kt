@@ -478,18 +478,29 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      * @property filter Material filter (typically the same one used in the Craft display text,
      *   e.g. `Filters.Dinosaur` for Saheeli's Lattice).
      * @property minCount Minimum number of materials to exile (1 for "one or more").
+     * @property maxCount Maximum number of materials, or `null` for unbounded ("... or more").
+     *   Most Craft costs name an exact count — "Craft with artifact" exiles exactly one
+     *   artifact, "Craft with two creatures" exactly two — so those set `maxCount == minCount`;
+     *   only "one or more" / "N or more" wordings leave it `null` (CR 702.167a).
      */
     @SerialName("CostCraft")
     @Serializable
     data class Craft(
         val filter: GameObjectFilter,
         val minCount: Int = 1,
+        val maxCount: Int? = null,
     ) : AbilityCost {
         override val description: String = buildString {
             append("Exile this permanent, Exile ")
-            if (minCount == 1) append("one or more ") else append("$minCount or more ")
+            when {
+                maxCount == null && minCount == 1 -> append("one or more ")
+                maxCount == null -> append("$minCount or more ")
+                maxCount == 1 -> append("a ")
+                else -> append("$minCount ")
+            }
             append(filter.description)
-            append("s you control and/or ")
+            if (maxCount != 1) append("s")
+            append(" you control and/or ")
             append(filter.description)
             append(" cards from your graveyard")
         }

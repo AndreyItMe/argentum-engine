@@ -1046,6 +1046,8 @@ export interface AdditionalCostInfo {
    */
   readonly validCraftMaterials?: readonly EntityId[]
   readonly craftMinCount?: number
+  /** Cap on material count for exact-count crafts ("Craft with artifact"); absent = unbounded. */
+  readonly craftMaxCount?: number
 }
 
 export interface CounterRemovalCreatureInfo {

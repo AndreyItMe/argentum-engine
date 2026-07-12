@@ -309,8 +309,8 @@ object Costs {
      * Costs.Composite(Costs.Mana("{4}{R}"), Costs.Craft(Filters.Dinosaur))
      * ```
      */
-    fun Craft(filter: GameObjectFilter, minCount: Int = 1): AbilityCost =
-        AbilityCost.Craft(filter, minCount)
+    fun Craft(filter: GameObjectFilter, minCount: Int = 1, maxCount: Int? = null): AbilityCost =
+        AbilityCost.Craft(filter, minCount, maxCount)
 
     // =========================================================================
     // Additional Costs (paid while casting a spell) — wraps AdditionalCost
