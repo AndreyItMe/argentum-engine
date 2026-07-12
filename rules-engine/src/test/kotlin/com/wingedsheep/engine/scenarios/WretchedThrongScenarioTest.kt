@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario test for Wretched Throng (VOW #91) — {1}{U} Creature — Zombie Horror, 2/1.
@@ -46,14 +47,19 @@ class WretchedThrongScenarioTest : ScenarioTestBase() {
                 withClue("the dies trigger offers a search decision") {
                     game.hasPendingDecision() shouldBe true
                 }
-                val decision = game.getPendingDecision()
-                val libraryCopy = (decision as? com.wingedsheep.engine.core.SelectCardsDecision)
-                    ?.options?.firstOrNull()
-                if (libraryCopy != null) {
-                    game.selectCards(listOf(libraryCopy)).error shouldBe null
-                } else {
-                    game.answerYesNo(true)
+
+                // The optional trigger surfaces two sequential decisions: first the "you may
+                // search" yes/no gate, then the library-search card selection. Accept the gate,
+                // then pick the copy of Wretched Throng out of the library.
+                if (game.getPendingDecision() is com.wingedsheep.engine.core.YesNoDecision) {
+                    game.answerYesNo(true).error shouldBe null
                 }
+                val selection = game.getPendingDecision() as? com.wingedsheep.engine.core.SelectCardsDecision
+                withClue("the search offers the library copy of Wretched Throng") {
+                    selection shouldNotBe null
+                }
+                val libraryCopy = selection!!.options.first()
+                game.selectCards(listOf(libraryCopy)).error shouldBe null
                 game.resolveStack()
 
                 withClue("the found copy of Wretched Throng is now in hand") {
