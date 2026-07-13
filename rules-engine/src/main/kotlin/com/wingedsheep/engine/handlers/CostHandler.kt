@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.CountersAddedEvent
 import com.wingedsheep.engine.core.LifeChangedEvent
 import com.wingedsheep.engine.core.LifeChangeReason
 import com.wingedsheep.engine.core.PermanentsSacrificedEvent
+import com.wingedsheep.engine.core.CountersRemovedEvent
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.core.tap
@@ -31,8 +32,10 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCost
+import com.wingedsheep.sdk.scripting.DistributedCounterRemoval
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
  * Validates and pays costs for spells and abilities.
@@ -560,6 +563,30 @@ class CostHandler(
             val handZone = ZoneKey(controllerId, Zone.HAND)
             findMatchingCardsUnified(state, state.getZone(handZone), atom.filter, controllerId).size >= atom.count
         }
+        is CostAtom.RemoveCounters -> {
+            if (atom.self) {
+                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
+                if (counters == null) return@canPayAtom false
+                val ct = atom.counterType?.let { resolveNamedCounterType(it) }
+                val needed = getAtomCount(atom.count)
+                if (needed <= 0) return@canPayAtom true
+                if (ct != null) counters.getCount(ct) >= needed
+                else counters.counters.values.sum() >= needed
+            } else {
+                val counterType = atom.counterType?.let { resolveNamedCounterType(it) }
+                val projected = state.projectedState
+                val ctx = PredicateContext(controllerId = controllerId)
+                val needed = getAtomCount(atom.count)
+                if (needed <= 0) return@canPayAtom true
+                val total = projected.getBattlefieldControlledBy(controllerId).sumOf { entityId ->
+                    if (!predicateEvaluator.matches(state, projected, entityId, atom.filter, ctx)) return@sumOf 0
+                    val counters = state.getEntity(entityId)?.get<CountersComponent>() ?: return@sumOf 0
+                    if (counterType != null) counters.getCount(counterType)
+                    else counters.counters.values.sum()
+                }
+                total >= needed
+            }
+        }
     }
 
     /** Perform payment for a single [CostAtom] paid as an activated-ability cost. */
@@ -619,6 +646,108 @@ class CostHandler(
             // is a no-op success kept for atom exhaustiveness (the PayCost reveal path emits the
             // CardsRevealedEvent through CostPaymentService).
             CostPaymentResult.success(state, manaPool)
+        is CostAtom.RemoveCounters -> {
+            val counterType = atom.counterType?.let { resolveNamedCounterType(it) }
+            val requiredCount = getAtomCount(atom.count, choices)
+            val projected = state.projectedState
+            val ctx = PredicateContext(controllerId = controllerId)
+            var newState = state
+            val events = mutableListOf<GameEvent>()
+
+            if (atom.self) {
+                // Remove from source permanent (self-cost)
+                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
+                    ?: return CostPaymentResult.failure("Source has no counters")
+                if (counterType != null) {
+                    val current = counters.getCount(counterType)
+                    if (current < requiredCount) {
+                        return CostPaymentResult.failure("Source has only $current ${atom.counterType} counters, need $requiredCount")
+                    }
+                    newState = newState.updateEntity(sourceId) { c ->
+                        c.with(counters.withRemoved(counterType, requiredCount))
+                    }
+                    events.add(CountersRemovedEvent(sourceId, atom.counterType!!, requiredCount, "Source"))
+                } else {
+                    // Self with any-type: use distributedCounterRemovals
+                    val removals = choices.distributedCounterRemovals
+                    for (removal in removals) {
+                        if (removal.count <= 0) continue
+                        val resolvedType = resolveNamedCounterType(removal.counterType)
+                        val source = state.getEntity(sourceId)?.get<CountersComponent>() ?: continue
+                        newState = newState.updateEntity(sourceId) { c ->
+                            c.with(source.withRemoved(resolvedType, removal.count))
+                        }
+                        events.add(CountersRemovedEvent(sourceId, removal.counterType, removal.count, "Source"))
+                    }
+                }
+            } else if (counterType != null) {
+                // Single-type removal: use counterRemovalChoices (type is implicit)
+                val removals = choices.counterRemovalChoices
+                val totalChosen = removals.values.sum()
+                if (totalChosen != requiredCount) {
+                    return CostPaymentResult.failure(
+                        "Counter removal total ($totalChosen) does not match required count ($requiredCount)"
+                    )
+                }
+                for ((entityId, toRemove) in removals) {
+                    if (toRemove <= 0) continue
+                    val container = state.getEntity(entityId)
+                        ?: return CostPaymentResult.failure("Permanent not found: $entityId")
+                    if (projected.getController(entityId) != controllerId) {
+                        return CostPaymentResult.failure("Cannot remove counters from a permanent you do not control")
+                    }
+                    if (!predicateEvaluator.matches(state, projected, entityId, atom.filter, ctx)) {
+                        return CostPaymentResult.failure("Permanent does not match the required filter for counter removal")
+                    }
+                    val available = container.get<CountersComponent>()?.getCount(counterType) ?: 0
+                    if (available < toRemove) {
+                        return CostPaymentResult.failure(
+                            "Permanent does not have enough ${atom.counterType} counters (need $toRemove, have $available)"
+                        )
+                    }
+                    newState = newState.updateEntity(entityId) { c ->
+                        val counters = c.get<CountersComponent>() ?: CountersComponent()
+                        c.with(counters.withRemoved(counterType, toRemove))
+                    }
+                    val entityName = container.get<CardComponent>()?.name ?: "Permanent"
+                    events.add(CountersRemovedEvent(entityId, atom.counterType!!, toRemove, entityName))
+                }
+            } else {
+                // Any-type removal: use distributedCounterRemovals (per-entry type)
+                val removals = choices.distributedCounterRemovals
+                val totalChosen = removals.sumOf { it.count }
+                if (totalChosen != requiredCount) {
+                    return CostPaymentResult.failure(
+                        "Counter removal total ($totalChosen) does not match required count ($requiredCount)"
+                    )
+                }
+                for (removal in removals) {
+                    if (removal.count <= 0) continue
+                    val container = state.getEntity(removal.entityId)
+                        ?: return CostPaymentResult.failure("Permanent not found: ${removal.entityId}")
+                    if (projected.getController(removal.entityId) != controllerId) {
+                        return CostPaymentResult.failure("Cannot remove counters from a permanent you do not control")
+                    }
+                    if (!predicateEvaluator.matches(state, projected, removal.entityId, atom.filter, ctx)) {
+                        return CostPaymentResult.failure("Permanent does not match the required filter for counter removal")
+                    }
+                    val resolvedType = resolveNamedCounterType(removal.counterType)
+                    val available = container.get<CountersComponent>()?.getCount(resolvedType) ?: 0
+                    if (available < removal.count) {
+                        return CostPaymentResult.failure(
+                            "Permanent does not have enough ${removal.counterType} counters (need ${removal.count}, have $available)"
+                        )
+                    }
+                    newState = newState.updateEntity(removal.entityId) { c ->
+                        val counters = c.get<CountersComponent>() ?: CountersComponent()
+                        c.with(counters.withRemoved(resolvedType, removal.count))
+                    }
+                    val entityName = container.get<CardComponent>()?.name ?: "Permanent"
+                    events.add(CountersRemovedEvent(removal.entityId, removal.counterType, removal.count, entityName))
+                }
+            }
+            CostPaymentResult.success(newState, manaPool, events)
+        }
     }
 
     /**
@@ -828,6 +957,22 @@ class CostHandler(
                     findMatchingCardsUnified(state, state.getZone(ZoneKey(controllerId, atom.zone)), atom.filter, controllerId).size >= atom.count
                 is CostAtom.TapPermanents ->
                     findUntappedMatchingPermanentsUnified(state, controllerId, atom.filter).size >= atom.count
+                is CostAtom.RemoveCounters -> {
+                    val needed = getAtomCount(atom.count)
+                    if (needed <= 0) true
+                    else {
+                        val counterType = atom.counterType?.let { resolveNamedCounterType(it) }
+                        val projected = state.projectedState
+                        val ctx = PredicateContext(controllerId = controllerId)
+                        val total = projected.getBattlefieldControlledBy(controllerId).sumOf { entityId ->
+                            if (!predicateEvaluator.matches(state, projected, entityId, atom.filter, ctx)) return@sumOf 0
+                            val counters = state.getEntity(entityId)?.get<CountersComponent>() ?: return@sumOf 0
+                            if (counterType != null) counters.getCount(counterType)
+                            else counters.counters.values.sum()
+                        }
+                        total >= needed
+                    }
+                }
                 // Mana / return-to-hand / reveal are not produced as spell additional costs today.
                 is CostAtom.Mana, is CostAtom.ReturnToHand, is CostAtom.RevealFromHand -> false
             }
@@ -1331,6 +1476,18 @@ class CostHandler(
         }
     }
 
+    /**
+     * Extract the effective count from a [DynamicAmount] in a cost atom.
+     * For [DynamicAmount.Fixed], returns the fixed value.
+     * For [DynamicAmount.XValue], returns [CostPaymentChoices.xValue] (or 0 when no choices).
+     * Scaffolds for other dynamic variants (returns 0 — caller handles zero as "not required").
+     */
+    private fun getAtomCount(amount: DynamicAmount, choices: CostPaymentChoices? = null): Int = when (amount) {
+        is DynamicAmount.Fixed -> amount.amount
+        is DynamicAmount.XValue -> choices?.xValue ?: 0
+        else -> 0
+    }
+
     private fun resolveNamedCounterType(name: String): CounterType {
         return when (name) {
             "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
@@ -1374,6 +1531,15 @@ data class CostPaymentChoices(
     val bounceChoices: List<EntityId> = emptyList(),
     val xValue: Int = 0,
     val counterRemovalChoices: Map<EntityId, Int> = emptyMap(),
+    /**
+     * Per-entity counter removals with explicit counter type, for
+     * [CostAtom.RemoveCounters] when [CostAtom.RemoveCounters.counterType] is null
+     * (any counter type may be removed — Tayam style). Each entry carries the
+     * entity, the counter type name, and the count to remove from that entity.
+     * When [counterRemovalChoices] is set instead, the counter type is implicit
+     * and must be the cost atom's own type.
+     */
+    val distributedCounterRemovals: List<DistributedCounterRemoval> = emptyList(),
     val blightChoices: List<EntityId> = emptyList(),
     /**
      * The permanent that granted the activated ability being paid for, when the

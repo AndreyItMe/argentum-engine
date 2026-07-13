@@ -81,6 +81,7 @@ class PayOrSufferExecutor(
                 is CostAtom.TapPermanents -> handleTapCost(state, effect, context, atom, sourceId, sourceCard.name, payingPlayerId)
                 is CostAtom.ReturnToHand -> EffectResult.error(state, "ReturnToHand payment for PayOrSuffer not yet implemented")
                 is CostAtom.RevealFromHand -> EffectResult.error(state, "RevealCard payment for PayOrSuffer not yet implemented")
+                is CostAtom.RemoveCounters -> handleRemoveCountersCost(state, effect, context, atom, sourceId, sourceCard.name, payingPlayerId)
             }
         }
     }
@@ -636,6 +637,100 @@ class PayOrSufferExecutor(
         )
     }
 
+
+    /**
+     * Handles a remove counters cost - player must remove the specified number of counters from the specified entities.
+     */
+    private fun handleRemoveCountersCost(
+        state: GameState,
+        effect: PayOrSufferEffect,
+        context: EffectContext,
+        cost: CostAtom.RemoveCounters,
+        sourceId: EntityId,
+        sourceName: String,
+        controllerId: EntityId
+    ): EffectResult {
+        val required = (cost.count as? com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed)?.amount ?: 0
+        val projected = state.projectedState
+        val candidates = if (cost.self) listOf(sourceId) else
+            projected.getBattlefieldControlledBy(controllerId).filter { entityId ->
+                predicateEvaluator.matches(
+                    state, projected, entityId, cost.filter,
+                    PredicateContext(controllerId = controllerId)
+                )
+            }
+        val counterType = cost.counterType?.let {
+            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+        }
+        val available = candidates.sumOf { entityId ->
+            val counters = state.getEntity(entityId)
+                ?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+            if (counterType != null) counters?.getCount(counterType) ?: 0
+            else counters?.counters?.values?.sum() ?: 0
+        }
+        if (available < required) return executeSufferEffect(state, effect.suffer, context)
+
+        val continuation = PayOrSufferContinuation(
+            decisionId = "",
+            playerId = controllerId,
+            sourceId = sourceId,
+            sourceName = sourceName,
+            costType = PayOrSufferCostType.REMOVE_COUNTERS,
+            sufferEffect = effect.suffer,
+            requiredCount = required,
+            filter = cost.filter,
+            counterType = cost.counterType,
+            self = cost.self,
+            targets = context.targets,
+            namedTargets = context.pipeline.namedTargets,
+            triggeringEntityId = context.triggeringEntityId,
+            triggeringPlayerId = context.triggeringPlayerId,
+            abilityControllerId = context.controllerId
+        )
+
+        if (cost.self || cost.counterType == null) {
+            val decision = decisionHandler.createYesNoDecision(
+                state = state,
+                playerId = controllerId,
+                sourceId = sourceId,
+                sourceName = sourceName,
+                prompt = cost.description,
+                yesText = "Remove counters",
+                noText = "Accept consequence",
+                phase = DecisionPhase.RESOLUTION
+            )
+            val pending = decision.pendingDecision!!
+            return EffectResult.paused(
+                decision.state.pushContinuation(continuation.copy(decisionId = pending.id)),
+                pending,
+                decision.events
+            )
+        }
+
+        val decision = decisionHandler.createCardSelectionDecision(
+            state = state,
+            playerId = controllerId,
+            sourceId = sourceId,
+            sourceName = sourceName,
+            prompt = cost.description,
+            options = candidates.filter { entityId ->
+                val counters = state.getEntity(entityId)
+                    ?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                (counterType?.let { counters?.getCount(it) } ?: counters?.counters?.values?.sum()) ?: 0 > 0
+            },
+            minSelections = 0,
+            maxSelections = required,
+            ordered = false,
+            phase = DecisionPhase.RESOLUTION
+        )
+        val pending = decision.pendingDecision!!
+        return EffectResult.paused(
+            decision.state.pushContinuation(continuation.copy(decisionId = pending.id)),
+            pending,
+            decision.events
+        )
+    }
+
     /**
      * Check if a player can pay a specific cost.
      */
@@ -665,6 +760,25 @@ class PayOrSufferExecutor(
                 is CostAtom.TapPermanents -> findValidUntappedPermanentsOnBattlefield(state, playerId, atom.filter, sourceId).size >= atom.count
                 is CostAtom.ReturnToHand -> false
                 is CostAtom.RevealFromHand -> false
+                is CostAtom.RemoveCounters -> {
+                    // Can pay if there are permanents matching the filter with enough counters
+                    val candidates = if (atom.self) listOf(sourceId)
+                    else findValidPermanentsOnBattlefield(state, playerId, atom.filter, sourceId)
+                    val required = (atom.count as? com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed)?.amount ?: 0
+                    candidates.any { permId ->
+                        val container = state.getEntity(permId)
+                        val counters = container?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                        if (counters == null) false
+                        else {
+                            val resolvedType = atom.counterType?.let {
+                                com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+                            }
+                            val available = if (resolvedType != null) counters.getCount(resolvedType)
+                            else counters.counters.values.sum()
+                            available >= required
+                        }
+                    }
+                }
             }
         }
     }

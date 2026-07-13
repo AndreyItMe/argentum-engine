@@ -267,6 +267,12 @@ excluded.
     (min = max = slot count); an illegal set that can't fill every slot is rejected at payment time
     (no per-slot selection UI).
 - `Costs.Composite(c1, c2, ...)` — multiple costs paid together.
+- `Costs.RemoveCounters(count = 1, counterType = null, filter = Any)` — remove `count` counters
+  from among permanents matching `filter` you control. When `counterType` is set (e.g. `"+1/+1"`),
+  only counters of that type are removed; when `null`, counters of any type may be removed in any
+  combination (Tayam, Luminous Enigma).
+- `Costs.RemoveXCounters` — remove X counters of any type from among creatures you control, where
+  X is the activated ability's chosen variable-cost value.
 
 **Spell-level alternatives**
 
@@ -331,7 +337,11 @@ definitions construct these through the facade, e.g. `Costs.additional.Sacrifice
   Natural Order) and the **pay path** (base cost + `alternativeManaCost` folded in). The chosen path
   is recovered at payment time from whether the cast action's `additionalCostPayment.sacrificedPermanents`
   is non-empty; the sacrifice path is only offered when you control at least `count` matching
-  permanents, so with nothing to sacrifice only the pay path is castable.
+     permanents, so with nothing to sacrifice only the pay path is castable.
+- `Costs.additional.RemoveCounters(count, counterType = null, filter = Any)` — "as an additional
+  cost to cast this spell, remove `count` counters from among permanents matching `filter` you
+  control." When `counterType` is set (e.g. `"+1/+1"`), only counters of that type are removed;
+  when `null`, counters of any type may be removed in any combination (Eladamri, Korève Domain).
 
 **`Costs.pay.*`** (wraps `PayCost`) — payable costs used by [`PayOrSufferEffect`](#15-replacement-effects) ("do X
 unless you Y") and by `morphCost` (non-mana face-up cost). Distinct from `AbilityCost` / `Costs.*`
@@ -377,6 +387,10 @@ preview — in the turn-face-up handler.)
   Currently only consumed by `morphCost`; not yet wired into `PayOrSufferEffect`.
 - `Costs.pay.RevealCard(filter, count = 1)` — reveal a card from hand matching `filter`. Currently
   only consumed by `morphCost`; not yet wired into `PayOrSufferEffect`.
+- `Costs.pay.RemoveCounters(count, counterType = null, filter = Any)` — remove `count` counters
+  from among permanents matching `filter` you control. When `counterType` is set (e.g. `"+1/+1"`),
+  only counters of that type are removed; when `null`, counters of any type may be removed in any
+  combination.
 
 ---
 

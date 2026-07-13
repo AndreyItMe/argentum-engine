@@ -54,6 +54,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.core.CountersAddedEvent
+import com.wingedsheep.engine.core.CountersRemovedEvent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -1440,6 +1441,51 @@ class CastSpellHandler(
                     }
                     // Mana / reveal are not produced as spell additional costs today.
                     is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
+                    is CostAtom.RemoveCounters -> {
+                        val needed = when (val c = atom.count) {
+                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                            else -> 0
+                        }
+                        val removals = resolveDistributedCounterRemovalsForPayment(action)
+                        val total = removals.sumOf { it.count }
+                        if (total < needed) {
+                            return "You must remove $needed counters from among ${atom.filter.description}s you control to cast this spell"
+                        }
+                        val demanded = mutableMapOf<Pair<EntityId, CounterType>, Int>()
+                        for (removal in removals) {
+                            if (removal.count <= 0) {
+                                return "Counter removal count must be positive"
+                            }
+                            val permContainer = state.getEntity(removal.entityId)
+                                ?: return "Counter removal target not found: ${removal.entityId}"
+                            permContainer.get<CardComponent>()
+                                ?: return "Counter removal target is not a card: ${removal.entityId}"
+                            if (projected.getController(removal.entityId) != action.playerId) {
+                                return "You can only remove counters from permanents you control"
+                            }
+                            if (removal.entityId !in state.getBattlefield()) {
+                                return "Counter removal target is not on the battlefield"
+                            }
+                            val ctx = com.wingedsheep.engine.handlers.PredicateContext(controllerId = action.playerId)
+                            if (!predicateEvaluator.matches(state, projected, removal.entityId, atom.filter, ctx)) {
+                                val permName = state.getEntity(removal.entityId)?.get<CardComponent>()?.name ?: "Permanent"
+                                return "$permName doesn't match the required filter: ${atom.filter.description}"
+                            }
+                            val resolvedType =
+                                com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
+                            val key = removal.entityId to resolvedType
+                            demanded[key] = (demanded[key] ?: 0) + removal.count
+                        }
+                        for ((key, demandedCount) in demanded) {
+                            val (entityId, counterType) = key
+                            val actual = state.getEntity(entityId)
+                                ?.get<CountersComponent>()
+                                ?.getCount(counterType) ?: 0
+                            if (actual < demandedCount) {
+                                return "Creature does not have $demandedCount $counterType counters to remove"
+                            }
+                        }
+                    }
                 }
                 is AdditionalCost.ExileVariableCards -> {
                     val exiled = action.additionalCostPayment?.exiledCards ?: emptyList()
@@ -2215,6 +2261,25 @@ class CastSpellHandler(
                         }
                         // PayLife is auto-paid in the loop above; mana / reveal aren't spell additional costs.
                         is CostAtom.PayLife, is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
+                        is CostAtom.RemoveCounters -> {
+                            val resolvedRemovals = resolveDistributedCounterRemovalsForPayment(action)
+                            for (removal in resolvedRemovals) {
+                                val container = currentState.getEntity(removal.entityId) ?: continue
+                                val existing = container.get<CountersComponent>() ?: continue
+                                val resolvedType =
+                                    com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
+                                currentState = currentState.updateEntity(removal.entityId) { c ->
+                                    c.with(existing.withRemoved(resolvedType, removal.count))
+                                }
+                                val entityName = container.get<CardComponent>()?.name ?: "Permanent"
+                                events.add(CountersRemovedEvent(
+                                    entityId = removal.entityId,
+                                    counterType = removal.counterType,
+                                    amount = removal.count,
+                                    entityName = entityName
+                                ))
+                            }
+                        }
                     }
                     is AdditionalCost.ExileVariableCards -> {
                         val exiledCards = action.additionalCostPayment.exiledCards

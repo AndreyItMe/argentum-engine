@@ -2,6 +2,7 @@ package com.wingedsheep.engine.mechanics.cost
 
 import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.CardsRevealedEvent
+import com.wingedsheep.engine.core.CountersRemovedEvent
 import com.wingedsheep.engine.core.ChooseOptionDecision
 import com.wingedsheep.engine.core.CostPaymentContinuation
 import com.wingedsheep.engine.core.DecisionContext
@@ -128,6 +129,30 @@ class CostPaymentService(private val services: EngineServices) {
                     selectionPrompt(state, payerId, resolved, sourceId, sourceName, ctx, controlledMatching(state, payerId, atom.filter, sourceId), atom.count, useTargetingUI = true)
                 is CostAtom.TapPermanents ->
                     selectionPrompt(state, payerId, resolved, sourceId, sourceName, ctx, controlledUntapped(state, payerId, atom.filter, if (atom.excludeSelf) sourceId else null), atom.count, useTargetingUI = true)
+                is CostAtom.RemoveCounters -> {
+                    val count = when (val c = atom.count) {
+                        is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                        else -> 0
+                    }
+                    if (atom.self) {
+                        // Self-removal: no permanent selection needed, just confirm
+                        val prompt = atom.description
+                        yesNoPrompt(state, payerId, resolved, sourceId, sourceName, ctx, prompt, prompt)
+                    } else {
+                        val candidates = controlledMatching(state, payerId, atom.filter, sourceId)
+                        if (candidates.isEmpty()) {
+                            return PaymentResult.Unaffordable(state)
+                        }
+                        // For single-counter removal from one permanent, offer a selection prompt.
+                        // For multi-counter or any-type cases, use a simple yes/no and auto-resolve.
+                        if (count == 1 && atom.counterType != null) {
+                            selectionPrompt(state, payerId, resolved, sourceId, sourceName, ctx, candidates, count, useTargetingUI = true)
+                        } else {
+                            val prompt = "Remove $atom?"
+                            yesNoPrompt(state, payerId, resolved, sourceId, sourceName, ctx, prompt, prompt.removeSuffix("?"))
+                        }
+                    }
+                }
             }
         }
     }
@@ -269,7 +294,112 @@ class CostPaymentService(private val services: EngineServices) {
             is CostAtom.Sacrifice -> sacrificeSelected(state, payerId, selected)
             is CostAtom.ReturnToHand -> returnSelected(state, selected)
             is CostAtom.TapPermanents -> tapSelected(state, selected)
+            is CostAtom.RemoveCounters -> performRemoveCounters(state, payerId, atom, sourceId, selected)
         }
+    }
+
+    private fun performRemoveCounters(
+        state: GameState,
+        payerId: EntityId,
+        atom: CostAtom.RemoveCounters,
+        sourceId: EntityId,
+        selected: List<EntityId>
+    ): CostPaymentExecution {
+        val required = when (val c = atom.count) {
+            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+            else -> return CostPaymentExecution(state, emptyList(), success = false)
+        }
+        var newState = state
+        val events = mutableListOf<GameEvent>()
+        val counterType = atom.counterType?.let {
+            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+        }
+
+        var remaining = required
+        if (atom.self) {
+            val selfId = sourceId
+            val container = newState.getEntity(selfId)
+                ?: return CostPaymentExecution(state, emptyList(), success = false)
+            val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                ?: return CostPaymentExecution(state, emptyList(), success = false)
+            if (counterType != null) {
+                if (counters.getCount(counterType) < required) {
+                    return CostPaymentExecution(state, emptyList(), success = false)
+                }
+                newState = newState.updateEntity(selfId) { c ->
+                    c.with(counters.withRemoved(counterType, required))
+                }
+                events.add(CountersRemovedEvent(selfId, atom.counterType!!, required, container.get<CardComponent>()?.name ?: "Permanent"))
+                remaining = 0
+            } else {
+                var selfRemaining = required
+                for ((type, available) in counters.counters.filterValues { it > 0 }) {
+                    if (selfRemaining == 0) break
+                    val toRemove = minOf(selfRemaining, available)
+                    newState = newState.updateEntity(selfId) { c ->
+                        val current = c.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                            ?: return@updateEntity c
+                        c.with(current.withRemoved(type, toRemove))
+                    }
+                    events.add(
+                        CountersRemovedEvent(
+                            selfId,
+                            com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(type),
+                            toRemove,
+                            container.get<CardComponent>()?.name ?: "Permanent"
+                        )
+                    )
+                    selfRemaining -= toRemove
+                }
+                remaining = selfRemaining
+            }
+        } else if (counterType != null && selected.isNotEmpty()) {
+            // Single-counter-per-permanent: remove 1 from each selected entity
+            for (entityId in selected.take(required)) {
+                val container = newState.getEntity(entityId) ?: continue
+                val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: continue
+                val actual = counters.getCount(counterType)
+                if (actual < 1) return CostPaymentExecution(state, emptyList(), success = false)
+                newState = newState.updateEntity(entityId) { c ->
+                    c.with(counters.withRemoved(counterType, 1))
+                }
+                remaining--
+                val name = container.get<CardComponent>()?.name ?: "Permanent"
+                events.add(CountersRemovedEvent(entityId, atom.counterType!!, 1, name))
+            }
+        } else {
+            // Auto-resolve: remove from permanents with the most counters first
+            val projected = newState.projectedState
+            val candidates = projected.getBattlefieldControlledBy(payerId).filter {
+                predicateEvaluator.matches(newState, projected, it, atom.filter, PredicateContext(controllerId = payerId))
+            }.sortedByDescending { entityId ->
+                val counters = newState.getEntity(entityId)
+                    ?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                if (counterType != null) counters?.getCount(counterType) ?: 0
+                else counters?.counters?.values?.sum() ?: 0
+            }
+            for (entityId in candidates) {
+                if (remaining <= 0) break
+                val container = newState.getEntity(entityId) ?: continue
+                val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: continue
+                val available = if (counterType != null) counters.getCount(counterType)
+                else counters.counters.values.sum()
+                val toRemove = minOf(remaining, available)
+                if (toRemove <= 0) continue
+                val removeType = counterType ?: counters.counters
+                    .filterValues { it > 0 }
+                    .maxByOrNull { it.value }
+                    ?.key ?: continue
+                newState = newState.updateEntity(entityId) { c ->
+                    c.with(counters.withRemoved(removeType, toRemove))
+                }
+                val name = container.get<CardComponent>()?.name ?: "Permanent"
+                val typeName = atom.counterType ?: com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(removeType)
+                events.add(CountersRemovedEvent(entityId, typeName, toRemove, name))
+                remaining -= toRemove
+            }
+        }
+        return CostPaymentExecution(newState, events, success = remaining <= 0)
     }
 
     private fun payMana(state: GameState, payerId: EntityId, manaCost: ManaCost, sourceId: EntityId): CostPaymentExecution {
@@ -477,6 +607,32 @@ class CostPaymentService(private val services: EngineServices) {
                     }
                     is CostAtom.ReturnToHand -> controlledMatching(state, payerId, atom.filter, sourceId).size >= atom.count
                     is CostAtom.TapPermanents -> controlledUntapped(state, payerId, atom.filter, if (atom.excludeSelf) sourceId else null).size >= atom.count
+                    is CostAtom.RemoveCounters -> {
+                        val needed = when (val c = atom.count) {
+                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue -> 0
+                            else -> 0
+                        }
+                        if (needed <= 0) return@canAfford true
+                        if (atom.self) {
+                            val counters = state.getEntity(sourceId)?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: return@canAfford false
+                            val ct = atom.counterType?.let { com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it) }
+                            if (ct != null) counters.getCount(ct) >= needed
+                            else counters.counters.values.sum() >= needed
+                        } else {
+                            val counterType = atom.counterType?.let { com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it) }
+                            val projected = state.projectedState
+                            val candidates = projected.getBattlefieldControlledBy(payerId).filter {
+                                predicateEvaluator.matches(state, projected, it, atom.filter, PredicateContext(controllerId = payerId))
+                            }
+                            val total = candidates.sumOf { entityId ->
+                                val counters = state.getEntity(entityId)?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: return@sumOf 0
+                                if (counterType != null) counters.getCount(counterType)
+                                else counters.counters.values.sum()
+                            }
+                            total >= needed
+                        }
+                    }
                 }
             }
         }

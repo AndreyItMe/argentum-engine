@@ -28,6 +28,7 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.scripting.AdditionalCost
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.MayCastFromGraveyard
@@ -890,6 +891,32 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 )
                 info to canPay
             }
+            is AdditionalCost.Atom -> when (val atom = additionalCost.atom) {
+                is CostAtom.RemoveCounters -> {
+                    val needed = when (val c = atom.count) {
+                        is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                        else -> 0
+                    }
+                    val creatures = buildRemoveCountersFromFilterPermanents(state, playerId, atom.filter, atom.counterType)
+                    val totalAvailable = creatures.sumOf { it.availableCounters }
+                    val canPay = if (needed <= 0) true else totalAvailable >= needed
+                    val info = AdditionalCostData(
+                        description = additionalCost.description,
+                        // Keep the established presentation discriminator for the Dawnhand
+                        // shape even though its SDK representation is now the shared atom.
+                        costType = if (atom.counterType == null && atom.filter == GameObjectFilter.Creature)
+                            "RemoveCountersFromYourCreatures"
+                        else "RemoveCounters",
+                        counterRemovalCreatures = creatures,
+                        distributedCounterRemovalTotal = needed
+                    )
+                    info to canPay
+                }
+                else -> AdditionalCostData(
+                    description = additionalCost.description,
+                    costType = "Other"
+                ) to true
+            }
             else -> AdditionalCostData(
                 description = additionalCost.description,
                 costType = "Other"
@@ -922,6 +949,58 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 .mapKeys { (type, _) ->
                     com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(type)
                 }
+            result.add(
+                com.wingedsheep.engine.legalactions.CounterRemovalCreatureData(
+                    entityId = permId,
+                    name = card.name,
+                    availableCounters = total,
+                    availableCountersByType = byType,
+                    imageUri = card.imageUri
+                )
+            )
+        }
+        return result
+    }
+
+    /**
+     * List permanents matching [filter] you control that have counters of the specified
+     * [counterType] (or any type when null), with a per-type breakdown. Used by the
+     * [CostAtom.RemoveCounters] atom's additional-cost path to surface counter-removal
+     * candidates to the client UI.
+     */
+    private fun buildRemoveCountersFromFilterPermanents(
+        state: GameState,
+        playerId: EntityId,
+        filter: GameObjectFilter,
+        counterType: String?
+    ): List<com.wingedsheep.engine.legalactions.CounterRemovalCreatureData> {
+        val projected = state.projectedState
+        val ctx = com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)
+        val resolvedType = counterType?.let {
+            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+        }
+        val result = mutableListOf<com.wingedsheep.engine.legalactions.CounterRemovalCreatureData>()
+        for (permId in state.getBattlefield()) {
+            if (projected.getController(permId) != playerId) continue
+            if (!com.wingedsheep.engine.handlers.PredicateEvaluator().matches(state, projected, permId, filter, ctx)) continue
+            val container = state.getEntity(permId) ?: continue
+            val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: continue
+            val card = container.get<CardComponent>() ?: continue
+
+            val (total, byType) = if (resolvedType != null) {
+                val count = counters.getCount(resolvedType)
+                if (count <= 0) continue
+                count to mapOf(
+                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(resolvedType) to count
+                )
+            } else {
+                val nonZero = counters.counters.filterValues { it > 0 }
+                if (nonZero.isEmpty()) continue
+                nonZero.values.sum() to nonZero.mapKeys { (type, _) ->
+                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(type)
+                }
+            }
+
             result.add(
                 com.wingedsheep.engine.legalactions.CounterRemovalCreatureData(
                     entityId = permId,

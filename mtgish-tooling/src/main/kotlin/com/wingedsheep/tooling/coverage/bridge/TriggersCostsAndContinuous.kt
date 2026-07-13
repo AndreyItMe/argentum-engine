@@ -181,6 +181,17 @@ internal fun BridgeBuilder.triggersCostsAndContinuous() {
     // -> blocked (the engine doesn't model an X waterbend cost yet).
     supported("Waterbend", "cost: waterbend {N} (tap artifacts/creatures, each pays {1} generic)")
     composed("DiscardACardOfType", "cost: discard filtered")
+    // "Remove N counters of a type from among permanents you control" — the generic
+    // remove-counters-from-among cost atom (e.g. Eladamri, Korève Domain).
+    // Renders as Costs.additional.RemoveCounters(n, counterType, filter) for additional costs
+    // or Costs.RemoveCounters(n, counterType, filter) for ability costs.
+    // NOTE: entry is keyed by the _Cost discriminator value ("RemoveCounters"), not the
+    // _RemoveCountersCost sub-variant — the tag extractor only reads CAPABILITY_DISCRIMINATORS
+    // (_Cost, _Action, _Trigger, …), and _RemoveCountersCost is not a top-level discriminator.
+    // The emitter still inspects the _RemoveCountersCost sub-field to decide which specific
+    // shape it can render (NumberCountersOfTypeFromAmongPermanents vs ACounterOfTypeFromPermanent, …).
+    supported("RemoveCounters",
+        "cost: remove N counters (Costs.RemoveCounters / Costs.additional.RemoveCounters / Costs.pay.RemoveCounters)")
 
     // Duration-scoped continuous trigger / replacement creators.
     composed("CreateReplaceWouldDealDamageUntil", "PreventDamageShield / RedirectNextDamage", composes = listOf("PreventDamageShield"))

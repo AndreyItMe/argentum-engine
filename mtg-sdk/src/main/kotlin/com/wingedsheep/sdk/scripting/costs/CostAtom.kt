@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.text.TextReplaceable
 import com.wingedsheep.sdk.scripting.text.TextReplacer
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -174,6 +175,58 @@ sealed interface CostAtom : TextReplaceable<CostAtom> {
             append("return ")
             append(quantify(count, filter.description))
             append(" you control to its owner's hand")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): CostAtom {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
+    /**
+     * Remove [count] counter(s) from among permanents matching [filter] you control,
+     * or from this permanent when [self] is true.
+     *
+     * When [counterType] is non-null, only counters of that type are removed
+     * (e.g. "Remove two +1/+1 counters from among artifacts you control").
+     * When null, counters of any type may be removed in any combination
+     * (e.g. Tayam's "Remove three counters from among creatures you control").
+     *
+     * [count] accepts [DynamicAmount] — use [DynamicAmount.Fixed] for a fixed number
+     * or [DynamicAmount.XValue] for a player-chosen X.
+     *
+     * The player distributes the removal across eligible permanents, choosing
+     * which counter types to remove where.
+     */
+    @SerialName("AtomRemoveCounters")
+    @Serializable
+    data class RemoveCounters(
+        val counterType: String? = null,
+        val count: DynamicAmount = DynamicAmount.Fixed(1),
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val self: Boolean = false
+    ) : CostAtom {
+        override val selectionCount: Int get() = when (val c = count) {
+            is DynamicAmount.Fixed -> if (self) 0 else c.amount
+            else -> 0
+        }
+        override val description: String get() = buildString {
+            append("remove ")
+            val countDesc = when (val c = count) {
+                is DynamicAmount.Fixed -> c.amount.toString()
+                is DynamicAmount.XValue -> "X"
+                else -> "?"
+            }
+            append(countDesc)
+            if (counterType != null) append(" $counterType")
+            val plural = countDesc != "1" && countDesc != "X"
+            append(" counter${if (plural) "s" else ""}")
+            if (self) append(" from this permanent")
+            else {
+                append(" from among ")
+                append(filter.description)
+                append("s you control")
+            }
         }
 
         override fun applyTextReplacement(replacer: TextReplacer): CostAtom {

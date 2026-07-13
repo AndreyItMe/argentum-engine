@@ -287,6 +287,24 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         // here (life payability is validated at payment time, matching the prior
                         // fall-through behavior for these costs).
                         is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
+                        is CostAtom.RemoveCounters -> {
+                            val needed = when (val count = atom.count) {
+                                is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> count.amount
+                                else -> 0
+                            }
+                            if (atom.self) {
+                                val counters = container.get<CountersComponent>()
+                                val type = atom.counterType?.let { resolveCounterType(it) }
+                                val available = if (type != null) counters?.getCount(type) ?: 0
+                                else counters?.counters?.values?.sum() ?: 0
+                                if (needed > 0 && available < needed) continue
+                            } else if (needed > 0) {
+                                val available = context.costUtils.buildRemoveCountersPermanents(
+                                    state, playerId, atom.filter, atom.counterType
+                                ).sumOf { it.availableCounters }
+                                if (available < needed) continue
+                            }
+                        }
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
                         val chosenType = container.chosenCreatureType()
@@ -422,6 +440,26 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     // Pay-life / reveal carry no enumeration-time gate here (matching
                                     // the prior else fall-through for these sub-costs).
                                     is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
+                                    is CostAtom.RemoveCounters -> {
+                                        val needed = when (val count = atom.count) {
+                                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> count.amount
+                                            else -> 0
+                                        }
+                                        val available = if (atom.self) {
+                                            val counters = container.get<CountersComponent>()
+                                            val type = atom.counterType?.let { resolveCounterType(it) }
+                                            if (type != null) counters?.getCount(type) ?: 0
+                                            else counters?.counters?.values?.sum() ?: 0
+                                        } else {
+                                            context.costUtils.buildRemoveCountersPermanents(
+                                                state, playerId, atom.filter, atom.counterType
+                                            ).sumOf { it.availableCounters }
+                                        }
+                                        if (needed > 0 && available < needed) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                    }
                                 }
                                 is AbilityCost.SacrificeChosenCreatureType -> {
                                     val chosenType = container.chosenCreatureType()
@@ -599,10 +637,24 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 }
 
                 // Check for X-variable costs early (needed for counter removal info and cost info)
-                val hasRemoveXCountersCostEarly = when (ability.cost) {
+                val hasRemoveXCountersCostEarly = when (val cost = ability.cost) {
                     is AbilityCost.RemoveXPlusOnePlusOneCounters -> true
-                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
-                        .any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
+                    is AbilityCost.Atom -> {
+                        val atom = cost.atom
+                        atom is CostAtom.RemoveCounters &&
+                            atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue
+                    }
+                    is AbilityCost.Composite -> cost.costs.any {
+                        when (it) {
+                            is AbilityCost.RemoveXPlusOnePlusOneCounters -> true
+                            is AbilityCost.Atom -> {
+                                val atom = it.atom
+                                atom is CostAtom.RemoveCounters &&
+                                    atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue
+                            }
+                            else -> false
+                        }
+                    }
                     else -> false
                 }
 
@@ -614,17 +666,27 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 }
 
                 // Build counter removal creature info if ability has RemoveXPlusOnePlusOneCounters
-                // (creature-only X-variable) OR RemovePlusOnePlusOneCounters (filtered fixed-count).
+                // (creature-only X-variable) OR RemovePlusOnePlusOneCounters (filtered fixed-count)
+                // OR the new RemoveCounters atom (any type or specific type).
                 val fixedRemoveCost: AbilityCost.RemovePlusOnePlusOneCounters? = when (ability.cost) {
                     is AbilityCost.RemovePlusOnePlusOneCounters -> ability.cost as AbilityCost.RemovePlusOnePlusOneCounters
                     is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
                         .filterIsInstance<AbilityCost.RemovePlusOnePlusOneCounters>().firstOrNull()
                     else -> null
                 }
+                val removeCountersAtom: CostAtom.RemoveCounters? = when (val cost = ability.cost) {
+                    is AbilityCost.Atom -> (cost.atom as? CostAtom.RemoveCounters)
+                    is AbilityCost.Composite -> cost.costs
+                        .firstNotNullOfOrNull { (it as? AbilityCost.Atom)?.atom as? CostAtom.RemoveCounters }
+                    else -> null
+                }
                 val counterRemovalCreatures = when {
                     hasRemoveXCountersCostEarly -> context.costUtils.buildCounterRemovalCreatures(state, playerId)
                     fixedRemoveCost != null -> context.costUtils.buildCounterRemovalPermanents(
                         state, playerId, fixedRemoveCost.filter
+                    )
+                    removeCountersAtom != null && !removeCountersAtom.self -> context.costUtils.buildRemoveCountersPermanents(
+                        state, playerId, removeCountersAtom.filter, removeCountersAtom.counterType
                     )
                     else -> emptyList()
                 }

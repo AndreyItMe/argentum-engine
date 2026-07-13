@@ -3901,6 +3901,31 @@ internal fun EmitCtx.abilityCostDsl(node: JsonElement?): String? {
             val counter = counterTypeDsl(a.getOrNull(1)) ?: return null
             "Costs.RemoveCounterFromSelf($counter, $n)"
         }
+        // Two sub-variants of _Cost: "RemoveCounters":
+        // 1. NumberCountersOfTypeFromAmongPermanents — "Remove N counters from among permanents
+        //    you control" — renders as Costs.RemoveCounters(n, counterType, filter).
+        //    IR: remove-count args = [N Integer, CounterType, Permanents filter].
+        // 2. NumberCountersOfTypeFromPermanent — "Remove N counters from this permanent" —
+        //    renders as Costs.RemoveCounterFromSelf(counterType, n) when subject is ThisPermanent;
+        //    other subjects (arbitrary refs) decline -> SCAFFOLD.
+        "RemoveCounters" -> {
+            val argsArr = obj["args"].asArr ?: return null
+            val subObj = argsArr.getOrNull(0) as? JsonObject ?: return null
+            val subArgs = subObj.get("args")?.asArr ?: return null
+            val n = findInteger(subArgs.getOrNull(0)) as? Int ?: return null
+            val counter = counterTypeDsl(subArgs.getOrNull(1)) ?: return null
+            when (subObj.strField("_RemoveCountersCost")) {
+                "NumberCountersOfTypeFromAmongPermanents" -> {
+                    val filter = costFilterDsl(subArgs.getOrNull(2)) ?: "GameObjectFilter.Any"
+                    "Costs.RemoveCounters($n, \"$counter\", $filter)"
+                }
+                "NumberCountersOfTypeFromPermanent" -> {
+                    if ((subArgs.getOrNull(2) as? JsonObject)?.strField("_Permanent") != "ThisPermanent") return null
+                    "Costs.RemoveCounterFromSelf(\"$counter\", $n)"
+                }
+                else -> null
+            }
+        }
         else -> null
     }
 }

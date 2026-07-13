@@ -63,7 +63,8 @@ enum class CounterType {
     POSSESSION,
     FIRE,
     CONQUEROR,
-    NET;
+    NET,
+    SPORE;
 
     companion object {
         /**
@@ -132,6 +133,7 @@ object Counters {
     const val TIME = "time"
     const val FEATHER = "feather"
     const val HOURGLASS = "hourglass"
+    const val SPORE = "spore"
 
     /**
      * Decayed counter (Tarkir: Dragonstorm). A keyword-ability counter (CR 702.147a): a creature

@@ -58,6 +58,8 @@ class CostPaymentContinuationResumer(
             is CostAtom.ExileFrom, is CostAtom.RevealFromHand, is CostAtom.Sacrifice,
             is CostAtom.ReturnToHand, is CostAtom.TapPermanents ->
                 resumeSelection(state, continuation, cost, response, checkForMore)
+            is CostAtom.RemoveCounters ->
+                resumeSelection(state, continuation, cost, response, checkForMore)
         }
     }
 

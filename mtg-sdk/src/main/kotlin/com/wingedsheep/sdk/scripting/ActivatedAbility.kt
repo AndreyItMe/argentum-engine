@@ -361,7 +361,11 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      * Remove X +1/+1 counters from among creatures you control.
      * X is chosen by the player when activating the ability.
      * The engine auto-distributes counter removal across creatures.
+     *
+     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.XValue] instead.
+     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
      */
+    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.XValue instead")
     @SerialName("CostRemoveXPlusOnePlusOneCounters")
     @Serializable
     data object RemoveXPlusOnePlusOneCounters : AbilityCost {
@@ -375,7 +379,11 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      *
      * The player chooses how to distribute the removal across matching permanents. Use
      * [RemoveXPlusOnePlusOneCounters] instead when the count is a player-chosen X.
+     *
+     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.Fixed] instead.
+     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
      */
+    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.Fixed instead")
     @SerialName("CostRemovePlusOnePlusOneCounters")
     @Serializable
     data class RemovePlusOnePlusOneCounters(val filter: GameObjectFilter, val count: Int) : AbilityCost {
@@ -394,7 +402,10 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      *
      * @property counterType The type of counter to remove (e.g., "gem", "charge")
      * @property count Number of counters to remove (defaults to 1)
+     * @deprecated Use [CostAtom.RemoveCounters] with [self] = true instead.
+     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
      */
+    @Deprecated("Use CostAtom.RemoveCounters with self=true instead")
     @SerialName("CostRemoveCounterFromSelf")
     @Serializable
     data class RemoveCounterFromSelf(val counterType: String, val count: Int = 1) : AbilityCost {
@@ -431,7 +442,11 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      * The player distributes which permanents contribute counters toward the total.
      *
      * Example: "Remove two +1/+1 counters from among artifacts you control"
+     *
+     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.Fixed] instead.
+     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
      */
+    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.Fixed instead")
     @SerialName("CostRemoveCountersFromAmongFilteredPermanents")
     @Serializable
     data class RemoveCountersFromAmongFilteredPermanents(

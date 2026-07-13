@@ -424,7 +424,10 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
      * you control in addition to paying their other costs."
      *
      * @property totalCount How many counters must be removed in total across creatures
+     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.Fixed] instead.
+     *   The [Costs.additional] facade already delegates to the atom.
      */
+    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.Fixed instead")
     @SerialName("RemoveCountersFromYourCreatures")
     @Serializable
     data class RemoveCountersFromYourCreatures(

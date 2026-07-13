@@ -508,6 +508,53 @@ class CostEnumerationUtils(
     }
 
     /**
+     * Build counter removal info for [CostAtom.RemoveCounters] — the general atom that
+     * works for any counter type (or any type when null) and any [GameObjectFilter].
+     * Each permanent matching [filter] that has counters of the relevant type is surfaced
+     * with a per-type breakdown so the client can offer a distributed counter-removal UI.
+     */
+    fun buildRemoveCountersPermanents(
+        state: GameState,
+        playerId: EntityId,
+        filter: GameObjectFilter,
+        counterType: String?
+    ): List<CounterRemovalCreatureData> {
+        val context = PredicateContext(controllerId = playerId)
+        val projected = state.projectedState
+        val resolvedType = counterType?.let {
+            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+        }
+        return state.entities.mapNotNull { (eid, c) ->
+            if (c.get<ControllerComponent>()?.playerId != playerId) return@mapNotNull null
+            if (!predicateEvaluator.matches(state, projected, eid, filter, context)) return@mapNotNull null
+            val counters = c.get<CountersComponent>() ?: return@mapNotNull null
+            val card = c.get<CardComponent>() ?: return@mapNotNull null
+
+            val (total, byType) = if (resolvedType != null) {
+                val count = counters.getCount(resolvedType)
+                if (count <= 0) return@mapNotNull null
+                count to mapOf(
+                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(resolvedType) to count
+                )
+            } else {
+                val nonZero = counters.counters.filterValues { it > 0 }
+                if (nonZero.isEmpty()) return@mapNotNull null
+                nonZero.values.sum() to nonZero.mapKeys { (type, _) ->
+                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(type)
+                }
+            }
+
+            CounterRemovalCreatureData(
+                entityId = eid,
+                name = card.name,
+                availableCounters = total,
+                availableCountersByType = byType,
+                imageUri = card.imageUri
+            )
+        }
+    }
+
+    /**
      * Calculate max affordable X for activated abilities, considering various X cost types.
      */
     fun calculateMaxAffordableX(
@@ -539,22 +586,56 @@ class CostEnumerationUtils(
             maxX = minOf(maxX, state.getZone(graveyardZone).size)
         }
 
-        // Cap by total +1/+1 counters if RemoveXPlusOnePlusOneCounters
-        val hasRemoveCounters = when (abilityCost) {
-            is AbilityCost.RemoveXPlusOnePlusOneCounters -> true
-            is AbilityCost.Composite -> abilityCost.costs.any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
-            else -> false
-        }
-        if (hasRemoveCounters) {
-            var totalCounters = 0
-            for ((_, container) in state.entities) {
-                if (container.get<ControllerComponent>()?.playerId == playerId &&
-                    container.get<CardComponent>()?.typeLine?.isCreature == true) {
-                    totalCounters += container.get<CountersComponent>()
-                        ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
+        // Cap by the counters available for any X-valued counter-removal cost. Use projected
+        // battlefield characteristics so animated/type-changing permanents are included correctly.
+        val removeXAtoms = when (abilityCost) {
+            is AbilityCost.RemoveXPlusOnePlusOneCounters -> emptyList()
+            is AbilityCost.Atom -> listOfNotNull(abilityCost.atom as? CostAtom.RemoveCounters)
+                .filter { it.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue }
+            is AbilityCost.Composite -> abilityCost.costs.mapNotNull {
+                when (it) {
+                    is AbilityCost.RemoveXPlusOnePlusOneCounters -> null
+                    is AbilityCost.Atom -> (it.atom as? CostAtom.RemoveCounters)
+                        ?.takeIf { atom -> atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue }
+                    else -> null
                 }
             }
-            maxX = minOf(maxX, totalCounters)
+            else -> emptyList()
+        }
+        val hasLegacyRemoveX = abilityCost is AbilityCost.RemoveXPlusOnePlusOneCounters ||
+            abilityCost is AbilityCost.Composite &&
+            abilityCost.costs.any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
+        if (hasLegacyRemoveX || removeXAtoms.isNotEmpty()) {
+            val projected = state.projectedState
+            val counterCaps = buildList {
+                if (hasLegacyRemoveX) {
+                    add(
+                        projected.getBattlefieldControlledBy(playerId).sumOf { entityId ->
+                            if (!projected.isCreature(entityId)) 0
+                            else state.getEntity(entityId)?.get<CountersComponent>()
+                                ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
+                        }
+                    )
+                }
+                addAll(removeXAtoms.map { atom ->
+                    val type = atom.counterType?.let {
+                        com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+                    }
+                    projected.getBattlefieldControlledBy(playerId).sumOf { entityId ->
+                        if (!predicateEvaluator.matches(
+                                state, projected, entityId, atom.filter,
+                                PredicateContext(controllerId = playerId)
+                            )
+                        ) 0
+                        else {
+                            val counters = state.getEntity(entityId)?.get<CountersComponent>()
+                            if (type != null) counters?.getCount(type) ?: 0
+                            else counters?.counters?.values?.sum() ?: 0
+                        }
+                    }
+                })
+            }
+            if (counterCaps.isNotEmpty()) maxX = minOf(maxX, counterCaps.minOrNull()!!)
         }
 
         // Cap by untapped matching permanents if TapXPermanents

@@ -175,8 +175,72 @@ class SacrificeAndPayContinuationResumer(
             PayOrSufferCostType.MANA -> resumePayOrSufferMana(state, continuation, response, checkForMore)
             PayOrSufferCostType.EXILE -> resumePayOrSufferExile(state, continuation, response, checkForMore)
             PayOrSufferCostType.TAP -> resumePayOrSufferTap(state, continuation, response, checkForMore)
+            PayOrSufferCostType.REMOVE_COUNTERS -> resumePayOrSufferRemoveCounters(state, continuation, response, checkForMore)
             PayOrSufferCostType.CHOICE -> ExecutionResult.error(state, "Choice cost type should be handled by PayOrSufferChoiceContinuation, not PayOrSufferContinuation")
         }
+    }
+
+    private fun resumePayOrSufferRemoveCounters(
+        state: GameState,
+        continuation: PayOrSufferContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        val selected = if (continuation.self) {
+            listOf(continuation.sourceId)
+        } else if (response is CardsSelectedResponse) {
+            response.selectedCards
+        } else {
+            emptyList()
+        }
+        if (response is YesNoResponse && !response.choice) {
+            return executePayOrSufferConsequence(state, continuation, checkForMore)
+        }
+        if (!continuation.self && response is CardsSelectedResponse &&
+            selected.size < continuation.requiredCount
+        ) {
+            return executePayOrSufferConsequence(state, continuation, checkForMore)
+        }
+
+        val type = continuation.counterType?.let {
+            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+        }
+        var remaining = continuation.requiredCount
+        var newState = state
+        val events = mutableListOf<GameEvent>()
+        val candidates = if (continuation.self) selected else
+            selected.ifEmpty {
+                state.projectedState.getBattlefieldControlledBy(continuation.playerId).filter {
+                    PredicateEvaluator().matches(
+                        state, state.projectedState, it, continuation.filter,
+                        PredicateContext(controllerId = continuation.playerId)
+                    )
+                }
+            }
+        for (entityId in candidates) {
+            if (remaining <= 0) break
+            val container = newState.getEntity(entityId) ?: continue
+            val counters = container.get<CountersComponent>() ?: continue
+            val removeType = type ?: counters.counters.filterValues { it > 0 }.maxByOrNull { it.value }?.key
+                ?: continue
+            val available = counters.getCount(removeType)
+            val amount = minOf(remaining, available)
+            if (amount <= 0) continue
+            newState = newState.updateEntity(entityId) { c ->
+                c.with((c.get<CountersComponent>() ?: CountersComponent()).withRemoved(removeType, amount))
+            }
+            events.add(
+                CountersRemovedEvent(
+                    entityId,
+                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(removeType),
+                    amount,
+                    container.get<CardComponent>()?.name ?: "Permanent"
+                )
+            )
+            remaining -= amount
+        }
+        return if (remaining == 0) checkForMore(newState, events)
+        else executePayOrSufferConsequence(state, continuation, checkForMore)
     }
 
     /**

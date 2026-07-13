@@ -870,6 +870,7 @@ class ActivateAbilityHandler(
             bounceChoices = action.costPayment?.bouncedPermanents ?: emptyList(),
             xValue = xValue,
             counterRemovalChoices = action.costPayment?.counterRemovals ?: emptyMap(),
+            distributedCounterRemovals = action.costPayment?.distributedCounterRemovals ?: emptyList(),
             blightChoices = action.costPayment?.blightTargets ?: emptyList(),
             granterId = staticGranterId
         )
