@@ -255,6 +255,15 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.TargetsMatching(subfilter)
     )
 
+    /**
+     * Add an arbitrary [CardPredicate] requirement. General-purpose combinator for predicates that
+     * don't have a dedicated helper — e.g. `GameObjectFilter.Nonland.withCardPredicate(
+     * CardPredicate.HasActivatedAbility)` for The Enigma Jewel's craft materials.
+     */
+    fun withCardPredicate(predicate: CardPredicate) = copy(
+        cardPredicates = cardPredicates + predicate
+    )
+
     /** Add a keyword requirement */
     fun withKeyword(keyword: Keyword) = copy(
         cardPredicates = cardPredicates + CardPredicate.HasKeyword(keyword)

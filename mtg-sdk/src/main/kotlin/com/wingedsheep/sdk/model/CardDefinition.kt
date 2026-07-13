@@ -355,6 +355,19 @@ data class CardDefinition(
                 it.activateFromZone == com.wingedsheep.sdk.core.Zone.BATTLEFIELD
         }
 
+    /**
+     * True if this card has at least one intrinsic activated ability (of any kind — mana,
+     * loyalty, or otherwise) activatable from the battlefield. Unlike [hasNonManaActivatedAbility]
+     * this counts mana abilities, because "a permanent/card with an activated ability" (e.g. the
+     * craft material clause on The Enigma Jewel — "four or more nonlands with activated abilities")
+     * is satisfied by a mana rock or mana dork just as much as by a tapper. Reflects printed
+     * abilities only; abilities granted by other continuous effects are not counted.
+     */
+    val hasActivatedAbility: Boolean
+        get() = script.activatedAbilities.any {
+            it.activateFromZone == com.wingedsheep.sdk.core.Zone.BATTLEFIELD
+        }
+
     /** Static abilities (continuous effects) on this card */
     val staticAbilities get() = script.staticAbilities
 

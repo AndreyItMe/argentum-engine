@@ -254,6 +254,7 @@ class PredicateEvaluator {
             CardPredicate.IsLegendary -> "LEGENDARY" in types
             CardPredicate.IsNonlegendary -> "LEGENDARY" !in types
             CardPredicate.HasNonManaActivatedAbility -> card.hasNonManaActivatedAbility
+            CardPredicate.HasActivatedAbility -> card.hasActivatedAbility
 
             // Color predicates - use projected colors
             is CardPredicate.HasColor -> predicate.color.name in colors
@@ -1352,6 +1353,7 @@ class PredicateEvaluator {
 
             // A cast-spell record has no battlefield permanent to inspect for activated abilities.
             CardPredicate.HasNonManaActivatedAbility -> false
+            CardPredicate.HasActivatedAbility -> false
 
             // Stack-relative targeting predicate — historical cast records have no
             // chosen-target snapshot, so this always returns false here.

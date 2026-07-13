@@ -1017,6 +1017,19 @@ class CastPermissionUtils(
                     }
                     continue
                 }
+                // "This permanent has each activated ability of the exiled cards used to craft it"
+                // (Locus of Enlightenment): self-scoped grant of every craft material's activated
+                // abilities to the source. Each ability is re-stamped with an exiled-card-derived
+                // AbilityId so duplicate materials don't collapse and each gets its own once-per-turn
+                // budget (see craftedExiledActivatedAbilities).
+                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfCraftedMaterials) {
+                    if (permanentId == entityId) {
+                        for (granted in craftedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.oncePerTurnEach)) {
+                            result.add(StaticGrantedAbility(granted, entityId))
+                        }
+                    }
+                    continue
+                }
                 // "This permanent has all activated and triggered abilities of the last chosen card
                 // exiled with it" (Koh, the Face Stealer): self-scoped grant of the chosen card's
                 // *activated* abilities to the source, which is recorded as granter.
@@ -1246,6 +1259,50 @@ fun linkedExiledActivatedAbilities(
         if (creatureCardsOnly && card?.typeLine?.isCreature != true) return@flatMap emptyList()
         val cardDef = card?.cardDefinitionId?.let { cardRegistry.getCard(it) }
         cardDef?.script?.activatedAbilities ?: emptyList()
+    }
+}
+
+/**
+ * Each activated ability of every card exiled to craft [sourceId] — the engine half of
+ * [com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfCraftedMaterials] (Locus of Enlightenment,
+ * the back face of The Enigma Jewel). Reads the source's
+ * [com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent] (CR 702.167c —
+ * "the exiled cards used to craft it"), looks up each exiled card's definition, and returns its
+ * `activatedAbilities`.
+ *
+ * Each returned ability is re-stamped with a **synthesized [AbilityId] derived from the exiled card's
+ * entity id** (`crafted_<exiledEntity>_<printedAbilityId>`). This is load-bearing:
+ *  - It stops the caller's `distinctBy { it.ability.id }` dedup from collapsing two exiled copies of
+ *    the *same* printed card (which share one printed `AbilityId`) into a single granted ability.
+ *  - It makes the standard once-per-turn tracker (`AbilityActivatedThisTurnComponent`, keyed by
+ *    receiver-entity + `AbilityId`) give each exiled card its *own* once-each-turn budget for free,
+ *    with no bespoke tracker — the printed Locus ruling ("each of those abilities only once each turn"
+ *    is per exiled card).
+ *
+ * When [oncePerTurnEach] is true, an [com.wingedsheep.sdk.scripting.ActivationRestriction.OncePerTurn]
+ * is appended to each ability. The caller grants each with [sourceId] as the granter, so `{T}` taps the
+ * Locus and self-references bind to it (CR 707.10b).
+ */
+fun craftedExiledActivatedAbilities(
+    state: GameState,
+    sourceId: EntityId,
+    cardRegistry: CardRegistry,
+    oncePerTurnEach: Boolean = true
+): List<com.wingedsheep.sdk.scripting.ActivatedAbility> {
+    val exiledIds = state.getEntity(sourceId)
+        ?.get<com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent>()
+        ?.exiledIds ?: return emptyList()
+    return exiledIds.flatMap { exiledId ->
+        val card = state.getEntity(exiledId)?.get<CardComponent>()
+        val cardDef = card?.cardDefinitionId?.let { cardRegistry.getCard(it) }
+        (cardDef?.script?.activatedAbilities ?: emptyList()).map { ability ->
+            ability.copy(
+                id = com.wingedsheep.sdk.scripting.AbilityId("crafted_${exiledId.value}_${ability.id.value}"),
+                restrictions = if (oncePerTurnEach)
+                    ability.restrictions + com.wingedsheep.sdk.scripting.ActivationRestriction.OncePerTurn
+                else ability.restrictions
+            )
+        }
     }
 }
 

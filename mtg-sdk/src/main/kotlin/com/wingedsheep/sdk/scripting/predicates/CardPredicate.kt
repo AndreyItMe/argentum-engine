@@ -819,6 +819,20 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
     }
 
     /**
+     * Matches a permanent or graveyard card that has at least one intrinsic activated ability of
+     * any kind — mana, loyalty, or otherwise — activatable from the battlefield. Backed by the
+     * precomputed `CardComponent.hasActivatedAbility` flag, so abilities granted by other
+     * continuous effects are not counted. Unlike [HasNonManaActivatedAbility] this DOES count mana
+     * abilities. Used by the craft material clause on The Enigma Jewel: "Craft with four or more
+     * nonlands with activated abilities."
+     */
+    @SerialName("HasActivatedAbility")
+    @Serializable
+    data object HasActivatedAbility : CardPredicate {
+        override val description: String = "with an activated ability"
+    }
+
+    /**
      * Matches a spell or ability on the stack at least one of whose chosen targets
      * matches [subfilter]. Player targets are skipped (they aren't card-like and have
      * no game-object filter to match against). Used by cards like Teferi's Response

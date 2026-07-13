@@ -139,7 +139,12 @@ internal fun buildCardComponentForDfcFace(
     colors = face.colors,
     ownerId = current.ownerId,
     spellEffect = face.spellEffect,
-    imageUri = face.metadata.imageUri ?: current.imageUri
+    imageUri = face.metadata.imageUri ?: current.imageUri,
+    // Carry the destination face's precomputed ability flags so predicates like
+    // CardPredicate.HasActivatedAbility / HasNonManaActivatedAbility see the face that's actually up
+    // (otherwise a transformed permanent silently reports the default `false`).
+    hasNonManaActivatedAbility = face.hasNonManaActivatedAbility,
+    hasActivatedAbility = face.hasActivatedAbility,
 )
 
 /**

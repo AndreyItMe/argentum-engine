@@ -100,6 +100,36 @@ data class HasAllActivatedAbilitiesOfLinkedExiledCard(
 }
 
 /**
+ * Grants the source permanent **each activated ability of the cards exiled to craft it** —
+ * Locus of Enlightenment (the back face of The Enigma Jewel): "Locus of Enlightenment has each
+ * activated ability of the exiled cards used to craft it. You may activate each of those abilities
+ * only once each turn."
+ *
+ * This is the craft-materials sibling of [HasAllActivatedAbilitiesOfLinkedExiledCard]: that static
+ * reads a `LinkedExileComponent`; this one reads the `CraftedFromExiledComponent` recorded by the
+ * craft ability (CR 702.167c — "the exiled cards used to craft it"). It is always self-scoped ("this
+ * permanent has …") — the Locus grants the abilities to itself, so `{T}` taps the Locus and any
+ * self-reference in a granted ability binds to the Locus (CR 707.10b, faithful to the "gains abilities
+ * of another object" rulings). It grants only *activated* abilities.
+ *
+ * @property oncePerTurnEach When true (the printed Locus text), each granted ability additionally
+ *   carries a once-each-turn activation cap, tracked *per exiled card* — two exiled copies of the
+ *   same card each get their own once-per-turn budget, not a shared one.
+ */
+@SerialName("HasAllActivatedAbilitiesOfCraftedMaterials")
+@Serializable
+data class HasAllActivatedAbilitiesOfCraftedMaterials(
+    val oncePerTurnEach: Boolean = true,
+) : StaticAbility {
+    override val description: String = buildString {
+        append("This permanent has each activated ability of the exiled cards used to craft it")
+        if (oncePerTurnEach) append(". You may activate each of those abilities only once each turn")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Grants the source permanent the **activated and/or triggered abilities of the single card it most
  * recently *chose*** from its linked-exile pile — the "last chosen card" of a
  * choose-from-your-exile mechanic (Koh, the Face Stealer: "Pay 1 life: Choose a creature card exiled

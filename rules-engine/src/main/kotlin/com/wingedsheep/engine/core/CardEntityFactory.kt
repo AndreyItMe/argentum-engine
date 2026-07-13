@@ -88,6 +88,7 @@ object CardEntityFactory {
                     // Modal DFC backs aren't a separate CardDefinition; their art rides on the face.
                     ?: cardDef.cardFaces.firstOrNull { it.imageUri != null }?.imageUri,
                 hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+                hasActivatedAbility = cardDef.hasActivatedAbility,
                 // Original-printing set (canonical, not the pinned printing) — "originally printed in X".
                 originalSetCode = cardDef.setCode,
             ),

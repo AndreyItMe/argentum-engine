@@ -2242,6 +2242,9 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
   the type-negation analogue of `.notColor(c)` / `.notSubtype(s)`.
 - `.notCreature()` — appends `CardPredicate.Not(CardPredicate.IsCreature)` ("noncreature artifact",
   e.g. `GameObjectFilter.Artifact.notCreature().youControl()` — Guardian Beast).
+- `.withCardPredicate(p)` — appends any `CardPredicate` for which there's no dedicated combinator
+  (general-purpose escape hatch), e.g.
+  `GameObjectFilter.Nonland.withCardPredicate(CardPredicate.HasActivatedAbility)` — The Enigma Jewel.
 - `.nonbasic()` — appends `CardPredicate.Not(CardPredicate.IsBasicLand)` ("nonbasic land"); compose on
   the land base (`GameObjectFilter.Land.nonbasic()`), or use the named constant `GameObjectFilter.NonbasicLand`
   / `TargetFilter.NonbasicLand` (Rocket Volley, Shivan Harvest, Encroaching Wastes). `TargetFilter.Land.nonbasic()`
@@ -2431,6 +2434,13 @@ work for abilities-on-stack (which carry no `CardComponent`).
   Backed by the precomputed `CardComponent.hasNonManaActivatedAbility` flag (set at entity creation from
   `CardDefinition.hasNonManaActivatedAbility`), so abilities granted by other continuous effects are not
   counted. Used by Tsabo's Web ("each land with an activated ability that isn't a mana ability …").
+- `CardPredicate.HasActivatedAbility` — matches a permanent/graveyard card whose printed activated
+  abilities include at least one battlefield-activatable ability **of any kind, mana abilities included**
+  (the difference from `HasNonManaActivatedAbility`). Backed by the precomputed
+  `CardComponent.hasActivatedAbility` flag (from `CardDefinition.hasActivatedAbility`); granted abilities
+  aren't counted. Used by The Enigma Jewel's craft material clause ("four or more nonlands with activated
+  abilities") — a mana rock/dork qualifies. Compose onto any filter with `.withCardPredicate(...)`, e.g.
+  `GameObjectFilter.Nonland.withCardPredicate(CardPredicate.HasActivatedAbility)`.
 
 ### `StatePredicate` — battlefield state checks
 
@@ -3936,6 +3946,17 @@ staticAbility {
       `HasAllActivatedAbilitiesOfLinkedExiledCard(GroupFilter.AllCreaturesYouControl.withCounter(Counters.PLUS_ONE_PLUS_ONE), creatureCardsOnly = true)`).
     - `creatureCardsOnly = true` restricts the source pile to *creature* cards (the exiled card's
       printed type), for the "all **creature** cards exiled with" wording.
+- `HasAllActivatedAbilitiesOfCraftedMaterials(oncePerTurnEach = true)` — the source permanent has
+  **each activated ability of the cards exiled to craft it** (CR 702.167c). The craft-materials sibling
+  of `HasAllActivatedAbilitiesOfLinkedExiledCard`: it reads the source's `CraftedFromExiledComponent`
+  (recorded by the `craft(...)` cost) instead of a `LinkedExileComponent`. Always self-scoped — the
+  source grants the abilities to itself, so `{T}` taps it and self-references bind to it (CR 707.10b).
+  Grants *activated* abilities only. With `oncePerTurnEach = true` (the printed Locus text) each granted
+  ability additionally gets an `ActivationRestriction.OncePerTurn` **tracked per exiled card** (each
+  granted ability is re-stamped with an exiled-card-derived `AbilityId`, so two exiled copies of one card
+  get independent once-each-turn budgets rather than sharing one, and duplicate materials aren't collapsed
+  by the granter-dedup). Used by Locus of Enlightenment, the back face of The Enigma Jewel →
+  `HasAllActivatedAbilitiesOfCraftedMaterials()`.
 - `HasAbilitiesOfChosenLinkedExiledCard(grantActivated = true, grantTriggered = true)` — the source
   permanent has all **activated and/or triggered abilities of the single card it most recently *chose***
   from its linked-exile pile (its "last chosen card", stamped by

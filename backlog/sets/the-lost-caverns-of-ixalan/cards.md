@@ -253,7 +253,7 @@
 - [x] Terror Tide
 - [x] The Ancient One
 - [x] The Belligerent
-- [ ] The Enigma Jewel
+- [x] The Enigma Jewel
 - [ ] The Everflowing Well
 - [ ] The Millennium Calendar
 - [x] The Mycotyrant

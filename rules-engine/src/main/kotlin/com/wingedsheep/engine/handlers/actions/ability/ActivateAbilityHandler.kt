@@ -2375,6 +2375,18 @@ class ActivateAbilityHandler(
                     }
                     continue
                 }
+                // "This permanent has each activated ability of the exiled cards used to craft it"
+                // (Locus of Enlightenment). Self-scoped: mirror CastPermissionUtils — grant every craft
+                // material's activated abilities to the source (recorded as granter). Each ability is
+                // re-stamped with an exiled-card-derived AbilityId + once-per-turn cap by the util.
+                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfCraftedMaterials) {
+                    if (permanentId == entityId) {
+                        for (granted in com.wingedsheep.engine.legalactions.utils.craftedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.oncePerTurnEach)) {
+                            result.add(granted to entityId)
+                        }
+                    }
+                    continue
+                }
                 // "This permanent has all activated and triggered abilities of the last chosen card
                 // exiled with it" (Koh, the Face Stealer). Self-scoped: only the source receives the
                 // chosen card's *activated* abilities here (triggered ones flow through

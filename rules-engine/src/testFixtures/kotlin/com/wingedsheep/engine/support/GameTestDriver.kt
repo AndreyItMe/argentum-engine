@@ -626,6 +626,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -670,6 +672,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -712,6 +716,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         val container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -746,6 +752,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -789,6 +797,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -848,6 +858,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -959,6 +971,8 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
+            hasNonManaActivatedAbility = cardDef.hasNonManaActivatedAbility,
+            hasActivatedAbility = cardDef.hasActivatedAbility,
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
