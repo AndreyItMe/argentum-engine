@@ -7423,6 +7423,109 @@
     ]
 }
 
+// Jade Seedstones
+{
+    "name": "Jade Seedstones",
+    "manaCost": "{3}{G}",
+    "typeLine": "Artifact",
+    "oracleText": "When this artifact enters, distribute three +1/+1 counters among one, two, or three target creatures you control.\nCraft with creature {5}{G}{G} ({5}{G}{G}, Exile this artifact, Exile a creature you control or a creature card from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+    "keywords": [
+        "CRAFT"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "DistributeCountersAmongTargets",
+                    "totalCounters": 3
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "count": 3,
+                    "minCount": 1,
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    }
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{5}{G}{G}"
+                            }
+                        },
+                        {
+                            "type": "CostCraft",
+                            "filter": "creature",
+                            "maxCount": 1
+                        }
+                    ]
+                },
+                "effect": "ReturnSelfFromExileTransformed",
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "Craft with creature — {5}{G}{G}"
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Jadeheart Attendant",
+        "manaCost": "",
+        "typeLine": "Artifact Creature — Golem",
+        "oracleText": "When this creature enters, you gain life equal to the mana value of the exiled card used to craft it.",
+        "creatureStats": {
+            "power": 7,
+            "toughness": 7
+        },
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_3",
+                    "trigger": {
+                        "type": "ZoneChangeEvent",
+                        "to": "Battlefield"
+                    },
+                    "effect": {
+                        "type": "GainLife",
+                        "amount": "CraftedMaterialsTotalManaValue"
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "195",
+            "rarity": "UNCOMMON",
+            "artist": "Alexandre Honoré",
+            "flavorText": "When the merfolk fled underground, they brought the life force of the jungle with them.",
+            "imageUri": "https://cards.scryfall.io/normal/back/b/b/bb95ffc2-ef35-49bf-8211-c5354d176051.jpg?1782694452"
+        },
+        "colorIdentityOverride": [
+            "GREEN"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "195",
+        "rarity": "UNCOMMON",
+        "artist": "Alexandre Honoré",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bb95ffc2-ef35-49bf-8211-c5354d176051.jpg?1782694452"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Jadelight Spelunker
 {
     "name": "Jadelight Spelunker",

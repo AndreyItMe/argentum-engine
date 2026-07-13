@@ -136,7 +136,7 @@
 - [x] Ironpaw Aspirant
 - [x] Itzquinth, Firstborn of Gishath
 - [x] Ixalli's Lorekeeper
-- [ ] Jade Seedstones
+- [x] Jade Seedstones
 - [x] Jadelight Spelunker
 - [x] Join the Dead
 - [x] Kaslem's Stonetree
