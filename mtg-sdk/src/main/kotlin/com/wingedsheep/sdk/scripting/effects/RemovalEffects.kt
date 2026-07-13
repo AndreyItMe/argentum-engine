@@ -545,11 +545,18 @@ data class PutOnLibraryPositionOfChoiceEffect(
  * from exile for its warp cost on a later turn.
  *
  * @property target The permanent to exile (resolved to SpecificEntity by delayed trigger creation)
+ * @property enteredBattlefieldTimestamp The tracked permanent's battlefield-entry timestamp,
+ *   snapshotted when the delayed trigger is created. At resolution the executor exiles the
+ *   permanent only if its current entry timestamp still matches — if it left the battlefield
+ *   and returned in between (blink), it's a new object the delayed trigger no longer tracks
+ *   (CR 603.7c / 400.7) and the exile does nothing. Null skips the check (pre-existing
+ *   serialized states, or callers that resolve the target at fire time).
  */
 @SerialName("WarpExile")
 @Serializable
 data class WarpExileEffect(
-    val target: EffectTarget
+    val target: EffectTarget,
+    val enteredBattlefieldTimestamp: Long? = null
 ) : Effect {
     override val description: String = "Exile ${target.description} (warp)"
 }

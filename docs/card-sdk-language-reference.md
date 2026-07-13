@@ -6649,7 +6649,10 @@ Card authors rarely reference these directly; they are created/updated by the ma
   when only one (or neither) is payable; the unpayable side appears grayed out (CR 118.9a, the caster
   chooses which cost to use). The warp action is enumerated by `CastFromZoneEnumerator`, which also
   emits the grayed-out normal-cast placeholder when the normal cost is unaffordable (mirroring
-  `MorphCastEnumerator`).
+  `MorphCastEnumerator`). The end-step exile is a delayed trigger whose `WarpExileEffect` snapshots
+  the permanent's battlefield-entry timestamp (`enteredBattlefieldTimestamp`); at resolution it only
+  exiles the *same object* — a warped permanent that left the battlefield and returned before the
+  end step (blink, e.g. Daydream) is a new object (CR 603.7c / 400.7) and stays permanently.
 - **Evoke** — `evoke = "{U}"`; pay alt cost, sacrifice on ETB.
 - **Sneak** — `sneak("{1}{U}")`; declare-blockers-step alt cost (pay mana + return an unblocked attacker you control to hand); a resolving permanent enters tapped and attacking the same defender. `Conditions.SneakCostWasPaid` reads the rider flag.
 - **Ninjutsu** — `ninjutsu("{1}{U}{B}")`; the canonical CR 702.49 keyword that **Sneak** reflavors. Same declare-blockers alt cost and tapped-and-attacking entry, shared via `KeywordAbility.ninjutsuStyleCost`. *Kaito, Bane of Nightmares* (DSK).

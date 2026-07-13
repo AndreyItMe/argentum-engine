@@ -1508,11 +1508,20 @@ class StackResolver(
             }
         }
 
-        // Warp: create delayed trigger to exile at beginning of next end step
+        // Warp: create delayed trigger to exile at beginning of next end step. Snapshot the
+        // permanent's battlefield-entry timestamp so the exile only affects this battlefield
+        // object — if the permanent leaves and re-enters before the trigger resolves (blink),
+        // it's a new object the delayed trigger no longer tracks (CR 603.7c / 400.7).
         if (spellComponent.wasWarped) {
+            val entryTimestamp = newState.getEntity(spellId)
+                ?.get<com.wingedsheep.engine.state.components.battlefield.BattlefieldEntryTimestampComponent>()
+                ?.timestamp
             val delayedTrigger = DelayedTriggeredAbility(
                 id = java.util.UUID.randomUUID().toString(),
-                effect = WarpExileEffect(EffectTarget.SpecificEntity(spellId)),
+                effect = WarpExileEffect(
+                    target = EffectTarget.SpecificEntity(spellId),
+                    enteredBattlefieldTimestamp = entryTimestamp
+                ),
                 fireAtStep = Step.END,
                 sourceId = spellId,
                 sourceName = cardComponent?.name ?: "Unknown",
