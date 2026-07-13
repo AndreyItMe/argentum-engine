@@ -10,11 +10,10 @@ import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.ManaCost
-import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.core.Zone
-import com.wingedsheep.sdk.scripting.CostZone
+import com.wingedsheep.sdk.dsl.Costs
+import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -289,7 +288,7 @@ class CostEnumerationUtilsTest : FunSpec({
     }
 
     // -------------------------------------------------------------------------
-    context("buildCounterRemovalCreatures") {
+    context("buildRemoveCountersPermanents") {
 
         test("returns only creatures with +1/+1 counters, tagged with the available count") {
             val driver = setupP1(battlefield = listOf("Grizzly Bears", "Grizzly Bears"))
@@ -301,7 +300,9 @@ class CostEnumerationUtilsTest : FunSpec({
             }
             driver.game.replaceState(driver.game.state.withEntity(bears[0], boosted))
 
-            val creatures = utils(driver).buildCounterRemovalCreatures(driver.game.state, driver.player1)
+            val creatures = utils(driver).buildRemoveCountersPermanents(
+                driver.game.state, driver.player1, GameObjectFilter.Creature, null
+            )
 
             creatures shouldHaveSize 1
             creatures.single().entityId shouldBe bears[0]
@@ -311,7 +312,9 @@ class CostEnumerationUtilsTest : FunSpec({
         test("returns empty when no creature has +1/+1 counters") {
             val driver = setupP1(battlefield = listOf("Grizzly Bears", "Forest"))
 
-            utils(driver).buildCounterRemovalCreatures(driver.game.state, driver.player1).shouldBeEmpty()
+            utils(driver).buildRemoveCountersPermanents(
+                driver.game.state, driver.player1, GameObjectFilter.Creature, null
+            ).shouldBeEmpty()
         }
     }
 
@@ -365,7 +368,7 @@ class CostEnumerationUtilsTest : FunSpec({
             val maxX = utils(driver).calculateMaxAffordableX(
                 driver.game.state,
                 driver.player1,
-                AbilityCost.RemoveXPlusOnePlusOneCounters,
+                Costs.RemoveXCounters(),
                 manaCost = null
             )
 

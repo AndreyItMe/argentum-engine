@@ -413,31 +413,6 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
     }
 
     /**
-     * Remove a total of [totalCount] counters from among creatures you control.
-     * The controller chooses how to distribute the removals across their creatures
-     * (any counter types qualify — Dawnhand Dissident's cost is not restricted to +1/+1).
-     *
-     * The player must have at least [totalCount] counters total on their creatures
-     * for this cost to be payable.
-     *
-     * Used for Dawnhand Dissident: "...by removing three counters from among creatures
-     * you control in addition to paying their other costs."
-     *
-     * @property totalCount How many counters must be removed in total across creatures
-     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.Fixed] instead.
-     *   The [Costs.additional] facade already delegates to the atom.
-     */
-    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.Fixed instead")
-    @SerialName("RemoveCountersFromYourCreatures")
-    @Serializable
-    data class RemoveCountersFromYourCreatures(
-        val totalCount: Int
-    ) : AdditionalCost {
-        override val description: String =
-            "Remove $totalCount counters from among creatures you control"
-    }
-
-    /**
      * Choose one entity from any of the zones declared in [zoneFilters], applying
      * the matching filter for that zone, without moving it. The chosen entity ID
      * is recorded in [AdditionalCostPayment.beheldCards] and surfaced to the
@@ -573,9 +548,8 @@ data class AdditionalCostPayment(
     val payXLifeAmount: Int = 0,
 
     /**
-     * Distributed counter removals for costs like
-     * [AdditionalCost.RemoveCountersFromYourCreatures] — each entry removes [count]
-     * counters of [counterType] from [entityId]. The engine validates that the sum
+     * Distributed counter removals for costs where each entry removes [count]
+     * counters of `counterType` from `entityId`. The engine validates that the sum
      * matches the cost's totalCount and that each creature has enough of each type.
      */
     val distributedCounterRemovals: List<DistributedCounterRemoval> = emptyList()

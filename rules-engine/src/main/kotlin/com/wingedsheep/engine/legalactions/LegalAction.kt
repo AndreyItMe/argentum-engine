@@ -311,8 +311,8 @@ data class AdditionalCostData(
      */
     val payXLifeMaxX: Int = 0,
     /**
-     * For [AdditionalCost.RemoveCountersFromYourCreatures]: total counters to remove
-     * across all creatures you control (any counter types qualify).
+     * For an any-type [CostAtom.RemoveCounters] additional cost: total counters to
+     * remove across all matching permanents.
      */
     val distributedCounterRemovalTotal: Int = 0,
 

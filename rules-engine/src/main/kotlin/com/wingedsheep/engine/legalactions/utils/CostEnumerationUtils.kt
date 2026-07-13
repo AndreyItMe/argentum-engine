@@ -2,36 +2,26 @@ package com.wingedsheep.engine.legalactions.utils
 
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.engine.legalactions.AdditionalCostData
-import com.wingedsheep.engine.legalactions.ConvokeCreatureData
-import com.wingedsheep.engine.legalactions.CounterRemovalCreatureData
-import com.wingedsheep.engine.legalactions.DelveCardData
-import com.wingedsheep.engine.legalactions.HarmonizeCreatureData
-import com.wingedsheep.engine.legalactions.WaterbendPermanentData
+import com.wingedsheep.engine.legalactions.*
 import com.wingedsheep.engine.mechanics.mana.CostCalculator
-import com.wingedsheep.engine.mechanics.mana.ManaSource
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
+import com.wingedsheep.engine.mechanics.mana.ManaSource
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
-import com.wingedsheep.engine.state.components.identity.FaceDownComponent
-import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
-import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
-import com.wingedsheep.sdk.scripting.AdditionalCost
-import com.wingedsheep.sdk.scripting.costs.CostAtom
-import com.wingedsheep.sdk.scripting.CostZone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 
 /**
  * Extracted cost-checking helpers from LegalActionsCalculator.
@@ -453,61 +443,6 @@ class CostEnumerationUtils(
     }
 
     /**
-     * Build counter removal creature info for abilities with RemoveXPlusOnePlusOneCounters cost.
-     */
-    fun buildCounterRemovalCreatures(state: GameState, playerId: EntityId): List<CounterRemovalCreatureData> {
-        return state.entities.mapNotNull { (eid, c) ->
-            if (c.get<ControllerComponent>()?.playerId == playerId &&
-                c.get<CardComponent>()?.typeLine?.isCreature == true) {
-                val counters = c.get<CountersComponent>()
-                    ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-                if (counters > 0) {
-                    val card = c.get<CardComponent>()!!
-                    CounterRemovalCreatureData(
-                        entityId = eid,
-                        name = card.name,
-                        availableCounters = counters,
-                        availableCountersByType = mapOf(com.wingedsheep.sdk.core.Counters.PLUS_ONE_PLUS_ONE to counters),
-                        imageUri = card.imageUri
-                    )
-                } else null
-            } else null
-        }
-    }
-
-    /**
-     * Build counter removal info for the filtered-fixed-count
-     * [AbilityCost.RemovePlusOnePlusOneCounters] variant. Surfaces every permanent the
-     * player controls that matches [filter] and has at least one +1/+1 counter,
-     * using projected state so type-changing effects (e.g., a Vehicle that became
-     * an artifact creature) are honored.
-     */
-    fun buildCounterRemovalPermanents(
-        state: GameState,
-        playerId: EntityId,
-        filter: GameObjectFilter
-    ): List<CounterRemovalCreatureData> {
-        val context = PredicateContext(controllerId = playerId)
-        val projected = state.projectedState
-        return state.entities.mapNotNull { (eid, c) ->
-            if (c.get<ControllerComponent>()?.playerId != playerId) return@mapNotNull null
-            if (!predicateEvaluator.matches(state, projected, eid, filter, context)) {
-                return@mapNotNull null
-            }
-            val counters = c.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-            if (counters <= 0) return@mapNotNull null
-            val card = c.get<CardComponent>() ?: return@mapNotNull null
-            CounterRemovalCreatureData(
-                entityId = eid,
-                name = card.name,
-                availableCounters = counters,
-                availableCountersByType = mapOf(com.wingedsheep.sdk.core.Counters.PLUS_ONE_PLUS_ONE to counters),
-                imageUri = card.imageUri
-            )
-        }
-    }
-
-    /**
      * Build counter removal info for [CostAtom.RemoveCounters] — the general atom that
      * works for any counter type (or any type when null) and any [GameObjectFilter].
      * Each permanent matching [filter] that has counters of the relevant type is surfaced
@@ -589,12 +524,10 @@ class CostEnumerationUtils(
         // Cap by the counters available for any X-valued counter-removal cost. Use projected
         // battlefield characteristics so animated/type-changing permanents are included correctly.
         val removeXAtoms = when (abilityCost) {
-            is AbilityCost.RemoveXPlusOnePlusOneCounters -> emptyList()
             is AbilityCost.Atom -> listOfNotNull(abilityCost.atom as? CostAtom.RemoveCounters)
                 .filter { it.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue }
             is AbilityCost.Composite -> abilityCost.costs.mapNotNull {
                 when (it) {
-                    is AbilityCost.RemoveXPlusOnePlusOneCounters -> null
                     is AbilityCost.Atom -> (it.atom as? CostAtom.RemoveCounters)
                         ?.takeIf { atom -> atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue }
                     else -> null
@@ -602,22 +535,9 @@ class CostEnumerationUtils(
             }
             else -> emptyList()
         }
-        val hasLegacyRemoveX = abilityCost is AbilityCost.RemoveXPlusOnePlusOneCounters ||
-            abilityCost is AbilityCost.Composite &&
-            abilityCost.costs.any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
-        if (hasLegacyRemoveX || removeXAtoms.isNotEmpty()) {
+        if (removeXAtoms.isNotEmpty()) {
             val projected = state.projectedState
-            val counterCaps = buildList {
-                if (hasLegacyRemoveX) {
-                    add(
-                        projected.getBattlefieldControlledBy(playerId).sumOf { entityId ->
-                            if (!projected.isCreature(entityId)) 0
-                            else state.getEntity(entityId)?.get<CountersComponent>()
-                                ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-                        }
-                    )
-                }
-                addAll(removeXAtoms.map { atom ->
+            val counterCaps = removeXAtoms.map { atom ->
                     val type = atom.counterType?.let {
                         com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
                     }
@@ -633,8 +553,7 @@ class CostEnumerationUtils(
                             else counters?.counters?.values?.sum() ?: 0
                         }
                     }
-                })
-            }
+                }
             if (counterCaps.isNotEmpty()) maxX = minOf(maxX, counterCaps.minOrNull()!!)
         }
 

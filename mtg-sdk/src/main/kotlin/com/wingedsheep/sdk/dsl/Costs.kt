@@ -2,6 +2,13 @@ package com.wingedsheep.sdk.dsl
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.Costs.Composite
+import com.wingedsheep.sdk.dsl.Costs.Mana
+import com.wingedsheep.sdk.dsl.Costs.RemoveCounters
+import com.wingedsheep.sdk.dsl.Costs.RemoveXCounters
+import com.wingedsheep.sdk.dsl.Costs.additional.Behold
+import com.wingedsheep.sdk.dsl.Costs.additional.ExileFromStorage
+import com.wingedsheep.sdk.dsl.Costs.additional.RemoveCounters
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.CostZone
@@ -253,19 +260,10 @@ object Costs {
     // =========================================================================
 
     /**
-     * Remove X +1/+1 counters from among creatures you control.
-     * X is chosen by the player; the engine auto-distributes counter removal.
-     * Delegates to [RemoveCounters] with [DynamicAmount.XValue].
-     */
-    val RemoveXPlusOnePlusOneCounters: AbilityCost = AbilityCost.Atom(
-        CostAtom.RemoveCounters("+1/+1", DynamicAmount.XValue, GameObjectFilter.Creature)
-    )
-
-    /**
      * Remove a fixed number of +1/+1 counters from among permanents you control matching
      * [filter]. Use this for fixed-count costs that aren't creature-only (e.g., Iron Spider:
      * "Remove two +1/+1 counters from among artifacts you control"). Use
-     * [RemoveXPlusOnePlusOneCounters] for player-chosen X.
+     * [RemoveXCounters] for player-chosen X.
      * Delegates to [RemoveCounters].
      */
     fun RemovePlusOnePlusOneCounters(filter: GameObjectFilter, count: Int): AbilityCost =
@@ -300,13 +298,11 @@ object Costs {
      * Remove X counters of any type from among creatures you control.
      * X is the value chosen for this ability's variable cost.
      */
-    val RemoveXCounters: AbilityCost = AbilityCost.Atom(
-        CostAtom.RemoveCounters(
-            counterType = null,
-            count = DynamicAmount.XValue,
-            filter = GameObjectFilter.Creature
-        )
-    )
+    fun RemoveXCounters(
+            counterType: String? = null,
+            count: DynamicAmount = DynamicAmount.XValue,
+            filter: GameObjectFilter = GameObjectFilter.Creature.youControl()
+        ): AbilityCost = AbilityCost.Atom(CostAtom.RemoveCounters(counterType, count, filter))
 
     // =========================================================================
     // Composite Costs

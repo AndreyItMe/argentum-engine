@@ -12,6 +12,8 @@ import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCostPayment
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -44,11 +46,11 @@ class RemoveTwo11CountersFromAmongArtifactsYouControlCostTest : FunSpec({
         oracleText = "Remove two +1/+1 counters from among artifacts you control: Draw a card."
 
         activatedAbility {
-            cost = AbilityCost.RemoveCountersFromAmongFilteredPermanents(
+            cost = AbilityCost.Atom(CostAtom.RemoveCounters(
                 counterType = "+1/+1",
-                count = 2,
+                count = DynamicAmount.Fixed(2),
                 filter = GameObjectFilter.Artifact
-            )
+            ))
             effect = Effects.DrawCards(1)
         }
     }

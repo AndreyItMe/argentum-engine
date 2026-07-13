@@ -143,9 +143,10 @@ class CostPaymentService(private val services: EngineServices) {
                         if (candidates.isEmpty()) {
                             return PaymentResult.Unaffordable(state)
                         }
-                        // For single-counter removal from one permanent, offer a selection prompt.
-                        // For multi-counter or any-type cases, use a simple yes/no and auto-resolve.
-                        if (count == 1 && atom.counterType != null) {
+                        // A typed counter cost is player-distributed: selecting the same entity
+                        // multiple times assigns multiple counters to it. Any-type costs remain
+                        // auto-resolved because their counter type must be chosen per removal.
+                        if (atom.counterType != null && count > 0) {
                             selectionPrompt(state, payerId, resolved, sourceId, sourceName, ctx, candidates, count, useTargetingUI = true)
                         } else {
                             val prompt = "Remove $atom?"
@@ -267,8 +268,8 @@ class CostPaymentService(private val services: EngineServices) {
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Apply the payment for [cost], where [selected] holds the entities the payer chose for a
-     * selection cost (empty for yes/no costs and random discard). Returns the new state, the emitted
+     * Apply the payment for [cost], where [selected] maps each entity the payer chose to the number
+     * of units assigned to it (empty for yes/no costs and random discard). Returns the new state, the emitted
      * events, and whether the payment actually completed (mana solving can still fail defensively).
      *
      * [cost] must already be resolved ([PayCost.OwnManaCost] mapped to a [PayCost.Atom] CostAtom.Mana) and, for
@@ -279,7 +280,7 @@ class CostPaymentService(private val services: EngineServices) {
         payerId: EntityId,
         cost: PayCost,
         sourceId: EntityId,
-        selected: List<EntityId>
+        selected: Map<EntityId, Int>
     ): CostPaymentExecution = when (cost) {
         is PayCost.OwnManaCost -> CostPaymentExecution(state, emptyList(), success = false)
         is PayCost.Choice -> CostPaymentExecution(state, emptyList(), success = false)
@@ -288,12 +289,12 @@ class CostPaymentService(private val services: EngineServices) {
             is CostAtom.PayLife -> payLife(state, payerId, atom.amount)
             is CostAtom.Discard ->
                 if (atom.random) discardRandom(state, payerId, atom.filter, atom.count)
-                else discardSelected(state, payerId, selected)
-            is CostAtom.ExileFrom -> exileSelected(state, payerId, selected, atom.zone)
-            is CostAtom.RevealFromHand -> revealSelected(state, payerId, selected)
-            is CostAtom.Sacrifice -> sacrificeSelected(state, payerId, selected)
-            is CostAtom.ReturnToHand -> returnSelected(state, selected)
-            is CostAtom.TapPermanents -> tapSelected(state, selected)
+                else discardSelected(state, payerId, selected.keys.toList())
+            is CostAtom.ExileFrom -> exileSelected(state, payerId, selected.keys.toList(), atom.zone)
+            is CostAtom.RevealFromHand -> revealSelected(state, payerId, selected.keys.toList())
+            is CostAtom.Sacrifice -> sacrificeSelected(state, payerId, selected.keys.toList())
+            is CostAtom.ReturnToHand -> returnSelected(state, selected.keys.toList())
+            is CostAtom.TapPermanents -> tapSelected(state, selected.keys.toList())
             is CostAtom.RemoveCounters -> performRemoveCounters(state, payerId, atom, sourceId, selected)
         }
     }
@@ -303,7 +304,7 @@ class CostPaymentService(private val services: EngineServices) {
         payerId: EntityId,
         atom: CostAtom.RemoveCounters,
         sourceId: EntityId,
-        selected: List<EntityId>
+        selected: Map<EntityId, Int>
     ): CostPaymentExecution {
         val required = when (val c = atom.count) {
             is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
@@ -354,18 +355,31 @@ class CostPaymentService(private val services: EngineServices) {
                 remaining = selfRemaining
             }
         } else if (counterType != null && selected.isNotEmpty()) {
-            // Single-counter-per-permanent: remove 1 from each selected entity
-            for (entityId in selected.take(required)) {
-                val container = newState.getEntity(entityId) ?: continue
-                val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>() ?: continue
-                val actual = counters.getCount(counterType)
-                if (actual < 1) return CostPaymentExecution(state, emptyList(), success = false)
-                newState = newState.updateEntity(entityId) { c ->
-                    c.with(counters.withRemoved(counterType, 1))
+            val totalSelected = selected.values.sum()
+            if (selected.values.any { it <= 0 } || totalSelected != required) {
+                return CostPaymentExecution(state, emptyList(), success = false)
+            }
+            // Remove the number of counters assigned to each selected entity.
+            val projected = newState.projectedState
+            val predicateContext = PredicateContext(controllerId = payerId)
+            for ((entityId, amount) in selected) {
+                val container = newState.getEntity(entityId)
+                    ?: return CostPaymentExecution(state, emptyList(), success = false)
+                if (projected.getController(entityId) != payerId ||
+                    !predicateEvaluator.matches(newState, projected, entityId, atom.filter, predicateContext)
+                ) {
+                    return CostPaymentExecution(state, emptyList(), success = false)
                 }
-                remaining--
+                val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
+                    ?: return CostPaymentExecution(state, emptyList(), success = false)
+                val actual = counters.getCount(counterType)
+                if (actual < amount) return CostPaymentExecution(state, emptyList(), success = false)
+                newState = newState.updateEntity(entityId) { c ->
+                    c.with(counters.withRemoved(counterType, amount))
+                }
+                remaining -= amount
                 val name = container.get<CardComponent>()?.name ?: "Permanent"
-                events.add(CountersRemovedEvent(entityId, atom.counterType!!, 1, name))
+                events.add(CountersRemovedEvent(entityId, atom.counterType!!, amount, name))
             }
         } else {
             // Auto-resolve: remove from permanents with the most counters first

@@ -203,7 +203,7 @@ sealed interface CostAtom : TextReplaceable<CostAtom> {
     data class RemoveCounters(
         val counterType: String? = null,
         val count: DynamicAmount = DynamicAmount.Fixed(1),
-        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val filter: GameObjectFilter = GameObjectFilter.Permanent,
         val self: Boolean = false
     ) : CostAtom {
         override val selectionCount: Int get() = when (val c = count) {
@@ -212,15 +212,11 @@ sealed interface CostAtom : TextReplaceable<CostAtom> {
         }
         override val description: String get() = buildString {
             append("remove ")
-            val countDesc = when (val c = count) {
-                is DynamicAmount.Fixed -> c.amount.toString()
-                is DynamicAmount.XValue -> "X"
-                else -> "?"
+            when (count) {
+                is DynamicAmount.XValue -> append("X $counterType counters")
+                is DynamicAmount.Fixed -> append(quantify(count.amount, "$counterType counter"))
+                else -> throw IllegalArgumentException("Unsupported DynamicAmount type: ${count::class.simpleName}")
             }
-            append(countDesc)
-            if (counterType != null) append(" $counterType")
-            val plural = countDesc != "1" && countDesc != "X"
-            append(" counter${if (plural) "s" else ""}")
             if (self) append(" from this permanent")
             else {
                 append(" from among ")

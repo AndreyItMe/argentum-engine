@@ -36,7 +36,7 @@ import io.kotest.matchers.shouldBe
  */
 class RemoveCountersAtomCostTest : FunSpec({
 
-    val RemoveCountersAbility = card("Counter Spender") {
+    val removeCountersCard = card("Counter Spender") {
         manaCost = "{2}"
         typeLine = "Creature — Human Wizard"
         power = 2
@@ -53,14 +53,21 @@ class RemoveCountersAtomCostTest : FunSpec({
         }
     }
 
-    val abilityId = RemoveCountersAbility.activatedAbilities[0].id
+    val abilityId = removeCountersCard.activatedAbilities[0].id
 
     fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
-        driver.registerCards(TestCards.all + listOf(RemoveCountersAbility))
+        driver.registerCards(TestCards.all + listOf(removeCountersCard))
         driver.initMirrorMatch(deck = Deck.of("Plains" to 20), skipMulligans = true)
         driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
         return driver
+    }
+
+    test("check filter ability description") {
+        removeCountersCard.activatedAbilities[0].cost.description shouldBe
+            "Remove two +1/+1 counters from among creatures you control"
+        Costs.RemoveXCounters(counterType = "+1/+1", filter = GameObjectFilter.Creature).description shouldBe
+            "Remove X +1/+1 counters from among creatures you control"
     }
 
     test("pay cost by removing two +1/+1 counters distributed across two creatures") {
@@ -155,7 +162,7 @@ class RemoveCountersAtomCostTest : FunSpec({
         }
 
         val driver = GameTestDriver()
-        driver.registerCards(TestCards.all + listOf(RemoveCountersAbility, AnyTypeSpender))
+        driver.registerCards(TestCards.all + listOf(removeCountersCard, AnyTypeSpender))
         driver.initMirrorMatch(deck = Deck.of("Plains" to 20), skipMulligans = true)
         driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
 

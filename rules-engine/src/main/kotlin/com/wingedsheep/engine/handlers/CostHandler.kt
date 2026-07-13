@@ -1,40 +1,26 @@
 package com.wingedsheep.engine.handlers
-import com.wingedsheep.engine.state.components.battlefield.chosenCreatureType
 
-import com.wingedsheep.engine.core.GameEvent
-import com.wingedsheep.engine.core.CountersAddedEvent
-import com.wingedsheep.engine.core.LifeChangedEvent
-import com.wingedsheep.engine.core.LifeChangeReason
-import com.wingedsheep.engine.core.PermanentsSacrificedEvent
-import com.wingedsheep.engine.core.CountersRemovedEvent
-import com.wingedsheep.engine.core.TappedEvent
-import com.wingedsheep.engine.core.ZoneChangeEvent
-import com.wingedsheep.engine.core.tap
-import com.wingedsheep.engine.core.untapOrConsumeStun
+import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.effects.DamageUtils
 import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
-import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
-import com.wingedsheep.engine.state.components.battlefield.CountersComponent
-import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
-import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.battlefield.*
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Counters
-import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.DistributedCounterRemoval
-import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
@@ -154,24 +140,6 @@ class CostHandler(
                 }
                 true
             }
-            is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
-                // X can be 0, so this is always payable as long as there are creatures
-                // maxAffordableX is capped by total +1/+1 counters in LegalActionsCalculator
-                true
-            }
-            is AbilityCost.RemovePlusOnePlusOneCounters -> {
-                val available = findMatchingPermanentsUnified(state, controllerId, cost.filter)
-                    .sumOf {
-                        state.getEntity(it)?.get<CountersComponent>()
-                            ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-                    }
-                available >= cost.count
-            }
-            is AbilityCost.RemoveCounterFromSelf -> {
-                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
-                val counterType = resolveNamedCounterType(cost.counterType)
-                (counters?.getCount(counterType) ?: 0) >= cost.count
-            }
             is AbilityCost.Forage ->
                 com.wingedsheep.engine.handlers.costs.ForageCostResolver.canPay(state, controllerId)
             is AbilityCost.Blight -> {
@@ -182,9 +150,6 @@ class CostHandler(
                 projected.getBattlefieldControlledBy(controllerId)
                     .any { projected.isCreature(it) && projected.canReceiveCounters(it) }
             }
-            is AbilityCost.RemoveCountersFromAmongFilteredPermanents ->
-                com.wingedsheep.engine.handlers.costs.RemoveCountersFromAmongFilteredPermanentsCostHandler
-                    .canPay(state, cost, controllerId)
             is AbilityCost.Craft -> {
                 // Source on battlefield + enough materials in the unified BF+GY pool (CR 702.167a-b).
                 val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
@@ -216,6 +181,7 @@ class CostHandler(
                     currentLoyalty >= -cost.change
                 }
             }
+            else -> false
         }
     }
 
@@ -398,39 +364,6 @@ class CostHandler(
                     CostPaymentResult.success(newState, manaPool, events)
                 }
             }
-            is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
-                val xCount = choices.xValue
-                if (xCount == 0) {
-                    CostPaymentResult.success(state, manaPool)
-                } else if (choices.counterRemovalChoices.isNotEmpty()) {
-                    removeCountersFromCreaturesWithChoices(state, controllerId, xCount, choices.counterRemovalChoices, manaPool)
-                } else {
-                    removeCountersFromCreatures(state, controllerId, xCount, manaPool)
-                }
-            }
-            is AbilityCost.RemovePlusOnePlusOneCounters -> {
-                if (choices.counterRemovalChoices.isNotEmpty()) {
-                    removeCountersFromPermanentsWithChoices(
-                        state, controllerId, cost.filter, cost.count, choices.counterRemovalChoices, manaPool
-                    )
-                } else {
-                    removeCountersFromPermanents(state, controllerId, cost.filter, cost.count, manaPool)
-                }
-            }
-            is AbilityCost.RemoveCounterFromSelf -> {
-                val counterType = resolveNamedCounterType(cost.counterType)
-                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
-                    ?: return CostPaymentResult.failure("Source has no counters")
-                val currentCount = counters.getCount(counterType)
-                if (currentCount < cost.count) {
-                    return CostPaymentResult.failure("Source has only $currentCount ${cost.counterType} counters, needs ${cost.count}")
-                }
-                val newState = state.updateEntity(sourceId) { container ->
-                    val c = container.get<CountersComponent>() ?: CountersComponent()
-                    container.with(c.withRemoved(counterType, cost.count))
-                }
-                CostPaymentResult.success(newState, manaPool)
-            }
             is AbilityCost.Forage -> {
                 // Unified forage payment — honors the player's mode + card/Food choice, falling
                 // back to a legal auto-payment only when no valid choice was supplied. See
@@ -479,9 +412,6 @@ class CostHandler(
                 )
                 CostPaymentResult.success(newState, manaPool, events)
             }
-            is AbilityCost.RemoveCountersFromAmongFilteredPermanents ->
-                com.wingedsheep.engine.handlers.costs.RemoveCountersFromAmongFilteredPermanentsCostHandler
-                    .pay(state, cost, controllerId, manaPool, choices.counterRemovalChoices)
             is AbilityCost.Craft -> payCraftCost(state, cost, sourceId, controllerId, manaPool, choices)
             is AbilityCost.Composite -> {
                 var currentState = state
@@ -509,6 +439,7 @@ class CostHandler(
                 }
                 CostPaymentResult.success(newState, manaPool)
             }
+            else -> CostPaymentResult.failure("Unsupported legacy ability cost")
         }
     }
 
@@ -565,11 +496,10 @@ class CostHandler(
         }
         is CostAtom.RemoveCounters -> {
             if (atom.self) {
-                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
-                if (counters == null) return@canPayAtom false
+                val counters = state.getEntity(sourceId)?.get<CountersComponent>() ?: return false
                 val ct = atom.counterType?.let { resolveNamedCounterType(it) }
                 val needed = getAtomCount(atom.count)
-                if (needed <= 0) return@canPayAtom true
+                if (needed <= 0) return true
                 if (ct != null) counters.getCount(ct) >= needed
                 else counters.counters.values.sum() >= needed
             } else {
@@ -577,7 +507,7 @@ class CostHandler(
                 val projected = state.projectedState
                 val ctx = PredicateContext(controllerId = controllerId)
                 val needed = getAtomCount(atom.count)
-                if (needed <= 0) return@canPayAtom true
+                if (needed <= 0) return true
                 val total = projected.getBattlefieldControlledBy(controllerId).sumOf { entityId ->
                     if (!predicateEvaluator.matches(state, projected, entityId, atom.filter, ctx)) return@sumOf 0
                     val counters = state.getEntity(entityId)?.get<CountersComponent>() ?: return@sumOf 0
@@ -1047,15 +977,6 @@ class CostHandler(
                 // Always payable: player can always choose the "pay mana" path
                 true
             }
-            is AdditionalCost.RemoveCountersFromYourCreatures -> {
-                val projected = state.projectedState
-                val total = state.getBattlefield().sumOf { permId ->
-                    if (projected.getController(permId) != controllerId) return@sumOf 0
-                    if (!projected.isCreature(permId)) return@sumOf 0
-                    state.getEntity(permId)?.get<CountersComponent>()?.counters?.values?.sum() ?: 0
-                }
-                total >= cost.totalCount
-            }
             is AdditionalCost.Composite -> {
                 // All steps must be payable
                 cost.steps.all { canPayAdditionalCost(state, it, controllerId) }
@@ -1064,6 +985,7 @@ class CostHandler(
                 // Payable iff at least one entity in the searched zones matches the filter.
                 findChooseEntityCandidates(state, cost, controllerId).isNotEmpty()
             }
+            else -> throw IllegalArgumentException("Unsupported legacy additional cost: $cost")
         }
     }
 
@@ -1143,168 +1065,6 @@ class CostHandler(
         }
 
         return CostPaymentResult.success(newState, manaPool, events)
-    }
-
-    /**
-     * Remove X +1/+1 counters from among creatures the player controls.
-     * Auto-distributes removal across creatures, preferring those with the most counters.
-     */
-    private fun removeCountersFromCreatures(
-        state: GameState,
-        controllerId: EntityId,
-        count: Int,
-        manaPool: ManaPool
-    ): CostPaymentResult {
-        // Find all creatures with +1/+1 counters controlled by this player
-        val creaturesWithCounters = state.entities.filter { (_, container) ->
-            container.get<ControllerComponent>()?.playerId == controllerId &&
-            container.get<CardComponent>()?.typeLine?.isCreature == true &&
-            (container.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0) > 0
-        }.map { (entityId, container) ->
-            entityId to (container.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0)
-        }.sortedByDescending { it.second } // Prefer creatures with the most counters
-
-        val totalAvailable = creaturesWithCounters.sumOf { it.second }
-        if (totalAvailable < count) {
-            return CostPaymentResult.failure("Not enough +1/+1 counters to remove (need $count, have $totalAvailable)")
-        }
-
-        var newState = state
-        var remaining = count
-
-        for ((creatureId, available) in creaturesWithCounters) {
-            if (remaining <= 0) break
-            val toRemove = minOf(remaining, available)
-            newState = newState.updateEntity(creatureId) { container ->
-                val counters = container.get<CountersComponent>() ?: CountersComponent()
-                container.with(counters.withRemoved(CounterType.PLUS_ONE_PLUS_ONE, toRemove))
-            }
-            remaining -= toRemove
-        }
-
-        return CostPaymentResult.success(newState, manaPool)
-    }
-
-    /**
-     * Remove +1/+1 counters from creatures using the player's chosen distribution.
-     * Validates that each creature is controlled by the player and has enough counters.
-     */
-    private fun removeCountersFromCreaturesWithChoices(
-        state: GameState,
-        controllerId: EntityId,
-        count: Int,
-        choices: Map<EntityId, Int>,
-        manaPool: ManaPool
-    ): CostPaymentResult {
-        val totalChosen = choices.values.sum()
-        if (totalChosen != count) {
-            return CostPaymentResult.failure("Counter removal total ($totalChosen) does not match X ($count)")
-        }
-
-        var newState = state
-        for ((creatureId, toRemove) in choices) {
-            if (toRemove <= 0) continue
-            val container = state.getEntity(creatureId)
-                ?: return CostPaymentResult.failure("Creature not found for counter removal")
-            if (container.get<ControllerComponent>()?.playerId != controllerId) {
-                return CostPaymentResult.failure("Cannot remove counters from a creature you don't control")
-            }
-            if (container.get<CardComponent>()?.typeLine?.isCreature != true) {
-                return CostPaymentResult.failure("Can only remove +1/+1 counters from creatures")
-            }
-            val available = container.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-            if (available < toRemove) {
-                return CostPaymentResult.failure("Creature does not have enough +1/+1 counters (need $toRemove, have $available)")
-            }
-            newState = newState.updateEntity(creatureId) { c ->
-                val counters = c.get<CountersComponent>() ?: CountersComponent()
-                c.with(counters.withRemoved(CounterType.PLUS_ONE_PLUS_ONE, toRemove))
-            }
-        }
-
-        return CostPaymentResult.success(newState, manaPool)
-    }
-
-    /**
-     * Fixed-count counter removal across permanents you control matching [filter].
-     * Auto-distributes when the player did not supply a choice map, preferring
-     * permanents with the most counters first.
-     */
-    private fun removeCountersFromPermanents(
-        state: GameState,
-        controllerId: EntityId,
-        filter: GameObjectFilter,
-        count: Int,
-        manaPool: ManaPool
-    ): CostPaymentResult {
-        val candidates = findMatchingPermanentsUnified(state, controllerId, filter)
-            .mapNotNull { id ->
-                val n = state.getEntity(id)?.get<CountersComponent>()
-                    ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-                if (n > 0) id to n else null
-            }
-            .sortedByDescending { it.second }
-
-        val available = candidates.sumOf { it.second }
-        if (available < count) {
-            return CostPaymentResult.failure(
-                "Not enough +1/+1 counters to remove (need $count, have $available)"
-            )
-        }
-
-        var newState = state
-        var remaining = count
-        for ((id, have) in candidates) {
-            if (remaining <= 0) break
-            val toRemove = minOf(remaining, have)
-            newState = newState.updateEntity(id) { c ->
-                val counters = c.get<CountersComponent>() ?: CountersComponent()
-                c.with(counters.withRemoved(CounterType.PLUS_ONE_PLUS_ONE, toRemove))
-            }
-            remaining -= toRemove
-        }
-        return CostPaymentResult.success(newState, manaPool)
-    }
-
-    private fun removeCountersFromPermanentsWithChoices(
-        state: GameState,
-        controllerId: EntityId,
-        filter: GameObjectFilter,
-        count: Int,
-        choices: Map<EntityId, Int>,
-        manaPool: ManaPool
-    ): CostPaymentResult {
-        val totalChosen = choices.values.sum()
-        if (totalChosen != count) {
-            return CostPaymentResult.failure(
-                "Counter removal total ($totalChosen) does not match required count ($count)"
-            )
-        }
-        val context = PredicateContext(controllerId = controllerId)
-        val projected = state.projectedState
-        var newState = state
-        for ((permId, toRemove) in choices) {
-            if (toRemove <= 0) continue
-            val container = state.getEntity(permId)
-                ?: return CostPaymentResult.failure("Permanent not found for counter removal")
-            if (container.get<ControllerComponent>()?.playerId != controllerId) {
-                return CostPaymentResult.failure("Cannot remove counters from a permanent you don't control")
-            }
-            if (!predicateEvaluator.matches(state, projected, permId, filter, context)) {
-                return CostPaymentResult.failure("Permanent does not match the cost's filter")
-            }
-            val available = container.get<CountersComponent>()?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
-            if (available < toRemove) {
-                return CostPaymentResult.failure(
-                    "Permanent does not have enough +1/+1 counters (need $toRemove, have $available)"
-                )
-            }
-            newState = newState.updateEntity(permId) { c ->
-                val counters = c.get<CountersComponent>() ?: CountersComponent()
-                c.with(counters.withRemoved(CounterType.PLUS_ONE_PLUS_ONE, toRemove))
-            }
-        }
-        return CostPaymentResult.success(newState, manaPool)
     }
 
     /**

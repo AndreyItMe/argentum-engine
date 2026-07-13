@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.ktk.cards
 
+import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
@@ -20,7 +21,10 @@ val RetributionOfTheAncients = card("Retribution of the Ancients") {
     oracleText = "{B}, Remove X +1/+1 counters from among creatures you control: Target creature gets -X/-X until end of turn."
 
     activatedAbility {
-        cost = Costs.Composite(Costs.Mana("{B}"), Costs.RemoveXPlusOnePlusOneCounters)
+        cost = Costs.Composite(Costs.Mana("{B}"),
+            Costs.RemoveXCounters(
+                counterType = Counters.PLUS_ONE_PLUS_ONE
+            ))
         val creature = target("creature", Targets.Creature)
         val negX = DynamicAmount.Multiply(DynamicAmount.XValue, -1)
         effect = Effects.ModifyStats(negX, negX, creature)

@@ -10,7 +10,9 @@ import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -764,20 +766,14 @@ class PayOrSufferExecutor(
                     // Can pay if there are permanents matching the filter with enough counters
                     val candidates = if (atom.self) listOf(sourceId)
                     else findValidPermanentsOnBattlefield(state, playerId, atom.filter, sourceId)
+                    val counterType = atom.counterType?.let { CounterType.fromName(it) }
                     val required = (atom.count as? com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed)?.amount ?: 0
-                    candidates.any { permId ->
-                        val container = state.getEntity(permId)
-                        val counters = container?.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
-                        if (counters == null) false
-                        else {
-                            val resolvedType = atom.counterType?.let {
-                                com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
-                            }
-                            val available = if (resolvedType != null) counters.getCount(resolvedType)
-                            else counters.counters.values.sum()
-                            available >= required
-                        }
+                    val total = candidates.sumOf { permId ->
+                        val counters = state.getEntity(permId)?.get<CountersComponent>() ?: return@sumOf 0
+                        if (counterType != null) counters.getCount(counterType)
+                        else counters.counters.values.sum()
                     }
+                    total >= required
                 }
             }
         }

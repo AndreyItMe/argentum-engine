@@ -1,7 +1,6 @@
 package com.wingedsheep.sdk.scripting
 
 import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -11,7 +10,6 @@ import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import com.wingedsheep.sdk.dsl.craft
 
 /**
  * An activated ability is an ability that a player can activate by paying a cost.
@@ -355,65 +353,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     @Serializable
     data class Loyalty(val change: Int) : AbilityCost {
         override val description: String = if (change >= 0) "+$change" else "$change"
-    }
-
-    /**
-     * Remove X +1/+1 counters from among creatures you control.
-     * X is chosen by the player when activating the ability.
-     * The engine auto-distributes counter removal across creatures.
-     *
-     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.XValue] instead.
-     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
-     */
-    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.XValue instead")
-    @SerialName("CostRemoveXPlusOnePlusOneCounters")
-    @Serializable
-    data object RemoveXPlusOnePlusOneCounters : AbilityCost {
-        override val description: String = "Remove X +1/+1 counters from among creatures you control"
-    }
-
-    /**
-     * Remove a fixed number of +1/+1 counters from among permanents you control matching
-     * a filter. Used for fixed-count costs that aren't creature-only — e.g., Iron Spider,
-     * Stark Upgrade's "Remove two +1/+1 counters from among artifacts you control."
-     *
-     * The player chooses how to distribute the removal across matching permanents. Use
-     * [RemoveXPlusOnePlusOneCounters] instead when the count is a player-chosen X.
-     *
-     * @deprecated Use [CostAtom.RemoveCounters] with [DynamicAmount.Fixed] instead.
-     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
-     */
-    @Deprecated("Use CostAtom.RemoveCounters with DynamicAmount.Fixed instead")
-    @SerialName("CostRemovePlusOnePlusOneCounters")
-    @Serializable
-    data class RemovePlusOnePlusOneCounters(val filter: GameObjectFilter, val count: Int) : AbilityCost {
-        override val description: String =
-            "Remove $count +1/+1 counters from among ${filter.description}s you control"
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
-    }
-
-    /**
-     * Remove one or more counters of the specified type from this permanent.
-     * Used for artifacts with charge/gem counters as activation costs.
-     *
-     * @property counterType The type of counter to remove (e.g., "gem", "charge")
-     * @property count Number of counters to remove (defaults to 1)
-     * @deprecated Use [CostAtom.RemoveCounters] with [self] = true instead.
-     *   The [Costs] facade already delegates to the atom, so no card DSL change is needed.
-     */
-    @Deprecated("Use CostAtom.RemoveCounters with self=true instead")
-    @SerialName("CostRemoveCounterFromSelf")
-    @Serializable
-    data class RemoveCounterFromSelf(val counterType: String, val count: Int = 1) : AbilityCost {
-        override val description: String = if (count == 1) {
-            "Remove a $counterType counter from this permanent"
-        } else {
-            "Remove $count $counterType counters from this permanent"
-        }
     }
 
     /**
