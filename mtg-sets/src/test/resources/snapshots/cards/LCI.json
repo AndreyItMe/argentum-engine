@@ -1459,8 +1459,12 @@
                     "costs": [
                         "CostTap",
                         {
-                            "type": "CostRemoveCounterFromSelf",
-                            "counterType": "net"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomRemoveCounters",
+                                "counterType": "net",
+                                "self": true
+                            }
                         }
                     ]
                 },

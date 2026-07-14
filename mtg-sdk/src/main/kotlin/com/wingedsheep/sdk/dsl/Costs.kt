@@ -557,7 +557,7 @@ object Costs {
         fun RemoveCounters(
             count: Int = 1,
             counterType: String? = null,
-            filter: GameObjectFilter = GameObjectFilter.Any
+            filter: GameObjectFilter = GameObjectFilter.Permanent
         ): PayCost = PayCost.Atom(CostAtom.RemoveCounters(counterType, DynamicAmount.Fixed(count), filter))
     }
 }

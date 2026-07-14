@@ -183,7 +183,6 @@ class CostHandler {
                     currentLoyalty >= -cost.change
                 }
             }
-            else -> false
         }
     }
 
@@ -441,7 +440,6 @@ class CostHandler {
                 }
                 CostPaymentResult.success(newState, manaPool)
             }
-            else -> CostPaymentResult.failure("Unsupported legacy ability cost")
         }
     }
 
@@ -934,7 +932,6 @@ class CostHandler {
                 // Payable iff at least one entity in the searched zones matches the filter.
                 findChooseEntityCandidates(state, cost, controllerId).isNotEmpty()
             }
-            else -> throw IllegalArgumentException("Unsupported legacy additional cost: $cost")
         }
     }
 
