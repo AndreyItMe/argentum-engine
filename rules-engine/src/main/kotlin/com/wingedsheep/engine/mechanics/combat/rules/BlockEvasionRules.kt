@@ -163,8 +163,19 @@ class CantBeBlockedByRule(
 ) : BlockEvasionRule {
     override fun check(ctx: BlockCheckContext): String? {
         val attackerCard = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>() ?: return null
-        val cardDef = ctx.cardRegistry.getCard(attackerCard.cardDefinitionId) ?: return null
-        val restrictions = cardDef.staticAbilities.filterIsInstance<CantBeBlockedBy>()
+        // Printed restrictions. cardDef may be null for tokens/copies without a registered
+        // definition — the granted form below still applies.
+        val cardDef = ctx.cardRegistry.getCard(attackerCard.cardDefinitionId)
+        val printed = cardDef?.staticAbilities?.filterIsInstance<CantBeBlockedBy>().orEmpty()
+        // Granted (floating) restrictions land in state.grantedStaticAbilities keyed to the
+        // attacker — e.g. Cavern Stomper's "{3}{G}: this creature can't be blocked by creatures
+        // with power 2 or less this turn" grants CantBeBlockedBy to itself via
+        // Effects.GrantStaticAbility, which the printed-only read above misses.
+        val granted = ctx.state.grantedStaticAbilities
+            .filter { it.entityId == ctx.attackerId }
+            .map { it.ability }
+            .filterIsInstance<CantBeBlockedBy>()
+        val restrictions = printed + granted
         if (restrictions.isEmpty()) return null
 
         val attackerController = ctx.projected.getController(ctx.attackerId) ?: return null

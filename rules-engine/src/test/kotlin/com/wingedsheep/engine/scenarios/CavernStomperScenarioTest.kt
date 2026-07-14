@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.SelectManaSourcesDecision
 import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.mtg.sets.definitions.lci.cards.CavernStomper
@@ -8,6 +9,7 @@ import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * Scenario test for Cavern Stomper (LCI #177) — {4}{G}{G} Creature — Dinosaur, 7/7, Common.
@@ -62,6 +64,52 @@ class CavernStomperScenarioTest : ScenarioTestBase() {
                 withClue("exactly one granted-ability badge") { badges.size shouldBe 1 }
                 withClue("badge description names the block restriction: ${badges.firstOrNull()?.description}") {
                     (badges.single().description?.contains("power 2 or less") == true) shouldBe true
+                }
+            }
+
+            // Build a game where Cavern Stomper has activated {3}{G} (granting the "can't be blocked
+            // by creatures with power 2 or less" restriction to itself) and is attacking, then declare
+            // [blockerName] as a blocker and return the result. Proves the granted CantBeBlockedBy is
+            // actually *enforced* in combat — the coverage the badge test above lacked, and the reason
+            // the restriction previously no-op'd (CantBeBlockedByRule read only printed statics).
+            fun declareBlockOnStomper(blockerName: String): ExecutionResult {
+                val game = scenario()
+                    .withPlayers("Player", "Opponent")
+                    .withCardOnBattlefield(1, "Cavern Stomper")
+                    .withLandsOnBattlefield(1, "Forest", 4)
+                    .withCardOnBattlefield(2, "Grizzly Bears") // 2/2 — power 2, caught by the restriction
+                    .withCardOnBattlefield(2, "Hill Giant")    // 3/3 — power 3, unaffected
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val stomper = game.findPermanent("Cavern Stomper")!!
+                val activation = game.execute(
+                    ActivateAbility(playerId = game.player1Id, sourceId = stomper, abilityId = activateAbilityId)
+                )
+                check(activation.error == null) { "ability activation failed: ${activation.error}" }
+                if (game.getPendingDecision() is SelectManaSourcesDecision) {
+                    game.submitManaSourcesAutoPay()
+                }
+                game.resolveStack()
+
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+                check(game.declareAttackers(mapOf("Cavern Stomper" to 2)).error == null) {
+                    "Cavern Stomper should be able to attack"
+                }
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_BLOCKERS)
+                return game.declareBlockers(mapOf(blockerName to listOf("Cavern Stomper")))
+            }
+
+            test("granted 'can't be blocked by power 2 or less' stops a power-2 blocker") {
+                withClue("a power-2 creature must not be able to block Cavern Stomper after the {3}{G} grant") {
+                    declareBlockOnStomper("Grizzly Bears").error shouldNotBe null
+                }
+            }
+
+            test("granted 'can't be blocked by power 2 or less' still lets a power-3 blocker through") {
+                withClue("a power-3 creature is unaffected by the restriction and may block") {
+                    declareBlockOnStomper("Hill Giant").error shouldBe null
                 }
             }
         }
