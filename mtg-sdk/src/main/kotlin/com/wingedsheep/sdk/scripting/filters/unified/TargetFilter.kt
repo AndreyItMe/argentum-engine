@@ -151,6 +151,9 @@ data class TargetFilter(
         /** Target nonland permanent */
         val NonlandPermanent = TargetFilter(GameObjectFilter.Companion.NonlandPermanent)
 
+        /** Another target nonland permanent (excluding the source) */
+        val OtherNonlandPermanent = TargetFilter(GameObjectFilter.Companion.NonlandPermanent, excludeSelf = true)
+
         /** Target permanent you control */
         val PermanentYouControl = TargetFilter(GameObjectFilter.Companion.Permanent.youControl())
 

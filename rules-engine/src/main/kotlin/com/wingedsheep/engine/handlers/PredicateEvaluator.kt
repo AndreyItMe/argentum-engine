@@ -1112,6 +1112,12 @@ class PredicateEvaluator {
                 matches(state, state.projectedState, attached.targetId, predicate.filter, ctx)
             }
 
+            // Source-relative — the candidate IS the effect's source permanent itself
+            // (GameObjectFilter counterpart of GroupFilter's Scope.Self). Backs the granted
+            // PreventActivatedAbilities form (Braided Net), where the activation-legality
+            // check supplies the grant's holder as the source. False with no source context.
+            StatePredicate.IsSource -> context?.sourceId == entityId
+
             // Source-relative — the candidate is the permanent the effect's source is attached
             // to (its enchanted/equipped creature). Read the source's AttachedToComponent and
             // compare its targetId to the candidate. False with no source or an unattached source.

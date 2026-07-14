@@ -421,6 +421,10 @@ internal class AffectsFilterResolver {
         // contexts via PredicateEvaluator. Never match here.
         StatePredicate.IsAttachedToBySource -> false
         StatePredicate.IsAttachedToSource -> false
+        // Source-relative: "the source permanent itself" — for a group static projecting onto
+        // its own source, use GroupFilter's Scope.Self instead. Only meaningful in point-of-use
+        // checks (activation legality) via PredicateEvaluator. Never match here.
+        StatePredicate.IsSource -> false
         // Source-relative exile linkage (LinkedExileComponent on the effect source). Only
         // meaningful in target/gather-filter contexts via PredicateEvaluator; never match in
         // group-static projection.

@@ -524,6 +524,26 @@ sealed interface StatePredicate {
     }
 
     /**
+     * The candidate permanent IS the effect's source permanent itself. Source-relative:
+     * resolves against the source supplied in the evaluation context, and is false with no
+     * source context. This is the [GameObjectFilter][com.wingedsheep.sdk.scripting.GameObjectFilter]
+     * counterpart of `GroupFilter`'s `Scope.Self` — use it to scope a filter-carrying static
+     * ability to the very permanent that carries it ("this permanent's …" wordings).
+     *
+     * Backs the granted form of
+     * [PreventActivatedAbilities][com.wingedsheep.sdk.scripting.PreventActivatedAbilities]:
+     * a permanent granted `PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself())`
+     * has *its own* activated abilities locked (Braided Net's "Its activated abilities can't
+     * be activated for as long as it remains tapped"), because the activation-legality check
+     * evaluates the filter with the grant's holder as the source.
+     */
+    @SerialName("IsSource")
+    @Serializable
+    data object IsSource : Entity {
+        override val description: String = "this"
+    }
+
+    /**
      * The candidate permanent is the permanent the effect's source is attached to — i.e. the
      * creature/permanent enchanted or equipped by the source (read from the source's
      * `AttachedToComponent`). Source-relative: resolves against the source supplied in the

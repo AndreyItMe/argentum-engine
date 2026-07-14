@@ -645,7 +645,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
     *modifier* in layer 7c, and from the `SetBasePowerToughness*Static` CDAs, which apply for as long as a
     static ability is active rather than as a one-shot floating effect.)
 - `GrantKeyword(keyword, target, duration)` — grant a keyword for a duration. The target may be a battlefield permanent **or a permanent spell still on the stack**: a permanent spell keeps its entity id as it resolves, so a keyword granted to `EffectTarget.TriggeringEntity` inside a "when you next cast a creature spell this turn" delayed trigger carries onto the creature the moment it enters (Summon: Brynhildr's Gestalt Mode = "it gains haste until end of turn"). On a non-permanent spell the floating effect simply never has a permanent to apply to.
-- `GrantStaticAbility(ability, target, duration)` — grant a printed-shape `StaticAbility` (e.g. `CantBeBlockedByMoreThan(1)`) to a permanent for a duration. The runtime sibling of a printed static ability: unlike keyword grants (which flow through projected keywords) it is recorded as a `GrantedStaticAbility` keyed to the entity in `GameState.grantedStaticAbilities` and read **at the point of use** — combat blocker validation (`BlockPhaseManager`, CR 509.1b) consults granted `CantBeBlockedByMoreThan` alongside the creature's printed static abilities; the grant expires in the cleanup step (EndOfTurn). Compose inside `ForEachInGroup` with `EffectTarget.Self` for "each creature you control gains ..." (Full Steam Ahead = `ModifyStats(2,2)` + `GrantKeyword(TRAMPLE)` + `GrantStaticAbility(CantBeBlockedByMoreThan(1))`). `CantBeBlockedByMoreThan` (combat) and `MayCastFromGraveyard` (graveyard-cast enumerator + `CastZoneResolver`, e.g. Forgotten Cellar's "cast spells from your graveyard this turn") are wired into read sites today; granting another `StaticAbility` kind compiles and stores but needs its own point-of-use read to take effect.
+- `GrantStaticAbility(ability, target, duration)` — grant a printed-shape `StaticAbility` (e.g. `CantBeBlockedByMoreThan(1)`) to a permanent for a duration. The runtime sibling of a printed static ability: unlike keyword grants (which flow through projected keywords) it is recorded as a `GrantedStaticAbility` keyed to the entity in `GameState.grantedStaticAbilities` and read **at the point of use** — combat blocker validation (`BlockPhaseManager`, CR 509.1b) consults granted `CantBeBlockedByMoreThan` alongside the creature's printed static abilities; the grant expires in the cleanup step (EndOfTurn). Compose inside `ForEachInGroup` with `EffectTarget.Self` for "each creature you control gains ..." (Full Steam Ahead = `ModifyStats(2,2)` + `GrantKeyword(TRAMPLE)` + `GrantStaticAbility(CantBeBlockedByMoreThan(1))`). `CantBeBlockedByMoreThan` (combat), `MayCastFromGraveyard` (graveyard-cast enumerator + `CastZoneResolver`, e.g. Forgotten Cellar's "cast spells from your graveyard this turn"), and `PreventActivatedAbilities` (activation legality: `CastPermissionUtils.isActivationPrevented`, consulted by the ability handler and both ability enumerators) are wired into read sites today; granting another `StaticAbility` kind compiles and stores but needs its own point-of-use read to take effect. A granted `PreventActivatedAbilities` behaves exactly like the printed form anchored to the grant's holder: its filter is evaluated with the holder as source, so the self-scoped `PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself())` locks the *holder's own* activated abilities — mana abilities included unless `nonManaAbilitiesOnly = true`. Pair it with `Duration.WhileAffectedTapped` ("for as long as it remains tapped", keyed to the granted-to permanent) for the Braided Net shape — "Tap another target nonland permanent. Its activated abilities can't be activated for as long as it remains tapped." = `Effects.Tap(target)` + `Effects.GrantStaticAbility(PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself()), target, Duration.WhileAffectedTapped)`. Like every "for as long as …" duration it is one-way (CR 611.2b): the read site gates per-frame, and `EndedDurationExpiryCheck` physically removes the grant the moment the permanent untaps (or leaves the battlefield), so a later re-tap does not re-lock it.
 - `GrantReplacementEffect(replacement, target, duration)` — grant a printed-shape `ReplacementEffect` (e.g. `RedirectZoneChange`) to a permanent for a duration. The runtime sibling of a printed replacement effect, modelled exactly like `GrantStaticAbility`: recorded as a `GrantedReplacementEffect` (carrying the granting `controllerId`) in `GameState.grantedReplacementEffects` and read **at the point of use** — the zone-change redirect path (`ZoneMovementUtils.checkZoneChangeRedirect`) consults granted `RedirectZoneChange` alongside permanents' printed replacement effects; the grant expires in the cleanup step (EndOfTurn). Used for durational "this turn" riders such as Forgotten Cellar's "if a card would be put into your graveyard from anywhere this turn, exile it instead" (`GrantReplacementEffect(RedirectZoneChange(newDestination = Zone.EXILE, appliesTo = EventPattern.ZoneChangeEvent(filter = GameObjectFilter(controllerPredicate = ControllerPredicate.OwnedByYou), to = Zone.GRAVEYARD)))`). Only `RedirectZoneChange` is wired into a read site today; granting another `ReplacementEffect` kind compiles and stores but needs its own point-of-use read to take effect. Note: `MayCastFromGraveyard` granted via `GrantStaticAbility` is now also read at the graveyard-cast enumerator/`CastZoneResolver`, so "you may cast spells from your graveyard this turn" is `GrantStaticAbility(MayCastFromGraveyard(filter), EffectTarget.Self, Duration.EndOfTurn)`.
 - `GrantHarmonize(target, cost?, duration)` — grant **Harmonize** (CR 702.180) to a target instant/sorcery card in a graveyard. `cost` defaults to `null` = "equal to the card's mana cost" (Songcrafter Mage); pass a `ManaCost` for a fixed harmonize cost. Records a runtime `GrantedKeywordAbility` keyed to the card entity; the cast-from-graveyard enumerator, the cast handler, the alternative-payment handler (tap-for-power reduction), and the stack resolver (exile on resolution) all read printed-or-granted harmonize through the shared `HarmonizeGrants` resolver, so a granted harmonize behaves identically to a printed one. The grant expires in the cleanup step (EndOfTurn) and surfaces a "Granted Ability" badge on the card.
 - `GrantFlashback(target, cost?, duration)` — grant **Flashback** (CR 702.34) to a target instant/sorcery card in a graveyard. The runtime sibling of printed `KeywordAbility.Flashback`, modelled exactly like `GrantHarmonize`. `cost` defaults to `null` = "equal to the card's mana cost" (Archmage's Newt); pass a `ManaCost` for a fixed flashback cost (e.g. `{0}` on a saddled-Mount branch). Records a runtime `GrantedKeywordAbility` keyed to the card entity; the cast-from-graveyard enumerator, the cast handler / `CastZoneResolver`, and the stack resolver (exile on resolution) read printed-**or**-granted flashback through the shared `FlashbackGrants.effectiveFlashback` resolver, so a granted flashback is castable and exiled exactly like a printed one. The grant survives the graveyard → stack move and expires in the cleanup step (EndOfTurn). Pair with `ConditionalEffect(Conditions.SourceIsSaddled, GrantFlashback(t, {0}), elseEffect = GrantFlashback(t))` for the saddled-or-not cost swap.
@@ -796,6 +796,7 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
 - `AddDynamicMana(amount, allowedColors, restriction?)` — split X across a fixed color set, distinct from `AddManaOfChoice` because it distributes the full X total across multiple colors rather than producing X copies of one chosen color.
 - `AddManaInAnyCombination(amount, allowedColors?, restriction?)` — "Add N mana in any combination of colors" (Wizard's Rockets, Thornvault Forager, Interdimensional Web Watch). Sugar for `AddDynamicMana`; `allowedColors` defaults to all five. The controller colors **each** pip independently at resolution (3+ colors → pip-by-pip color choice; 2 colors → one "how much of the first" prompt; ≤0 → no mana, no prompt), so the result can mix colors — distinct from `AddAnyColorMana`, where all N share one color.
 - `AddOneManaOfEachColorAmong(filter)` — one mana of *each* color found among matching permanents (Bloom Tender shape).
+- `AddOneManaOfEachCraftedMaterialColor()` — one mana of *each* printed color among the exiled cards used to craft the source (`AddOneManaOfEachColorAmongEffect(colorSource = ManaColorSource.CraftedMaterials)`; Sunbird Effigy).
 - `PayDynamicMana(amount, payer?, color?)` — pay a dynamically-computed amount of mana at resolution; the
   dynamic, payer-parametric twin of the flat `PayManaCostEffect`. `amount` is a [DynamicAmount](#dynamicamount)
   evaluated at resolution (0 pays nothing and succeeds); `payer` is a `Player` reference defaulting to the
@@ -1976,6 +1977,7 @@ can't statically prevent (cross-trigger flows, `Self`-vs-`ContextTarget` inside 
 - `Targets.Planeswalker` — any planeswalker.
 - `Targets.Permanent` — any permanent.
 - `Targets.NonlandPermanent` — any nonland permanent.
+- `Targets.OtherNonlandPermanent` — "another target nonland permanent"; excludes the source (Braided Net).
 - `Targets.Artifact` — any artifact.
 - `Targets.Enchantment` — any enchantment.
 - `Targets.Land` — any land.
@@ -2498,6 +2500,15 @@ work for abilities-on-stack (which carry no `CardComponent`).
   `PreventActivatedAbilities(GameObjectFilter.Permanent.attachedToBySource())`. Resolves
   against `PredicateContext.sourceId`; inert with no source / unattached source, and never matches in
   group-static projection or trigger-gating contexts (no source there).
+- `IsSource` (filter builder `sourceItself()`) — source-relative: matches only the effect's source
+  permanent itself (`PredicateContext.sourceId == candidate`). The `GameObjectFilter` counterpart of
+  `GroupFilter`'s `Scope.Self` — use it to scope a filter-carrying static ability to the very
+  permanent that carries it. Backs the granted form of `PreventActivatedAbilities`: a permanent
+  granted `PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself())` has *its own*
+  activated abilities locked, because the activation-legality check evaluates the filter with the
+  grant's holder as source (Braided Net's "Its activated abilities can't be activated for as long
+  as it remains tapped"). Inert with no source context, and never matches in group-static
+  projection (use `GroupFilter.source()` there) or trigger-gating contexts.
 - `IsAttachedToSource` (filter builder `attachedToSource()`) — the *mirror* of `IsAttachedToBySource`:
   matches an Aura/Equipment currently attached **to** the effect's source, read from the candidate's
   `AttachedToComponent.targetId == sourceId`. Use it to scope a static ability on the *host* to its own
@@ -3905,6 +3916,11 @@ staticAbility {
   (Cursed Totem → `GameObjectFilter.Creature`). With `nonManaAbilitiesOnly = true`, mana abilities
   stay usable and only non-mana abilities are blocked — the "… can't be activated unless they're
   mana abilities" wording (Sharkey, Tyrant of the Shire → `GameObjectFilter.Land.opponentControls()`).
+  Also grantable at runtime via `Effects.GrantStaticAbility` (read from `GameState.grantedStaticAbilities`
+  by the same activation-legality check, anchored to the holder) — see the `GrantStaticAbility`
+  entry in §3 for the durational, targeted form (Braided Net:
+  `PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself())` +
+  `Duration.WhileAffectedTapped`).
 - `HasAllActivatedAbilitiesOfLinkedExiledCard(filter = GroupFilter.source(), creatureCardsOnly = false)`
   — the permanents matching `filter` gain **all activated abilities of the cards in this source's
   linked-exile pile** (`LinkedExileComponent`). Resolved dynamically at activation-legality time: the
@@ -5521,6 +5537,16 @@ Numbers computed at resolution time.
   permanent (CR 702.167c). Reads the source's `CraftedFromExiledComponent`. Used for the
   `*`-power CDA on Mastercraft Raptor (Saheeli's Lattice back face). Evaluates to 0 when the
   source has no recorded materials.
+- `CraftedMaterialsTotalManaValue` — mana-value sibling of `CraftedMaterialsTotalPower`: total
+  printed mana value of the crafted materials. Exact-one crafts read it as the single material's
+  mana value (Jadeheart Attendant's "gain life equal to the mana value of the exiled card used to
+  craft it"). 0 when not crafted.
+- `CraftedMaterialsColorCount` — number of distinct printed colors (0–5) among the crafted
+  materials (Sunbird Effigy's `*/*` P/T CDA). Pairs with the
+  `Effects.AddOneManaOfEachCraftedMaterialColor()` mana effect (§4 mana effects) —
+  `AddOneManaOfEachColorAmongEffect(colorSource = ManaColorSource.CraftedMaterials)` — for
+  "for each color among the exiled cards used to craft this creature, add one mana of that
+  color". 0 when not crafted.
 - `CreaturesThatCrewedOrSaddledThisTurn` (facade `DynamicAmounts.creaturesThatCrewedOrSaddledThisTurn()`)
   — number of distinct creatures that crewed (CR 702.122) or saddled (CR 702.171) the source
   permanent this turn. Source-relative: reads the source's `CrewSaddleContributorsComponent` and
@@ -6468,6 +6494,9 @@ substitution.
   `conqueror` (`Counters.CONQUEROR`): TLA — Zhao, the Moon Slayer (a `{7}` ability accumulates one; a
   `ConditionalStaticAbility` gated on `Conditions.SourceCounterCountAtLeast(Counters.CONQUEROR, 1)` switches on a
   `SetLandTypesForGroup` making all nonbasic lands Mountains) — another pure passive counter with no inherent rule.
+  `net` (`Counters.NET`): LCI — Braided Net (enters with three via an `EntersWithCounters` replacement; its tap
+  ability spends them via `Costs.RemoveCounterFromSelf(Counters.NET, 1)`) — another pure passive counter with no
+  inherent rule.
 - `stun` — CR 122.1d, a built-in replacement: "If a permanent with a stun counter on it would become untapped,
   instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
   which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the
