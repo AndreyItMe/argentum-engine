@@ -531,12 +531,29 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                         .filter { context.predicateEvaluator.matches(state, projected, it, subCost.filter, com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)) }
                                     val graveyardMaterials = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
                                         .filter { context.predicateEvaluator.matches(state, state.projectedState, it, subCost.filter, com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)) }
-                                    if (battlefieldMaterials.size + graveyardMaterials.size < subCost.minCount) {
+                                    val allMaterials = battlefieldMaterials + graveyardMaterials
+                                    if (allMaterials.size < subCost.minCount) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    // Heterogeneous per-slot craft (Throne of the Grim Captain): only
+                                    // offer the ability when the candidate pool can actually cover every
+                                    // slot (four Vampires don't satisfy Dinosaur/Merfolk/Pirate/Vampire).
+                                    if (subCost.slots.isNotEmpty() &&
+                                        !com.wingedsheep.engine.handlers.costs.CraftSlotMatching.canSatisfyAllSlots(
+                                            subCost.slots, allMaterials
+                                        ) { materialId, slotFilter ->
+                                            context.predicateEvaluator.matches(
+                                                state, state.projectedState, materialId, slotFilter,
+                                                com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)
+                                            )
+                                        }
+                                    ) {
                                         costCanBePaid = false
                                         break
                                     }
                                     craftCost = subCost
-                                    craftMaterials = battlefieldMaterials + graveyardMaterials
+                                    craftMaterials = allMaterials
                                 }
                                 else -> {}
                             }

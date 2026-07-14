@@ -248,6 +248,18 @@ excluded.
   transformed. Always combined with `Mana(...)` and used with the
   `Effects.ReturnSelfFromExileTransformed` resolution effect (the `card { craft(filter, cost) }`
   helper wires the whole pattern).
+  - **Heterogeneous per-slot craft** — `card { craft(slots = listOf(f1, f2, ...), cost, materialDescription?) }`
+    for crafts that name one material of *each* of several kinds ("Craft with a Dinosaur, a Merfolk, a
+    Pirate, and a Vampire" — Throne of the Grim Captain). Each slot is filled by exactly **one distinct**
+    material, so validating a chosen set is a bipartite perfect-matching problem, not a per-subtype count
+    (a single Merfolk Pirate fills only one slot; four Vampires cannot cover four different subtypes). The
+    built `AbilityCost.Craft` carries the per-slot filters in `slots` plus a union `filter` (`anyOf` of the
+    slots) with `minCount == maxCount == slots.size`, so the flat BF+GY candidate gathering, `canPay`, the
+    legal-action enumerator, and the client material overlay work unchanged; the engine layers the
+    matching check (`CraftSlotMatching`, Kuhn's augmenting-path — same routine as `BlockPhaseManager`) on
+    top in `canPay`, enumeration, and payment. The legal action still ships one flat material list
+    (min = max = slot count); an illegal set that can't fill every slot is rejected at payment time
+    (no per-slot selection UI).
 - `Costs.Composite(c1, c2, ...)` — multiple costs paid together.
 
 **Spell-level alternatives**
@@ -1826,6 +1838,12 @@ effect = Effects.Pipeline {
   `chooseUpTo(1)` → `destroy(...)`.
 - `CardSource.ChosenTargets` — the spell/ability's already-resolved targets.
 - `CardSource.FromLinkedExile(count?)` — the cards in the source's linked-exile pile.
+- `CardSource.CraftedMaterials` — the cards exiled to Craft the source (its
+  `CraftedFromExiledComponent`), restricted to those still in exile. The gather-pipeline twin of
+  `ExiledCardsSource.CRAFTED` (which feeds back-face CDAs/ability grants). Backs The Grim Captain's
+  "put an exiled creature card used to craft it onto the battlefield tapped and attacking":
+  `GatherCards(CraftedMaterials) → SelectFromCollection(ChooseUpTo 1, filter = Creature) →
+  MoveCollection(BATTLEFIELD, ZonePlacement.TappedAndAttacking)`.
 - `CardSource.LastKnownCombatPairedWithSource` — creatures blocking/blocked by the source at the
   moment it last left the battlefield (Abu Ja'far).
 - `CardSource.CreaturesThatSaddledSource` — the creatures that saddled the source Mount this turn

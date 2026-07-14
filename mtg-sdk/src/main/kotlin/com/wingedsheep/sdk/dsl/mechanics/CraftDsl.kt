@@ -61,3 +61,70 @@ fun CardBuilder.craft(
     )
     keywordSet.add(Keyword.CRAFT)
 }
+
+/**
+ * Craft with a heterogeneous set of materials — one distinct material per entry in [slots]
+ * (CR 702.167, e.g. Throne of the Grim Captain's "Craft with a Dinosaur, a Merfolk, a Pirate,
+ * and a Vampire {4}").
+ *
+ * Unlike the homogeneous [craft] above, each slot names its own material filter and each is filled
+ * by exactly one distinct material. Because a single card can satisfy several slot filters (a
+ * Merfolk Pirate matches two), the engine validates a chosen set by bipartite perfect matching
+ * (`CraftSlotMatching`), not a per-subtype count — so four Vampires cannot fill Dinosaur/Merfolk/
+ * Pirate/Vampire.
+ *
+ * The built [AbilityCost.Craft] carries the [slots] plus a union [filter] (`anyOf` of the slots)
+ * and `minCount == maxCount == slots.size`, so the count-based candidate gathering, `canPay`, and
+ * legal-action enumeration keep working unchanged; only the matching check is layered on top.
+ *
+ * ```kotlin
+ * craft(
+ *     slots = listOf(
+ *         GameObjectFilter().withSubtype(Subtype.DINOSAUR),
+ *         GameObjectFilter().withSubtype(Subtype.MERFOLK),
+ *         GameObjectFilter().withSubtype(Subtype.PIRATE),
+ *         GameObjectFilter().withSubtype(Subtype.VAMPIRE),
+ *     ),
+ *     cost = "{4}",
+ *     materialDescription = "a Dinosaur, a Merfolk, a Pirate, and a Vampire"
+ * )
+ * ```
+ *
+ * @param slots The per-slot material filters, in printed order. Must be non-empty.
+ * @param cost The mana portion of the craft cost.
+ * @param materialDescription Optional override for the material text in the rendered cost
+ *   description; defaults to the slot filters joined with commas and a trailing "and".
+ */
+fun CardBuilder.craft(
+    slots: List<GameObjectFilter>,
+    cost: String,
+    materialDescription: String? = null
+) {
+    require(slots.isNotEmpty()) { "craft(slots = ...) needs at least one slot" }
+    val materials = materialDescription ?: slots.mapIndexed { i, slot ->
+        val prefix = if (i == slots.size - 1 && slots.size > 1) "and " else ""
+        val d = slot.description
+        val article = if (d.firstOrNull()?.lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an" else "a"
+        "$prefix$article $d"
+    }.joinToString(", ")
+    activatedAbilities.add(
+        ActivatedAbility(
+            cost = AbilityCost.Composite(
+                listOf(
+                    AbilityCost.Atom(CostAtom.Mana(ManaCost.parse(cost))),
+                    AbilityCost.Craft(
+                        filter = GameObjectFilter(anyOf = slots),
+                        minCount = slots.size,
+                        maxCount = slots.size,
+                        slots = slots
+                    )
+                )
+            ),
+            effect = com.wingedsheep.sdk.scripting.effects.ReturnSelfFromExileTransformedEffect,
+            targetRequirements = emptyList(),
+            timing = TimingRule.SorcerySpeed,
+            descriptionOverride = "Craft with $materials — $cost"
+        )
+    )
+    keywordSet.add(Keyword.CRAFT)
+}

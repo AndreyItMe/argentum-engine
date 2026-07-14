@@ -14665,6 +14665,228 @@
     }
 }
 
+// Throne of the Grim Captain
+{
+    "name": "Throne of the Grim Captain",
+    "manaCost": "{2}",
+    "typeLine": "Legendary Artifact",
+    "oracleText": "{T}: Mill two cards.\nCraft with a Dinosaur, a Merfolk, a Pirate, and a Vampire {4} ({4}, Exile this artifact, Exile the four from among permanents you control and/or cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+    "keywords": [
+        "CRAFT"
+    ],
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": "CostTap",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "isMill": true
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}"
+                            }
+                        },
+                        {
+                            "type": "CostCraft",
+                            "filter": {
+                                "anyOf": [
+                                    {
+                                        "cardPredicates": [
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Dinosaur"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "cardPredicates": [
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Merfolk"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "cardPredicates": [
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Pirate"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "cardPredicates": [
+                                            {
+                                                "type": "HasSubtype",
+                                                "subtype": "Vampire"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "minCount": 4,
+                            "maxCount": 4,
+                            "slots": [
+                                {
+                                    "cardPredicates": [
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Dinosaur"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "cardPredicates": [
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Merfolk"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "cardPredicates": [
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Pirate"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "cardPredicates": [
+                                        {
+                                            "type": "HasSubtype",
+                                            "subtype": "Vampire"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "effect": "ReturnSelfFromExileTransformed",
+                "timing": "SorcerySpeed",
+                "descriptionOverride": "Craft with a Dinosaur, a Merfolk, a Pirate, and a Vampire — {4}"
+            }
+        ]
+    },
+    "backFace": {
+        "name": "The Grim Captain",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Skeleton Spirit Pirate",
+        "oracleText": "Menace, trample, lifelink, hexproof\nWhenever The Grim Captain attacks, each opponent sacrifices a nonland permanent of their choice. Then you may put an exiled creature card used to craft The Grim Captain onto the battlefield under your control tapped and attacking.",
+        "creatureStats": {
+            "power": 7,
+            "toughness": 7
+        },
+        "keywords": [
+            "MENACE",
+            "TRAMPLE",
+            "LIFELINK",
+            "HEXPROOF"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_3",
+                    "trigger": "AttackEvent",
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForceSacrifice",
+                                "filter": "nonland permanent",
+                                "target": {
+                                    "type": "PlayerRef",
+                                    "player": "EachOpponent"
+                                }
+                            },
+                            {
+                                "type": "GatherCards",
+                                "source": "CraftedMaterials",
+                                "storeAs": "grimCaptainCrafted"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "grimCaptainCrafted",
+                                "selection": {
+                                    "type": "ChooseUpTo",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "filter": "creature",
+                                "storeSelected": "grimCaptainReturn",
+                                "prompt": "Put an exiled creature card used to craft The Grim Captain onto the battlefield tapped and attacking",
+                                "selectedLabel": "Put onto the battlefield tapped and attacking",
+                                "showAllCards": true
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "grimCaptainReturn",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Battlefield",
+                                    "placement": "TappedAndAttacking"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "266",
+            "rarity": "RARE",
+            "artist": "Tiffany Turrill",
+            "imageUri": "https://cards.scryfall.io/normal/back/c/1/c13e8e3d-2a6b-4782-a3c9-71af7336a881.jpg?1782694399"
+        },
+        "colorIdentityOverride": [
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "266",
+        "rarity": "RARE",
+        "artist": "Tiffany Turrill",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/1/c13e8e3d-2a6b-4782-a3c9-71af7336a881.jpg?1782694399"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Tinker's Tote
 {
     "name": "Tinker's Tote",

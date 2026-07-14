@@ -186,7 +186,17 @@ class CostHandler(
                 // Source on battlefield + enough materials in the unified BF+GY pool (CR 702.167a-b).
                 val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
                 if (!state.getZone(battlefieldZone).contains(sourceId)) return false
-                findCraftMaterialCandidates(state, controllerId, cost.filter, sourceId).size >= cost.minCount
+                val candidates = findCraftMaterialCandidates(state, controllerId, cost.filter, sourceId)
+                if (candidates.size < cost.minCount) return false
+                // Heterogeneous per-slot craft (Throne of the Grim Captain): the count is necessary
+                // but not sufficient — the candidates must admit a matching that saturates every
+                // slot (four Vampires can't cover Dinosaur/Merfolk/Pirate/Vampire). CR 702.167.
+                if (cost.slots.isNotEmpty() &&
+                    !com.wingedsheep.engine.handlers.costs.CraftSlotMatching.canSatisfyAllSlots(
+                        cost.slots, candidates
+                    ) { materialId, slotFilter -> craftMaterialMatchesSlot(state, controllerId, materialId, slotFilter) }
+                ) return false
+                true
             }
             is AbilityCost.Composite -> {
                 cost.costs.all { canPayAbilityCost(state, it, sourceId, controllerId, manaPool, abilityContext) }
@@ -1172,6 +1182,21 @@ class CostHandler(
         return battlefield + graveyardCards
     }
 
+    /**
+     * Edge predicate for heterogeneous Craft slot matching (CR 702.167): may [materialId] fill a
+     * slot whose material filter is [slotFilter]? Uses the same projected-state matcher as the
+     * unified candidate gathering, so a battlefield permanent's projected subtypes/type line are
+     * honored while a graveyard card falls back to its printed characteristics.
+     */
+    private fun craftMaterialMatchesSlot(
+        state: GameState,
+        controllerId: EntityId,
+        materialId: EntityId,
+        slotFilter: GameObjectFilter
+    ): Boolean = predicateEvaluator.matches(
+        state, state.projectedState, materialId, slotFilter, PredicateContext(controllerId = controllerId)
+    )
+
     private fun payCraftCost(
         state: GameState,
         cost: AbilityCost.Craft,
@@ -1210,6 +1235,19 @@ class CostHandler(
         }
         if (chosen.contains(sourceId)) {
             return CostPaymentResult.failure("Craft material cannot include the source permanent")
+        }
+        // Heterogeneous per-slot craft (Throne of the Grim Captain): the chosen set must admit a
+        // matching that fills every slot with a distinct material (CR 702.167). min == max ==
+        // slots.size is already enforced above, so a full matching here uses each chosen material
+        // exactly once. Rejects e.g. four Vampires for a Dinosaur/Merfolk/Pirate/Vampire craft.
+        if (cost.slots.isNotEmpty() &&
+            !com.wingedsheep.engine.handlers.costs.CraftSlotMatching.canSatisfyAllSlots(
+                cost.slots, chosen.toList()
+            ) { materialId, slotFilter -> craftMaterialMatchesSlot(state, controllerId, materialId, slotFilter) }
+        ) {
+            return CostPaymentResult.failure(
+                "Chosen Craft materials cannot fill each of the required material slots"
+            )
         }
 
         var newState = state

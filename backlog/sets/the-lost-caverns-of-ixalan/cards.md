@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 232 / 286
+**Implemented:** 235 / 286
 - [x] Abrade
 - [x] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -263,7 +263,7 @@
 - [ ] Thousand Moons Smithy
 - [x] Thrashing Brontodon
 - [x] Threefold Thunderhulk
-- [ ] Throne of the Grim Captain
+- [x] Throne of the Grim Captain
 - [x] Tinker's Tote
 - [ ] Tishana's Tidebinder
 - [x] Tithing Blade
