@@ -2347,12 +2347,15 @@ class ActivateAbilityHandler(
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             val classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
             for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
-                // "[filter] have all activated abilities of the [creature] cards exiled with this"
-                // (Territory Forge = Self; Agatha's Soul Cauldron = creatures you control with a
-                // +1/+1 counter). Mirror CastPermissionUtils.getStaticGrantedAbilitiesWithGranter:
-                // grant each pile ability to every matching permanent, recording the *receiver* as
-                // the granter so `{T}`/self-references bind to the permanent that gained the ability.
-                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard) {
+                // "[filter] have all activated abilities of the [creature] cards exiled with/to craft
+                // this" (Territory Forge / Locus of Enlightenment = Self; Agatha's Soul Cauldron =
+                // creatures you control with a +1/+1 counter). Mirror
+                // CastPermissionUtils.getStaticGrantedAbilitiesWithGranter: grant each pile ability
+                // (linked or crafted, per `ability.source`) to every matching permanent, recording the
+                // *receiver* as the granter so `{T}`/self-references bind to the permanent that gained
+                // the ability. When `oncePerTurnEach` is set (Locus), the util re-stamps each ability
+                // with an exiled-card-derived AbilityId + once-per-turn cap.
+                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards) {
                     val receives = when (val scope = ability.filter.scope) {
                         is Scope.Self -> permanentId == entityId
                         is Scope.Specific -> scope.entityId == entityId
@@ -2369,19 +2372,9 @@ class ActivateAbilityHandler(
                         }
                     }
                     if (receives) {
-                        for (granted in com.wingedsheep.engine.legalactions.utils.linkedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.creatureCardsOnly)) {
-                            result.add(granted to entityId)
-                        }
-                    }
-                    continue
-                }
-                // "This permanent has each activated ability of the exiled cards used to craft it"
-                // (Locus of Enlightenment). Self-scoped: mirror CastPermissionUtils — grant every craft
-                // material's activated abilities to the source (recorded as granter). Each ability is
-                // re-stamped with an exiled-card-derived AbilityId + once-per-turn cap by the util.
-                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfCraftedMaterials) {
-                    if (permanentId == entityId) {
-                        for (granted in com.wingedsheep.engine.legalactions.utils.craftedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.oncePerTurnEach)) {
+                        for (granted in com.wingedsheep.engine.legalactions.utils.exiledCardsActivatedAbilities(
+                            state, permanentId, cardRegistry, ability.source, ability.creatureCardsOnly, ability.oncePerTurnEach
+                        )) {
                             result.add(granted to entityId)
                         }
                     }

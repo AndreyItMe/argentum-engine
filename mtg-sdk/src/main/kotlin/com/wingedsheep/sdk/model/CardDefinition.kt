@@ -357,15 +357,23 @@ data class CardDefinition(
 
     /**
      * True if this card has at least one intrinsic activated ability (of any kind — mana,
-     * loyalty, or otherwise) activatable from the battlefield. Unlike [hasNonManaActivatedAbility]
-     * this counts mana abilities, because "a permanent/card with an activated ability" (e.g. the
-     * craft material clause on The Enigma Jewel — "four or more nonlands with activated abilities")
-     * is satisfied by a mana rock or mana dork just as much as by a tapper. Reflects printed
-     * abilities only; abilities granted by other continuous effects are not counted.
+     * loyalty, or otherwise) activatable from the battlefield or the graveyard. Unlike
+     * [hasNonManaActivatedAbility] this counts mana abilities, because "a permanent/card with an
+     * activated ability" (e.g. the craft material clause on The Enigma Jewel — "four or more nonlands
+     * with activated abilities") is satisfied by a mana rock or mana dork just as much as by a tapper.
+     * Reflects printed abilities only; abilities granted by other continuous effects are not counted.
+     *
+     * Scoped to abilities that function from the **battlefield or the graveyard** — the two zones a
+     * craft material can be drawn from ("permanents you control and/or cards in your graveyard", CR
+     * 702.167a). So a graveyard card whose only activated ability is graveyard-activated (e.g. Undead
+     * Gladiator's `{1}, Discard a card: Return this from your graveyard …`) still counts as "with an
+     * activated ability." A hand-only ability (cycling) does not, since it never functions on an
+     * object that is being used as material.
      */
     val hasActivatedAbility: Boolean
         get() = script.activatedAbilities.any {
-            it.activateFromZone == com.wingedsheep.sdk.core.Zone.BATTLEFIELD
+            it.activateFromZone == com.wingedsheep.sdk.core.Zone.BATTLEFIELD ||
+                it.activateFromZone == com.wingedsheep.sdk.core.Zone.GRAVEYARD
         }
 
     /** Static abilities (continuous effects) on this card */

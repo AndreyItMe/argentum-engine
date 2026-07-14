@@ -14375,7 +14375,11 @@
                 }
             ],
             "staticAbilities": [
-                "HasAllActivatedAbilitiesOfCraftedMaterials"
+                {
+                    "type": "HasAllActivatedAbilitiesOfExiledCards",
+                    "source": "Crafted",
+                    "oncePerTurnEach": true
+                }
             ]
         },
         "metadata": {

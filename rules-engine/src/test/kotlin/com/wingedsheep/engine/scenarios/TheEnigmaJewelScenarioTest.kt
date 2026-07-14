@@ -121,6 +121,21 @@ class TheEnigmaJewelScenarioTest : FunSpec({
         }
     }
 
+    // A nonland whose ONLY activated ability functions from the GRAVEYARD (not the battlefield). It
+    // still "has an activated ability" for craft-material purposes — the material pool includes cards
+    // in the graveyard, and a graveyard-activated ability is one such card's activated ability.
+    val graveyardOnlyCache = card("Enigma Graveyard Cache") {
+        manaCost = "{0}"
+        typeLine = "Artifact"
+        oracleText = "{1}: You gain 1 life. Activate only from your graveyard."
+        activatedAbility {
+            cost = Costs.Mana("{1}")
+            effect = Effects.GainLife(1)
+            activateFromZone = Zone.GRAVEYARD
+            timing = TimingRule.InstantSpeed
+        }
+    }
+
     // ---- Copy-trigger fixtures (from the back face's copy clause). ----
     // {2}: You gain 1 life — a mana-cost ability the Jewel's restricted {C}{C} can fund.
     val testCurio = card("Test Curio") {
@@ -163,7 +178,7 @@ class TheEnigmaJewelScenarioTest : FunSpec({
     }
 
     val extraCards = listOf(
-        cacheA, cacheB, cacheC, cacheD, tapCache, manaCache, bauble, abilityLand,
+        cacheA, cacheB, cacheC, cacheD, tapCache, manaCache, bauble, abilityLand, graveyardOnlyCache,
         testCurio, testTrinket, testPumper, testLifegainer
     )
 
@@ -189,9 +204,9 @@ class TheEnigmaJewelScenarioTest : FunSpec({
     fun GameTestDriver.abilitiesOn(player: EntityId, source: EntityId): List<ActivateAbility> =
         legalActions(player).mapNotNull { it.action as? ActivateAbility }.filter { it.sourceId == source }
 
-    // A granted ability's synthesized id is "crafted_<exiledEntity>_<printedAbilityId>", so this
+    // A granted ability's synthesized id is "exiled_<exiledEntity>_<printedAbilityId>", so this
     // fragment identifies the ability contributed by a specific exiled material entity.
-    fun fromMaterial(material: EntityId) = "crafted_${material.value}_"
+    fun fromMaterial(material: EntityId) = "exiled_${material.value}_"
 
     /** Craft The Enigma Jewel using [materials]; returns the (same) entity, now the Locus. */
     fun GameTestDriver.craftJewel(player: EntityId, jewel: EntityId, materials: List<EntityId>): EntityId {
@@ -362,6 +377,23 @@ class TheEnigmaJewelScenarioTest : FunSpec({
         val onField = listOf("Enigma Cache A", "Enigma Cache B", "Enigma Cache C")
             .map { driver.putPermanentOnBattlefield(me, it) }
         val fromYard = driver.putCardInGraveyard(me, "Enigma Cache D")
+
+        driver.craftJewel(me, jewel, onField + fromYard)
+
+        driver.state.getEntity(jewel)?.get<CardComponent>()?.name shouldBe "Locus of Enlightenment"
+        driver.state.getZone(ZoneKey(me, Zone.EXILE)).contains(fromYard) shouldBe true
+    }
+
+    test("a graveyard card whose only activated ability is graveyard-activated is valid craft material") {
+        val driver = createDriver()
+        val me = driver.activePlayer!!
+
+        val jewel = driver.putPermanentOnBattlefield(me, "The Enigma Jewel")
+        val onField = listOf("Enigma Cache A", "Enigma Cache B", "Enigma Cache C")
+            .map { driver.putPermanentOnBattlefield(me, it) }
+        // Its sole activated ability functions from the graveyard, never the battlefield — it must
+        // still count as "a nonland with an activated ability" (the material pool spans the graveyard).
+        val fromYard = driver.putCardInGraveyard(me, "Enigma Graveyard Cache")
 
         driver.craftJewel(me, jewel, onField + fromYard)
 

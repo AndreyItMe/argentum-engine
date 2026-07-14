@@ -6,7 +6,7 @@ import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard
+import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards
 
 /**
  * Territory Forge — {4}{R} Artifact (The Big Score, mythic).
@@ -17,9 +17,9 @@ import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard
  * Implementation:
  *  - ETB trigger gated by an intervening-if [Conditions.WasCast] ("if you cast it"): exile
  *    a target artifact or land, linking it to Territory Forge's `LinkedExileComponent`.
- *  - The static ability [HasAllActivatedAbilitiesOfLinkedExiledCard] reads that linked-exile
- *    pile at activation-legality time and surfaces every activated ability of the exiled card
- *    on Territory Forge itself.
+ *  - The static ability [HasAllActivatedAbilitiesOfExiledCards] (default `source = LINKED`) reads
+ *    that linked-exile pile at activation-legality time and surfaces every activated ability of the
+ *    exiled card on Territory Forge itself.
  *
  * Rulings:
  *  - It grants only *activated* abilities — not mana abilities only, not triggered/static ones.
@@ -43,8 +43,8 @@ val TerritoryForge = card("Territory Forge") {
     }
 
     staticAbility {
-        // Default filter = the source itself ("This artifact has all activated abilities …").
-        ability = HasAllActivatedAbilitiesOfLinkedExiledCard()
+        // Default source = LINKED, filter = the source itself ("This artifact has all activated abilities …").
+        ability = HasAllActivatedAbilitiesOfExiledCards()
     }
 
     metadata {

@@ -8,7 +8,8 @@ import com.wingedsheep.sdk.dsl.craft
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfCraftedMaterials
+import com.wingedsheep.sdk.scripting.ExiledCardsSource
+import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards
 import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
@@ -41,10 +42,11 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  *    more nonlands with activated abilities" (CR 702.167a/b; the material pool spans battlefield
  *    permanents you control and cards in your graveyard, and `HasActivatedAbility` counts mana
  *    abilities too, so a mana rock/dork qualifies).
- *  - The back face's **ability grant** is the [HasAllActivatedAbilitiesOfCraftedMaterials] static
- *    (CR 702.167c): the Locus has each activated ability of the cards exiled to craft it, each
- *    usable only once each turn (tracked per exiled card — two exiled copies of one card each get
- *    their own budget). `{T}` costs tap the Locus and self-references bind to it (CR 707.10b).
+ *  - The back face's **ability grant** is the [HasAllActivatedAbilitiesOfExiledCards] static with
+ *    `source = CRAFTED` and `oncePerTurnEach = true` (CR 702.167c): the Locus has each activated
+ *    ability of the cards exiled to craft it, each usable only once each turn (tracked per exiled
+ *    card — two exiled copies of one card each get their own budget). `{T}` costs tap the Locus and
+ *    self-references bind to it (CR 113.7 — a granted ability's source is the object that has it).
  *  - The back face's **copy clause** is [Triggers.YouActivateAbility] (fires for every activated
  *    ability you activate that isn't a mana ability, CR 605.1a) paired with
  *    [Effects.CopyTargetSpellOrAbility] against [EffectTarget.TriggeringEntity]: the triggering
@@ -103,7 +105,10 @@ private val LocusOfEnlightenment = card("Locus of Enlightenment") {
     // Locus of Enlightenment has each activated ability of the exiled cards used to craft it.
     // You may activate each of those abilities only once each turn.
     staticAbility {
-        ability = HasAllActivatedAbilitiesOfCraftedMaterials()
+        ability = HasAllActivatedAbilitiesOfExiledCards(
+            source = ExiledCardsSource.CRAFTED,
+            oncePerTurnEach = true
+        )
     }
 
     // Whenever you activate an ability that isn't a mana ability, copy it. You may choose
