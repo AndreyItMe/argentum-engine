@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers
 
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.effects.DamageUtils
+import com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType
 import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.state.GameState
@@ -1249,15 +1250,7 @@ class CostHandler(
     }
 
     private fun resolveNamedCounterType(name: String): CounterType {
-        return when (name) {
-            "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
-            "-1/-1" -> CounterType.MINUS_ONE_MINUS_ONE
-            else -> try {
-                CounterType.valueOf(name.uppercase().replace(' ', '_'))
-            } catch (_: IllegalArgumentException) {
-                CounterType.PLUS_ONE_PLUS_ONE
-            }
-        }
+        return resolveCounterType(name)
     }
 }
 
