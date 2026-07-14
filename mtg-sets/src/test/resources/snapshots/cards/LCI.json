@@ -1275,6 +1275,90 @@
     ]
 }
 
+// Bloodthorn Flail
+{
+    "name": "Bloodthorn Flail",
+    "manaCost": "{B}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +2/+1.\nEquip—Pay {3} or discard a card.",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            },
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": "AtomDiscard"
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "target creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true,
+                "descriptionOverride": "Equip—Discard a card."
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 2,
+                "toughnessBonus": 1
+            }
+        ]
+    },
+    "equipCost": "{3}",
+    "metadata": {
+        "collectorNumber": "93",
+        "rarity": "UNCOMMON",
+        "artist": "Igor Kieryluk",
+        "flavorText": "\"This weapon embodies both the strength and the weakness of the Legion of Dusk. They will endure any pain to achieve their ends, but they suffer pointlessly just to prove their dedication.\"\n—Huatli",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/b/db38babd-57e8-4e59-9701-11a0682baa77.jpg?1782694536"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Bonehoard Dracosaur
 {
     "name": "Bonehoard Dracosaur",
@@ -3783,6 +3867,107 @@
     ]
 }
 
+// Deconstruction Hammer
+{
+    "name": "Deconstruction Hammer",
+    "manaCost": "{W}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +1/+1 and has \"{3}, {T}, Sacrifice Deconstruction Hammer: Destroy target artifact or enchantment.\"\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 1
+            },
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            {
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomMana",
+                                    "cost": "{3}"
+                                }
+                            },
+                            "CostTap",
+                            {
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomSacrifice",
+                                    "filter": "artifact name:Deconstruction Hammer ctrl:you"
+                                }
+                            }
+                        ]
+                    },
+                    "effect": {
+                        "type": "MoveToZone",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "destination": "Graveyard",
+                        "byDestruction": true
+                    },
+                    "targetRequirements": [
+                        {
+                            "type": "TargetObject",
+                            "filter": {
+                                "baseFilter": "artifact|enchantment"
+                            }
+                        }
+                    ],
+                    "descriptionOverride": "{3}, {T}, Sacrifice Deconstruction Hammer: Destroy target artifact or enchantment."
+                }
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "9",
+        "artist": "Dibujante Nocturno",
+        "flavorText": "\"All that is made can be unmade. Chimil's light is the only constant.\"\n—Oltec artificers' creed",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/c/0c7ba382-18c4-4833-b3d2-bd469ae2ad77.jpg?1782694606"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Deep Goblin Skulltaker
 {
     "name": "Deep Goblin Skulltaker",
@@ -5790,6 +5975,70 @@
     },
     "colorIdentityOverride": [
         "WHITE"
+    ]
+}
+
+// Glowcap Lantern
+{
+    "name": "Glowcap Lantern",
+    "manaCost": "{G}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature has \"You may look at the top card of your library any time\" and \"Whenever this creature attacks, it explores.\" (Reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on that creature, then put the card back or put it into your graveyard.)\nEquip {2}",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{2}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            "LookAtTopOfLibrary",
+            {
+                "type": "GrantTriggeredAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "trigger": "AttackEvent",
+                    "effect": {
+                        "type": "Explore",
+                        "target": "Self"
+                    }
+                }
+            }
+        ]
+    },
+    "equipCost": "{2}",
+    "metadata": {
+        "collectorNumber": "187",
+        "rarity": "UNCOMMON",
+        "artist": "Irina Nordsol",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/a/bafde87c-743d-4307-93e0-fbd30f5d92f6.jpg?1782694459"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
     ]
 }
 
@@ -13803,6 +14052,110 @@
         "imageUri": "https://cards.scryfall.io/normal/front/e/0/e0b6d40a-fded-4625-b03c-765c88d75766.jpg?1782694401"
     },
     "colorIdentityOverride": []
+}
+
+// Sunfire Torch
+{
+    "name": "Sunfire Torch",
+    "manaCost": "{R}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature gets +1/+0 and has \"Whenever this creature attacks, you may sacrifice Sunfire Torch. When you do, this creature deals 2 damage to any target.\"\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "ModifyStats",
+                "powerBonus": 1,
+                "toughnessBonus": 0
+            },
+            {
+                "type": "GrantTriggeredAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "trigger": "AttackEvent",
+                    "effect": {
+                        "type": "ReflexiveTrigger",
+                        "action": {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "SelectTarget",
+                                    "requirement": {
+                                        "type": "TargetObject",
+                                        "filter": {
+                                            "baseFilter": "artifact name:Sunfire Torch ctrl:you"
+                                        }
+                                    },
+                                    "storeAs": "toSacrifice"
+                                },
+                                {
+                                    "type": "SacrificeTarget",
+                                    "target": {
+                                        "type": "PipelineTarget",
+                                        "collectionName": "toSacrifice"
+                                    }
+                                }
+                            ]
+                        },
+                        "reflexiveEffect": {
+                            "type": "DealDamage",
+                            "amount": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": {
+                                "type": "ContextTarget",
+                                "index": 0
+                            }
+                        },
+                        "reflexiveTargetRequirements": [
+                            "AnyTarget"
+                        ],
+                        "descriptionOverride": "You may sacrifice Sunfire Torch. When you do, this creature deals 2 damage to any target."
+                    }
+                }
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "167",
+        "artist": "David Szabo",
+        "flavorText": "\"Let Tilonalli's light burn a path through this darkness.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/b/bb040fc7-f728-4482-92af-9a320c03bb54.jpg?1782694475"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
 }
 
 // Sunken Citadel

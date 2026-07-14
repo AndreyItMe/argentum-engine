@@ -2,7 +2,7 @@
 
 **Set Size:** 286 booster cards (excluding basic lands and tokens)
 **Release Date:** November 17, 2023
-**Implemented:** 239 / 286
+**Implemented:** 243 / 286
 - [x] Abrade
 - [x] Abuelo's Awakening
 - [x] Abuelo, Ancestral Echo
@@ -27,7 +27,7 @@
 - [x] Belligerent Yearling
 - [x] Bitter Triumph
 - [x] Bloodletter of Aclazotz
-- [ ] Bloodthorn Flail
+- [x] Bloodthorn Flail
 - [x] Bonehoard Dracosaur
 - [x] Brackish Blunder
 - [x] Braided Net
@@ -69,7 +69,7 @@
 - [x] Dauntless Dismantler
 - [x] Dead Weight
 - [x] Deathcap Marionette
-- [ ] Deconstruction Hammer
+- [x] Deconstruction Hammer
 - [x] Deep Goblin Skulltaker
 - [x] Deep-Cavern Bat
 - [x] Deepfathom Echo
@@ -106,7 +106,7 @@
 - [x] Gishath, Sun's Avatar
 - [x] Glimpse the Core
 - [x] Glorifier of Suffering
-- [ ] Glowcap Lantern
+- [x] Glowcap Lantern
 - [x] Goblin Tomb Raider
 - [x] Goldfury Strider
 - [ ] Grasping Shadows
@@ -241,7 +241,7 @@
 - [x] Stinging Cave Crawler
 - [x] Subterranean Schooner
 - [x] Sunbird Standard
-- [ ] Sunfire Torch
+- [x] Sunfire Torch
 - [x] Sunken Citadel
 - [x] Sunshot Militia
 - [x] Swashbuckler's Whip
