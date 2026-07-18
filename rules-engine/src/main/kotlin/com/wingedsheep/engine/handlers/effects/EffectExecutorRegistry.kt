@@ -47,6 +47,9 @@ class EffectExecutorRegistry(
     private val drawingExecutors = DrawingExecutors(amountEvaluator, decisionHandler, cardRegistry = cardRegistry)
     private val playerExecutors = PlayerExecutors(decisionHandler, cardRegistry)
     private val chainExecutors = ChainExecutors()
+    // Held as a field so its recursion (for ModifyExplore's Composite delegation) can be wired
+    // before the module is registered, mirroring libraryExecutors.
+    private val permanentExecutors = PermanentExecutors(decisionHandler, amountEvaluator, cardRegistry)
 
     /**
      * Exposed so [com.wingedsheep.engine.core.EngineServices] can call
@@ -58,7 +61,10 @@ class EffectExecutorRegistry(
         // Register all effect executors by module
         registerModule(LifeExecutors(amountEvaluator))
         registerModule(DamageExecutors(amountEvaluator, decisionHandler))
-        registerModule(PermanentExecutors(decisionHandler, amountEvaluator, cardRegistry))
+        // Wire the recursion (for ModifyExplore's Composite delegation) before registering, so the
+        // ref is read lazily at explore time (order is not load-bearing — see libraryExecutors).
+        permanentExecutors.initializeRecursion(::recurse)
+        registerModule(permanentExecutors)
         registerModule(ManaExecutors(amountEvaluator, cardRegistry))
         registerModule(TokenExecutors(amountEvaluator, StaticAbilityHandler(cardRegistry), cardRegistry))
         // The scry/surveil macro executors expand to a composite pipeline and delegate back through

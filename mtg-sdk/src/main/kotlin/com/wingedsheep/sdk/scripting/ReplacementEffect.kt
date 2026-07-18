@@ -799,6 +799,42 @@ data class ReplaceDrawWithEffect(
 }
 
 /**
+ * Insert an extra effect into an explore (CR 614, CR 701.44). Replaces "[a permanent matching
+ * [appliesTo]'s filter] explores" with "[prefixEffect] happens, then that permanent explores".
+ *
+ * Modeled on [ReplaceDrawWithEffect]: like draw replacement, explore isn't dispatched as a
+ * generic replaceable event, so `ExploreEffectExecutor` consults this directly at explore time.
+ * When a matching `ModifyExplore` is on the battlefield, the executor re-issues the explore as
+ * `Composite([prefixEffect], ExploreEffect(sameCreature, replacementsApplied = true))`, reusing
+ * the composite executor's pause-sequencing so a prefix that pauses (e.g. Scry's top/bottom
+ * decision) resolves fully before the explore runs.
+ *
+ * [appliesTo]'s filter scopes *which* explores are modified, evaluated with the replacement
+ * source's controller as "you" — `ExploredEvent(Creature.youControl())` for "if a creature you
+ * control would explore". The [prefixEffect] runs as the source's controller.
+ *
+ * Twists and Turns: `ModifyExplore(Effects.Scry(1), ExploredEvent(Creature.youControl()))` —
+ * "If a creature you control would explore, instead you scry 1, then that creature explores."
+ */
+@SerialName("ModifyExplore")
+@Serializable
+data class ModifyExplore(
+    val prefixEffect: Effect,
+    override val appliesTo: EventPattern = EventPattern.ExploredEvent()
+) : ReplacementEffect {
+    override val description: String =
+        "If ${appliesTo.description}, first ${prefixEffect.description}, then it explores"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newPrefix = prefixEffect.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newPrefix !== prefixEffect)
+            copy(appliesTo = newAppliesTo, prefixEffect = newPrefix)
+        else this
+    }
+}
+
+/**
  * Prevent drawing (with optional replacement).
  * Example: Spirit of the Labyrinth (second draw), Narset Parter of Veils
  */

@@ -1010,6 +1010,8 @@ class StaticAbilityHandler(
             is com.wingedsheep.sdk.scripting.RedirectZoneChange,
             is com.wingedsheep.sdk.scripting.RedirectZoneChangeWithEffect,
             is com.wingedsheep.sdk.scripting.PreventExtraTurns,
+            // Explore modification (consulted from the battlefield at explore time — Twists and Turns):
+            is com.wingedsheep.sdk.scripting.ModifyExplore,
             // Token creation:
             is com.wingedsheep.sdk.scripting.ReplaceTokenCreationWithAttachedCopy,
             is com.wingedsheep.sdk.scripting.DoubleTokenCreation,

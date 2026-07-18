@@ -6619,6 +6619,21 @@ replacementEffect {
   instances sum. Use for "if an opponent would mill one or more cards, they mill that many cards plus
   four instead" (The Water Crystal:
   `ModifyMillAmount(modifier = 4, appliesTo = EventPattern.MillEvent(player = Player.EachOpponent))`).
+- `ModifyExplore(prefixEffect, appliesTo)` — insert an extra effect into an explore (CR 614, CR
+  701.44): replaces "[a matching permanent] explores" with "[prefixEffect], then that permanent
+  explores". `appliesTo` is an `EventPattern.ExploredEvent` whose `filter` scopes which explores are
+  modified, matched against the exploring creature with the **source's controller** as "you" (so
+  `ExploredEvent(GameObjectFilter.Creature.youControl())` = "if a creature you control would
+  explore"); `revealedType` is irrelevant (the replacement runs before the reveal). Like
+  `ReplaceDrawWithEffect`, explore isn't a generic replaceable event — `ExploreEffectExecutor`
+  consults printed `ModifyExplore` on the battlefield directly and, on a match, re-issues the explore
+  as `Composite(prefixEffect, ExploreEffect(sameCreature, replacementsApplied = true))` through the
+  registry recursion, so a pausing prefix (Scry's top/bottom decision) sequences fully before the
+  explore. The `replacementsApplied` guard on the inner `ExploreEffect` stops the same replacement
+  applying twice. Multiple applicable sources chain their prefixes in battlefield order (a faithful
+  APNAP order per CR 616 is unmodeled — no printed card stacks explore modifiers). Twists and Turns:
+  `ModifyExplore(Effects.Scry(1), EventPattern.ExploredEvent(GameObjectFilter.Creature.youControl()))`
+  ("If a creature you control would explore, instead you scry 1, then that creature explores").
 - `ModifyLifeGain(multiplier, modifier, appliesTo, restrictions)` — modify life gain by a multiplicative *and/or*
   additive factor: `gained = (original * multiplier) + modifier`, clamped to ≥ 0. `appliesTo` is a `LifeGainEvent`
   whose `player` filter (default `Player.Each`) gates which players the replacement applies to. `restrictions`

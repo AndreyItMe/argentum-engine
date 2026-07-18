@@ -497,7 +497,16 @@ data class RecordChosenLinkedExileEffect(
 @SerialName("Explore")
 @Serializable
 data class ExploreEffect(
-    val target: EffectTarget = EffectTarget.ContextTarget(0)
+    val target: EffectTarget = EffectTarget.ContextTarget(0),
+    /**
+     * Recursion guard for explore-replacement effects
+     * ([com.wingedsheep.sdk.scripting.ModifyExplore], CR 614). When a matching `ModifyExplore`
+     * is on the battlefield, `ExploreEffectExecutor` re-issues the explore as
+     * `Composite(prefixEffect, ExploreEffect(target, replacementsApplied = true))`; the flag on
+     * the inner explore stops the same replacement from applying a second time. Defaults to
+     * `false` (with `encodeDefaults = false`, no existing explore card's snapshot churns).
+     */
+    val replacementsApplied: Boolean = false
 ) : Effect {
     override val description: String = "${target.description} explores"
 }
