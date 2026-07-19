@@ -68,8 +68,15 @@ interface MtgSet {
      */
     val basicLandsFallback: MtgSet? get() = null
 
-    /** Whether the set is wired into the booster generator for sealed/draft. */
-    val sealedSupported: Boolean get() = false
+    /**
+     * Whether the set is wired into the booster generator for sealed/draft.
+     *
+     * Defaults to true: a finished set shouldn't have to opt in to being draftable. Sets that
+     * genuinely can't carry a limited environment — Commander/duel decks, Jumpstart, planar sets —
+     * override this to false. Work-in-progress sets don't need to touch it: [incomplete] already
+     * keeps them out of `fullyImplemented` (and so behind the picker's partial-sets toggle).
+     */
+    val sealedSupported: Boolean get() = true
 
     /**
      * True for extension sets — bonus sheets and other supplemental releases (e.g. The Big Score
