@@ -210,7 +210,7 @@ data class AdditionalCostInfo(
     val blightVariableMaxX: Int = 0,
     /** For PayXLife: cap on X (your current life total). */
     val payXLifeMaxX: Int = 0,
-    /** Total counters to remove across creatures you control (RemoveCountersFromYourCreatures cost). */
+    /** Total counters to remove across creatures for an any-type counter-removal cost. */
     val distributedCounterRemovalTotal: Int = 0,
 
     /**
@@ -220,7 +220,9 @@ data class AdditionalCostInfo(
      * `ActivateAbility.costPayment.exiledCards`.
      */
     val validCraftMaterials: List<EntityId> = emptyList(),
-    val craftMinCount: Int = 1
+    val craftMinCount: Int = 1,
+    /** Cap on material count for exact-count crafts ("Craft with artifact"); null = unbounded. */
+    val craftMaxCount: Int? = null
 )
 
 @Serializable

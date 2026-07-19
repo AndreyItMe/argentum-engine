@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.ControlChangeDirection
 import com.wingedsheep.sdk.scripting.EventPattern.*
+import com.wingedsheep.sdk.scripting.ExploreReveal
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
 import com.wingedsheep.sdk.scripting.TriggerSpec
@@ -255,6 +256,20 @@ object Triggers {
     )
 
     /**
+     * When this creature attacks a player (i.e. attacks an opponent). (SELF.)
+     *
+     * Does **not** fire when the creature attacks a planeswalker or a battle — a creature only
+     * ever attacks an opponent when it attacks a player (CR 508.1). This is the "attacks an
+     * opponent" wording (Kaalia of the Vast, whose 2024 ruling clarifies the ability doesn't
+     * trigger on attacking a planeswalker or battle). Sugar for
+     * `attacks(requires = setOf(AttackPredicate.DefenderIsPlayer))`.
+     */
+    val AttacksAnOpponent: TriggerSpec = TriggerSpec(
+        event = AttackEvent(requires = setOf(AttackPredicate.DefenderIsPlayer)),
+        binding = TriggerBinding.SELF
+    )
+
+    /**
      * Generic "attacks" trigger factory. Use [Attacks] for the SELF-only
      * unfiltered case; reach for this factory for any other combination.
      *
@@ -276,6 +291,9 @@ object Triggers {
      *            binding = TriggerBinding.ANY)`
      * - "Battalion — whenever ~ and at least two other creatures attack":
      *   `attacks(requires = setOf(AttackPredicate.AttackerCountAtLeast(3)))`
+     * - "Whenever this creature attacks a player / an opponent"
+     *   (prefer the [AttacksAnOpponent] sugar):
+     *   `attacks(requires = setOf(AttackPredicate.DefenderIsPlayer))`
      * - "Whenever this creature attacks for the first time each turn"
      *   (prefer the [AttacksFirstTimeEachTurn] sugar):
      *   `attacks(requires = setOf(AttackPredicate.FirstTimeEachTurn))`
@@ -478,6 +496,11 @@ object Triggers {
      *   `dealsDamage(binding = TriggerBinding.ATTACHED)`
      * - "Whenever this deals combat damage to a player or planeswalker":
      *   `dealsDamage(DamageType.Combat, RecipientFilter.AnyPlayerOrPlaneswalker)`
+     * - "Whenever one or more creatures your opponents control are dealt excess
+     *   noncombat damage" (batch wording, CR 603.2c — fires once per event batch,
+     *   not once per damaged creature; ANY binding only):
+     *   `dealsDamage(DamageType.NonCombat, RecipientFilter.CreatureOpponentControls,
+     *                binding = TriggerBinding.ANY, requireExcess = true, batch = true)`
      */
     fun dealsDamage(
         damageType: DamageType = DamageType.Any,
@@ -485,12 +508,14 @@ object Triggers {
         sourceFilter: GameObjectFilter? = null,
         binding: TriggerBinding = TriggerBinding.SELF,
         requireExcess: Boolean = false,
+        batch: Boolean = false,
     ): TriggerSpec = TriggerSpec(
         event = DealsDamageEvent(
             damageType = damageType,
             recipient = recipient,
             sourceFilter = sourceFilter,
             requireExcess = requireExcess,
+            batch = batch,
         ),
         binding = binding,
     )
@@ -1027,10 +1052,22 @@ object Triggers {
     )
 
     /**
-     * Whenever you discard a card.
+     * Whenever you discard a card. Fires once per card discarded — discarding 3 cards in
+     * one resolution fires this 3 times. For "one or more cards" wording use
+     * [YouDiscardOneOrMore].
      */
     val YouDiscard: TriggerSpec = TriggerSpec(
         event = DiscardEvent(player = Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever you discard one or more cards — batch wording (CR 603.2c): fires once per
+     * discard event no matter how many cards it contained (Inti, Seneschal of the Sun).
+     * Sequential discards in the same resolution are separate events and fire separately.
+     */
+    val YouDiscardOneOrMore: TriggerSpec = TriggerSpec(
+        event = DiscardEvent(player = Player.You, batch = true),
         binding = TriggerBinding.ANY
     )
 
@@ -1047,13 +1084,15 @@ object Triggers {
      *
      * Note: fires once per card discarded — e.g. an opponent discarding 3 cards
      * in one resolution fires this 3 times. Mirrors how [YouDraw] handles
-     * multi-card draws.
+     * multi-card draws. For "one or more cards" batch wording (fires once per
+     * discard event, CR 603.2c) pass `batch = true` — see [YouDiscardOneOrMore].
      */
     fun discards(
         player: Player = Player.Each,
         cardFilter: GameObjectFilter? = null,
+        batch: Boolean = false,
     ): TriggerSpec = TriggerSpec(
-        event = DiscardEvent(player = player, cardFilter = cardFilter),
+        event = DiscardEvent(player = player, cardFilter = cardFilter, batch = batch),
         binding = TriggerBinding.ANY,
     )
 
@@ -1096,6 +1135,19 @@ object Triggers {
      */
     fun youActivateAbilityTargeting(targetMatch: AbilityTargetMatch): TriggerSpec = TriggerSpec(
         event = AbilityActivatedEvent(player = Player.You, targetMatch = targetMatch),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever a creature you control attacking causes a triggered ability of that creature to
+     * trigger — Firebender Ascension. Fires when a per-attacker "whenever this creature attacks"
+     * ability (a SELF-bound [EventPattern.AttackEvent]) of a creature you control is put on the
+     * stack. The triggering ability is exposed as
+     * [com.wingedsheep.sdk.scripting.targets.EffectTarget.TriggeringEntity], so a
+     * [com.wingedsheep.sdk.dsl.Effects.CopyTargetTriggeredAbility] can copy it.
+     */
+    val AttackCausesYourCreaturesTriggeredAbility: TriggerSpec = TriggerSpec(
+        event = AbilityTriggeredEvent(player = Player.You, requireAttackCause = true),
         binding = TriggerBinding.ANY
     )
 
@@ -1165,11 +1217,13 @@ object Triggers {
         counterType: String = Counters.ANY,
         firstTimeEachTurn: Boolean = true,
         binding: TriggerBinding = TriggerBinding.ANY,
+        placedBy: Player? = null,
     ): TriggerSpec = TriggerSpec(
         event = CountersPlacedEvent(
             counterType = counterType,
             filter = filter,
             firstTimeEachTurn = firstTimeEachTurn,
+            placedBy = placedBy,
         ),
         binding = binding
     )
@@ -1187,6 +1241,23 @@ object Triggers {
             firstTimeEachTurn = false,
         ),
         binding = TriggerBinding.SELF
+    )
+
+    /**
+     * "Whenever this creature trains" (CR 702.149c) — fires when a resolving training ability puts
+     * one or more +1/+1 counters on this creature. Keyed on [EventPattern.TrainedEvent], which the
+     * training composite emits **only when the counter actually lands** (a Solemnity-type "can't
+     * have counters" prohibition trains nothing and fires nothing). Distinct from
+     * [CountersPlacedOnThis]: that fires for a +1/+1 counter from any source, this only for the one
+     * a resolving training ability placed.
+     *
+     * Defaults to [TriggerBinding.SELF] — "when **this** creature trains" (Savior of Ollenbock).
+     * [TriggerBinding.OTHER] ("another creature you control trains") and [TriggerBinding.ANY] are
+     * supported for the next card (none printed yet). CR 702.149c defines only the SELF form.
+     */
+    fun trains(binding: TriggerBinding = TriggerBinding.SELF): TriggerSpec = TriggerSpec(
+        event = TrainedEvent,
+        binding = binding
     )
 
     // =========================================================================
@@ -1280,6 +1351,19 @@ object Triggers {
         filter: GameObjectFilter? = null
     ): TriggerSpec =
         TriggerSpec(event = TapEvent(filter), binding = binding)
+
+    /**
+     * Whenever one or more permanents matching [filter] become tapped — a **batching** trigger
+     * (CR 603.2c) that fires at most once per simultaneous tap batch, not once per tapped permanent.
+     * Use for the "Whenever one or more … become tapped" wording (Deeproot Pilgrimage: "Whenever one
+     * or more nontoken Merfolk you control become tapped, create a … token"), where tapping several
+     * matching permanents at once (attacking, convoke, crew) must still make a single token.
+     *
+     * Distinct from [becomesTapped] (per-permanent — fires once for each tapped permanent). ANY
+     * binding; scope with the filter's `youControl` for "you control".
+     */
+    fun OneOrMoreBecomeTapped(filter: GameObjectFilter): TriggerSpec =
+        TriggerSpec(event = TapEvent(filter = filter, batch = true), binding = TriggerBinding.ANY)
 
     /**
      * Whenever any player taps a land for mana. (ANY binding.)
@@ -1568,6 +1652,18 @@ object Triggers {
      */
     val AnyPlayerLosesLife: TriggerSpec = TriggerSpec(
         event = LifeLossEvent(Player.Each),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever a player loses the game (CR 104.3). Fires for every player's loss; pair with a
+     * `triggerCondition` to narrow to a specific player (e.g. Shinryu, Transcendent Rival's
+     * "When the chosen player loses the game, you win the game" gates on
+     * [com.wingedsheep.sdk.dsl.Conditions.TriggeringPlayerIs]`(Player.ChosenOpponent)`).
+     * `Player.TriggeringPlayer` inside the effect resolves to the player who lost.
+     */
+    val AnyPlayerLosesGame: TriggerSpec = TriggerSpec(
+        event = PlayerLostGameEvent(Player.Each),
         binding = TriggerBinding.ANY
     )
 
@@ -1864,6 +1960,32 @@ object Triggers {
         event = ScriedOrSurveiledEvent(Player.You),
         binding = TriggerBinding.ANY
     )
+
+    /**
+     * Whenever a permanent matching [filter] explores (CR 701.44), optionally gated by the reveal
+     * outcome ([revealedType]). Binding is [TriggerBinding.ANY] — the observer watches every
+     * matching permanent, so `filter.youControl()` resolves "you" to the observer's controller.
+     * Defaults to "a creature you control explores" (Merfolk Cave-Diver). Fires once per explore,
+     * including the empty-library case for [ExploreReveal.ANY] (CR 701.44b).
+     */
+    fun creatureExplores(
+        filter: GameObjectFilter = GameObjectFilter.Creature.youControl(),
+        revealedType: ExploreReveal = ExploreReveal.ANY
+    ): TriggerSpec = TriggerSpec(
+        event = ExploredEvent(filter = filter, revealedType = revealedType),
+        binding = TriggerBinding.ANY
+    )
+
+    /** "Whenever a creature you control explores" (Merfolk Cave-Diver). */
+    val WheneverCreatureYouControlExplores: TriggerSpec = creatureExplores()
+
+    /** "Whenever a creature you control explores a land card" (Nicanzil, first ability). */
+    val WheneverCreatureYouControlExploresLand: TriggerSpec =
+        creatureExplores(revealedType = ExploreReveal.LAND)
+
+    /** "Whenever a creature you control explores a nonland card" (Nicanzil, second ability). */
+    val WheneverCreatureYouControlExploresNonland: TriggerSpec =
+        creatureExplores(revealedType = ExploreReveal.NONLAND)
 
     /**
      * "Whenever you waterbend, earthbend, firebend, or airbend, …" (CR 701.65b / 701.66b /

@@ -12,6 +12,11 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("SearchLibrary", "Gather->Select->Move SearchLibrary pattern", composes = listOf("MoveCollection", "ShuffleLibrary"))
 
     composed("DiscardACard", "Patterns.Hand.discardCards -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
+    // "Exile a card from your hand" (Mindleech Ghoul's exploit payoff, wrapped in an EachPlayerAction
+    // -> each opponent chooses one of their own cards). Same Gather(hand)/Select/MoveCollection pipeline
+    // as DiscardACard but the destination zone is EXILE -> Patterns.Hand.eachOpponentExilesFromHand /
+    // Effects.EachOpponentExilesFromHand(n).
+    composed("ExileACardFromHand", "Gather(hand)/Select/MoveCollection -> exile (Effects.EachOpponentExilesFromHand)", composes = listOf("MoveCollection"))
     composed("DiscardNumberCards", "MoveToZone hand->graveyard, N", composes = listOf("MoveCollection"))
     composed("DiscardAnyNumberOfCards", "MoveToZone hand->graveyard, any", composes = listOf("MoveCollection"))
     composed("DiscardACardAtRandom", "Patterns.Hand.discardRandom -> MoveCollection", composes = listOf("MoveCollection"))
@@ -25,6 +30,11 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("ShuffleEachPermanentIntoLibrary", "self + target ShuffleIntoLibrary (each to owner's library)", composes = listOf("MoveToZone", "ShuffleLibrary"))
     composed("ReturnDeadGraveyardCardToTopOfLibrary", "MoveCollection -> library top", composes = listOf("MoveToZone"))
     composed("PutGraveyardCardOnBottomOfLibrary", "MoveCollection -> library bottom (Tomb Trawler)", composes = listOf("MoveToZone"))
+    // "Target creature's owner puts it on their choice of the top or bottom of their library" (Diver
+    // Skaab's exploit payoff) — the owner-chosen tuck, a native leaf effect
+    // Effects.PutOnTopOrBottomOfLibrary(target) -> PutOnLibraryPositionOfChoiceEffect [Top, Bottom].
+    effect("ReturnPermanentToTopOrBottomOfLibrary", "PutOnLibraryPositionOfChoice",
+        "owner chooses top or bottom of their library — Effects.PutOnTopOrBottomOfLibrary(target)")
     composed("ReturnGraveyardCardToHand", UNIVERSAL, composes = listOf("MoveToZone"))
     composed("PutEachGraveyardCardIntoHand", UNIVERSAL, composes = listOf("MoveCollection"))
     // "Return all <filter> cards from your graveyard to your hand" (Wisdom of Ages) — a mass
@@ -41,6 +51,9 @@ internal fun BridgeBuilder.zoneMovement() {
     composed("ShuffleHandIntoLibrary", "MoveCollection hand->library + ShuffleLibrary", composes = listOf("MoveCollection", "ShuffleLibrary"))
     composed("ShuffleGraveyardIntoLibrary", "Patterns.Library.shuffleGraveyardIntoLibrary -> Gather + MoveCollection (shuffled)", composes = listOf("MoveCollection"))
 
+    // Discover N (CR 701.57) — native DiscoverEffect. The emitter renders the fixed-integer form
+    // (`Effects.Discover(N)`); a dynamic threshold (e.g. TheGreatestPowerAmongPermanents) declines -> SCAFFOLD.
+    effect("Discover", "Discover", "CR 701.57 — Effects.Discover(N)")
     composed("Surveil", "Patterns.Library.surveil -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
     composed("Scry", "Patterns.Library.scry -> Gather/Select/MoveCollection", composes = listOf("MoveCollection"))
     composed("ManifestDread", "Patterns.Library.manifestDread -> Gather/Select/MoveCollection(face-down MANIFEST)", composes = listOf("MoveCollection"))

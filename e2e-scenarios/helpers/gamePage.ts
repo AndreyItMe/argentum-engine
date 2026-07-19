@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { HAND, BATTLEFIELD, cardByName, graveyard, PLAYER_LIBRARY, OPPONENT_LIBRARY } from './selectors'
+import { HAND, BATTLEFIELD, PLAYER_BATTLEFIELD, cardByName, graveyard, PLAYER_LIBRARY, OPPONENT_LIBRARY } from './selectors'
 
 /**
  * Page object wrapping common game board interactions.
@@ -419,6 +419,28 @@ export class GamePage {
       .first()
       .click()
     await this.screenshot('Confirm distribution')
+  }
+
+  /** Assert that a creature is offered as a counter-removal source. */
+  async expectCounterRemovalOption(name: string) {
+    const battlefield = this.page.locator(PLAYER_BATTLEFIELD)
+    const card = battlefield.locator(cardByName(name)).first()
+    const cardRoot = card.locator('xpath=ancestor::*[@data-card-id][1]')
+    await expect(cardRoot.locator('button').filter({ hasText: /^\+$/ })).toBeVisible({
+      timeout: 10_000,
+    })
+  }
+
+  /** Allocate counters from a named creature in the counter-distribution UI. */
+  async allocateCounterRemoval(name: string, amount: number) {
+    const battlefield = this.page.locator(PLAYER_BATTLEFIELD)
+    const card = battlefield.locator(cardByName(name)).first()
+    const cardRoot = card.locator('xpath=ancestor::*[@data-card-id][1]')
+    const increment = cardRoot.locator('button').filter({ hasText: /^\+$/ })
+    for (let i = 0; i < amount; i++) {
+      await increment.click()
+    }
+    await this.screenshot(`Remove ${amount} counter${amount === 1 ? '' : 's'} from ${name}`)
   }
 
   /**

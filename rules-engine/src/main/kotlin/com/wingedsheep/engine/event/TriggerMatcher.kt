@@ -49,6 +49,7 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.EventPattern
+import com.wingedsheep.sdk.scripting.ExploreReveal
 import com.wingedsheep.sdk.scripting.events.ControllerFilter
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
@@ -124,7 +125,7 @@ class TriggerMatcher(
             is EventPattern.AttackEvent -> {
                 event is AttackersDeclaredEvent &&
                     checkBinding(binding, sourceId, event.attackers) &&
-                    trigger.requires.all { matchesAttackPredicate(it, event, sourceId) }
+                    trigger.requires.all { matchesAttackPredicate(it, event, sourceId, state) }
             }
             is EventPattern.YouAttackEvent -> {
                 if (event !is AttackersDeclaredEvent) return false
@@ -315,6 +316,26 @@ class TriggerMatcher(
                     matchesAbilityTargetConstraint(event.abilityEntityId, targetMatch, sourceId, controllerId, state)
                 } else true
             }
+            is EventPattern.AbilityTriggeredEvent -> {
+                if (event !is AbilityTriggeredEvent) return false
+                if (!matchesPlayer(trigger.player, event.controllerId, controllerId)) return false
+                // "attacking causes a triggered ability of that creature to trigger": only fire for
+                // abilities the engine stamped as attack-caused (SELF-bound attacks triggers).
+                if (trigger.requireAttackCause && !event.causedByAttack) return false
+                // sourceFilter: the permanent whose ability triggered must match (null = any).
+                val sourceFilter = trigger.sourceFilter
+                if (sourceFilter != null) {
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = controllerId,
+                        sourceId = sourceId
+                    )
+                    if (!PredicateEvaluator().matches(
+                            state, state.projectedState, event.sourceId, sourceFilter, predicateContext
+                        )
+                    ) return false
+                }
+                true
+            }
             is EventPattern.CycleEvent -> {
                 event is CardCycledEvent &&
                     matchesPlayer(trigger.player, event.playerId, controllerId) &&
@@ -400,6 +421,9 @@ class TriggerMatcher(
             }
             is EventPattern.TapEvent -> {
                 if (event !is TappedEvent) return false
+                // Batch ("one or more become tapped") triggers fire once per tap batch, handled by
+                // detectTapBatchTriggers — never once per event here.
+                if (trigger.batch) return false
                 if (binding == TriggerBinding.SELF && event.entityId != sourceId) return false
                 val filter = trigger.filter
                 if (filter != null) {
@@ -473,6 +497,50 @@ class TriggerMatcher(
                     matchesPlayer(trigger.player, event.playerId, controllerId)
                 else -> false
             }
+            is EventPattern.ExploredEvent -> {
+                if (event !is com.wingedsheep.engine.core.PermanentExploredEvent) return false
+                // Reveal-type gate (CR 701.44a): ANY always matches; LAND/NONLAND require the
+                // matching reveal. Empty-library explore (wasLand == null) matches only ANY.
+                when (trigger.revealedType) {
+                    ExploreReveal.ANY -> {}
+                    ExploreReveal.LAND -> if (event.revealedCardWasLand != true) return false
+                    ExploreReveal.NONLAND -> if (event.revealedCardWasLand != false) return false
+                }
+                // Subject gate: the exploring permanent must match the filter, resolving "you" to
+                // the observing ability's controller. A null filter matches any permanent.
+                val filter = trigger.filter ?: return true
+                predicateEvaluator.matches(
+                    state,
+                    state.projectedState,
+                    event.exploringPermanentId,
+                    filter,
+                    PredicateContext(controllerId = controllerId, sourceId = sourceId)
+                )
+            }
+            is EventPattern.ExploitedEvent -> {
+                if (event !is com.wingedsheep.engine.core.ExploitedEvent) return false
+                // SELF: the exploiter is this permanent (a creature's own "when it exploits" payoff —
+                // though the DSL bakes those into the reflexive, so watchers are the common case).
+                // OTHER: any exploiter but this permanent. ANY: no restriction.
+                if (binding == TriggerBinding.SELF && event.exploiterId != sourceId) return false
+                if (binding == TriggerBinding.OTHER && event.exploiterId == sourceId) return false
+                // "a creature you control exploits ..." scopes on the EXPLOITER's controller.
+                if (!matchesPlayer(trigger.player, event.exploiterControllerId, controllerId)) return false
+                // "exploits a NONTOKEN creature" (Skull Skaab): reject when the sacrificed
+                // permanent was a token (last-known info captured before the zone change).
+                if (trigger.requireNontokenExploited && event.sacrificedWasToken) return false
+                true
+            }
+            is EventPattern.TrainedEvent -> {
+                if (event !is com.wingedsheep.engine.core.TrainedEvent) return false
+                // "When THIS creature trains" (Savior of Ollenbock): SELF binding restricts to the
+                // ability's own source. OTHER would be "another creature you control trains"; ANY has
+                // no restriction. The emit already gates on a counter actually landing (CR 702.149c),
+                // so any TrainedEvent that reaches here is a genuine train.
+                if (binding == TriggerBinding.SELF && event.trainedId != sourceId) return false
+                if (binding == TriggerBinding.OTHER && event.trainedId == sourceId) return false
+                true
+            }
             is EventPattern.BendPerformedEvent -> {
                 event is com.wingedsheep.engine.core.BendPerformedEvent &&
                     event.bendType in trigger.types &&
@@ -528,6 +596,10 @@ class TriggerMatcher(
                     event.oldLife != event.newLife &&
                     matchesPlayer(trigger.player, event.playerId, controllerId)
             }
+            is EventPattern.PlayerLostGameEvent -> {
+                event is com.wingedsheep.engine.core.PlayerLostEvent &&
+                    matchesPlayer(trigger.player, event.playerId, controllerId)
+            }
             is EventPattern.DiscardEvent -> {
                 event is CardsDiscardedEvent &&
                     matchingDiscardCount(trigger, event, sourceId, controllerId, state) > 0
@@ -566,6 +638,12 @@ class TriggerMatcher(
                     !counterTypesMatch(trigger.counterType, event.counterType)) return false
                 // "First time counters this turn" intervening-if (Stalwart Successor).
                 if (trigger.firstTimeEachTurn && !event.firstThisTurn) return false
+                // Placer restriction (CR 122.6a): "Whenever YOU put counters ...". A placement the
+                // engine didn't attribute to a placer (null) never satisfies a non-null selector.
+                trigger.placedBy?.let { placer ->
+                    val placedBy = event.placedBy ?: return false
+                    if (!matchesPlayer(placer, placedBy, controllerId)) return false
+                }
                 // Check filter: the permanent receiving counters must match
                 if (trigger.filter != GameObjectFilter.Any) {
                     val projected = state.projectedState
@@ -727,6 +805,14 @@ class TriggerMatcher(
 
         // Check filter
         if (trigger.filter != GameObjectFilter.Any) {
+            // A heterogeneous OR union (`Artifact or Creature.tapped()`) carries its branches in
+            // anyOf, each a complete filter — match if any branch matches. (A homogeneous OR
+            // instead collapses to a single CardPredicate.Or handled below.)
+            if (trigger.filter.anyOf.isNotEmpty()) {
+                return trigger.filter.anyOf.any { branch ->
+                    matchesZoneChangeTrigger(trigger.copy(filter = branch), binding, event, sourceId, controllerId, state)
+                }
+            }
             val projected = state.projectedState
             // Check card predicates (creature type, subtype, etc.)
             // Note: entity may not exist in state if it was a token cleaned up by SBAs.
@@ -744,13 +830,17 @@ class TriggerMatcher(
             }
             val isFaceDown = entity?.has<FaceDownComponent>() == true
 
-            for (predicate in trigger.filter.cardPredicates) {
-                when (predicate) {
+            // LKI-aware predicate evaluation. Composites (Or/And/Not — e.g. the collapsed
+            // `Artifact or Creature` union on Tarrian's Soulcleaver) must recurse through THIS
+            // function, not fall through to the live-entity path: a token is swept by 704.5d
+            // before the matcher runs, so the generic cardComponent-based path returns false for
+            // every predicate inside the composite and the trigger silently misses token deaths.
+            fun matchesLkiPredicate(predicate: com.wingedsheep.sdk.scripting.predicates.CardPredicate): Boolean {
+                return when (predicate) {
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> {
                         // For dying creatures: use base state (they're already in graveyard)
                         // Face-down permanents are 2/2 creatures (Rule 708.2) and count.
-                        val isCreature = isFaceDown || typeLine?.isCreature == true
-                        if (!isCreature) return false
+                        isFaceDown || typeLine?.isCreature == true
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsPermanent -> {
                         // LKI-safe permanent check. Anything that left the battlefield was, by
@@ -760,27 +850,21 @@ class TriggerMatcher(
                         // (captured on the event, like IsCreature/IsLand above) instead. Without this,
                         // "whenever another permanent you control leaves the battlefield" (Suki,
                         // Courageous Rescuer) silently misses a leaving token.
-                        val isPermanent = isFaceDown || typeLine?.isPermanent == true
-                        if (!isPermanent) return false
+                        isFaceDown || typeLine?.isPermanent == true
                     }
-                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsLand -> {
-                        if (typeLine?.isLand != true) return false
-                    }
-                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact -> {
-                        if (typeLine?.isArtifact != true) return false
-                    }
-                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsEnchantment -> {
-                        if (typeLine?.isEnchantment != true) return false
-                    }
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsLand ->
+                        typeLine?.isLand == true
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsArtifact ->
+                        typeLine?.isArtifact == true
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsEnchantment ->
+                        typeLine?.isEnchantment == true
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype -> {
                         // For entering creatures: use projected state (they're on battlefield)
                         // For dying creatures: use base state (they're in graveyard, no projected subtypes)
                         if (event.toZone == Zone.BATTLEFIELD) {
-                            if (!projected.hasSubtype(event.entityId, predicate.subtype.value)) return false
+                            projected.hasSubtype(event.entityId, predicate.subtype.value)
                         } else {
-                            if (isFaceDown) return false
-                            if (typeLine == null) return false
-                            if (!typeLine.hasSubtype(predicate.subtype)) return false
+                            !isFaceDown && typeLine?.hasSubtype(predicate.subtype) == true
                         }
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasAnyOfSubtypes -> {
@@ -789,11 +873,9 @@ class TriggerMatcher(
                         // the entity (and its CardComponent) may already be gone, so read the
                         // last-known type line rather than the generic cardComponent path.
                         if (event.toZone == Zone.BATTLEFIELD) {
-                            if (predicate.subtypes.none { projected.hasSubtype(event.entityId, it.value) }) return false
+                            predicate.subtypes.any { projected.hasSubtype(event.entityId, it.value) }
                         } else {
-                            if (isFaceDown) return false
-                            if (typeLine == null) return false
-                            if (predicate.subtypes.none { typeLine.hasSubtype(it) }) return false
+                            !isFaceDown && typeLine != null && predicate.subtypes.any { typeLine.hasSubtype(it) }
                         }
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasKeyword -> {
@@ -803,9 +885,9 @@ class TriggerMatcher(
                         // have its keywords (e.g., Jackdaw Savior: "whenever a creature you control
                         // with flying dies").
                         if (event.fromZone == Zone.BATTLEFIELD && event.lastKnown?.keywords?.isNotEmpty() == true) {
-                            if (predicate.keyword.name !in (event.lastKnown?.keywords ?: emptySet())) return false
+                            predicate.keyword.name in (event.lastKnown?.keywords ?: emptySet())
                         } else {
-                            if (!projected.hasKeyword(event.entityId, predicate.keyword)) return false
+                            projected.hasKeyword(event.entityId, predicate.keyword)
                         }
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasChosenSubtype -> {
@@ -822,7 +904,7 @@ class TriggerMatcher(
                         val isChangelingCreatureType = cardComponent != null &&
                             Keyword.CHANGELING in cardComponent.baseKeywords &&
                             chosenType in Subtype.ALL_CREATURE_TYPES
-                        if (!hasSubtype && !isChangelingCreatureType) return false
+                        hasSubtype || isChangelingCreatureType
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsNontoken -> {
                         // Token-ness is intrinsic; LKI is required because 704.5d sweeps the
@@ -835,27 +917,36 @@ class TriggerMatcher(
                         } else {
                             entity?.has<com.wingedsheep.engine.state.components.identity.TokenComponent>() == true
                         }
-                        if (isToken) return false
+                        !isToken
                     }
                     is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsToken -> {
-                        val isToken = if (event.fromZone == Zone.BATTLEFIELD) {
+                        if (event.fromZone == Zone.BATTLEFIELD) {
                             event.lastKnown?.wasToken == true
                         } else {
                             entity?.has<com.wingedsheep.engine.state.components.identity.TokenComponent>() == true
                         }
-                        if (!isToken) return false
                     }
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Or ->
+                        predicate.predicates.any { matchesLkiPredicate(it) }
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.And ->
+                        predicate.predicates.all { matchesLkiPredicate(it) }
+                    is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Not ->
+                        !matchesLkiPredicate(predicate.predicate)
                     else -> {
                         // For other predicates, check the entity's type
                         if (cardComponent == null) return false
-                        if (!matchesCardPredicate(
-                                predicate, cardComponent, projected, event.entityId, isFaceDown,
-                                lastKnownPower = event.lastKnown?.power,
-                                lastKnownToughness = event.lastKnown?.toughness,
-                                lastKnownWasToken = event.lastKnown?.wasToken == true
-                            )) return false
+                        matchesCardPredicate(
+                            predicate, cardComponent, projected, event.entityId, isFaceDown,
+                            lastKnownPower = event.lastKnown?.power,
+                            lastKnownToughness = event.lastKnown?.toughness,
+                            lastKnownWasToken = event.lastKnown?.wasToken == true
+                        )
                     }
                 }
+            }
+
+            for (predicate in trigger.filter.cardPredicates) {
+                if (!matchesLkiPredicate(predicate)) return false
             }
             // Check state predicates (face-down, tapped, etc.)
             for (predicate in trigger.filter.statePredicates) {
@@ -1151,48 +1242,20 @@ class TriggerMatcher(
         // Valiant: check if this is the first time this turn
         if (trigger.firstTimeEachTurn && !event.firstTimeByThisController) return false
 
-        // Check targetFilter against the targeted entity
+        // Check targetFilter against the targeted entity. The target is live (a battlefield
+        // permanent, or a spell on the stack for includeSpellTargets), so evaluate the whole
+        // filter through PredicateEvaluator: card predicates read projected types when the
+        // entity has a battlefield projection — an animated land IS "a creature you control"
+        // while the effect lasts — and fall back to base card data for stack objects; the
+        // controller predicate likewise falls back to the spell's caster (Surrak, Elusive
+        // Hunter). Targeted abilities on the stack carry no card data and never match.
         if (trigger.targetFilter != GameObjectFilter.Any) {
-            val projected = state.projectedState
             val targetContainer = state.getEntity(event.targetEntityId) ?: return false
-            val targetCard = targetContainer.get<CardComponent>() ?: return false
-
-            // Check card predicates
-            for (predicate in trigger.targetFilter.cardPredicates) {
-                if (!matchesCardPredicate(predicate, targetCard, projected, event.targetEntityId)) return false
-            }
-
-            // Check state predicates (e.g. "with a +1/+1 counter on it" — Elrond, Master of
-            // Healing). The targeted permanent is on the battlefield, so projected/base state
-            // applies. (A spell-on-stack target has no such state, so the filter simply won't match.)
-            if (trigger.targetFilter.statePredicates.isNotEmpty()) {
-                val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
-                    controllerId = controllerId, sourceId = sourceId
-                )
-                val statePredicateEvaluator = PredicateEvaluator()
-                for (predicate in trigger.targetFilter.statePredicates) {
-                    if (!statePredicateEvaluator.matchesStatePredicate(
-                            state, event.targetEntityId, predicate, predicateContext
-                        )) return false
-                }
-            }
-
-            // Check controller predicate. Spells on the stack aren't in projected state
-            // (only battlefield permanents are), so fall back to the spell's own controller
-            // component for spell-target events (Surrak, Elusive Hunter).
-            trigger.targetFilter.controllerPredicate?.let { pred ->
-                val targetController = projected.getController(event.targetEntityId)
-                    ?: targetContainer.get<SpellOnStackComponent>()?.casterId
-                    ?: return false
-                val controllerMatches = pred.evaluateWith { leaf ->
-                    when (leaf) {
-                        is ControllerPredicate.ControlledByYou -> targetController == controllerId
-                        is ControllerPredicate.ControlledByOpponent -> targetController != controllerId
-                        else -> null // leaf kinds this site can't evaluate don't constrain
-                    }
-                }
-                if (!controllerMatches) return false
-            }
+            if (!targetContainer.has<CardComponent>()) return false
+            val predicateContext = PredicateContext(controllerId = controllerId, sourceId = sourceId)
+            if (!PredicateEvaluator().matches(
+                    state, state.projectedState, event.targetEntityId, trigger.targetFilter, predicateContext
+                )) return false
         }
 
         return true
@@ -1412,11 +1475,16 @@ class TriggerMatcher(
      * Add a new branch here when extending [AttackPredicate] with a new
      * attack-time fact. The matcher is conjunctive — every predicate the
      * trigger declares must hold.
+     *
+     * [state] is threaded for predicates that must read **projected** creature stats across the
+     * attacking band (Training's [AttackPredicate.AttackedAlongsideGreaterPower]); count-only and
+     * stamped-set predicates ignore it.
      */
     internal fun matchesAttackPredicate(
         predicate: AttackPredicate,
         event: AttackersDeclaredEvent,
-        boundEntityId: EntityId
+        boundEntityId: EntityId,
+        state: GameState
     ): Boolean = when (predicate) {
         AttackPredicate.Alone -> event.attackers.size == 1
         is AttackPredicate.AttackerCountAtLeast -> event.attackers.size >= predicate.n
@@ -1424,6 +1492,24 @@ class TriggerMatcher(
         // creatures attacking for the first time this turn. Stamped on the event at declaration
         // (post-declaration state can't tell, since the per-turn attacker set already includes it).
         AttackPredicate.FirstTimeEachTurn -> boundEntityId in event.firstTimeAttackers
+        // Per-attacker: the trigger's own source was declared as attacking a player (not a
+        // planeswalker or battle). Stamped on the event at declaration (CR 508.1 defender kind).
+        AttackPredicate.DefenderIsPlayer -> boundEntityId in event.attackersAgainstPlayer
+        // Training (CR 702.149a): the source attacked, and at least one *other* declared attacker
+        // has strictly greater PROJECTED power (Rule 613 layers — so an anthem/aura on the other
+        // attacker counts). Read every power through the cached projected state, never raw
+        // CreatureStatsComponent, per the projected-state load-bearing rule.
+        AttackPredicate.AttackedAlongsideGreaterPower -> {
+            if (boundEntityId !in event.attackers) {
+                false
+            } else {
+                val projected = state.projectedState
+                val myPower = projected.getPower(boundEntityId) ?: 0
+                event.attackers.any { other ->
+                    other != boundEntityId && (projected.getPower(other) ?: 0) > myPower
+                }
+            }
+        }
     }
 
     private fun matchesSpellCastPredicate(
@@ -1503,6 +1589,7 @@ class TriggerMatcher(
                 sourceId = trigger.sourceId,
                 controllerId = trigger.controllerId,
                 triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+                triggeringPlayerId = trigger.triggerContext.triggeringPlayerId,
                 triggerDamageAmount = trigger.triggerContext.damageAmount,
                 triggerCounterCount = trigger.triggerContext.counterCount,
                 triggerTotalCounterCount = trigger.triggerContext.totalCounterCount,
@@ -1628,6 +1715,8 @@ class TriggerMatcher(
         }
         // Graveyard-zone-only predicate; trigger gating never sees a stamped entity here.
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.PutIntoGraveyardFromBattlefieldThisTurn -> false
+        // No granter context in trigger gating — granter-relative exclusion is resolution-time only.
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsGrantingPermanent -> false
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Or ->
             predicate.predicates.any { matchesStatePredicateForTrigger(it, state, entityId) }
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.And ->
@@ -1670,10 +1759,12 @@ class TriggerMatcher(
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.CrewedOrSaddledBySourceThisTurn,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsWarpExiled,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.NotTargetedByAbilityFromSameNamedSource,
+        com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttachedToBySource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsAttachedToSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.ExiledWithSource,
         com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasCastForWarp,
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.WasCastFromZone,
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedToCardType -> true
         is com.wingedsheep.sdk.scripting.predicates.StatePredicate.AttachedTo -> true
         // Counter predicates require last-known-info to evaluate a creature that has already left

@@ -59,6 +59,10 @@ internal fun BridgeBuilder.damageLifeAndCards() {
 
     effect("SacrificePermanent", "Sacrifice")
     effect("CounterSpell", "Counter")
+    // "Counter target spell, activated ability, or triggered ability" (Overcharged Amalgam's exploit
+    // payoff, Teferi's Response). Same CounterEffect as CounterSpell, but its target dispatches at
+    // resolution on whatever stack-object kind was chosen -> Effects.CounterSpellOrAbility().
+    effect("CounterSpellOrAbility", "Counter")
     // Copy / retarget a spell or ability on the stack (Return the Favor). The unified copy effect
     // dispatches at resolution on the chosen stack-object kind (spell / activated / triggered ability).
     effect("CopySpellOrAbilityAndMayChooseNewTargets", "CopyTargetSpellOrAbility")

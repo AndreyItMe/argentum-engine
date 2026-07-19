@@ -83,12 +83,9 @@ internal val tapLayerStateHandlers: Map<String, ActionHandler> = actionHandlers 
             arg("effect", thenEffect),
         )
     }
-    on("RegeneratePermanent") { _, args, _ ->
-        // Self-regeneration ("{cost}: Regenerate this") renders faithfully. A chosen target's
-        // requirement isn't always recovered exactly (e.g. "Regenerate target Zombie" flattens the
-        // subtype to "permanent"), so scaffold the targeted case rather than emit a too-broad target.
-        if (!jsonContains(args, "_Permanent", "ThisPermanent")) return@on null
-        call("RegenerateEffect", arg("EffectTarget.Self"))
+    on("RegeneratePermanent") { _, args, tvar ->
+        val target = refTarget(args, tvar) ?: return@on null
+        call("RegenerateEffect", arg(target))
     }
     on("TapEachPermanent", "UntapEachPermanent") { node, args, _ ->
         val verb = if (node.strField("_Action") == "TapEachPermanent") "Tap" else "Untap"
@@ -424,6 +421,7 @@ internal fun counterTypeDsl(counterNode: JsonElement?): String? {
         // card's cast-an-instant-or-sorcery trigger accumulates it and its activated ability reads the
         // count to reduce its own cost. Adding one is a plain AddCounters(Counters.PAGE, …).
         "PageCounter" -> "Counters.PAGE"
+        "SporeCounter" -> "Counters.SPORE"
         else -> null
     }
 }

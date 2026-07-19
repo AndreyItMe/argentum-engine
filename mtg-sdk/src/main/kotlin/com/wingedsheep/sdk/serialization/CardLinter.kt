@@ -170,6 +170,7 @@ object CardLinter {
         put("FilterCollection" to "storeMatching", write(Space.COLLECTION))
         put("FilterCollection" to "storeNonMatching", write(Space.COLLECTION))
         put("ExileLibraryUntilManaValue" to "storeAs", write(Space.COLLECTION))
+        put("Discover" to "storeDiscoveredAs", write(Space.COLLECTION))
         put("CopyCardIntoCollection" to "storeAs", write(Space.COLLECTION))
         put("CopyCollectionIntoCollection" to "storeAs", write(Space.COLLECTION))
         put("CastFromCollectionWithoutPayingCost" to "storeCastTo", write(Space.COLLECTION))
@@ -468,10 +469,15 @@ object CardLinter {
 
         val baseReqs = script["targetRequirements"] as? JsonArray ?: JsonArray(emptyList())
         val kickerReqs = script["kickerTargetRequirements"] as? JsonArray ?: JsonArray(emptyList())
+        val cleaveReqs = script["cleaveTargetRequirements"] as? JsonArray ?: JsonArray(emptyList())
         val spellScope = state.newScope(
             label = "spell effect",
-            targetCount = maxOf(requirementSlotCount(baseReqs), requirementSlotCount(kickerReqs)),
-            targetIds = requirementIds(baseReqs) + requirementIds(kickerReqs),
+            targetCount = maxOf(
+                requirementSlotCount(baseReqs),
+                requirementSlotCount(kickerReqs),
+                requirementSlotCount(cleaveReqs),
+            ),
+            targetIds = requirementIds(baseReqs) + requirementIds(kickerReqs) + requirementIds(cleaveReqs),
         )
 
         // Spell-resolution scope, in execution order: cast-time writers (captures, additional
@@ -481,7 +487,7 @@ object CardLinter {
             "staticAbilities", "replacementEffects", "sagaChapters", "classLevels",
         )
         val orderedSpellFields = listOf("castTimeCaptures", "additionalCosts", "selfAlternativeCost")
-        val deferredSpellFields = listOf("spellEffect", "kickerSpellEffect")
+        val deferredSpellFields = listOf("spellEffect", "kickerSpellEffect", "cleaveSpellEffect")
 
         // A declared cast-time creature-type choice writes the chosen type before resolution.
         if (script["castTimeCreatureTypeChoice"]?.takeIf { it !is JsonNull } != null) {

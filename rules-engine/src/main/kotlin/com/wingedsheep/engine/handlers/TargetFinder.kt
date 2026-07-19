@@ -56,12 +56,18 @@ class TargetFinder(
         controllerId: EntityId,
         sourceId: EntityId? = null,
         ownerId: EntityId? = null,
+        triggeringEntityId: EntityId? = null,
         pipelineContext: PredicateContext? = null
     ): PredicateContext =
         (pipelineContext ?: PredicateContext(controllerId = controllerId)).copy(
             controllerId = controllerId,
             sourceId = sourceId,
-            ownerId = ownerId
+            ownerId = ownerId,
+            // Carry the trigger's associated entity so a target filter can scope to "that player"
+            // (ControllerPredicate.ControlledByTriggeringPlayer / OwnedByTriggeringPlayer) — e.g.
+            // Dreadmaw's Ire's "destroy target artifact that player controls". Only overrides when a
+            // triggering entity is supplied, so a pipeline-derived context keeps its own value.
+            triggeringEntityId = triggeringEntityId ?: pipelineContext?.triggeringEntityId
         )
 
     /**
@@ -302,7 +308,7 @@ class TargetFinder(
             }
 
             // Use unified filter with projected state
-            val predicateContext = targetingContext(controllerId, sourceId, pipelineContext = pipelineContext)
+            val predicateContext = targetingContext(controllerId, sourceId, triggeringEntityId = triggeringEntityId, pipelineContext = pipelineContext)
             predicateEvaluator.matches(state, projected, entityId, filter.baseFilter, predicateContext)
         }
     }

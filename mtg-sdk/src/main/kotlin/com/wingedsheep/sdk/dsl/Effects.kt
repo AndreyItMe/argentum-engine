@@ -17,12 +17,14 @@ import com.wingedsheep.sdk.scripting.values.EntityReference
 import com.wingedsheep.sdk.scripting.values.LandControllerScope
 import com.wingedsheep.sdk.scripting.values.ManaColorSet
 import com.wingedsheep.sdk.scripting.effects.AddOneManaOfEachColorAmongEffect
+import com.wingedsheep.sdk.scripting.effects.ManaColorSource
 import com.wingedsheep.sdk.scripting.effects.ManaRestriction
 import com.wingedsheep.sdk.scripting.effects.ManaSpellRider
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
 import com.wingedsheep.sdk.scripting.effects.CantBeRegeneratedEffect
 import com.wingedsheep.sdk.scripting.effects.OpenLifeBidEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
+import com.wingedsheep.sdk.scripting.effects.AddCountersUpToEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicCountersEffect
 import com.wingedsheep.sdk.scripting.effects.MoveAllLastKnownCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AddSubtypeEffect
@@ -584,6 +586,13 @@ object Effects {
     fun EachOpponentDiscards(count: Int = 1): Effect = HandPatterns.eachOpponentDiscards(count)
 
     /**
+     * Each opponent exiles N cards from their hand (Mindleech Ghoul). Same
+     * ForEachPlayer(EachOpponent) → Gather → Select → Move pipeline as [EachOpponentDiscards], but
+     * the destination is exile; each opponent chooses their own card(s).
+     */
+    fun EachOpponentExilesFromHand(count: Int = 1): Effect = HandPatterns.eachOpponentExilesFromHand(count)
+
+    /**
      * "Any player may [cost]. If a player does, [consequence]."
      * Each player in APNAP order is offered the cost; the first to pay triggers [consequence].
      * (Prowling Pangolin: "any player may sacrifice two creatures. If a player does, sacrifice this.")
@@ -1002,6 +1011,25 @@ object Effects {
         com.wingedsheep.sdk.scripting.effects.RemoveMaximumHandSizeEffect(target)
 
     /**
+     * "[target]'s maximum hand size is reduced by [amount] for the rest of the game" (Inspired
+     * Idea). A one-shot resolution effect that confers a permanent, accumulating, player-scoped
+     * reduction (survives the source leaving the stack), distinct from the battlefield-only
+     * [com.wingedsheep.sdk.scripting.SetMaximumHandSize] static. Repeat applications stack.
+     */
+    fun ReduceMaximumHandSize(
+        amount: Int,
+        target: EffectTarget = EffectTarget.Controller
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.ReduceMaximumHandSizeEffect(DynamicAmount.Fixed(amount), target)
+
+    /** [DynamicAmount]-parameterized overload of [ReduceMaximumHandSize]. */
+    fun ReduceMaximumHandSize(
+        amount: DynamicAmount,
+        target: EffectTarget = EffectTarget.Controller
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.ReduceMaximumHandSizeEffect(amount, target)
+
+    /**
      * "[target] can't gain life for [duration]." A one-shot effect that tags the player directly,
      * so the lock is independent of the source (unlike the
      * [com.wingedsheep.sdk.scripting.PreventLifeGain] static replacement). Defaults to the rest of
@@ -1282,6 +1310,35 @@ object Effects {
      */
     val Cascade: Effect = com.wingedsheep.sdk.scripting.effects.CascadeEffect
 
+    /**
+     * Discover N (CR 701.57). Exile from the top of your library until a nonland card
+     * with mana value [amount] or less is exiled; cast it for free or put it into your
+     * hand; bottom the rest in a random order. Fixed-threshold form ("Discover 4/5/10").
+     *
+     * @param storeDiscoveredAs publish the discovered card to this pipeline collection.
+     * @param thenEffect resolved after the discover, only if a card was discovered
+     *   (Hit the Mother Lode's "…create Treasure tokens equal to the difference").
+     */
+    fun Discover(
+        amount: Int,
+        storeDiscoveredAs: String? = null,
+        thenEffect: Effect? = null,
+    ): Effect = com.wingedsheep.sdk.scripting.effects.DiscoverEffect(
+        DynamicAmount.Fixed(amount), storeDiscoveredAs, thenEffect
+    )
+
+    /**
+     * Discover N with a dynamic threshold ("Discover X, where X is that spell's mana
+     * value" — Hurl into History). See the fixed-threshold overload for the parameters.
+     */
+    fun Discover(
+        amount: DynamicAmount,
+        storeDiscoveredAs: String? = null,
+        thenEffect: Effect? = null,
+    ): Effect = com.wingedsheep.sdk.scripting.effects.DiscoverEffect(
+        amount, storeDiscoveredAs, thenEffect
+    )
+
     // =========================================================================
     // Stat Modification Effects
     // =========================================================================
@@ -1441,6 +1498,18 @@ object Effects {
      */
     fun AddDynamicCounters(counterType: String, amount: DynamicAmount, target: EffectTarget): Effect =
         AddDynamicCountersEffect(counterType, amount, target)
+
+    /**
+     * Put a player-chosen number (0 up to [max]) of a single kind of counter on a target.
+     * "Put up to N [counterType] counters on target" — the additive mirror of
+     * [Effects.RemoveCountersUpTo] / [RemoveAnyNumberOfCountersEffect].
+     */
+    fun AddCountersUpTo(counterType: String, max: Int, target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
+        AddCountersUpToEffect(counterType, DynamicAmount.Fixed(max), target)
+
+    /** [AddCountersUpTo] with a dynamic ceiling ("put up to X counters"). */
+    fun AddCountersUpTo(counterType: String, max: DynamicAmount, target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
+        AddCountersUpToEffect(counterType, max, target)
 
     /**
      * Put every counter that was on the triggering source onto a target.
@@ -1913,6 +1982,18 @@ object Effects {
         AddOneManaOfEachColorAmongEffect(filter, restriction)
 
     /**
+     * For each color among the exiled cards used to craft the source (its
+     * `CraftedFromExiledComponent`), add one mana of that color — Sunbird Effigy's mana
+     * ability. Printed colors of the exile-zone materials; 0–5 mana total, no choice.
+     */
+    fun AddOneManaOfEachCraftedMaterialColor(restriction: ManaRestriction? = null): Effect =
+        AddOneManaOfEachColorAmongEffect(
+            filter = GameObjectFilter.Any,
+            restriction = restriction,
+            colorSource = ManaColorSource.CraftedMaterials
+        )
+
+    /**
      * Add one mana of any color that a land in the given scope could produce.
      * Used for cards like Fellwar Stone (OPPONENTS), Exotic Orchard (OPPONENTS),
      * Reflecting Pool (YOU). Sugar for
@@ -1953,12 +2034,14 @@ object Effects {
         legendary: Boolean = false,
         tapped: Boolean = false,
         artifactToken: Boolean = false,
-        enchantmentToken: Boolean = false
+        enchantmentToken: Boolean = false,
+        staticAbilities: List<com.wingedsheep.sdk.scripting.StaticAbility> = emptyList()
     ): Effect = CreateTokenEffect(
         count = DynamicAmount.Fixed(count), power = power, toughness = toughness,
         colors = colors, creatureTypes = creatureTypes, keywords = keywords,
         controller = controller, imageUri = imageUri, legendary = legendary, tapped = tapped,
-        artifactToken = artifactToken, enchantmentToken = enchantmentToken
+        artifactToken = artifactToken, enchantmentToken = enchantmentToken,
+        staticAbilities = staticAbilities
     )
 
     /**
@@ -3027,9 +3110,17 @@ object Effects {
      * permits both (e.g. [com.wingedsheep.sdk.dsl.Targets.InstantSorcerySpellOrAbility]) — the
      * "copy target instant/sorcery spell, activated ability, or triggered ability" clause
      * (Return the Favor).
+     *
+     * [copies] copies of the chosen object are created; it defaults to a single copy. Pass a
+     * [DynamicAmount] (e.g. [DynamicAmount.XValue]) to copy an ability multiple times — "Copy target
+     * activated or triggered ability you control X times" (Gogo, Master of Mimicry). New targets may
+     * be chosen independently for each copy. Only the ability branches honor [copies] > 1.
      */
-    fun CopyTargetSpellOrAbility(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
-        com.wingedsheep.sdk.scripting.effects.CopyTargetSpellOrAbilityEffect(target)
+    fun CopyTargetSpellOrAbility(
+        target: EffectTarget = EffectTarget.ContextTarget(0),
+        copies: DynamicAmount = DynamicAmount.Fixed(1)
+    ): Effect =
+        com.wingedsheep.sdk.scripting.effects.CopyTargetSpellOrAbilityEffect(target, copies)
 
     /**
      * When you next cast a spell matching [spellFilter] this turn, copy that spell.

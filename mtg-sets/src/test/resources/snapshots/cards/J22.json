@@ -1,3 +1,85 @@
+// Ingenious Leonin
+{
+    "name": "Ingenious Leonin",
+    "manaCost": "{4}{W}",
+    "typeLine": "Creature — Cat Soldier",
+    "oracleText": "{3}{W}: Put a +1/+1 counter on another target attacking creature you control. If that creature is a Cat, it gains first strike until end of turn. (It deals combat damage before creatures without first strike.)",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{W}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "+1/+1",
+                            "count": 1,
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target"
+                            }
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "EntityMatches",
+                                    "entity": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "filter": "creature Cat"
+                                }
+                            },
+                            "then": {
+                                "type": "GrantKeyword",
+                                "keyword": "FIRST_STRIKE",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "target"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature attacking ctrl:you",
+                            "excludeSelf": true
+                        },
+                        "id": "target"
+                    }
+                ]
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "5",
+        "rarity": "UNCOMMON",
+        "artist": "Eric Deschamps",
+        "flavorText": "Leonin claws were already deadly weapons of natural evolution before he improved upon them.",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/c/4c6fd0bf-3f02-46f3-9c9a-931eab190584.jpg?1782699361"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Mild-Mannered Librarian
 {
     "name": "Mild-Mannered Librarian",

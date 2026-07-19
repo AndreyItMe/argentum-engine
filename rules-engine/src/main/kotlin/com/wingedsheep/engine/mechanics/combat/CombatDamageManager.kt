@@ -1124,7 +1124,8 @@ internal class CombatDamageManager(
                     com.wingedsheep.engine.handlers.effects.DamageUtils.recordCounterPlacement(newState, targetId)
                 newState = afterMark
                 events.add(CountersAddedEvent(targetId, com.wingedsheep.sdk.core.CounterType.MINUS_ONE_MINUS_ONE.name, amount,
-                    newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature", firstThisTurn))
+                    newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature", firstThisTurn,
+                    placedBy = projected.getController(sourceId)))
             } else {
                 val existingDamage = newState.getEntity(targetId)?.get<DamageComponent>()
                 val currentDamage = existingDamage?.amount ?: 0

@@ -223,6 +223,25 @@ class MomirBasicScenarioTest : ScenarioTestBase() {
             game.state.projectedState.getToughness(token) shouldBe 1
         }
 
+        test("a minted saga token applies its own enters effects (Summon: Knights of Round)") {
+            val game = scenario()
+                .withPlayers()
+                .withFormat(Format.MomirBasic(eligibleCreatureNames = listOf("Summon: Knights of Round")))
+                .withCardInCommandZone(1, avatar)
+                .withLandsOnBattlefield(1, "Plains", 8)
+                .withCardsInHand(1, "Mountain", 2)
+                .build()
+
+            game.execute(game.momirAction(xValue = 8)).error shouldBe null
+            game.resolveStack()
+
+            val token = game.findPermanents("Summon: Knights of Round").single()
+            game.state.projectedState.getPower(token) shouldBe 3
+            game.state.projectedState.getToughness(token) shouldBe 3
+            // The saga's on-enter chapter I trigger fired, creating three 2/2 white Knight tokens.
+            game.findPermanents("Knight Token") shouldHaveSize 3
+        }
+
         test("a minted token prompts its as-enters choice and becomes the chosen color (Alloy Golem)") {
             val game = scenario()
                 .withPlayers()

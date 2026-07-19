@@ -21,6 +21,7 @@ import com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComp
 import com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.engine.legalactions.utils.CostEnumerationUtils
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
@@ -28,6 +29,7 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.scripting.AdditionalCost
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.MayCastFromGraveyard
@@ -37,6 +39,7 @@ import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.engine.mechanics.FlashbackGrants
 import com.wingedsheep.engine.mechanics.HarmonizeGrants
 import com.wingedsheep.engine.mechanics.WarpGrants
+import com.wingedsheep.engine.mechanics.mana.paymentSubtypesOf
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 
@@ -715,7 +718,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
             // Pre-compute additional-cost affordability for the granter's optional
             // additional cost (e.g. "remove three counters from your creatures").
             val (linkedAdditionalCostInfo, canPayLinkedAdditionalCost) = buildLinkedExileAdditionalCostInfo(
-                state, playerId, grantAbility.additionalCost
+                state, playerId, grantAbility.additionalCost, context.costUtils
             )
 
             for (exiledId in linked.exiledIds) {
@@ -874,65 +877,40 @@ class CastFromZoneEnumerator : ActionEnumerator {
     private fun buildLinkedExileAdditionalCostInfo(
         state: GameState,
         playerId: EntityId,
-        additionalCost: AdditionalCost?
+        additionalCost: AdditionalCost?,
+        costUtils: CostEnumerationUtils
     ): Pair<AdditionalCostData?, Boolean> {
         if (additionalCost == null) return null to true
         return when (additionalCost) {
-            is AdditionalCost.RemoveCountersFromYourCreatures -> {
-                val creatures = buildAnyCounterCreatures(state, playerId)
-                val totalAvailable = creatures.sumOf { it.availableCounters }
-                val canPay = totalAvailable >= additionalCost.totalCount
-                val info = AdditionalCostData(
+            is AdditionalCost.Atom -> when (val atom = additionalCost.atom) {
+                is CostAtom.RemoveCounters -> {
+                    val needed = when (val c = atom.count) {
+                        is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                        else -> 0
+                    }
+                    val creatures = costUtils.buildRemoveCountersPermanents(
+                        state, playerId, atom.filter, atom.counterType
+                    )
+                    val totalAvailable = creatures.sumOf { it.availableCounters }
+                    val canPay = if (needed <= 0) true else totalAvailable >= needed
+                    val info = AdditionalCostData(
+                        description = additionalCost.description,
+                        costType = "RemoveCounters",
+                        counterRemovalCreatures = creatures,
+                        distributedCounterRemovalTotal = needed
+                    )
+                    info to canPay
+                }
+                else -> AdditionalCostData(
                     description = additionalCost.description,
-                    costType = "RemoveCountersFromYourCreatures",
-                    counterRemovalCreatures = creatures,
-                    distributedCounterRemovalTotal = additionalCost.totalCount
-                )
-                info to canPay
+                    costType = "Other"
+                ) to true
             }
             else -> AdditionalCostData(
                 description = additionalCost.description,
                 costType = "Other"
             ) to true
         }
-    }
-
-    /**
-     * List the player's creatures with at least one counter of any type, alongside a total
-     * counter count — used to populate [AdditionalCostData.counterRemovalCreatures] for
-     * distributed counter-removal costs like Dawnhand Dissident's.
-     */
-    private fun buildAnyCounterCreatures(
-        state: GameState,
-        playerId: EntityId
-    ): List<com.wingedsheep.engine.legalactions.CounterRemovalCreatureData> {
-        val projected = state.projectedState
-        val result = mutableListOf<com.wingedsheep.engine.legalactions.CounterRemovalCreatureData>()
-        for (permId in state.getBattlefield()) {
-            if (projected.getController(permId) != playerId) continue
-            if (!projected.isCreature(permId)) continue
-            val container = state.getEntity(permId) ?: continue
-            val counters = container.get<com.wingedsheep.engine.state.components.battlefield.CountersComponent>()
-                ?: continue
-            val total = counters.counters.values.sum()
-            if (total <= 0) continue
-            val card = container.get<CardComponent>() ?: continue
-            val byType = counters.counters
-                .filterValues { it > 0 }
-                .mapKeys { (type, _) ->
-                    com.wingedsheep.engine.handlers.effects.permanent.counters.counterTypeToString(type)
-                }
-            result.add(
-                com.wingedsheep.engine.legalactions.CounterRemovalCreatureData(
-                    entityId = permId,
-                    name = card.name,
-                    availableCounters = total,
-                    availableCountersByType = byType,
-                    imageUri = card.imageUri
-                )
-            )
-        }
-        return result
     }
 
     // =========================================================================
@@ -1951,7 +1929,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
                 isCreature = cardComponent.typeLine.isCreature,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 cardTypes = cardComponent.typeLine.cardTypes,
                 // This enumerator only enumerates non-hand-zone casts (command, library, exile,
                 // graveyard, …) — `sourceZone` is never "HAND" here. Mark accordingly so

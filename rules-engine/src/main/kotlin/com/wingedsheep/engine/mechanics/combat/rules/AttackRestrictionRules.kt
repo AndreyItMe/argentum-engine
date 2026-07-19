@@ -7,7 +7,6 @@ import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.combat.AttackingComponent
-import com.wingedsheep.engine.state.components.combat.CanAttackDespiteDefenderThisTurnComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
@@ -15,9 +14,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.player.InAdditionalCombatPhaseComponent
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.scripting.CanAttackDespiteDefender
 import com.wingedsheep.sdk.scripting.CantAttackUnless
-import com.wingedsheep.sdk.scripting.filters.unified.Scope
 import com.wingedsheep.sdk.scripting.CantBeAttackedWithout
 
 // =========================================================================
@@ -91,32 +88,17 @@ class DefenderAttackRule : AttackRestrictionRule {
     override fun check(ctx: AttackCheckContext): String? {
         if (!ctx.projected.hasKeyword(ctx.attackerId, Keyword.DEFENDER)) return null
 
-        val container = ctx.state.getEntity(ctx.attackerId) ?: return errorMsg(ctx)
+        // The Defender restriction is lifted by a temporary "attack this turn as though it didn't
+        // have defender" grant or a satisfied CanAttackDespiteDefender static ability. Both live in
+        // DefenderBypass so this enforcement path and the client's "can attack" badge agree exactly.
+        if (DefenderBypass.isActive(ctx.state, ctx.attackerId, ctx.attackingPlayer, ctx.cardRegistry)) return null
 
-        // Temporary "can attack this turn as though it didn't have defender" grant
-        // (e.g. Krotiq Nestguard's activated ability). The marker is removed at end of turn.
-        if (container.has<CanAttackDespiteDefenderThisTurnComponent>()) return null
-
-        val cardComp = container.get<CardComponent>() ?: return errorMsg(ctx)
-        val cardDef = ctx.cardRegistry.getCard(cardComp.cardDefinitionId) ?: return errorMsg(ctx)
-
-        val effectContext = EffectContext(sourceId = ctx.attackerId, controllerId = ctx.attackingPlayer)
-        val canAttackDespite = cardDef.staticAbilities
-            .filterIsInstance<CanAttackDespiteDefender>()
-            .filter { it.filter.scope is Scope.Self }
-            .any { conditionEvaluator.evaluate(ctx.state, it.condition, effectContext) }
-
-        if (canAttackDespite) return null
         return errorMsg(ctx)
     }
 
     private fun errorMsg(ctx: AttackCheckContext): String {
         val name = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>()?.name ?: "Creature"
         return "$name has defender and cannot attack"
-    }
-
-    companion object {
-        private val conditionEvaluator = ConditionEvaluator()
     }
 }
 

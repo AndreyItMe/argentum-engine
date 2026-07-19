@@ -218,6 +218,12 @@ internal class AttackPhaseManager(
             ?.get<PlayerAttackersThisTurnComponent>()?.attackerIds ?: emptySet()
         val firstTimeAttackers = attackers.keys - previousAttackersThisTurn
 
+        // Attackers whose declared defender is a *player* (CR 508.1), not a planeswalker or
+        // battle. Backs AttackPredicate.DefenderIsPlayer ("attacks an opponent"); the defender
+        // kind is fixed at declaration and the event carries no per-attacker defender identity,
+        // so the fact is stamped here. `defenderId in turnOrder` is the player-identity idiom.
+        val attackersAgainstPlayer = attackers.filterValues { it in state.turnOrder }.keys
+
         newState = newState.updateEntity(attackingPlayer) { container ->
             var updated = container.with(AttackersDeclaredThisCombatComponent)
             if (attackers.isNotEmpty()) {
@@ -246,7 +252,8 @@ internal class AttackPhaseManager(
                     attackers.keys.toList(),
                     attackerNames,
                     attackingPlayer,
-                    firstTimeAttackers = firstTimeAttackers
+                    firstTimeAttackers = firstTimeAttackers,
+                    attackersAgainstPlayer = attackersAgainstPlayer
                 )
             )
         )

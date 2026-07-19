@@ -48,13 +48,17 @@ class BecomeArtifactExecutor : EffectExecutor<BecomeArtifactEffect> {
         var newState = state
 
         // Layer 4 (TYPE): set card types, replacing all existing ones ("loses all other card types").
-        newState = newState.addFloatingEffect(
-            layer = Layer.TYPE,
-            modification = SerializableModification.SetCardTypes(effect.cardTypes),
-            affectedEntities = affectedEntities,
-            duration = effect.duration,
-            context = context
-        )
+        // Skipped when cardTypes is null — the permanent keeps its existing card types (Ultima's
+        // blighted land stays a land and keeps any other card types; only its subtypes are stripped).
+        effect.cardTypes?.let { cardTypes ->
+            newState = newState.addFloatingEffect(
+                layer = Layer.TYPE,
+                modification = SerializableModification.SetCardTypes(cardTypes),
+                affectedEntities = affectedEntities,
+                duration = effect.duration,
+                context = context
+            )
+        }
 
         // Layer 4 (TYPE): set subtypes, replacing all existing ones (e.g. "Treasure").
         newState = newState.addFloatingEffect(

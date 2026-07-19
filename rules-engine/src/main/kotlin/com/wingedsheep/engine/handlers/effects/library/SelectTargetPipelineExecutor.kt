@@ -38,7 +38,15 @@ class SelectTargetPipelineExecutor(
             state = state,
             requirement = effect.requirement,
             controllerId = controllerId,
-            sourceId = sourceId
+            sourceId = sourceId,
+            // Carry the resolving ability's granter so a target filter can exclude it via
+            // StatePredicate.IsGrantingPermanent — e.g. Dire Blunderbuss's "an artifact other than
+            // Dire Blunderbuss" (CR 201.5a). Only granterId is threaded; other context fields keep
+            // their prior (null) defaults so no existing SelectTargetEffect changes behavior.
+            pipelineContext = com.wingedsheep.engine.handlers.PredicateContext(
+                controllerId = controllerId,
+                granterId = context.granterId
+            )
         )
 
         if (legalTargets.isEmpty()) {

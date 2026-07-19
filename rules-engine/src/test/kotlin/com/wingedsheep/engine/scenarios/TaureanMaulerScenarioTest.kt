@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.scenarios
 
+import com.wingedsheep.engine.core.YesNoDecision
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Step
@@ -14,8 +15,9 @@ import io.kotest.matchers.shouldBe
  * +1/+1 counter on this creature."
  *
  * The opponent must cast on a window they control, so these tests hand the opponent priority
- * (instant-speed) before they cast a harmless {0} instant. The scenario harness takes the
- * beneficial optional "may", so a successful trigger shows up as the +1/+1 counter being added.
+ * (instant-speed) before they cast a harmless {0} instant. The optional trigger pauses on a
+ * yes/no "may" prompt at resolution; the local [resolveStack] accepts it, so a successful
+ * trigger shows up as the +1/+1 counter being added.
  */
 class TaureanMaulerScenarioTest : FunSpec({
 
@@ -35,7 +37,10 @@ class TaureanMaulerScenarioTest : FunSpec({
 
     fun resolveStack(d: GameTestDriver) {
         var guard = 0
-        while (d.state.stack.isNotEmpty() && guard++ < 8) d.bothPass()
+        while ((d.state.stack.isNotEmpty() || d.pendingDecision != null) && guard++ < 12) {
+            val decision = d.pendingDecision
+            if (decision is YesNoDecision) d.submitYesNo(decision.playerId, true) else d.bothPass()
+        }
     }
 
     test("opponent casts a spell: a +1/+1 counter is added (2/2 -> 3/3)") {

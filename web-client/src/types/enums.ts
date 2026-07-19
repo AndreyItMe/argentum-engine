@@ -190,9 +190,11 @@ export enum Keyword {
   STORM = 'STORM',
   FLASHBACK = 'FLASHBACK',
   EVOKE = 'EVOKE',
+  EXPLOIT = 'EXPLOIT',
   SNEAK = 'SNEAK',
   NINJUTSU = 'NINJUTSU',
   IMPENDING = 'IMPENDING',
+  CLEAVE = 'CLEAVE',
   CONSPIRE = 'CONSPIRE',
   CASUALTY = 'CASUALTY',
   MIRACLE = 'MIRACLE',
@@ -212,6 +214,8 @@ export enum Keyword {
   ASCEND = 'ASCEND',
   // Token decay (Innistrad: Midnight Hunt / TDM decayed counter)
   DECAYED = 'DECAYED',
+  // Attack-triggered self-buff (Innistrad: Midnight Hunt)
+  TRAINING = 'TRAINING',
   // Equipment that makes its own bearer (Final Fantasy)
   JOB_SELECT = 'JOB_SELECT',
   // Ability words
@@ -261,9 +265,11 @@ export const KeywordDisplayNames: Record<Keyword, string> = {
   [Keyword.STORM]: 'Storm',
   [Keyword.FLASHBACK]: 'Flashback',
   [Keyword.EVOKE]: 'Evoke',
+  [Keyword.EXPLOIT]: 'Exploit',
   [Keyword.SNEAK]: 'Sneak',
   [Keyword.NINJUTSU]: 'Ninjutsu',
   [Keyword.IMPENDING]: 'Impending',
+  [Keyword.CLEAVE]: 'Cleave',
   [Keyword.CONSPIRE]: 'Conspire',
   [Keyword.CASUALTY]: 'Casualty',
   [Keyword.MIRACLE]: 'Miracle',
@@ -277,6 +283,7 @@ export const KeywordDisplayNames: Record<Keyword, string> = {
   [Keyword.ENDURING]: 'Enduring',
   [Keyword.ASCEND]: 'Ascend',
   [Keyword.DECAYED]: 'Decayed',
+  [Keyword.TRAINING]: 'Training',
   [Keyword.JOB_SELECT]: 'Job select',
   [Keyword.EERIE]: 'Eerie',
 }
@@ -386,6 +393,8 @@ export enum CounterType {
   PAGE = 'PAGE',
   REV = 'REV',
   POSSESSION = 'POSSESSION',
+  LANDMARK = 'LANDMARK',
+  DREAD = 'DREAD',
   INCUBATION = 'INCUBATION',
 }
 
@@ -441,6 +450,8 @@ export const CounterTypeDisplayNames: Record<CounterType, string> = {
   [CounterType.PAGE]: 'Page',
   [CounterType.REV]: 'Rev',
   [CounterType.POSSESSION]: 'Possession',
+  [CounterType.LANDMARK]: 'Landmark',
+  [CounterType.DREAD]: 'Dread',
   [CounterType.INCUBATION]: 'Incubation',
 }
 

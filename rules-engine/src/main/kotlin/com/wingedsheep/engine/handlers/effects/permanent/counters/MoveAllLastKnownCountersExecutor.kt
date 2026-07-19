@@ -69,7 +69,7 @@ class MoveAllLastKnownCountersExecutor : EffectExecutor<MoveAllLastKnownCounters
             newState = newState.updateEntity(targetId) { container ->
                 container.with(current.withAdded(counterType, modifiedCount))
             }
-            events.add(CountersAddedEvent(targetId, counterTypeString, modifiedCount, targetName, firstThisTurn))
+            events.add(CountersAddedEvent(targetId, counterTypeString, modifiedCount, targetName, firstThisTurn, placedBy = context.controllerId))
             firstThisTurn = false
         }
 

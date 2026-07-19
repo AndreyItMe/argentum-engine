@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.core.ChooseNumberDecision
+import com.wingedsheep.engine.core.YesNoDecision
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
@@ -163,8 +164,10 @@ class ShapeshifterScenarioTest : ScenarioTestBase() {
                     before.getToughness(shifter) shouldBe 5
                 }
 
-                // The upkeep trigger surfaces the number choice directly (the `optional = true` flag
-                // raises no separate decline prompt for this no-target trigger shape; see below).
+                // The optional upkeep trigger pauses on a yes/no "may" prompt; accepting it
+                // surfaces the number choice.
+                game.getPendingDecision().shouldBeInstanceOf<YesNoDecision>()
+                game.answerYesNo(true)
                 game.getPendingDecision().shouldBeInstanceOf<ChooseNumberDecision>()
                 game.chooseNumber(6)
                 game.resolveStack()
@@ -176,19 +179,38 @@ class ShapeshifterScenarioTest : ScenarioTestBase() {
                 }
             }
 
-            // The card prints "you **may** choose a number"; mechanically this trigger always
-            // resolves the choice (the optional flag is inert for a no-target/no-else trigger), and
-            // needs no decline path — re-selecting the current number is equivalent to keeping it, so
-            // the previous P/T is retained.
+            // Accepting the "may" but re-selecting the current number is equivalent to keeping it,
+            // so the previous P/T is retained.
             test("re-choosing the same number at the upkeep keeps the P/T") {
                 val (game, shifter) = castThenReachUpkeepChoice(entry = 3)
 
+                game.getPendingDecision().shouldBeInstanceOf<YesNoDecision>()
+                game.answerYesNo(true)
                 game.getPendingDecision().shouldBeInstanceOf<ChooseNumberDecision>()
                 game.chooseNumber(3)
                 game.resolveStack()
 
                 val p = stateProjector.project(game.state)
                 withClue("re-picking the entry value (3) keeps 3/4") {
+                    p.getPower(shifter) shouldBe 3
+                    p.getToughness(shifter) shouldBe 4
+                }
+            }
+
+            // The card prints "you **may** choose a number" — declining the upkeep "may" skips the
+            // number choice entirely and the last chosen number (the entry choice) stays in force.
+            test("declining the upkeep re-choice keeps the P/T") {
+                val (game, shifter) = castThenReachUpkeepChoice(entry = 3)
+
+                game.getPendingDecision().shouldBeInstanceOf<YesNoDecision>()
+                game.answerYesNo(false)
+                game.resolveStack()
+
+                withClue("no number choice is offered after declining") {
+                    game.getPendingDecision() shouldBe null
+                }
+                val p = stateProjector.project(game.state)
+                withClue("declining keeps the entry choice (3): still 3/4") {
                     p.getPower(shifter) shouldBe 3
                     p.getToughness(shifter) shouldBe 4
                 }

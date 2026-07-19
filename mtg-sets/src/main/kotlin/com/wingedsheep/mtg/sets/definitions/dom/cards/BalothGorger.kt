@@ -1,13 +1,11 @@
 package com.wingedsheep.mtg.sets.definitions.dom.cards
 
-import com.wingedsheep.sdk.core.Counters
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.EntersWithCounters
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
  * Baloth Gorger
@@ -27,11 +25,13 @@ val BalothGorger = card("Baloth Gorger") {
 
     keywordAbility(KeywordAbility.kicker("{4}"))
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = WasKicked
-        effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 3, EffectTarget.Self)
-    }
+    // "Enters with a counter" is a replacement effect (rule 614.1c), not an ETB trigger
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 3,
+        selfOnly = true,
+        condition = WasKicked
+    ))
 
     metadata {
         rarity = Rarity.COMMON

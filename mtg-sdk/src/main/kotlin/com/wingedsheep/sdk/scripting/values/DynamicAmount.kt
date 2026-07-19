@@ -25,6 +25,13 @@ enum class TurnTracker {
     CREATURES_DIED,
     /** Count of nontoken creatures put into a player's graveyard from the battlefield this turn. */
     NONTOKEN_CREATURES_DIED,
+    /**
+     * Count of creatures (including tokens) that left the battlefield under a player's control this
+     * turn — regardless of destination (death, exile, bounce, …). Distinct from [CREATURES_DIED]
+     * (only battlefield→graveyard). Powers "for each creature that left the battlefield under your
+     * control this turn" (Kutzil's Flanker).
+     */
+    CREATURES_LEFT_BATTLEFIELD,
     /** Count of creatures exiled from opponents' control this turn. */
     OPPONENT_CREATURES_EXILED,
     /** Count of opponents who lost life this turn. */
@@ -108,6 +115,7 @@ enum class TurnTracker {
     fun descriptionFor(player: Player): String = when (this) {
         CREATURES_DIED -> "the number of creatures that died under ${player.possessive} control this turn"
         NONTOKEN_CREATURES_DIED -> "the number of nontoken creatures put into ${player.possessive} graveyard from the battlefield this turn"
+        CREATURES_LEFT_BATTLEFIELD -> "the number of creatures that left the battlefield under ${player.possessive} control this turn"
         OPPONENT_CREATURES_EXILED -> "the number of creatures that were exiled under your opponents' control this turn"
         OPPONENTS_WHO_LOST_LIFE -> "the number of opponents who lost life this turn"
         DAMAGE_RECEIVED -> "the damage already dealt to that player this turn"
@@ -1193,6 +1201,34 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     @Serializable
     data object CraftedMaterialsTotalPower : DynamicAmount {
         override val description: String = "the total power of the exiled cards used to craft it"
+    }
+
+    /**
+     * Total mana value of the cards exiled to craft the source permanent.
+     *
+     * The mana-value sibling of [CraftedMaterialsTotalPower] — same
+     * `CraftedFromExiledComponent` read, summing printed mana value instead of power. Exact-one
+     * crafts read it as the single material's mana value (Jadeheart Attendant: "you gain life
+     * equal to the mana value of the exiled card used to craft it"). Zero when not crafted.
+     */
+    @SerialName("CraftedMaterialsTotalManaValue")
+    @Serializable
+    data object CraftedMaterialsTotalManaValue : DynamicAmount {
+        override val description: String = "the total mana value of the exiled cards used to craft it"
+    }
+
+    /**
+     * Number of colors (0–5) among the cards exiled to craft the source permanent.
+     *
+     * The color-counting sibling of [CraftedMaterialsTotalPower] — same
+     * `CraftedFromExiledComponent` read, counting distinct printed colors across all exiled
+     * materials (Sunbird Effigy's P/T CDA and its "add one mana of each of those colors"
+     * mana ability). Zero when not crafted or all materials are colorless.
+     */
+    @SerialName("CraftedMaterialsColorCount")
+    @Serializable
+    data object CraftedMaterialsColorCount : DynamicAmount {
+        override val description: String = "the number of colors among the exiled cards used to craft it"
     }
 
     /**

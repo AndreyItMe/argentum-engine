@@ -59,6 +59,21 @@ data class GameObjectFilter(
     val description: String
         get() = buildDescription()
 
+    /**
+     * The English indefinite article ("a" or "an") for this filter's type name.
+     * Derived from the card predicates' type word (e.g. "artifact", "equipment"),
+     * not from the full [description] — which may include "you control" prefixes
+     * that would give the wrong first letter.
+     */
+    val indefiniteArticle: String
+        get() {
+            val typeWord = cardPredicates.firstOrNull()?.description?.trim()
+                ?: if (anyOf.isNotEmpty()) anyOf.first().indefiniteArticle
+                else description.trim()
+            val first = typeWord.firstOrNull()?.lowercaseChar() ?: return "a"
+            return if (first in "aeiou") "an" else "a"
+        }
+
     private fun buildDescription(): String = buildString {
         controllerPredicate?.let {
             if (it.description.isNotEmpty()) {
@@ -253,6 +268,15 @@ data class GameObjectFilter(
      */
     fun targetsMatching(subfilter: GameObjectFilter) = copy(
         cardPredicates = cardPredicates + CardPredicate.TargetsMatching(subfilter)
+    )
+
+    /**
+     * Add an arbitrary [CardPredicate] requirement. General-purpose combinator for predicates that
+     * don't have a dedicated helper — e.g. `GameObjectFilter.Nonland.withCardPredicate(
+     * CardPredicate.HasActivatedAbility)` for The Enigma Jewel's craft materials.
+     */
+    fun withCardPredicate(predicate: CardPredicate) = copy(
+        cardPredicates = cardPredicates + predicate
     )
 
     /** Add a keyword requirement */
@@ -673,12 +697,44 @@ data class GameObjectFilter(
     )
 
     /**
+     * Must BE the effect's source permanent itself — the [GameObjectFilter] counterpart of
+     * `GroupFilter`'s `Scope.Self`. Scopes a filter-carrying static ability to the very
+     * permanent that carries it: granting
+     * [PreventActivatedAbilities][com.wingedsheep.sdk.scripting.PreventActivatedAbilities]
+     * with this filter locks the *holder's own* activated abilities (Braided Net's
+     * "Its activated abilities can't be activated for as long as it remains tapped").
+     */
+    fun sourceItself() = copy(
+        statePredicates = statePredicates + StatePredicate.IsSource
+    )
+
+    /**
      * Must BE an Aura/Equipment attached to the effect's source permanent — the mirror of
      * [attachedToBySource]. Source-relative — scopes a static ability on the *host* to its own
      * attachments, e.g. Cloud, Midgar Mercenary's "an Equipment attached to it".
      */
     fun attachedToSource() = copy(
         statePredicates = statePredicates + StatePredicate.IsAttachedToSource
+    )
+
+    /**
+     * Must NOT be an Aura/Equipment attached to the effect's source permanent — the negation of
+     * [attachedToSource].
+     */
+    fun notAttachedToSource() = copy(
+        statePredicates = statePredicates + StatePredicate.Not(StatePredicate.IsAttachedToSource)
+    )
+
+    /**
+     * Must NOT be the *granting permanent* of the resolving ability — excludes exactly the
+     * Equipment/Aura/permanent whose static ability granted the ability (read from the evaluation
+     * context's `granterId`, CR 201.5a). Backs "an artifact other than [this granting Equipment]"
+     * on a granted triggered ability whose source is the equipped creature (Dire Blunderbuss's
+     * "sacrifice an artifact other than Dire Blunderbuss"): unlike [notAttachedToSource] it
+     * excludes only the specific granter, leaving other attachments and same-named copies legal.
+     */
+    fun notGrantingPermanent() = copy(
+        statePredicates = statePredicates + StatePredicate.Not(StatePredicate.IsGrantingPermanent)
     )
 
     /**
@@ -833,6 +889,22 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.WasCastForWarp
     )
 
+    /**
+     * Must be a spell on the stack cast from [zone] — reads the engine's stamped
+     * `SpellOnStackComponent.castFromZone`. See [StatePredicate.WasCastFromZone].
+     */
+    fun castFromZone(zone: com.wingedsheep.sdk.core.Zone) = copy(
+        statePredicates = statePredicates + StatePredicate.WasCastFromZone(zone)
+    )
+
+    /**
+     * Must be a spell on the stack that was *not* cast from [zone]. Backs Wash Away's
+     * "counter target spell that wasn't cast from its owner's hand" (`Zone.HAND`).
+     */
+    fun notCastFromZone(zone: com.wingedsheep.sdk.core.Zone) = copy(
+        statePredicates = statePredicates + StatePredicate.Not(StatePredicate.WasCastFromZone(zone))
+    )
+
     // =============================================================================
     // Fluent Builder Methods - Controller Predicates
     // =============================================================================
@@ -885,6 +957,14 @@ data class GameObjectFilter(
      * card's immutable owner, so it captures cards in a graveyard the triggering player owns.
      */
     fun ownedByTriggeringPlayer() = copy(controllerPredicate = ControllerPredicate.OwnedByTriggeringPlayer)
+
+    /**
+     * Must be controlled by the trigger's associated player — the damaged player for a combat/damage
+     * trigger (Dreadmaw's Ire — "destroy target artifact that player controls"). Reads projected
+     * control, so it tracks control-changing effects, unlike the owner-based
+     * [ownedByTriggeringPlayer].
+     */
+    fun controlledByTriggeringPlayer() = copy(controllerPredicate = ControllerPredicate.ControlledByTriggeringPlayer)
 
     /**
      * Must match [predicate] on the controller/owner axis. The entry point for *composed*

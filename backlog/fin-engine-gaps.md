@@ -151,9 +151,10 @@ instead of sacrifice, sorcery-speed gating, second card).
   - Crystal Fragments // Summon: Alexander — Equipment front works via `CardDefinition.doubleFacedPermanent`, but
     the Alexander back needs a **group damage-prevention shield** ("prevent all damage that would be dealt to
     creatures you control this turn" — `PreventDamageEffect` only targets a single entity today).
-  - Esper Origins — a different template (a *sorcery* that, when cast from a graveyard, exiles itself off the stack
-    and *puts itself onto the battlefield transformed with a finality counter*) — a spell-becomes-permanent shape,
-    not the permanent exile-and-return this effect models.
+  - Esper Origins ✅ **DONE** — a *sorcery* that, when cast from a graveyard, exiles itself off the stack and puts
+    itself onto the battlefield transformed with a finality counter. Implemented as the resolution-destination flag
+    `CardScript.returnTransformedFromGraveyardOnResolve` (`spell { returnTransformedFromGraveyard(CounterType.FINALITY) }`),
+    read by `StackResolver` — not the permanent exile-and-return effect. See `EsperOriginsScenarioTest`.
 
 ### 3. Job select (≈16 Equipment) — ❌ **GAP** (create-token-then-attach-self)
 
@@ -258,19 +259,25 @@ so a land // spell Adventure offers *both* "play the land" (PlayLandEnumerator) 
   mills that many cards plus four instead" is the additive `ModifyMillAmount` replacement (twin of `ModifyDrawAmount`),
   applied at the mill announcement in `GatherCardsExecutor` via the new `CardSource.TopOfLibrary.isMill` flag +
   `EventPattern.MillEvent`.
-- **Y'shtola / Gogo copy-an-ability** — Gogo, Master of Mimicry ("Copy target activated or triggered ability you
-  control X times") needs ability-on-stack copying with X. Verify `CopyAbility` support; likely a gap for the
-  targeted-ability-copy-X-times shape.
+- **Y'shtola / Gogo copy-an-ability** — ✅ **DONE.** Gogo, Master of Mimicry ("Copy target activated or triggered
+  ability you control X times") implemented by generalizing `CopyTargetSpellOrAbilityEffect` with a
+  `copies: DynamicAmount` (pass `DynamicAmount.XValue`); the executor makes N independent copies of the chosen
+  ability, pausing per copy that has targets for CR 707.10c retargeting, and copies no-target abilities too.
+  Added `Targets.ActivatedOrTriggeredAbilityYouControl`, `ActivatedAbility.minimumXValue` ("X can't be 0") and
+  `ActivatedAbility.cantBeCopied` ("This ability can't be copied", reusing the `CantBeCopiedComponent` marker).
 - **"This ability triggers an additional time"** (Cloud, Midgar Mercenary; The Masamune) — a static that makes a
   permanent's/equipment's triggered abilities trigger one extra time. Check for an existing "trigger doubling"
   primitive (Panharmonicon-style); likely a gap scoped to "triggers of this creature and Equipment attached to it."
 - **Half-rounded-down sacrifice / mill** (Zodiark "sacrifices half … rounded down"; Jidoor "mills half their
   library") — `DynamicAmount.Divide(..., roundUp=false)` exists (used by Cecil); confirm it feeds a
   "each player sacrifices N of their choice" and mill-half. Likely supported once wired.
-- **Blight counter that strips land types/abilities + replaces with "{T}: Add {C}"** (Ultima, Origin of Oblivion) —
-  `BLIGHT` counter exists; the **continuous type/ability-stripping driven by a blight counter on a land** is the new
-  piece (Layer 4/6 overwrite gated on a counter). Plus "whenever you tap a land for {C}, add an additional {C}"
-  (a mana-doubling replacement on colorless taps).
+- ~~**Blight counter that strips land types/abilities + replaces with "{T}: Add {C}"** (Ultima, Origin of Oblivion)~~ —
+  ✅ IMPLEMENTED. New `Duration.WhileAffectedHasCounter(counterType)` — a source-independent (CR 611.2b), counter-keyed
+  "for as long as" duration wired into `StateProjector` (per-frame gate), `EndedDurationExpiryCheck` (one-way latch +
+  granted-ability prune), and `CleanupPhaseManager`. The transform reuses `BecomeArtifactEffect` (now with nullable
+  `cardTypes` = keep card types, per the "keeps artifact/supertypes" ruling). The mana ability = `AdditionalManaOnSourceTap`
+  with a new `whenProducing = TappedForManaType.COLORLESS` gate ("tap a land **for {C}**"), gated on all three mana paths
+  (manual tap, color-choice mirror, auto-pay `ManaSolver` with a colorless bonus float).
 - **Win/lose-the-game riders** (Zenos → Shinryu "when the chosen player loses the game, you win"; Summon: Primal Odin
   II grants "deals combat damage → that player loses the game") — confirm `Effects.WinTheGame` / `LoseTheGame` and a
   "chosen player loses → you win" linked trigger exist.
@@ -441,3 +448,44 @@ stale on both:
   primitive is general: `firstFlipEachTurn = false` gives a plain "you win all coin flips". Covered by
   `EdgarKingOfFigaroScenarioTest` (forced first-flip win via The Gold Saucer, the once-per-turn gate,
   and the artifact-count ETB draw).
+
+## Implementation pass — 2026-07-05 (Terra, Magical Adept + two engine additions)
+
+- **Terra, Magical Adept // Esper Terra** — implemented (295/300). The front ETB (mill five, put up to
+  one enchantment milled this way into hand) and the Trance `ExileAndReturnTransformed` into the Esper
+  Terra Summon-Saga back are pure authoring (CacheGrab / Clive-Ifrit precedents). Chapter IV (`AddMana`
+  ×5 colors + `ExileAndReturnTransformed(FRONT)`) is authoring too; it exile-returns front face up before
+  the CR 714.4 final-chapter sacrifice applies, like the Dominant eikons. Two small, reusable engine
+  additions unblocked chapters I–III:
+  - **`AddCountersUpTo(counterType, max, target)`** (`Effects.AddCountersUpTo`) — the additive,
+    single-kind, player-chosen mirror of `RemoveAnyNumberOfCounters`: one `ChooseNumberDecision` (0..max),
+    then placement through the normal `AddCounters` chokepoint (honors placement replacements + Saga
+    chapter triggers). Chapter I–III's "if it's a Saga, put up to three lore counters on it" composes as
+    `ConditionalEffect(CollectionContainsMatch(CREATED_TOKENS, Enchantment.withSubtype(SAGA)),
+    AddCountersUpTo(LORE, 3, PipelineTarget(CREATED_TOKENS)))`. mtgish bridge: `UptoNumberCountersOfTypeOnPermanent`
+    → `AddCountersUpTo` (capability-only; player-choice shape stays SCAFFOLD). Tested by
+    `AddCountersUpToScenarioTest`.
+  - **Token copies of a Saga now enter as Sagas (CR 714.2b/714.3a)** — the `CreateTokenCopyOf*` executors
+    (target/source/chosen/equipped) route through the shared `ZoneMovementUtils.applySagaEntryIfNeeded`
+    hook (`BattlefieldEntry.place`, the ad-hoc insertion path, skips enters-with-counters setup), so a
+    token copy of a Saga gains a `SagaComponent`, its on-enter lore counter (chapter I triggers), and
+    accrues lore each turn. Previously such tokens were inert. Tested by `TokenCopyOfSagaEntryScenarioTest`
+    (generally) and `TerraMagicalAdeptScenarioTest` (via the card). Covered by `TerraMagicalAdeptScenarioTest`
+    (ETB mill-take, Trance transform, chapter copy with/without the Saga lore prompt).
+- **Zenos yae Galvus // Shinryu, Transcendent Rival — DONE.** Front's "My First Friend" ETB is an
+  optional `target(CreatureOpponentControls, optional = true)` + `ForEachInGroup(AllCreatures
+  .other().otherThanTarget(), ModifyStats(-2,-2))` (the -2/-2 still resolves when no creature is
+  chosen, per the ruling), plus a persistent reflexive delayed trigger (`Triggers.LeavesBattlefield`
+  + `watchedTarget` + new `DelayedTriggerExpiry.Never`) that transforms Zenos when the chosen
+  creature leaves. Shinryu's win-rider uses the new `Triggers.AnyPlayerLosesGame`
+  (`EventPattern.PlayerLostGameEvent` → engine `PlayerLostEvent`) gated by the new
+  `Conditions.TriggeringPlayerIs(Player.ChosenOpponent)` + `Effects.WinGame()`. Also fixed
+  `TriggerMatcher.filterByTriggerCondition` to thread `triggeringPlayerId` into the intervening-if
+  context (previously null). Covered by `ZenosYaeGalvusScenarioTest` (incl. a 3-player win-con pod).
+- Remaining missing FIN cards (0): **the set is now 100% complete.** (Ultima, Origin of Oblivion;
+  Emet-Selch, Unsundered; Gogo, Master of Mimicry; and Esper Origins are now all implemented.)
+- Esper Origins ✅ — implemented via a new `CardScript.returnTransformedFromGraveyardOnResolve` flag
+  (`spell { returnTransformedFromGraveyard(CounterType.FINALITY) }`): a graveyard-cast spell resolves
+  onto the battlefield transformed with a finality counter (destination derived from `castFromZone` in
+  `StackResolver`, precedence over flashback exile, survives the Surveil mid-resolution pause). Covered
+  by `EsperOriginsScenarioTest`.

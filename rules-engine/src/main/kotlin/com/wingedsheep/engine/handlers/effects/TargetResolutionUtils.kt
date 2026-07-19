@@ -7,6 +7,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
+import com.wingedsheep.engine.state.components.battlefield.LastKnownPermanentComponent
 import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
@@ -62,12 +63,12 @@ object TargetResolutionUtils {
         }
         if (effectTarget is EffectTarget.TargetController) {
             val targetEntity = context.targets.firstOrNull()?.toEntityId() ?: return null
-            return state.getEntity(targetEntity)?.get<ControllerComponent>()?.playerId
-                ?: state.getEntity(targetEntity)?.get<CardComponent>()?.ownerId
+            return controllerOf(state, targetEntity)
         }
         if (effectTarget is EffectTarget.ControllerOfTriggeringEntity) {
             val triggerId = context.triggeringEntityId ?: return null
             val entity = state.getEntity(triggerId) ?: return null
+            state.projectedState.getController(triggerId)?.let { return it }
             entity.get<ControllerComponent>()?.playerId?.let { return it }
             // An activated ability's stack entity is a bare container with no
             // ControllerComponent. "That artifact's controller" (Haunting Wind, Artifact
@@ -75,9 +76,11 @@ object TargetResolutionUtils {
             // through to it, or to the ability's own controller as last-known information
             // if the source has left the battlefield.
             entity.get<com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent>()?.let { ability ->
-                return state.getEntity(ability.sourceId)?.get<ControllerComponent>()?.playerId
-                    ?: ability.controllerId
+                return controllerOf(state, ability.sourceId) ?: ability.controllerId
             }
+            // The triggering permanent may itself have left the battlefield: last-known
+            // controller (CR 608.2h) before the owner.
+            entity.get<LastKnownPermanentComponent>()?.snapshot?.controllerId?.let { return it }
             return entity.get<CardComponent>()?.ownerId
         }
         if (effectTarget is EffectTarget.AttachedToTriggeringPermanent) {
@@ -89,9 +92,7 @@ object TargetResolutionUtils {
         }
         if (effectTarget is EffectTarget.ControllerOfPipelineTarget) {
             val targetEntityId = context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index) ?: return null
-            val entity = state.getEntity(targetEntityId) ?: return null
-            return entity.get<ControllerComponent>()?.playerId
-                ?: entity.get<CardComponent>()?.ownerId
+            return controllerOf(state, targetEntityId)
         }
         if (effectTarget is EffectTarget.PipelineTarget) {
             return context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
@@ -208,13 +209,6 @@ object TargetResolutionUtils {
     }
 
     /**
-     * Resolve the controller of an entity. For a spell on the stack the controller is the player
-     * who cast it ([SpellOnStackComponent.casterId]) — the stack object's [ControllerComponent]
-     * still reflects the card's owner, which differs from the controller when a player casts a
-     * card they don't own (e.g. casting a spell from an opponent's graveyard). Falls back to the
-     * [ControllerComponent] (battlefield permanents) and finally the owner.
-     */
-    /**
      * The player the source Aura is attached to (CR 303 enchant player), or `null` when the source
      * isn't attached to a player. Reads the source's [AttachedToComponent] target and confirms it
      * is a player (in [GameState.turnOrder]). Used to resolve [Player.EnchantedPlayer].
@@ -225,10 +219,23 @@ object TargetResolutionUtils {
         return targetId.takeIf { it in state.turnOrder }
     }
 
+    /**
+     * The controller of [entityId] wherever the entity is. A spell on the stack is controlled by
+     * its caster ([SpellOnStackComponent.casterId] — the stack object's [ControllerComponent]
+     * still reflects the owner when a player casts a card they don't own). A battlefield
+     * permanent reads the *projected* controller: control-changing effects (Threaten, Empress
+     * Galina) live in Layer 2 and never touch the base [ControllerComponent]. An entity that has
+     * left the battlefield reads its last-known controller (CR 608.2h,
+     * [LastKnownPermanentComponent]) — so "Destroy target creature. Its controller creates two
+     * Map tokens." credits the controller-at-death, not the owner. Finally falls back to the
+     * owner (cards that never were permanents, e.g. a discarded card).
+     */
     private fun controllerOf(state: GameState, entityId: EntityId): EntityId? {
         val entity = state.getEntity(entityId) ?: return null
         return entity.get<SpellOnStackComponent>()?.casterId
+            ?: state.projectedState.getController(entityId)
             ?: entity.get<ControllerComponent>()?.playerId
+            ?: entity.get<LastKnownPermanentComponent>()?.snapshot?.controllerId
             ?: entity.get<CardComponent>()?.ownerId
     }
 

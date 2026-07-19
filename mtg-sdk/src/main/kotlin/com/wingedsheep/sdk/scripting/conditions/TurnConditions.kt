@@ -34,6 +34,19 @@ data object IsNotYourTurn : Condition {
 }
 
 /**
+ * Condition: "If it's [player]'s turn" — the [Player]-parametric form of [IsYourTurn], for a
+ * turn check relative to a player other than the ability's controller. Pairs with
+ * `Conditions.Not(...)` for the "if it's not their turn" wording where "their" is a non-controller
+ * player: Scytheclaw Raptor's "whenever a player casts a spell, if it's not their turn" reads
+ * "their" as the *casting* (triggering) player, so `Not(IsPlayersTurn(Player.TriggeringPlayer))`.
+ */
+@SerialName("IsPlayersTurn")
+@Serializable
+data class IsPlayersTurn(val player: Player) : Condition {
+    override val description: String = "if it's ${player.description}'s turn"
+}
+
+/**
  * Condition: "If the current phase matches any of the listed phases"
  * When `yoursOnly = true` (default), also requires that it's the controller's turn —
  * i.e. "your main phase" means it's both your turn AND the main phase.

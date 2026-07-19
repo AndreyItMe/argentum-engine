@@ -28,6 +28,7 @@ import com.wingedsheep.sdk.scripting.effects.DividedDamageEffect
 import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.effects.ModalEffect
 import com.wingedsheep.engine.mechanics.mana.ManaSource
+import com.wingedsheep.engine.mechanics.mana.paymentSubtypesOf
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 
 /**
@@ -162,6 +163,8 @@ class CastSpellEnumerator : ActionEnumerator {
             var discardCount = 0
             var bounceTargets = emptyList<EntityId>()
             var bounceCount = 0
+            var tapTargets = emptyList<EntityId>()
+            var tapCount = 0
             var beholdTargets = emptyList<EntityId>()
             var beholdCount = 0
             var blightOrPayCost: AdditionalCost.BlightOrPay? = null
@@ -227,7 +230,23 @@ class CastSpellEnumerator : ActionEnumerator {
                             bounceTargets = validBounceTargets
                             bounceCount = atom.count
                         }
-                        // Mana / tap / reveal aren't produced as spell additional costs today.
+                        is CostAtom.TapPermanents -> {
+                            // "As an additional cost to cast this spell, tap [count] untapped
+                            // [filter] you control" (e.g. Guardian of the Great Door). Mirrors the
+                            // ReturnToHand selection model above — permanents you control, chosen by
+                            // the caster — but the payment taps instead of bouncing. Without this
+                            // case the cost fell through to `else -> {}`, so no `AdditionalCostData`
+                            // reached the client: it couldn't prompt for the tap, yet the cast-time
+                            // validator still rejected the empty payment.
+                            val validTapTargets = context.costUtils.findAbilityTapTargets(state, playerId, atom.filter)
+                                .let { if (atom.excludeSelf) it.filter { id -> id != cardId } else it }
+                            if (validTapTargets.size < atom.count) {
+                                canPayAdditionalCosts = false
+                            }
+                            tapTargets = validTapTargets
+                            tapCount = atom.count
+                        }
+                        // Mana / reveal aren't produced as spell additional costs today.
                         else -> {}
                     }
                     is AdditionalCost.SacrificeCreaturesForCostReduction -> {
@@ -440,7 +459,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 isLegendary = cardComponent.typeLine.isLegendary,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 cardTypes = cardComponent.typeLine.cardTypes,
             )
 
@@ -502,6 +521,14 @@ class CastSpellEnumerator : ActionEnumerator {
                 context.manaSolver.canPay(state, playerId, impendingMana, precomputedSources = cachedSources)
             } else false
 
+            // Check cleave cost (CR 702.148 — alternative cost from the Cleave keyword). Emitted as
+            // its own legal action below since paying it swaps in the brackets-removed target set.
+            val cleaveAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cleave>().firstOrNull()
+            val canAffordCleave = if (cleaveAbility != null) {
+                val cleaveMana = context.costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, cleaveAbility.cost, playerId)
+                context.manaSolver.canPay(state, playerId, cleaveMana, precomputedSources = cachedSources)
+            } else false
+
             // Check blight path affordability (base cost without the extra mana, but needs a creature)
             val canAffordBlightPath = if (blightOrPayCost != null && blightCreatures.isNotEmpty()) {
                 context.manaSolver.canPay(state, playerId, blightBaseCost, spellContext = spellContext, precomputedSources = cachedSources)
@@ -528,7 +555,7 @@ class CastSpellEnumerator : ActionEnumerator {
             // spell affordable for {0} when its gates are open. Emitted by its own branch below;
             // don't continue out before reaching it.
             val canAffordFreeCast = context.freeCastPermissionFor(cardId)
-            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordBlightPath && !canAffordBeholdPath && !canAffordExileOrPayPath && !canAffordSacOrPayPath && !canAffordFreeCast) {
+            if (!canAfford && !canAffordAlternative && !canAffordSelfAlternative && !canAffordEvoke && !canAffordImpending && !canAffordCleave && !canAffordBlightPath && !canAffordBeholdPath && !canAffordExileOrPayPath && !canAffordSacOrPayPath && !canAffordFreeCast) {
                 // The primary face can't be paid for by any path. Normally we skip it entirely.
                 // But if this is an Adventure/Omen/modal-DFC card whose *secondary* face is
                 // affordable, surface a grayed-out placeholder for the primary face so the
@@ -556,6 +583,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 additionalCosts, sacrificeTargets, variableSacrificeTargets,
                 exileTargets, exileMinCount, discardTargets, discardCount,
                 bounceTargets, bounceCount,
+                tapTargets, tapCount,
                 beholdTargets, beholdCount,
                 blightVariableCost, blightVariableCreatures, blightVariableMaxX,
                 payXLifeCost, payXLifeMaxX
@@ -1488,6 +1516,9 @@ class CastSpellEnumerator : ActionEnumerator {
         // --- Kicker ---
         enumerateKicker(context, hand, result)
 
+        // --- Cleave (CR 702.148) ---
+        enumerateCleave(context, hand, result)
+
         // --- Conspire ---
         enumerateConspire(context, hand, result)
 
@@ -1625,7 +1656,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 isLegendary = cardComponent.typeLine.isLegendary,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 cardTypes = cardComponent.typeLine.cardTypes,
             )
             val canAfford = context.manaSolver.canPay(state, playerId, baseCost, spellContext = spellContext, precomputedSources = context.availableManaSources)
@@ -1734,7 +1765,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 isLegendary = cardComponent.typeLine.isLegendary,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 cardTypes = cardComponent.typeLine.cardTypes,
             )
             val canAfford = context.manaSolver.canPay(state, playerId, baseCost, spellContext = spellContext, precomputedSources = context.availableManaSources)
@@ -1836,7 +1867,7 @@ class CastSpellEnumerator : ActionEnumerator {
                 isLegendary = cardComponent.typeLine.isLegendary,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 cardTypes = cardComponent.typeLine.cardTypes,
             )
             val canAffordKickedMana = context.manaSolver.canPay(state, playerId, kickedCost, spellContext = kickedSpellContext, precomputedSources = context.availableManaSources)
@@ -2010,6 +2041,144 @@ class CastSpellEnumerator : ActionEnumerator {
     }
 
     /**
+     * Enumerates the cleave cast (CR 702.148) for cards with the Cleave keyword. Cleave is an
+     * *alternative* cost, so it emits a `CastWithAlternativeCost` legal action tagged
+     * [AlternativeCostType.CLEAVE] — mirroring evoke/impending — but as its own pass (like
+     * [enumerateKicker]) because paying it removes the bracketed text and can therefore change the
+     * spell's legal target set (e.g. Fierce Retribution's "target [attacking] creature" widens to
+     * "target creature"). The brackets-removed target requirements come from
+     * [com.wingedsheep.sdk.model.CardScript.cleaveTargetRequirements]; when a card declares none, the
+     * cleave variant is untargeted or targets identically to the base and this reuses the printed
+     * requirements.
+     */
+    private fun enumerateCleave(
+        context: EnumerationContext,
+        hand: List<EntityId>,
+        result: MutableList<LegalAction>
+    ) {
+        val state = context.state
+        val playerId = context.playerId
+
+        for (cardId in hand) {
+            val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: continue
+            if (cardComponent.typeLine.isLand) continue
+            if (context.cantCastSpell(cardId)) continue
+
+            val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
+            val cleaveAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cleave>().firstOrNull() ?: continue
+
+            // Timing — cleave doesn't change when the spell can be cast; instants keep flash timing,
+            // sorceries stay sorcery-speed.
+            val isInstant = cardComponent.typeLine.isInstant
+            val grantedFlash = cardDef.keywords.contains(Keyword.FLASH) || context.castPermissionUtils.hasGrantedFlash(state, cardId)
+            if (!isInstant && !grantedFlash && !context.canPlaySorcerySpeed) continue
+
+            // Check cast restrictions
+            val castRestrictions = cardDef.script.castRestrictions
+            if (castRestrictions.isNotEmpty() && !context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)) continue
+
+            // Cleave mana cost (CR 202.3b — mana value is still computed from the printed cost, not
+            // the cleave cost; only affordability uses this).
+            val cleaveCost = context.costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, cleaveAbility.cost, playerId)
+            val canAffordCleave = context.manaSolver.canPay(state, playerId, cleaveCost, precomputedSources = context.availableManaSources)
+            val cleaveCostString = cleaveCost.toString()
+            val cleaveAutoTapPreview = if (context.skipAutoTapPreview) null else {
+                context.manaSolver.solve(state, playerId, cleaveCost, precomputedSources = context.availableManaSources)
+                    ?.sources?.map { it.entityId }
+            }
+
+            // A cleave cost can itself carry {X} (Lantern Flare — cleave {X}{R}{W}). The printed
+            // mode may bind X from board state, but the cleave mode's X is chosen and paid, so the
+            // client must be prompted for it. Compute the affordable X ceiling exactly as the
+            // printed X-cost path does (available mana minus the fixed portion, divided by the X
+            // symbol count). `action.xValue` then flows through validation → payment → resolution
+            // unchanged, so the resolving effect's `DynamicAmount.XValue` reads the chosen X.
+            val cleaveHasX = cleaveCost.hasX
+            val cleaveMaxAffordableX: Int? = if (cleaveHasX) {
+                val spellContext = SpellPaymentContext(
+                    isInstantOrSorcery = cardComponent.typeLine.isInstant || cardComponent.typeLine.isSorcery,
+                    isKicked = false,
+                    isCreature = cardComponent.typeLine.isCreature,
+                    isLegendary = cardComponent.typeLine.isLegendary,
+                    manaValue = cardComponent.manaCost.cmc,
+                    hasXInCost = cleaveCost.hasX,
+                    subtypes = paymentSubtypesOf(cardComponent),
+                    cardTypes = cardComponent.typeLine.cardTypes,
+                )
+                val availableSources = context.manaSolver.getAvailableManaCount(
+                    state, playerId, precomputedSources = context.availableManaSources, spellContext = spellContext
+                )
+                val fixedCost = cleaveCost.cmc  // X contributes 0 to CMC
+                val xSymbolCount = cleaveCost.xCount.coerceAtLeast(1)
+                ((availableSources - fixedCost) / xSymbolCount).coerceAtLeast(0)
+            } else null
+
+            // Target requirements for the brackets-removed variant.
+            val cleaveBaseReqs = if (cardDef.script.cleaveTargetRequirements.isNotEmpty()) {
+                cardDef.script.cleaveTargetRequirements
+            } else {
+                cardDef.script.targetRequirements
+            }
+            val targetReqs = buildList {
+                addAll(cleaveBaseReqs)
+                cardDef.script.auraTarget?.let { add(it) }
+            }
+
+            if (targetReqs.isNotEmpty()) {
+                val targetReqInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
+                if (!context.targetUtils.allRequirementsSatisfied(targetReqInfos)) continue
+                val firstReq = targetReqs.first()
+                val firstReqInfo = targetReqInfos.first()
+
+                val canAutoSelect = targetReqs.size == 1 &&
+                    context.targetUtils.shouldAutoSelectPlayerTarget(firstReq, firstReqInfo.validTargets)
+
+                if (canAutoSelect) {
+                    val autoSelectedTarget = ChosenTarget.Player(firstReqInfo.validTargets.first())
+                    result.add(LegalAction(
+                        actionType = "CastWithAlternativeCost",
+                        description = "Cleave ${cardComponent.name} ($cleaveCostString)",
+                        action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget), useAlternativeCost = true, alternativeCostType = AlternativeCostType.CLEAVE),
+                        affordable = canAffordCleave,
+                        manaCostString = cleaveCostString,
+                        hasXCost = cleaveHasX,
+                        maxAffordableX = cleaveMaxAffordableX,
+                        autoTapPreview = cleaveAutoTapPreview
+                    ))
+                } else {
+                    result.add(LegalAction(
+                        actionType = "CastWithAlternativeCost",
+                        description = "Cleave ${cardComponent.name} ($cleaveCostString)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true, alternativeCostType = AlternativeCostType.CLEAVE),
+                        validTargets = firstReqInfo.validTargets,
+                        requiresTargets = true,
+                        targetCount = firstReq.count,
+                        minTargets = firstReq.effectiveMinCount,
+                        targetDescription = firstReq.description,
+                        targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                        affordable = canAffordCleave,
+                        manaCostString = cleaveCostString,
+                        hasXCost = cleaveHasX,
+                        maxAffordableX = cleaveMaxAffordableX,
+                        autoTapPreview = cleaveAutoTapPreview
+                    ))
+                }
+            } else {
+                result.add(LegalAction(
+                    actionType = "CastWithAlternativeCost",
+                    description = "Cleave ${cardComponent.name} ($cleaveCostString)",
+                    action = CastSpell(playerId, cardId, useAlternativeCost = true, alternativeCostType = AlternativeCostType.CLEAVE),
+                    affordable = canAffordCleave,
+                    manaCostString = cleaveCostString,
+                    hasXCost = cleaveHasX,
+                    maxAffordableX = cleaveMaxAffordableX,
+                    autoTapPreview = cleaveAutoTapPreview
+                ))
+            }
+        }
+    }
+
+    /**
      * Builds the AdditionalCostData for the client based on what additional costs the spell requires.
      */
     private fun buildAdditionalCostData(
@@ -2022,6 +2191,8 @@ class CastSpellEnumerator : ActionEnumerator {
         discardCount: Int,
         bounceTargets: List<EntityId> = emptyList(),
         bounceCount: Int = 0,
+        tapTargets: List<EntityId> = emptyList(),
+        tapCount: Int = 0,
         beholdTargets: List<EntityId> = emptyList(),
         beholdCount: Int = 0,
         blightVariableCost: AdditionalCost.BlightVariable? = null,
@@ -2091,6 +2262,14 @@ class CastSpellEnumerator : ActionEnumerator {
                 costType = "ReturnToHand",
                 validBounceTargets = bounceTargets,
                 bounceCount = bounceCount
+            )
+        } else if (tapTargets.isNotEmpty()) {
+            val tapCostAtom = additionalCosts.firstNotNullOfOrNull { (it as? AdditionalCost.Atom)?.atom as? CostAtom.TapPermanents }
+            AdditionalCostData(
+                description = tapCostAtom?.description?.replaceFirstChar { it.uppercase() } ?: "Tap permanents you control",
+                costType = "TapPermanents",
+                validTapTargets = tapTargets,
+                tapCount = tapCount
             )
         } else if (beholdTargets.isNotEmpty()) {
             val flatCosts = additionalCosts.flatMap { if (it is AdditionalCost.Composite) it.steps else listOf(it) }

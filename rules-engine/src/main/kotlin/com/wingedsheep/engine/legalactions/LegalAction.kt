@@ -311,8 +311,8 @@ data class AdditionalCostData(
      */
     val payXLifeMaxX: Int = 0,
     /**
-     * For [AdditionalCost.RemoveCountersFromYourCreatures]: total counters to remove
-     * across all creatures you control (any counter types qualify).
+     * For an any-type [CostAtom.RemoveCounters] additional cost: total counters to
+     * remove across all matching permanents.
      */
     val distributedCounterRemovalTotal: Int = 0,
 
@@ -325,7 +325,9 @@ data class AdditionalCostData(
      * `ActivateAbility.costPayment.exiledCards`.
      */
     val validCraftMaterials: List<EntityId> = emptyList(),
-    val craftMinCount: Int = 1
+    val craftMinCount: Int = 1,
+    /** Cap on material count for exact-count crafts ("Craft with artifact"); null = unbounded. */
+    val craftMaxCount: Int? = null
 )
 
 /**

@@ -1,8 +1,10 @@
 package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.support.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
@@ -234,6 +236,104 @@ class WaterbendScenarioTest : ScenarioTestBase() {
                 val tapped = creatures.count { game.state.getEntity(it)!!.has<TappedComponent>() }
                 withClue("exactly 4 of the 5 creatures pay the {4} cost (can't tap more than the generic)") {
                     tapped shouldBe 4
+                }
+            }
+
+            // Regression: floating mana in the pool must count toward an Explicit payment.
+            // The client always routes a waterbend (or convoke) activation through Explicit payment
+            // (the mana-source pipeline phase is forced whenever an alternative-payment phase runs),
+            // and the enumerator deems the ability affordable counting pool + sources. The Explicit
+            // execution branch used to solve the whole cost from the tapped sources alone, ignoring
+            // the pool — so mana already floating was stranded ("not used and not available"), and a
+            // legal activation could even fail with "Selected mana sources cannot pay this ability's
+            // cost". These two tests pin the pool-first behaviour (parity with the auto-tap branch
+            // and CastPaymentProcessor.autoPay).
+            test("floating mana pays part of an Explicit waterbend-ability cost (pool not stranded)") {
+                val game = scenario()
+                    .withPlayers("P1", "P2")
+                    .withCardOnBattlefield(1, "Waterbend Tester")
+                    .withLandsOnBattlefield(1, "Island", 2)
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(2, "Island")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Two mana already floating; the {4} cost is 2 from the pool + 2 from the two Islands.
+                game.state = game.state.updateEntity(game.player1Id) { c ->
+                    c.with(ManaPoolComponent(blue = 2))
+                }
+
+                val before = game.handSize(1)
+                val sourceId = game.findPermanent("Waterbend Tester")!!
+                val islands = game.findAllPermanents("Island")
+
+                val result = game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = sourceId,
+                        abilityId = abilityId(),
+                        paymentStrategy = PaymentStrategy.Explicit(islands),
+                    )
+                )
+                withClue("floating mana should cover the rest of the Explicit payment: ${result.error}") {
+                    result.error shouldBe null
+                }
+                game.resolveStack()
+                game.handSize(1) shouldBe before + 1
+                withClue("the floating pool is spent, not stranded") {
+                    game.state.getEntity(game.player1Id)!!.get<ManaPoolComponent>()!!.blue shouldBe 0
+                }
+                withClue("both Islands were tapped for the remaining {2}") {
+                    islands.all { game.state.getEntity(it)!!.has<TappedComponent>() } shouldBe true
+                }
+            }
+
+            test("floating mana plus waterbend taps pay the cost (pool spent, no sources tapped)") {
+                val game = scenario()
+                    .withPlayers("P1", "P2")
+                    .withCardOnBattlefield(1, "Waterbend Tester")
+                    .withCardOnBattlefield(1, "Glory Seeker")
+                    .withCardOnBattlefield(1, "Glory Seeker")
+                    .withLandsOnBattlefield(1, "Island", 2) // available but should NOT be needed
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(2, "Island")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Two mana floating; tap 2 creatures for waterbend → {4} = 2 taps + 2 pool.
+                game.state = game.state.updateEntity(game.player1Id) { c ->
+                    c.with(ManaPoolComponent(blue = 2))
+                }
+
+                val before = game.handSize(1)
+                val sourceId = game.findPermanent("Waterbend Tester")!!
+                val creatures = game.findAllPermanents("Glory Seeker")
+                val islands = game.findAllPermanents("Island")
+
+                val result = game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = sourceId,
+                        abilityId = abilityId(),
+                        paymentStrategy = PaymentStrategy.Explicit(emptyList()),
+                        alternativePayment = AlternativePaymentChoice(waterbendPermanents = creatures.toSet())
+                    )
+                )
+                withClue("waterbend taps + floating mana should pay the whole cost: ${result.error}") {
+                    result.error shouldBe null
+                }
+                game.resolveStack()
+                game.handSize(1) shouldBe before + 1
+                withClue("the floating pool is spent") {
+                    game.state.getEntity(game.player1Id)!!.get<ManaPoolComponent>()!!.blue shouldBe 0
+                }
+                withClue("both creatures were tapped for waterbend") {
+                    creatures.all { game.state.getEntity(it)!!.has<TappedComponent>() } shouldBe true
+                }
+                withClue("no Island needed to be tapped — the pool covered the non-waterbend remainder") {
+                    islands.none { game.state.getEntity(it)!!.has<TappedComponent>() } shouldBe true
                 }
             }
 

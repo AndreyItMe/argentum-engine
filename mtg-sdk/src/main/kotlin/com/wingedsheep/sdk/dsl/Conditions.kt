@@ -35,6 +35,7 @@ import com.wingedsheep.sdk.scripting.conditions.YouChoseOtherCreatureAsRingBeare
 import com.wingedsheep.sdk.scripting.predicates.StatePredicate
 import com.wingedsheep.sdk.scripting.conditions.IsYourTurn as IsYourTurnCondition
 import com.wingedsheep.sdk.scripting.conditions.IsNotYourTurn as IsNotYourTurnCondition
+import com.wingedsheep.sdk.scripting.conditions.IsPlayersTurn as IsPlayersTurnCondition
 import com.wingedsheep.sdk.scripting.conditions.IsInPhase as IsInPhaseCondition
 import com.wingedsheep.sdk.scripting.conditions.PlayerAttackedWithCreaturesThisTurn
 import com.wingedsheep.sdk.scripting.conditions.PlayerCastSpellsThisTurn
@@ -455,6 +456,23 @@ object Conditions {
      */
     fun TargetIsPlayer(targetIndex: Int = 0): ConditionInterface =
         com.wingedsheep.sdk.scripting.conditions.TargetIsPlayer(targetIndex)
+
+    /**
+     * The player who triggered this ability is [player]. Narrows a broad "whenever a player …"
+     * trigger to a specific player — e.g. Shinryu, Transcendent Rival gates "When the chosen
+     * player loses the game, you win the game" with `TriggeringPlayerIs(Player.ChosenOpponent)`.
+     */
+    fun TriggeringPlayerIs(player: Player): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.TriggeringPlayerIs(player)
+
+    /**
+     * [player] has the most life, or is tied for the most life, among all players. The "most life"
+     * check a binary comparison can't express. Preacher of the Schism gates its attack triggers with
+     * `PlayerHasMostLife(Player.DefendingPlayer)` (the attacked player) and
+     * `PlayerHasMostLife(Player.You)`.
+     */
+    fun PlayerHasMostLife(player: Player): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.PlayerHasMostLife(player)
 
     /**
      * If the context target at [targetIndex] is a tapped battlefield permanent. Branch on a
@@ -961,10 +979,20 @@ object Conditions {
      * or removed after the permanent entered.
      */
     fun SourceCounterCountAtLeast(counterType: String, count: Int): ConditionInterface =
+        SourceCounterCountAtLeast(CounterTypeFilter.Named(counterType), count)
+
+    /**
+     * While this permanent has [count] or more counters matching [counterType] on it.
+     *
+     * The [CounterTypeFilter] form of [SourceCounterCountAtLeast]; pass [CounterTypeFilter.Any]
+     * for "N or more counters of any kind" gates (Warden of the Inner Sky's "three or more
+     * counters on it"), which sums every counter kind on the source.
+     */
+    fun SourceCounterCountAtLeast(counterType: CounterTypeFilter, count: Int): ConditionInterface =
         Compare(
             DynamicAmount.EntityProperty(
                 EntityReference.Source,
-                EntityNumericProperty.CounterCount(CounterTypeFilter.Named(counterType))
+                EntityNumericProperty.CounterCount(counterType)
             ),
             ComparisonOperator.GTE,
             DynamicAmount.Fixed(count)
@@ -1371,6 +1399,13 @@ object Conditions {
      */
     val IsNotYourTurn: ConditionInterface =
         IsNotYourTurnCondition
+
+    /**
+     * If it's [player]'s turn — the [Player]-parametric form of [IsYourTurn]. Wrap in [Not] for
+     * "if it's not [player]'s turn" (Scytheclaw Raptor: `Not(IsPlayersTurn(Player.TriggeringPlayer))`).
+     */
+    fun IsPlayersTurn(player: Player): ConditionInterface =
+        IsPlayersTurnCondition(player)
 
     /**
      * If the current phase matches any of the listed phases.

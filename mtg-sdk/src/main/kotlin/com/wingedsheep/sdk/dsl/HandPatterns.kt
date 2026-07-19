@@ -90,6 +90,36 @@ object HandPatterns {
         )
     }
 
+    /**
+     * "Each opponent exiles a card from their hand" — Mindleech Ghoul's exploit payoff. Mirrors
+     * [eachOpponentDiscards]'s [ForEachPlayerEffect] shape: one iteration per opponent with
+     * `Player.You` rebound to the iterated opponent, so each opponent gathers *their own* hand,
+     * that opponent (the iteration's controller/chooser) picks the card, and it moves to *their*
+     * exile. Unlike a targeted single-player exile, this hits every opponent and needs no target.
+     *
+     * @param count how many cards each opponent exiles (default 1).
+     */
+    fun eachOpponentExilesFromHand(count: Int = 1): Effect =
+        ForEachPlayerEffect(
+            players = Player.EachOpponent,
+            effects = listOf(
+                GatherCardsEffect(
+                    source = CardSource.FromZone(Zone.HAND, Player.You),
+                    storeAs = "hand"
+                ),
+                SelectFromCollectionEffect(
+                    from = "hand",
+                    selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(count)),
+                    storeSelected = "exiled",
+                    prompt = "Choose ${if (count == 1) "a card" else "$count cards"} to exile"
+                ),
+                MoveCollectionEffect(
+                    from = "exiled",
+                    destination = CardDestination.ToZone(Zone.EXILE)
+                )
+            )
+        )
+
     fun discardCards(
         count: Int,
         target: EffectTarget = EffectTarget.Controller,

@@ -125,6 +125,35 @@ sealed interface Duration {
     }
 
     /**
+     * Effect lasts for as long as each affected permanent has at least one counter of
+     * [counterType] on it (CR 611.2b "for as long as …"). This is the *affected-object*
+     * analogue of the source-keyed `While*` durations: the gate watches a counter on the
+     * permanent the effect is modifying, not on the effect's source, so the effect persists
+     * independently of the source permanent and ends the instant the counter leaves that
+     * affected permanent.
+     *
+     * Per-affected and one-way (like [WhileSourceAttachedToAffected]): each affected entity is
+     * dropped as soon as it stops carrying the counter, and `EndedDurationExpiryCheck` latches
+     * that drop off so re-adding the counter does not resurrect the effect for that entity
+     * (a fresh application would create a new effect). `StateProjector` supplies the
+     * instantaneous per-frame gate.
+     *
+     * Used by Ultima, Origin of Oblivion — "put a blight counter on target land. For as long as
+     * that land has a blight counter on it, it loses all land types and abilities and has
+     * '{T}: Add {C}.'" — where the transform is created by a resolving triggered ability and must
+     * outlive Ultima leaving the battlefield.
+     *
+     * @property counterType The counter kind that must remain present (matches
+     *   [com.wingedsheep.sdk.core.CounterType] names / the `Counters.*` string constants,
+     *   e.g. `Counters.BLIGHT`).
+     */
+    @SerialName("WhileAffectedHasCounter")
+    @Serializable
+    data class WhileAffectedHasCounter(val counterType: String) : Duration {
+        override val description = "for as long as it has a $counterType counter on it"
+    }
+
+    /**
      * Effect lasts until a specific phase.
      * Example: "Until your next end step"
      */
@@ -168,6 +197,31 @@ sealed interface Duration {
         val sourceDescription: String = "this creature"
     ) : Duration {
         override val description = "for as long as $sourceDescription remains tapped"
+    }
+
+    /**
+     * Effect lasts for as long as each *affected* permanent remains tapped (CR 611.2b
+     * "for as long as it remains tapped") — the affected-object mirror of
+     * [WhileSourceTapped]: the gate watches the permanent the effect is modifying, not the
+     * effect's source, so the effect persists independently of the source and ends the
+     * instant that permanent becomes untapped (or leaves the battlefield — a returning
+     * permanent is a new object).
+     *
+     * Per-affected and one-way (CR 611.2b): once an affected permanent untaps, the effect
+     * ends for that permanent for good — `EndedDurationExpiryCheck` physically removes it
+     * (from floating effects and from duration-keyed grants alike), so tapping it again
+     * later does NOT restart the effect. `StateProjector` (floating effects) and the
+     * granted-ability read sites supply the instantaneous per-frame gate.
+     *
+     * Used by Braided Net — "Tap another target nonland permanent. Its activated abilities
+     * can't be activated for as long as it remains tapped." — as the duration of a
+     * [com.wingedsheep.sdk.scripting.effects.GrantStaticAbilityEffect] carrying
+     * [com.wingedsheep.sdk.scripting.PreventActivatedAbilities].
+     */
+    @SerialName("WhileAffectedTapped")
+    @Serializable
+    data object WhileAffectedTapped : Duration {
+        override val description = "for as long as it remains tapped"
     }
 
     /**
@@ -264,8 +318,13 @@ object Durations {
     fun whileSourceTapped(source: String = "this creature") =
         Duration.WhileSourceTapped(source)
 
+    val WhileAffectedTapped = Duration.WhileAffectedTapped
+
     fun whileYouControlSource(source: String = "this permanent") =
         Duration.WhileYouControlSource(source)
+
+    fun whileAffectedHasCounter(counterType: String) =
+        Duration.WhileAffectedHasCounter(counterType)
 
     fun untilPhase(phase: String) = Duration.UntilPhase(phase)
     fun until(condition: String) = Duration.UntilCondition(condition)

@@ -14,7 +14,8 @@ import com.wingedsheep.sdk.model.EntityId
  * [com.wingedsheep.sdk.scripting.effects.ManaRestriction.SubtypeSpellsOrAbilitiesOnly]) see
  * the correct types even when continuous effects (Mycosynth Lattice, Sea's Claim) modify
  * them. Works for any zone — projected types simply aren't reported for entities the layer
- * system doesn't project.
+ * system doesn't project, which is why the base subtypes go through [paymentSubtypesOf] (so a
+ * changeling source keeps every creature type outside the battlefield too).
  */
 internal fun buildAbilityPaymentContext(
     cardComponent: CardComponent,
@@ -25,8 +26,7 @@ internal fun buildAbilityPaymentContext(
         .mapNotNull { name -> CardType.entries.find { it.name == name } }
         .toSet()
     val cardTypes = cardComponent.typeLine.cardTypes + projectedTypes
-    val subtypes = (cardComponent.typeLine.subtypes.map { it.value } +
-        projected.getSubtypes(sourceId)).toSet()
+    val subtypes = paymentSubtypesOf(cardComponent) + projected.getSubtypes(sourceId)
     return SpellPaymentContext(
         isAbilityActivation = true,
         abilitySourceCardTypes = cardTypes,

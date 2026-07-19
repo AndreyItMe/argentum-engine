@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
 import com.wingedsheep.engine.state.components.battlefield.EnteredThisTurnComponent
+import com.wingedsheep.engine.state.components.battlefield.LastKnownPermanentComponent
 import com.wingedsheep.engine.state.components.battlefield.DealtCombatDamageToPlayersThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtCombatDamageToPlayerComponent
 import com.wingedsheep.engine.state.components.battlefield.HasDealtDamageComponent
@@ -253,6 +254,7 @@ class PredicateEvaluator {
             CardPredicate.IsLegendary -> "LEGENDARY" in types
             CardPredicate.IsNonlegendary -> "LEGENDARY" !in types
             CardPredicate.HasNonManaActivatedAbility -> card.hasNonManaActivatedAbility
+            CardPredicate.HasActivatedAbility -> card.hasActivatedAbility
 
             // Color predicates - use projected colors
             is CardPredicate.HasColor -> predicate.color.name in colors
@@ -751,6 +753,14 @@ class PredicateEvaluator {
                     ControllerPredicate.ControlledByTargetPlayer -> {
                         context.targetPlayerId?.let { controllerId == it } ?: false
                     }
+                    ControllerPredicate.ControlledByTriggeringPlayer -> {
+                        // Mirror OwnedByTriggeringPlayer's resolution: the damaged player rides on
+                        // triggeringEntityId for a damage trigger (triggeringPlayerId is only set by
+                        // triggers that name a distinct player), so fall back to it. A non-player
+                        // triggeringEntityId (e.g. a creature) can never equal a controller playerId.
+                        val triggeringPlayer = context.triggeringPlayerId ?: context.triggeringEntityId
+                        triggeringPlayer != null && controllerId == triggeringPlayer
+                    }
                     is ControllerPredicate.ControlledByReferencedPlayer -> {
                         val referenced = context.resolvePlayerTarget(predicate.target)
                             ?: resolveReferencedPlayerFromState(state, projected, predicate.target, context)
@@ -781,9 +791,13 @@ class PredicateEvaluator {
             val triggeringId = context.triggeringEntityId ?: return null
             projected.getController(triggeringId)
                 ?: state.getEntity(triggeringId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(triggeringId)
+                    ?.get<LastKnownPermanentComponent>()?.snapshot?.controllerId
         }
         // The controller of the spell/ability's first chosen target — lets a filter scope to
-        // "creatures with the same controller as the target" (Fear, Fire, Foes!).
+        // "creatures with the same controller as the target" (Fear, Fire, Foes!). A target the
+        // effect itself has already moved off the battlefield reads its last-known controller
+        // (CR 608.2h).
         EffectTarget.TargetController -> {
             val targetId = when (val first = context.targets.firstOrNull()) {
                 is ChosenTarget.Permanent -> first.entityId
@@ -792,6 +806,8 @@ class PredicateEvaluator {
             } ?: return null
             projected.getController(targetId)
                 ?: state.getEntity(targetId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(targetId)
+                    ?.get<LastKnownPermanentComponent>()?.snapshot?.controllerId
         }
         else -> null
     }
@@ -1105,6 +1121,13 @@ class PredicateEvaluator {
                 matches(state, state.projectedState, attached.targetId, predicate.filter, ctx)
             }
 
+            // Source-relative — the candidate IS the effect's source permanent itself
+            // (GameObjectFilter counterpart of GroupFilter's Scope.Self). Backs the granted
+            // PreventActivatedAbilities form (Braided Net), where the activation-legality
+            // check supplies the grant's holder as the source. False with no source context.
+            StatePredicate.IsSource -> context?.sourceId == entityId
+            StatePredicate.IsGrantingPermanent -> context?.granterId != null && context.granterId == entityId
+
             // Source-relative — the candidate is the permanent the effect's source is attached
             // to (its enchanted/equipped creature). Read the source's AttachedToComponent and
             // compare its targetId to the candidate. False with no source or an unattached source.
@@ -1146,6 +1169,11 @@ class PredicateEvaluator {
             // Battlefield marker — set when a warped spell resolves (CR 702.185).
             StatePredicate.WasCastForWarp ->
                 container.has<com.wingedsheep.engine.state.components.battlefield.WarpedComponent>()
+
+            // Cast-origin zone of a spell on the stack — reads the engine-stamped
+            // SpellOnStackComponent.castFromZone (Wash Away's "wasn't cast from its owner's hand").
+            is StatePredicate.WasCastFromZone ->
+                container.get<SpellOnStackComponent>()?.castFromZone == predicate.zone
 
             // Relative power
             StatePredicate.HasGreatestPower -> {
@@ -1334,6 +1362,7 @@ class PredicateEvaluator {
 
             // A cast-spell record has no battlefield permanent to inspect for activated abilities.
             CardPredicate.HasNonManaActivatedAbility -> false
+            CardPredicate.HasActivatedAbility -> false
 
             // Stack-relative targeting predicate — historical cast records have no
             // chosen-target snapshot, so this always returns false here.
@@ -1357,6 +1386,13 @@ data class PredicateContext(
     val sourceId: EntityId? = null,
     /** Owner of the entity being evaluated (for graveyard targeting) */
     val ownerId: EntityId? = null,
+    /**
+     * The permanent whose static ability granted the resolving ability (the Equipment/Aura bearing
+     * a `GrantActivatedAbility`/`GrantTriggeredAbility`). Lets a target filter resolve
+     * [StatePredicate.IsGrantingPermanent] — e.g. "an artifact other than [this granting Equipment]"
+     * (Dire Blunderbuss). Null for ungranted abilities.
+     */
+    val granterId: EntityId? = null,
     /** The entity that caused the trigger to fire (for SharesCreatureTypeWithTriggeringEntity) */
     val triggeringEntityId: EntityId? = null,
     /**
@@ -1454,6 +1490,7 @@ data class PredicateContext(
                 targetOpponentId = chosenPlayerTarget,
                 targetPlayerId = chosenPlayerTarget,
                 sourceId = context.sourceId,
+                granterId = context.granterId,
                 triggeringEntityId = context.triggeringEntityId,
                 triggeringPlayerId = context.triggeringPlayerId,
                 affectedEntityId = context.affectedEntityId,

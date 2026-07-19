@@ -52,6 +52,8 @@ export const keywordManaClass: Record<string, string> = {
   TOXIC: 'ability-toxic',
   CANT_BE_BLOCKED: 'ability-unblockable',
   CHANGELING: 'ability-changeling',
+  EXPLOIT: 'ability-exploit',
+  TRAINING: 'ability-training',
   /** Suspect status (CR 701.60). Rendered via the synthetic SUSPECTED pseudo-keyword from
    *  ProjectedState.isSuspected — the status itself isn't a keyword, but reusing this
    *  icon table keeps the badge rendering uniform. */
@@ -65,7 +67,7 @@ export const displayableKeywords = new Set([
   'SHROUD', 'INDESTRUCTIBLE', 'DEFENDER', 'MENACE', 'FEAR',
   'PROWESS', 'WARD', 'INTIMIDATE', 'INFECT',
   'WITHER', 'TOXIC', 'CANT_BE_BLOCKED', 'CHANGELING',
-  'PERSIST', 'BANDING', 'FLANKING',
+  'PERSIST', 'BANDING', 'FLANKING', 'EXPLOIT', 'TRAINING',
 ])
 
 /** Maps engine CounterType to mana-font counter class suffixes */
@@ -117,5 +119,7 @@ export const counterManaClass: Record<string, string> = {
   PAGE: 'counter-lore',
   REV: 'counter-bolt',
   POSSESSION: 'counter-devotion',
+  LANDMARK: 'counter-charge',
+  DREAD: 'counter-doom',
   INCUBATION: 'counter-slime',
 }

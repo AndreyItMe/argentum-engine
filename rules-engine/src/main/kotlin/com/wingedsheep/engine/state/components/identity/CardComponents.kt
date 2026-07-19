@@ -39,6 +39,14 @@ data class CardComponent(
      */
     val hasNonManaActivatedAbility: Boolean = false,
     /**
+     * Precomputed from the card definition: does this card have at least one intrinsic activated
+     * ability of any kind (mana, loyalty, or otherwise) activatable from the battlefield? Used by
+     * `CardPredicate.HasActivatedAbility` for the craft material clause on The Enigma Jewel ("four
+     * or more nonlands with activated abilities"). Unlike [hasNonManaActivatedAbility] this counts
+     * mana abilities. Printed abilities only — granted abilities are not counted.
+     */
+    val hasActivatedAbility: Boolean = false,
+    /**
      * The set this card was *originally printed* in (the canonical [CardDefinition.setCode], not the
      * specific printing the player owns). Read by `CardPredicate.OriginallyPrintedInSet` to model
      * "permanent with a name originally printed in [set]" (Golgothian Sylex, ARN City in a Bottle).

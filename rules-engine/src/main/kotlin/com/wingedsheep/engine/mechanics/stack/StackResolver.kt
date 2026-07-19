@@ -26,6 +26,7 @@ import com.wingedsheep.engine.state.components.identity.CantBeCounteredComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.CopyOfComponent
+import com.wingedsheep.engine.state.components.identity.DoubleFacedComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.HasMorphAbilityComponent
 import com.wingedsheep.engine.state.components.identity.MorphDataComponent
@@ -50,17 +51,13 @@ import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.EntersAsCopy
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
-import com.wingedsheep.engine.handlers.effects.DamageUtils
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
+import com.wingedsheep.engine.handlers.effects.permanent.types.returnDfcFaceFromExile
 import com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils
 import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.EntersWithChoice
-import com.wingedsheep.sdk.scripting.EntersWithCounters
-import com.wingedsheep.sdk.scripting.EntersWithDynamicCounters
 import com.wingedsheep.sdk.scripting.ChoiceType
-import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.TargetingSourceType
@@ -122,6 +119,7 @@ class StackResolver(
         wasWarped: Boolean = false,
         wasEvoked: Boolean = false,
         wasImpending: Boolean = false,
+        wasCleaved: Boolean = false,
         wasSneaked: Boolean = false,
         sneakAttackDefenderId: EntityId? = null,
         chosenModes: List<Int> = emptyList(),
@@ -195,6 +193,7 @@ class StackResolver(
                 wasWarped = wasWarped,
                 wasEvoked = wasEvoked,
                 wasImpending = wasImpending,
+                wasCleaved = wasCleaved,
                 wasSneaked = wasSneaked,
                 sneakAttackDefenderId = sneakAttackDefenderId,
                 beheldCards = beheldCards,
@@ -452,7 +451,14 @@ class StackResolver(
         state: GameState,
         ability: TriggeredAbilityOnStackComponent,
         targets: List<ChosenTarget> = emptyList(),
-        targetRequirements: List<TargetRequirement> = emptyList()
+        targetRequirements: List<TargetRequirement> = emptyList(),
+        /**
+         * True when this ability fired because its own source creature was declared as an attacker
+         * (a SELF-bound attacks trigger). Stamped onto the emitted [AbilityTriggeredEvent] so
+         * Firebender Ascension's "attacking causes a triggered ability of that creature to trigger"
+         * meta-trigger can key on it.
+         */
+        causedByAttack: Boolean = false
     ): ExecutionResult {
         // Create a new entity for the ability on the stack
         val (abilityId, stateWithId) = state.newEntity()
@@ -472,7 +478,8 @@ class StackResolver(
                 ability.sourceName,
                 ability.controllerId,
                 ability.description,
-                abilityEntityId = abilityId
+                abilityEntityId = abilityId,
+                causedByAttack = causedByAttack
             )
         )
 
@@ -623,13 +630,21 @@ class StackResolver(
         targets: List<ChosenTarget> = emptyList(),
         targetRequirements: List<TargetRequirement> = emptyList(),
         emitActivationEvent: Boolean = true,
-        costsTap: Boolean = false
+        costsTap: Boolean = false,
+        cantBeCopied: Boolean = false
     ): ExecutionResult {
         val (abilityId, stateWithId) = state.newEntity()
 
         var container = ComponentContainer.of(ability)
         if (targets.isNotEmpty()) {
             container = container.with(TargetsComponent(targets, targetRequirements))
+        }
+        // CR 707.10e — "This ability can't be copied": tag the ability instance on the stack so a
+        // copy-ability effect (e.g. Gogo, Master of Mimicry) makes no copy of it.
+        if (cantBeCopied) {
+            container = container.with(
+                com.wingedsheep.engine.state.components.identity.CantBeCopiedComponent
+            )
         }
 
         var newState = stateWithId.withEntity(abilityId, container)
@@ -1361,7 +1376,7 @@ class StackResolver(
             val totalManaSpent = spellComponent.manaSpentWhite + spellComponent.manaSpentBlue +
                 spellComponent.manaSpentBlack + spellComponent.manaSpentRed +
                 spellComponent.manaSpentGreen + spellComponent.manaSpentColorless
-            val (counterState, events) = applyEntersWithCounters(
+            val (counterState, events) = applyEntersWithReplacements(
                 newState, spellId, cardDef, controllerId, spellComponent.xValue, totalManaSpent
             )
             newState = counterState
@@ -1493,11 +1508,20 @@ class StackResolver(
             }
         }
 
-        // Warp: create delayed trigger to exile at beginning of next end step
+        // Warp: create delayed trigger to exile at beginning of next end step. Snapshot the
+        // permanent's battlefield-entry timestamp so the exile only affects this battlefield
+        // object — if the permanent leaves and re-enters before the trigger resolves (blink),
+        // it's a new object the delayed trigger no longer tracks (CR 603.7c / 400.7).
         if (spellComponent.wasWarped) {
+            val entryTimestamp = newState.getEntity(spellId)
+                ?.get<com.wingedsheep.engine.state.components.battlefield.BattlefieldEntryTimestampComponent>()
+                ?.timestamp
             val delayedTrigger = DelayedTriggeredAbility(
                 id = java.util.UUID.randomUUID().toString(),
-                effect = WarpExileEffect(EffectTarget.SpecificEntity(spellId)),
+                effect = WarpExileEffect(
+                    target = EffectTarget.SpecificEntity(spellId),
+                    enteredBattlefieldTimestamp = entryTimestamp
+                ),
                 fireAtStep = Step.END,
                 sourceId = spellId,
                 sourceName = cardComponent?.name ?: "Unknown",
@@ -1554,6 +1578,11 @@ class StackResolver(
             faceSpellEffect != null -> faceSpellEffect
             spellComponent.wasKicked && cardComponent != null ->
                 resolvedCardDef?.script?.kickerSpellEffect ?: cardComponent.spellEffect
+            // Cleave (CR 702.148): a spell cast for its cleave cost resolves with its
+            // brackets-removed effect variant, applied structurally at cast time rather than by
+            // editing text — so e.g. a bracketed delayed-trigger clause is never created.
+            spellComponent.wasCleaved && cardComponent != null ->
+                resolvedCardDef?.script?.cleaveSpellEffect ?: cardComponent.spellEffect
             else -> cardComponent?.spellEffect
         }
         val rawSpellEffect = baseSpellEffect
@@ -1628,6 +1657,26 @@ class StackResolver(
                 // For a cast face (Adventure / modal DFC), "Exile <name>." lives on the face's script.
                 val pausedResolvedScript = spellComponent.faceIndex?.let { pausedCardDef?.cardFaces?.getOrNull(it)?.script }
                     ?: pausedCardDef?.script
+
+                // Esper Origins: a graveyard-cast that returns itself to the battlefield transformed
+                // does so even when its resolution paused mid-way (e.g. the Surveil earlier in the
+                // same resolution). The card leaves the stack and enters transformed now; the paused
+                // continuation still resolves the remaining effects. Precedence over flashback exile.
+                val pausedReturnTransformed = pausedResolvedScript?.returnTransformedFromGraveyardOnResolve
+                if (pausedReturnTransformed != null && spellComponent.castFromZone == Zone.GRAVEYARD) {
+                    val transformEvents = mutableListOf<GameEvent>()
+                    val transformed = resolveSelfToBattlefieldTransformed(
+                        effectResult.state, spellId, pausedReturnTransformed.counters, transformEvents
+                    )
+                    if (transformed != null) {
+                        return ExecutionResult.paused(
+                            transformed,
+                            effectResult.pendingDecision!!,
+                            events + effectResult.events + transformEvents
+                        )
+                    }
+                }
+
                 val pausedSelfExile = pausedResolvedScript?.selfExileOnResolve == true
                 // Flashback (printed or granted — Archmage's Newt) or Harmonize (printed or granted
                 // — Songcrafter Mage): a graveyard cast exiles on resolution instead of returning
@@ -1747,6 +1796,21 @@ class StackResolver(
         // For a cast face (Adventure / modal DFC), "Exile <name>." lives on the face's script.
         val resolvedScript = spellComponent.faceIndex?.let { cardDef?.cardFaces?.getOrNull(it)?.script }
             ?: cardDef?.script
+
+        // Esper Origins: a spell cast from a graveyard is put onto the battlefield transformed
+        // instead of going to the graveyard. Gated on the same graveyard cast as the flashback
+        // exile below and takes precedence over it. Falls through to the normal destination if the
+        // card can't enter transformed (non-DFC or non-permanent back face — official ruling).
+        val returnTransformedSpec = resolvedScript?.returnTransformedFromGraveyardOnResolve
+        if (returnTransformedSpec != null && spellComponent.castFromZone == Zone.GRAVEYARD) {
+            val transformed = resolveSelfToBattlefieldTransformed(
+                newState, spellId, returnTransformedSpec.counters, events
+            )
+            if (transformed != null) {
+                return ExecutionResult.success(transformed, events)
+            }
+        }
+
         val selfExile = resolvedScript?.selfExileOnResolve == true
         // Flashback (printed or granted — Archmage's Newt) or Harmonize (printed or granted —
         // Songcrafter Mage): a graveyard cast exiles on resolution instead of returning to the
@@ -1894,6 +1958,77 @@ class StackResolver(
     }
 
     /**
+     * Resolution destination for [com.wingedsheep.sdk.model.CardScript.returnTransformedFromGraveyardOnResolve]
+     * (Esper Origins): a spell cast from a graveyard is put onto the battlefield **transformed**
+     * (its back face up) under its owner's control, entering with [counters], instead of going to
+     * the graveyard/exile.
+     *
+     * Faithful to "exile it, then put it onto the battlefield transformed ... with a finality counter":
+     * the resolved card leaves the stack and a brand-new back-face object enters the battlefield
+     * (leaves/enters triggers fire, a Saga back enters with a fresh lore counter). The intermediate
+     * exile is invisible — no effect keys on it — so the stack → battlefield move is done directly.
+     *
+     * Per the official ruling, a card that is not double-faced (or whose back face is not a permanent)
+     * "will not enter at all"; [returnDfcFaceFromExile] no-ops in that case and the caller must fall
+     * back to the normal graveyard/exile destination.
+     */
+    private fun resolveSelfToBattlefieldTransformed(
+        state: GameState,
+        spellId: EntityId,
+        counters: List<CounterType>,
+        events: MutableList<GameEvent>
+    ): GameState? {
+        val container = state.getEntity(spellId) ?: return null
+        val cardComponent = container.get<CardComponent>() ?: return null
+        val ownerId = cardComponent.ownerId ?: return null
+        val cardDef = cardRegistry.getCard(cardComponent.name) ?: return null
+        val backFace = cardDef.backFace ?: return null
+        // A non-permanent back face can't be put onto the battlefield — no-op, caller falls back.
+        if (!backFace.isPermanent) return null
+
+        // Strip the on-stack bookkeeping (and any alternative-cost permissions) before the card
+        // becomes a permanent, mirroring the normal resolved-spell cleanup.
+        var working = state.updateEntity(spellId) { c ->
+            c.without<SpellOnStackComponent>()
+                .without<TargetsComponent>()
+                .without<PlayWithoutPayingCostComponent>()
+                .without<com.wingedsheep.engine.state.components.identity.PlayWithCostIncreaseComponent>()
+                .without<com.wingedsheep.engine.state.components.identity.PlayWithFixedAlternativeManaCostComponent>()
+                .without<ExileAfterResolveComponent>()
+        }
+        working = working.removeMayPlayPermissionsForCard(spellId)
+
+        // "Exile it, then put it onto the battlefield transformed": the resolving spell was already
+        // popped off the stack (it is in no zone), so place it in its owner's exile — the source
+        // zone [returnDfcFaceFromExile] is built to flip-and-return from.
+        working = working.addToZone(ZoneKey(ownerId, Zone.EXILE), spellId)
+
+        // A DFC spell on the stack carries no DoubleFacedComponent yet (it's stamped on ETB); add
+        // one on its front face so returnDfcFaceFromExile can flip it to the back face.
+        if (working.getEntity(spellId)?.get<DoubleFacedComponent>() == null) {
+            working = working.updateEntity(spellId) { c ->
+                c.with(
+                    DoubleFacedComponent(
+                        frontCardDefinitionId = cardDef.name,
+                        backCardDefinitionId = backFace.name,
+                        currentFace = DoubleFacedComponent.Face.FRONT
+                    )
+                )
+            }
+        }
+
+        val transition = returnDfcFaceFromExile(working, cardRegistry, spellId, DoubleFacedComponent.Face.BACK)
+        working = transition.state
+        events.addAll(transition.events)
+
+        // The finality counter (and any others) land on the new back-face permanent.
+        if (counters.isNotEmpty()) {
+            working = applyExileCounters(working, spellId, counters, events)
+        }
+        return working
+    }
+
+    /**
      * Add counters to a card that was just exiled because of ExileAfterResolveComponent.
      * Used by Goliath Daydreamer to put a dream counter on cast spells as they're exiled.
      */
@@ -2033,6 +2168,7 @@ class StackResolver(
         val context = EffectContext(
             sourceId = abilityComponent.sourceId,
             controllerId = abilityComponent.controllerId,
+            granterId = abilityComponent.granterId,
             abilityIdentity = abilityComponent.abilityIdentity,
             targets = resolvedTargets2,
             triggerDamageAmount = abilityComponent.triggerDamageAmount,
@@ -2211,19 +2347,17 @@ class StackResolver(
     }
 
     // =========================================================================
-    // Enters With Counters
+    // Enters With Replacements ("enters with counters / keywords", CR 614.1c)
     // =========================================================================
 
-    private val dynamicAmountEvaluator = DynamicAmountEvaluator()
-    private val conditionEvaluator = com.wingedsheep.engine.handlers.ConditionEvaluator()
-
     /**
-     * Apply "enters with counters" replacement effects to a permanent.
-     * Handles both fixed count (EntersWithCounters) and dynamic count (EntersWithDynamicCounters).
-     * Also checks other battlefield permanents for replacement effects that modify entering creatures
-     * (e.g., Gev, Scaled Scorch: "Other creatures you control enter with additional +1/+1 counters").
+     * Apply the resolving permanent's "enters with …" replacement effects — counters
+     * (EntersWithCounters / EntersWithDynamicCounters) and keywords (EntersWithKeywords) —
+     * plus any global ones sourced from other battlefield permanents (e.g., Gev, Scaled
+     * Scorch: "Other creatures you control enter with additional +1/+1 counters").
+     * Thin wrapper over [EntersWithReplacements] carrying the cast context (X, mana spent).
      */
-    internal fun applyEntersWithCounters(
+    internal fun applyEntersWithReplacements(
         state: GameState,
         entityId: EntityId,
         cardDef: com.wingedsheep.sdk.model.CardDefinition,
@@ -2233,61 +2367,14 @@ class StackResolver(
     ): Pair<GameState, List<GameEvent>> {
         var newState = state
         val events = mutableListOf<GameEvent>()
-        val entityName = newState.getEntity(entityId)?.get<CardComponent>()?.name ?: ""
-        // Apply the entering creature's own replacement effects
-        for (effect in cardDef.script.replacementEffects) {
-            when (effect) {
-                is EntersWithCounters -> {
-                    if (effect.condition != null) {
-                        val condContext = EffectContext(
-                            sourceId = entityId,
-                            controllerId = controllerId,
-                        )
-                        if (!conditionEvaluator.evaluate(newState, effect.condition!!, condContext)) continue
-                    }
-                    val counterType = resolveCounterType(effect.counterType)
-                    val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
-                        newState, entityId, counterType, effect.count, placerId = controllerId
-                    )
-                    val current = newState.getEntity(entityId)?.get<CountersComponent>() ?: CountersComponent()
-                    newState = newState.updateEntity(entityId) { c ->
-                        c.with(current.withAdded(counterType, modifiedCount))
-                    }
-                    val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, entityId)
-                    newState = afterMark
-                    events.add(CountersAddedEvent(entityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn))
-                }
-                is EntersWithDynamicCounters -> {
-                    // Skip "other only" effects when applying to self (e.g., Gev)
-                    if (effect.otherOnly) continue
-                    val counterType = resolveCounterType(effect.counterType)
-                    val context = EffectContext(
-                        sourceId = entityId,
-                        controllerId = controllerId,
-                        xValue = xValue,
-                        totalManaSpent = totalManaSpent
-                    )
-                    val count = dynamicAmountEvaluator.evaluate(newState, effect.count, context)
-                    if (count > 0) {
-                        val modifiedCount = ReplacementEffectUtils.applyCounterPlacementModifiers(
-                            newState, entityId, counterType, count, placerId = controllerId
-                        )
-                        val current = newState.getEntity(entityId)?.get<CountersComponent>() ?: CountersComponent()
-                        newState = newState.updateEntity(entityId) { c ->
-                            c.with(current.withAdded(counterType, modifiedCount))
-                        }
-                        val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, entityId)
-                        newState = afterMark
-                        events.add(CountersAddedEvent(entityId, effect.counterType.description, modifiedCount, entityName, firstThisTurn))
-                    }
-                }
-                else -> { /* Other replacement effects handled elsewhere */ }
-            }
-        }
 
-        // Apply "enters with counters" replacement effects from other battlefield permanents
-        // (e.g., Gev: "Other creatures you control enter with additional +1/+1 counters")
-        val (globalState, globalEvents) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+        val (ownState, ownEvents) = EntersWithReplacements.applyFromDefinition(
+            newState, entityId, cardDef, controllerId, xValue, totalManaSpent
+        )
+        newState = ownState
+        events.addAll(ownEvents)
+
+        val (globalState, globalEvents) = EntersWithReplacements.applyGlobal(
             newState, entityId, controllerId
         )
         newState = globalState
@@ -2295,9 +2382,6 @@ class StackResolver(
 
         return newState to events
     }
-
-    private fun resolveCounterType(filter: CounterTypeFilter): CounterType =
-        EntersWithCountersHelper.resolveCounterType(filter)
 
     // =========================================================================
     // Countering

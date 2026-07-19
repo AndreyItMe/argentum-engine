@@ -4,6 +4,7 @@ import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.ReplacementEffectSourceComponent
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -53,6 +54,41 @@ object EnterTappedReplacements {
             }
         }
         return false
+    }
+
+    /**
+     * Resolve global "[filter] enter tapped/untapped" replacements for a token [tokenId] just
+     * placed onto [controllerId]'s battlefield, mirroring the entry-tap resolution in
+     * [ZoneTransitionService]. Tokens are permanents entering the battlefield, so they honor
+     * Dauntless Dismantler / Authority of the Consuls-style effects just like cast or played
+     * permanents — but [com.wingedsheep.engine.handlers.effects.BattlefieldEntry.place] (the
+     * ad-hoc insertion path token executors use) deliberately doesn't set tapped state, so each
+     * token-minting site calls this immediately after placing the token.
+     *
+     * [definedTapped] is whether the token was minted already tapped (its own `effect.tapped` /
+     * self-`EntersTapped`); [attacking] whether it entered attacking (a combat token keeps its
+     * tapped state and is never flipped untapped). Per CR 614 an applicable "enters untapped"
+     * replacement wins over a global "enters tapped".
+     *
+     * The token must already carry its `ControllerComponent` / `CardComponent` so the replacement
+     * filters ("artifacts your opponents control", …) resolve.
+     */
+    fun applyCreatedTokenEntryTap(
+        state: GameState,
+        tokenId: EntityId,
+        controllerId: EntityId,
+        definedTapped: Boolean = false,
+        attacking: Boolean = false,
+    ): GameState {
+        val entersUntapped = EnterUntappedReplacements.entersUntapped(state, tokenId, controllerId)
+        return when {
+            definedTapped && !attacking && entersUntapped ->
+                state.updateEntity(tokenId) { it.without<TappedComponent>() }
+            !definedTapped && !entersUntapped &&
+                entersTapped(state, tokenId, controllerId) ->
+                state.updateEntity(tokenId) { it.with(TappedComponent) }
+            else -> state
+        }
     }
 
     private fun matchesEnterFilter(

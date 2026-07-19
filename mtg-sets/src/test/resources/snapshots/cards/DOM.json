@@ -18,20 +18,12 @@
         }
     ],
     "script": {
-        "triggeredAbilities": [
+        "replacementEffects": [
             {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 2,
-                    "target": "Self"
-                },
-                "triggerCondition": "WasKicked"
+                "type": "EntersWithCounters",
+                "count": 2,
+                "selfOnly": true,
+                "condition": "WasKicked"
             }
         ]
     },
@@ -855,20 +847,12 @@
         }
     ],
     "script": {
-        "triggeredAbilities": [
+        "replacementEffects": [
             {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 3,
-                    "target": "Self"
-                },
-                "triggerCondition": "WasKicked"
+                "type": "EntersWithCounters",
+                "count": 3,
+                "selfOnly": true,
+                "condition": "WasKicked"
             }
         ]
     },
@@ -5134,20 +5118,6 @@
             {
                 "id": "ability_1",
                 "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 5,
-                    "target": "Self"
-                },
-                "triggerCondition": "WasKicked"
-            },
-            {
-                "id": "ability_2",
-                "trigger": {
                     "type": "AttackEvent",
                     "requires": [
                         "AttacksAlone"
@@ -5167,6 +5137,14 @@
                     },
                     "target": "Self"
                 }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "count": 5,
+                "selfOnly": true,
+                "condition": "WasKicked"
             }
         ]
     },
@@ -11417,20 +11395,12 @@
         }
     ],
     "script": {
-        "triggeredAbilities": [
+        "replacementEffects": [
             {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 2,
-                    "target": "Self"
-                },
-                "triggerCondition": "WasKicked"
+                "type": "EntersWithCounters",
+                "count": 2,
+                "selfOnly": true,
+                "condition": "WasKicked"
             }
         ]
     },
@@ -13497,20 +13467,12 @@
         }
     ],
     "script": {
-        "triggeredAbilities": [
+        "replacementEffects": [
             {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 3,
-                    "target": "Self"
-                },
-                "triggerCondition": "WasKicked"
+                "type": "EntersWithCounters",
+                "count": 3,
+                "selfOnly": true,
+                "condition": "WasKicked"
             }
         ]
     },

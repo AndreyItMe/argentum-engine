@@ -82,7 +82,7 @@ class MoveCountersEachKindMissingExecutor : EffectExecutor<MoveCountersEachKindM
             }
             val (afterMark, firstThisTurn) = DamageUtils.recordCounterPlacement(newState, destinationId)
             newState = afterMark
-            events.add(CountersAddedEvent(destinationId, counterTypeToString(counterType), modified, destName, firstThisTurn))
+            events.add(CountersAddedEvent(destinationId, counterTypeToString(counterType), modified, destName, firstThisTurn, placedBy = context.controllerId))
         }
 
         return EffectResult.success(newState, events)

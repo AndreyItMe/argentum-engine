@@ -5897,6 +5897,413 @@
     "colorIdentityOverride": []
 }
 
+// Emet-Selch, Unsundered
+{
+    "name": "Emet-Selch, Unsundered",
+    "manaCost": "{1}{U}{B}",
+    "typeLine": "Legendary Creature — Elder Wizard",
+    "oracleText": "Vigilance\nWhenever Emet-Selch enters or attacks, draw a card, then discard a card.\nAt the beginning of your upkeep, if there are fourteen or more cards in your graveyard, you may transform Emet-Selch.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Hand"
+                                    },
+                                    "storeAs": "hand"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "hand",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "discarded",
+                                    "prompt": "Choose 1 card to discard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "discarded",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    },
+                                    "moveType": "Discard"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "DrawCards",
+                            "count": {
+                                "type": "Fixed",
+                                "amount": 1
+                            }
+                        },
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "FromZone",
+                                        "zone": "Hand"
+                                    },
+                                    "storeAs": "hand"
+                                },
+                                {
+                                    "type": "SelectFromCollection",
+                                    "from": "hand",
+                                    "selection": {
+                                        "type": "ChooseExactly",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 1
+                                        }
+                                    },
+                                    "storeSelected": "discarded",
+                                    "prompt": "Choose 1 card to discard"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "discarded",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    },
+                                    "moveType": "Discard"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "UPKEEP"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": "Transform"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "Count",
+                        "player": "You",
+                        "zone": "Graveyard"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 14
+                    }
+                }
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Hades, Sorcerer of Eld",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Avatar",
+        "oracleText": "Vigilance\nEcho of the Lost — During your turn, you may play cards from your graveyard.\nIf a card or token would be put into your graveyard from anywhere, exile it instead.",
+        "creatureStats": {
+            "power": 6,
+            "toughness": 6
+        },
+        "keywords": [
+            "VIGILANCE"
+        ],
+        "script": {
+            "staticAbilities": [
+                "MayPlayLandsFromGraveyard",
+                {
+                    "type": "MayCastFromGraveyard",
+                    "filter": "nonland",
+                    "duringYourTurnOnly": true
+                }
+            ],
+            "replacementEffects": [
+                {
+                    "type": "RedirectZoneChange",
+                    "newDestination": "Exile",
+                    "appliesTo": {
+                        "type": "ZoneChangeEvent",
+                        "filter": "own:you",
+                        "to": "Graveyard"
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "218",
+            "rarity": "MYTHIC",
+            "artist": "Néstor Ossandón Leal",
+            "imageUri": "https://cards.scryfall.io/normal/back/7/5/75cf4eb8-33e7-4dfc-b890-a7e3b5c1b9d5.jpg?1782686432",
+            "rulings": [
+                {
+                    "date": "2025-06-06",
+                    "text": "While you control Hades, Sorcerer of Eld, abilities that trigger whenever a permanent you own is put into your graveyard from the battlefield (for example, \"When this creature dies . . .\") won't trigger."
+                },
+                {
+                    "date": "2025-06-06",
+                    "text": "If you discard a card while you control Hades, Sorcerer of Eld, abilities that function when a card is discarded (such as madness) still work, even though that card never reaches your graveyard. Spells or abilities that check the characteristics of a discarded card can find that card in exile."
+                },
+                {
+                    "date": "2025-06-06",
+                    "text": "You pay all costs and follow all timing rules for cards played with the permission granted by Hades, Sorcerer of Eld's second ability."
+                }
+            ]
+        },
+        "colorIdentityOverride": [
+            "BLUE",
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "218",
+        "rarity": "MYTHIC",
+        "artist": "Néstor Ossandón Leal",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/5/75cf4eb8-33e7-4dfc-b890-a7e3b5c1b9d5.jpg?1782686432",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "Emet-Selch's last ability checks your graveyard at the moment it would trigger to see if you have fourteen or more cards in your graveyard. If you don't, the ability won't trigger at all. If it does trigger, the ability will check again as it tries to resolve. If you don't have fourteen or more cards in your graveyard at that time, the ability won't resolve and none of its effects will happen."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "The mana value of a nonmodal double-faced card is the mana value of its front face, no matter which face is up."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
+// Esper Origins
+{
+    "name": "Esper Origins",
+    "manaCost": "{1}{G}",
+    "typeLine": "Sorcery",
+    "oracleText": "Surveil 2. You gain 2 life. If this spell was cast from a graveyard, exile it, then put it onto the battlefield transformed under its owner's control with a finality counter on it. (If a creature with a finality counter on it would die, exile it instead.)\nFlashback {3}{G} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "{3}{G}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Surveil",
+                    "count": 2
+                },
+                {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 2
+                    }
+                }
+            ]
+        },
+        "returnTransformedFromGraveyardOnResolve": {
+            "counters": [
+                "FINALITY"
+            ]
+        }
+    },
+    "backFace": {
+        "name": "Summon: Esper Maduin",
+        "manaCost": "",
+        "typeLine": "Enchantment Creature — Saga Elemental",
+        "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Reveal the top card of your library. If it's a permanent card, put it into your hand.\nII — Add {G}{G}.\nIII — Other creatures you control get +2/+2 and gain trample until end of turn.",
+        "creatureStats": {
+            "power": 4,
+            "toughness": 4
+        },
+        "script": {
+            "sagaChapters": [
+                {
+                    "chapter": 1,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "TopOfLibrary",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeAs": "looked"
+                            },
+                            {
+                                "type": "RevealCollection",
+                                "from": "looked"
+                            },
+                            {
+                                "type": "FilterCollection",
+                                "from": "looked",
+                                "filter": {
+                                    "type": "MatchesFilter",
+                                    "filter": "permanent"
+                                },
+                                "storeMatching": "kept",
+                                "storeNonMatching": "rest"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "kept",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Hand"
+                                }
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "rest",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Library",
+                                    "placement": "Top"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "chapter": 2,
+                    "effect": {
+                        "type": "AddMana",
+                        "color": "GREEN",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    }
+                },
+                {
+                    "chapter": 3,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you",
+                                        "excludeSelf": true
+                                    }
+                                },
+                                "body": {
+                                    "type": "ModifyStats",
+                                    "powerModifier": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    },
+                                    "toughnessModifier": {
+                                        "type": "Fixed",
+                                        "amount": 2
+                                    },
+                                    "target": "Self"
+                                }
+                            },
+                            {
+                                "type": "ForEach",
+                                "space": {
+                                    "type": "IterationSpace.Group",
+                                    "filter": {
+                                        "baseFilter": "creature ctrl:you",
+                                        "excludeSelf": true
+                                    }
+                                },
+                                "body": {
+                                    "type": "GrantKeyword",
+                                    "keyword": "TRAMPLE",
+                                    "target": "Self"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "185",
+            "rarity": "RARE",
+            "artist": "Danciao",
+            "flavorText": "\"I've chosen a name for her . . . Terra.\"",
+            "imageUri": "https://cards.scryfall.io/normal/back/0/f/0f503360-216a-4629-89b2-d32072850aef.jpg?1782686461"
+        },
+        "colorIdentityOverride": [
+            "GREEN"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "185",
+        "rarity": "RARE",
+        "artist": "Solan",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/f/0f503360-216a-4629-89b2-d32072850aef.jpg?1782686461"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Ether
 {
     "name": "Ether",
@@ -7711,6 +8118,75 @@
     "colorIdentityOverride": [
         "RED",
         "GREEN"
+    ]
+}
+
+// Gogo, Master of Mimicry
+{
+    "name": "Gogo, Master of Mimicry",
+    "manaCost": "{2}{U}",
+    "typeLine": "Legendary Creature — Wizard",
+    "oracleText": "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies. This ability can't be copied and X can't be 0. (Mana abilities can't be targeted.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 4
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{X}{X}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "CopyTargetSpellOrAbility",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target activated or triggered ability you control"
+                    },
+                    "copies": "XValue"
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsActivatedOrTriggeredAbility"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            },
+                            "zone": "Stack"
+                        },
+                        "id": "target activated or triggered ability you control"
+                    }
+                ],
+                "descriptionOverride": "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies. This ability can't be copied and X can't be 0.",
+                "holdPriority": true,
+                "minimumXValue": 1,
+                "cantBeCopied": true
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "54",
+        "rarity": "MYTHIC",
+        "artist": "Thea Dumitriu",
+        "flavorText": "\"I see... so, you seek to save the world. Then I guess that means I shall save the world as well. Lead on! I will copy your every move.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/c/cce4eb99-d960-4ab7-911a-bb4ea74d1775.jpg?1782686556"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 
@@ -15891,6 +16367,7 @@
                                                 "amount": 1
                                             }
                                         },
+                                        "chooser": "ControllerOfTarget",
                                         "storeSelected": "found"
                                     },
                                     {
@@ -20721,6 +21198,374 @@
     ]
 }
 
+// Terra, Magical Adept
+{
+    "name": "Terra, Magical Adept",
+    "manaCost": "{1}{R}{G}",
+    "typeLine": "Legendary Creature — Human Wizard Warrior",
+    "oracleText": "When Terra enters, mill five cards. Put up to one enchantment card milled this way into your hand.\nTrance — {4}{R}{G}, {T}: Exile Terra, then return it to the battlefield transformed under its owner's control. Activate only as a sorcery.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 5
+                                        },
+                                        "isMill": true
+                                    },
+                                    "storeAs": "milled"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "milled",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "milled",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "filter": "enchantment",
+                            "storeSelected": "selected",
+                            "prompt": "You may put an enchantment card milled this way into your hand",
+                            "selectedLabel": "Put in hand",
+                            "remainderLabel": "Leave in graveyard",
+                            "showAllCards": true
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "selected",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{4}{R}{G}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": "ExileAndReturnTransformed",
+                "timing": "SorcerySpeed"
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Esper Terra",
+        "manaCost": "",
+        "typeLine": "Legendary Enchantment Creature — Saga Wizard",
+        "oracleText": "(As this Saga enters and after your draw step, add a lore counter.)\nI, II, III — Create a token that's a copy of target nonlegendary enchantment you control. It gains haste. If it's a Saga, put up to three lore counters on it. Sacrifice it at the beginning of your next end step.\nIV — Add {W}{W}, {U}{U}, {B}{B}, {R}{R}, and {G}{G}. Exile Esper Terra, then return it to the battlefield (front face up).",
+        "creatureStats": {
+            "power": 6,
+            "toughness": 6
+        },
+        "keywords": [
+            "FLYING"
+        ],
+        "script": {
+            "sagaChapters": [
+                {
+                    "chapter": 1,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "CreateTokenCopyOfTarget",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "enchantment"
+                                },
+                                "addedKeywords": [
+                                    "HASTE"
+                                ],
+                                "sacrificeAtStep": "END",
+                                "sacrificeOnlyOnControllersTurn": true
+                            },
+                            {
+                                "type": "Gated",
+                                "gate": {
+                                    "type": "Gate.WhenCondition",
+                                    "condition": {
+                                        "type": "CollectionContainsMatch",
+                                        "collection": "createdTokens",
+                                        "filter": "enchantment Saga"
+                                    }
+                                },
+                                "then": {
+                                    "type": "AddCountersUpTo",
+                                    "counterType": "lore",
+                                    "max": {
+                                        "type": "Fixed",
+                                        "amount": 3
+                                    },
+                                    "target": {
+                                        "type": "PipelineTarget",
+                                        "collectionName": "createdTokens"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "targetRequirement": {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsEnchantment",
+                                    "IsNonlegendary"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "id": "enchantment"
+                    }
+                },
+                {
+                    "chapter": 2,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "CreateTokenCopyOfTarget",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "enchantment"
+                                },
+                                "addedKeywords": [
+                                    "HASTE"
+                                ],
+                                "sacrificeAtStep": "END",
+                                "sacrificeOnlyOnControllersTurn": true
+                            },
+                            {
+                                "type": "Gated",
+                                "gate": {
+                                    "type": "Gate.WhenCondition",
+                                    "condition": {
+                                        "type": "CollectionContainsMatch",
+                                        "collection": "createdTokens",
+                                        "filter": "enchantment Saga"
+                                    }
+                                },
+                                "then": {
+                                    "type": "AddCountersUpTo",
+                                    "counterType": "lore",
+                                    "max": {
+                                        "type": "Fixed",
+                                        "amount": 3
+                                    },
+                                    "target": {
+                                        "type": "PipelineTarget",
+                                        "collectionName": "createdTokens"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "targetRequirement": {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsEnchantment",
+                                    "IsNonlegendary"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "id": "enchantment"
+                    }
+                },
+                {
+                    "chapter": 3,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "CreateTokenCopyOfTarget",
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "enchantment"
+                                },
+                                "addedKeywords": [
+                                    "HASTE"
+                                ],
+                                "sacrificeAtStep": "END",
+                                "sacrificeOnlyOnControllersTurn": true
+                            },
+                            {
+                                "type": "Gated",
+                                "gate": {
+                                    "type": "Gate.WhenCondition",
+                                    "condition": {
+                                        "type": "CollectionContainsMatch",
+                                        "collection": "createdTokens",
+                                        "filter": "enchantment Saga"
+                                    }
+                                },
+                                "then": {
+                                    "type": "AddCountersUpTo",
+                                    "counterType": "lore",
+                                    "max": {
+                                        "type": "Fixed",
+                                        "amount": 3
+                                    },
+                                    "target": {
+                                        "type": "PipelineTarget",
+                                        "collectionName": "createdTokens"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "targetRequirement": {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": {
+                                "cardPredicates": [
+                                    "IsEnchantment",
+                                    "IsNonlegendary"
+                                ],
+                                "controllerPredicate": "ControlledByYou"
+                            }
+                        },
+                        "id": "enchantment"
+                    }
+                },
+                {
+                    "chapter": 4,
+                    "effect": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "AddMana",
+                                "color": "WHITE",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            {
+                                "type": "AddMana",
+                                "color": "BLUE",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            {
+                                "type": "AddMana",
+                                "color": "BLACK",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            {
+                                "type": "AddMana",
+                                "color": "RED",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            {
+                                "type": "AddMana",
+                                "color": "GREEN",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            },
+                            {
+                                "type": "ExileAndReturnTransformed",
+                                "returnAs": "FRONT"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "245",
+            "rarity": "MYTHIC",
+            "artist": "Clare Wong",
+            "imageUri": "https://cards.scryfall.io/normal/back/f/b/fbd447aa-588d-4c4d-925e-a7d3bdf6a65c.jpg?1782686407",
+            "rulings": [
+                {
+                    "date": "2025-06-06",
+                    "text": "Esper Terra's fourth chapter ability isn't a mana ability. It uses the stack and can be responded to."
+                },
+                {
+                    "date": "2025-06-06",
+                    "text": "The token copies exactly what was printed on the original enchantment. It doesn't copy counters, Auras/Equipment, or non-copy effects. If the copied enchantment has {X} in its mana cost, X is 0."
+                }
+            ]
+        },
+        "colorIdentityOverride": [
+            "WHITE",
+            "BLUE",
+            "BLACK",
+            "RED",
+            "GREEN"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "245",
+        "rarity": "MYTHIC",
+        "artist": "Clare Wong",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/b/fbd447aa-588d-4c4d-925e-a7d3bdf6a65c.jpg?1782686407"
+    },
+    "colorIdentityOverride": [
+        "RED",
+        "GREEN"
+    ]
+}
+
 // The Crystal's Chosen
 {
     "name": "The Crystal's Chosen",
@@ -22989,6 +23834,101 @@
         "artist": "Fariba Khamseh",
         "flavorText": "\"This will be the end of it.\"",
         "imageUri": "https://cards.scryfall.io/normal/front/b/9/b9162d08-a6ba-4e6e-b82c-9b092bd781dd.jpg"
+    },
+    "colorIdentityOverride": []
+}
+
+// Ultima, Origin of Oblivion
+{
+    "name": "Ultima, Origin of Oblivion",
+    "manaCost": "{5}",
+    "typeLine": "Legendary Creature — God",
+    "oracleText": "Flying\nWhenever Ultima attacks, put a blight counter on target land. For as long as that land has a blight counter on it, it loses all land types and abilities and has \"{T}: Add {C}.\"\nWhenever you tap a land for {C}, add an additional {C}.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "AttackEvent",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "blight",
+                            "count": 1,
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land"
+                            }
+                        },
+                        {
+                            "type": "BecomeArtifact",
+                            "target": {
+                                "type": "BoundVariable",
+                                "name": "target land"
+                            },
+                            "cardTypes": null,
+                            "colors": null,
+                            "grantedAbility": {
+                                "id": "ability_2",
+                                "cost": "CostTap",
+                                "effect": {
+                                    "type": "AddColorlessMana",
+                                    "amount": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "isManaAbility": true,
+                                "descriptionOverride": "{T}: Add {C}."
+                            },
+                            "duration": {
+                                "type": "WhileAffectedHasCounter",
+                                "counterType": "blight"
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "land"
+                    },
+                    "id": "target land"
+                },
+                "descriptionOverride": "Whenever Ultima attacks, put a blight counter on target land. For as long as that land has a blight counter on it, it loses all land types and abilities and has \"{T}: Add {C}.\""
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "AdditionalManaOnSourceTap",
+                "sourceFilter": "land ctrl:you",
+                "whenProducing": "COLORLESS"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "2",
+        "rarity": "RARE",
+        "artist": "Russell Lu",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/5/d55a4c02-1aa4-454c-9041-84937377a53b.jpg?1782686600",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "The affected land keeps any other card types (such as artifact) and supertypes (such as basic or legendary) when it loses its land types."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "Ultima's last ability is a triggered mana ability. It doesn't use the stack and can't be responded to."
+            }
+        ]
     },
     "colorIdentityOverride": []
 }
@@ -25542,6 +26482,164 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Zenos yae Galvus
+{
+    "name": "Zenos yae Galvus",
+    "manaCost": "{3}{B}{B}",
+    "typeLine": "Legendary Creature — Human Noble Warrior",
+    "oracleText": "My First Friend — When Zenos yae Galvus enters, choose a creature an opponent controls. Until end of turn, creatures other than Zenos yae Galvus and the chosen creature get -2/-2.\nWhen the chosen creature leaves the battlefield, transform Zenos yae Galvus.",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ForEach",
+                            "space": {
+                                "type": "IterationSpace.Group",
+                                "filter": {
+                                    "baseFilter": "creature",
+                                    "excludeSelf": true,
+                                    "excludeTarget": true
+                                }
+                            },
+                            "body": {
+                                "type": "ModifyStats",
+                                "powerModifier": {
+                                    "type": "Fixed",
+                                    "amount": -2
+                                },
+                                "toughnessModifier": {
+                                    "type": "Fixed",
+                                    "amount": -2
+                                },
+                                "target": "Self"
+                            }
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "EntityMatches",
+                                    "entity": {
+                                        "type": "ContextTarget",
+                                        "index": 0
+                                    },
+                                    "filter": "creature"
+                                }
+                            },
+                            "then": {
+                                "type": "CreateDelayedTrigger",
+                                "effect": "Transform",
+                                "trigger": {
+                                    "event": {
+                                        "type": "ZoneChangeEvent",
+                                        "from": "Battlefield"
+                                    }
+                                },
+                                "watchedTarget": {
+                                    "type": "BoundVariable",
+                                    "name": "creature an opponent controls"
+                                },
+                                "expiry": "DelayedTriggerExpiry.Never",
+                                "fireOnce": true
+                            }
+                        }
+                    ]
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "optional": true,
+                    "filter": {
+                        "baseFilter": "creature ctrl:opponent"
+                    },
+                    "id": "creature an opponent controls"
+                },
+                "descriptionOverride": "My First Friend — When Zenos yae Galvus enters, choose a creature an opponent controls. Until end of turn, creatures other than Zenos yae Galvus and the chosen creature get -2/-2. When the chosen creature leaves the battlefield, transform Zenos yae Galvus."
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Shinryu, Transcendent Rival",
+        "manaCost": "",
+        "typeLine": "Legendary Creature — Dragon",
+        "oracleText": "Flying\nAs this creature transforms into Shinryu, choose an opponent.\nBurning Chains — When the chosen player loses the game, you win the game.",
+        "creatureStats": {
+            "power": 8,
+            "toughness": 8
+        },
+        "keywords": [
+            "FLYING"
+        ],
+        "script": {
+            "triggeredAbilities": [
+                {
+                    "id": "ability_2",
+                    "trigger": {
+                        "type": "TransformEvent",
+                        "intoBackFace": true
+                    },
+                    "effect": "ChooseOpponentForSource",
+                    "descriptionOverride": "As this creature transforms into Shinryu, choose an opponent."
+                },
+                {
+                    "id": "ability_3",
+                    "trigger": "PlayerLostGameEvent",
+                    "binding": "ANY",
+                    "effect": {
+                        "type": "WinGame",
+                        "message": "Shinryu, Transcendent Rival — the chosen player lost the game"
+                    },
+                    "triggerCondition": {
+                        "type": "TriggeringPlayerIs",
+                        "player": "ChosenOpponent"
+                    },
+                    "descriptionOverride": "Burning Chains — When the chosen player loses the game, you win the game."
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "127",
+            "rarity": "RARE",
+            "artist": "Alexander Mokhov",
+            "imageUri": "https://cards.scryfall.io/normal/back/b/6/b65ffce4-bb58-418a-9bad-81533a5f2ba2.jpg?1782686503"
+        },
+        "colorIdentityOverride": [
+            "BLACK"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "127",
+        "rarity": "RARE",
+        "artist": "Alexander Mokhov",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/6/b65ffce4-bb58-418a-9bad-81533a5f2ba2.jpg?1782686503",
+        "rulings": [
+            {
+                "date": "2025-06-06",
+                "text": "In the case where you can't choose a creature an opponent controls for Zenos's first ability (probably because your opponents control no creatures), other creatures will still get -2/-2 until end of turn when Zenos's first ability resolves."
+            },
+            {
+                "date": "2025-06-06",
+                "text": "If this card somehow enters the battlefield with its back face up, it didn't transform, so you won't choose an opponent."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "BLACK"
     ]
 }
 

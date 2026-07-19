@@ -186,6 +186,51 @@
     "colorIdentityOverride": []
 }
 
+// Linden, the Steadfast Queen
+{
+    "name": "Linden, the Steadfast Queen",
+    "manaCost": "{W}{W}{W}",
+    "typeLine": "Legendary Creature — Human Noble",
+    "oracleText": "Vigilance (Attacking doesn't cause this creature to tap.)\nWhenever a white creature you control attacks, you gain 1 life.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "VIGILANCE"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "AttackEvent",
+                    "filter": "creature white ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "GainLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "Whenever a white creature you control attacks, you gain 1 life."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "20",
+        "rarity": "RARE",
+        "artist": "Ryan Pancoast",
+        "flavorText": "\"Until my last breath, I will defend the realm.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/a/fa3ab467-be97-4b84-a73d-b03484d06b97.jpg?1782707922"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Raging Redcap
 {
     "name": "Raging Redcap",

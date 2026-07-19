@@ -291,6 +291,152 @@
     ]
 }
 
+// Growing Rites of Itlimoc
+{
+    "name": "Growing Rites of Itlimoc",
+    "manaCost": "{2}{G}",
+    "typeLine": "Legendary Enchantment",
+    "oracleText": "When Growing Rites of Itlimoc enters, look at the top four cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in any order.\nAt the beginning of your end step, if you control four or more creatures, transform Growing Rites of Itlimoc.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 4
+                                }
+                            },
+                            "storeAs": "looked"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "looked",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "filter": "creature",
+                            "storeSelected": "kept",
+                            "storeRemainder": "rest",
+                            "prompt": "You may reveal a creature card and put it into your hand",
+                            "showAllCards": true
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "kept",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            },
+                            "revealed": true
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "rest",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Library",
+                                "placement": "Bottom"
+                            },
+                            "order": "ControllerChooses"
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END"
+                },
+                "binding": "ANY",
+                "effect": "Transform",
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "AggregateBattlefield",
+                        "player": "You",
+                        "filter": "creature"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 4
+                    }
+                },
+                "descriptionOverride": "At the beginning of your end step, if you control four or more creatures, transform Growing Rites of Itlimoc."
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Itlimoc, Cradle of the Sun",
+        "manaCost": "",
+        "typeLine": "Legendary Land",
+        "oracleText": "{T}: Add {G}.\n{T}: Add {G} for each creature you control.",
+        "script": {
+            "activatedAbilities": [
+                {
+                    "id": "ability_3",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "AddMana",
+                        "color": "GREEN"
+                    },
+                    "timing": "ManaAbility",
+                    "isManaAbility": true
+                },
+                {
+                    "id": "ability_4",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "AddMana",
+                        "color": "GREEN",
+                        "amount": {
+                            "type": "AggregateBattlefield",
+                            "player": "You",
+                            "filter": "creature"
+                        }
+                    },
+                    "timing": "ManaAbility",
+                    "isManaAbility": true
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "191",
+            "rarity": "RARE",
+            "artist": "Grzegorz Rutkowski",
+            "imageUri": "https://cards.scryfall.io/normal/back/b/3/b3b87bfc-f97f-4734-94f6-e3e2f335fc4d.jpg?1783935735"
+        },
+        "colorIdentityOverride": [
+            "GREEN"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "191",
+        "rarity": "RARE",
+        "artist": "Grzegorz Rutkowski",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/3/b3b87bfc-f97f-4734-94f6-e3e2f335fc4d.jpg?1783935735"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Makeshift Munitions
 {
     "name": "Makeshift Munitions",
@@ -787,4 +933,147 @@
     "colorIdentityOverride": [
         "RED"
     ]
+}
+
+// Treasure Map
+{
+    "name": "Treasure Map",
+    "manaCost": "{2}",
+    "typeLine": "Artifact",
+    "oracleText": "{1}, {T}: Scry 1. Put a landmark counter on this artifact. Then if there are three or more landmark counters on it, remove those counters, transform this artifact, and create three Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostComposite",
+                    "costs": [
+                        {
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomMana",
+                                "cost": "{1}"
+                            }
+                        },
+                        "CostTap"
+                    ]
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Scry",
+                            "count": 1
+                        },
+                        {
+                            "type": "AddCounters",
+                            "counterType": "landmark",
+                            "count": 1,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "EntityProperty",
+                                        "entity": "Source",
+                                        "numericProperty": {
+                                            "type": "CounterCount",
+                                            "counterType": {
+                                                "type": "Named",
+                                                "name": "landmark"
+                                            }
+                                        }
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 3
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "RemoveCounters",
+                                        "counterType": "landmark",
+                                        "count": 3,
+                                        "target": "Self"
+                                    },
+                                    "Transform",
+                                    {
+                                        "type": "CreatePredefinedToken",
+                                        "tokenType": "Treasure",
+                                        "count": 3
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "backFace": {
+        "name": "Treasure Cove",
+        "manaCost": "",
+        "typeLine": "Land",
+        "oracleText": "{T}: Add {C}.\n{T}, Sacrifice a Treasure: Draw a card.",
+        "script": {
+            "activatedAbilities": [
+                {
+                    "id": "ability_2",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "AddColorlessMana",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "timing": "ManaAbility",
+                    "isManaAbility": true
+                },
+                {
+                    "id": "ability_3",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            "CostTap",
+                            {
+                                "type": "CostAtomWrapper",
+                                "atom": {
+                                    "type": "AtomSacrifice",
+                                    "filter": "artifact Treasure"
+                                }
+                            }
+                        ]
+                    },
+                    "effect": {
+                        "type": "DrawCards",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    }
+                }
+            ]
+        },
+        "metadata": {
+            "collectorNumber": "250",
+            "rarity": "RARE",
+            "artist": "Cliff Childs",
+            "imageUri": "https://cards.scryfall.io/normal/back/c/0/c0f9c733-0818-4a03-8f0c-a163d09e0fff.jpg?1783935704"
+        }
+    },
+    "metadata": {
+        "collectorNumber": "250",
+        "rarity": "RARE",
+        "artist": "Cliff Childs",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/0/c0f9c733-0818-4a03-8f0c-a163d09e0fff.jpg?1783935704"
+    }
 }

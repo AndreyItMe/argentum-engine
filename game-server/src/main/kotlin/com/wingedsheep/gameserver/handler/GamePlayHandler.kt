@@ -1251,6 +1251,24 @@ class GamePlayHandler(
         gameSession: GameSession,
         aiPlayerId: EntityId
     ): List<com.wingedsheep.engine.core.GameAction> {
+        // A pending decision blocks every priority action (pass included), and a decision
+        // response that was just rejected is deterministic — re-submitting it can't succeed.
+        // Cancelling the decision is the only fallback that can unwedge the game: cancellable
+        // decisions (cast-time mode/target pauses) abort cleanly with no side effects, and
+        // non-cancellable ones reject the cancel without state change, falling through to the
+        // remaining fallbacks. Without this, an AI whose decision answer keeps failing (e.g. a
+        // mid-cast pause whose eventual payment is impossible) loops forever.
+        val pendingDecision = gameSession.getStateForTesting()?.pendingDecision
+        val cancelPending = if (pendingDecision?.playerId == aiPlayerId) {
+            listOf<com.wingedsheep.engine.core.GameAction>(
+                com.wingedsheep.engine.core.SubmitDecision(
+                    aiPlayerId,
+                    com.wingedsheep.engine.core.CancelDecisionResponse(pendingDecision.id)
+                )
+            )
+        } else {
+            emptyList()
+        }
         val pass = com.wingedsheep.engine.core.PassPriority(aiPlayerId)
         // If PassPriority is currently a legal action, we're in a priority window (e.g. after
         // blockers/attackers were already declared), not the actual declare-step decision. In that
@@ -1261,7 +1279,7 @@ class GamePlayHandler(
         val passIsLegal = gameSession.getLegalActions(aiPlayerId).any {
             it.action is com.wingedsheep.engine.core.PassPriority
         }
-        return when (gameSession.getStateForTesting()?.step) {
+        return cancelPending + when (gameSession.getStateForTesting()?.step) {
             com.wingedsheep.sdk.core.Step.DECLARE_BLOCKERS -> {
                 val declare = com.wingedsheep.engine.core.DeclareBlockers(aiPlayerId, emptyMap())
                 if (passIsLegal) listOf(pass, declare) else listOf(declare, pass)

@@ -8,6 +8,7 @@ import com.wingedsheep.sdk.scripting.effects.RedirectScope
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -132,11 +133,15 @@ sealed interface SerializableModification {
     @Serializable
     data class AddColor(val colors: Set<String>) : SerializableModification
 
+    // The JSON field must not be named "type": the game-server persistence Json uses
+    // classDiscriminator = "type", and kotlinx.serialization refuses to encode a polymorphic
+    // class whose own property collides with the discriminator (JsonEncodingException the
+    // first time a BecomeCreature/AddCardType floating effect is saved).
     @Serializable
-    data class AddType(val type: String) : SerializableModification
+    data class AddType(@SerialName("cardType") val type: String) : SerializableModification
 
     @Serializable
-    data class RemoveType(val type: String) : SerializableModification
+    data class RemoveType(@SerialName("cardType") val type: String) : SerializableModification
 
     @Serializable
     data class ChangeController(val newControllerId: EntityId) : SerializableModification

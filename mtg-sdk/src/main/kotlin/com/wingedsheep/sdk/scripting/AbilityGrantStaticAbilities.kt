@@ -61,37 +61,69 @@ data class GrantActivatedAbility(
 }
 
 /**
- * Grants the permanents matching [filter] **all activated abilities of the card(s) in this
- * source's linked-exile pile**. Two shapes:
+ * Which exile pile a [HasAllActivatedAbilitiesOfExiledCards] static reads to find the cards whose
+ * activated abilities it grants.
+ */
+@Serializable
+enum class ExiledCardsSource {
+    /** Cards exiled *with* the source — its `LinkedExileComponent` (Territory Forge, Agatha's Soul Cauldron). */
+    @SerialName("Linked") LINKED,
+
+    /** Cards exiled *to craft* the source — its `CraftedFromExiledComponent` (Locus of Enlightenment, CR 702.167c). */
+    @SerialName("Crafted") CRAFTED,
+}
+
+/**
+ * Grants the permanents matching [filter] **all activated abilities of the cards in the source's
+ * [source] exile pile** — the single primitive behind both "exiled with this" (linked-exile) grants
+ * and "exiled to craft this" (craft-material) grants. Shapes:
  *  - `filter = GroupFilter.source()` (the default) → "This permanent has all activated abilities of
- *    the exiled card" (Territory Forge — the source grants the abilities to *itself*).
+ *    the exiled cards" (Territory Forge / Locus of Enlightenment — the source grants to *itself*).
  *  - any battlefield filter → "Creatures you control with +1/+1 counters on them have all activated
- *    abilities of all creature cards exiled with this" (Agatha's Soul Cauldron — the source grants
- *    the abilities to *other* matching permanents). Pair with [creatureCardsOnly] when the printed
- *    text restricts the source pile to creature cards.
+ *    abilities of all creature cards exiled with this" (Agatha's Soul Cauldron — grants to *other*
+ *    matching permanents). Pair with [creatureCardsOnly] when the text restricts the pile to
+ *    creature cards.
  *
- * Resolution is dynamic: the engine reads the source's linked-exile pile at activation-legality
- * time, pulls every activated ability off each exiled card's definition, and surfaces them as
- * activatable on each *matching* permanent — with that permanent as the ability's source, so
- * self-references and `{T}` resolve against the creature that gained the ability (CR-faithful to
- * the rulings that the exiled card's "this card" references become references to the permanent
- * that has the ability).
+ * Resolution is dynamic: the engine reads the source's exile pile (linked or crafted, per [source])
+ * at activation-legality time, pulls every activated ability off each exiled card's definition, and
+ * surfaces them as activatable on each *matching* permanent — with that permanent as the ability's
+ * source, so self-references and `{T}` resolve against the permanent that gained the ability (CR
+ * 113.7 — a granted ability's source is the object that has it; faithful to the rulings that the
+ * exiled card's "this card" references become references to the permanent that has the ability).
  *
  * It grants only *activated* abilities — not triggered, static, or replacement abilities.
  *
+ * @property source The exile pile to read — [ExiledCardsSource.LINKED] (default) or [ExiledCardsSource.CRAFTED].
  * @property filter The permanents that gain the exiled cards' abilities (default: the source itself).
- * @property creatureCardsOnly When true, only *creature* cards in the linked-exile pile contribute
- *   their abilities (Agatha's "all **creature** cards exiled with"). When false, every exiled card
- *   contributes (Territory Forge).
+ * @property creatureCardsOnly When true, only *creature* cards in the pile contribute their abilities
+ *   (Agatha's "all **creature** cards exiled with"). When false, every exiled card contributes.
+ * @property oncePerTurnEach When true (Locus of Enlightenment's "only once each turn"), each granted
+ *   ability additionally carries a once-each-turn cap tracked *per exiled card* — two exiled copies of
+ *   one card each get their own budget, not a shared one. The engine implements this by re-stamping
+ *   each granted ability with an exiled-card-derived [AbilityId] (`exiled_<entity>_<printedId>`), which
+ *   also stops duplicate materials collapsing under the granter-dedup. When false (Territory Forge,
+ *   Agatha), abilities are granted unmodified and duplicates dedup as before.
  */
-@SerialName("HasAllActivatedAbilitiesOfLinkedExiledCard")
+@SerialName("HasAllActivatedAbilitiesOfExiledCards")
 @Serializable
-data class HasAllActivatedAbilitiesOfLinkedExiledCard(
+data class HasAllActivatedAbilitiesOfExiledCards(
+    val source: ExiledCardsSource = ExiledCardsSource.LINKED,
     val filter: GroupFilter = GroupFilter.source(),
     val creatureCardsOnly: Boolean = false,
+    val oncePerTurnEach: Boolean = false,
 ) : StaticAbility {
-    override val description: String =
-        "${filter.description} have all activated abilities of the${if (creatureCardsOnly) " creature" else ""} cards exiled with this"
+    override val description: String = buildString {
+        append(filter.description)
+        append(" have all activated abilities of the")
+        if (creatureCardsOnly) append(" creature")
+        append(
+            when (source) {
+                ExiledCardsSource.LINKED -> " cards exiled with this"
+                ExiledCardsSource.CRAFTED -> " cards exiled to craft this"
+            }
+        )
+        if (oncePerTurnEach) append(" (each only once each turn)")
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
         val newFilter = filter.applyTextReplacement(replacer)
@@ -105,7 +137,7 @@ data class HasAllActivatedAbilitiesOfLinkedExiledCard(
  * choose-from-your-exile mechanic (Koh, the Face Stealer: "Pay 1 life: Choose a creature card exiled
  * with Koh. Koh has all activated and triggered abilities of the last chosen card").
  *
- * Unlike [HasAllActivatedAbilitiesOfLinkedExiledCard] — which surfaces the abilities of *every* card
+ * Unlike [HasAllActivatedAbilitiesOfExiledCards] — which surfaces the abilities of *every* card
  * in the pile — this reads the source's `ChosenLinkedExileComponent` (stamped by
  * [com.wingedsheep.sdk.scripting.effects.RecordChosenLinkedExileEffect]) and contributes only the
  * abilities of that one chosen card. It is always self-scoped ("this permanent has …"); use the two

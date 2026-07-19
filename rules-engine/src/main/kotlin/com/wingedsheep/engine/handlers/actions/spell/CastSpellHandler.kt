@@ -25,6 +25,7 @@ import com.wingedsheep.engine.mechanics.HarmonizeGrants
 import com.wingedsheep.engine.mechanics.SneakWindow
 import com.wingedsheep.engine.mechanics.WarpGrants
 import com.wingedsheep.engine.mechanics.MiracleGrants
+import com.wingedsheep.engine.mechanics.mana.paymentSubtypesOf
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
 import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.core.PermanentsSacrificedEvent
@@ -54,6 +55,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.core.CountersAddedEvent
+import com.wingedsheep.engine.core.CountersRemovedEvent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -129,6 +131,18 @@ import kotlin.reflect.KClass
  */
 private fun CastSpell.altAllows(type: AlternativeCostType): Boolean =
     alternativeCostType == null || alternativeCostType == type
+
+/**
+ * True if this cast is paying the card's cleave cost (CR 702.148). Cleave is an alternative cost,
+ * so it's driven by [CastSpell.useAlternativeCost] gated on the chosen [AlternativeCostType.CLEAVE]
+ * (never by `wasKicked`, which is an *additional* cost). When true, the resolver swaps in the
+ * brackets-removed effect / target-requirement variant (`cleaveSpellEffect` /
+ * `cleaveTargetRequirements`).
+ */
+private fun isCleaveCast(action: CastSpell, cardDef: com.wingedsheep.sdk.model.CardDefinition): Boolean =
+    action.useAlternativeCost &&
+        action.altAllows(AlternativeCostType.CLEAVE) &&
+        cardDef.keywordAbilities.any { it is KeywordAbility.Cleave }
 
 class CastSpellHandler(
     private val cardRegistry: CardRegistry,
@@ -424,6 +438,262 @@ class CastSpellHandler(
             }
         }
         val playForFree = playForFreeFromComponent || action.useWithoutPayingManaCost
+        val computedCost = computeTotalCastCost(state, action, cardDef, cardComponent, playForFree, hasCommanderCast)
+            ?: return "No alternative casting cost available"
+        val paymentError = validatePayment(state, action, computedCost.cost, computedCost.paymentXValue)
+        if (paymentError != null) {
+            return paymentError
+        }
+
+        // Validate targets (include auraTarget as a target requirement for aura spells)
+        // Use mode-specific targets for modal spells, kickerTargetRequirements when kicked
+        if (cardDef != null) {
+            // Adventure / split face cast (CR 715 / 709) — read targets from the face's script.
+            val faceScript = action.faceIndex?.let { cardDef.cardFaces.getOrNull(it)?.script }
+            val effectiveScript = faceScript ?: cardDef.script
+            val modalEffect = effectiveScript.spellEffect as? com.wingedsheep.sdk.scripting.effects.ModalEffect
+            // A choose-N modal cast that arrives with modes chosen but targets deferred
+            // (the single-panel client mode selector submits `chosenModes` only) is target-
+            // validated later by the cast-time per-mode target pause in execute(); skip the
+            // top-level target check here so the deferred-targets action isn't rejected.
+            val modalTargetsDeferred = modalEffect != null &&
+                action.chosenModes.isNotEmpty() &&
+                action.targets.isEmpty() &&
+                action.modeTargetsOrdered.isEmpty()
+            val baseTargetReqs = if (modalTargetsDeferred) {
+                emptyList()
+            } else if (action.chosenModes.isNotEmpty() && modalEffect != null) {
+                // Modal spell with mode(s) chosen at cast time — validate against the union of per-mode requirements.
+                action.chosenModes.flatMap { modeIndex ->
+                    modalEffect.modes.getOrNull(modeIndex)?.targetRequirements ?: emptyList()
+                }
+            } else if (action.wasKicked && cardDef.script.kickerTargetRequirements.isNotEmpty()) {
+                cardDef.script.kickerTargetRequirements
+            } else if (isCleaveCast(action, cardDef) && cardDef.script.cleaveTargetRequirements.isNotEmpty()) {
+                // Cleave (CR 702.148): removing bracketed text can change the legal target set
+                // (e.g. Fierce Retribution's "target [attacking] creature" → "target creature").
+                cardDef.script.cleaveTargetRequirements
+            } else {
+                effectiveScript.targetRequirements
+            }
+            val targetRequirements = buildList {
+                addAll(baseTargetReqs)
+                cardDef.script.auraTarget?.let { add(it) }
+            }
+            if (targetRequirements.isNotEmpty()) {
+                // Reject casting if spell requires targets but none were provided
+                if (action.targets.isEmpty()) {
+                    val requiredCount = targetRequirements.sumOf { it.effectiveMinCount }
+                    if (requiredCount > 0) {
+                        return "No valid targets available"
+                    }
+                }
+                val targetError = targetValidator.validateTargets(
+                    state,
+                    action.targets,
+                    targetRequirements,
+                    action.playerId,
+                    sourceColors = cardDef.colors,
+                    sourceSubtypes = cardDef.typeLine.subtypes.map { it.value }.toSet(),
+                    sourceId = action.cardId,
+                    xValue = action.xValue
+                )
+                if (targetError != null) {
+                    return targetError
+                }
+            }
+        }
+
+        // Validate damage distribution for DividedDamageEffect spells
+        // Use kickerSpellEffect when kicked, cleaveSpellEffect when cleaved, else the printed effect.
+        val spellEffect = if (action.wasKicked && cardDef?.script?.kickerSpellEffect != null) {
+            cardDef.script.kickerSpellEffect
+        } else if (cardDef != null && isCleaveCast(action, cardDef) && cardDef.script.cleaveSpellEffect != null) {
+            cardDef.script.cleaveSpellEffect
+        } else {
+            cardDef?.script?.spellEffect
+        }
+        if (spellEffect is DividedDamageEffect && action.targets.size > 1) {
+            val distribution = action.damageDistribution
+            if (distribution == null) {
+                return "Damage distribution required for this spell when targeting multiple creatures"
+            }
+
+            // Check that distribution targets match chosen targets
+            val targetIds = action.targets.map { it.toEntityId() }.toSet()
+            val distributionTargets = distribution.keys
+            if (distributionTargets != targetIds) {
+                return "Damage distribution targets must match chosen targets"
+            }
+
+            // Check that total damage equals the spell's total damage
+            val totalDistributed = distribution.values.sum()
+            if (totalDistributed != spellEffect.totalDamage) {
+                return "Total distributed damage ($totalDistributed) must equal ${spellEffect.totalDamage}"
+            }
+
+            // Check that each target gets at least 1 damage (per MTG rules)
+            val minPerTarget = 1
+            for ((targetId, damage) in distribution) {
+                if (damage < minPerTarget) {
+                    return "Each target must receive at least $minPerTarget damage"
+                }
+            }
+        }
+
+        // Validate that the caster can afford any additional life cost imposed by opponent
+        // permanents via ModifySpellCost + OpponentsCastTargeting + IncreaseLife (e.g. Terror
+        // of the Peaks: "Spells your opponents cast that target this creature cost an
+        // additional 3 life to cast.").
+        if (action.targets.isNotEmpty()) {
+            val additionalLifeCost = costCalculator.calculateAdditionalLifeCost(
+                state, action.playerId, action.targets
+            )
+            if (additionalLifeCost > 0) {
+                val currentLife = state.lifeTotal(action.playerId) // CR 810.9a — team's shared total
+                if (currentLife < additionalLifeCost) {
+                    return "Not enough life to pay additional life cost ($additionalLifeCost life required)"
+                }
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * X value used for *mana payment* of a Harmonize cast (≤ `action.xValue`).
+     *
+     * Harmonize lets the player tap one creature to reduce the cost by generic mana equal
+     * to its power; {X} is generic mana (TDM release notes), but colored pips are never
+     * reduced. [AlternativePaymentHandler] already lowers the printed generic via
+     * `reduceGeneric`; the leftover reduction beyond the printed generic must come off the
+     * mana paid for X. The spell's own X value ([CastSpell.xValue], which drives the
+     * "mana value X or less" search) is unchanged — only the mana paid for X drops.
+     *
+     * Returns `action.xValue` unchanged when this isn't an X-cost Harmonize cast with a
+     * validly-tapped creature, mirroring [AlternativePaymentHandler.applyHarmonize]'s guards
+     * so validation, payment, and the actual tap stay consistent.
+     */
+    /**
+     * Sacrifice a permanent paid as an additional cost of casting, routing the zone move through
+     * the canonical [ZoneTransitionService] (the single source of truth for zone transitions).
+     *
+     * This is the *cost* analogue of [com.wingedsheep.engine.handlers.effects.zones.SacrificeExecutor]
+     * (the *effect* "Sacrifice a creature: …"). Both must go through [ZoneTransitionService.moveToZone]
+     * so the emitted [ZoneChangeEvent] carries the last-known-information snapshot (CR 603.10 /
+     * 608.2h) *and* the full exit cleanup + graveyard-replacement redirect run. Dies/leaves triggers
+     * that read the dying permanent's counters, power/toughness, keywords, or token-ness (e.g.
+     * Explorer's Cache: "Whenever a creature you control with a +1/+1 counter on it dies …") only
+     * fire when that snapshot is present — a hand-built `ZoneChangeEvent(lastKnown = null)` silently
+     * drops them. [ZoneTransitionService.trackPermanentSacrifice] first marks the permanent so the
+     * resulting event is tagged `wasSacrificed = true` (CR 701.21), honoring "if it wasn't
+     * sacrificed" triggers.
+     */
+    private fun sacrificePermanentAsCost(
+        state: GameState,
+        permId: EntityId,
+        sacrificingPlayerId: EntityId,
+        events: MutableList<GameEvent>,
+    ): GameState {
+        val permName = state.getEntity(permId)?.get<CardComponent>()?.name
+        val tracked = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+            .trackPermanentSacrifice(state, listOf(permId), sacrificingPlayerId)
+        events.add(PermanentsSacrificedEvent(sacrificingPlayerId, listOf(permId), listOfNotNull(permName)))
+        val transition = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
+            .moveToZone(tracked, permId, Zone.GRAVEYARD)
+        events.addAll(transition.events)
+        return transition.state
+    }
+
+    /**
+     * The waterbend amount this cast adds to its mana cost (Avatar: The Last Airbender), or 0 when
+     * the spell has no waterbend additional cost, or its *optional* cost was declined. For
+     * "waterbend {X}" the amount is the cast-time X ([CastSpell.xValue]).
+     */
+    private fun spellWaterbendAmount(
+        cardDef: com.wingedsheep.sdk.model.CardDefinition,
+        action: CastSpell,
+    ): Int {
+        val wb = cardDef.script.spellWaterbend ?: return 0
+        val paid = !wb.optional || action.wasWaterbendPaid
+        if (!paid) return 0
+        return if (wb.isX) (action.xValue ?: 0) else wb.amount
+    }
+
+    /**
+     * The generic amount of a waterbend-flagged *fixed alternative* cost this cast can pay by
+     * tapping artifacts/creatures, or 0 when the cast has no such cost. Hama, the Bloodbender exiles
+     * a card and grants a `PlayWithFixedAlternativeManaCostComponent(waterbend = true)` whose whole
+     * fixed cost is `{mana value}` generic and entirely waterbend-reducible (CR 701.67). Unlike a
+     * spell-level `waterbend {N}` additional cost — which is capped so taps never eat the printed
+     * generic — the fixed alternative cost *replaces* the printed cost, so the cap is the whole cost.
+     */
+    private fun fixedAltWaterbendAmount(
+        state: GameState,
+        action: CastSpell,
+        playForFree: Boolean,
+    ): Int {
+        if (playForFree) return 0
+        val comp = state.getEntity(action.cardId)
+            ?.get<PlayWithFixedAlternativeManaCostComponent>()
+            ?.takeIf { it.controllerId == action.playerId && it.waterbend }
+            ?: return 0
+        return comp.fixedCost.genericAmount
+    }
+
+    private fun harmonizePaymentXValue(
+        state: GameState,
+        action: CastSpell,
+        cardDef: com.wingedsheep.sdk.model.CardDefinition?,
+        harmonizeCost: ManaCost,
+    ): Int {
+        val xValue = action.xValue ?: 0
+        if (xValue <= 0) return xValue
+        val creatureId = action.alternativePayment?.harmonizeCreature ?: return xValue
+        // Harmonize may be printed or granted at runtime (Songcrafter Mage).
+        if (HarmonizeGrants.effectiveHarmonize(state, action.cardId, cardDef) == null) return xValue
+        if (!zoneResolver.hasHarmonizePermission(state, action.playerId, action.cardId)) return xValue
+        // Mirror applyHarmonize's validity gate: a creature that wouldn't actually be tapped
+        // grants no reduction, so payment must not assume one.
+        if (creatureId !in state.getZone(ZoneKey(action.playerId, Zone.BATTLEFIELD))) return xValue
+        val container = state.getEntity(creatureId) ?: return xValue
+        val projected = state.projectedState
+        if (!projected.isCreature(creatureId)) return xValue
+        if (container.has<TappedComponent>()) return xValue
+        if (container.get<ControllerComponent>()?.playerId != action.playerId) return xValue
+        val power = (projected.getPower(creatureId) ?: 0).coerceAtLeast(0)
+        if (power <= 0) return xValue
+        // reduceGeneric eats the printed generic first; whatever power is left reduces the
+        // X mana. xCount > 1 (no current card) floors conservatively so payment never
+        // under-charges.
+        val leftover = (power - harmonizeCost.genericAmount).coerceAtLeast(0)
+        val xCount = harmonizeCost.xCount.coerceAtLeast(1)
+        return ((xValue * xCount - leftover).coerceAtLeast(0)) / xCount
+    }
+
+    /** The [cost] and adjusted X actually charged as mana at payment time for a cast. */
+    private data class ComputedCastCost(val cost: ManaCost, val paymentXValue: Int)
+
+    /**
+     * The full mana-cost pipeline for a cast (CR 601.2f): alternative-cost base selection
+     * (flashback/harmonize/warp/sneak/evoke/impending/miracle/…), kicker, Or-Pay additional
+     * costs, waterbend, airbend fixed-alternative plus runtime cost increases,
+     * sacrifice-for-reduction, and delve/convoke/waterbend alternative-payment reductions —
+     * plus the harmonize/waterbend adjustment to the X actually paid as mana.
+     *
+     * Shared by [validate] and the cast-time modal affordability gate
+     * ([canPayModeSelection]) so mode offers can never diverge from what payment will
+     * actually charge. Returns null when the action requests an alternative cost but none
+     * is available.
+     */
+    private fun computeTotalCastCost(
+        state: GameState,
+        action: CastSpell,
+        cardDef: com.wingedsheep.sdk.model.CardDefinition?,
+        cardComponent: CardComponent,
+        playForFree: Boolean,
+        castingFromCommandZone: Boolean
+    ): ComputedCastCost? {
         // Split-layout (CR 709.3a) — only the chosen half is evaluated for legality. When
         // `faceIndex` is set, the cost is the face's printed mana cost passed through the
         // standard battlefield cost-modifier pipeline (CR 118.9a applies cost modifiers to
@@ -476,6 +746,9 @@ class CastSpellHandler(
                     } else {
                         // Check impending cost
                         val impendingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Impending>().firstOrNull()
+                        // Check cleave cost (CR 702.148 — an alternative cost; the brackets-removed
+                        // text variant is chosen structurally at resolution, not here).
+                        val cleaveAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cleave>().firstOrNull()
                         // Check miracle cost (CR 702.94 — printed or granted in hand, window-gated).
                         // The window component must be present (opened when drawn as the first card
                         // this turn); without it, the miracle alternative cost is unavailable.
@@ -486,6 +759,8 @@ class CastSpellHandler(
                         ) else null
                         if (action.altAllows(AlternativeCostType.IMPENDING) && impendingAbility != null) {
                             costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, impendingAbility.cost, action.playerId)
+                        } else if (action.altAllows(AlternativeCostType.CLEAVE) && cleaveAbility != null) {
+                            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, cleaveAbility.cost, action.playerId)
                         } else if (action.altAllows(AlternativeCostType.MIRACLE) && miracleAbility != null) {
                             costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, miracleAbility.cost, action.playerId)
                         } else {
@@ -497,7 +772,7 @@ class CastSpellHandler(
                             } else {
                                 // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
                                 val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
-                                if (altCosts.isEmpty()) return "No alternative casting cost available"
+                                if (altCosts.isEmpty()) return null
                                 costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
                             }
                         }
@@ -510,7 +785,7 @@ class CastSpellHandler(
                 cardDef,
                 action.playerId,
                 action.targets.map { it.toEntityId() },
-                fromZone = if (hasCommanderCast) Zone.COMMAND else castSourceZone(state, action.cardId),
+                fromZone = if (castingFromCommandZone) Zone.COMMAND else castSourceZone(state, action.cardId),
             )
         } else {
             cardComponent.manaCost
@@ -653,205 +928,14 @@ class CastSpellHandler(
             costAfterAltPayment
         }
 
-        // Validate payment. For an X-cost Harmonize cast where a creature is tapped, the
+        // For an X-cost Harmonize cast where a creature is tapped, the
         // creature's power reduces generic mana — and {X} is generic (TDM release notes) —
         // so the leftover reduction beyond any printed generic comes off the X mana paid.
         // For a "waterbend {X}" spell the X is already materialized as generic in the cost
         // (and reduced by the waterbend taps), so it must NOT also be charged as {X} mana.
         val paymentXValue = if (cardDef?.script?.spellWaterbend?.isX == true) 0
             else harmonizePaymentXValue(state, action, cardDef, effectiveCost)
-        val paymentError = validatePayment(state, action, costAfterWaterbend, paymentXValue)
-        if (paymentError != null) {
-            return paymentError
-        }
-
-        // Validate targets (include auraTarget as a target requirement for aura spells)
-        // Use mode-specific targets for modal spells, kickerTargetRequirements when kicked
-        if (cardDef != null) {
-            // Adventure / split face cast (CR 715 / 709) — read targets from the face's script.
-            val faceScript = action.faceIndex?.let { cardDef.cardFaces.getOrNull(it)?.script }
-            val effectiveScript = faceScript ?: cardDef.script
-            val modalEffect = effectiveScript.spellEffect as? com.wingedsheep.sdk.scripting.effects.ModalEffect
-            // A choose-N modal cast that arrives with modes chosen but targets deferred
-            // (the single-panel client mode selector submits `chosenModes` only) is target-
-            // validated later by the cast-time per-mode target pause in execute(); skip the
-            // top-level target check here so the deferred-targets action isn't rejected.
-            val modalTargetsDeferred = modalEffect != null &&
-                action.chosenModes.isNotEmpty() &&
-                action.targets.isEmpty() &&
-                action.modeTargetsOrdered.isEmpty()
-            val baseTargetReqs = if (modalTargetsDeferred) {
-                emptyList()
-            } else if (action.chosenModes.isNotEmpty() && modalEffect != null) {
-                // Modal spell with mode(s) chosen at cast time — validate against the union of per-mode requirements.
-                action.chosenModes.flatMap { modeIndex ->
-                    modalEffect.modes.getOrNull(modeIndex)?.targetRequirements ?: emptyList()
-                }
-            } else if (action.wasKicked && cardDef.script.kickerTargetRequirements.isNotEmpty()) {
-                cardDef.script.kickerTargetRequirements
-            } else {
-                effectiveScript.targetRequirements
-            }
-            val targetRequirements = buildList {
-                addAll(baseTargetReqs)
-                cardDef.script.auraTarget?.let { add(it) }
-            }
-            if (targetRequirements.isNotEmpty()) {
-                // Reject casting if spell requires targets but none were provided
-                if (action.targets.isEmpty()) {
-                    val requiredCount = targetRequirements.sumOf { it.effectiveMinCount }
-                    if (requiredCount > 0) {
-                        return "No valid targets available"
-                    }
-                }
-                val targetError = targetValidator.validateTargets(
-                    state,
-                    action.targets,
-                    targetRequirements,
-                    action.playerId,
-                    sourceColors = cardDef.colors,
-                    sourceSubtypes = cardDef.typeLine.subtypes.map { it.value }.toSet(),
-                    sourceId = action.cardId,
-                    xValue = action.xValue
-                )
-                if (targetError != null) {
-                    return targetError
-                }
-            }
-        }
-
-        // Validate damage distribution for DividedDamageEffect spells
-        // Use kickerSpellEffect when kicked and available
-        val spellEffect = if (action.wasKicked && cardDef?.script?.kickerSpellEffect != null) {
-            cardDef.script.kickerSpellEffect
-        } else {
-            cardDef?.script?.spellEffect
-        }
-        if (spellEffect is DividedDamageEffect && action.targets.size > 1) {
-            val distribution = action.damageDistribution
-            if (distribution == null) {
-                return "Damage distribution required for this spell when targeting multiple creatures"
-            }
-
-            // Check that distribution targets match chosen targets
-            val targetIds = action.targets.map { it.toEntityId() }.toSet()
-            val distributionTargets = distribution.keys
-            if (distributionTargets != targetIds) {
-                return "Damage distribution targets must match chosen targets"
-            }
-
-            // Check that total damage equals the spell's total damage
-            val totalDistributed = distribution.values.sum()
-            if (totalDistributed != spellEffect.totalDamage) {
-                return "Total distributed damage ($totalDistributed) must equal ${spellEffect.totalDamage}"
-            }
-
-            // Check that each target gets at least 1 damage (per MTG rules)
-            val minPerTarget = 1
-            for ((targetId, damage) in distribution) {
-                if (damage < minPerTarget) {
-                    return "Each target must receive at least $minPerTarget damage"
-                }
-            }
-        }
-
-        // Validate that the caster can afford any additional life cost imposed by opponent
-        // permanents via ModifySpellCost + OpponentsCastTargeting + IncreaseLife (e.g. Terror
-        // of the Peaks: "Spells your opponents cast that target this creature cost an
-        // additional 3 life to cast.").
-        if (action.targets.isNotEmpty()) {
-            val additionalLifeCost = costCalculator.calculateAdditionalLifeCost(
-                state, action.playerId, action.targets
-            )
-            if (additionalLifeCost > 0) {
-                val currentLife = state.lifeTotal(action.playerId) // CR 810.9a — team's shared total
-                if (currentLife < additionalLifeCost) {
-                    return "Not enough life to pay additional life cost ($additionalLifeCost life required)"
-                }
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * X value used for *mana payment* of a Harmonize cast (≤ `action.xValue`).
-     *
-     * Harmonize lets the player tap one creature to reduce the cost by generic mana equal
-     * to its power; {X} is generic mana (TDM release notes), but colored pips are never
-     * reduced. [AlternativePaymentHandler] already lowers the printed generic via
-     * `reduceGeneric`; the leftover reduction beyond the printed generic must come off the
-     * mana paid for X. The spell's own X value ([CastSpell.xValue], which drives the
-     * "mana value X or less" search) is unchanged — only the mana paid for X drops.
-     *
-     * Returns `action.xValue` unchanged when this isn't an X-cost Harmonize cast with a
-     * validly-tapped creature, mirroring [AlternativePaymentHandler.applyHarmonize]'s guards
-     * so validation, payment, and the actual tap stay consistent.
-     */
-    /**
-     * The waterbend amount this cast adds to its mana cost (Avatar: The Last Airbender), or 0 when
-     * the spell has no waterbend additional cost, or its *optional* cost was declined. For
-     * "waterbend {X}" the amount is the cast-time X ([CastSpell.xValue]).
-     */
-    private fun spellWaterbendAmount(
-        cardDef: com.wingedsheep.sdk.model.CardDefinition,
-        action: CastSpell,
-    ): Int {
-        val wb = cardDef.script.spellWaterbend ?: return 0
-        val paid = !wb.optional || action.wasWaterbendPaid
-        if (!paid) return 0
-        return if (wb.isX) (action.xValue ?: 0) else wb.amount
-    }
-
-    /**
-     * The generic amount of a waterbend-flagged *fixed alternative* cost this cast can pay by
-     * tapping artifacts/creatures, or 0 when the cast has no such cost. Hama, the Bloodbender exiles
-     * a card and grants a `PlayWithFixedAlternativeManaCostComponent(waterbend = true)` whose whole
-     * fixed cost is `{mana value}` generic and entirely waterbend-reducible (CR 701.67). Unlike a
-     * spell-level `waterbend {N}` additional cost — which is capped so taps never eat the printed
-     * generic — the fixed alternative cost *replaces* the printed cost, so the cap is the whole cost.
-     */
-    private fun fixedAltWaterbendAmount(
-        state: GameState,
-        action: CastSpell,
-        playForFree: Boolean,
-    ): Int {
-        if (playForFree) return 0
-        val comp = state.getEntity(action.cardId)
-            ?.get<PlayWithFixedAlternativeManaCostComponent>()
-            ?.takeIf { it.controllerId == action.playerId && it.waterbend }
-            ?: return 0
-        return comp.fixedCost.genericAmount
-    }
-
-    private fun harmonizePaymentXValue(
-        state: GameState,
-        action: CastSpell,
-        cardDef: com.wingedsheep.sdk.model.CardDefinition?,
-        harmonizeCost: ManaCost,
-    ): Int {
-        val xValue = action.xValue ?: 0
-        if (xValue <= 0) return xValue
-        val creatureId = action.alternativePayment?.harmonizeCreature ?: return xValue
-        // Harmonize may be printed or granted at runtime (Songcrafter Mage).
-        if (HarmonizeGrants.effectiveHarmonize(state, action.cardId, cardDef) == null) return xValue
-        if (!zoneResolver.hasHarmonizePermission(state, action.playerId, action.cardId)) return xValue
-        // Mirror applyHarmonize's validity gate: a creature that wouldn't actually be tapped
-        // grants no reduction, so payment must not assume one.
-        if (creatureId !in state.getZone(ZoneKey(action.playerId, Zone.BATTLEFIELD))) return xValue
-        val container = state.getEntity(creatureId) ?: return xValue
-        val projected = state.projectedState
-        if (!projected.isCreature(creatureId)) return xValue
-        if (container.has<TappedComponent>()) return xValue
-        if (container.get<ControllerComponent>()?.playerId != action.playerId) return xValue
-        val power = (projected.getPower(creatureId) ?: 0).coerceAtLeast(0)
-        if (power <= 0) return xValue
-        // reduceGeneric eats the printed generic first; whatever power is left reduces the
-        // X mana. xCount > 1 (no current card) floors conservatively so payment never
-        // under-charges.
-        val leftover = (power - harmonizeCost.genericAmount).coerceAtLeast(0)
-        val xCount = harmonizeCost.xCount.coerceAtLeast(1)
-        return ((xValue * xCount - leftover).coerceAtLeast(0)) / xCount
+        return ComputedCastCost(costAfterWaterbend, paymentXValue)
     }
 
     private fun validatePayment(state: GameState, action: CastSpell, cost: ManaCost, paymentXValue: Int = action.xValue ?: 0): String? {
@@ -867,7 +951,7 @@ class CastSpellHandler(
                 isLegendary = cardComponent.typeLine.isLegendary,
                 manaValue = cardComponent.manaCost.cmc,
                 hasXInCost = cardComponent.manaCost.hasX,
-                subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+                subtypes = paymentSubtypesOf(cardComponent),
                 isFromExile = isCastFromExile(state, action.cardId),
                 isFromHand = isCastFromHand(state, action.cardId),
                 cardTypes = cardComponent.typeLine.cardTypes,
@@ -1190,14 +1274,14 @@ class CastSpellHandler(
 
     /**
      * Resolve the distributed counter removals to apply for a
-     * [AdditionalCost.RemoveCountersFromYourCreatures] cost.
+     * [CostAtom.RemoveCounters] additional cost.
      *
      * Web clients send the typed [AdditionalCostPayment.distributedCounterRemovals] —
      * one entry per (entity, counterType, count) — so the player explicitly picks
      * which counter types come off each creature. The CastSpell flow does not honour
      * the legacy `counterRemovals: Map<EntityId, Int>` payload; that field remains
-     * only for activated-ability X-cost (`RemoveXPlusOnePlusOneCounters`), which is
-     * single-type by definition and routes through [CostHandler] instead.
+     * The legacy map payload is intentionally ignored; counter removal uses the typed
+     * per-entity, per-counter-type payload.
      */
     private fun resolveDistributedCounterRemovalsForPayment(
         action: CastSpell
@@ -1358,6 +1442,53 @@ class CastSpellHandler(
                     }
                     // Mana / reveal are not produced as spell additional costs today.
                     is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
+                    is CostAtom.RemoveCounters -> {
+                        val needed = when (val c = atom.count) {
+                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> c.amount
+                            else -> 0
+                        }
+                        val removals = resolveDistributedCounterRemovalsForPayment(action)
+                        val total = removals.sumOf { it.count }
+                        if (total < needed) {
+                            val phrase = if (needed == 1) "1 counter from a" else "$needed counters from among"
+                            val plural = if (needed == 1) "" else "s"
+                            return "You must remove $phrase ${atom.filter.description}$plural you control to cast this spell"
+                        }
+                        val demanded = mutableMapOf<Pair<EntityId, CounterType>, Int>()
+                        for (removal in removals) {
+                            if (removal.count <= 0) {
+                                return "Counter removal count must be positive"
+                            }
+                            val permContainer = state.getEntity(removal.entityId)
+                                ?: return "Counter removal target not found: ${removal.entityId}"
+                            permContainer.get<CardComponent>()
+                                ?: return "Counter removal target is not a card: ${removal.entityId}"
+                            if (projected.getController(removal.entityId) != action.playerId) {
+                                return "You can only remove counters from permanents you control"
+                            }
+                            if (removal.entityId !in state.getBattlefield()) {
+                                return "Counter removal target is not on the battlefield"
+                            }
+                            val ctx = com.wingedsheep.engine.handlers.PredicateContext(controllerId = action.playerId)
+                            if (!predicateEvaluator.matches(state, projected, removal.entityId, atom.filter, ctx)) {
+                                val permName = state.getEntity(removal.entityId)?.get<CardComponent>()?.name ?: "Permanent"
+                                return "$permName doesn't match the required filter: ${atom.filter.description}"
+                            }
+                            val resolvedType =
+                                com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
+                            val key = removal.entityId to resolvedType
+                            demanded[key] = (demanded[key] ?: 0) + removal.count
+                        }
+                        for ((key, demandedCount) in demanded) {
+                            val (entityId, counterType) = key
+                            val actual = state.getEntity(entityId)
+                                ?.get<CountersComponent>()
+                                ?.getCount(counterType) ?: 0
+                            if (actual < demandedCount) {
+                                return "Creature does not have $demandedCount $counterType counters to remove"
+                            }
+                        }
+                    }
                 }
                 is AdditionalCost.ExileVariableCards -> {
                     val exiled = action.additionalCostPayment?.exiledCards ?: emptyList()
@@ -1597,50 +1728,6 @@ class CastSpellHandler(
                     }
                     // If sacrificedPermanents is empty, the player is paying extra mana instead
                 }
-                is AdditionalCost.RemoveCountersFromYourCreatures -> {
-                    // Web client sends a typed list of (entity, counterType, count)
-                    // entries so the player picks which counter type comes off each
-                    // creature; the engine validates totals and per-type availability.
-                    val removals = resolveDistributedCounterRemovalsForPayment(action)
-                    val total = removals.sumOf { it.count }
-                    if (total < additionalCost.totalCount) {
-                        return "You must remove ${additionalCost.totalCount} counters from among creatures you control to cast this spell"
-                    }
-                    // Tally demanded removals per (entity, counterType) so we can validate
-                    // against actual counter counts.
-                    val demanded = mutableMapOf<Pair<EntityId, CounterType>, Int>()
-                    for (removal in removals) {
-                        if (removal.count <= 0) {
-                            return "Counter removal count must be positive"
-                        }
-                        val permContainer = state.getEntity(removal.entityId)
-                            ?: return "Counter removal target not found: ${removal.entityId}"
-                        permContainer.get<CardComponent>()
-                            ?: return "Counter removal target is not a card: ${removal.entityId}"
-                        if (projected.getController(removal.entityId) != action.playerId) {
-                            return "You can only remove counters from creatures you control"
-                        }
-                        if (removal.entityId !in state.getBattlefield()) {
-                            return "Counter removal target is not on the battlefield"
-                        }
-                        if (!projected.isCreature(removal.entityId)) {
-                            return "Counter removal target must be a creature"
-                        }
-                        val resolvedType =
-                            com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
-                        val key = removal.entityId to resolvedType
-                        demanded[key] = (demanded[key] ?: 0) + removal.count
-                    }
-                    for ((key, demandedCount) in demanded) {
-                        val (entityId, counterType) = key
-                        val actual = state.getEntity(entityId)
-                            ?.get<CountersComponent>()
-                            ?.getCount(counterType) ?: 0
-                        if (actual < demandedCount) {
-                            return "Creature does not have $demandedCount $counterType counters to remove"
-                        }
-                    }
-                }
                 is AdditionalCost.PayLifePerTarget -> {
                     val required = additionalCost.amountPerTarget * action.targets.size
                     val currentLife = state.lifeTotal(action.playerId) // CR 810.9a — team's shared total
@@ -1792,6 +1879,8 @@ class CastSpellHandler(
                     } else {
                         // Check impending cost
                         val impendingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Impending>().firstOrNull()
+                        // Check cleave cost (CR 702.148 — an alternative cost).
+                        val cleaveAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Cleave>().firstOrNull()
                         // Check miracle cost (CR 702.94 — printed or granted in hand, window-gated).
                         val miracleWindowOpen = currentState.getEntity(action.cardId)
                             ?.has<com.wingedsheep.engine.state.components.identity.MiracleWindowComponent>() == true
@@ -1800,6 +1889,8 @@ class CastSpellHandler(
                         ) else null
                         if (action.altAllows(AlternativeCostType.IMPENDING) && impendingAbility != null) {
                             costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, impendingAbility.cost, action.playerId)
+                        } else if (action.altAllows(AlternativeCostType.CLEAVE) && cleaveAbility != null) {
+                            costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, cleaveAbility.cost, action.playerId)
                         } else if (action.altAllows(AlternativeCostType.MIRACLE) && miracleAbility != null) {
                             costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, miracleAbility.cost, action.playerId)
                         } else {
@@ -2059,26 +2150,8 @@ class CastSpellHandler(
                                 captureEntitySnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
                             )
                             for (permId in action.additionalCostPayment.sacrificedPermanents) {
-                                val permContainer = currentState.getEntity(permId) ?: continue
-                                val permCard = permContainer.get<CardComponent>() ?: continue
-                                val controllerId = permContainer.get<ControllerComponent>()?.playerId ?: action.playerId
-                                val ownerId = permCard.ownerId ?: action.playerId
-                                val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
-                                val graveyardZone = ZoneKey(ownerId, Zone.GRAVEYARD)
-
-                                currentState = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                                    .trackPermanentSacrifice(currentState, listOf(permId), action.playerId)
-                                currentState = currentState.removeFromZone(battlefieldZone, permId)
-                                currentState = currentState.addToZone(graveyardZone, permId)
-
-                                events.add(PermanentsSacrificedEvent(action.playerId, listOf(permId), listOf(permCard.name)))
-                                events.add(ZoneChangeEvent(
-                                    entityId = permId,
-                                    entityName = permCard.name,
-                                    fromZone = Zone.BATTLEFIELD,
-                                    toZone = Zone.GRAVEYARD,
-                                    ownerId = ownerId
-                                ))
+                                if (currentState.getEntity(permId) == null) continue
+                                currentState = sacrificePermanentAsCost(currentState, permId, action.playerId, events)
                             }
                         }
                         is CostAtom.Discard -> {
@@ -2147,6 +2220,25 @@ class CastSpellHandler(
                         }
                         // PayLife is auto-paid in the loop above; mana / reveal aren't spell additional costs.
                         is CostAtom.PayLife, is CostAtom.Mana, is CostAtom.RevealFromHand -> {}
+                        is CostAtom.RemoveCounters -> {
+                            val resolvedRemovals = resolveDistributedCounterRemovalsForPayment(action)
+                            for (removal in resolvedRemovals) {
+                                val container = currentState.getEntity(removal.entityId) ?: continue
+                                val existing = container.get<CountersComponent>() ?: continue
+                                val resolvedType =
+                                    com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
+                                currentState = currentState.updateEntity(removal.entityId) { c ->
+                                    c.with(existing.withRemoved(resolvedType, removal.count))
+                                }
+                                val entityName = container.get<CardComponent>()?.name ?: "Permanent"
+                                events.add(CountersRemovedEvent(
+                                    entityId = removal.entityId,
+                                    counterType = removal.counterType,
+                                    amount = removal.count,
+                                    entityName = entityName
+                                ))
+                            }
+                        }
                     }
                     is AdditionalCost.ExileVariableCards -> {
                         val exiledCards = action.additionalCostPayment.exiledCards
@@ -2177,26 +2269,8 @@ class CastSpellHandler(
                             captureEntitySnapshots(action.additionalCostPayment.sacrificedPermanents, projectedBeforeSacrifice)
                         )
                         for (permId in action.additionalCostPayment.sacrificedPermanents) {
-                            val permContainer = currentState.getEntity(permId) ?: continue
-                            val permCard = permContainer.get<CardComponent>() ?: continue
-                            val controllerId = permContainer.get<ControllerComponent>()?.playerId ?: action.playerId
-                            val ownerId = permCard.ownerId ?: action.playerId
-                            val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
-                            val graveyardZone = ZoneKey(ownerId, Zone.GRAVEYARD)
-
-                            currentState = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                                .trackPermanentSacrifice(currentState, listOf(permId), action.playerId)
-                            currentState = currentState.removeFromZone(battlefieldZone, permId)
-                            currentState = currentState.addToZone(graveyardZone, permId)
-
-                            events.add(PermanentsSacrificedEvent(action.playerId, listOf(permId), listOf(permCard.name)))
-                            events.add(ZoneChangeEvent(
-                                entityId = permId,
-                                entityName = permCard.name,
-                                fromZone = Zone.BATTLEFIELD,
-                                toZone = Zone.GRAVEYARD,
-                                ownerId = ownerId
-                            ))
+                            if (currentState.getEntity(permId) == null) continue
+                            currentState = sacrificePermanentAsCost(currentState, permId, action.playerId, events)
                         }
                         // Apply cost reduction based on number of creatures sacrificed
                         val reduction = action.additionalCostPayment.sacrificedPermanents.size * additionalCost.costReductionPerCreature
@@ -2293,7 +2367,8 @@ class CastSpellHandler(
                                     counterType = Counters.MINUS_ONE_MINUS_ONE,
                                     amount = additionalCost.blightAmount,
                                     entityName = targetName,
-                                    firstThisTurn = firstThisTurn
+                                    firstThisTurn = firstThisTurn,
+                                    placedBy = action.playerId
                                 ))
                             }
                         }
@@ -2321,7 +2396,8 @@ class CastSpellHandler(
                                     counterType = Counters.MINUS_ONE_MINUS_ONE,
                                     amount = amount,
                                     entityName = targetName,
-                                    firstThisTurn = firstThisTurn
+                                    firstThisTurn = firstThisTurn,
+                                    placedBy = action.playerId
                                 ))
                             }
                         }
@@ -2387,49 +2463,9 @@ class CastSpellHandler(
                                 captureEntitySnapshots(sacrificed, projectedBeforeSacrifice)
                             )
                             for (permId in sacrificed) {
-                                val permContainer = currentState.getEntity(permId) ?: continue
-                                val permCard = permContainer.get<CardComponent>() ?: continue
-                                val controllerId = permContainer.get<ControllerComponent>()?.playerId ?: action.playerId
-                                val ownerId = permCard.ownerId ?: action.playerId
-                                val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
-                                val graveyardZone = ZoneKey(ownerId, Zone.GRAVEYARD)
-
-                                currentState = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                                    .trackPermanentSacrifice(currentState, listOf(permId), action.playerId)
-                                currentState = currentState.removeFromZone(battlefieldZone, permId)
-                                currentState = currentState.addToZone(graveyardZone, permId)
-
-                                events.add(PermanentsSacrificedEvent(action.playerId, listOf(permId), listOf(permCard.name)))
-                                events.add(ZoneChangeEvent(
-                                    entityId = permId,
-                                    entityName = permCard.name,
-                                    fromZone = Zone.BATTLEFIELD,
-                                    toZone = Zone.GRAVEYARD,
-                                    ownerId = ownerId
-                                ))
+                                if (currentState.getEntity(permId) == null) continue
+                                currentState = sacrificePermanentAsCost(currentState, permId, action.playerId, events)
                             }
-                        }
-                    }
-                    is AdditionalCost.RemoveCountersFromYourCreatures -> {
-                        // Remove the chosen counters from the designated creatures.
-                        // The typed `distributedCounterRemovals` payload tells us
-                        // exactly which counter type to take off each creature.
-                        val resolvedRemovals = resolveDistributedCounterRemovalsForPayment(action)
-                        for (removal in resolvedRemovals) {
-                            val container = currentState.getEntity(removal.entityId) ?: continue
-                            val existing = container.get<CountersComponent>() ?: continue
-                            val resolvedType =
-                                com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(removal.counterType)
-                            currentState = currentState.updateEntity(removal.entityId) { c ->
-                                c.with(existing.withRemoved(resolvedType, removal.count))
-                            }
-                            val entityName = container.get<CardComponent>()?.name ?: "Creature"
-                            events.add(com.wingedsheep.engine.core.CountersRemovedEvent(
-                                entityId = removal.entityId,
-                                counterType = removal.counterType,
-                                amount = removal.count,
-                                entityName = entityName
-                            ))
                         }
                     }
                     is AdditionalCost.PayLifePerTarget -> {
@@ -2492,29 +2528,16 @@ class CastSpellHandler(
         }
 
         // Pay Casualty's optional additional cost: sacrifice the chosen creature (CR 702.153).
-        // Validated in validate(); mirror the additional-cost Sacrifice zone move, including the
-        // LKI snapshot (Rule 112.7a / 608.2h) and the leave-the-battlefield events so dies/leaves
-        // triggers and the "cards leave your graveyard" family see the move.
+        // Validated in validate(); routes through the shared cost-sacrifice helper so the LKI
+        // snapshot (CR 608.2h / 113.7a) and the leave-the-battlefield events are emitted for
+        // dies/leaves triggers and the "cards leave your graveyard" family. The pre-sacrifice
+        // EntitySnapshot is also captured into sacrificedSnapshots for the spell's own effect
+        // context (copy-token P/T, etc.).
         action.casualtyCreature?.let { permId ->
             val projectedBeforeSacrifice = currentState.projectedState
             sacrificedSnapshots.addAll(captureEntitySnapshots(listOf(permId), projectedBeforeSacrifice))
-            val permContainer = currentState.getEntity(permId)
-            val permCard = permContainer?.get<CardComponent>()
-            if (permContainer != null && permCard != null) {
-                val controllerId = permContainer.get<ControllerComponent>()?.playerId ?: action.playerId
-                val ownerId = permCard.ownerId ?: action.playerId
-                currentState = com.wingedsheep.engine.handlers.effects.ZoneTransitionService
-                    .trackPermanentSacrifice(currentState, listOf(permId), action.playerId)
-                currentState = currentState.removeFromZone(ZoneKey(controllerId, Zone.BATTLEFIELD), permId)
-                currentState = currentState.addToZone(ZoneKey(ownerId, Zone.GRAVEYARD), permId)
-                events.add(PermanentsSacrificedEvent(action.playerId, listOf(permId), listOf(permCard.name)))
-                events.add(ZoneChangeEvent(
-                    entityId = permId,
-                    entityName = permCard.name,
-                    fromZone = Zone.BATTLEFIELD,
-                    toZone = Zone.GRAVEYARD,
-                    ownerId = ownerId
-                ))
+            if (currentState.getEntity(permId) != null) {
+                currentState = sacrificePermanentAsCost(currentState, permId, action.playerId, events)
             }
         }
 
@@ -2579,7 +2602,7 @@ class CastSpellHandler(
             isLegendary = cardComponent.typeLine.isLegendary,
             manaValue = cardComponent.manaCost.cmc,
             hasXInCost = cardComponent.manaCost.hasX,
-            subtypes = cardComponent.typeLine.subtypes.map { it.value }.toSet(),
+            subtypes = paymentSubtypesOf(cardComponent),
             isFromExile = isCastFromExile(currentState, action.cardId),
             isFromHand = isCastFromHand(currentState, action.cardId),
             cardTypes = cardComponent.typeLine.cardTypes,
@@ -2687,6 +2710,8 @@ class CastSpellHandler(
                 }
             } else if (action.wasKicked && cardDef.script.kickerTargetRequirements.isNotEmpty()) {
                 cardDef.script.kickerTargetRequirements
+            } else if (isCleaveCast(action, cardDef) && cardDef.script.cleaveTargetRequirements.isNotEmpty()) {
+                cardDef.script.cleaveTargetRequirements
             } else {
                 (faceScriptForTargets ?: cardDef.script).targetRequirements
             }
@@ -2752,6 +2777,13 @@ class CastSpellHandler(
         val wasImpending = action.useAlternativeCost && cardDef != null &&
             action.altAllows(AlternativeCostType.IMPENDING) &&
             cardDef.keywordAbilities.any { it is KeywordAbility.Impending }
+
+        // Determine if this spell is being cast using cleave (CR 702.148). When true, the spell
+        // resolves with its brackets-removed effect/target variant (cleaveSpellEffect /
+        // cleaveTargetRequirements) instead of its printed one.
+        val wasCleaved = action.useAlternativeCost && cardDef != null &&
+            action.altAllows(AlternativeCostType.CLEAVE) &&
+            cardDef.keywordAbilities.any { it is KeywordAbility.Cleave }
 
         // Extract per-color mana spent from payment events (for mana-spent-gated triggers)
         val manaSpentEvent = paymentResult.events.filterIsInstance<ManaSpentEvent>().firstOrNull()
@@ -2869,6 +2901,7 @@ class CastSpellHandler(
             wasWarped = wasWarped,
             wasEvoked = wasEvoked,
             wasImpending = wasImpending,
+            wasCleaved = wasCleaved,
             wasSneaked = wasSneaked,
             sneakAttackDefenderId = sneakAttackDefenderId,
             chosenModes = action.chosenModes,
@@ -3351,6 +3384,47 @@ class CastSpellHandler(
     }
 
     /**
+     * Mana-affordability gate for cast-time mode selection: can the caster still pay
+     * the spell's total cost if [chosenIndices] end up being the chosen modes? Chosen
+     * modes' additional mana costs stack (rule 700.2h), so a pick that is affordable
+     * alone can become unpayable combined with earlier picks — and by the time payment
+     * runs (after target selection) the only way out is cancelling the whole cast.
+     *
+     * The base cost comes from [computeTotalCastCost] — the same pipeline payment uses —
+     * so alternative costs, cost modifiers, and alternative payments (convoke/delve)
+     * can't make the gate disagree with payment. A "without paying its mana cost" cast
+     * still owes the stacked per-mode additional costs (CR 601.2b, 601.2f — additional
+     * costs apply on top of an alternative cost).
+     */
+    private fun canPayModeSelection(
+        state: GameState,
+        action: CastSpell,
+        modes: List<com.wingedsheep.sdk.scripting.effects.Mode>,
+        chosenIndices: List<Int>
+    ): Boolean {
+        val extraCosts = chosenIndices.mapNotNull { modes.getOrNull(it)?.additionalManaCost }
+        // Nothing stacks — base-cost affordability was already validated on the cast action.
+        if (extraCosts.isEmpty()) return true
+        val cardComponent = state.getEntity(action.cardId)?.get<CardComponent>() ?: return true
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return true
+        val playForFree = zoneResolver.hasPlayWithoutPayingCost(state, action.playerId, action.cardId) ||
+            action.useWithoutPayingManaCost
+        val computed = computeTotalCastCost(
+            state,
+            action,
+            cardDef,
+            cardComponent,
+            playForFree,
+            castingFromCommandZone = zoneResolver.hasCommanderCastPermission(state, action.playerId, action.cardId)
+        ) ?: return false
+        var cost = computed.cost
+        for (extra in extraCosts) {
+            cost = cost + ManaCost.parse(extra)
+        }
+        return validatePayment(state, action, cost, computed.paymentXValue) == null
+    }
+
+    /**
      * Build a ChooseOptionDecision + CastModalModeSelectionContinuation for the next
      * mode pick. Shared between the initial pause (here) and the iterative resumer.
      */
@@ -3365,7 +3439,20 @@ class CastSpellHandler(
         availableIndices: List<Int>?,
         repeatAvailableIndices: List<Int>?
     ): ExecutionResult {
-        val offerIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        val candidateIndices = availableIndices ?: repeatAvailableIndices ?: modalEffect.modes.indices.toList()
+        // Rule 700.2h — only offer a mode the caster can still pay for on top of the
+        // modes already picked. Without this gate an unpayable combination sails
+        // through mode + target selection and dead-ends at payment, where the pending
+        // decision can never be answered legally (only cancelled).
+        val offerIndices = candidateIndices.filter { candidate ->
+            canPayModeSelection(state, baseCastAction, modalEffect.modes, selectedModeIndices + candidate)
+        }
+        if (offerIndices.isEmpty() && selectedModeIndices.size < modalEffect.minChooseCount) {
+            return ExecutionResult.error(
+                state,
+                "Cannot afford the additional cost of any remaining mode for $cardName"
+            )
+        }
         val doneOffered = selectedModeIndices.size >= modalEffect.minChooseCount &&
             selectedModeIndices.size < modalEffect.chooseCount
 

@@ -22,6 +22,7 @@ import com.wingedsheep.sdk.scripting.effects.LookAudience
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CrewSaddleContributorsComponent
+import com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.stack.entityIds
 import kotlin.reflect.KClass
@@ -228,6 +229,25 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                 // Apply count limit if specified (take first N from the ordered pile)
                 val count = source.count
                 if (count != null) inExile.take(count) else inExile
+            }
+
+            is CardSource.CraftedMaterials -> {
+                // The cards exiled to Craft this permanent (CraftedFromExiledComponent), filtered to
+                // those still in exile — the gather-pipeline twin of ExiledCardsSource.CRAFTED.
+                // Backs The Grim Captain's "put an exiled creature card used to craft it" clause.
+                val sourceId = context.sourceId
+                    ?: return EffectResult.error(state, "No source entity for CraftedMaterials")
+                val sourceContainer = state.getEntity(sourceId)
+                    ?: return EffectResult.error(state, "Source entity not found for CraftedMaterials")
+                val crafted = sourceContainer.get<CraftedFromExiledComponent>()
+                    ?: return EffectResult.success(state).copy(
+                        updatedCollections = mapOf(effect.storeAs to emptyList())
+                    )
+                crafted.exiledIds.filter { entityId ->
+                    val ownerId = state.getEntity(entityId)?.get<OwnerComponent>()?.playerId
+                        ?: context.controllerId
+                    entityId in state.getZone(ZoneKey(ownerId, Zone.EXILE))
+                }
             }
 
             is CardSource.Self -> {

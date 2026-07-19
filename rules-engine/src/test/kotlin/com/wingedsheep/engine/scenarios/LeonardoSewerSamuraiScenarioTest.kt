@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldBe
  *
  * Exercises the non-self `EntersWithCounters(FINALITY, condition = WasCastFromGraveyard)`:
  * Leonardo's `selfOnly = false` replacement must evaluate the cast-from-graveyard status of the
- * *entering* creature (the fix in EntersWithCountersHelper.applyGlobalEntersWithCounters).
+ * *entering* creature (the fix in EntersWithReplacements.applyGlobal).
  */
 class LeonardoSewerSamuraiScenarioTest : ScenarioTestBase() {
 

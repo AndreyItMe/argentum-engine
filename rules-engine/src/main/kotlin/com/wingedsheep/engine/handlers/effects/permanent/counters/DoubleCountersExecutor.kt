@@ -60,7 +60,7 @@ class DoubleCountersExecutor : EffectExecutor<DoubleCountersEffect> {
 
         return EffectResult.success(
             newState,
-            listOf(CountersAddedEvent(targetId, effect.counterType, added, entityName, firstThisTurn))
+            listOf(CountersAddedEvent(targetId, effect.counterType, added, entityName, firstThisTurn, placedBy = context.controllerId))
         )
     }
 }

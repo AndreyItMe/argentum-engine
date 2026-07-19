@@ -405,17 +405,19 @@ export function mergeResult(
           return casualtyCreature ? { ...action, casualtyCreature } : action
         }
         const fieldUpdate =
-          costType === 'DiscardCard'
-            ? { discardedCards: selectedTargets }
-            : costType === 'BouncePermanent'
-              ? { bouncedPermanents: selectedTargets }
-              : costType === 'ExileFromGraveyard'
-                ? { exiledCards: selectedTargets }
-                : costType === 'Behold' || costType === 'ChooseEntity'
-                  ? { beheldCards: selectedTargets }
-                  : costType === 'Blight' || costType === 'BlightVariable'
-                    ? { blightTargets: selectedTargets }
-                    : { sacrificedPermanents: selectedTargets }
+          costType === 'TapPermanents'
+            ? { tappedPermanents: selectedTargets }
+            : costType === 'DiscardCard'
+              ? { discardedCards: selectedTargets }
+              : costType === 'BouncePermanent'
+                ? { bouncedPermanents: selectedTargets }
+                : costType === 'ExileFromGraveyard'
+                  ? { exiledCards: selectedTargets }
+                  : costType === 'Behold' || costType === 'ChooseEntity'
+                    ? { beheldCards: selectedTargets }
+                    : costType === 'Blight' || costType === 'BlightVariable'
+                      ? { blightTargets: selectedTargets }
+                      : { sacrificedPermanents: selectedTargets }
         // Spread the existing additionalCostPayment so prior phases' fields
         // (e.g. `blightAmount` from a preceding BlightVariable phase) survive.
         const additionalCostPayment = {
@@ -798,7 +800,7 @@ export function enterPhase(
           // dedicated cross-zone overlay rather than the single-zone targeting flow.
           validTargets = [...(costInfo.validCraftMaterials ?? [])]
           minTargets = costInfo.craftMinCount ?? 1
-          maxTargets = validTargets.length
+          maxTargets = costInfo.craftMaxCount ?? validTargets.length
           flags.isCraftMaterialSelection = true
           flags.targetDescription = costInfo.description
           flags.sourceCardName = actionInfo.description

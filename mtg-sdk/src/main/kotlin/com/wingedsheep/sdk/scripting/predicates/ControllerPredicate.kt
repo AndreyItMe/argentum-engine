@@ -65,6 +65,24 @@ sealed interface ControllerPredicate {
     }
 
     /**
+     * Controlled by the player associated with the current trigger — the damaged player for a
+     * combat/damage trigger, the event's player otherwise (resolved from the effect context's
+     * `triggeringPlayerId`, falling back to `triggeringEntityId` for damage triggers where the
+     * damaged player rides on the triggering entity).
+     *
+     * The control sibling of [OwnedByTriggeringPlayer] for the *non-targeted* "that player"
+     * wording where control (not ownership) is what matters: Dreadmaw's Ire grants "whenever this
+     * creature deals combat damage to a player, destroy target artifact **that player** controls" —
+     * "that player" is the player just damaged, without the ability targeting them. Reads projected
+     * control, so it tracks control-changing effects (unlike the owner-based sibling).
+     */
+    @SerialName("ControlledByTriggeringPlayer")
+    @Serializable
+    data object ControlledByTriggeringPlayer : ControllerPredicate {
+        override val description: String = "that player controls"
+    }
+
+    /**
      * Controlled by the player referenced by an explicit [EffectTarget].
      *
      * Use this when a filter needs to scope to a specific named/bound player target

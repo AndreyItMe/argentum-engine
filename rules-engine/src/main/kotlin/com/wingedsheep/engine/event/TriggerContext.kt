@@ -204,6 +204,14 @@ data class TriggerContext(
                     xValueOfTriggeringSpell = event.xValue
                 )
                 is CardsDrawnEvent -> TriggerContext(triggeringPlayerId = event.playerId)
+                // A player losing the game: the loser is both the triggering player (so
+                // Player.TriggeringPlayer / a TriggeringPlayerIs condition resolves to them) and
+                // the triggering entity (players are entities). Shinryu, Transcendent Rival reads
+                // this to gate "when the chosen player loses the game, you win the game".
+                is com.wingedsheep.engine.core.PlayerLostEvent -> TriggerContext(
+                    triggeringEntityId = event.playerId,
+                    triggeringPlayerId = event.playerId
+                )
                 is com.wingedsheep.engine.core.ScriedEvent -> TriggerContext(
                     triggeringPlayerId = event.playerId,
                     scryCount = event.count

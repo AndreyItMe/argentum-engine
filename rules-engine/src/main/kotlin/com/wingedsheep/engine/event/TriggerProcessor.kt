@@ -171,7 +171,17 @@ class TriggerProcessor(
             requirement = targetRequirement,
             controllerId = trigger.controllerId,
             sourceId = trigger.sourceId,
-            triggeringEntityId = trigger.triggerContext.triggeringEntityId
+            triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+            // Carry the triggering player so a "target … that player controls" filter
+            // (ControllerPredicate.ControlledByTriggeringPlayer / ControlledByReferencedPlayer over
+            // Player.TriggeringPlayer) resolves identically here to the on-stack targeting path — a
+            // trigger whose associated player rides on triggeringPlayerId must reach the same
+            // legal-target verdict in this pre-check, or the may/pay question is wrongly skipped.
+            pipelineContext = com.wingedsheep.engine.handlers.PredicateContext(
+                controllerId = trigger.controllerId,
+                triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+                triggeringPlayerId = trigger.triggerContext.triggeringPlayerId,
+            )
         )
         if (legalTargets.isEmpty() && targetRequirement.effectiveMinCount > 0) return null
         return BatchKey(trigger.controllerId, identity)
@@ -297,19 +307,24 @@ class TriggerProcessor(
             return processTargetedTrigger(currentState, trigger, targetRequirement)
         }
 
-        // A no-target "you may X. If you don't, Y" (optional + elseEffect) has no target-selection
-        // step to carry the decline through, so the targeted path's may/else handling never runs and
-        // both fields were silently dropped (the latent bug that made Yawgmoth Demon do nothing).
-        // Lower it into the unified GatedEffect(Gate.MayDecide) frame so GatedEffectExecutor owns the
-        // resolution-time yes/no and runs `elseEffect` on decline. Feasibility derived from the
-        // may-action lets an impossible "may" (e.g. "you may sacrifice an artifact" with no artifact)
-        // fall straight to the else with no prompt — the no-target analogue of "no legal targets → else".
-        val elseEffect = ability.elseEffect
-        if (ability.optional && elseEffect != null) {
+        // A no-target optional trigger has no target-selection step to carry the decline through,
+        // so the targeted path's may handling never runs and `optional` (plus any `elseEffect`)
+        // was silently dropped — the trigger resolved as mandatory (the latent bug that made
+        // Yawgmoth Demon do nothing and Song of Stupefaction mill without asking). Lower it into
+        // the unified GatedEffect(Gate.MayDecide) frame so GatedEffectExecutor owns the
+        // resolution-time yes/no and runs `elseEffect` (if any) on decline. Skip the wrap when the
+        // effect already carries its own consent gate (a May* GatedEffect, e.g. `Effects.May` or
+        // an optional mana payment) — double-wrapping would prompt twice. Feasibility derived from
+        // the may-action lets an impossible "may" (e.g. "you may sacrifice an artifact" with no
+        // artifact) fall straight to the else with no prompt — the no-target analogue of
+        // "no legal targets → else".
+        val effectOwnsConsent = (ability.effect as? GatedEffect)?.gate
+            .let { it is Gate.MayDecide || it is Gate.MayPay || it is Gate.MayPayX }
+        if (ability.optional && !effectOwnsConsent) {
             val gated = GatedEffect(
                 gate = Gate.MayDecide(feasibility = impliedMayFeasibility(ability.effect)),
                 then = ability.effect,
-                otherwise = elseEffect
+                otherwise = ability.elseEffect
             )
             return putTriggerOnStack(currentState, trigger, emptyList(), gated)
         }
@@ -353,7 +368,17 @@ class TriggerProcessor(
             requirement = targetRequirement,
             controllerId = trigger.controllerId,
             sourceId = trigger.sourceId,
-            triggeringEntityId = trigger.triggerContext.triggeringEntityId
+            triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+            // Carry the triggering player so a "target … that player controls" filter
+            // (ControllerPredicate.ControlledByTriggeringPlayer / ControlledByReferencedPlayer over
+            // Player.TriggeringPlayer) resolves identically here to the on-stack targeting path — a
+            // trigger whose associated player rides on triggeringPlayerId must reach the same
+            // legal-target verdict in this pre-check, or the may/pay question is wrongly skipped.
+            pipelineContext = com.wingedsheep.engine.handlers.PredicateContext(
+                controllerId = trigger.controllerId,
+                triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+                triggeringPlayerId = trigger.triggerContext.triggeringPlayerId,
+            )
         )
 
         if (legalTargets.isEmpty() && targetRequirement.effectiveMinCount > 0) {
@@ -449,7 +474,17 @@ class TriggerProcessor(
             requirement = targetRequirement,
             controllerId = trigger.controllerId,
             sourceId = trigger.sourceId,
-            triggeringEntityId = trigger.triggerContext.triggeringEntityId
+            triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+            // Carry the triggering player so a "target … that player controls" filter
+            // (ControllerPredicate.ControlledByTriggeringPlayer / ControlledByReferencedPlayer over
+            // Player.TriggeringPlayer) resolves identically here to the on-stack targeting path — a
+            // trigger whose associated player rides on triggeringPlayerId must reach the same
+            // legal-target verdict in this pre-check, or the may/pay question is wrongly skipped.
+            pipelineContext = com.wingedsheep.engine.handlers.PredicateContext(
+                controllerId = trigger.controllerId,
+                triggeringEntityId = trigger.triggerContext.triggeringEntityId,
+                triggeringPlayerId = trigger.triggerContext.triggeringPlayerId,
+            )
         )
 
         if (legalTargets.isEmpty() && targetRequirement.effectiveMinCount > 0) {
@@ -710,6 +745,7 @@ class TriggerProcessor(
             effect = effectOverride ?: ability.effect,
             description = ability.description,
             abilityIdentity = state.abilityIdentityOf(trigger.sourceId, ability.id),
+            granterId = trigger.granterId,
             descriptionOverride = ability.descriptionOverride,
             triggerDamageAmount = trigger.triggerContext.damageAmount,
             triggeringEntityId = trigger.triggerContext.triggeringEntityId,
@@ -740,9 +776,24 @@ class TriggerProcessor(
 
         return stackResolver.putTriggeredAbility(
             state, abilityComponent, targets,
-            targetRequirements = listOfNotNull(ability.targetRequirement)
+            targetRequirements = listOfNotNull(ability.targetRequirement),
+            causedByAttack = isAttackCausedTrigger(trigger)
         )
     }
+
+    /**
+     * True when [trigger] is a creature's own "whenever this creature attacks" ability — a
+     * SELF-bound per-attacker [com.wingedsheep.sdk.scripting.EventPattern.AttackEvent]. Used to
+     * stamp `causedByAttack` on the emitted `AbilityTriggeredEvent` so Firebender Ascension's
+     * "a creature you control attacking causes a triggered ability of that creature to trigger"
+     * meta-trigger fires only for genuine attack triggers, not other in-combat triggers (deals
+     * damage, dies, etc.). The SELF binding is what ties the ability to "that [attacking] creature":
+     * an anthem-style ANY-bound "whenever a creature you control attacks" ability lives on a
+     * different permanent and is deliberately excluded.
+     */
+    private fun isAttackCausedTrigger(trigger: PendingTrigger): Boolean =
+        trigger.ability.trigger is com.wingedsheep.sdk.scripting.EventPattern.AttackEvent &&
+            trigger.ability.binding == com.wingedsheep.sdk.scripting.TriggerBinding.SELF
 
     /**
      * Convenience method to detect and process triggers in one call.

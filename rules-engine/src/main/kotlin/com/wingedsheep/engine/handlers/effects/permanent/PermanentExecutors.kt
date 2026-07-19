@@ -4,7 +4,6 @@ import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.ExecutorModule
-import com.wingedsheep.engine.handlers.effects.permanent.ExploreEffectExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.abilities.GrantActivatedAbilityExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.abilities.GrantActivatedAbilityToGroupExecutor
 import com.wingedsheep.engine.handlers.effects.permanent.abilities.GrantFlashbackExecutor
@@ -113,10 +112,30 @@ class PermanentExecutors(
 ) : ExecutorModule {
     private val staticAbilityHandler = StaticAbilityHandler(cardRegistry)
 
+    // Late-bound registry recursion, so ExploreEffectExecutor can re-issue an explore as a
+    // Composite(prefixEffect, explore) when a ModifyExplore replacement (CR 614) applies. Mirrors
+    // LibraryExecutors' recursion wiring; read through the ref at execution time so constructing
+    // this module before initialization (as some unit tests do) never trips over an unset property.
+    private val recursionRef =
+        java.util.concurrent.atomic.AtomicReference<((com.wingedsheep.engine.state.GameState, com.wingedsheep.sdk.scripting.effects.Effect, com.wingedsheep.engine.handlers.EffectContext) -> com.wingedsheep.engine.core.EffectResult)?>(null)
+
+    private val recursion: (com.wingedsheep.engine.state.GameState, com.wingedsheep.sdk.scripting.effects.Effect, com.wingedsheep.engine.handlers.EffectContext) -> com.wingedsheep.engine.core.EffectResult =
+        { state, effect, context ->
+            val executor = recursionRef.get()
+                ?: error("PermanentExecutors.initializeRecursion(...) was not called before an explore replacement ran")
+            executor(state, effect, context)
+        }
+
+    /** Late-bind the registry's recursive executor so ExploreEffectExecutor can delegate. */
+    fun initializeRecursion(executor: (com.wingedsheep.engine.state.GameState, com.wingedsheep.sdk.scripting.effects.Effect, com.wingedsheep.engine.handlers.EffectContext) -> com.wingedsheep.engine.core.EffectResult) {
+        recursionRef.set(executor)
+    }
+
     override fun executors(): List<EffectExecutor<*>> = listOf(
         // counters
         AddCountersExecutor(),
         AddDynamicCountersExecutor(),
+        com.wingedsheep.engine.handlers.effects.permanent.counters.AddCountersUpToExecutor(),
         MoveAllLastKnownCountersExecutor(),
         AddCountersToCollectionExecutor(),
         DoubleCountersExecutor(),
@@ -132,6 +151,7 @@ class PermanentExecutors(
         DistributeCountersAmongTargetsExecutor(),
         DistributeCountersAmongFilteredExecutor(),
         ProliferateExecutor(),
+        com.wingedsheep.engine.handlers.effects.permanent.counters.EmitTrainedEventExecutor(),
         // control
         ExchangeControlExecutor(),
         GainControlExecutor(),
@@ -194,7 +214,8 @@ class PermanentExecutors(
         LevelUpClassExecutor(staticAbilityHandler),
         IncrementAbilityResolutionCountExecutor(),
         MarkEnduringReturnExecutor(),
-        ExploreEffectExecutor(),
+        ExploreEffectExecutor(recursion),
+        EmitExploredEventExecutor(),
         // tapping
         TapUntapExecutor(),
         TapUntapCollectionExecutor(),

@@ -108,7 +108,7 @@ import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import com.wingedsheep.sdk.scripting.ExtraLoyaltyActivation
 import com.wingedsheep.sdk.scripting.GainActivatedAbilitiesOfPermanents
 import com.wingedsheep.sdk.scripting.GrantActivatedAbility
-import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard
+import com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards
 import com.wingedsheep.sdk.scripting.SpendAnyManaTypeForActivatedAbilities
 import com.wingedsheep.sdk.scripting.GrantAdditionalLandDrop
 import com.wingedsheep.sdk.scripting.GrantAlternativeCastingCost
@@ -871,7 +871,7 @@ class StaticAbilityHandler(
             // Activated abilities (ActivateAbilityHandler / ActivatedAbilityEnumerator):
             is ExtraLoyaltyActivation,
             is GrantActivatedAbility,
-            is HasAllActivatedAbilitiesOfLinkedExiledCard,
+            is HasAllActivatedAbilitiesOfExiledCards,
             is com.wingedsheep.sdk.scripting.HasAbilitiesOfChosenLinkedExiledCard,
             is GainActivatedAbilitiesOfPermanents,
             is SpendAnyManaTypeForActivatedAbilities,
@@ -1006,6 +1006,7 @@ class StaticAbilityHandler(
             is com.wingedsheep.sdk.scripting.DoubleCounterPlacement,
             is com.wingedsheep.sdk.scripting.EntersWithCounters,
             is com.wingedsheep.sdk.scripting.EntersWithDynamicCounters,
+            is com.wingedsheep.sdk.scripting.EntersWithKeywords,
             // "Lands you control enter untapped" (The Wandering Minstrel): a static effect
             // consulted from the battlefield against OTHER permanents as they enter.
             is com.wingedsheep.sdk.scripting.EntersUntapped,
@@ -1016,6 +1017,8 @@ class StaticAbilityHandler(
             is com.wingedsheep.sdk.scripting.RedirectZoneChange,
             is com.wingedsheep.sdk.scripting.RedirectZoneChangeWithEffect,
             is com.wingedsheep.sdk.scripting.PreventExtraTurns,
+            // Explore modification (consulted from the battlefield at explore time — Twists and Turns):
+            is com.wingedsheep.sdk.scripting.ModifyExplore,
             // Token creation:
             is com.wingedsheep.sdk.scripting.ReplaceTokenCreationWithAttachedCopy,
             is com.wingedsheep.sdk.scripting.DoubleTokenCreation,

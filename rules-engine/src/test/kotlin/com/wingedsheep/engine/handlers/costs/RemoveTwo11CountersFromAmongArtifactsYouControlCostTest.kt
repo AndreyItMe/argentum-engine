@@ -11,7 +11,10 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Deck
 import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.AdditionalCostPayment
+import com.wingedsheep.sdk.scripting.DistributedCounterRemoval
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.costs.CostAtom
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -44,11 +47,11 @@ class RemoveTwo11CountersFromAmongArtifactsYouControlCostTest : FunSpec({
         oracleText = "Remove two +1/+1 counters from among artifacts you control: Draw a card."
 
         activatedAbility {
-            cost = AbilityCost.RemoveCountersFromAmongFilteredPermanents(
+            cost = AbilityCost.Atom(CostAtom.RemoveCounters(
                 counterType = "+1/+1",
-                count = 2,
+                count = DynamicAmount.Fixed(2),
                 filter = GameObjectFilter.Artifact
-            )
+            ))
             effect = Effects.DrawCards(1)
         }
     }
@@ -95,7 +98,10 @@ class RemoveTwo11CountersFromAmongArtifactsYouControlCostTest : FunSpec({
                 sourceId = source,
                 abilityId = abilityId,
                 costPayment = AdditionalCostPayment(
-                    counterRemovals = mapOf(artifact1 to 1, artifact2 to 1)
+                    distributedCounterRemovals = listOf(
+                        DistributedCounterRemoval(artifact1, "+1/+1", 1),
+                        DistributedCounterRemoval(artifact2, "+1/+1", 1)
+                    )
                 )
             )
         )
@@ -139,7 +145,9 @@ class RemoveTwo11CountersFromAmongArtifactsYouControlCostTest : FunSpec({
                 sourceId = source,
                 abilityId = abilityId,
                 costPayment = AdditionalCostPayment(
-                    counterRemovals = mapOf(nonArtifact to 2)
+                    distributedCounterRemovals = listOf(
+                        DistributedCounterRemoval(nonArtifact, "+1/+1", 2)
+                    )
                 )
             )
         )

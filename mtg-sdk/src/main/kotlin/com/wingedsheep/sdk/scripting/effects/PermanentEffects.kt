@@ -142,8 +142,12 @@ data class BecomeCreatureEffect(
  * resulting permanent is exactly the named artifact, nothing more.
  *
  * @property target The permanent to transform
- * @property cardTypes Card types to set, replacing all existing ones (e.g. `setOf("ARTIFACT")`)
- * @property subtypes Subtypes to set, replacing all existing ones (e.g. `setOf("Treasure")`)
+ * @property cardTypes Card types to set, replacing all existing ones (e.g. `setOf("ARTIFACT")`).
+ *   `null` keeps the permanent's existing card types unchanged — used when only subtypes/abilities
+ *   change (Ultima's blighted land "loses all land types and abilities" but stays a land and keeps
+ *   any other card types such as artifact, per its ruling).
+ * @property subtypes Subtypes to set, replacing all existing ones (e.g. `setOf("Treasure")`;
+ *   `emptySet()` strips all subtypes — "loses all land types")
  * @property colors Colors to set (`emptySet()` = colorless, the default; `null` = keep existing)
  * @property loseAllAbilities Whether the permanent loses all printed/granted-via-projection abilities
  * @property grantedAbility A single activated ability the transformed permanent gains (e.g. the
@@ -156,7 +160,7 @@ data class BecomeCreatureEffect(
 @Serializable
 data class BecomeArtifactEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0),
-    val cardTypes: Set<String> = setOf("ARTIFACT"),
+    val cardTypes: Set<String>? = setOf("ARTIFACT"),
     val subtypes: Set<String> = emptySet(),
     val colors: Set<com.wingedsheep.sdk.core.Color>? = emptySet(),
     val loseAllAbilities: Boolean = true,
@@ -167,7 +171,7 @@ data class BecomeArtifactEffect(
         append("${target.description} becomes ")
         if (colors?.isEmpty() == true) append("a colorless ")
         if (subtypes.isNotEmpty()) append(subtypes.joinToString(" "))
-        if (cardTypes.isNotEmpty()) {
+        if (!cardTypes.isNullOrEmpty()) {
             if (subtypes.isNotEmpty()) append(" ")
             append(cardTypes.joinToString(" ") { it.lowercase() })
         }
@@ -493,7 +497,36 @@ data class RecordChosenLinkedExileEffect(
 @SerialName("Explore")
 @Serializable
 data class ExploreEffect(
-    val target: EffectTarget = EffectTarget.ContextTarget(0)
+    val target: EffectTarget = EffectTarget.ContextTarget(0),
+    /**
+     * Recursion guard for explore-replacement effects
+     * ([com.wingedsheep.sdk.scripting.ModifyExplore], CR 614). When a matching `ModifyExplore`
+     * is on the battlefield, `ExploreEffectExecutor` re-issues the explore as
+     * `Composite(prefixEffect, ExploreEffect(target, replacementsApplied = true))`; the flag on
+     * the inner explore stops the same replacement from applying a second time. Defaults to
+     * `false` (with `encodeDefaults = false`, no existing explore card's snapshot churns).
+     */
+    val replacementsApplied: Boolean = false
 ) : Effect {
     override val description: String = "${target.description} explores"
+}
+
+/**
+ * Tail marker that emits the "a permanent explored" event (CR 701.44), mirroring
+ * [EmitSurveiledEventEffect]. Deferred to the very end of the explore so the event lands in a
+ * *completed* resolution batch — the nonland branch of an explore pauses for the top/graveyard
+ * choice, and a game event emitted in that paused batch does not reliably fire watcher triggers.
+ * The land and empty-library branches emit the event inline (they don't pause), so this marker is
+ * appended only to the nonland branch's post-decision effects.
+ *
+ * @property target The permanent that explored (the trigger's subject).
+ * @property revealedCardWasLand `true` land / `false` nonland / `null` no reveal (empty library).
+ */
+@SerialName("EmitExploredEvent")
+@Serializable
+data class EmitExploredEventEffect(
+    val target: EffectTarget = EffectTarget.Self,
+    val revealedCardWasLand: Boolean? = null
+) : Effect {
+    override val description: String = "${target.description} explored"
 }

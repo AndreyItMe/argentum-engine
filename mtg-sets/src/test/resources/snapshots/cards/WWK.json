@@ -118,6 +118,79 @@
     ]
 }
 
+// Kalastria Highborn
+{
+    "name": "Kalastria Highborn",
+    "manaCost": "{B}{B}",
+    "typeLine": "Creature — Vampire Shaman",
+    "oracleText": "Whenever this creature or another Vampire you control dies, you may pay {B}. If you do, target player loses 2 life and you gain 2 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature Vampire ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayPay",
+                        "cost": {
+                            "type": "PayManaCost",
+                            "cost": "{B}"
+                        }
+                    },
+                    "then": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "LoseLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                },
+                                "target": {
+                                    "type": "BoundVariable",
+                                    "name": "target player"
+                                }
+                            },
+                            {
+                                "type": "GainLife",
+                                "amount": {
+                                    "type": "Fixed",
+                                    "amount": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetPlayer",
+                    "id": "target player"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "59",
+        "rarity": "RARE",
+        "artist": "D. Alexander Gregory",
+        "flavorText": "Each of Malakir's great families boasts a contingent of nulls appropriate to its rank in society.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/1/f1efd1dd-903c-47a0-b746-5571a3ea1755.jpg?1782715561"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Pilgrim's Eye
 {
     "name": "Pilgrim's Eye",

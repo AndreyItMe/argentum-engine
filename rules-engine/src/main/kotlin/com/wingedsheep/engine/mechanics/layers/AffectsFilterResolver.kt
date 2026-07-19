@@ -306,6 +306,11 @@ internal class AffectsFilterResolver {
                         ControllerPredicate.ControlledByYou -> entityController == controller
                         ControllerPredicate.ControlledByOpponent -> entityController != controller
                         ControllerPredicate.ControlledByAny -> true
+                        // Turn-scoped floating restrictions (Sandswirl Wanderglyph's "they can't
+                        // attack ... this turn" via a CantAttackGroup over the active player's
+                        // creatures). Unknown leaves fail OPEN in evaluateWith, so leaving this
+                        // unhandled silently matched every creature.
+                        ControllerPredicate.ControlledByActivePlayer -> entityController == state.activePlayerId
                         // Owner-axis leaves read the card's owner relative to the source's
                         // controller (Laughing Jasper Flint: "creatures you control but don't own").
                         ControllerPredicate.OwnedByYou -> card.ownerId != null && card.ownerId == controller
@@ -421,6 +426,12 @@ internal class AffectsFilterResolver {
         // contexts via PredicateEvaluator. Never match here.
         StatePredicate.IsAttachedToBySource -> false
         StatePredicate.IsAttachedToSource -> false
+        // Source-relative: "the source permanent itself" — for a group static projecting onto
+        // its own source, use GroupFilter's Scope.Self instead. Only meaningful in point-of-use
+        // checks (activation legality) via PredicateEvaluator. Never match here.
+        StatePredicate.IsSource -> false
+        // No granter context during projection — granter-relative exclusion is resolution-time only.
+        StatePredicate.IsGrantingPermanent -> false
         // Source-relative exile linkage (LinkedExileComponent on the effect source). Only
         // meaningful in target/gather-filter contexts via PredicateEvaluator; never match in
         // group-static projection.
@@ -480,6 +491,10 @@ internal class AffectsFilterResolver {
             container.has<com.wingedsheep.engine.state.components.identity.WarpExiledComponent>()
         StatePredicate.WasCastForWarp ->
             container.has<com.wingedsheep.engine.state.components.battlefield.WarpedComponent>()
+        // Stack-only: cast-origin zone reads SpellOnStackComponent, which battlefield permanents
+        // in group-static projection never carry. Only meaningful in target/counter contexts via
+        // PredicateEvaluator. Never match here.
+        is StatePredicate.WasCastFromZone -> false
         StatePredicate.HasGreatestPower -> hasGreatestPowerInProjection(state, entityId, container, projectedValues)
         StatePredicate.HasLeastPowerAmongAllCreatures -> hasLeastPowerAmongAllCreaturesInProjection(state, entityId, container, projectedValues)
         StatePredicate.HasLeastPower -> hasLeastPowerInProjection(state, entityId, container, projectedValues)
@@ -603,6 +618,7 @@ internal class AffectsFilterResolver {
         CardPredicate.IsLegendary -> "LEGENDARY" in types
         CardPredicate.IsNonlegendary -> "LEGENDARY" !in types
         CardPredicate.HasNonManaActivatedAbility -> card.hasNonManaActivatedAbility
+        CardPredicate.HasActivatedAbility -> card.hasActivatedAbility
         is CardPredicate.HasSubtype -> if (isFaceDown) false else subtypes.any { it.equals(predicate.subtype.value, ignoreCase = true) }
         is CardPredicate.NotSubtype -> if (isFaceDown) true else subtypes.none { it.equals(predicate.subtype.value, ignoreCase = true) }
         is CardPredicate.HasAnyOfSubtypes -> if (isFaceDown) false else predicate.subtypes.any { sub -> subtypes.any { it.equals(sub.value, ignoreCase = true) } }

@@ -75,12 +75,16 @@ enum class TriggerCategory {
     RING_TEMPTED,
     SCRIED,
     SURVEILED,
+    EXPLORED,
+    EXPLOITED,
+    TRAINED,
     YOU_BEND,
     MANIFESTED_DREAD,
     SEARCH_LIBRARY,
     BECAME_SADDLED,
     BECOMES_ATTACHED,
     SAGA_CHAPTER_RESOLVED,
+    PLAYER_LOST,
 }
 
 /**
@@ -218,6 +222,7 @@ class TriggerIndex(
                 is SdkGameEvent.ExpendEvent -> listOf(TriggerCategory.SPELL_CAST)
                 is SdkGameEvent.SpellOrAbilityOnStackEvent -> listOf(TriggerCategory.SPELL_OR_ABILITY)
                 is SdkGameEvent.AbilityActivatedEvent -> listOf(TriggerCategory.SPELL_OR_ABILITY)
+                is SdkGameEvent.AbilityTriggeredEvent -> listOf(TriggerCategory.SPELL_OR_ABILITY)
                 is SdkGameEvent.CycleEvent -> listOf(TriggerCategory.CARD_CYCLED)
                 is SdkGameEvent.TapEvent -> listOf(TriggerCategory.TAPPED)
                 is SdkGameEvent.UntapEvent -> listOf(TriggerCategory.UNTAPPED)
@@ -250,12 +255,16 @@ class TriggerIndex(
                 // "Whenever you scry or surveil" indexes under both buckets so either engine event
                 // finds it; the matcher confirms the event is a scry or a surveil.
                 is SdkGameEvent.ScriedOrSurveiledEvent -> SCRIED_OR_SURVEILED_LIST
+                is SdkGameEvent.ExploredEvent -> EXPLORED_LIST
+                is SdkGameEvent.ExploitedEvent -> EXPLOITED_LIST
+                is SdkGameEvent.TrainedEvent -> TRAINED_LIST
                 is SdkGameEvent.BendPerformedEvent -> BEND_LIST
                 is SdkGameEvent.ManifestedDreadEvent -> MANIFESTED_DREAD_LIST
                 is SdkGameEvent.SearchLibraryEvent -> SEARCH_LIBRARY_LIST
                 is SdkGameEvent.BecameSaddledEvent -> BECAME_SADDLED_LIST
                 is SdkGameEvent.BecomesAttachedEvent -> BECOMES_ATTACHED_LIST
                 is SdkGameEvent.SagaChapterResolvedEvent -> SAGA_CHAPTER_RESOLVED_LIST
+                is SdkGameEvent.PlayerLostGameEvent -> PLAYER_LOST_LIST
                 // These are handled by specialized detect methods, not the main loop
                 else -> emptyList()
             }
@@ -293,12 +302,16 @@ class TriggerIndex(
             is com.wingedsheep.engine.core.RingTemptedEvent -> RING_TEMPTED_LIST
             is com.wingedsheep.engine.core.ScriedEvent -> SCRIED_LIST
             is com.wingedsheep.engine.core.SurveiledEvent -> SURVEILED_LIST
+            is com.wingedsheep.engine.core.PermanentExploredEvent -> EXPLORED_LIST
+            is com.wingedsheep.engine.core.ExploitedEvent -> EXPLOITED_LIST
+            is com.wingedsheep.engine.core.TrainedEvent -> TRAINED_LIST
             is com.wingedsheep.engine.core.BendPerformedEvent -> BEND_LIST
             is com.wingedsheep.engine.core.ManifestedDreadEvent -> MANIFESTED_DREAD_LIST
             is com.wingedsheep.engine.core.LibrarySearchedEvent -> SEARCH_LIBRARY_LIST
             is com.wingedsheep.engine.core.BecameSaddledEvent -> BECAME_SADDLED_LIST
             is com.wingedsheep.engine.core.PermanentAttachedEvent -> BECOMES_ATTACHED_LIST
             is com.wingedsheep.engine.core.SagaChapterResolvedEvent -> SAGA_CHAPTER_RESOLVED_LIST
+            is com.wingedsheep.engine.core.PlayerLostEvent -> PLAYER_LOST_LIST
             else -> emptyList()
         }
 
@@ -329,11 +342,15 @@ class TriggerIndex(
         private val SCRIED_LIST = listOf(TriggerCategory.SCRIED)
         private val SURVEILED_LIST = listOf(TriggerCategory.SURVEILED)
         private val SCRIED_OR_SURVEILED_LIST = listOf(TriggerCategory.SCRIED, TriggerCategory.SURVEILED)
+        private val EXPLORED_LIST = listOf(TriggerCategory.EXPLORED)
+        private val EXPLOITED_LIST = listOf(TriggerCategory.EXPLOITED)
+        private val TRAINED_LIST = listOf(TriggerCategory.TRAINED)
         private val BEND_LIST = listOf(TriggerCategory.YOU_BEND)
         private val MANIFESTED_DREAD_LIST = listOf(TriggerCategory.MANIFESTED_DREAD)
         private val SEARCH_LIBRARY_LIST = listOf(TriggerCategory.SEARCH_LIBRARY)
         private val BECAME_SADDLED_LIST = listOf(TriggerCategory.BECAME_SADDLED)
         private val BECOMES_ATTACHED_LIST = listOf(TriggerCategory.BECOMES_ATTACHED)
         private val SAGA_CHAPTER_RESOLVED_LIST = listOf(TriggerCategory.SAGA_CHAPTER_RESOLVED)
+        private val PLAYER_LOST_LIST = listOf(TriggerCategory.PLAYER_LOST)
     }
 }

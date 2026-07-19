@@ -3052,37 +3052,9 @@
         "toughness": 2
     },
     "script": {
-        "triggeredAbilities": [
-            {
-                "id": "ability_1",
-                "trigger": {
-                    "type": "ZoneChangeEvent",
-                    "to": "Battlefield"
-                },
-                "effect": {
-                    "type": "AddCounters",
-                    "counterType": "+1/+1",
-                    "count": 1,
-                    "target": "Self"
-                },
-                "triggerCondition": {
-                    "type": "Compare",
-                    "left": {
-                        "type": "TurnTracking",
-                        "player": "EachOpponent",
-                        "tracker": "LIFE_LOST"
-                    },
-                    "operator": "GTE",
-                    "right": {
-                        "type": "Fixed",
-                        "amount": 1
-                    }
-                }
-            }
-        ],
         "activatedAbilities": [
             {
-                "id": "ability_2",
+                "id": "ability_1",
                 "cost": {
                     "type": "CostAtomWrapper",
                     "atom": {
@@ -3094,6 +3066,26 @@
                     "type": "GrantKeyword",
                     "keyword": "MENACE",
                     "target": "Self"
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithCounters",
+                "count": 1,
+                "selfOnly": true,
+                "condition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "EachOpponent",
+                        "tracker": "LIFE_LOST"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
                 }
             }
         ]
@@ -12028,7 +12020,8 @@
                             "destination": "Hand"
                         }
                     }
-                }
+                },
+                "descriptionOverride": "At the beginning of your upkeep, return another creature you control to its owner's hand. If you do, put a +1/+1 counter on this creature. Otherwise, you may return this creature to its owner's hand."
             }
         ]
     },
@@ -18266,8 +18259,12 @@
                             }
                         },
                         {
-                            "type": "CostRemoveCounterFromSelf",
-                            "counterType": "supply"
+                            "type": "CostAtomWrapper",
+                            "atom": {
+                                "type": "AtomRemoveCounters",
+                                "counterType": "supply",
+                                "self": true
+                            }
                         }
                     ]
                 },

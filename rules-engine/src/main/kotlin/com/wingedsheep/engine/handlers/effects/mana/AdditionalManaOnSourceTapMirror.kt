@@ -13,6 +13,7 @@ import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AdditionalManaOnSourceTap
+import com.wingedsheep.sdk.scripting.TappedForManaType
 
 /**
  * Applies the [AdditionalManaOnSourceTap] *mirror* bonus (`color = null` — "add one mana of any
@@ -54,6 +55,9 @@ object AdditionalManaOnSourceTapMirror {
                 val onSourceTap = staticAbility as? AdditionalManaOnSourceTap ?: continue
                 // Only the mirror form is resolved here; fixed-color forms fire synchronously.
                 if (onSourceTap.color != null) continue
+                // This resume path only fires after a *color* choice resolves, so the produced mana
+                // is always colored — a COLORLESS-gated bonus ("tap for {C}") can never match here.
+                if (onSourceTap.whenProducing == TappedForManaType.COLORLESS) continue
 
                 val staticController = currentState.projectedState.getController(entityId) ?: continue
                 val filterContext = PredicateContext(controllerId = staticController, sourceId = entityId)

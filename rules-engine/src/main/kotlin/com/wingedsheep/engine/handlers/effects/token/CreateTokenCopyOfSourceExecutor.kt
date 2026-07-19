@@ -5,7 +5,7 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.DelayedTriggeredAbility
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.Component
@@ -131,17 +131,30 @@ class CreateTokenCopyOfSourceExecutor(
             // Add to battlefield
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, controllerId, tokenId)
+
+            // A token copy honors global "[filter] enter tapped" replacements (Authority of the
+            // Consuls / Dauntless Dismantler on an opponent's token copy).
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
         }
 
         // Apply "enters with counters" replacement effects from other battlefield permanents
         // (e.g., Gev, Scaled Scorch granting +1/+1 counters to Offspring token copies).
         val counterEvents = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
         for (tokenId in createdTokens) {
-            val (nextState, events) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+            val (nextState, events) = EntersWithReplacements.applyGlobal(
                 newState, tokenId, controllerId
             )
             newState = nextState
             counterEvents.addAll(events)
+
+            // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga and gets its on-enter lore
+            // counter. BattlefieldEntry.place skips enters-with-counters setup, so apply the shared
+            // Saga-entry helper (as the standard moveToZone pipeline does). No-op for non-Sagas.
+            val (sagaState, sagaEvents) = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+                .applySagaEntryIfNeeded(newState, tokenId)
+            newState = sagaState
+            counterEvents.addAll(sagaEvents)
         }
 
         // If exileAtStep is set, create delayed triggers to exile each created token

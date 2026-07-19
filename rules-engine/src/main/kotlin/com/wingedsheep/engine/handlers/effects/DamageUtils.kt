@@ -294,8 +294,11 @@ object DamageUtils {
                 newState = newState.updateEntity(targetId) { container ->
                     container.with(counters.withAdded(CounterType.MINUS_ONE_MINUS_ONE, effectiveAmount))
                 }
+                // CR 702.80 / 122.6a: the -1/-1 counters are put on the creature by the wither
+                // source's controller, so "whenever you put counters" triggers see them as yours.
                 events.add(CountersAddedEvent(targetId, CounterType.MINUS_ONE_MINUS_ONE.name, effectiveAmount,
-                    newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature"))
+                    newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature",
+                    placedBy = sourceId?.let { newState.projectedState.getController(it) }))
             } else {
                 val existingDamage = newState.getEntity(targetId)?.get<DamageComponent>()
                 val currentDamage = existingDamage?.amount ?: 0
@@ -1072,6 +1075,9 @@ object DamageUtils {
         is EffectTarget.TargetController ->
             state.projectedState.getController(originalTargetId)
                 ?: state.getEntity(originalTargetId)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(originalTargetId)
+                    ?.get<com.wingedsheep.engine.state.components.battlefield.LastKnownPermanentComponent>()
+                    ?.snapshot?.controllerId
         is EffectTarget.Self -> replacementOwnerId
         else -> null
     }
@@ -1789,7 +1795,7 @@ object DamageUtils {
                 }
 
                 val entityName = container.get<CardComponent>()?.name ?: ""
-                events.add(CountersAddedEvent(entityId, effect.counterType, amount, entityName))
+                events.add(CountersAddedEvent(entityId, effect.counterType, amount, entityName, placedBy = sourceControllerId))
 
                 // Check sacrifice threshold (state-triggered ability approximation)
                 val totalCounters = updatedCounters.getCount(counterType)

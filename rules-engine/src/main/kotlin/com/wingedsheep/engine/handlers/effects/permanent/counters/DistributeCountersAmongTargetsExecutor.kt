@@ -66,7 +66,7 @@ class DistributeCountersAmongTargetsExecutor : EffectExecutor<DistributeCounters
             currentState = DamageUtils.markCounterPlacedOnCreature(currentState, context.controllerId, targetId)
 
             val entityName = state.getEntity(targetId)?.get<CardComponent>()?.name ?: ""
-            events.add(CountersAddedEvent(targetId, effect.counterType, modifiedCount, entityName, firstThisTurn))
+            events.add(CountersAddedEvent(targetId, effect.counterType, modifiedCount, entityName, firstThisTurn, placedBy = context.controllerId))
         }
 
         return EffectResult.success(currentState, events)

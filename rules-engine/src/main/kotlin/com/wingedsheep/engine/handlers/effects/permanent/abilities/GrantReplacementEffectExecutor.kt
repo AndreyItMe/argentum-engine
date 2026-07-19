@@ -37,12 +37,24 @@ class GrantReplacementEffectExecutor : EffectExecutor<GrantReplacementEffectEffe
             ?: return EffectResult.error(state, "Target no longer exists")
         targetContainer.get<CardComponent>()
             ?: return EffectResult.error(state, "Target is not a card")
-        if (!state.getBattlefield().contains(targetId)) {
+
+        val onBattlefield = state.getBattlefield().contains(targetId)
+        // A resolving instant/sorcery (its `EffectTarget.Self` is the spell on the stack, not a
+        // battlefield permanent) may grant a *floating, controller-scoped* global replacement —
+        // Malicious Eclipse's "if a creature an opponent controls would die this turn, exile it
+        // instead". The zone-change redirect read path uses only the grant's controllerId + the
+        // replacement's filter (never its entityId), so anchoring to the caster is sufficient and the
+        // grant persists after the spell leaves. A grant aimed at a permanent that has left the
+        // battlefield is still meaningless, so only the source-spell case is allowed off-battlefield.
+        if (!onBattlefield && targetId != context.sourceId) {
             return EffectResult.error(state, "Target is not on the battlefield")
         }
 
-        val controllerId = targetContainer.get<ControllerComponent>()?.playerId
-            ?: context.controllerId
+        val controllerId = if (onBattlefield) {
+            targetContainer.get<ControllerComponent>()?.playerId ?: context.controllerId
+        } else {
+            context.controllerId
+        }
 
         val grant = GrantedReplacementEffect(
             entityId = targetId,

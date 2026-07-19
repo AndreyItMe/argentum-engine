@@ -573,8 +573,18 @@ private fun EmitCtx.youControlConditionDsl(condNode: JsonElement?): String? {
     if ((args.getOrNull(0) as? JsonObject)?.strField("_Player") != "You") return null
     val controls = args.getOrNull(1) as? JsonObject ?: return null
     if (controls.strField("_Players") != "ControlsA") return null
-    val filter = gameObjectFilterDsl(controls["args"]) ?: return null
-    return render(call("Conditions.YouControl", arg(Lit(filter))))
+    // "you control ANOTHER <filter>" (Packsong Pup's "another Wolf or Werewolf", Resistance Squad's
+    // "another Human"): the filter's `And` carries an `Other(<self>)` clause the flat GameObjectFilter
+    // can't represent. Peel it off and lift it to `excludeSelf = true` on the condition — otherwise the
+    // "another" restriction is silently dropped (gameObjectFilterDsl renders the remaining filter but
+    // ignores the self-exclusion). Mirrors the resolution-time path in [actionConditionDsl].
+    val (innerFilter, excludeSelf) = stripSelfOtherClause(controls["args"])
+    val filter = gameObjectFilterDsl(innerFilter) ?: return null
+    return render(
+        if (excludeSelf)
+            call("Conditions.YouControl", arg(Lit(filter)), arg("excludeSelf", "true"))
+        else call("Conditions.YouControl", arg(Lit(filter)))
+    )
 }
 
 /**
@@ -2892,6 +2902,21 @@ private fun EmitCtx.triggerSpecFor(rule: JsonObject): String? {
     if (jsonContains(trig, "_Trigger", "WhenACreatureAttacks") && isPlainCreatureFilter(trig))
         return "Triggers.attacks(binding = TriggerBinding.ANY)"
 
+    // "Whenever this creature attacks a player" (SELF) — the attacks-a-player trigger gated on the
+    // declared defender being a *player*, not a planeswalker or battle (AttackPredicate.DefenderIsPlayer
+    // / Triggers.AttacksAnOpponent; Kaalia of the Vast, CR 508.1 + Kaalia's 2024-06-07 ruling). The args
+    // are [subject, defending-player scope]; only the SELF subject over a bare Opponent / AnyPlayer scope
+    // ("a player") renders — both mean "attacks a player" for a single attacker, exactly what
+    // DefenderIsPlayer gates. A `SinglePlayer(You)` scope ("attacks you") or a constrained scope
+    // (LifeTotalIs / ControlsNum — a player at a life total / controlling N permanents; Preacher of the
+    // Schism, Owlbear Cub) has no calibrated Triggers.* constant, so it declines -> SCAFFOLD rather than
+    // widen the trigger. A non-self attacker (the batched "whenever a creature attacks a player" cursed-
+    // land cards) also declines, since the SELF sugar can't express an ANY-binding defender-player scope.
+    if (jsonContains(trig, "_Trigger", "WhenACreatureAttacksAPlayer") && isSelf(trig)) {
+        val scope = castScope(trig["args"].asArr?.getOrNull(1) as? JsonObject)
+        return if (scope == CastScope.OPPONENT || scope == CastScope.ANY) "Triggers.AttacksAnOpponent" else null
+    }
+
     // "Whenever you attack with N or more creatures" — WhenAPlayerAttacksWithANumberOfCreatures scoped to
     // You + a `>= N` comparison + a plain creature filter (Overwhelming Instinct). Only the
     // greater-than-or-equal (N-or-more) shape maps to YouAttackEvent(minAttackers); any other comparison
@@ -3885,6 +3910,42 @@ internal fun EmitCtx.abilityCostDsl(node: JsonElement?): String? {
             if (a.getOrNull(2).strField("_Permanent") != "ThisPermanent") return null
             val counter = counterTypeDsl(a.getOrNull(1)) ?: return null
             "Costs.RemoveCounterFromSelf($counter, $n)"
+        }
+        // Two sub-variants of _Cost: "RemoveCounters":
+        // 1. NumberCountersOfTypeFromAmongPermanents — "Remove N counters from among permanents
+        //    you control" — renders as Costs.RemoveCounters(n, counterType, filter).
+        //    IR: remove-count args = [N Integer, CounterType, Permanents filter].
+        // 2. NumberCountersOfTypeFromPermanent — "Remove N counters from this permanent" —
+        //    renders as Costs.RemoveCounterFromSelf(counterType, n) when subject is ThisPermanent;
+        //    other subjects (arbitrary refs) decline -> SCAFFOLD.
+        "RemoveCounters" -> {
+            val argsArr = obj["args"].asArr ?: return null
+            val subObj = argsArr.getOrNull(0) as? JsonObject ?: return null
+            val subArgs = subObj.get("args")?.asArr ?: return null
+            val n = findInteger(subArgs.getOrNull(0)) as? Int ?: return null
+            val counter = counterTypeDsl(subArgs.getOrNull(1)) ?: return null
+            when (subObj.strField("_RemoveCountersCost")) {
+                "NumberCountersOfTypeFromAmongPermanents" -> {
+                    // The engine's RemoveCounters cost payment always scopes candidate permanents to
+                    // the payer (CostPaymentService: getBattlefieldControlledBy(payerId) before the
+                    // filter), so "from among [X] you control" is intrinsic to the cost — a `.youControl()`
+                    // on the filter is redundant and only diverges the serialized tree from the
+                    // hand-authored golden's bare filter. Strip it.
+                    val filter = (costFilterDsl(subArgs.getOrNull(2)) ?: "GameObjectFilter.Any")
+                        .removeSuffix(".youControl()")
+                    // [counter] is already the qualified `Counters.X` constant (its value is the
+                    // counter-type string, e.g. Counters.PLUS_ONE_PLUS_ONE == "+1/+1"); pass it
+                    // unquoted like the RemoveCounterFromSelf sibling above. Quoting it would emit the
+                    // literal string "Counters.PLUS_ONE_PLUS_ONE" as the counter type — a card whose
+                    // cost removes a counter kind that never exists.
+                    "Costs.RemoveCounters($n, $counter, $filter)"
+                }
+                "NumberCountersOfTypeFromPermanent" -> {
+                    if ((subArgs.getOrNull(2) as? JsonObject)?.strField("_Permanent") != "ThisPermanent") return null
+                    "Costs.RemoveCounterFromSelf($counter, $n)"
+                }
+                else -> null
+            }
         }
         else -> null
     }

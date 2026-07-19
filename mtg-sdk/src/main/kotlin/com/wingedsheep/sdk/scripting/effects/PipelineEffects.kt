@@ -225,6 +225,25 @@ sealed interface CardSource {
     }
 
     /**
+     * The cards exiled to Craft the source permanent (its
+     * [com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent]), filtered
+     * to those still in exile. The gather counterpart of `ExiledCardsSource.CRAFTED` (which the
+     * back-face CDAs read): where that feeds ability grants and dynamic amounts, this feeds a
+     * gather → select → move pipeline.
+     *
+     * Backs The Grim Captain's attack trigger — "put an exiled creature card used to craft The Grim
+     * Captain onto the battlefield tapped and attacking": `GatherCards(CraftedMaterials)` →
+     * `SelectFromCollection(ChooseUpTo 1, filter = Creature)` →
+     * `MoveCollection(BATTLEFIELD, ZonePlacement.TappedAndAttacking)`. Mirrors [FromLinkedExile]
+     * but reads the crafted-materials component rather than the linked-exile one.
+     */
+    @SerialName("CraftedMaterials")
+    @Serializable
+    data object CraftedMaterials : CardSource {
+        override val description: String = "cards used to craft this permanent"
+    }
+
+    /**
      * The ability's own source card ([com.wingedsheep.sdk.scripting.references] sourceId).
      *
      * Yields a single-element collection referencing the source, regardless of which zone

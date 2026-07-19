@@ -917,6 +917,54 @@
     ]
 }
 
+// Lava Dart
+{
+    "name": "Lava Dart",
+    "manaCost": "{R}",
+    "typeLine": "Instant",
+    "oracleText": "Lava Dart deals 1 damage to any target.\nFlashback—Sacrifice a Mountain. (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+    "keywords": [
+        "FLASHBACK"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Flashback",
+            "cost": "",
+            "additionalCost": {
+                "type": "AdditionalAtom",
+                "atom": {
+                    "type": "AtomSacrifice",
+                    "filter": "land Mountain"
+                }
+            }
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "DealDamage",
+            "amount": {
+                "type": "Fixed",
+                "amount": 1
+            },
+            "target": {
+                "type": "ContextTarget",
+                "index": 0
+            }
+        },
+        "targetRequirements": [
+            "AnyTarget"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "94",
+        "artist": "Darrell Riche",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/6/865bb1d3-5b7d-40e9-87cc-96be9524a105.jpg?1782719236"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Lead Astray
 {
     "name": "Lead Astray",

@@ -39,6 +39,7 @@ data class SpellOnStackComponent(
     val wasWarped: Boolean = false,  // For warp - permanent is exiled at end step
     val wasEvoked: Boolean = false,  // For evoke - permanent is sacrificed on ETB
     val wasImpending: Boolean = false,  // For impending - permanent enters with time counters and isn't a creature until they're gone
+    val wasCleaved: Boolean = false,  // For cleave (CR 702.148) - spell resolves with its brackets-removed effect/target variant
     /** For sneak (CR 702.190) - permanent spell enters tapped and attacking; the flag is readable via SneakCostWasPaid. */
     val wasSneaked: Boolean = false,
     /**
@@ -140,6 +141,14 @@ data class TriggeredAbilityOnStackComponent(
     /** Power of the aura/equipment's attached creature, captured at trigger time; LKI for
      *  "enchanted creature ... its power" reads when the creature has left (CR 608.2h). */
     val enchantedCreatureLastKnownPower: Int? = null,
+    /**
+     * The permanent whose `GrantTriggeredAbility` static granted this triggered ability (an
+     * Equipment/Aura granting the ability to the attached creature). Read at resolution into
+     * [com.wingedsheep.engine.handlers.EffectContext.granterId] so the effect can reference its
+     * granter (CR 201.5a) — e.g. Dire Blunderbuss's "sacrifice an artifact other than Dire
+     * Blunderbuss". Null for the source's own printed abilities.
+     */
+    val granterId: EntityId? = null,
     /** Cards looked at by the scry that fired this trigger (CR 701.18). Null for non-scry triggers. */
     val triggerScryCount: Int? = null,
     /** Damage past lethal dealt to the trigger's creature recipient (CR 120.4a). Null for non-damage triggers. */

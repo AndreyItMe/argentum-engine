@@ -5,7 +5,8 @@ import com.wingedsheep.engine.event.DelayedTriggeredAbility
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.state.Component
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
@@ -229,13 +230,21 @@ class CreateTokenExecutor(
             // Add to battlefield
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, tokenControllerId, tokenId)
+
+            // Tokens honor global "[filter] enter tapped" replacements from other permanents
+            // (Dauntless Dismantler, Authority of the Consuls, …) — BattlefieldEntry.place doesn't
+            // set tapped state, so resolve it here now the token carries its controller/type.
+            newState = EnterTappedReplacements.applyCreatedTokenEntryTap(
+                newState, tokenId, tokenControllerId,
+                definedTapped = effect.tapped, attacking = effect.attacking,
+            )
         }
 
         // Apply "enters with counters" replacement effects from other battlefield permanents
         // (e.g., Gev, Scaled Scorch granting +1/+1 counters to tokens entering under your control).
         val counterEvents = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
         for (tokenId in createdTokens) {
-            val (nextState, events) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+            val (nextState, events) = EntersWithReplacements.applyGlobal(
                 newState, tokenId, tokenControllerId
             )
             newState = nextState

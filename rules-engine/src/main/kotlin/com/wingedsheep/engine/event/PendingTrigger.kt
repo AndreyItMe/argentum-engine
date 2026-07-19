@@ -12,6 +12,14 @@ data class PendingTrigger(
     val sourceId: EntityId,
     val sourceName: String,
     val controllerId: EntityId,
+    /**
+     * The permanent whose `GrantTriggeredAbility` static granted this triggered ability, when it is
+     * a granted ability (e.g. an Equipment granting an attack trigger to the equipped creature).
+     * Carried onto the stack so the resolving effect can reference the granter (CR 201.5a) via
+     * [com.wingedsheep.engine.handlers.EffectContext.granterId] — e.g. Dire Blunderbuss's "sacrifice
+     * an artifact other than Dire Blunderbuss". Null for the source's own printed abilities.
+     */
+    val granterId: EntityId? = null,
     val triggerContext: TriggerContext,
     /**
      * When set, this pending trigger came from a one-shot event-based delayed triggered

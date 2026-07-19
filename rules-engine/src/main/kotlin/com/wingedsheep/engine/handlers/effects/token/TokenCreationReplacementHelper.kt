@@ -8,7 +8,7 @@ import com.wingedsheep.engine.core.TokenCreationReplacementContinuation
 import com.wingedsheep.engine.core.YesNoDecision
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.Component
@@ -217,6 +217,11 @@ object TokenCreationReplacementHelper {
                     newState = newState.withEntity(tokenId, tokenContainer)
                     newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                         .place(newState, tokenControllerId, tokenId)
+                    // Honor global "[filter] enter tapped" replacements on the added token too.
+                    newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                        .applyCreatedTokenEntryTap(
+                            newState, tokenId, tokenControllerId, definedTapped = tapped,
+                        )
 
                     events.add(
                         ZoneChangeEvent(
@@ -338,7 +343,7 @@ object TokenCreationReplacementHelper {
      * exactly what was printed on the attached permanent. That includes printed
      * "enters with N counters" replacement effects (e.g., Burdened Stoneback's "this
      * creature enters with two -1/-1 counters"), applied via
-     * [EntersWithCountersHelper.applyEntersWithCounters]. Summoning sickness is added
+     * [EntersWithReplacements.applyOnEntry]. Summoning sickness is added
      * only when the copy is itself a creature (CR 302.6).
      */
     fun createAttachedPermanentCopies(
@@ -387,11 +392,14 @@ object TokenCreationReplacementHelper {
             newState = newState.withEntity(tokenId, container)
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, controllerId, tokenId)
+            // Honor global "[filter] enter tapped" replacements on the copy too.
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
 
             // Apply the attached permanent's printed enters-with-counters replacement
             // effects (and any global ones from other permanents).
             if (cardRegistry != null) {
-                val (afterCounters, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
+                val (afterCounters, counterEvents) = EntersWithReplacements.applyOnEntry(
                     newState, tokenId, controllerId, cardRegistry
                 )
                 newState = afterCounters

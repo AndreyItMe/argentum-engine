@@ -113,6 +113,11 @@ class CreateTokenCopyOfEquippedCreatureExecutor(
         newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
             .place(newState, controllerId, tokenId)
 
+        // A token copy honors global "[filter] enter tapped" replacements (Authority of the
+        // Consuls / Dauntless Dismantler on an opponent's token copy).
+        newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+            .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
+
         val events = listOf(
             ZoneChangeEvent(
                 entityId = tokenId,
@@ -123,6 +128,12 @@ class CreateTokenCopyOfEquippedCreatureExecutor(
             )
         )
 
-        return EffectResult.success(newState, events)
+        // CR 714.2b/714.3a: if the copied permanent is a Saga (e.g. an Enchantment Creature — Saga),
+        // the token enters as a Saga with its on-enter lore counter. BattlefieldEntry.place skips
+        // enters-with-counters setup, so apply the shared Saga-entry helper. No-op for non-Sagas.
+        val (sagaState, sagaEvents) = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+            .applySagaEntryIfNeeded(newState, tokenId)
+
+        return EffectResult.success(sagaState, events + sagaEvents)
     }
 }

@@ -417,6 +417,11 @@ class DynamicAmountEvaluator(
                             ?.get<com.wingedsheep.engine.state.components.player.NonTokenCreaturesDiedThisTurnComponent>()
                             ?.count ?: 0
                     }
+                    TurnTracker.CREATURES_LEFT_BATTLEFIELD -> playerIds.sumOf { playerId ->
+                        state.getEntity(playerId)
+                            ?.get<com.wingedsheep.engine.state.components.player.CreatureLeftBattlefieldThisTurnComponent>()
+                            ?.count ?: 0
+                    }
                     TurnTracker.OPPONENT_CREATURES_EXILED -> playerIds.sumOf { playerId ->
                         state.getEntity(playerId)
                             ?.get<com.wingedsheep.engine.state.components.player.OpponentCreaturesExiledThisTurnComponent>()
@@ -552,6 +557,29 @@ class DynamicAmountEvaluator(
                         }
                         total
                     }
+                }
+            }
+
+            is DynamicAmount.CraftedMaterialsTotalManaValue -> {
+                val sourceId = context.sourceId
+                if (sourceId == null) 0 else {
+                    state.getEntity(sourceId)
+                        ?.get<com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent>()
+                        ?.exiledIds
+                        ?.sumOf { exiledId -> state.getEntity(exiledId)?.get<CardComponent>()?.manaValue ?: 0 }
+                        ?: 0
+                }
+            }
+
+            is DynamicAmount.CraftedMaterialsColorCount -> {
+                val sourceId = context.sourceId
+                if (sourceId == null) 0 else {
+                    state.getEntity(sourceId)
+                        ?.get<com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent>()
+                        ?.exiledIds
+                        ?.flatMap { exiledId -> state.getEntity(exiledId)?.get<CardComponent>()?.colors ?: emptySet() }
+                        ?.toSet()?.size
+                        ?: 0
                 }
             }
 
@@ -1030,10 +1058,8 @@ class DynamicAmountEvaluator(
                     spell.manaSpentRed + spell.manaSpentGreen + spell.manaSpentColorless
             }
 
-            is EntityNumericProperty.CounterCount -> {
-                val countersComponent = state.getEntity(entityId)?.get<CountersComponent>() ?: return 0
-                countersComponent.getCount(resolveCounterType(property.counterType))
-            }
+            is EntityNumericProperty.CounterCount ->
+                counterCountOf(state, entityId, property.counterType)
 
             is EntityNumericProperty.AttachmentCount -> {
                 val attachedIds = state.getEntity(entityId)?.get<AttachmentsComponent>()?.attachedIds ?: emptyList()

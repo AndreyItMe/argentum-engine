@@ -184,6 +184,16 @@ class CardBuilder(private val name: String) {
     var colorIdentity: String? = null
 
     /**
+     * Explicit color indicator (CR 204) as a string of color symbols, e.g. `"B"` for a black
+     * indicator. `null` (the default) means the card has no color indicator and its color comes
+     * from its mana cost alone. Set this on faces printed with a color indicator instead of colored
+     * mana symbols — most commonly a transforming DFC back face with an empty mana cost (e.g. The
+     * Grim Captain's black back face). The indicated colors combine with any mana-cost colors (CR
+     * 202.2) and are folded into color identity (CR 903.4).
+     */
+    var colorIndicator: String? = null
+
+    /**
      * Power (for creatures). Can be set as Int for fixed stats.
      */
     var power: Int? = null
@@ -814,10 +824,13 @@ class CardBuilder(private val name: String) {
             conditionalFlash = conditionalFlash,
             kickerTargetRequirements = spellBuilder?.kickerTargetRequirements ?: emptyList(),
             kickerSpellEffect = spellBuilder?.kickerEffect,
+            cleaveTargetRequirements = spellBuilder?.cleaveTargetRequirements ?: emptyList(),
+            cleaveSpellEffect = spellBuilder?.cleaveEffect,
             classLevels = classLevelsList.toList(),
             sagaChapters = sagaChaptersList.toList(),
             selfExileOnResolve = spellBuilder?.exilesOnResolve ?: false,
             paradigm = spellBuilder?.isParadigm ?: false,
+            returnTransformedFromGraveyardOnResolve = spellBuilder?.returnTransformedFromGraveyardMarker,
             selfAlternativeCost = selfAlternativeCost,
             xManaRestriction = spellBuilder?.xManaRestriction ?: emptySet(),
             mayStartOnBattlefield = mayStartOnBattlefield,
@@ -847,6 +860,9 @@ class CardBuilder(private val name: String) {
         val parsedColorIdentity: Set<Color>? = colorIdentity?.let { raw ->
             raw.mapNotNullTo(mutableSetOf()) { Color.fromSymbol(it.uppercaseChar()) }
         }
+        val parsedColorIndicator: Set<Color>? = colorIndicator?.let { raw ->
+            raw.mapNotNullTo(mutableSetOf()) { Color.fromSymbol(it.uppercaseChar()) }
+        }
 
         return CardDefinition(
             name = name,
@@ -862,6 +878,7 @@ class CardBuilder(private val name: String) {
             startingLoyalty = startingLoyalty,
             metadata = metadata,
             colorIdentityOverride = parsedColorIdentity,
+            colorIndicator = parsedColorIndicator,
             layout = layout,
             cardFaces = cardFaceList.toList()
         )
@@ -933,6 +950,24 @@ class SpellBuilder {
 
     internal val isParadigm: Boolean get() = paradigm
 
+    private var returnTransformedFromGraveyard: ReturnTransformedFromGraveyard? = null
+
+    /**
+     * Mark this spell so that, when it resolves after being cast from a graveyard, it is exiled and
+     * put onto the battlefield transformed (its back face up) with the given [counters], instead of
+     * going to its owner's graveyard. The card must be double-faced with a permanent back face.
+     *
+     * Models Esper Origins' "If this spell was cast from a graveyard, exile it, then put it onto the
+     * battlefield transformed under its owner's control with a finality counter on it." See
+     * [CardScript.returnTransformedFromGraveyardOnResolve].
+     */
+    fun returnTransformedFromGraveyard(vararg counters: CounterType) {
+        returnTransformedFromGraveyard = ReturnTransformedFromGraveyard(counters.toList())
+    }
+
+    internal val returnTransformedFromGraveyardMarker: ReturnTransformedFromGraveyard?
+        get() = returnTransformedFromGraveyard
+
     /**
      * Alternate effect used when kicker is paid. When set along with [kickerTarget],
      * the kicked version uses completely different targeting and effect resolution.
@@ -966,6 +1001,45 @@ class SpellBuilder {
             namedKickerTargets.map { it.second }
         } else {
             listOfNotNull(kickerTarget)
+        }
+
+    /**
+     * Alternate effect used when this spell is cast for its cleave cost (CR 702.148). When set, the
+     * cleaved version uses this effect — the brackets-removed shape — instead of the normal [effect].
+     * Declare the keyword itself at the card level with
+     * `keywordAbility(KeywordAbility.cleave("{cost}"))`; set this inside the `spell { }` block
+     * (mirrors how kicker uses [kickerEffect]).
+     */
+    var cleaveEffect: Effect? = null
+
+    /**
+     * Alternate target used when this spell is cast for its cleave cost. When set, the cleaved
+     * version uses this target requirement instead of the normal [target] (e.g. Fierce Retribution's
+     * "target [attacking] creature" → "target creature"). For multiple/named cleave targets use
+     * [cleaveTarget].
+     */
+    var cleaveTarget: TargetRequirement? = null
+
+    // Named cleave target bindings (for cleaved spells with named/multiple alternate targets)
+    private val namedCleaveTargets: MutableList<Pair<String, TargetRequirement>> = mutableListOf()
+
+    /**
+     * Declare a named cleave target and get an EffectTarget reference to use in [cleaveEffect].
+     *
+     * @param name A descriptive name for the target
+     * @param requirement The (brackets-removed) target requirement specification
+     * @return An EffectTarget.BoundVariable that references this cleave target by name
+     */
+    fun cleaveTarget(name: String, requirement: TargetRequirement): EffectTarget.BoundVariable {
+        namedCleaveTargets.add(name to requirement.withId(name))
+        return EffectTarget.BoundVariable(name)
+    }
+
+    internal val cleaveTargetRequirements: List<TargetRequirement>
+        get() = if (namedCleaveTargets.isNotEmpty()) {
+            namedCleaveTargets.map { it.second }
+        } else {
+            listOfNotNull(cleaveTarget)
         }
 
     // Named target bindings
@@ -1370,6 +1444,10 @@ class ActivatedAbilityBuilder {
     var genericCostReduction: DynamicAmount? = null
     /** Colors that may be spent on the `{X}` portion of this ability's cost (empty = any). */
     var xManaRestriction: Set<Color> = emptySet()
+    /** Minimum legal value for `{X}` in this ability's cost (set to 1 for "X can't be 0"). */
+    var minimumXValue: Int = 0
+    /** When true, this ability can't be copied by copy-ability effects (CR 707.10e). */
+    var cantBeCopied: Boolean = false
 
     // Named target bindings (for multi-target abilities)
     private val namedTargets: MutableList<Pair<String, TargetRequirement>> = mutableListOf()
@@ -1419,7 +1497,9 @@ class ActivatedAbilityBuilder {
             isExhaust = isExhaust,
             holdPriority = holdPriority,
             genericCostReduction = genericCostReduction,
-            xManaRestriction = xManaRestriction
+            xManaRestriction = xManaRestriction,
+            minimumXValue = minimumXValue,
+            cantBeCopied = cantBeCopied
         )
     }
 }

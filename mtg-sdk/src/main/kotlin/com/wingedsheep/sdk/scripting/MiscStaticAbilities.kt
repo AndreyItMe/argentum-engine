@@ -126,6 +126,12 @@ data class OverrideEnchantedLandManaColor(
  *   only that controller can activate the source's mana ability (mana-ability rules), the
  *   trigger only fires when "you" tap a matching creature.
  *
+ * - **Ultima, Origin of Oblivion** ("Whenever you tap a land for {C}, add an additional {C}") →
+ *   `AdditionalManaOnSourceTap(sourceFilter = GameObjectFilter.Land.youControl(), color = null,
+ *   whenProducing = TappedForManaType.COLORLESS)`. The [whenProducing] gate restricts the trigger
+ *   to taps that produced colorless mana, and the mirror form (`color = null`) then mirrors that
+ *   {C} back — so a Forest tapped for {G} does NOT fire it, only a {C} tap does.
+ *
  * Triggered mana ability — resolves immediately without using the stack (Rule 605.1).
  * Filter matching uses projected state, so animated creature-lands count as creatures
  * and typeshifted lands count under their projected types. The filter's controller
@@ -145,6 +151,9 @@ data class OverrideEnchantedLandManaColor(
  *   The rider runs only on the manual mana-ability path; auto-tapping for a cost adds the mirror
  *   mana via the solver but skips the rider, matching how the engine already treats mana-ability
  *   side effects (e.g. City of Brass's damage) during automatic payment.
+ * @property whenProducing Restricts which produced-mana types cause the bonus to fire (default
+ *   [TappedForManaType.ANY] — the historical behavior). [TappedForManaType.COLORLESS] models
+ *   "tap a land for {C}" (Ultima); [TappedForManaType.COLORED] models "tap … for colored mana".
  */
 @SerialName("AdditionalManaOnSourceTap")
 @Serializable
@@ -152,16 +161,28 @@ data class AdditionalManaOnSourceTap(
     val sourceFilter: GameObjectFilter,
     val color: Color? = null,
     val amount: DynamicAmount = DynamicAmount.Fixed(1),
-    val rider: Effect? = null
+    val rider: Effect? = null,
+    val whenProducing: TappedForManaType = TappedForManaType.ANY
 ) : StaticAbility {
     override val description: String = buildString {
         append("Whenever a ")
         append(sourceFilter.description)
-        append(" is tapped for mana, ")
-        if (color == null) {
-            append("that player adds one mana of any type that source produced.")
-        } else {
-            append("add an additional {${color.symbol}}.")
+        append(" is tapped for ")
+        append(
+            when (whenProducing) {
+                TappedForManaType.ANY -> "mana"
+                TappedForManaType.COLORLESS -> "{C}"
+                TappedForManaType.COLORED -> "colored mana"
+            }
+        )
+        append(", ")
+        when {
+            color == null && whenProducing == TappedForManaType.COLORLESS ->
+                append("add an additional {C}.")
+            color == null ->
+                append("that player adds one mana of any type that source produced.")
+            else ->
+                append("add an additional {${color.symbol}}.")
         }
         if (rider != null) {
             append(" ")
@@ -176,6 +197,23 @@ data class AdditionalManaOnSourceTap(
             copy(sourceFilter = newFilter, amount = newAmount, rider = newRider)
         } else this
     }
+}
+
+/**
+ * Restricts which produced-mana type fires an [AdditionalManaOnSourceTap] bonus. Modeled as its
+ * own type (rather than a nullable [Color]) because "colorless" is not a [Color], and to keep the
+ * three cases explicit at the call site.
+ */
+@Serializable
+enum class TappedForManaType {
+    /** Any produced mana fires the bonus (the historical, default behavior). */
+    ANY,
+
+    /** Only a tap that produced colorless {C} mana fires the bonus (Ultima: "tap a land for {C}"). */
+    COLORLESS,
+
+    /** Only a tap that produced colored mana fires the bonus. */
+    COLORED,
 }
 
 /**

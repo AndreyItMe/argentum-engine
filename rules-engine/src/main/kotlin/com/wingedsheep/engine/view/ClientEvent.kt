@@ -1195,9 +1195,22 @@ is PermanentsSacrificedEvent -> {
             is KeywordGrantedEvent,
             is CitysBlessingGainedEvent,
             is MaximumHandSizeRemovedEvent,
+            is MaximumHandSizeReducedEvent,
             is RingTemptedEvent,
             is ScriedEvent,
             is SurveiledEvent,
+            // Internal signal that fires "whenever a creature you control explores" watcher
+            // triggers; the reveal/hand/counter moves are already surfaced by their own events, so
+            // no separate client event.
+            is PermanentExploredEvent,
+            // Internal signal that fires "exploits a creature" watcher triggers (Skull Skaab); the
+            // sacrifice is already surfaced by PermanentsSacrificedEvent and the payoff by the
+            // exploiting creature's own triggered/reflexive ability, so no separate client event.
+            is ExploitedEvent,
+            // Internal signal that fires "when this creature trains" watcher triggers (Savior of
+            // Ollenbock); the +1/+1 counter the training ability placed is already surfaced by its
+            // own CountersAddedEvent (animation + log), so no separate client event.
+            is TrainedEvent,
             is BendPerformedEvent,
             is ManifestedDreadEvent,
             is LibrarySearchedEvent,

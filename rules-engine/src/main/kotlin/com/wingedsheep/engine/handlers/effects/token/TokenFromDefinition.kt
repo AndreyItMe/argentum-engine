@@ -6,8 +6,10 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.BattlefieldEntry
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.handlers.effects.PermanentEntryReplacements
+import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
@@ -45,7 +47,7 @@ import com.wingedsheep.sdk.scripting.EntersWithChoice
  *    `payLifeCost` form is land-only, so a minted creature only ever has the simple form.
  *  - **self + global [EntersWithCounters]/[EntersWithDynamicCounters]** add counters (a creature
  *    that "enters with N +1/+1 counters", plus grants from other permanents) via
- *    [EntersWithCountersHelper].
+ *    [EntersWithReplacements].
  *  - **[EntersWithChoice]** (Alloy Golem, "as this enters, choose a color") pauses for a player
  *    decision via [PermanentEntryReplacements]; the chosen value is recorded in
  *    `CastChoicesComponent` and the token's ETB triggers fire from the resumer afterward.
@@ -98,6 +100,7 @@ object TokenFromDefinition {
 
         // As-enters: enters tapped (CR 614). The payLifeCost (shock-land) form is land-only.
         val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
+        var enteredTapped = false
         if (entersTapped != null && entersTapped.payLifeCost == null) {
             val shouldEnterTapped = entersTapped.unlessCondition?.let { condition ->
                 !conditionEvaluator.evaluate(
@@ -106,11 +109,19 @@ object TokenFromDefinition {
             } ?: true
             if (shouldEnterTapped) {
                 newState = newState.updateEntity(tokenId) { c -> c.with(TappedComponent) }
+                enteredTapped = true
             }
         }
 
+        // As-enters: global "[filter] enter tapped/untapped" replacements from OTHER permanents
+        // (Authority of the Consuls taps an opponent's minted creature token). Passing the self
+        // enters-tapped result lets an "enters untapped" replacement override it per CR 614.
+        newState = EnterTappedReplacements.applyCreatedTokenEntryTap(
+            newState, tokenId, controllerId, definedTapped = enteredTapped,
+        )
+
         // As-enters: the token's own + global "enters with counters" (CR 614).
-        val (stateWithCounters, counterEvents) = EntersWithCountersHelper.applyEntersWithCounters(
+        val (stateWithCounters, counterEvents) = EntersWithReplacements.applyOnEntry(
             newState, tokenId, controllerId, cardRegistry
         )
         newState = stateWithCounters
@@ -139,6 +150,12 @@ object TokenFromDefinition {
                 if (paused != null) return EffectResult.from(paused)
             }
         }
+        // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga and gets its on-enter lore
+        // counter (chapter I then triggers). BattlefieldEntry.place is the ad-hoc insertion path
+        // and intentionally skips enters-with-counters setup, so apply the shared Saga-entry
+        // helper here — the same one the standard moveToZone pipeline uses. No-op for non-Sagas.
+        val (sagaState, sagaEvents) = ZoneMovementUtils.applySagaEntryIfNeeded(newState, tokenId)
+        newState = sagaState
 
         val event = ZoneChangeEvent(
             entityId = tokenId,
@@ -148,6 +165,6 @@ object TokenFromDefinition {
             ownerId = controllerId
         )
 
-        return EffectResult.success(newState, listOf(event) + counterEvents)
+        return EffectResult.success(newState, listOf(event) + counterEvents + sagaEvents)
     }
 }

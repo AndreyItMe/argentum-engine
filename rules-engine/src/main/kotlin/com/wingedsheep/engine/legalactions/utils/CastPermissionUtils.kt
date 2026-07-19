@@ -9,6 +9,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedEverComponent
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.GraveyardPlayPermissionUsedComponent
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
@@ -40,6 +41,7 @@ import com.wingedsheep.sdk.scripting.PlayersCantActivateAbilities
 import com.wingedsheep.sdk.scripting.PlayersCantCastSpells
 import com.wingedsheep.sdk.scripting.PreventActivatedAbilities
 import com.wingedsheep.sdk.scripting.PreventCycling
+import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.RestrictSpellsCastPerTurn
 import com.wingedsheep.sdk.scripting.references.Player
 
@@ -782,8 +784,19 @@ class CastPermissionUtils(
     }
 
     /**
-     * True when any [PreventActivatedAbilities] static ability on the battlefield matches
-     * [sourceId] under projected state (Cursed Totem, Damping Matrix, ...).
+     * True when any [PreventActivatedAbilities] static ability — printed on a battlefield
+     * permanent (Cursed Totem, Damping Matrix, ...) or granted via
+     * [com.wingedsheep.engine.event.GrantedStaticAbility] (Braided Net's durational
+     * "its activated abilities can't be activated") — matches [sourceId] under projected state.
+     *
+     * Granted instances behave exactly like printed ones, anchored to the entity they are
+     * granted to: the filter is evaluated with the grant's holder as the source and its
+     * controller as the perspective. A self-scoped grant
+     * (`PreventActivatedAbilities(GameObjectFilter.Permanent.sourceItself())`) therefore locks
+     * the holder's own abilities. Grants with a conditional "for as long as …" duration
+     * ([Duration.WhileAffectedTapped]) are gated here per-frame; the one-way latch (CR 611.2b)
+     * is enforced by `EndedDurationExpiryCheck`, which physically removes the grant the moment
+     * its condition fails.
      *
      * Callers should skip both mana and non-mana activated abilities of [sourceId] when this
      * returns true. Loyalty abilities of planeswalkers are not blocked (Cursed Totem's filter
@@ -814,6 +827,27 @@ class CastPermissionUtils(
                 if (predicateEvaluator.matches(state, projected, sourceId, prevent.filter, context)) {
                     return true
                 }
+            }
+        }
+        // Granted statics (GameState.grantedStaticAbilities) — same semantics as printed,
+        // anchored to the holder entity instead of a card definition.
+        for (grant in state.grantedStaticAbilities) {
+            val prevent = grant.ability as? PreventActivatedAbilities ?: continue
+            if (prevent.nonManaAbilitiesOnly && abilityIsManaAbility) continue
+            if (!state.getBattlefield().contains(grant.entityId)) continue
+            // Per-frame gate for conditional durations — the mirror of StateProjector's gate
+            // for floating effects. EndedDurationExpiryCheck supplies the one-way latch.
+            if (grant.duration is Duration.WhileAffectedTapped &&
+                state.getEntity(grant.entityId)?.has<TappedComponent>() != true
+            ) {
+                continue
+            }
+            val holderController = projected.getController(grant.entityId)
+                ?: state.getEntity(grant.entityId)?.get<ControllerComponent>()?.playerId
+                ?: continue
+            val context = PredicateContext(controllerId = holderController, sourceId = grant.entityId)
+            if (predicateEvaluator.matches(state, projected, sourceId, prevent.filter, context)) {
+                return true
             }
         }
         return false
@@ -953,13 +987,16 @@ class CastPermissionUtils(
             // Include unlocked Room face statics (CR 709.5) so a Room that grants activated
             // abilities (e.g. Greenhouse) only hands them out once its door is unlocked.
             for (ability in com.wingedsheep.engine.state.components.identity.RoomFaceStatics.activeStaticAbilities(container, cardDef)) {
-                // "[filter] have all activated abilities of the [creature] cards exiled with this":
-                // pull every activated ability off each card in the granter's linked-exile pile and
-                // grant it to each matching permanent. Self filter = Territory Forge (grants to
-                // itself); a battlefield filter = Agatha's Soul Cauldron (grants to other creatures
-                // you control with +1/+1 counters). The granter recorded is the *receiver* so the
-                // ability's `{T}`/self-references bind to the permanent that gained it (CR-faithful).
-                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard) {
+                // "[filter] have all activated abilities of the [creature] cards exiled with/to craft
+                // this": pull every activated ability off each card in the granter's exile pile (linked
+                // or crafted, per `ability.source`) and grant it to each matching permanent. Self filter
+                // = Territory Forge / Locus of Enlightenment (grants to itself); a battlefield filter =
+                // Agatha's Soul Cauldron (grants to other creatures you control with +1/+1 counters). The
+                // granter recorded is the *receiver* so the ability's `{T}`/self-references bind to the
+                // permanent that gained it (CR-faithful). When `oncePerTurnEach` is set (Locus), each
+                // ability is re-stamped with an exiled-card-derived AbilityId so duplicate materials don't
+                // collapse and each gets its own once-per-turn budget (see exiledCardsActivatedAbilities).
+                if (ability is com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards) {
                     val receives = when (val scope = ability.filter.scope) {
                         is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self -> permanentId == entityId
                         is com.wingedsheep.sdk.scripting.filters.unified.Scope.Specific -> scope.entityId == entityId
@@ -977,7 +1014,9 @@ class CastPermissionUtils(
                         }
                     }
                     if (receives) {
-                        for (granted in linkedExiledActivatedAbilities(state, permanentId, cardRegistry, ability.creatureCardsOnly)) {
+                        for (granted in exiledCardsActivatedAbilities(
+                            state, permanentId, cardRegistry, ability.source, ability.creatureCardsOnly, ability.oncePerTurnEach
+                        )) {
                             result.add(StaticGrantedAbility(granted, entityId))
                         }
                     }
@@ -1187,31 +1226,57 @@ data class StaticGrantedAbility(
 )
 
 /**
- * The activated abilities of every card in [sourceId]'s linked-exile pile — the engine half of
- * [com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfLinkedExiledCard] (Territory Forge).
+ * The activated abilities of every card in [sourceId]'s exile pile — the engine half of
+ * [com.wingedsheep.sdk.scripting.HasAllActivatedAbilitiesOfExiledCards]. [source] selects the pile:
+ * [ExiledCardsSource.LINKED] reads the source's `LinkedExileComponent` (Territory Forge, Agatha's
+ * Soul Cauldron); [ExiledCardsSource.CRAFTED] reads its `CraftedFromExiledComponent` (Locus of
+ * Enlightenment; CR 702.167c — "the exiled cards used to craft it"). It looks up each exiled card's
+ * definition and returns its `activatedAbilities`. The caller grants each with the *receiver* as the
+ * granter so the ability activates against that permanent (its `{T}` taps it, self-references bind to
+ * it — CR 113.7, faithful to the ruling that the exiled card's "this card" references become
+ * references to the permanent that has the ability).
  *
- * Reads the source's [com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent],
- * looks up each exiled card's definition, and returns its `activatedAbilities`. The caller grants
- * each with [sourceId] as the granter so the ability activates against the source permanent (its
- * `{T}` taps the source, self-references bind to the source — CR-faithful to the Territory Forge
- * ruling that the exiled card's "this card" references become references to the source).
+ * When [oncePerTurnEach] is true (Locus of Enlightenment's "only once each turn"), each returned
+ * ability is re-stamped with a **synthesized [AbilityId] derived from the exiled card's entity id**
+ * (`exiled_<exiledEntity>_<printedAbilityId>`) and gains an
+ * [com.wingedsheep.sdk.scripting.ActivationRestriction.OncePerTurn]. The re-stamp is load-bearing:
+ *  - It stops the caller's `distinctBy { it.ability.id }` dedup from collapsing two exiled copies of
+ *    the *same* printed card (which share one printed `AbilityId`) into a single granted ability.
+ *  - It makes the standard once-per-turn tracker (`AbilityActivatedThisTurnComponent`, keyed by
+ *    receiver-entity + `AbilityId`) give each exiled card its *own* once-each-turn budget for free,
+ *    with no bespoke tracker.
+ *
+ * When [oncePerTurnEach] is false (Territory Forge, Agatha), abilities are returned unmodified — the
+ * dedup collapses duplicate copies, which is fine when there's no per-card budget to keep apart.
  */
-fun linkedExiledActivatedAbilities(
+fun exiledCardsActivatedAbilities(
     state: GameState,
     sourceId: EntityId,
     cardRegistry: CardRegistry,
-    creatureCardsOnly: Boolean = false
+    source: com.wingedsheep.sdk.scripting.ExiledCardsSource,
+    creatureCardsOnly: Boolean = false,
+    oncePerTurnEach: Boolean = false
 ): List<com.wingedsheep.sdk.scripting.ActivatedAbility> {
-    val exiledIds = state.getEntity(sourceId)
-        ?.get<com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent>()
-        ?.exiledIds ?: return emptyList()
+    val exiledIds = when (source) {
+        com.wingedsheep.sdk.scripting.ExiledCardsSource.LINKED -> state.getEntity(sourceId)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent>()?.exiledIds
+        com.wingedsheep.sdk.scripting.ExiledCardsSource.CRAFTED -> state.getEntity(sourceId)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.CraftedFromExiledComponent>()?.exiledIds
+    } ?: return emptyList()
     return exiledIds.flatMap { exiledId ->
         val card = state.getEntity(exiledId)?.get<CardComponent>()
-        // Agatha's "all *creature* cards exiled" restricts the source pile by the exiled card's
-        // printed type; Territory Forge (creatureCardsOnly = false) takes every exiled card.
+        // Agatha's "all *creature* cards exiled" restricts the pile by the exiled card's printed
+        // type; the other users (creatureCardsOnly = false) take every exiled card.
         if (creatureCardsOnly && card?.typeLine?.isCreature != true) return@flatMap emptyList()
         val cardDef = card?.cardDefinitionId?.let { cardRegistry.getCard(it) }
-        cardDef?.script?.activatedAbilities ?: emptyList()
+        val abilities = cardDef?.script?.activatedAbilities ?: emptyList()
+        if (!oncePerTurnEach) abilities
+        else abilities.map { ability ->
+            ability.copy(
+                id = com.wingedsheep.sdk.scripting.AbilityId("exiled_${exiledId.value}_${ability.id.value}"),
+                restrictions = ability.restrictions + com.wingedsheep.sdk.scripting.ActivationRestriction.OncePerTurn
+            )
+        }
     }
 }
 

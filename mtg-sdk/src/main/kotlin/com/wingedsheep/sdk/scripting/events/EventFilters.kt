@@ -570,6 +570,47 @@ sealed interface AttackPredicate {
     data object FirstTimeEachTurn : AttackPredicate {
         override val description = "for the first time each turn"
     }
+
+    /**
+     * The attacker was declared as attacking a **player** — not a planeswalker or a battle.
+     * (CR 508.1: an attacker is declared as attacking a player, planeswalker, or battle.)
+     *
+     * A creature can only attack a player who is its controller's opponent, so on a `SELF`
+     * binding this is exactly "attacks an opponent" (Kaalia of the Vast — whose 2024 ruling
+     * clarifies the ability "doesn't trigger if it attacks a planeswalker or battle"). The
+     * defender kind is fixed at declaration, so the matcher reads it from the stamped
+     * `AttackersDeclaredEvent.attackersAgainstPlayer` set rather than post-declaration state.
+     *
+     * Per-attacker by design: it gates against the trigger's own source, so use it with a
+     * `SELF` binding (or an ANY-binding attacker filter that already scopes to one creature).
+     */
+    @SerialName("AttacksDefenderIsPlayer")
+    @Serializable
+    data object DefenderIsPlayer : AttackPredicate {
+        override val description = "a player"
+    }
+
+    /**
+     * The attacker was declared as attacking **and** at least one *other* declared attacker has
+     * strictly greater **projected** power than the attacker's own projected power. This is the
+     * Training trigger condition (CR 702.149a: "Whenever this creature and at least one other
+     * creature with power greater than this creature's power attack, put a +1/+1 counter on this
+     * creature").
+     *
+     * Power is compared through **projected** state (Rule 613 layers), so anthems, auras, and
+     * counters on the attacking band are reflected — a lord that pumps the *other* attacker can
+     * flip this from false to true. Both powers are read at declaration time (when the trigger
+     * condition is checked); the comparison is strict (`>`), so an equal-power partner does not
+     * satisfy it.
+     *
+     * Per-attacker by design: it gates against the trigger's own source, so use it with a `SELF`
+     * binding — "Whenever this creature trains, …".
+     */
+    @SerialName("AttacksAlongsideGreaterPower")
+    @Serializable
+    data object AttackedAlongsideGreaterPower : AttackPredicate {
+        override val description = "with another creature with greater power"
+    }
 }
 
 // =============================================================================

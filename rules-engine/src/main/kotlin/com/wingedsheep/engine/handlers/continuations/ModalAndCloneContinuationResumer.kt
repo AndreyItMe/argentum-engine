@@ -986,7 +986,8 @@ class ModalAndCloneContinuationResumer(
             val spellName = newState.getEntity(spellId)?.get<CardComponent>()?.name ?: ""
             events.add(
                 com.wingedsheep.engine.core.CountersAddedEvent(
-                    spellId, continuation.counterType, counterCount, spellName, firstThisTurn
+                    spellId, continuation.counterType, counterCount, spellName, firstThisTurn,
+                    placedBy = controllerId
                 )
             )
         }

@@ -164,7 +164,8 @@ class LegalActionEnricher(
         payXLifeMaxX = payXLifeMaxX,
         distributedCounterRemovalTotal = distributedCounterRemovalTotal,
         validCraftMaterials = validCraftMaterials,
-        craftMinCount = craftMinCount
+        craftMinCount = craftMinCount,
+        craftMaxCount = craftMaxCount
     )
 
     private fun ConvokeCreatureData.toDto() = ConvokeCreatureInfo(

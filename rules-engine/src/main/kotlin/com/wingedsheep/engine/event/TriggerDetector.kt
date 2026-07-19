@@ -7,6 +7,7 @@ import com.wingedsheep.engine.core.CardCycledEvent
 import com.wingedsheep.engine.core.CardPlottedEvent
 import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.CardsDrawnEvent
+import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.ControlChangedEvent
 import com.wingedsheep.engine.core.DoorUnlockedEvent
 import com.wingedsheep.engine.core.DamageDealtEvent
@@ -274,10 +275,21 @@ class TriggerDetector(
         // and fires the trigger at most once per controller.
         detectSacrificeBatchTriggers(state, events, triggers, index)
 
+        // Detect "whenever one or more [filtered] permanents become tapped" batching triggers
+        // (e.g., Deeproot Pilgrimage). Fires the trigger at most once per source regardless of how
+        // many matching permanents were tapped simultaneously; the per-event path skips batch taps.
+        detectTapBatchTriggers(state, events, triggers, index)
+
         // Detect "whenever one or more [creatures] you control deal combat damage to a player"
         // batching triggers (e.g., Kastral, the Windcrested). Groups combat damage events
         // and fires the trigger at most once per observer.
         detectCombatDamageBatchTriggers(state, events, triggers, state.projectedState, index)
+
+        // Detect recipient-side "whenever one or more [creatures] are dealt [excess] damage"
+        // batching triggers (DealsDamageEvent(batch = true), e.g. Magmatic Galleon). Fires the
+        // trigger at most once per observer regardless of how many recipients were damaged
+        // simultaneously; the per-event observer path skips batch triggers.
+        damageDetector.detectDamageObserverBatchTriggers(state, events, triggers, index)
 
         // Detect "whenever one or more creatures you control leave the battlefield without dying"
         // batching triggers (e.g., Dour Port-Mage). Groups zone changes from battlefield to
@@ -349,7 +361,42 @@ class TriggerDetector(
         val filteredTriggers = capOncePerTurnTriggers(state, triggers)
 
         // Rule 603.4: Filter out triggers with unmet intervening-if conditions
-        return matcher.sortByApnapOrder(state, matcher.filterByTriggerCondition(state, filteredTriggers))
+        return matcher.sortByApnapOrder(
+            state,
+            matcher.filterByTriggerCondition(state, assignGranterIds(state, filteredTriggers))
+        )
+    }
+
+    /**
+     * Stamp each granted triggered ability with the permanent that granted it (an Equipment/Aura
+     * granting a trigger to the attached creature), so the resolving effect can reference its
+     * granter (CR 201.5a) via [com.wingedsheep.engine.handlers.EffectContext.granterId] — e.g. Dire
+     * Blunderbuss's "sacrifice an artifact other than Dire Blunderbuss". Applied uniformly to every
+     * event-based path (per-event scan plus the batch/duplicate detectors that append directly to
+     * the trigger list) and to [detectPhaseStepTriggers], so a granted upkeep/step trigger is
+     * covered too — not just the attack-trigger case.
+     *
+     * When several identical granters are attached to the same creature (two copies of the same
+     * Equipment), each fires its own trigger with an identical `abilityId`; a per-`(source, ability)`
+     * cursor hands the granting attachments out in index order so the N triggers map 1:1 onto the N
+     * granters instead of all collapsing onto the first. Triggers beyond the granter count (e.g. a
+     * Panharmonicon-doubled copy) clamp to the last granter, keeping the doubled copy pointed at the
+     * same Equipment. Cheap: [TriggerAbilityResolver.resolveGranterIds] is O(1) for the un-attached
+     * majority.
+     */
+    private fun assignGranterIds(
+        state: GameState,
+        triggers: List<PendingTrigger>
+    ): List<PendingTrigger> {
+        val cursor = HashMap<Pair<EntityId, com.wingedsheep.sdk.scripting.AbilityId>, Int>()
+        return triggers.map { trigger ->
+            val granters = abilityResolver.resolveGranterIds(state, trigger.sourceId, trigger.ability.id)
+            if (granters.isEmpty()) return@map trigger
+            val key = trigger.sourceId to trigger.ability.id
+            val i = cursor.getOrDefault(key, 0)
+            cursor[key] = i + 1
+            trigger.copy(granterId = granters.getOrElse(i) { granters.last() })
+        }
     }
 
     /**
@@ -568,7 +615,10 @@ class TriggerDetector(
         val filteredTriggers = capOncePerTurnTriggers(state, triggers)
 
         // Rule 603.4: Filter out triggers with unmet intervening-if conditions
-        return matcher.sortByApnapOrder(state, matcher.filterByTriggerCondition(state, filteredTriggers))
+        return matcher.sortByApnapOrder(
+            state,
+            matcher.filterByTriggerCondition(state, assignGranterIds(state, filteredTriggers))
+        )
     }
 
     /**
@@ -1212,16 +1262,21 @@ class TriggerDetector(
                     }
                     // Same shape for "whenever an opponent discards a card" — discarding N cards
                     // through one effect creates N separate trigger firings. A card filter narrows
-                    // that to the matching cards, so defer to the matcher for the count.
+                    // that to the matching cards, so defer to the matcher for the count. Batch
+                    // wording ("whenever you discard one or more cards", CR 603.2c) collapses the
+                    // whole event to a single firing — CardsDiscardedEvent is already one event
+                    // per discard action, so the cap is exactly the printed once-per-event.
                     else if (ability.trigger is EventPattern.DiscardEvent &&
                         event is CardsDiscardedEvent) {
-                        val firings = matcher.matchingDiscardCount(
-                            ability.trigger as EventPattern.DiscardEvent,
+                        val discardTrigger = ability.trigger as EventPattern.DiscardEvent
+                        val matchingCards = matcher.matchingDiscardCount(
+                            discardTrigger,
                             event,
                             entityId,
                             controllerId,
                             state
                         )
+                        val firings = if (discardTrigger.batch) minOf(matchingCards, 1) else matchingCards
                         repeat(firings) {
                             triggers.add(
                                 PendingTrigger(
@@ -1397,7 +1452,65 @@ class TriggerDetector(
             detectSelfCastTriggers(state, event, triggers)
         }
 
+        // Handle a self-exploiting creature's own exploit watcher (CR 603.10a look-back). When an
+        // exploiter sacrifices *itself* it is in the graveyard by the time the ExploitedEvent fires,
+        // so the battlefield index scan above misses its own "whenever a creature you control
+        // exploits ..." trigger (Skull Skaab). The exploiter was on the battlefield as its exploit
+        // ability resolved, so the sacrifice look-back requires that watcher to still fire.
+        if (event is com.wingedsheep.engine.core.ExploitedEvent) {
+            detectExploitedSelfSacrificeTriggers(state, event, triggers)
+        }
+
         return triggers
+    }
+
+    /**
+     * Detect an exploit watcher borne by an exploiter that sacrificed *itself* and so is no longer on
+     * the battlefield when its [com.wingedsheep.engine.core.ExploitedEvent] fires.
+     *
+     * CR 603.10a: abilities that trigger when a player sacrifices a permanent "look back in time" — the
+     * game uses the appearance of objects immediately before the sacrifice. A creature with exploit is on
+     * the battlefield as its own exploit ability resolves (that resolution is what performs the sacrifice),
+     * so its own "whenever a creature you control exploits a[nontoken] creature" watcher (Skull Skaab)
+     * must still fire even when the exploiter sacrifices itself. This matches the DTK Silumgar Butcher
+     * ruling. The main index scan in [detectTriggersForEvent] only covers battlefield permanents, so a
+     * self-exploiting Skull Skaab — now in the graveyard — would otherwise miss its own trigger.
+     *
+     * Guards:
+     *  - Fires only when the exploiter has actually left the battlefield, so this never double-fires with
+     *    the battlefield index scan (which handles the exploiter-still-present case, e.g. exploiting
+     *    another creature).
+     *  - Skips [TriggerBinding.OTHER] — "whenever *another* creature you control exploits" never fires for
+     *    the exploiter observing its own exploit.
+     */
+    private fun detectExploitedSelfSacrificeTriggers(
+        state: GameState,
+        event: com.wingedsheep.engine.core.ExploitedEvent,
+        triggers: MutableList<PendingTrigger>
+    ) {
+        val exploiterId = event.exploiterId
+        // Still on the battlefield → already covered by the main index scan; avoid a double fire.
+        if (exploiterId in state.getBattlefield()) return
+
+        val container = state.getEntity(exploiterId) ?: return
+        val cardComponent = container.get<CardComponent>() ?: return
+        val controllerId = event.exploiterControllerId
+
+        val abilities = abilityResolver.getTriggeredAbilities(exploiterId, cardComponent.cardDefinitionId, state)
+        for (ability in abilities) {
+            if (ability.trigger !is EventPattern.ExploitedEvent) continue
+            if (ability.binding == TriggerBinding.OTHER) continue
+            if (!matcher.matchesTrigger(ability.trigger, ability.binding, event, exploiterId, controllerId, state)) continue
+            triggers.add(
+                PendingTrigger(
+                    ability = ability,
+                    sourceId = exploiterId,
+                    sourceName = cardComponent.name,
+                    controllerId = controllerId,
+                    triggerContext = TriggerContext.fromEvent(event)
+                )
+            )
+        }
     }
 
     /**
@@ -1916,6 +2029,61 @@ class TriggerDetector(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Detect "whenever one or more [filtered] permanents become tapped" batching triggers
+     * (`TapEvent(batch = true)`, ANY binding — Deeproot Pilgrimage). A simultaneous tap of several
+     * matching permanents (attacking, convoke, crew) emits several [TappedEvent]s in one batch; this
+     * fires the trigger **once** for that batch, not once per permanent (the over-count the per-event
+     * path — which skips batch taps — would produce). The filter (e.g. "nontoken Merfolk you
+     * control") is evaluated against projected state relative to the source's controller.
+     */
+    private fun detectTapBatchTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>,
+        index: TriggerIndex
+    ) {
+        val tappedIds = events.filterIsInstance<TappedEvent>().map { it.entityId }
+        if (tappedIds.isEmpty()) return
+
+        for (entry in index.getEntitiesForCategory(TriggerCategory.TAPPED)) {
+            for (ability in entry.abilities) {
+                val trigger = ability.trigger
+                if (trigger !is EventPattern.TapEvent || !trigger.batch) continue
+                // Batch tap triggers are "one or more … become tapped" observers (ANY binding).
+                if (ability.binding != TriggerBinding.ANY) continue
+
+                val filter = trigger.filter
+                val matched = if (filter == null) {
+                    tappedIds
+                } else {
+                    val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                        controllerId = entry.controllerId,
+                        sourceId = entry.entityId
+                    )
+                    tappedIds.filter { tappedId ->
+                        predicateEvaluator.matches(
+                            state, state.projectedState, tappedId, filter, predicateContext
+                        )
+                    }
+                }
+                if (matched.isEmpty()) continue
+
+                // Fire once for the whole batch; bind the first matching permanent as the triggering
+                // entity so any "it" payoff has a referent (CR 603.2c).
+                triggers.add(
+                    PendingTrigger(
+                        ability = ability,
+                        sourceId = entry.entityId,
+                        sourceName = entry.cardComponent.name,
+                        controllerId = entry.controllerId,
+                        triggerContext = TriggerContext(triggeringEntityId = matched.first())
+                    )
+                )
             }
         }
     }

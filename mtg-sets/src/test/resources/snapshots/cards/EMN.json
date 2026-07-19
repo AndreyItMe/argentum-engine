@@ -756,6 +756,50 @@
     "colorIdentityOverride": []
 }
 
+// Harmless Offering
+{
+    "name": "Harmless Offering",
+    "manaCost": "{2}{R}",
+    "typeLine": "Sorcery",
+    "oracleText": "Target opponent gains control of target permanent you control.",
+    "script": {
+        "spellEffect": {
+            "type": "GiveControlToTargetPlayer",
+            "permanent": {
+                "type": "BoundVariable",
+                "name": "permanent"
+            },
+            "newController": {
+                "type": "BoundVariable",
+                "name": "opponent"
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetOpponent",
+                "id": "opponent"
+            },
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "permanent ctrl:you"
+                },
+                "id": "permanent"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "131",
+        "rarity": "RARE",
+        "artist": "Howard Lyon",
+        "flavorText": "\"Such an adorable face!\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/8/f8f3cc4f-7943-4025-b332-b40653b13014.jpg?1783937459"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Haunted Dead
 {
     "name": "Haunted Dead",

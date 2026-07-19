@@ -63,7 +63,30 @@ enum class CounterType {
     POSSESSION,
     FIRE,
     CONQUEROR,
-    INCUBATION
+    NET,
+    LANDMARK,
+    DREAD,
+    SPORE,
+    INCUBATION;
+
+    companion object {
+        /**
+         * Maps a counter-type *name* — as stored on effects/durations, i.e. a `Counters.*`
+         * string constant (e.g. `"blight"`, `"+1/+1"`) — to its [CounterType], or `null` if
+         * it doesn't correspond to a known counter. Handles the two symbolic names (`+1/+1`,
+         * `-1/-1`) and otherwise upper-cases and swaps spaces for underscores to match the
+         * enum constant. Mirrors the inline parse used by `StatePredicate.HasCounter`.
+         */
+        fun fromName(name: String): CounterType? = when (name) {
+            "+1/+1" -> PLUS_ONE_PLUS_ONE
+            "-1/-1" -> MINUS_ONE_MINUS_ONE
+            else -> try {
+                valueOf(name.uppercase().replace(' ', '_'))
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }
+    }
 }
 
 /**
@@ -113,6 +136,7 @@ object Counters {
     const val TIME = "time"
     const val FEATHER = "feather"
     const val HOURGLASS = "hourglass"
+    const val SPORE = "spore"
 
     /**
      * Decayed counter (Tarkir: Dragonstorm). A keyword-ability counter (CR 702.147a): a creature
@@ -216,10 +240,38 @@ object Counters {
     const val CONQUEROR = "conqueror"
 
     /**
+     * Net counter (LCI — Braided Net). Passive named counter with no inherent rule of its
+     * own — the card enters with three (an `EntersWithCounters` replacement with
+     * `CounterTypeFilter.Named(Counters.NET)`) and removes one as an activation cost
+     * (`Costs.RemoveCounterFromSelf(Counters.NET, 1)`).
+     * NOT a keyword counter, so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
+     */
+    const val NET = "net"
+
+    /**
+     * Landmark counter (LCI — Treasure Map). Passive named counter with no inherent rule of its
+     * own — Treasure Map's activated ability adds one per activation and reads the count (via
+     * `Conditions.SourceCounterCountAtLeast(...)`) to remove three, transform into Treasure Cove,
+     * and make three Treasures.
+     * NOT a keyword counter, so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
+     */
+    const val LANDMARK = "landmark"
+
+    /**
+     * Dread counter (LCI — Grasping Shadows). Passive named counter with no inherent rule of its
+     * own — Grasping Shadows adds one whenever a creature you control attacks alone and reads the
+     * count (via `Conditions.SourceCounterCountAtLeast(...)`) to transform into Shadows' Lair,
+     * whose activated ability spends one (`Costs.RemoveCounterFromSelf(Counters.DREAD, 1)`).
+     * NOT a keyword counter, so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
+     */
+    const val DREAD = "dread"
+
+    /**
      * Incubation counter (FDN — Drake Hatcher). Passive storage counter with no inherent rule; the
      * card's own abilities accumulate it (a combat-damage trigger adds one per point of damage) and
      * spend it (remove three as an activation cost to hatch a Drake token). NOT a keyword counter,
      * so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
+     * Not MTG's Incubate/incubator-token mechanic.
      */
     const val INCUBATION = "incubation"
 

@@ -723,6 +723,18 @@ sealed interface DelayedTriggerExpiry {
     @SerialName("DelayedTriggerExpiry.EndOfTurn")
     @Serializable
     data object EndOfTurn : DelayedTriggerExpiry
+
+    /**
+     * Never expire on a turn boundary — the delayed trigger persists across turns until it
+     * fires (pair with `fireOnce = true`) or the game ends. Models watch-a-permanent-until-it-
+     * leaves reflexive triggers that aren't scoped to the current turn, e.g. Zenos yae Galvus's
+     * "When the chosen creature leaves the battlefield, transform Zenos yae Galvus." The
+     * end-of-turn cleanup only removes [EndOfTurn] triggers, so a [Never] trigger is retained
+     * automatically; a `fireOnce` trigger is still consumed the first time it fires.
+     */
+    @SerialName("DelayedTriggerExpiry.Never")
+    @Serializable
+    data object Never : DelayedTriggerExpiry
 }
 
 /**

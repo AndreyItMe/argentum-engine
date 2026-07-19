@@ -585,12 +585,32 @@ internal class BlockPhaseManager(
             val attackerCard = attackerContainer.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(attackerCard.cardDefinitionId)
 
-            // Printed "can't be blocked by more than N". cardDef may be null for tokens/copies
-            // without a registered definition — the granted forms below still apply.
+            // Printed "can't be blocked by more than N", including the conditional form
+            // (Akawalli's descend-8 "can't be blocked by more than one creature") — unwrap a
+            // ConditionalStaticAbility and honor it only while its condition currently holds,
+            // mirroring the MustBeBlocked handling in attackersWithMustBeBlockedStatic. cardDef
+            // may be null for tokens/copies without a registered definition — the granted forms
+            // below still apply.
+            val attackerController = state.projectedState.getController(attackerId)
             val staticLimit = cardDef?.staticAbilities
-                ?.filterIsInstance<CantBeBlockedByMoreThan>()
-                ?.filter { it.filter.scope is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self }
-                ?.minOfOrNull { it.maxBlockers }
+                ?.mapNotNull { ability ->
+                    val unwrapped = if (ability is ConditionalStaticAbility) ability.ability else ability
+                    if (unwrapped !is CantBeBlockedByMoreThan) return@mapNotNull null
+                    if (unwrapped.filter.scope !is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self) {
+                        return@mapNotNull null
+                    }
+                    if (ability is ConditionalStaticAbility) {
+                        if (attackerController == null) return@mapNotNull null
+                        if (!conditionEvaluator.evaluate(
+                                state,
+                                ability.condition,
+                                EffectContext(sourceId = attackerId, controllerId = attackerController)
+                            )
+                        ) return@mapNotNull null
+                    }
+                    unwrapped.maxBlockers
+                }
+                ?.minOrNull()
             // Granted static-ability form: e.g. Full Steam Ahead grants CantBeBlockedByMoreThan(1)
             // until end of turn via grantedStaticAbilities.
             val grantedLimit = state.grantedStaticAbilities
@@ -746,20 +766,55 @@ internal class BlockPhaseManager(
             }
         }
 
-        // 2. "Must be blocked if able" (Gaea's Protector): at least one creature must block it
+        // 2. "Must be blocked if able" (Gaea's Protector): at least one creature must block it.
+        // Rule 509.1c: the declaration is illegal if the number of requirements being obeyed is
+        // fewer than the maximum number that could be obeyed. That maximum is a maximum bipartite
+        // matching between the must-be-blocked attackers and the blockers hypothetically free to
+        // cover them: a provoke-pinned blocker is only free for its pinned attacker, and a blocker
+        // that can block a Lure-style attacker is claimed by that requirement (section 1 forces it
+        // there). Per-pair blocking restrictions go through canCreatureBlockAttacker; declaration-
+        // wide restrictions (e.g. can't-block-alone) are not modelled, so the computed maximum can
+        // only over-count in those corners — never rejecting more than 509.1c would.
         val mustBeBlockedIfAbleAttackers = findMustBeBlockedIfAbleAttackers(state)
-        for (attackerId in mustBeBlockedIfAbleAttackers) {
-            val blockersAssigned = attackerToBlockers[attackerId] ?: emptySet()
-            if (blockersAssigned.isNotEmpty()) continue
+        if (mustBeBlockedIfAbleAttackers.isNotEmpty()) {
+            val provokePinnedAttackers = state.floatingEffects
+                .filter { it.effect.modification is SerializableModification.MustBlockSpecificAttacker }
+                .flatMap { floatingEffect ->
+                    val modification =
+                        floatingEffect.effect.modification as SerializableModification.MustBlockSpecificAttacker
+                    floatingEffect.effect.affectedEntities.map { it to modification.attackerId }
+                }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { it.value.toSet() }
+            val lureClaimedBlockers = potentialBlockers.filter { blockerId ->
+                mustBeBlockedByAllAttackers.any { attackerId ->
+                    canCreatureBlockAttacker(state, blockerId, attackerId, blockingPlayer, projected)
+                }
+            }.toSet()
 
-            // Check if any potential blocker can actually block this attacker
-            val canBeBlocked = potentialBlockers.any { blockerId ->
-                canCreatureBlockAttacker(state, blockerId, attackerId, blockingPlayer, projected)
+            fun canHypotheticallyBlock(blockerId: EntityId, attackerId: EntityId): Boolean {
+                if (blockerId in lureClaimedBlockers) return false
+                provokePinnedAttackers[blockerId]?.let { pins -> if (attackerId !in pins) return false }
+                return canCreatureBlockAttacker(state, blockerId, attackerId, blockingPlayer, projected)
             }
-            if (!canBeBlocked) continue
 
-            val attackerName = state.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-            return "$attackerName must be blocked if able"
+            // Maximum bipartite matching (attackers ↔ hypothetically-free blockers): its size is
+            // the most requirements that could be simultaneously obeyed. Shared Kuhn's routine.
+            val matchedAttackerOfBlocker = com.wingedsheep.engine.mechanics.BipartiteMatching
+                .maximumMatching(mustBeBlockedIfAbleAttackers, potentialBlockers) { attackerId, blockerId ->
+                    canHypotheticallyBlock(blockerId, attackerId)
+                }
+            val maxSatisfiable = matchedAttackerOfBlocker.size
+            val satisfied = mustBeBlockedIfAbleAttackers.count { !attackerToBlockers[it].isNullOrEmpty() }
+
+            if (satisfied < maxSatisfiable) {
+                val matchedAttackers = matchedAttackerOfBlocker.values.toSet()
+                val culpritId = mustBeBlockedIfAbleAttackers.first {
+                    it in matchedAttackers && attackerToBlockers[it].isNullOrEmpty()
+                }
+                val attackerName = state.getEntity(culpritId)?.get<CardComponent>()?.name ?: "Creature"
+                return "$attackerName must be blocked if able"
+            }
         }
 
         return null

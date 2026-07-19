@@ -6,7 +6,7 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.EntersWithCountersHelper
+import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.ComponentContainer
@@ -142,6 +142,11 @@ class CreateTokenCopyOfChosenPermanentExecutor(
             newState = com.wingedsheep.engine.handlers.effects.BattlefieldEntry
                 .place(newState, controllerId, tokenId)
 
+            // A token copy honors global "[filter] enter tapped" replacements (Authority of the
+            // Consuls taps an opponent's token copy of a creature).
+            newState = com.wingedsheep.engine.handlers.effects.EnterTappedReplacements
+                .applyCreatedTokenEntryTap(newState, tokenId, controllerId)
+
             val event = ZoneChangeEvent(
                 entityId = tokenId,
                 entityName = tokenCard.name,
@@ -152,11 +157,17 @@ class CreateTokenCopyOfChosenPermanentExecutor(
 
             // Apply "enters with counters" replacement effects from other battlefield permanents
             // (e.g., Gev, Scaled Scorch granting +1/+1 counters to token copies).
-            val (stateWithCounters, counterEvents) = EntersWithCountersHelper.applyGlobalEntersWithCounters(
+            val (stateWithCounters, counterEvents) = EntersWithReplacements.applyGlobal(
                 newState, tokenId, controllerId
             )
 
-            return EffectResult.success(stateWithCounters, listOf(event) + counterEvents)
+            // CR 714.2b/714.3a: a token copy of a Saga enters as a Saga with its on-enter lore
+            // counter. BattlefieldEntry.place skips enters-with-counters setup, so apply the shared
+            // Saga-entry helper (as the standard moveToZone pipeline does). No-op for non-Sagas.
+            val (sagaState, sagaEvents) = com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
+                .applySagaEntryIfNeeded(stateWithCounters, tokenId)
+
+            return EffectResult.success(sagaState, listOf(event) + counterEvents + sagaEvents)
         }
     }
 }

@@ -76,6 +76,8 @@ data class PayOrSufferContinuation(
     val namedTargets: Map<String, ChosenTarget> = emptyMap(),
     val manaCost: ManaCost? = null,
     val zone: Zone? = null,
+    val counterType: String? = null,
+    val self: Boolean = false,
     /**
      * Trigger context from the original PayOrSufferEffect execution, preserved so the
      * suffer effect can still resolve [com.wingedsheep.sdk.scripting.references.Player.TriggeringPlayer]
@@ -110,7 +112,8 @@ enum class PayOrSufferCostType {
     MANA,
     EXILE,
     CHOICE,
-    TAP
+    TAP,
+    REMOVE_COUNTERS
 }
 
 /**

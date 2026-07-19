@@ -482,6 +482,8 @@ class CleanupPhaseManager(
                     sourceId != null && newState.getBattlefield().contains(sourceId)
                 }
                 is Duration.WhileControlledByController -> true  // Gated at projection by controller; cleared on leaving play
+                is Duration.WhileAffectedHasCounter -> true  // Gated per-frame by StateProjector (counter present); latched off by EndedDurationExpiryCheck when the counter leaves
+                is Duration.WhileAffectedTapped -> true  // Gated per-frame by StateProjector / activation-legality checks; latched off by EndedDurationExpiryCheck when the permanent untaps
                 is Duration.UntilAfterAffectedControllersNextUntap -> true  // Expires after affected entity's controller's untap
                 is Duration.UntilPhase -> true  // Handle in phase transitions
                 is Duration.UntilCondition -> true  // Handle condition checking elsewhere
@@ -624,6 +626,9 @@ class CleanupPhaseManager(
                 }
                 if (result.has<PermanentLeftBattlefieldThisTurnComponent>()) {
                     result = result.without<PermanentLeftBattlefieldThisTurnComponent>()
+                }
+                if (result.has<com.wingedsheep.engine.state.components.player.CreatureLeftBattlefieldThisTurnComponent>()) {
+                    result = result.without<com.wingedsheep.engine.state.components.player.CreatureLeftBattlefieldThisTurnComponent>()
                 }
                 if (result.has<OpponentCreaturesExiledThisTurnComponent>()) {
                     result = result.without<OpponentCreaturesExiledThisTurnComponent>()

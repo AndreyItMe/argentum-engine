@@ -749,6 +749,15 @@ function WaitingForOpponent({
  * Targets 18 grids per draft (the canonical number).
  */
 /**
+ * Sentinel set code for a deferred "Random Set" pick in a tournament lobby. The concrete set stays
+ * hidden (shown as "Random Set") until the server rolls it at game start — mirrors the server's
+ * TournamentLobby.RANDOM_SET_CODE. Multiple random slots use suffixed codes (RANDOM, RANDOM-2, …).
+ */
+const RANDOM_SET_CODE = 'RANDOM'
+const isRandomSetCode = (code: string): boolean =>
+  code === RANDOM_SET_CODE || code.startsWith(`${RANDOM_SET_CODE}-`)
+
+/**
  * Lobby overlay for sealed lobbies.
  */
 function LobbyOverlay({
@@ -859,11 +868,17 @@ function LobbyOverlay({
   // (`SetPickerModal`, shared with the Quick Game lobby). The lobby itself only shows the
   // *selected* sets as compact chips, so its footprint stays small and stable no matter how many
   // sets exist in total or how many a host picks.
-  type AvailableSet = typeof lobbyState.settings.availableSets[number]
   const allSets = lobbyState.settings.availableSets
-  const selectedSets = lobbyState.settings.setCodes
-    .map((code) => allSets.find((s) => s.code === code))
-    .filter((s): s is AvailableSet => s != null)
+  // A selected-set chip is either a concrete set or a deferred "Random Set" placeholder that stays
+  // hidden until the server reveals it at game start (see addRandomSet / RANDOM_SET_CODE).
+  type SelectedSetChip = { code: string; name: string; partial: boolean; extensionSet: boolean; random: boolean }
+  const selectedSets: SelectedSetChip[] = lobbyState.settings.setCodes
+    .map((code): SelectedSetChip | null => {
+      if (isRandomSetCode(code)) return { code, name: 'Random Set', partial: false, extensionSet: false, random: true }
+      const s = allSets.find((x) => x.code === code)
+      return s ? { code, name: s.name, partial: s.partial ?? false, extensionSet: s.extensionSet ?? false, random: false } : null
+    })
+    .filter((s): s is SelectedSetChip => s != null)
 
   const toggleSet = (code: string) => {
     const isSelected = lobbyState.settings.setCodes.includes(code)
@@ -873,14 +888,13 @@ function LobbyOverlay({
     updateLobbySettings({ setCodes: newCodes })
   }
 
-  // "Random Set" in the picker: add one random complete, standalone set to the selection.
-  // Partial sets stay opt-in and extension sets can't anchor a pool, so neither is rolled.
+  // "Random Set" in the picker: add a deferred random slot. Unlike a concrete set it stays hidden
+  // (shown as "Random Set") until the server rolls a complete, non-extension set at game start.
+  // Suffixed codes keep multiple random slots distinct (RANDOM, RANDOM-2, …).
   const addRandomSet = () => {
-    const candidates = allSets.filter(
-      (s) => !s.partial && !s.extensionSet && !lobbyState.settings.setCodes.includes(s.code),
-    )
-    const pick = candidates[Math.floor(Math.random() * candidates.length)]
-    if (pick) updateLobbySettings({ setCodes: [...lobbyState.settings.setCodes, pick.code] })
+    const existing = lobbyState.settings.setCodes.filter(isRandomSetCode).length
+    const code = existing === 0 ? RANDOM_SET_CODE : `${RANDOM_SET_CODE}-${existing + 1}`
+    updateLobbySettings({ setCodes: [...lobbyState.settings.setCodes, code] })
   }
 
   return (
@@ -1233,13 +1247,17 @@ function LobbyOverlay({
                       <span
                         key={set.code}
                         className={`${styles.setChip} ${isAnyDraft ? styles.setChipDraft : ''} ${set.partial ? styles.setChipPartial : ''}`}
-                        title={set.partial
-                          ? `${set.name} — partial (reduced card pool)`
-                          : set.extensionSet
-                            ? `${set.name} — extension set (needs a regular set alongside)`
-                            : set.name}
+                        title={set.random
+                          ? 'Random Set — revealed when the game starts'
+                          : set.partial
+                            ? `${set.name} — partial (reduced card pool)`
+                            : set.extensionSet
+                              ? `${set.name} — extension set (needs a regular set alongside)`
+                              : set.name}
                       >
-                        <SetIcon code={set.code} className={styles.setChipIcon} />
+                        {set.random
+                          ? <span className={styles.setChipIcon} aria-hidden>🎲</span>
+                          : <SetIcon code={set.code} className={styles.setChipIcon} />}
                         <span className={styles.setChipName}>{set.name}</span>
                         <button
                           type="button"

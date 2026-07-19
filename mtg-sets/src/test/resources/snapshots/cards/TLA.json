@@ -390,6 +390,7 @@
             "collectorNumber": "204",
             "rarity": "RARE",
             "artist": "Tetsuko",
+            "flavorText": "With the death of the moon spirit, the Avatar's tides of vengeance crashed over the Fire Nation fleet.",
             "imageUri": "https://cards.scryfall.io/normal/back/8/2/82866a0e-485a-4f7e-8c49-f7d9ff3f4ad4.jpg?1778914119"
         },
         "colorIdentityOverride": [
@@ -2155,13 +2156,15 @@
         "collectorNumber": "207",
         "rarity": "MYTHIC",
         "artist": "Fahmi Fauzi",
+        "flavorText": "When the world needed him most, the Avatar returned.",
         "imageUri": "https://cards.scryfall.io/normal/front/f/e/fe29e909-50e9-4f04-b1a3-2cc5d7e3efe8.jpg?1778914169"
     },
     "colorIdentityOverride": [
-        "RED",
-        "GREEN",
         "WHITE",
-        "BLUE"
+        "BLUE",
+        "BLACK",
+        "RED",
+        "GREEN"
     ]
 }
 
@@ -3237,18 +3240,15 @@
                 "id": "ability_1",
                 "trigger": "AttackEvent",
                 "effect": {
-                    "type": "Gated",
-                    "gate": "Gate.MayDecide",
-                    "then": {
+                    "type": "ReflexiveTrigger",
+                    "action": {
+                        "type": "Sacrifice",
+                        "filter": "creature|artifact",
+                        "excludeSource": true
+                    },
+                    "reflexiveEffect": {
                         "type": "Composite",
                         "effects": [
-                            {
-                                "type": "SacrificeTarget",
-                                "target": {
-                                    "type": "BoundVariable",
-                                    "name": "another creature or artifact"
-                                }
-                            },
                             {
                                 "type": "DrawCards",
                                 "count": {
@@ -3263,15 +3263,8 @@
                                 "target": "Self"
                             }
                         ]
-                    }
-                },
-                "targetRequirement": {
-                    "type": "TargetObject",
-                    "filter": {
-                        "baseFilter": "creature|artifact ctrl:you",
-                        "excludeSelf": true
                     },
-                    "id": "another creature or artifact"
+                    "hint": "Sacrifice another creature or artifact"
                 },
                 "descriptionOverride": "Whenever this creature attacks, you may sacrifice another creature or artifact. If you do, draw a card and put a +1/+1 counter on this creature."
             }
@@ -3431,6 +3424,7 @@
     "metadata": {
         "collectorNumber": "255",
         "artist": "Dee Nguyen",
+        "flavorText": "Katara's waterskin ensured that she would always have water for bending, healing, or drinking.",
         "imageUri": "https://cards.scryfall.io/normal/front/6/d/6d4a1712-d19e-4475-9614-a0b1af4da610.jpg?1764121885"
     }
 }
@@ -4227,7 +4221,7 @@
     "name": "Bumi, Unleashed",
     "manaCost": "{3}{R}{G}",
     "typeLine": "Legendary Creature — Human Noble Ally",
-    "oracleText": "Trample\nWhen Bumi enters, earthbend 4. (Target land you control becomes a 0/0 creature with haste that's still a land. Put four +1/+1 counters on it. When it dies or is exiled, return it to the battlefield tapped.)\nWhenever Bumi deals combat damage to a player, untap all lands you control. After this phase, there is an additional combat phase. Only land creatures can attack during that combat phase.",
+    "oracleText": "Trample\nWhen Bumi enters, earthbend 4.\nWhenever Bumi deals combat damage to a player, untap all lands you control. After this phase, there is an additional combat phase. Only land creatures can attack during that combat phase.",
     "creatureStats": {
         "power": 5,
         "toughness": 4
@@ -4712,6 +4706,7 @@
         "collectorNumber": "127",
         "rarity": "UNCOMMON",
         "artist": "Pisukev",
+        "flavorText": "\"The Avatar's alive. I want you to find him, and end him.\"\n—Zuko",
         "imageUri": "https://cards.scryfall.io/normal/front/8/6/86f7399d-6876-4e85-ba34-ff1f97dc144a.jpg?1764120875"
     },
     "colorIdentityOverride": [
@@ -6213,17 +6208,21 @@
                 "trigger": {
                     "type": "CountersPlacedEvent",
                     "counterType": "+1/+1",
-                    "filter": "creature"
+                    "filter": "creature",
+                    "placedBy": "You"
                 },
                 "binding": "ANY",
                 "effect": {
-                    "type": "GainLife",
-                    "amount": {
-                        "type": "ContextProperty",
-                        "key": "TRIGGER_COUNTERS_PLACED_AMOUNT"
+                    "type": "Gated",
+                    "gate": "Gate.MayDecide",
+                    "then": {
+                        "type": "GainLife",
+                        "amount": {
+                            "type": "ContextProperty",
+                            "key": "TRIGGER_COUNTERS_PLACED_AMOUNT"
+                        }
                     }
                 },
-                "optional": true,
                 "oncePerTurn": true,
                 "descriptionOverride": "Whenever you put one or more +1/+1 counters on a creature, you may gain that much life. Do this only once each turn."
             }
@@ -8529,6 +8528,125 @@
     ]
 }
 
+// Firebender Ascension
+{
+    "name": "Firebender Ascension",
+    "manaCost": "{1}{R}",
+    "typeLine": "Enchantment",
+    "oracleText": "When this enchantment enters, create a 2/2 red Soldier creature token with firebending 1.\nWhenever a creature you control attacking causes a triggered ability of that creature to trigger, put a quest counter on this enchantment. Then if it has four or more quest counters on it, you may copy that ability. You may choose new targets for the copy.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 2,
+                    "toughness": 2,
+                    "colors": [
+                        "RED"
+                    ],
+                    "creatureTypes": [
+                        "Soldier"
+                    ],
+                    "keywords": [
+                        "FIREBENDING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/2/d/2de43b03-9ac5-4292-ab29-2dc6210ef3d9.jpg?1777982247",
+                    "triggeredAbilities": [
+                        {
+                            "id": "ability_2",
+                            "trigger": "AttackEvent",
+                            "effect": {
+                                "type": "Composite",
+                                "effects": [
+                                    {
+                                        "type": "AddMana",
+                                        "color": "RED",
+                                        "expiry": "END_OF_COMBAT"
+                                    },
+                                    {
+                                        "type": "EmitBendEvent",
+                                        "bendType": "FIRE"
+                                    }
+                                ]
+                            },
+                            "descriptionOverride": "Whenever this creature attacks, add {R}. Until end of combat, you don't lose this mana as steps and phases end."
+                        }
+                    ]
+                },
+                "descriptionOverride": "When this enchantment enters, create a 2/2 red Soldier creature token with firebending 1."
+            },
+            {
+                "id": "ability_3",
+                "trigger": {
+                    "type": "AbilityTriggeredEvent",
+                    "requireAttackCause": true
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "AddCounters",
+                            "counterType": "quest",
+                            "count": 1,
+                            "target": "Self"
+                        },
+                        {
+                            "type": "Gated",
+                            "gate": {
+                                "type": "Gate.WhenCondition",
+                                "condition": {
+                                    "type": "Compare",
+                                    "left": {
+                                        "type": "EntityProperty",
+                                        "entity": "Source",
+                                        "numericProperty": {
+                                            "type": "CounterCount",
+                                            "counterType": {
+                                                "type": "Named",
+                                                "name": "quest"
+                                            }
+                                        }
+                                    },
+                                    "operator": "GTE",
+                                    "right": {
+                                        "type": "Fixed",
+                                        "amount": 4
+                                    }
+                                }
+                            },
+                            "then": {
+                                "type": "Gated",
+                                "gate": "Gate.MayDecide",
+                                "then": {
+                                    "type": "CopyTargetTriggeredAbility",
+                                    "target": "TriggeringEntity"
+                                },
+                                "descriptionOverride": "Copy that triggered ability? You may choose new targets for the copy."
+                            }
+                        }
+                    ]
+                },
+                "descriptionOverride": "Whenever a creature you control attacking causes a triggered ability of that creature to trigger, put a quest counter on this enchantment. Then if it has four or more quest counters on it, you may copy that ability. You may choose new targets for the copy."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "137",
+        "rarity": "RARE",
+        "artist": "Tetsuko",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/9/2929b702-03c6-4cf0-a3f7-61b27f4803be.jpg?1764120940"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Firebending Lesson
 {
     "name": "Firebending Lesson",
@@ -10176,6 +10294,7 @@
         "collectorNumber": "103",
         "rarity": "UNCOMMON",
         "artist": "Sylvain Sarrailh",
+        "flavorText": "\"Put a muzzle on him!\"\n—Si Wong Sandbender",
         "imageUri": "https://cards.scryfall.io/normal/front/b/5/b57c57a8-d72b-4c6c-a2db-a7ef61190f42.jpg?1764120715"
     },
     "colorIdentityOverride": [
@@ -10923,7 +11042,7 @@
     "name": "Iroh, Grand Lotus",
     "manaCost": "{3}{G}{U}{R}",
     "typeLine": "Legendary Creature — Human Noble Ally",
-    "oracleText": "Firebending 2 (Whenever this creature attacks, add {R}{R}. Until end of combat, you don't lose this mana as steps and phases end.)\nDuring your turn, each non-Lesson instant and sorcery card in your graveyard has flashback. The flashback cost is equal to that card's mana cost. (You may cast a card from your graveyard for its flashback cost. Then exile it.)\nDuring your turn, each Lesson card in your graveyard has flashback {1}.",
+    "oracleText": "Firebending 2\nDuring your turn, each non-Lesson instant and sorcery card in your graveyard has flashback. The flashback cost is equal to that card's mana cost. (You may cast a card from your graveyard for its flashback cost. Then exile it.)\nDuring your turn, each Lesson card in your graveyard has flashback {1}.",
     "creatureStats": {
         "power": 5,
         "toughness": 5
@@ -12689,6 +12808,7 @@
         "collectorNumber": "147",
         "rarity": "UNCOMMON",
         "artist": "Toraji",
+        "flavorText": "\"Finally, something to do.\"",
         "imageUri": "https://cards.scryfall.io/normal/front/7/3/732e6bc9-0798-4c00-aea0-5ef4298b45f5.jpg?1764121013"
     },
     "colorIdentityOverride": [
@@ -14306,7 +14426,7 @@
     "name": "Ozai, the Phoenix King",
     "manaCost": "{2}{B}{B}{R}{R}",
     "typeLine": "Legendary Creature — Human Noble",
-    "oracleText": "Trample, firebending 4, haste (Whenever this creature attacks, add {R}{R}{R}{R}. This mana lasts until end of combat.)\nIf you would lose unspent mana, that mana becomes red instead.\nOzai has flying and indestructible as long as you have six or more unspent mana.",
+    "oracleText": "Trample, firebending 4, haste\nIf you would lose unspent mana, that mana becomes red instead.\nOzai has flying and indestructible as long as you have six or more unspent mana.",
     "creatureStats": {
         "power": 7,
         "toughness": 7
@@ -14658,9 +14778,10 @@
                 "id": "ability_1",
                 "trigger": {
                     "type": "PermanentsSacrificedEvent",
-                    "filter": "permanent"
+                    "filter": "permanent",
+                    "perPermanent": true
                 },
-                "binding": "ANY",
+                "binding": "OTHER",
                 "effect": {
                     "type": "AddCounters",
                     "counterType": "+1/+1",
@@ -14917,6 +15038,7 @@
                                         "amount": 1
                                     }
                                 },
+                                "chooser": "ControllerOfTarget",
                                 "storeSelected": "found"
                             },
                             {
@@ -16260,7 +16382,7 @@
     "name": "Saber-Tooth Moose-Lion",
     "manaCost": "{4}{G}{G}",
     "typeLine": "Creature — Elk Cat",
-    "oracleText": "Reach\nForestcycling {2}",
+    "oracleText": "Reach\nForestcycling {2} ({2}, Discard this card: Search your library for a Forest card, reveal it, put it into your hand, then shuffle.)",
     "creatureStats": {
         "power": 7,
         "toughness": 7
@@ -19170,6 +19292,7 @@
             "collectorNumber": "186",
             "rarity": "MYTHIC",
             "artist": "Thanh Tuấn",
+            "flavorText": "\"Only justice will bring peace.\"",
             "imageUri": "https://cards.scryfall.io/normal/back/4/8/4887ce64-7c98-4bd7-95db-0c43ab71cc6e.jpg?1764846544"
         },
         "colorIdentityOverride": []
@@ -21038,7 +21161,7 @@
     "metadata": {
         "collectorNumber": "200",
         "artist": "Sylvain Sarrailh",
-        "flavorText": "\"A turtle-duckling's greatest defense comes not from their shell, but from their mother.\"",
+        "flavorText": "A turtle-duckling's greatest defense comes not from their shell, but from their mother.",
         "imageUri": "https://cards.scryfall.io/normal/front/a/e/aefcd734-3916-4c77-9d98-3ea2c2795658.jpg?1764121358"
     },
     "colorIdentityOverride": [
@@ -21974,12 +22097,12 @@
                             "type": "AddCounters",
                             "counterType": "+1/+1",
                             "count": 1,
-                            "target": "Self"
+                            "target": "TriggeringEntity"
                         },
                         {
                             "type": "GrantKeyword",
                             "keyword": "HASTE",
-                            "target": "Self"
+                            "target": "TriggeringEntity"
                         }
                     ]
                 }
@@ -22321,6 +22444,7 @@
     "metadata": {
         "collectorNumber": "80",
         "artist": "Sylvain Sarrailh",
+        "flavorText": "\"Just push and pull the water—like this.\"\n—Katara",
         "imageUri": "https://cards.scryfall.io/normal/front/4/f/4f81e3b5-a0a9-4764-8c2d-b499ce1740b4.jpg?1764120543"
     },
     "colorIdentityOverride": [
@@ -22561,6 +22685,7 @@
         "collectorNumber": "262",
         "rarity": "MYTHIC",
         "artist": "Dee Nguyen",
+        "flavorText": "\"Most people think the lotus tile insignificant, but it is essential for the unusual strategy that I employ.\"\n—Iroh",
         "imageUri": "https://cards.scryfall.io/normal/front/1/d/1d70f9ec-fdc1-4219-b89b-c030d712c1fc.jpg?1764121931"
     }
 }

@@ -17,6 +17,9 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * Enchant creature
  * When this Aura enters, tap enchanted creature.
  * Enchanted creature doesn't untap during its controller's untap step.
+ *
+ * Functionally a Claustrophobia variant (cf. Charmed Sleep): the ETB taps the enchanted
+ * creature, and the DOESNT_UNTAP static keeps it tapped through its controller's untap step.
  */
 val StarlightSnare = card("Starlight Snare") {
     manaCost = "{2}{U}"
@@ -39,6 +42,6 @@ val StarlightSnare = card("Starlight Snare") {
         rarity = Rarity.COMMON
         collectorNumber = "514"
         artist = "Borja Pindado"
-        imageUri = "https://cards.scryfall.io/normal/front/7/4/74fb19b2-4f6c-4cbd-8756-a7eb5c7c9ef6.jpg?1782688818"
+        imageUri = "https://cards.scryfall.io/normal/front/7/4/74fb19b2-4f6c-4cbd-8756-a7eb5c7c9ef6.jpg?1783908961"
     }
 }

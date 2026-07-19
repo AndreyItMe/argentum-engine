@@ -1,21 +1,12 @@
 package com.wingedsheep.engine.legalactions.enumerators
-import com.wingedsheep.engine.state.components.battlefield.chosenCreatureType
 
 import com.wingedsheep.engine.core.ActivateAbility
-import com.wingedsheep.engine.legalactions.ActionEnumerator
-import com.wingedsheep.engine.legalactions.AdditionalCostData
-import com.wingedsheep.engine.legalactions.CounterRemovalCreatureData
-import com.wingedsheep.engine.legalactions.EnumerationContext
-import com.wingedsheep.engine.legalactions.LegalAction
-import com.wingedsheep.engine.legalactions.TargetInfo
+import com.wingedsheep.engine.handlers.effects.composite.asConditional
+import com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType
+import com.wingedsheep.engine.legalactions.*
 import com.wingedsheep.engine.state.ZoneKey
-import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
-import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
-import com.wingedsheep.engine.state.components.battlefield.CountersComponent
-import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
-import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.battlefield.*
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
@@ -23,28 +14,10 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
-import com.wingedsheep.sdk.scripting.AbilityCost
-import com.wingedsheep.sdk.scripting.AbilityId
-import com.wingedsheep.sdk.scripting.ActivatedAbility
-import com.wingedsheep.sdk.scripting.ActivationRestriction
-import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.costs.manaCostOrNull
-import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
-import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
-import com.wingedsheep.sdk.scripting.effects.BecomeCreatureTypeEffect
-import com.wingedsheep.sdk.scripting.effects.CompositeEffect
-import com.wingedsheep.engine.handlers.effects.composite.asConditional
-import com.wingedsheep.sdk.scripting.effects.Effect
-import com.wingedsheep.sdk.scripting.effects.LevelUpClassEffect
-import com.wingedsheep.sdk.scripting.effects.ModalEffect
-import com.wingedsheep.sdk.scripting.effects.RegenerateEffect
-import com.wingedsheep.sdk.scripting.effects.SetBaseStatsEffect
-import com.wingedsheep.sdk.scripting.effects.SetCreatureSubtypesEffect
-import com.wingedsheep.engine.legalactions.ConvokeCreatureData
-import com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType
-import com.wingedsheep.sdk.dsl.craft
+import com.wingedsheep.sdk.scripting.effects.*
 
 /**
  * Enumerates non-mana activated abilities on battlefield permanents.
@@ -287,6 +260,24 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         // here (life payability is validated at payment time, matching the prior
                         // fall-through behavior for these costs).
                         is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
+                        is CostAtom.RemoveCounters -> {
+                            val needed = when (val count = atom.count) {
+                                is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> count.amount
+                                else -> 0
+                            }
+                            if (atom.self) {
+                                val counters = container.get<CountersComponent>()
+                                val type = atom.counterType?.let { resolveCounterType(it) }
+                                val available = if (type != null) counters?.getCount(type) ?: 0
+                                else counters?.counters?.values?.sum() ?: 0
+                                if (needed > 0 && available < needed) continue
+                            } else if (needed > 0) {
+                                val available = context.costUtils.buildRemoveCountersPermanents(
+                                    state, playerId, atom.filter, atom.counterType
+                                ).sumOf { it.availableCounters }
+                                if (available < needed) continue
+                            }
+                        }
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
                         val chosenType = container.chosenCreatureType()
@@ -313,11 +304,6 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         // card still in your hand, you can't pay the cost" ruling).
                         val tracked = state.lastCardDrawnThisTurnByPlayer[playerId] ?: continue
                         if (tracked !in state.getZone(ZoneKey(playerId, Zone.HAND))) continue
-                    }
-                    is AbilityCost.RemoveCounterFromSelf -> {
-                        val counters = container.get<CountersComponent>()
-                        val counterType = resolveCounterType(effectiveCost.counterType)
-                        if ((counters?.getCount(counterType) ?: 0) < effectiveCost.count) continue
                     }
                     is AbilityCost.Composite -> {
                         val compositeCost = effectiveCost
@@ -422,6 +408,26 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     // Pay-life / reveal carry no enumeration-time gate here (matching
                                     // the prior else fall-through for these sub-costs).
                                     is CostAtom.PayLife, is CostAtom.RevealFromHand -> {}
+                                    is CostAtom.RemoveCounters -> {
+                                        val needed = when (val count = atom.count) {
+                                            is com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed -> count.amount
+                                            else -> 0
+                                        }
+                                        val available = if (atom.self) {
+                                            val counters = container.get<CountersComponent>()
+                                            val type = atom.counterType?.let { resolveCounterType(it) }
+                                            if (type != null) counters?.getCount(type) ?: 0
+                                            else counters?.counters?.values?.sum() ?: 0
+                                        } else {
+                                            context.costUtils.buildRemoveCountersPermanents(
+                                                state, playerId, atom.filter, atom.counterType
+                                            ).sumOf { it.availableCounters }
+                                        }
+                                        if (needed > 0 && available < needed) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                    }
                                 }
                                 is AbilityCost.SacrificeChosenCreatureType -> {
                                     val chosenType = container.chosenCreatureType()
@@ -498,30 +504,10 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                 is AbilityCost.ExileXFromGraveyard -> {
                                     // ExileXFromGraveyard: validated via maxAffordableX cap below
                                 }
-                                is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
-                                    // RemoveXPlusOnePlusOneCounters: validated via maxAffordableX cap below
-                                }
-                                is AbilityCost.RemovePlusOnePlusOneCounters -> {
-                                    val available = context.costUtils.buildCounterRemovalPermanents(
-                                        state, playerId, subCost.filter
-                                    ).sumOf { it.availableCounters }
-                                    if (available < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
-                                }
                                 is AbilityCost.TapXPermanents -> {
                                     // TapXPermanents: validated via maxAffordableX cap below
                                     // Also provide tap targets for the UI
                                     tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, subCost.filter)
-                                }
-                                is AbilityCost.RemoveCounterFromSelf -> {
-                                    val counters = container.get<CountersComponent>()
-                                    val counterType = resolveCounterType(subCost.counterType)
-                                    if ((counters?.getCount(counterType) ?: 0) < subCost.count) {
-                                        costCanBePaid = false
-                                        break
-                                    }
                                 }
                                 is AbilityCost.Craft -> {
                                     // Combined BF+GY material pool (CR 702.167a-b). Records the cost
@@ -531,12 +517,29 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                         .filter { context.predicateEvaluator.matches(state, projected, it, subCost.filter, com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)) }
                                     val graveyardMaterials = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
                                         .filter { context.predicateEvaluator.matches(state, state.projectedState, it, subCost.filter, com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)) }
-                                    if (battlefieldMaterials.size + graveyardMaterials.size < subCost.minCount) {
+                                    val allMaterials = battlefieldMaterials + graveyardMaterials
+                                    if (allMaterials.size < subCost.minCount) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    // Heterogeneous per-slot craft (Throne of the Grim Captain): only
+                                    // offer the ability when the candidate pool can actually cover every
+                                    // slot (four Vampires don't satisfy Dinosaur/Merfolk/Pirate/Vampire).
+                                    if (subCost.slots.isNotEmpty() &&
+                                        !com.wingedsheep.engine.handlers.costs.CraftSlotMatching.canSatisfyAllSlots(
+                                            subCost.slots, allMaterials
+                                        ) { materialId, slotFilter ->
+                                            context.predicateEvaluator.matches(
+                                                state, projected, materialId, slotFilter,
+                                                com.wingedsheep.engine.handlers.PredicateContext(controllerId = playerId)
+                                            )
+                                        }
+                                    ) {
                                         costCanBePaid = false
                                         break
                                     }
                                     craftCost = subCost
-                                    craftMaterials = battlefieldMaterials + graveyardMaterials
+                                    craftMaterials = allMaterials
                                 }
                                 else -> {}
                             }
@@ -582,10 +585,20 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 }
 
                 // Check for X-variable costs early (needed for counter removal info and cost info)
-                val hasRemoveXCountersCostEarly = when (ability.cost) {
-                    is AbilityCost.RemoveXPlusOnePlusOneCounters -> true
-                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
-                        .any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
+                val hasRemoveXCountersCostEarly = when (val cost = ability.cost) {
+                    is AbilityCost.Atom -> {
+                        val atom = cost.atom
+                        atom is CostAtom.RemoveCounters &&
+                            (atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue)
+                    }
+                    is AbilityCost.Composite -> cost.costs.any {
+                        if (it !is AbilityCost.Atom) false
+                        else {
+                            val atom = it.atom
+                            atom is CostAtom.RemoveCounters &&
+                                atom.count is com.wingedsheep.sdk.scripting.values.DynamicAmount.XValue
+                        }
+                    }
                     else -> false
                 }
 
@@ -596,18 +609,16 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                     else -> false
                 }
 
-                // Build counter removal creature info if ability has RemoveXPlusOnePlusOneCounters
-                // (creature-only X-variable) OR RemovePlusOnePlusOneCounters (filtered fixed-count).
-                val fixedRemoveCost: AbilityCost.RemovePlusOnePlusOneCounters? = when (ability.cost) {
-                    is AbilityCost.RemovePlusOnePlusOneCounters -> ability.cost as AbilityCost.RemovePlusOnePlusOneCounters
-                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
-                        .filterIsInstance<AbilityCost.RemovePlusOnePlusOneCounters>().firstOrNull()
+                // Build counter removal info for the shared RemoveCounters atom.
+                val removeCountersAtom: CostAtom.RemoveCounters? = when (val cost = ability.cost) {
+                    is AbilityCost.Atom -> (cost.atom as? CostAtom.RemoveCounters)
+                    is AbilityCost.Composite -> cost.costs
+                        .firstNotNullOfOrNull { (it as? AbilityCost.Atom)?.atom as? CostAtom.RemoveCounters }
                     else -> null
                 }
                 val counterRemovalCreatures = when {
-                    hasRemoveXCountersCostEarly -> context.costUtils.buildCounterRemovalCreatures(state, playerId)
-                    fixedRemoveCost != null -> context.costUtils.buildCounterRemovalPermanents(
-                        state, playerId, fixedRemoveCost.filter
+                    removeCountersAtom != null && !removeCountersAtom.self -> context.costUtils.buildRemoveCountersPermanents(
+                        state, playerId, removeCountersAtom.filter, removeCountersAtom.counterType
                     )
                     else -> emptyList()
                 }
@@ -660,7 +671,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 val forageEmissionStart = result.size
 
                 // Calculate X cost info for activated abilities with X in their mana cost
-                // or X determined by a variable cost (e.g., RemoveXPlusOnePlusOneCounters).
+                // or X determined by a variable counter-removal atom.
                 // Use [effectiveCost] so generic-cost reductions (e.g., The Dominion Bracelet,
                 // Starport Security) flow through to the displayed [manaCostString].
                 val abilityManaCost = when (effectiveCost) {
@@ -683,6 +694,10 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 val abilityMaxAffordableX: Int? = if (abilityHasXCost) {
                     context.costUtils.calculateMaxAffordableX(state, playerId, ability.cost, abilityManaCost, precomputedSources = context.availableManaSources)
                 } else null
+                // "X can't be 0" abilities (Gogo, Master of Mimicry) surface a minimum X so the
+                // client's X picker never offers 0. Enforced authoritatively by the X-choice
+                // decision's lower bound in ActivateAbilityHandler.
+                val abilityMinX = if (abilityHasXCost) ability.minimumXValue else 0
 
                 // Compute auto-tap preview for UI highlighting (skipped in ACTIONS_ONLY mode).
                 // The solver runs against the full ability cost; the client trims this set
@@ -766,6 +781,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                             additionalCostInfo = costInfo,
                             hasXCost = abilityHasXCost,
                             maxAffordableX = abilityMaxAffordableX,
+                            minX = abilityMinX,
                             autoTapPreview = abilityAutoTapPreview,
                             manaCostString = abilityManaCostString,
                             hasConvoke = ability.hasConvoke,
@@ -783,6 +799,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                             additionalCostInfo = costInfo,
                             hasXCost = abilityHasXCost,
                             maxAffordableX = abilityMaxAffordableX,
+                            minX = abilityMinX,
                             autoTapPreview = abilityAutoTapPreview,
                             maxRepeatableActivations = maxRepeatableActivations,
                             manaCostString = abilityManaCostString,
@@ -813,6 +830,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                             additionalCostInfo = costInfo,
                             hasXCost = abilityHasXCost,
                             maxAffordableX = abilityMaxAffordableX,
+                            minX = abilityMinX,
                             autoTapPreview = abilityAutoTapPreview,
                             manaCostString = abilityManaCostString,
                             hasConvoke = ability.hasConvoke,
@@ -830,6 +848,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                         additionalCostInfo = costInfo,
                         hasXCost = abilityHasXCost,
                         maxAffordableX = abilityMaxAffordableX,
+                        minX = abilityMinX,
                         autoTapPreview = abilityAutoTapPreview,
                         maxRepeatableActivations = maxRepeatableActivations,
                         manaCostString = abilityManaCostString,
@@ -1022,6 +1041,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 costType = "Craft",
                 validCraftMaterials = craftMaterials,
                 craftMinCount = craftCost.minCount,
+                craftMaxCount = craftCost.maxCount,
                 counterRemovalCreatures = counterRemovalCreatures
             )
         }

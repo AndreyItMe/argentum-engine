@@ -7,9 +7,13 @@ import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
+import com.wingedsheep.engine.mechanics.cost.CostPaymentContext
+import com.wingedsheep.engine.mechanics.cost.CostPaymentService
+import com.wingedsheep.engine.mechanics.cost.PaymentResult
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -46,6 +50,7 @@ class PayOrSufferExecutor(
     override val effectType: KClass<PayOrSufferEffect> = PayOrSufferEffect::class
 
     private val predicateEvaluator = PredicateEvaluator()
+    private val costPaymentService by lazy { CostPaymentService(EngineServices(cardRegistry)) }
 
     override fun execute(
         state: GameState,
@@ -81,6 +86,7 @@ class PayOrSufferExecutor(
                 is CostAtom.TapPermanents -> handleTapCost(state, effect, context, atom, sourceId, sourceCard.name, payingPlayerId)
                 is CostAtom.ReturnToHand -> EffectResult.error(state, "ReturnToHand payment for PayOrSuffer not yet implemented")
                 is CostAtom.RevealFromHand -> EffectResult.error(state, "RevealCard payment for PayOrSuffer not yet implemented")
+                is CostAtom.RemoveCounters -> handleRemoveCountersCost(state, effect, context, atom, sourceId, sourceCard.name, payingPlayerId)
             }
         }
     }
@@ -636,6 +642,45 @@ class PayOrSufferExecutor(
         )
     }
 
+
+    /**
+     * Handles a remove counters cost - player must remove the specified number of counters from the specified entities.
+     */
+    private fun handleRemoveCountersCost(
+        state: GameState,
+        effect: PayOrSufferEffect,
+        context: EffectContext,
+        cost: CostAtom.RemoveCounters,
+        sourceId: EntityId,
+        sourceName: String,
+        controllerId: EntityId
+    ): EffectResult {
+        val payment = costPaymentService.pay(
+            state = state,
+            payerId = controllerId,
+            cost = PayCost.Atom(cost),
+            sourceId = sourceId,
+            ctx = CostPaymentContext(
+                onDeclined = effect.suffer,
+                targets = context.targets,
+                namedTargets = context.pipeline.namedTargets,
+                storedCollections = context.pipeline.storedCollections
+            ),
+            // "Remove counters from among creatures you control" does not say "another".
+            excludeSource = false
+        )
+        return when (payment) {
+            is PaymentResult.Pending ->
+                EffectResult.paused(payment.state, payment.pendingDecision, payment.events)
+            is PaymentResult.Unaffordable ->
+                executeSufferEffect(state, effect.suffer, context)
+            is PaymentResult.Paid ->
+                EffectResult.success(payment.state, payment.events)
+            is PaymentResult.Declined ->
+                executeSufferEffect(state, effect.suffer, context)
+        }
+    }
+
     /**
      * Check if a player can pay a specific cost.
      */
@@ -665,6 +710,25 @@ class PayOrSufferExecutor(
                 is CostAtom.TapPermanents -> findValidUntappedPermanentsOnBattlefield(state, playerId, atom.filter, sourceId).size >= atom.count
                 is CostAtom.ReturnToHand -> false
                 is CostAtom.RevealFromHand -> false
+                is CostAtom.RemoveCounters -> {
+                    // Can pay if there are permanents matching the filter with enough counters.
+                    // Don't exclude the source — removing counters from the source itself is a
+                    // legitimate payment, matching the logic in handleRemoveCountersCost.
+                    val candidates = if (atom.self) listOf(sourceId)
+                    else BattlefieldFilterUtils.findMatchingOnBattlefield(
+                        state, atom.filter.youControl(), PredicateContext(controllerId = playerId)
+                    )
+                    val counterType = atom.counterType?.let {
+                        com.wingedsheep.engine.handlers.effects.permanent.counters.resolveCounterType(it)
+                    }
+                    val required = (atom.count as? com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed)?.amount ?: 0
+                    val total = candidates.sumOf { permId ->
+                        val counters = state.getEntity(permId)?.get<CountersComponent>() ?: return@sumOf 0
+                        if (counterType != null) counters.getCount(counterType)
+                        else counters.counters.values.sum()
+                    }
+                    total >= required
+                }
             }
         }
     }

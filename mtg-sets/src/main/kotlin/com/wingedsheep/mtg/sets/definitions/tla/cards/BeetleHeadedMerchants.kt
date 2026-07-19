@@ -6,10 +6,9 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.effects.MayEffect
-import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
+import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
+import com.wingedsheep.sdk.scripting.effects.SacrificeEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
-import com.wingedsheep.sdk.scripting.targets.TargetPermanent
 
 /**
  * Beetle-Headed Merchants — Avatar: The Last Airbender #86
@@ -18,12 +17,14 @@ import com.wingedsheep.sdk.scripting.targets.TargetPermanent
  * Whenever this creature attacks, you may sacrifice another creature or artifact.
  * If you do, draw a card and put a +1/+1 counter on this creature.
  *
- * The attack trigger mirrors Namazu Trader's "you may sacrifice another creature or artifact"
- * pay-then-payoff: a [MayEffect] wrapping `Effects.SacrificeTarget` over a `.other()` target
- * (creature or artifact you control, excluding this creature), followed by the payoff —
- * `Effects.DrawCards(1)` then a +1/+1 counter on this creature ([EffectTarget.Self]).
- * Sequencing the payoff after the sacrifice inside the same `MayEffect` makes "If you do"
- * conditional on actually sacrificing.
+ * The attack trigger is a [ReflexiveTriggerEffect]: the optional action is a *non-targeted*
+ * `SacrificeEffect` of one creature or artifact you control excluding this creature
+ * (`excludeSource = true`), and the reflexive payoff — `Effects.DrawCards(1)` then a +1/+1 counter
+ * on this creature ([EffectTarget.Self]) — fires only when you actually sacrifice. The reflexive
+ * executor's feasibility check skips the "may" prompt when you control no other creature/artifact,
+ * so the payoff can't fire without a sacrifice. This is the rules-correct shape: the ability is not
+ * targeted, so the trigger always goes on the stack and can't be fizzled by removing the fodder in
+ * response (unlike a `target()`-based sacrifice).
  */
 val BeetleHeadedMerchants = card("Beetle-Headed Merchants") {
     manaCost = "{4}{B}"
@@ -36,18 +37,16 @@ val BeetleHeadedMerchants = card("Beetle-Headed Merchants") {
 
     triggeredAbility {
         trigger = Triggers.Attacks
-        val sacrificeTarget = target(
-            "another creature or artifact",
-            TargetPermanent(
-                filter = TargetFilter(
-                    GameObjectFilter.Creature.youControl().or(GameObjectFilter.Artifact.youControl())
-                ).other()
-            )
-        )
-        effect = MayEffect(
-            Effects.SacrificeTarget(sacrificeTarget) then
-                Effects.DrawCards(1) then
-                Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
+        effect = ReflexiveTriggerEffect(
+            action = SacrificeEffect(
+                filter = GameObjectFilter.Creature.or(GameObjectFilter.Artifact),
+                count = 1,
+                excludeSource = true
+            ),
+            optional = true,
+            reflexiveEffect = Effects.DrawCards(1) then
+                Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self),
+            hint = "Sacrifice another creature or artifact"
         )
         description = "Whenever this creature attacks, you may sacrifice another creature or artifact. " +
             "If you do, draw a card and put a +1/+1 counter on this creature."

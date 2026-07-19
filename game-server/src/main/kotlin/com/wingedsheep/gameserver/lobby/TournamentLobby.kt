@@ -383,15 +383,46 @@ class TournamentLobby(
         if (state != LobbyState.WAITING_FOR_PLAYERS) return false
         if (newSetCodes.isEmpty()) return false
 
-        // Validate all set codes first
-        val configs = newSetCodes.map { code ->
-            boosterGenerator.getSetConfig(code) ?: return false
+        // Validate concrete codes; random placeholders are validated only when resolved at start.
+        val names = newSetCodes.map { code ->
+            if (isRandomSetCode(code)) RANDOM_SET_NAME
+            else (boosterGenerator.getSetConfig(code) ?: return false).setName
         }
 
-        setCodes = configs.map { it.setCode }
-        setNames = configs.map { it.setName }
+        setCodes = newSetCodes
+        setNames = names
         boosterDistribution = calculateDefaultDistribution(setCodes, boosterCount)
         return true
+    }
+
+    /**
+     * Reveal any deferred [RANDOM_SET_CODE] placeholders in [setCodes] by rolling a concrete set
+     * for each. Picks fully-implemented, non-extension sets that aren't already in the selection
+     * (and distinct from each other), then recomputes [setNames] and remaps [boosterDistribution]
+     * keys so any host-tuned per-set booster counts survive the reveal. No-op when there are no
+     * placeholders. Called once at tournament start (see LobbyHandler.handleStartTournamentLobby).
+     */
+    fun resolveRandomSets() {
+        if (setCodes.none { isRandomSetCode(it) }) return
+
+        val used = setCodes.filterNot { isRandomSetCode(it) }.toMutableSet()
+        val pool = boosterGenerator.availableSets.values
+            .filter { it.fullyImplemented && !it.extensionSet }
+            .map { it.setCode }
+
+        val placeholderToConcrete = HashMap<String, String>()
+        val resolved = setCodes.map { code ->
+            if (!isRandomSetCode(code)) return@map code
+            // Prefer an unused set; fall back to the whole pool only if it's exhausted.
+            val pick = pool.filterNot { it in used }.ifEmpty { pool }.randomOrNull() ?: return@map code
+            used.add(pick)
+            placeholderToConcrete[code] = pick
+            pick
+        }
+
+        setCodes = resolved
+        setNames = resolved.map { boosterGenerator.getSetConfig(it)?.setName ?: it }
+        boosterDistribution = boosterDistribution.mapKeys { (key, _) -> placeholderToConcrete[key] ?: key }
     }
 
     /**
@@ -1814,6 +1845,24 @@ class TournamentLobby(
     }
 
     companion object {
+        /**
+         * Sentinel set code for a deferred "Random Set" pick. A host can add one or more random
+         * slots to a lobby's pool; each stays hidden (displayed as [RANDOM_SET_NAME]) until the
+         * tournament starts, when [resolveRandomSets] rolls a concrete set. This mirrors the Quick
+         * Game deferred roll (QuickGameLobbyHandler resolves a null set code at game start).
+         *
+         * Multiple random slots use suffixed codes (`RANDOM`, `RANDOM-2`, …) so each is a distinct
+         * key in [setCodes] / [boosterDistribution] and resolves independently.
+         */
+        const val RANDOM_SET_CODE = "RANDOM"
+
+        /** Display name shown for an unresolved [RANDOM_SET_CODE] slot. */
+        const val RANDOM_SET_NAME = "Random Set"
+
+        /** True if [code] is an unresolved random-set placeholder (see [RANDOM_SET_CODE]). */
+        fun isRandomSetCode(code: String): Boolean =
+            code == RANDOM_SET_CODE || code.startsWith("$RANDOM_SET_CODE-")
+
         /**
          * Calculate a default booster distribution for the given sets and total booster count.
          * Distributes evenly with remainder going to the first sets.

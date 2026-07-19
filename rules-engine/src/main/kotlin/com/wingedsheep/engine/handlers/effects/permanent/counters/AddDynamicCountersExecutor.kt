@@ -54,7 +54,7 @@ class AddDynamicCountersExecutor : EffectExecutor<AddDynamicCountersEffect> {
 
         return EffectResult.success(
             newState,
-            listOf(CountersAddedEvent(targetId, effect.counterType, modifiedCount, entityName, firstThisTurn))
+            listOf(CountersAddedEvent(targetId, effect.counterType, modifiedCount, entityName, firstThisTurn, placedBy = context.controllerId))
         )
     }
 }

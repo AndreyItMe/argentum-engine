@@ -305,6 +305,43 @@ data class CascadeMayCastContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume after the controller answers "cast the discovered card for free, or put it
+ * into your hand?" during the resolution of a [com.wingedsheep.sdk.scripting.effects.DiscoverEffect]
+ * (CR 701.57a).
+ *
+ * The discover executor has already exiled cards from the top of the controller's
+ * library and found a nonland card with mana value ≤ N (the discovered card). The
+ * resumer then, per CR 701.57a:
+ *
+ *  - bottom-randomizes every *other* exiled card;
+ *  - **Cast**: grants the discovered card a free cast (reusing
+ *    [com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect])
+ *    so target / X / mode prompts flow through the normal cast machinery. If the cast
+ *    can't initiate, the card falls back to the controller's hand ("if you don't cast it,
+ *    put that card into your hand").
+ *  - **Hand**: moves the discovered card to the controller's hand;
+ *  - then runs [thenEffect] (if any), with the discovered card published to
+ *    [storeDiscoveredAs] so the follow-up can read it (Hit the Mother Lode's Treasures).
+ *
+ * @property playerId The discovering player (also the decision-maker)
+ * @property sourceId The discovering source; null only for synthetic sources
+ * @property exiledCards Every card exiled by the discover walk, in exile order
+ * @property discoveredCardId The nonland card with mana value ≤ N
+ * @property storeDiscoveredAs Pipeline collection to publish [discoveredCardId] to before [thenEffect]
+ * @property thenEffect Follow-up effect resolved after the discover completes
+ */
+@Serializable
+data class DiscoverMayCastContinuation(
+    override val decisionId: String,
+    val playerId: EntityId,
+    val sourceId: EntityId?,
+    val exiledCards: List<EntityId>,
+    val discoveredCardId: EntityId,
+    val storeDiscoveredAs: String? = null,
+    val thenEffect: com.wingedsheep.sdk.scripting.effects.Effect? = null,
+) : ContinuationFrame
+
+/**
  * Resume after the controller picks targets for a spell being cast for free by
  * [com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect].
  *
@@ -321,6 +358,11 @@ data class CascadeMayCastContinuation(
  * @property casterId The controller of the effect (also the decision-maker)
  * @property storeCastTo When set, the cast card's id is published to this pipeline collection
  *   once the cast initiates, so an enclosing `IfYouDoEffect` can gate a follow-up.
+ * @property grantedPermissionId The [com.wingedsheep.engine.state.permissions.MayPlayPermission]
+ *   created for this synthesized cast, so a failed cast can revoke exactly that grant (a blanket
+ *   per-card removal could clobber an unrelated permission covering the same card).
+ * @property onCastFailure Where the card goes if the cast still can't initiate with the chosen
+ *   targets. The free-cast grant is revoked either way.
  */
 @Serializable
 data class CastFromCollectionTargetsContinuation(
@@ -328,7 +370,25 @@ data class CastFromCollectionTargetsContinuation(
     val cardId: EntityId,
     val casterId: EntityId,
     val storeCastTo: String? = null,
+    val grantedPermissionId: EntityId? = null,
+    val onCastFailure: FreeCastFallback = FreeCastFallback.LEAVE,
 ) : ContinuationFrame
+
+/**
+ * Disposition of the card when a synthesized free cast fails to initiate after target
+ * selection ([CastFromCollectionTargetsContinuation.onCastFailure]).
+ */
+@Serializable
+enum class FreeCastFallback {
+    /** The card stays where it is (CastFromCollection effects — the card simply stays put). */
+    LEAVE,
+
+    /** Discover (CR 701.57a) — "If you don't cast it, put that card into your hand." */
+    HAND,
+
+    /** Cascade (CR 702.85a) — uncast exiled cards go to the bottom of the library. */
+    BOTTOM_OF_LIBRARY,
+}
 
 /**
  * Resume after the controller picks (or declines) the next card to cast for free during a

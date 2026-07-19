@@ -13,8 +13,8 @@ import io.kotest.matchers.shouldBe
  * reveal cards from the top of your library until you reveal a creature card. Put that card into
  * your hand and the rest on the bottom of your library in a random order."
  *
- * Exercises the new `Patterns.Library.revealUntilMatchToHand` composition. The optional "may" is a
- * YesNoDecision in interactive play; the scenario harness auto-accepts it, so these tests assert the
+ * Exercises the new `Patterns.Library.revealUntilMatchToHand` composition. The optional "may" pauses
+ * on a YesNoDecision at resolution; the dies-trigger test accepts it explicitly, then asserts the
  * resulting board (the revealed creature goes to hand, the non-creature cards stay in the library).
  */
 class SpinnerOfSoulsScenarioTest : ScenarioTestBase() {
@@ -45,6 +45,10 @@ class SpinnerOfSoulsScenarioTest : ScenarioTestBase() {
             val turtle = game.findPermanent("Aegis Turtle")!!
             game.castSpell(1, "Slay", targetId = turtle).error shouldBe null
             game.resolveStack()
+
+            // The dies trigger pauses on the "may" prompt; accept it to run the reveal.
+            (game.state.pendingDecision != null) shouldBe true
+            game.answerYesNo(true)
 
             // The revealed creature is put into hand; the non-creature cards go to the bottom.
             game.isInHand(1, "Bear Cub") shouldBe true

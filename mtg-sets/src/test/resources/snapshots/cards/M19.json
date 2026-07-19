@@ -618,6 +618,124 @@
     ]
 }
 
+// Resplendent Angel
+{
+    "name": "Resplendent Angel",
+    "manaCost": "{1}{W}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flying\nAt the beginning of each end step, if you gained 5 or more life this turn, create a 4/4 white Angel creature token with flying and vigilance.\n{3}{W}{W}{W}: Until end of turn, this creature gets +2/+2 and gains lifelink.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "StepEvent",
+                    "step": "END",
+                    "player": "Each"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 4,
+                    "toughness": 4,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Angel"
+                    ],
+                    "keywords": [
+                        "FLYING",
+                        "VIGILANCE"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/d/c/dc31e017-81e6-43bf-bf8e-ea0faca5d9b7.jpg?1782747632"
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "You",
+                        "tracker": "LIFE_GAINED"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 5
+                    }
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_2",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{3}{W}{W}{W}"
+                    }
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "ModifyStats",
+                            "powerModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "toughnessModifier": {
+                                "type": "Fixed",
+                                "amount": 2
+                            },
+                            "target": "Self"
+                        },
+                        {
+                            "type": "GrantKeyword",
+                            "keyword": "LIFELINK",
+                            "target": "Self"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "34",
+        "rarity": "MYTHIC",
+        "artist": "Volkan Baǵa",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/8/586854d1-edfd-4c66-873d-df459324dbfd.jpg?1782709621",
+        "rulings": [
+            {
+                "date": "2018-07-13",
+                "text": "Resplendent Angel's triggered ability checks if you gained 5 or more life total during the turn. It doesn't matter if you also lost life or whether your life total is greater than it was at the beginning of the turn. It also doesn't matter whether Resplendent Angel was on the battlefield when any of the life gain happened."
+            },
+            {
+                "date": "2018-07-13",
+                "text": "You don't need to have gained 5 life all at once to satisfy Resplendent Angel's triggered ability."
+            },
+            {
+                "date": "2018-07-13",
+                "text": "If you didn't gain life during the turn before the end step begins, Resplendent Angel's triggered ability won't trigger at all. Gaining life during the end step won't cause the ability to trigger."
+            },
+            {
+                "date": "2018-07-13",
+                "text": "You create only one Angel token, no matter how many times you gained 5 or more life."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Skeleton Archer
 {
     "name": "Skeleton Archer",

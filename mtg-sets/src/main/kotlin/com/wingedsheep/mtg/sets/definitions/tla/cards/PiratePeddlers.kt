@@ -18,12 +18,10 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * Deathtouch
  * Whenever you sacrifice another permanent, put a +1/+1 counter on this creature.
  *
- * The sacrifice ability is modeled with the batching "you sacrifice one or more permanents"
- * trigger (ANY binding) over any permanent — the same shape as Sandbender Scavengers. The
- * engine's sacrifice-batch detector only fires ANY-binding triggers; an exact OTHER ("another")
- * binding isn't supported there. The only behavioral gap is the case where this creature is
- * itself sacrificed — the trigger fires and adds a +1/+1 counter to it, but it has already left
- * the battlefield, so that counter is a no-op.
+ * The sacrifice ability uses the per-permanent `YouSacrificeAnother` trigger (OTHER binding), so it
+ * fires once for EACH other permanent sacrificed — sacrificing three permanents at once adds three
+ * counters (CR 603.2c), not one — and the "another" binding excludes this creature sacrificing
+ * itself.
  */
 val PiratePeddlers = card("Pirate Peddlers") {
     manaCost = "{2}{B}"
@@ -38,7 +36,7 @@ val PiratePeddlers = card("Pirate Peddlers") {
 
     // Whenever you sacrifice another permanent, put a +1/+1 counter on this creature.
     triggeredAbility {
-        trigger = Triggers.YouSacrificeOneOrMore(GameObjectFilter.Permanent)
+        trigger = Triggers.YouSacrificeAnother(GameObjectFilter.Permanent)
         effect = Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 1, EffectTarget.Self)
         description = "Whenever you sacrifice another permanent, put a +1/+1 counter on this creature."
     }

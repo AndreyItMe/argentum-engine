@@ -46,6 +46,33 @@ data class AddDynamicCountersEffect(
 }
 
 /**
+ * Put a player-chosen number (0 up to [max]) of a single kind of counter on a target.
+ * "Put up to three lore counters on it." (Esper Terra) — "Put up to two +1/+1 counters on
+ * target creature."
+ *
+ * The additive, single-kind mirror of [RemoveAnyNumberOfCountersEffect]: at resolution the
+ * executor prompts the effect's controller with one `ChooseNumberDecision` (0..[max], evaluated
+ * once at resolution) and then places that many [counterType] counters on the target through the
+ * standard counter-placement chokepoint — so counter-placement replacement effects (Hardened
+ * Scales) and downstream triggers (Saga chapter abilities off lore counters) fire normally.
+ * No-op when the target can't receive counters or [max] resolves to <= 0. Choosing 0 places none.
+ *
+ * @property counterType Which counter kind to place (e.g. [com.wingedsheep.sdk.core.Counters.LORE]).
+ * @property max Ceiling on the controller's choice (a [DynamicAmount] so "up to X" is expressible).
+ * @property target The permanent to put counters on.
+ */
+@SerialName("AddCountersUpTo")
+@Serializable
+data class AddCountersUpToEffect(
+    val counterType: String,
+    val max: DynamicAmount,
+    val target: EffectTarget = EffectTarget.ContextTarget(0)
+) : Effect {
+    override val description: String =
+        "Put up to ${max.description} $counterType counter${if (max is DynamicAmount.Fixed && max.amount == 1) "" else "s"} on ${target.description}"
+}
+
+/**
  * Put all counters that were on the triggering source onto a target.
  * "When this creature dies, put its counters on target creature you control."
  *
@@ -445,4 +472,30 @@ data class GrantCounterPlacementModifierEffect(
             append("put that many minus ${-modifier} ${counterType.description} counter${if (-modifier != 1) "s" else ""} on it instead")
         }
     }
+}
+
+/**
+ * Emit a `TrainedEvent` (CR 702.149c) after a training ability's +1/+1 counter placement resolves —
+ * the training twin of [EmitExploitedEventEffect] / `EmitScriedEventEffect`. Appended internally by
+ * [com.wingedsheep.sdk.dsl.training] as the tail of the training triggered ability, immediately after
+ * its [AddCountersEffect], so "When this creature trains" payoffs
+ * ([com.wingedsheep.sdk.scripting.EventPattern.TrainedEvent], e.g. Savior of Ollenbock) fire.
+ *
+ * CR 702.149c: "'When this creature trains' means 'When a resolving training ability puts one or more
+ * +1/+1 counters on this creature.'" The executor honours the "puts one or more" clause: it emits the
+ * event **only if** the source is still on the battlefield and can actually receive counters — a
+ * Solemnity-type "can't have counters put on it" prohibition (the only way a training ability places
+ * zero) trains nothing and fires no event. This gating is what distinguishes it from a raw
+ * [com.wingedsheep.sdk.scripting.EventPattern.CountersPlacedEvent] watcher, which would fire for a
+ * +1/+1 counter from any source; the emit only ever runs inside the training ability's own resolution.
+ *
+ * The trained creature is the ability's source ([com.wingedsheep.engine.handlers.EffectContext.sourceId]);
+ * the `TrainedEvent`'s subject is selected by the watching ability's `TriggerBinding` (SELF for
+ * "this creature trains"). Card authors should not use this directly; it is wired into `training()`.
+ */
+@SerialName("EmitTrainedEvent")
+@Serializable
+data object EmitTrainedEventEffect : Effect {
+    // Intentionally blank: this is an internal training-ability tail with no player-facing text.
+    override val description: String = ""
 }

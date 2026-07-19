@@ -18,6 +18,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.permissions.MayPlayPermission
 import com.wingedsheep.engine.state.permissions.addMayPlayPermission
+import com.wingedsheep.engine.state.permissions.removeMayPlayPermission
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CastFromCollectionWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.ModalEffect
@@ -70,113 +71,43 @@ class CastFromCollectionWithoutPayingCostExecutor(
         val cardId = cards.first()
         val controllerId = context.controllerId
 
+        // Check targeting *before* granting: a grant made ahead of a cast that never happens
+        // would follow the card out of exile and stay live until end-of-turn cleanup.
+        val prep = prepareTargetSelection(state, cardId, controllerId, cardRegistry, targetFinder, effect.storeCastTo)
+        if (prep is TargetPrep.NoLegalTargets) {
+            // CR 601.2c — if no legal targets exist for a required slot, the cast can't
+            // initiate; the chosen card simply stays where it is.
+            return EffectResult.success(state)
+        }
+
         // payManaCost casts route through the normal cost (Kaervek, the Punisher — "you may cast
         // the copy"); only the free-cast path stamps PlayWithoutPayingCostComponent. Both grant a
         // MayPlayPermission so the card is castable from its current (e.g. exile) zone.
-        var newState = if (effect.payManaCost) state else state.updateEntity(cardId) { container ->
-            container.with(PlayWithoutPayingCostComponent(controllerId = controllerId))
-        }
-        val (permId, stateWithPerm) = newState.newEntity()
-        newState = stateWithPerm.addMayPlayPermission(
-            MayPlayPermission(
-                id = permId,
-                cardIds = setOf(cardId),
-                controllerId = controllerId,
-                sourceId = context.sourceId,
-                timestamp = newState.timestamp,
-            )
+        val (permId, newState) = grantFreeCast(
+            state = state,
+            cardId = cardId,
+            controllerId = controllerId,
+            sourceId = context.sourceId,
+            withoutPayingCost = !effect.payManaCost,
         )
 
-        val cardComponent = newState.getEntity(cardId)?.get<CardComponent>()
-        val cardDef = cardComponent?.let { cardRegistry.getCard(it.cardDefinitionId) }
-        val isModalSpell = cardDef?.script?.spellEffect is ModalEffect
-        // Include the aura's enchant target: an Aura carries its target in `auraTarget`, not in
-        // `targetRequirements`, so a free-cast Aura (Pacifism) would otherwise reach CastSpellHandler
-        // with no target — which it rejects ("No valid targets available"), stranding the card in
-        // exile. Mirror CastSpellHandler's own `targetRequirements + auraTarget` union here.
-        val targetRequirements = buildList {
-            addAll(cardDef?.script?.targetRequirements.orEmpty())
-            cardDef?.script?.auraTarget?.let { add(it) }
-        }
-
-        // Modal spells route through CastSpellHandler's own target-pause flow after mode
-        // selection. Non-modal targeted spells (including Auras) need us to surface a
-        // ChooseTargetsDecision first because CastSpellHandler.validate rejects `targets = []`
-        // for required slots.
-        if (!isModalSpell && targetRequirements.isNotEmpty()) {
-            val legalTargetsMap = mutableMapOf<Int, List<EntityId>>()
-            val requirementInfos = targetRequirements.mapIndexed { index, requirement ->
-                val legal = targetFinder.findLegalTargets(
-                    state = newState,
-                    requirement = requirement,
-                    controllerId = controllerId,
-                    sourceId = cardId,
-                )
-                legalTargetsMap[index] = legal
-                TargetRequirementInfo(
-                    index = index,
-                    description = requirement.description,
-                    minTargets = requirement.effectiveMinCount,
-                    maxTargets = requirement.count,
-                )
-            }
-            val mandatoryRequirementHasNoTargets = requirementInfos.any { info ->
-                info.minTargets > 0 && legalTargetsMap[info.index].isNullOrEmpty()
-            }
-            if (mandatoryRequirementHasNoTargets) {
-                // CR 601.2c — if no legal targets exist for a required slot, the cast can't
-                // initiate; the chosen card simply stays where it is.
-                return EffectResult.success(newState)
-            }
-
-            val cardName = cardComponent?.name ?: "spell"
-            val decisionId = UUID.randomUUID().toString()
-            val decision = ChooseTargetsDecision(
-                id = decisionId,
-                playerId = controllerId,
-                prompt = "Choose targets for $cardName",
-                context = DecisionContext(
-                    sourceId = cardId,
-                    sourceName = cardName,
-                    phase = DecisionPhase.CASTING,
-                ),
-                targetRequirements = requirementInfos,
-                legalTargets = legalTargetsMap,
-                canCancel = false,
-            )
-            val continuation = CastFromCollectionTargetsContinuation(
-                decisionId = decisionId,
-                cardId = cardId,
-                casterId = controllerId,
-                storeCastTo = effect.storeCastTo,
-            )
+        if (prep is TargetPrep.NeedsTargets) {
             val pausedState = newState
-                .pushContinuation(continuation)
-                .withPendingDecision(decision)
+                .pushContinuation(prep.continuation.copy(grantedPermissionId = permId))
+                .withPendingDecision(prep.decision)
                 .withPriority(controllerId)
-
-            return EffectResult.paused(
-                pausedState,
-                decision,
-                listOf(
-                    DecisionRequestedEvent(
-                        decisionId = decisionId,
-                        playerId = controllerId,
-                        decisionType = "CHOOSE_TARGETS",
-                        prompt = decision.prompt,
-                    )
-                ),
-            )
+            return EffectResult.paused(pausedState, prep.decision, listOf(prep.event))
         }
 
         // No targets needed (or modal — CastSpellHandler will handle per-mode targets).
-        return invokeCast(newState, controllerId, cardId, emptyList(), effect.storeCastTo)
+        return invokeCast(newState, controllerId, cardId, permId, emptyList(), effect.storeCastTo)
     }
 
     private fun invokeCast(
         state: GameState,
         casterId: EntityId,
         cardId: EntityId,
+        grantedPermissionId: EntityId,
         targets: List<com.wingedsheep.engine.state.components.stack.ChosenTarget>,
         storeCastTo: String?,
     ): EffectResult {
@@ -187,7 +118,7 @@ class CastFromCollectionWithoutPayingCostExecutor(
         )
 
         if (castResult.error != null) {
-            return EffectResult.success(state)
+            return EffectResult.success(revokeFreeCast(state, cardId, grantedPermissionId))
         }
 
         // The cast initiated (synchronously or pausing for X / further input). Publish the cast
@@ -215,7 +146,154 @@ class CastFromCollectionWithoutPayingCostExecutor(
             )
     }
 
+    /** Outcome of [prepareTargetSelection] for a synthesized free/granted cast. */
+    sealed interface TargetPrep {
+        /** Targetless or modal spell — invoke `CastSpellHandler` directly; it drives any further prompts. */
+        data object NotNeeded : TargetPrep
+
+        /** A required target slot has no legal targets — the cast can't initiate (CR 601.2c). */
+        data object NoLegalTargets : TargetPrep
+
+        /** Pause with [decision] and push [continuation]; the resumer performs the cast with the picks. */
+        data class NeedsTargets(
+            val decision: ChooseTargetsDecision,
+            val continuation: CastFromCollectionTargetsContinuation,
+            val event: DecisionRequestedEvent,
+        ) : TargetPrep
+    }
+
     companion object {
+        /**
+         * Grant [controllerId] a one-shot cast of [cardId] from its current zone: a
+         * [MayPlayPermission] covering the card and — unless [withoutPayingCost] is false
+         * (Kaervek's "you may cast the copy", paying its cost) — a [PlayWithoutPayingCostComponent]
+         * making the cast free. Returns the permission id so a cast that never happens can revoke
+         * exactly this grant via [revokeFreeCast].
+         *
+         * Callers must only grant once the cast is known to be attemptable
+         * ([prepareTargetSelection] first): the component is zone-agnostic and lives until
+         * end-of-turn cleanup, so a leftover grant would let the card be cast for free from
+         * wherever it lands (hand, library, exile).
+         */
+        fun grantFreeCast(
+            state: GameState,
+            cardId: EntityId,
+            controllerId: EntityId,
+            sourceId: EntityId?,
+            withoutPayingCost: Boolean = true,
+        ): Pair<EntityId, GameState> {
+            val stamped = if (!withoutPayingCost) state else state.updateEntity(cardId) { container ->
+                container.with(PlayWithoutPayingCostComponent(controllerId = controllerId))
+            }
+            val (permId, stateWithPerm) = stamped.newEntity()
+            val granted = stateWithPerm.addMayPlayPermission(
+                MayPlayPermission(
+                    id = permId,
+                    cardIds = setOf(cardId),
+                    controllerId = controllerId,
+                    sourceId = sourceId,
+                    timestamp = stateWithPerm.timestamp,
+                )
+            )
+            return permId to granted
+        }
+
+        /** Undo [grantFreeCast] when the synthesized cast didn't happen after all. */
+        fun revokeFreeCast(state: GameState, cardId: EntityId, permissionId: EntityId?): GameState {
+            val withoutPermission = permissionId?.let { state.removeMayPlayPermission(it) } ?: state
+            return withoutPermission.updateEntity(cardId) { container ->
+                container.without<PlayWithoutPayingCostComponent>()
+            }
+        }
+
+        /**
+         * Determine whether a synthesized cast of [cardId] must pause for target selection first.
+         *
+         * Synthesized casts (Cascade, Discover, Sunbird's Invocation, …) can't carry targets
+         * through the `CastSpell` action — there is no client action to supply them — and
+         * `CastSpellHandler.validate` rejects `targets = []` for required slots (and `execute`,
+         * invoked directly, would silently put the spell on the stack untargeted). Non-modal
+         * spells with target requirements therefore need a [ChooseTargetsDecision] surfaced
+         * before the cast. Modal spells fall through to [TargetPrep.NotNeeded] because
+         * `CastSpellHandler` has its own per-mode target-selection pause after mode choice.
+         *
+         * Includes the aura's enchant target: an Aura carries its target in `auraTarget`, not in
+         * `targetRequirements`, so a free-cast Aura (Pacifism) would otherwise reach
+         * CastSpellHandler with no target. Mirrors CastSpellHandler's own
+         * `targetRequirements + auraTarget` union.
+         */
+        fun prepareTargetSelection(
+            state: GameState,
+            cardId: EntityId,
+            casterId: EntityId,
+            cardRegistry: CardRegistry,
+            targetFinder: TargetFinder,
+            storeCastTo: String? = null,
+        ): TargetPrep {
+            val cardComponent = state.getEntity(cardId)?.get<CardComponent>()
+            val cardDef = cardComponent?.let { cardRegistry.getCard(it.cardDefinitionId) }
+            val isModalSpell = cardDef?.script?.spellEffect is ModalEffect
+            val targetRequirements = buildList {
+                addAll(cardDef?.script?.targetRequirements.orEmpty())
+                cardDef?.script?.auraTarget?.let { add(it) }
+            }
+            if (isModalSpell || targetRequirements.isEmpty()) {
+                return TargetPrep.NotNeeded
+            }
+
+            val legalTargetsMap = mutableMapOf<Int, List<EntityId>>()
+            val requirementInfos = targetRequirements.mapIndexed { index, requirement ->
+                val legal = targetFinder.findLegalTargets(
+                    state = state,
+                    requirement = requirement,
+                    controllerId = casterId,
+                    sourceId = cardId,
+                )
+                legalTargetsMap[index] = legal
+                TargetRequirementInfo(
+                    index = index,
+                    description = requirement.description,
+                    minTargets = requirement.effectiveMinCount,
+                    maxTargets = requirement.count,
+                )
+            }
+            val mandatoryRequirementHasNoTargets = requirementInfos.any { info ->
+                info.minTargets > 0 && legalTargetsMap[info.index].isNullOrEmpty()
+            }
+            if (mandatoryRequirementHasNoTargets) {
+                return TargetPrep.NoLegalTargets
+            }
+
+            val cardName = cardComponent?.name ?: "spell"
+            val decisionId = UUID.randomUUID().toString()
+            val decision = ChooseTargetsDecision(
+                id = decisionId,
+                playerId = casterId,
+                prompt = "Choose targets for $cardName",
+                context = DecisionContext(
+                    sourceId = cardId,
+                    sourceName = cardName,
+                    phase = DecisionPhase.CASTING,
+                ),
+                targetRequirements = requirementInfos,
+                legalTargets = legalTargetsMap,
+                canCancel = false,
+            )
+            val continuation = CastFromCollectionTargetsContinuation(
+                decisionId = decisionId,
+                cardId = cardId,
+                casterId = casterId,
+                storeCastTo = storeCastTo,
+            )
+            val event = DecisionRequestedEvent(
+                decisionId = decisionId,
+                playerId = casterId,
+                decisionType = "CHOOSE_TARGETS",
+                prompt = decision.prompt,
+            )
+            return TargetPrep.NeedsTargets(decision, continuation, event)
+        }
+
         /**
          * Shared `state + targets → ExecutionResult` shim used by both the inline
          * (no-targets) path and the targets-continuation resumer.

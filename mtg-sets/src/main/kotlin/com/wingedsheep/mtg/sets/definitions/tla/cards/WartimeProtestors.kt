@@ -39,8 +39,8 @@ val WartimeProtestors = card("Wartime Protestors") {
             binding = TriggerBinding.OTHER
         )
         effect = Effects.Composite(
-            AddCountersEffect(counterType = Counters.PLUS_ONE_PLUS_ONE, count = 1, target = EffectTarget.Self),
-            Effects.GrantKeyword(Keyword.HASTE, EffectTarget.Self)
+            AddCountersEffect(counterType = Counters.PLUS_ONE_PLUS_ONE, count = 1, target = EffectTarget.TriggeringEntity),
+            Effects.GrantKeyword(Keyword.HASTE, EffectTarget.TriggeringEntity)
         )
     }
     metadata {

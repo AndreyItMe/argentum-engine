@@ -1,7 +1,6 @@
 package com.wingedsheep.sdk.scripting
 
 import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.costs.CostAtom
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -11,7 +10,6 @@ import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import com.wingedsheep.sdk.dsl.craft
 
 /**
  * An activated ability is an ability that a player can activate by paying a cost.
@@ -76,7 +74,21 @@ data class ActivatedAbility(
      * Master ("Spend only white mana on X"). Honored by the mana solver and the
      * activated-ability payment path.
      */
-    val xManaRestriction: Set<Color> = emptySet()
+    val xManaRestriction: Set<Color> = emptySet(),
+    /**
+     * Minimum legal value for the `{X}` in this ability's cost (CR 601.2b analogue for activated
+     * abilities). Defaults to 0. Set to 1 for "X can't be 0" abilities (Gogo, Master of Mimicry:
+     * "{X}{X}, {T}: … X can't be 0."). The activated-ability X-choice decision clamps its lower
+     * bound to this value.
+     */
+    val minimumXValue: Int = 0,
+    /**
+     * When true, this activated ability can't be copied by effects that copy abilities (CR 707.10e).
+     * The engine tags the ability instance on the stack with a can't-be-copied marker so a
+     * copy-ability effect (e.g. another Gogo, Master of Mimicry) produces no copy of it. Models
+     * "This ability can't be copied."
+     */
+    val cantBeCopied: Boolean = false
 ) : TextReplaceable<ActivatedAbility> {
     /** Backward-compatible secondary constructor for single-target abilities. */
     constructor(
@@ -284,6 +296,21 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     }
 
     /**
+     * Sacrifice the permanent that granted this activated ability to the source.
+     * The self-sacrifice sibling of [ExileGrantingPermanent]: an Equipment/Aura whose static
+     * ability grants an activated ability to the attached creature with "Sacrifice [this
+     * permanent]" as part of the cost (e.g. Deconstruction Hammer's granted "{3}, {T},
+     * Sacrifice Deconstruction Hammer: ..."). Per CR 201.5a the name in the granted ability
+     * refers only to the specific granting permanent, so this sacrifices exactly that one —
+     * the granter resolved at activation time — not any same-named permanent.
+     */
+    @SerialName("CostSacrificeGrantingPermanent")
+    @Serializable
+    data object SacrificeGrantingPermanent : AbilityCost {
+        override val description: String = "Sacrifice the granting permanent"
+    }
+
+    /**
      * Sacrifice a creature of the type chosen when this permanent entered the battlefield.
      * Used by cards like Doom Cannon that choose a creature type on entry and reference it in costs.
      */
@@ -344,54 +371,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     }
 
     /**
-     * Remove X +1/+1 counters from among creatures you control.
-     * X is chosen by the player when activating the ability.
-     * The engine auto-distributes counter removal across creatures.
-     */
-    @SerialName("CostRemoveXPlusOnePlusOneCounters")
-    @Serializable
-    data object RemoveXPlusOnePlusOneCounters : AbilityCost {
-        override val description: String = "Remove X +1/+1 counters from among creatures you control"
-    }
-
-    /**
-     * Remove a fixed number of +1/+1 counters from among permanents you control matching
-     * a filter. Used for fixed-count costs that aren't creature-only — e.g., Iron Spider,
-     * Stark Upgrade's "Remove two +1/+1 counters from among artifacts you control."
-     *
-     * The player chooses how to distribute the removal across matching permanents. Use
-     * [RemoveXPlusOnePlusOneCounters] instead when the count is a player-chosen X.
-     */
-    @SerialName("CostRemovePlusOnePlusOneCounters")
-    @Serializable
-    data class RemovePlusOnePlusOneCounters(val filter: GameObjectFilter, val count: Int) : AbilityCost {
-        override val description: String =
-            "Remove $count +1/+1 counters from among ${filter.description}s you control"
-
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
-    }
-
-    /**
-     * Remove one or more counters of the specified type from this permanent.
-     * Used for artifacts with charge/gem counters as activation costs.
-     *
-     * @property counterType The type of counter to remove (e.g., "gem", "charge")
-     * @property count Number of counters to remove (defaults to 1)
-     */
-    @SerialName("CostRemoveCounterFromSelf")
-    @Serializable
-    data class RemoveCounterFromSelf(val counterType: String, val count: Int = 1) : AbilityCost {
-        override val description: String = if (count == 1) {
-            "Remove a $counterType counter from this permanent"
-        } else {
-            "Remove $count $counterType counters from this permanent"
-        }
-    }
-
-    /**
      * Forage: exile three cards from your graveyard or sacrifice a Food.
      * Used as an activated ability cost for Bloomburrow cards.
      */
@@ -410,27 +389,6 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     @Serializable
     data class Blight(val amount: Int) : AbilityCost {
         override val description: String = "Blight $amount"
-    }
-
-    /**
-     * Remove N counters of a specific type from among permanents matching a filter you control.
-     * The player distributes which permanents contribute counters toward the total.
-     *
-     * Example: "Remove two +1/+1 counters from among artifacts you control"
-     */
-    @SerialName("CostRemoveCountersFromAmongFilteredPermanents")
-    @Serializable
-    data class RemoveCountersFromAmongFilteredPermanents(
-        val counterType: String,
-        val count: Int,
-        val filter: GameObjectFilter
-    ) : AbilityCost {
-        override val description: String =
-            "Remove $count $counterType counter${if (count == 1) "" else "s"} from among ${filter.description}s you control"
-        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
-            val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
-        }
     }
 
     /**
@@ -464,25 +422,67 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
      * @property filter Material filter (typically the same one used in the Craft display text,
      *   e.g. `Filters.Dinosaur` for Saheeli's Lattice).
      * @property minCount Minimum number of materials to exile (1 for "one or more").
+     * @property maxCount Maximum number of materials, or `null` for unbounded ("... or more").
+     *   Most Craft costs name an exact count — "Craft with artifact" exiles exactly one
+     *   artifact, "Craft with two creatures" exactly two — so those set `maxCount == minCount`;
+     *   only "one or more" / "N or more" wordings leave it `null` (CR 702.167a).
      */
     @SerialName("CostCraft")
     @Serializable
     data class Craft(
         val filter: GameObjectFilter,
         val minCount: Int = 1,
+        val maxCount: Int? = null,
+        /**
+         * Heterogeneous per-slot material filters (CR 702.167, e.g. Throne of the Grim Captain's
+         * "Craft with a Dinosaur, a Merfolk, a Pirate, and a Vampire"). Each slot is filled by
+         * exactly **one distinct** material, so validating a chosen set is a bipartite
+         * perfect-matching problem — a single card carrying two of the named subtypes (a Merfolk
+         * Pirate) can fill only one slot, and a naive per-subtype count check would double-count
+         * it (see [com.wingedsheep.engine.handlers.costs.CraftSlotMatching] engine-side).
+         *
+         * Empty for the common homogeneous case ("Craft with artifact", "one or more Dinosaurs"),
+         * where [filter]/[minCount]/[maxCount] alone describe the cost. When non-empty, [filter]
+         * is the union ([GameObjectFilter.anyOf]) of the slot filters — so the flat candidate
+         * gathering and legal-action paths (which read [filter]) keep working — and
+         * [minCount] == [maxCount] == `slots.size`. Build via `craft(slots = ...)`.
+         */
+        val slots: List<GameObjectFilter> = emptyList(),
     ) : AbilityCost {
         override val description: String = buildString {
             append("Exile this permanent, Exile ")
-            if (minCount == 1) append("one or more ") else append("$minCount or more ")
-            append(filter.description)
-            append("s you control and/or ")
-            append(filter.description)
-            append(" cards from your graveyard")
+            if (slots.isNotEmpty()) {
+                // Heterogeneous: "a Dinosaur, a Merfolk, a Pirate, and a Vampire from among ...".
+                slots.forEachIndexed { i, slot ->
+                    if (i > 0) append(if (i == slots.size - 1) ", and " else ", ")
+                    val d = slot.description
+                    append(if (d.firstOrNull()?.lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an " else "a ")
+                    append(d)
+                }
+                append(" from among permanents you control and/or cards in your graveyard")
+            } else {
+                val exactlyOne = maxCount == 1
+                val article = if (filter.description.firstOrNull()?.lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an" else "a"
+                when {
+                    maxCount == null && minCount == 1 -> append("one or more ")
+                    maxCount == null -> append("$minCount or more ")
+                    exactlyOne -> append("$article ")
+                    else -> append("$minCount ")
+                }
+                append(filter.description)
+                if (!exactlyOne) append("s")
+                append(" you control and/or ")
+                if (exactlyOne) append("$article ")
+                append(filter.description)
+                append(if (exactlyOne) " card from your graveyard" else " cards from your graveyard")
+            }
         }
 
         override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
             val newFilter = filter.applyTextReplacement(replacer)
-            return if (newFilter !== filter) copy(filter = newFilter) else this
+            val newSlots = slots.map { it.applyTextReplacement(replacer) }
+            val slotsChanged = newSlots.zip(slots).any { (new, old) -> new !== old }
+            return if (newFilter !== filter || slotsChanged) copy(filter = newFilter, slots = newSlots) else this
         }
     }
 }

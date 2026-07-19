@@ -55,6 +55,13 @@ class SandwormScenarioTest : ScenarioTestBase() {
                 game.answerYesNo(true)
                 game.resolveStack()
 
+                // The basic-land search must be made by the destroyed land's controller
+                // (player 2), NOT the caster (player 1). Regression guard: a missing
+                // Chooser.ControllerOfTarget silently routed this selection to the caster.
+                withClue("Player 2 (the land's controller) should choose the basic land") {
+                    game.getPendingDecision()?.playerId shouldBe game.player2Id
+                }
+
                 // Select the Forest from player 2's library.
                 if (game.hasPendingDecision()) {
                     val forest = game.state.getLibrary(game.player2Id).first { id ->

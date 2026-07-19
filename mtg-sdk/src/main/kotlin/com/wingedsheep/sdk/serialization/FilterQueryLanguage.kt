@@ -90,6 +90,7 @@ object FilterQueryLanguage {
         "own:opponent" to "OwnedByOpponent",
         "own:target-player" to "OwnedByTargetPlayer",
         "own:triggering-player" to "OwnedByTriggeringPlayer",
+        "ctrl:triggering-player" to "ControlledByTriggeringPlayer",
     )
     private val CONTROLLER_PREDICATE_NAMES = CONTROLLER_PREDICATES.entries.associate { (k, v) -> v to k }
 

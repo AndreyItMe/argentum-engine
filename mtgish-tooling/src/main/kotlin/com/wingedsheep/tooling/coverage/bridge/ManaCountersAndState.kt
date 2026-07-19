@@ -35,7 +35,11 @@ internal fun BridgeBuilder.manaCountersAndState() {
     // addition to its other types"): set base power/toughness (Layer 7b) and add a creature subtype
     // (Layer 4). Both map to standing SDK effects with Duration.Permanent. Capability-only — the
     // EntersWithLayerEffect/PutEachExiledCardOntoTheBattlefield host shape is card-specific, so the
-    // emitter declines -> SCAFFOLD.
+    // emitter declines -> SCAFFOLD. (A *plain-keyword* AddAbility under EntersWithLayerEffect is now
+    // expressible as the EntersWithKeywords replacement — the INV/DOM kicker "enters with … and with
+    // trample" cycle — but every corpus card with this tag also carries SetPT / activated-ability /
+    // until-EOT riders the shape doesn't cover, so there is no calibrated card to render and the
+    // emitter keeps declining.)
     effect("SetPT", "SetBasePowerToughness", "set base power/toughness via an enters-with layer effect (Ghost Vacuum)")
     effect("AddCreatureType", "AddCreatureType", "add a creature subtype in addition to other types (Ghost Vacuum)")
     // The mtgish IR routes every put-counter action through a `PutCounters` envelope whose nested
@@ -46,6 +50,12 @@ internal fun BridgeBuilder.manaCountersAndState() {
     envelope("PutCounters", "put-counter envelope — the real action is the nested _PutCountersAction variant")
     // "Put a / N +1/+1 (or keyword) counter(s) on <permanent>" -> AddCounters / AddDynamicCounters.
     effects("ACounterOfTypeOnPermanent", "NumberCountersOfTypeOnPermanent", tag = "AddCounters", note = UNIVERSAL)
+    // "Put up to N counters of a type on <permanent>" (Esper Terra's lore chapters) -> AddCountersUpTo,
+    // the additive/player-chosen mirror of the RemoveAnyNumberOfCounters family. Capability-only: the
+    // put-up-to-N shape is a value-selection prompt the emitter declines to render (-> SCAFFOLD), per
+    // the module's "chosen values" policy.
+    effect("UptoNumberCountersOfTypeOnPermanent", "AddCountersUpTo",
+        "put up to N counters of a type on a permanent — player chooses 0..N (Esper Terra)")
     // "Put a / N counter(s) on each <filter>" — the mass form, ForEachInGroup(AddCounters) over the
     // recovered group filter or the just-created tokens (Bounding Felidar, Germination Practicum).
     composed("ACounterOfTypeOnEachPermanent", "ForEachInGroup(AddCounters) over a group filter",

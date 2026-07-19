@@ -1,15 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.inv.cards
 
-import com.wingedsheep.sdk.core.Counters
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
-import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.Duration
+import com.wingedsheep.sdk.scripting.EntersWithCounters
+import com.wingedsheep.sdk.scripting.EntersWithKeywords
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 
 /**
  * Duskwalker
@@ -31,14 +29,19 @@ val Duskwalker = card("Duskwalker") {
 
     keywordAbility(KeywordAbility.kicker("{3}{B}"))
 
-    triggeredAbility {
-        trigger = Triggers.EntersBattlefield
-        triggerCondition = WasKicked
-        effect = Effects.Composite(
-            Effects.AddCounters(Counters.PLUS_ONE_PLUS_ONE, 2, EffectTarget.Self),
-            Effects.GrantKeyword(Keyword.FEAR, EffectTarget.Self, Duration.Permanent),
-        )
-    }
+    // "Enters with … counters … and with fear" is a replacement
+    // effect (rule 614.1c), not an ETB trigger — no stack, present the moment it enters.
+    replacementEffect(EntersWithCounters(
+        counterType = CounterTypeFilter.PlusOnePlusOne,
+        count = 2,
+        selfOnly = true,
+        condition = WasKicked
+    ))
+    replacementEffect(EntersWithKeywords(
+        keywords = listOf(Keyword.FEAR),
+        selfOnly = true,
+        condition = WasKicked
+    ))
 
     metadata {
         rarity = Rarity.COMMON

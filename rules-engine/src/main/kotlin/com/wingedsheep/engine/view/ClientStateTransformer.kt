@@ -3,6 +3,7 @@ package com.wingedsheep.engine.view
 import com.wingedsheep.sdk.core.AbilityFlag
 import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.engine.mechanics.combat.rules.DefenderBypass
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Subtype
@@ -421,66 +422,78 @@ class ClientStateTransformer(
     }
 
     /**
+     * Resolve a static ability that may be gated by a [ConditionalStaticAbility] (e.g. The
+     * Belligerent's play-from-top window, a [LookAtTopOfLibrary] gated on "attacked this turn").
+     * Unconditional abilities pass through unchanged; a conditional one resolves to its inner
+     * ability only while its condition currently holds for the granting permanent, and to null
+     * otherwise. Mirrors `CastPermissionUtils.activeStaticAbility` so that what a player can SEE
+     * stays in sync with what the legal-actions layer lets them DO.
+     */
+    private fun activeStaticAbility(
+        state: GameState,
+        ability: com.wingedsheep.sdk.scripting.StaticAbility,
+        sourceId: EntityId,
+        controllerId: EntityId
+    ): com.wingedsheep.sdk.scripting.StaticAbility? = when (ability) {
+        is ConditionalStaticAbility -> {
+            val context = EffectContext(sourceId = sourceId, controllerId = controllerId)
+            if (conditionEvaluator.evaluate(state, ability.condition, context)) ability.ability else null
+        }
+        else -> ability
+    }
+
+    /**
+     * Check whether any static ability active on [playerId]'s battlefield satisfies [predicate],
+     * honoring [ConditionalStaticAbility] gates via [activeStaticAbility].
+     */
+    private fun hasActiveStaticAbility(
+        state: GameState,
+        playerId: EntityId,
+        predicate: (com.wingedsheep.sdk.scripting.StaticAbility) -> Boolean
+    ): Boolean {
+        for (entityId in state.getBattlefield(playerId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.any { ability ->
+                    activeStaticAbility(state, ability, entityId, playerId)?.let(predicate) == true
+                }
+            ) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
      * Check if a player controls a permanent that reveals the top card of their library to all
      * players — either [PlayFromTopOfLibrary] (Future Sight) or [RevealTopOfLibrary] (Goblin Spy).
      * The two abilities share the public-reveal visibility; they diverge only in play permission,
      * which is handled by the cast/play-from-top paths (keyed on [PlayFromTopOfLibrary] alone).
      */
-    private fun revealsTopOfLibraryPublicly(state: GameState, playerId: EntityId): Boolean {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is PlayFromTopOfLibrary || it is RevealTopOfLibrary }) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun revealsTopOfLibraryPublicly(state: GameState, playerId: EntityId): Boolean =
+        hasActiveStaticAbility(state, playerId) { it is PlayFromTopOfLibrary || it is RevealTopOfLibrary }
 
     /**
      * Check if [playerId] controls a permanent with [OpponentsPlayWithHandsRevealed]
      * (e.g., Seer's Vision). While they do, their opponents' hands are visible to them.
      */
-    private fun revealsOpponentHandsTo(state: GameState, playerId: EntityId): Boolean {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is OpponentsPlayWithHandsRevealed }) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun revealsOpponentHandsTo(state: GameState, playerId: EntityId): Boolean =
+        hasActiveStaticAbility(state, playerId) { it is OpponentsPlayWithHandsRevealed }
 
     /**
-     * Check if a player controls a permanent with LookAtTopOfLibrary (e.g., Lens of Clarity).
+     * Check if a player controls a permanent with an active LookAtTopOfLibrary (e.g., Lens of
+     * Clarity; The Belligerent's is gated behind "attacked this turn").
      * This reveals the top card of the controller's library privately (only to them).
      */
-    private fun hasLookAtTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is LookAtTopOfLibrary }) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun hasLookAtTopOfLibrary(state: GameState, playerId: EntityId): Boolean =
+        hasActiveStaticAbility(state, playerId) { it is LookAtTopOfLibrary }
 
     /**
      * Check if a player controls a permanent with LookAtFaceDownCreatures (e.g., Lens of Clarity).
      * This reveals the identity of opponent's face-down battlefield creatures to the controller.
      */
-    private fun hasLookAtFaceDownCreatures(state: GameState, playerId: EntityId): Boolean {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is LookAtFaceDownCreatures }) {
-                return true
-            }
-        }
-        return false
-    }
+    private fun hasLookAtFaceDownCreatures(state: GameState, playerId: EntityId): Boolean =
+        hasActiveStaticAbility(state, playerId) { it is LookAtFaceDownCreatures }
 
     /**
      * Check if an individual card has been revealed to a specific player.
@@ -2637,6 +2650,74 @@ class ClientStateTransformer(
                     icon = "granted-ability"
                 )
             )
+        }
+        // Granted *static* abilities (e.g. Cavern Stomper's "{3}{G}: can't be blocked by creatures
+        // with power 2 or less"). These live in their own GameState list — combat reads them directly
+        // rather than through the layer system — so they never reach the projected keyword set that
+        // feeds `abilityFlags`. Without this badge the grant is invisible after it resolves.
+        for (granted in state.grantedStaticAbilities) {
+            if (granted.entityId != entityId) continue
+            if (!seenGrantDescriptions.add(granted.ability.description)) continue
+            effects.add(
+                ClientCardEffect(
+                    effectId = "granted_static_${granted.ability.description.hashCode()}",
+                    name = "Granted Ability",
+                    description = granted.ability.description,
+                    icon = "granted-ability"
+                )
+            )
+        }
+
+        // Printed "can't be blocked by more than N" restrictions (incl. the conditional descend
+        // form, e.g. Akawalli's descend-8) are read directly by BlockPhaseManager, never through
+        // the layer system, so they never reach the projected keyword set / abilityFlags and get
+        // no keyword chip. Surface an active one as a badge so the restriction is visible in play.
+        val cardDefForRestrictions = state.getEntity(entityId)?.get<CardComponent>()
+            ?.let { cardRegistry.getCard(it.cardDefinitionId) }
+        val restrictionController = state.projectedState.getController(entityId)
+        if (cardDefForRestrictions != null && restrictionController != null) {
+            for (ability in cardDefForRestrictions.script.staticAbilities) {
+                val active = activeStaticAbility(state, ability, entityId, restrictionController)
+                if (active is com.wingedsheep.sdk.scripting.CantBeBlockedByMoreThan &&
+                    active.filter.scope is com.wingedsheep.sdk.scripting.filters.unified.Scope.Self
+                ) {
+                    val description = active.description.replaceFirstChar { it.uppercase() }
+                    if (seenGrantDescriptions.add(description)) {
+                        effects.add(
+                            ClientCardEffect(
+                                effectId = "block_restriction_${description.hashCode()}",
+                                name = "Evasion",
+                                description = description,
+                                icon = "evasion"
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // Printed "can attack despite defender" (Shipwreck Sentry, Mechan Shieldmate, …) and the
+        // temporary Krotiq-style grant are read directly by AttackRestrictionRules, never through the
+        // layer system, so they never reach the projected keyword set / abilityFlags. Surface a badge
+        // while the creature actually has Defender AND the restriction is currently lifted, so the
+        // player can see a Defender that can presently attack (e.g. after an artifact entered this
+        // turn). Shares DefenderBypass with the attack-legality rule so the badge shows exactly when
+        // the attack would be allowed.
+        if (restrictionController != null &&
+            state.projectedState.hasKeyword(entityId, Keyword.DEFENDER) &&
+            DefenderBypass.isActive(state, entityId, restrictionController, cardRegistry)
+        ) {
+            val description = "Can attack despite defender"
+            if (seenGrantDescriptions.add(description)) {
+                effects.add(
+                    ClientCardEffect(
+                        effectId = "can_attack_despite_defender",
+                        name = "Can Attack",
+                        description = description,
+                        icon = "can-attack"
+                    )
+                )
+            }
         }
 
         return effects

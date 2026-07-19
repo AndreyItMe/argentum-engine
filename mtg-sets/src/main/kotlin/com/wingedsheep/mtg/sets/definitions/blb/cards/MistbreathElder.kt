@@ -39,6 +39,12 @@ val MistbreathElder = card("Mistbreath Elder") {
 
     triggeredAbility {
         trigger = Triggers.YourUpkeep
+        // The effect tree below (Exists → Gather → Select → Move) would otherwise render a
+        // garbled auto-description ("...look at all other creature permanents...Put those cards
+        // into a hand..."), so pin the player-facing text to the oracle wording.
+        description = "At the beginning of your upkeep, return another creature you control to " +
+            "its owner's hand. If you do, put a +1/+1 counter on this creature. Otherwise, you " +
+            "may return this creature to its owner's hand."
         effect = ConditionalEffect(
             condition = Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Creature.youControl(), excludeSelf = true),
             // If you control another creature: bounce one of them (Gather → Select → Move;

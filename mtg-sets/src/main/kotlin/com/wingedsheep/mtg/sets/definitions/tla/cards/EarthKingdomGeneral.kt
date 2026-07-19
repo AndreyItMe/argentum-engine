@@ -7,7 +7,9 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.TriggerBinding
+import com.wingedsheep.sdk.scripting.effects.MayEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
+import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.TargetObject
 import com.wingedsheep.sdk.scripting.values.ContextPropertyKey
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -30,9 +32,12 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * Ability 2 mirrors Terrasymbiosis ("you put one or more +1/+1 counters on a creature you control,
  * you may draw that many cards. Do this only once each turn.") but pays off with life and is not
  * restricted to creatures you control — the oracle reads "a creature" (any creature). It fires on a
- * `Triggers.countersPlacedOn` for `Counters.PLUS_ONE_PLUS_ONE` over any creature, gains
- * `TRIGGER_COUNTERS_PLACED_AMOUNT` ("that much") life, and uses `optional = true` for the "may"
- * plus `oncePerTurn = true` for "Do this only once each turn".
+ * `Triggers.countersPlacedOn` for `Counters.PLUS_ONE_PLUS_ONE` over any creature with
+ * `placedBy = Player.You` — the recipient filter is unrestricted, so the "you put" scope comes from
+ * the placer selector (CR 122.6a), not from a "you control" recipient filter; a counter placed by
+ * an opponent doesn't fire it. Gains `TRIGGER_COUNTERS_PLACED_AMOUNT` ("that much") life, wrapped in
+ * `MayEffect` for the "may" (a bare `optional = true` is ignored on a no-target ability, like
+ * Terrasymbiosis) plus `oncePerTurn = true` for "Do this only once each turn".
  */
 val EarthKingdomGeneral = card("Earth Kingdom General") {
     manaCost = "{3}{G}"
@@ -59,11 +64,16 @@ val EarthKingdomGeneral = card("Earth Kingdom General") {
             counterType = Counters.PLUS_ONE_PLUS_ONE,
             firstTimeEachTurn = false,
             binding = TriggerBinding.ANY,
+            placedBy = Player.You,
         )
-        optional = true
         oncePerTurn = true
-        effect = Effects.GainLife(
-            DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_COUNTERS_PLACED_AMOUNT)
+        // The "you may" is a MayEffect, not a bare `optional = true` — the engine ignores that
+        // flag on a no-target ability with no elseEffect (same as Terrasymbiosis), gaining the life
+        // unconditionally instead of offering the choice.
+        effect = MayEffect(
+            Effects.GainLife(
+                DynamicAmount.ContextProperty(ContextPropertyKey.TRIGGER_COUNTERS_PLACED_AMOUNT)
+            )
         )
         description = "Whenever you put one or more +1/+1 counters on a creature, you may gain " +
             "that much life. Do this only once each turn."

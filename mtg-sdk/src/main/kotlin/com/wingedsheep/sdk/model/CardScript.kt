@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.model
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.scripting.ClassLevelAbility
 import com.wingedsheep.sdk.scripting.SagaChapterAbility
 import com.wingedsheep.sdk.scripting.*
@@ -21,6 +22,19 @@ enum class CastTimeCreatureTypeSource {
     /** Scan the caster's graveyard for creature subtypes */
     GRAVEYARD
 }
+
+/**
+ * Marker carried by [CardScript.returnTransformedFromGraveyardOnResolve]: when a spell with this
+ * set resolves after being cast from a graveyard, it is put onto the battlefield transformed with
+ * [counters] instead of going to its owner's graveyard.
+ *
+ * @property counters counters the transformed permanent enters the battlefield with (e.g. a
+ *   finality counter for Esper Origins). Empty means "enter with no extra counters".
+ */
+@Serializable
+data class ReturnTransformedFromGraveyard(
+    val counters: List<CounterType> = emptyList()
+)
 
 /**
  * CardScript contains the behavioral logic of a card - what happens when it's cast,
@@ -210,6 +224,28 @@ data class CardScript(
     val kickerSpellEffect: Effect? = null,
 
     /**
+     * Alternate target requirements used when this spell is cast for its cleave cost
+     * (CR 702.148, Innistrad: Crimson Vow). When non-empty and the spell was cleaved, these replace
+     * [targetRequirements]. This is how the cleave text-change (removing all text in square
+     * brackets) is modelled *structurally* rather than by parsing brackets — the card author writes
+     * the brackets-removed targeting explicitly. Used when removing bracketed text broadens or drops
+     * a targeting restriction (e.g. Fierce Retribution: "target [attacking] creature" → "target
+     * creature"; Wash Away: "target spell [that wasn't cast from its owner's hand]" → "target spell").
+     */
+    val cleaveTargetRequirements: List<TargetRequirement> = emptyList(),
+
+    /**
+     * Alternate spell effect used when this spell is cast for its cleave cost (CR 702.148).
+     * When non-null and the spell was cleaved, this replaces [spellEffect]. Removing bracketed text
+     * can change which objects the effect touches (Path of Peril: "destroy all creatures [with mana
+     * value 2 or less]" → "destroy all creatures"), drop a step (Dig Up: remove "[reveal it,]"), or
+     * delete an entire clause including a delayed triggered ability that is then never created at all
+     * (Alchemist's Gambit: remove "[At the beginning of that turn's end step, you lose the game.]").
+     * The variant is applied at cast time so the resolving spell only ever carries the cleaved shape.
+     */
+    val cleaveSpellEffect: Effect? = null,
+
+    /**
      * Class level abilities (for Class enchantments).
      * Level 1 abilities use the base CardScript fields (triggeredAbilities, staticAbilities, etc.).
      * Levels 2+ are stored here with their level-up costs.
@@ -240,6 +276,25 @@ data class CardScript(
      * mana cost." The original stays in exile; each recast is a phantom copy (CR 707.10a).
      */
     val paradigm: Boolean = false,
+
+    /**
+     * When set, a spell that resolves **after being cast from a graveyard** is exiled and then put
+     * onto the battlefield transformed (its back face up) under its owner's control, entering with
+     * [ReturnTransformedFromGraveyard.counters], instead of being put into its owner's graveyard.
+     *
+     * Models Esper Origins: "If this spell was cast from a graveyard, exile it, then put it onto the
+     * battlefield transformed under its owner's control with a finality counter on it." The card must
+     * be double-faced with a permanent back face (a non-DFC or a non-permanent back is a no-op per the
+     * official ruling on putting a non-double-faced card onto the battlefield transformed).
+     *
+     * Evaluated at resolution-destination time — exactly like flashback's graveyard-cast exile
+     * ([selfExileOnResolve] / [com.wingedsheep.sdk.scripting.KeywordAbility.Flashback]) — from the
+     * spell's `castFromZone`, not from any effect run during resolution. This makes it immune to
+     * mid-resolution pauses (e.g. a Surveil earlier in the same resolution) and correctly inert when
+     * the spell is countered or fizzles. It takes precedence over the flashback exile: a card cast
+     * from a graveyard that both has flashback and this flag returns transformed rather than exiling.
+     */
+    val returnTransformedFromGraveyardOnResolve: ReturnTransformedFromGraveyard? = null,
 
     /**
      * An alternative cost that the caster may pay instead of the spell's mana cost.

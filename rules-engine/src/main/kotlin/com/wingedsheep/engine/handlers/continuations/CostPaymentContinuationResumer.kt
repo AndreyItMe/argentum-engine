@@ -58,6 +58,12 @@ class CostPaymentContinuationResumer(
             is CostAtom.ExileFrom, is CostAtom.RevealFromHand, is CostAtom.Sacrifice,
             is CostAtom.ReturnToHand, is CostAtom.TapPermanents ->
                 resumeSelection(state, continuation, cost, response, checkForMore)
+            is CostAtom.RemoveCounters ->
+                if (atom.self || atom.counterType == null) {
+                    resumeYesNo(state, continuation, cost, response, checkForMore)
+                } else {
+                    resumeSelection(state, continuation, cost, response, checkForMore)
+                }
         }
     }
 
@@ -73,7 +79,7 @@ class CostPaymentContinuationResumer(
         }
         if (!response.choice) return declined(state, continuation, checkForMore)
 
-        val execution = paymentService.performPayment(state, continuation.payerId, cost, continuation.sourceId, emptyList())
+        val execution = paymentService.performPayment(state, continuation.payerId, cost, continuation.sourceId, emptyMap())
         // A defensive payment failure (e.g. mana solve came up short) falls through to declined.
         return if (execution.success) paid(execution.state, execution.events, continuation, checkForMore)
         else declined(state, continuation, checkForMore)
@@ -89,18 +95,24 @@ class CostPaymentContinuationResumer(
         if (response !is CardsSelectedResponse) {
             return ExecutionResult.error(state, "Expected card-selection response for cost payment")
         }
-        if (response.selectedCards.size < paymentService.requiredCount(cost)) {
+        val selected = response.selectedCards.groupingBy { it }.eachCount()
+        val atom = (cost as? PayCost.Atom)?.atom
+        val selectedCount = if (atom is CostAtom.RemoveCounters && atom.counterType != null) {
+            selected.values.sum()
+        } else {
+            response.selectedCards.size
+        }
+        if (selectedCount < paymentService.requiredCount(cost)) {
             return declined(state, continuation, checkForMore)
         }
         // "Sacrifice N ... with different names" — reject selections that repeat a name (CR 601.2g costs
         // must be paid in full and legally). The chosen permanents must be pairwise distinctly named.
-        val atom = (cost as? PayCost.Atom)?.atom
         if (atom is CostAtom.Sacrifice && atom.distinctNames &&
             !CostPaymentService.allDistinctNames(state, response.selectedCards)
         ) {
             return declined(state, continuation, checkForMore)
         }
-        val execution = paymentService.performPayment(state, continuation.payerId, cost, continuation.sourceId, response.selectedCards)
+        val execution = paymentService.performPayment(state, continuation.payerId, cost, continuation.sourceId, selected)
         return if (execution.success) paid(execution.state, execution.events, continuation, checkForMore)
         else declined(state, continuation, checkForMore)
     }

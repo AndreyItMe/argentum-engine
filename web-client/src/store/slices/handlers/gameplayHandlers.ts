@@ -67,6 +67,70 @@ function getEventLogType(eventType: string): 'action' | 'turn' | 'combat' | 'sys
   }
 }
 
+type RawCardsRevealedEvent = {
+  type: 'cardsRevealed'
+  revealingPlayerId: EntityId
+  cardIds: readonly EntityId[]
+  cardNames: readonly string[]
+  imageUris: readonly (string | null)[]
+  source: string | null
+  cardOwnerIds?: readonly EntityId[]
+  fromZone?: string | null
+  toZone?: string | null
+}
+
+/**
+ * Merge every cardsRevealed event in a state update into one overlay payload. A single
+ * resolution can reveal cards more than once (e.g. a creature exploring twice), and the
+ * overlay can only show one reveal — so combine them rather than dropping all but the first.
+ *
+ * Fields that disagree across events degrade gracefully: mixed sources → no source label,
+ * mixed zone transitions → plain reveal, mixed revealers → per-card owner attribution
+ * (the same mechanism multi-player reveals like Psychic Battle already use). A card
+ * revealed twice in the same update is shown once.
+ */
+function mergeCardsRevealedEvents(
+  events: readonly RawCardsRevealedEvent[]
+): RawCardsRevealedEvent | undefined {
+  if (events.length <= 1) return events[0]
+
+  const first = events[0]!
+  const sameRevealer = events.every((e) => e.revealingPlayerId === first.revealingPlayerId)
+  const needOwners = !sameRevealer || events.some((e) => e.cardOwnerIds && e.cardOwnerIds.length > 0)
+  const sources = [...new Set(events.map((e) => e.source).filter((s): s is string => s != null))]
+  const sameTransition = events.every(
+    (e) => (e.fromZone ?? null) === (first.fromZone ?? null) && (e.toZone ?? null) === (first.toZone ?? null)
+  )
+
+  const seen = new Set<EntityId>()
+  const cardIds: EntityId[] = []
+  const cardNames: string[] = []
+  const imageUris: (string | null)[] = []
+  const cardOwnerIds: EntityId[] = []
+  for (const e of events) {
+    e.cardIds.forEach((id, i) => {
+      if (seen.has(id)) return
+      seen.add(id)
+      cardIds.push(id)
+      cardNames.push(e.cardNames[i] ?? 'Unknown Card')
+      imageUris.push(e.imageUris[i] ?? null)
+      cardOwnerIds.push(e.cardOwnerIds?.[i] ?? e.revealingPlayerId)
+    })
+  }
+
+  return {
+    type: 'cardsRevealed',
+    revealingPlayerId: first.revealingPlayerId,
+    cardIds,
+    cardNames,
+    imageUris,
+    source: sources.length === 1 ? sources[0]! : null,
+    ...(needOwners ? { cardOwnerIds } : {}),
+    fromZone: sameTransition ? first.fromZone ?? null : null,
+    toZone: sameTransition ? first.toZone ?? null : null,
+  }
+}
+
 /**
  * Common state update fields shared by both full and delta update messages.
  */
@@ -102,9 +166,14 @@ function processStateUpdate(
     (e) => e.type === 'handRevealed' && (e as { revealingPlayerId: EntityId }).revealingPlayerId !== playerId
   ) as { type: 'handRevealed'; cardIds: readonly EntityId[] } | undefined
 
-  const cardsRevealedEventRaw = msg.events.find(
+  const cardsRevealedEvents = msg.events.filter(
     (e) => e.type === 'cardsRevealed'
-  ) as { type: 'cardsRevealed'; revealingPlayerId: EntityId; cardIds: readonly EntityId[]; cardNames: readonly string[]; imageUris: readonly (string | null)[]; source: string | null; cardOwnerIds?: readonly EntityId[]; fromZone?: string | null; toZone?: string | null } | undefined
+  ) as RawCardsRevealedEvent[]
+
+  // A single resolution can reveal more than once (e.g. Defossilize's creature explores
+  // twice → two cardsRevealed events in one update). Merge them into one overlay payload
+  // instead of taking the first and silently dropping the rest.
+  const cardsRevealedEventRaw = mergeCardsRevealedEvents(cardsRevealedEvents)
 
   // A single effect can reveal cards from more than one player at once (Psychic Battle: each
   // player reveals their top card). The event carries per-card owners in that case; derive a

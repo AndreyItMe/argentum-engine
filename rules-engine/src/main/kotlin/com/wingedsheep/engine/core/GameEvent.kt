@@ -242,6 +242,22 @@ data class MaximumHandSizeRemovedEvent(
 ) : GameEvent
 
 /**
+ * A player's maximum hand size was reduced for the rest of the game (Inspired Idea,
+ * "Your maximum hand size is reduced by three for the rest of the game"). [amount] is the
+ * amount this application reduced by; [newReductionTotal] is the accumulated reduction after it.
+ * Permanent — fires once per application (repeat casts stack).
+ */
+@Serializable
+@SerialName("MaximumHandSizeReducedEvent")
+data class MaximumHandSizeReducedEvent(
+    val playerId: EntityId,
+    val playerName: String,
+    val amount: Int,
+    val newReductionTotal: Int,
+    val sourceName: String
+) : GameEvent
+
+/**
  * The Ring tempted a player (CR 701.54d). Emitted after the "the Ring tempts you" action
  * completes (even if some or all of it was impossible). Drives "Whenever the Ring tempts you"
  * triggers; see [com.wingedsheep.sdk.scripting.EventPattern.RingTemptedEvent].
@@ -295,6 +311,27 @@ data class SurveiledEvent(
     val playerId: EntityId,
     val count: Int,
     val sourceName: String
+) : GameEvent
+
+/**
+ * A permanent just explored (CR 701.44). Fires once per explore, after the reveal + hand/counter
+ * resolution is determined. Drives [com.wingedsheep.sdk.scripting.EventPattern.ExploredEvent]
+ * triggers ("whenever a creature you control explores [a land / nonland card]").
+ *
+ * @property exploringPermanentId The permanent that explored (the trigger's subject).
+ * @property controllerId The exploring permanent's controller at explore time.
+ * @property revealedCardWasLand `true` if the revealed card was a land, `false` if a nonland,
+ *   `null` if no card was revealed (empty library — the permanent still explored per CR 701.44b).
+ *   Gates the `LAND` / `NONLAND` reveal-type triggers; `ANY` matches regardless.
+ * @property sourceName The card/ability that caused the explore (for display).
+ */
+@Serializable
+@SerialName("PermanentExploredEvent")
+data class PermanentExploredEvent(
+    val exploringPermanentId: EntityId,
+    val controllerId: EntityId,
+    val revealedCardWasLand: Boolean?,
+    val sourceName: String? = null
 ) : GameEvent
 
 /**
@@ -461,7 +498,16 @@ data class AbilityTriggeredEvent(
     val sourceName: String,
     val controllerId: EntityId,
     val description: String,
-    val abilityEntityId: EntityId? = null
+    val abilityEntityId: EntityId? = null,
+    /**
+     * True when this ability was put on the stack because its own source creature was declared as
+     * an attacker — a per-attacker "whenever this creature attacks" ability (SELF-bound
+     * [com.wingedsheep.sdk.scripting.EventPattern.AttackEvent]). Read by the
+     * [com.wingedsheep.sdk.scripting.EventPattern.AbilityTriggeredEvent] `requireAttackCause`
+     * pattern (Firebender Ascension). Defaults false for every other trigger and for ability copies
+     * (which don't re-fire the meta-trigger).
+     */
+    val causedByAttack: Boolean = false
 ) : GameEvent
 
 /**
@@ -634,6 +680,12 @@ data class TargetsChosenEvent(
  * per-turn attacker set already includes the just-declared attacker by detection time, so
  * the "first time" fact is captured on the event at declaration (mirroring
  * `LifeChangeEvent.firstThisTurn` / `BecomesTargetEvent.firstTimeByThisController`).
+ *
+ * [attackersAgainstPlayer] is the subset of [attackers] declared as attacking a **player**
+ * (CR 508.1), as opposed to a planeswalker or battle. It backs
+ * `AttackPredicate.DefenderIsPlayer` ("attacks an opponent"): the defender kind is fixed at
+ * declaration and the event doesn't otherwise carry per-attacker defender identity, so the
+ * player-vs-permanent fact is stamped here rather than re-derived downstream.
  */
 @Serializable
 @SerialName("AttackersDeclaredEvent")
@@ -641,7 +693,8 @@ data class AttackersDeclaredEvent(
     val attackers: List<EntityId>,
     val attackerNames: List<String> = emptyList(),
     val attackingPlayerId: EntityId? = null,
-    val firstTimeAttackers: Set<EntityId> = emptySet()
+    val firstTimeAttackers: Set<EntityId> = emptySet(),
+    val attackersAgainstPlayer: Set<EntityId> = emptySet()
 ) : GameEvent
 
 /**
@@ -891,7 +944,17 @@ data class CountersAddedEvent(
      * (Stalwart Successor). Computed against the target's [ReceivedCountersThisTurnComponent]
      * before that marker is set; defaults to false for emitters that don't track it.
      */
-    val firstThisTurn: Boolean = false
+    val firstThisTurn: Boolean = false,
+    /**
+     * The player who *put* these counters, per CR 122.6a — the controller of the effect that
+     * placed them, that permanent's controller (for a permanent entering with counters), the mover's
+     * controller (CR 122.5: moving a counter "puts" it on the destination), or the damage source's
+     * controller (wither, CR 702.80). Drives "Whenever **you** put one or more counters on a
+     * creature" triggers ([com.wingedsheep.sdk.scripting.EventPattern.CountersPlacedEvent.placedBy]).
+     * `null` for the few paths that don't attribute a placer (saga lore counters, poison counters on
+     * players); a null placer never matches a placer-restricted trigger.
+     */
+    val placedBy: EntityId? = null
 ) : GameEvent
 
 /**
@@ -996,6 +1059,60 @@ data class PermanentsSacrificedEvent(
     val playerId: EntityId,
     val permanentIds: List<EntityId>,
     val permanentNames: List<String> = emptyList()
+) : GameEvent
+
+/**
+ * A creature exploited a creature (CR 702.110b): the controller of an exploit ability sacrificed a
+ * creature as that ability resolved. Emitted once per sacrificed creature by `EmitExploitedEventExecutor`
+ * (wired into the `exploit()` reflexive action right after the sacrifice), so external watchers —
+ * [com.wingedsheep.sdk.scripting.EventPattern.ExploitedEvent], e.g. Skull Skaab — can react. Declining the
+ * optional sacrifice sacrifices nothing, so no event is emitted.
+ *
+ * @property exploiterId The creature with exploit that did the sacrificing (the "exploiter").
+ * @property exploiterControllerId Controller of the exploit ability (scopes "a creature *you* control exploits").
+ * @property sacrificedId The creature that was sacrificed.
+ * @property sacrificedWasToken Last-known token-ness of the sacrificed creature, snapshotted **before** the
+ *   zone change — the creature is gone by the time watchers resolve. Drives Skull Skaab's "nontoken" clause.
+ * @property sacrificedName The sacrificed creature's name (for display).
+ * @property sourceName The exploiter's name (for display).
+ */
+@Serializable
+@SerialName("ExploitedEvent")
+data class ExploitedEvent(
+    val exploiterId: EntityId,
+    val exploiterControllerId: EntityId,
+    val sacrificedId: EntityId,
+    val sacrificedWasToken: Boolean,
+    val sacrificedName: String,
+    val sourceName: String
+) : GameEvent
+
+/**
+ * A creature trained (CR 702.149c): a resolving training ability put one or more +1/+1 counters on
+ * this creature. Emitted by `EmitTrainedEventExecutor` — the tail of the `training()` ability's
+ * composite, right after its `AddCountersEffect` — but **only when the counter actually landed**
+ * (the ability places nothing under a "can't have counters put on it" prohibition, and then no event
+ * fires, faithful to "puts one or more +1/+1 counters"). Drives "When this creature trains" payoffs
+ * ([com.wingedsheep.sdk.scripting.EventPattern.TrainedEvent], e.g. Savior of Ollenbock).
+ *
+ * Distinct from [CountersAddedEvent], which the same counter placement also emits for generic
+ * "whenever counters are placed" watchers (Cloaked Cadet): this event marks that the placement came
+ * from a *resolving training ability* specifically (the Option A distinction).
+ *
+ * @property trainedId The creature that trained (the trigger's subject; selected by the watching
+ *   ability's `TriggerBinding` — SELF for "this creature trains").
+ * @property controllerId The trained creature's controller at train time.
+ * @property counters How many +1/+1 counters the training ability placed (>= 1; normally 1, more
+ *   under a Hardened Scales / Doubling Season counter-placement replacement).
+ * @property sourceName The trained creature's name (for display / logging).
+ */
+@Serializable
+@SerialName("TrainedEvent")
+data class TrainedEvent(
+    val trainedId: EntityId,
+    val controllerId: EntityId,
+    val counters: Int,
+    val sourceName: String
 ) : GameEvent
 
 // =============================================================================

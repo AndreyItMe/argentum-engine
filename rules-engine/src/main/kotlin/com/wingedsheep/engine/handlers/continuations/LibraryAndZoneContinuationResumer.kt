@@ -1,8 +1,13 @@
 package com.wingedsheep.engine.handlers.continuations
 
 import com.wingedsheep.engine.core.*
+import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.handlers.actions.spell.CastSpellHandler
+import com.wingedsheep.engine.handlers.TargetFinder
+import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.handlers.effects.library.CascadeExecutor
+import com.wingedsheep.engine.handlers.effects.library.CastFromCollectionWithoutPayingCostExecutor
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -10,7 +15,6 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.state.permissions.MayPlayPermission
-import com.wingedsheep.engine.state.permissions.addMayPlayPermission
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CastAnyNumberFromCollectionWithoutPayingCostEffect
@@ -24,6 +28,7 @@ class LibraryAndZoneContinuationResumer(
 ) : ContinuationResumerModule {
 
     private val castSpellHandler: CastSpellHandler by lazy { CastSpellHandler.create(services) }
+    private val targetFinder = TargetFinder()
     private val effectRunner: EffectContinuationRunner by lazy {
         EffectContinuationRunner(services.effectExecutorRegistry)
     }
@@ -40,6 +45,7 @@ class LibraryAndZoneContinuationResumer(
         resumer(PutOntoBattlefieldAttachedToChosenContinuation::class, ::resumePutOntoBattlefieldAttachedToChosen),
         resumer(PutOnTopOrBottomContinuation::class, ::resumePutOnTopOrBottom),
         resumer(CascadeMayCastContinuation::class, ::resumeCascadeMayCast),
+        resumer(DiscoverMayCastContinuation::class, ::resumeDiscoverMayCast),
         resumer(CastFromCollectionTargetsContinuation::class, ::resumeCastFromCollectionTargets),
         resumer(CastAnyNumberFromCollectionContinuation::class, ::resumeCastAnyNumberFromCollection)
     )
@@ -795,20 +801,47 @@ class LibraryAndZoneContinuationResumer(
             cards = others
         ) { afterBottom = it }
 
-        // Grant free-cast permission so the synthesized cast pays nothing.
-        var stateWithGrant = afterBottom.updateEntity(continuation.cascadeCardId) { container ->
-            container.with(PlayWithoutPayingCostComponent(controllerId = continuation.playerId))
-        }
-        val (permId, stateWithPerm) = stateWithGrant.newEntity()
-        stateWithGrant = stateWithPerm.addMayPlayPermission(
-            MayPlayPermission(
-                id = permId,
-                cardIds = setOf(continuation.cascadeCardId),
-                controllerId = continuation.playerId,
-                sourceId = continuation.sourceId,
-                timestamp = stateWithGrant.timestamp,
-            )
+        // A non-modal targeted spell can't carry targets through the synthesized CastSpell —
+        // surface the ChooseTargetsDecision first, exactly as
+        // CastFromCollectionWithoutPayingCostExecutor does. If a required slot has no legal
+        // targets the cast can't initiate (CR 601.2c) and the cascade card is bottomed. Checked
+        // *before* granting so the bottomed card carries no lingering free-cast grant.
+        val targetPrep = CastFromCollectionWithoutPayingCostExecutor.prepareTargetSelection(
+            state = afterBottom,
+            cardId = continuation.cascadeCardId,
+            casterId = continuation.playerId,
+            cardRegistry = services.cardRegistry,
+            targetFinder = targetFinder,
         )
+        if (targetPrep is CastFromCollectionWithoutPayingCostExecutor.TargetPrep.NoLegalTargets) {
+            var finalState = afterBottom
+            val tailEvents = CascadeExecutor.bottomRandomize(
+                state = afterBottom,
+                playerId = continuation.playerId,
+                cards = listOf(continuation.cascadeCardId)
+            ) { finalState = it }
+            return checkForMore(finalState, bottomEvents + tailEvents)
+        }
+
+        // Grant free-cast permission so the synthesized cast pays nothing.
+        val (permId, stateWithGrant) = CastFromCollectionWithoutPayingCostExecutor.grantFreeCast(
+            state = afterBottom,
+            cardId = continuation.cascadeCardId,
+            controllerId = continuation.playerId,
+            sourceId = continuation.sourceId,
+        )
+
+        if (targetPrep is CastFromCollectionWithoutPayingCostExecutor.TargetPrep.NeedsTargets) {
+            val targetsContinuation = targetPrep.continuation.copy(
+                grantedPermissionId = permId,
+                onCastFailure = FreeCastFallback.BOTTOM_OF_LIBRARY,
+            )
+            val pausedState = stateWithGrant
+                .pushContinuation(targetsContinuation)
+                .withPendingDecision(targetPrep.decision)
+                .withPriority(continuation.playerId)
+            return ExecutionResult.paused(pausedState, targetPrep.decision, bottomEvents + targetPrep.event)
+        }
 
         // Hand priority to the cascade controller for the synthesized cast. The cast
         // happens *during* cascade resolution (CR 702.85a) rather than on a normal
@@ -818,17 +851,23 @@ class LibraryAndZoneContinuationResumer(
         val castResult = castSpellHandler.execute(stateForCast, castAction)
 
         if (castResult.error != null) {
-            // Cast couldn't initiate (no legal targets, etc.) — the cascade card
-            // wasn't cast, so it joins the leftovers on the bottom of the library.
-            var finalState = stateWithGrant
+            // Cast couldn't initiate (no legal targets, etc.) — revoke the unused free-cast
+            // grant; the cascade card wasn't cast, so it joins the leftovers on the bottom
+            // of the library.
+            val revoked = CastFromCollectionWithoutPayingCostExecutor.revokeFreeCast(
+                stateWithGrant, continuation.cascadeCardId, permId
+            )
+            var finalState = revoked
             val tailEvents = CascadeExecutor.bottomRandomize(
-                state = stateWithGrant,
+                state = revoked,
                 playerId = continuation.playerId,
                 cards = listOf(continuation.cascadeCardId)
             ) { finalState = it }
             return checkForMore(finalState, bottomEvents + tailEvents)
         }
 
+        // CastSpellHandler already detected + stacked this cast's triggers; propagate the flag
+        // so SubmitDecisionHandler doesn't re-scan the SpellCastEvent and double-fire them.
         if (castResult.pendingDecision != null) {
             // The cast paused (for target / X / mode selection). The leftover
             // bottoming is already done; let the cast's own continuations finish
@@ -837,11 +876,193 @@ class LibraryAndZoneContinuationResumer(
                 castResult.state,
                 castResult.pendingDecision,
                 bottomEvents + castResult.events
-            )
+            ).copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
         }
 
         return checkForMore(castResult.state, bottomEvents + castResult.events)
+            .copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
     }
+
+    /**
+     * Resume after the controller answers "cast the discovered card for free, or put it into
+     * your hand?" during a [com.wingedsheep.sdk.scripting.effects.DiscoverEffect] (CR 701.57a).
+     *
+     * In both branches the *other* exiled cards are bottom-randomized first. Then:
+     *  - **Cast** (yes): the discovered card is granted a free cast (like [CascadeExecutor]) and
+     *    synthesized through the normal cast machinery, so target / X / mode prompts surface and the
+     *    cast's "whenever you cast a spell (from exile)" triggers are stacked exactly once (the
+     *    `triggersAlreadyProcessed` flag is propagated so they aren't re-scanned). If the cast can't
+     *    initiate — no legal target, etc. — the card falls back to the controller's hand, per
+     *    "If you don't cast it, put that card into your hand."
+     *  - **Hand** (no): the discovered card is moved straight to the controller's hand.
+     *
+     * Any [DiscoverMayCastContinuation.thenEffect] then resolves last, with the discovered card
+     * published to [DiscoverMayCastContinuation.storeDiscoveredAs] so it can be read (Hit the
+     * Mother Lode's "…create Treasure tokens equal to the difference"). In the cast branch it is
+     * pre-pushed as an [EffectContinuation] so it runs after the cast even if the cast pauses.
+     */
+    fun resumeDiscoverMayCast(
+        state: GameState,
+        continuation: DiscoverMayCastContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is YesNoResponse) {
+            return ExecutionResult.error(state, "Expected yes/no response for discover may-cast")
+        }
+
+        val discovered = continuation.discoveredCardId
+        val others = continuation.exiledCards.filter { it != discovered }
+
+        // Bottom-randomize every other exiled card first (CR 701.57a).
+        var afterBottom = state
+        val bottomEvents = CascadeExecutor.bottomRandomize(
+            state = state,
+            playerId = continuation.playerId,
+            cards = others
+        ) { afterBottom = it }
+
+        val discoveredCollections = continuation.storeDiscoveredAs
+            ?.let { mapOf(it to listOf(discovered)) }
+            ?: emptyMap()
+
+        if (!response.choice) {
+            // Put the discovered card into the controller's hand, then run the follow-up.
+            val moveResult = ZoneMovementUtils.moveCardToZone(afterBottom, discovered, Zone.HAND)
+            var afterHand = afterBottom
+            val leadingEvents = bottomEvents.toMutableList()
+            if (moveResult.isSuccess) {
+                afterHand = moveResult.state
+                leadingEvents.addAll(moveResult.events)
+            }
+            return runDiscoverThenEffect(
+                afterHand, continuation, discoveredCollections, leadingEvents, checkForMore
+            )
+        }
+
+        // A non-modal targeted spell (Zombify) can't carry targets through the synthesized
+        // CastSpell — surface the ChooseTargetsDecision first, exactly as
+        // CastFromCollectionWithoutPayingCostExecutor does. If a required slot has no legal
+        // targets the cast can't initiate (CR 601.2c) and the card goes to hand instead. Checked
+        // *before* granting so the card reaches hand without a lingering free-cast grant.
+        val targetPrep = CastFromCollectionWithoutPayingCostExecutor.prepareTargetSelection(
+            state = afterBottom,
+            cardId = discovered,
+            casterId = continuation.playerId,
+            cardRegistry = services.cardRegistry,
+            targetFinder = targetFinder,
+        )
+        if (targetPrep is CastFromCollectionWithoutPayingCostExecutor.TargetPrep.NoLegalTargets) {
+            val moveResult = ZoneMovementUtils.moveCardToZone(afterBottom, discovered, Zone.HAND)
+            var afterHand = afterBottom
+            val handEvents = bottomEvents.toMutableList()
+            if (moveResult.isSuccess) {
+                afterHand = moveResult.state
+                handEvents.addAll(moveResult.events)
+            }
+            return runDiscoverThenEffect(afterHand, continuation, discoveredCollections, handEvents, checkForMore)
+        }
+
+        // Cast branch: grant a free cast and synthesize it through the normal cast machinery —
+        // mirroring CascadeExecutor's may-cast rather than the CastFromCollection effect, so the
+        // cast's "whenever you cast a spell (from exile)" triggers are stacked exactly once
+        // (Quintorius Kand).
+        val (permId, granted) = CastFromCollectionWithoutPayingCostExecutor.grantFreeCast(
+            state = afterBottom,
+            cardId = discovered,
+            controllerId = continuation.playerId,
+            sourceId = continuation.sourceId,
+        )
+
+        // The follow-up [thenEffect] is pre-pushed as an EffectContinuation so it resolves after
+        // the cast even if the cast pauses for targets / X.
+        var stateForCast = granted
+        if (continuation.thenEffect != null) {
+            val thenCtx = EffectContext(
+                sourceId = continuation.sourceId,
+                controllerId = continuation.playerId,
+                pipeline = PipelineState.EMPTY.copy(storedCollections = discoveredCollections)
+            )
+            stateForCast = stateForCast.pushContinuation(
+                EffectContinuation(
+                    decisionId = "pending",
+                    remainingEffects = listOf(continuation.thenEffect),
+                    effectContext = thenCtx
+                )
+            )
+        }
+
+        if (targetPrep is CastFromCollectionWithoutPayingCostExecutor.TargetPrep.NeedsTargets) {
+            val targetsContinuation = targetPrep.continuation.copy(
+                grantedPermissionId = permId,
+                onCastFailure = FreeCastFallback.HAND,
+            )
+            val pausedState = stateForCast
+                .pushContinuation(targetsContinuation)
+                .withPendingDecision(targetPrep.decision)
+                .withPriority(continuation.playerId)
+            return ExecutionResult.paused(pausedState, targetPrep.decision, bottomEvents + targetPrep.event)
+        }
+
+        val stateReady = stateForCast.copy(priorityPlayerId = continuation.playerId)
+        val castResult = castSpellHandler.execute(stateReady, CastSpell(continuation.playerId, discovered))
+
+        if (castResult.error != null) {
+            // The cast couldn't initiate — pop the pre-pushed follow-up, revoke the unused
+            // free-cast grant, put the discovered card into hand ("If you don't cast it, put
+            // that card into your hand"), then run the follow-up (Hit the Mother Lode still
+            // makes its Treasures — a card was discovered).
+            val withoutThen = CastFromCollectionWithoutPayingCostExecutor.revokeFreeCast(
+                if (continuation.thenEffect != null) stateForCast.popContinuation().second else stateForCast,
+                discovered,
+                permId,
+            )
+            val moveResult = ZoneMovementUtils.moveCardToZone(withoutThen, discovered, Zone.HAND)
+            var afterHand = withoutThen
+            val handEvents = bottomEvents.toMutableList()
+            if (moveResult.isSuccess) {
+                afterHand = moveResult.state
+                handEvents.addAll(moveResult.events)
+            }
+            return runDiscoverThenEffect(afterHand, continuation, discoveredCollections, handEvents, checkForMore)
+        }
+
+        if (castResult.pendingDecision != null) {
+            // The cast paused (targets / X); the pre-pushed follow-up runs when it resumes.
+            return ExecutionResult.paused(castResult.state, castResult.pendingDecision, bottomEvents + castResult.events)
+                .copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
+        }
+
+        // Cast succeeded synchronously; checkForMore drains the pre-pushed follow-up continuation.
+        // CastSpellHandler already stacked this cast's triggers (e.g. Quintorius Kand's "whenever you
+        // cast a spell from exile"); propagate the flag so SubmitDecisionHandler doesn't re-scan the
+        // SpellCastEvent and double-fire them.
+        return checkForMore(castResult.state, bottomEvents + castResult.events)
+            .copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
+    }
+
+    /** Run a discover [DiscoverMayCastContinuation.thenEffect] (if any) with the discovered card published. */
+    private fun runDiscoverThenEffect(
+        state: GameState,
+        continuation: DiscoverMayCastContinuation,
+        discoveredCollections: Map<String, List<EntityId>>,
+        leadingEvents: List<com.wingedsheep.engine.core.GameEvent>,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        val thenEffect = continuation.thenEffect
+            ?: return checkForMore(state, leadingEvents)
+        val ctx = EffectContext(
+            sourceId = continuation.sourceId,
+            controllerId = continuation.playerId,
+            pipeline = PipelineState.EMPTY.copy(storedCollections = discoveredCollections)
+        )
+        val result = effectRunner.executeRemainingEffects(state, listOf(thenEffect), ctx)
+        if (result.isPaused) {
+            return ExecutionResult.paused(result.state, result.pendingDecision!!, leadingEvents + result.events)
+        }
+        return checkForMore(result.state, leadingEvents + result.events)
+    }
+
 
     /**
      * Resume after the controller picks targets for a free synthesized cast triggered by
@@ -877,9 +1098,34 @@ class LibraryAndZoneContinuationResumer(
 
         if (castResult.error != null) {
             // Cast still couldn't initiate (e.g., targets became illegal between selection
-            // and resolution). Treat as a no-op so the rest of the trigger's resolution
-            // doesn't lose its outer pipeline.
-            return checkForMore(state, emptyList())
+            // and resolution). Revoke the unused free-cast grant and send the card to the
+            // owning flow's fallback zone (discover → hand, cascade → bottom of library) so
+            // it isn't stranded in exile; checkForMore keeps the rest of the trigger's
+            // resolution (e.g. a discover follow-up frame) alive.
+            var cleaned = CastFromCollectionWithoutPayingCostExecutor.revokeFreeCast(
+                state, continuation.cardId, continuation.grantedPermissionId
+            )
+            val fallbackEvents = mutableListOf<GameEvent>()
+            when (continuation.onCastFailure) {
+                FreeCastFallback.LEAVE -> {}
+                FreeCastFallback.HAND -> {
+                    val moveResult = ZoneMovementUtils.moveCardToZone(cleaned, continuation.cardId, Zone.HAND)
+                    if (moveResult.isSuccess) {
+                        cleaned = moveResult.state
+                        fallbackEvents.addAll(moveResult.events)
+                    }
+                }
+                FreeCastFallback.BOTTOM_OF_LIBRARY -> {
+                    fallbackEvents.addAll(
+                        CascadeExecutor.bottomRandomize(
+                            state = cleaned,
+                            playerId = continuation.casterId,
+                            cards = listOf(continuation.cardId)
+                        ) { cleaned = it }
+                    )
+                }
+            }
+            return checkForMore(cleaned, fallbackEvents)
         }
 
         // The cast initiated. Publish the cast card so an enclosing IfYouDoEffect frame beneath
@@ -887,17 +1133,21 @@ class LibraryAndZoneContinuationResumer(
         val castCollections = continuation.storeCastTo?.let { mapOf(it to listOf(continuation.cardId)) }
             ?: emptyMap()
 
+        // CastSpellHandler already detected + stacked this cast's triggers (e.g. Quintorius Kand's
+        // "whenever you cast a spell from exile"); propagate the flag so SubmitDecisionHandler
+        // doesn't re-scan the SpellCastEvent and double-fire them.
         if (castResult.pendingDecision != null) {
             val exposed = exposeCollectionsToNextFrame(castResult.state, castCollections)
             return ExecutionResult.paused(
                 exposed,
                 castResult.pendingDecision,
                 castResult.events,
-            )
+            ).copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
         }
 
         val exposed = exposeCollectionsToNextFrame(castResult.state, castCollections)
         return checkForMore(exposed, castResult.events)
+            .copy(triggersAlreadyProcessed = castResult.triggersAlreadyProcessed)
     }
 
     /**
