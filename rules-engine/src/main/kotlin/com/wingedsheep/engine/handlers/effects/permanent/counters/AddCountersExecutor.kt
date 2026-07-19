@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import kotlin.reflect.KClass
 
 /**
@@ -26,8 +27,14 @@ class AddCountersExecutor : EffectExecutor<AddCountersEffect> {
         effect: AddCountersEffect,
         context: EffectContext
     ): EffectResult {
-        val targetId = context.resolveTarget(effect.target, state)
-            ?: return EffectResult.error(state, "No valid target for counters")
+        // Counters usually go on a permanent, but "that player gets two poison counters"
+        // (Virulent Silencer) puts them on a player — a PlayerRef target only resolves through
+        // the player-resolution path, so try it when the target denotes a player.
+        val targetId = if (effect.target is EffectTarget.PlayerRef) {
+            context.resolvePlayerTarget(effect.target, state)
+        } else {
+            context.resolveTarget(effect.target, state)
+        } ?: return EffectResult.error(state, "No valid target for counters")
 
         if (!state.projectedState.canReceiveCounters(targetId)) {
             return EffectResult.success(state, emptyList())
