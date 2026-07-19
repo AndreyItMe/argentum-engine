@@ -3,6 +3,7 @@ package com.wingedsheep.engine.mechanics.combat.rules
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
+import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.core.Color
@@ -14,6 +15,7 @@ import com.wingedsheep.sdk.scripting.CantBeBlockedIfCastSpellType
 import com.wingedsheep.sdk.scripting.CantBeBlockedUnlessDefenderSharesCreatureType
 import com.wingedsheep.sdk.scripting.GrantCantBeBlockedToSmallCreatures
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.filters.unified.Scope
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 
 /**
@@ -166,7 +168,10 @@ class CantBeBlockedByRule(
         // Printed restrictions. cardDef may be null for tokens/copies without a registered
         // definition — the granted form below still applies.
         val cardDef = ctx.cardRegistry.getCard(attackerCard.cardDefinitionId)
-        val printed = cardDef?.staticAbilities?.filterIsInstance<CantBeBlockedBy>().orEmpty()
+        val printed = cardDef?.staticAbilities
+            ?.filterIsInstance<CantBeBlockedBy>()
+            ?.filter { it.filter.scope is Scope.Self }
+            .orEmpty()
         // Granted (floating) restrictions land in state.grantedStaticAbilities keyed to the
         // attacker — e.g. Cavern Stomper's "{3}{G}: this creature can't be blocked by creatures
         // with power 2 or less this turn" grants CantBeBlockedBy to itself via
@@ -175,7 +180,7 @@ class CantBeBlockedByRule(
             .filter { it.entityId == ctx.attackerId }
             .map { it.ability }
             .filterIsInstance<CantBeBlockedBy>()
-        val restrictions = printed + granted
+        val restrictions = printed + granted + hostScopedRestrictions(ctx)
         if (restrictions.isEmpty()) return null
 
         val attackerController = ctx.projected.getController(ctx.attackerId) ?: return null
@@ -191,6 +196,41 @@ class CantBeBlockedByRule(
             }
         }
         return null
+    }
+
+    /**
+     * Restrictions projected onto the attacker by a *different* battlefield permanent through the
+     * static's [com.wingedsheep.sdk.scripting.filters.unified.GroupFilter] — an Equipment or Aura
+     * whose "equipped/enchanted creature can't be blocked by …" clause lives on the attachment, not
+     * on the attacker's own card (Blazing Torch, Artifact Ward). Mirrors the host-scoped
+     * `MustBeBlocked` scan in `BlockPhaseManager`: the filter's scope is resolved relative to the
+     * permanent carrying the static, and the attacker must also satisfy the filter's base filter.
+     */
+    private fun hostScopedRestrictions(ctx: BlockCheckContext): List<CantBeBlockedBy> {
+        val result = mutableListOf<CantBeBlockedBy>()
+        for (hostId in ctx.state.getBattlefield()) {
+            if (hostId == ctx.attackerId) continue
+            val container = ctx.state.getEntity(hostId) ?: continue
+            if (container.has<FaceDownComponent>()) continue
+            val hostCard = container.get<CardComponent>() ?: continue
+            val statics = ctx.cardRegistry.getCard(hostCard.cardDefinitionId)?.staticAbilities.orEmpty()
+            for (ability in statics.filterIsInstance<CantBeBlockedBy>()) {
+                val scopeMatches = when (val scope = ability.filter.scope) {
+                    is Scope.AttachedTo -> container.get<AttachedToComponent>()?.targetId == ctx.attackerId
+                    is Scope.Specific -> scope.entityId == ctx.attackerId
+                    is Scope.Battlefield -> true
+                    is Scope.Self -> false // already covered by the attacker's own printed read
+                }
+                if (!scopeMatches) continue
+                val hostController = ctx.projected.getController(hostId) ?: continue
+                val baseMatches = predicateEvaluator.matches(
+                    ctx.state, ctx.projected, ctx.attackerId, ability.filter.baseFilter,
+                    PredicateContext(sourceId = hostId, controllerId = hostController)
+                )
+                if (baseMatches) result.add(ability)
+            }
+        }
+        return result
     }
 }
 

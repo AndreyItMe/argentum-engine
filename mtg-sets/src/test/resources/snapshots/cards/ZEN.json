@@ -70,6 +70,110 @@
     "colorIdentityOverride": []
 }
 
+// Blazing Torch
+{
+    "name": "Blazing Torch",
+    "manaCost": "{1}",
+    "typeLine": "Artifact — Equipment",
+    "oracleText": "Equipped creature can't be blocked by Vampires or Zombies.\nEquipped creature has \"{T}, Sacrifice Blazing Torch: Blazing Torch deals 2 damage to any target.\"\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomMana",
+                        "cost": "{1}"
+                    }
+                },
+                "effect": {
+                    "type": "AttachEquipment",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature you control"
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        },
+                        "id": "creature you control"
+                    }
+                ],
+                "timing": "SorcerySpeed",
+                "isEquipAbility": true
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "CantBeBlockedBy",
+                "blockerFilter": {
+                    "cardPredicates": [
+                        "IsCreature",
+                        {
+                            "type": "Or",
+                            "predicates": [
+                                {
+                                    "type": "HasSubtype",
+                                    "subtype": "Vampire"
+                                },
+                                {
+                                    "type": "HasSubtype",
+                                    "subtype": "Zombie"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                }
+            },
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": {
+                        "type": "CostComposite",
+                        "costs": [
+                            "CostTap",
+                            "CostSacrificeGrantingPermanent"
+                        ]
+                    },
+                    "effect": {
+                        "type": "DealDamage",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 2
+                        },
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        },
+                        "damageSource": "GrantingSource"
+                    },
+                    "targetRequirements": [
+                        "AnyTarget"
+                    ],
+                    "descriptionOverride": "{T}, Sacrifice Blazing Torch: Blazing Torch deals 2 damage to any target."
+                }
+            }
+        ]
+    },
+    "equipCost": "{1}",
+    "metadata": {
+        "collectorNumber": "197",
+        "rarity": "UNCOMMON",
+        "artist": "Vance Kovacs",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/e/1e9d1ff2-9ce3-4737-af1d-9fc82e4dffe6.jpg?1783942128"
+    },
+    "colorIdentityOverride": []
+}
+
 // Burst Lightning
 {
     "name": "Burst Lightning",

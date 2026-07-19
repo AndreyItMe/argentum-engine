@@ -556,6 +556,101 @@
     ]
 }
 
+// Eccentric Farmer
+{
+    "name": "Eccentric Farmer",
+    "manaCost": "{2}{G}",
+    "typeLine": "Creature — Human Peasant",
+    "oracleText": "When this creature enters, mill three cards, then you may return a land card from your graveyard to your hand. (To mill three cards, put the top three cards of your library into your graveyard.)",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "Composite",
+                            "effects": [
+                                {
+                                    "type": "GatherCards",
+                                    "source": {
+                                        "type": "TopOfLibrary",
+                                        "count": {
+                                            "type": "Fixed",
+                                            "amount": 3
+                                        },
+                                        "isMill": true
+                                    },
+                                    "storeAs": "milled"
+                                },
+                                {
+                                    "type": "MoveCollection",
+                                    "from": "milled",
+                                    "destination": {
+                                        "type": "ToZone",
+                                        "zone": "Graveyard"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "FromZone",
+                                "zone": "Graveyard",
+                                "filter": "land"
+                            },
+                            "storeAs": "gathered1"
+                        },
+                        {
+                            "type": "SelectFromCollection",
+                            "from": "gathered1",
+                            "selection": {
+                                "type": "ChooseUpTo",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 1
+                                }
+                            },
+                            "storeSelected": "selected2",
+                            "prompt": "You may return a land card from your graveyard to your hand",
+                            "selectedLabel": "Return to hand",
+                            "remainderLabel": "Leave in graveyard",
+                            "showAllCards": true
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "selected2",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Hand"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "185",
+        "artist": "Tyler Walpole",
+        "flavorText": "\"Careful now. Don't want to get the seeds stuck to your feelers like last time.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/5/b5339f6e-9ed7-4734-91c9-c2ed59ca1052.jpg?1783925579"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Fading Hope
 {
     "name": "Fading Hope",
@@ -1332,6 +1427,53 @@
     },
     "colorIdentityOverride": [
         "BLUE",
+        "BLACK"
+    ]
+}
+
+// Siege Zombie
+{
+    "name": "Siege Zombie",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Zombie",
+    "oracleText": "Tap three untapped creatures you control: Each opponent loses 1 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "activatedAbilities": [
+            {
+                "id": "ability_1",
+                "cost": {
+                    "type": "CostAtomWrapper",
+                    "atom": {
+                        "type": "AtomTapPermanents",
+                        "count": 3,
+                        "filter": "creature"
+                    }
+                },
+                "effect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "121",
+        "artist": "Johann Bodin",
+        "flavorText": "A barricade only buys time. So the wealthy buy more barricades.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/9/d94b5270-840b-4905-815a-057029d7352f.jpg?1783925609"
+    },
+    "colorIdentityOverride": [
         "BLACK"
     ]
 }

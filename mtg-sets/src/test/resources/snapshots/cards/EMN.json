@@ -609,6 +609,88 @@
     ]
 }
 
+// Grapple with the Past
+{
+    "name": "Grapple with the Past",
+    "manaCost": "{1}{G}",
+    "typeLine": "Instant",
+    "oracleText": "Mill three cards, then you may return a creature or land card from your graveyard to your hand. (To mill three cards, put the top three cards of your library into your graveyard.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": {
+                                    "type": "Fixed",
+                                    "amount": 3
+                                },
+                                "isMill": true
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "GatherCards",
+                    "source": {
+                        "type": "FromZone",
+                        "zone": "Graveyard",
+                        "filter": "creature|land"
+                    },
+                    "storeAs": "gathered1"
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "gathered1",
+                    "selection": {
+                        "type": "ChooseUpTo",
+                        "count": {
+                            "type": "Fixed",
+                            "amount": 1
+                        }
+                    },
+                    "storeSelected": "selected2",
+                    "prompt": "You may return a creature or land card from your graveyard to your hand",
+                    "selectedLabel": "Return to hand",
+                    "remainderLabel": "Leave in graveyard",
+                    "showAllCards": true
+                },
+                {
+                    "type": "MoveCollection",
+                    "from": "selected2",
+                    "destination": {
+                        "type": "ToZone",
+                        "zone": "Hand"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "160",
+        "artist": "Howard Lyon",
+        "flavorText": "Emrakul does not grant wishes. Desires simply align to her will.",
+        "imageUri": "https://cards.scryfall.io/normal/front/d/4/d44a77a6-e8a1-4706-886f-8ab3af56b342.jpg?1783937443"
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Guardian of Pilgrims
 {
     "name": "Guardian of Pilgrims",

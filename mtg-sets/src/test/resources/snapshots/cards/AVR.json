@@ -48,6 +48,66 @@
     ]
 }
 
+// Angel's Tomb
+{
+    "name": "Angel's Tomb",
+    "manaCost": "{3}",
+    "typeLine": "Artifact",
+    "oracleText": "Whenever a creature you control enters, you may have this artifact become a 3/3 white Angel artifact creature with flying until end of turn.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "to": "Battlefield"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "Gated",
+                    "gate": {
+                        "type": "Gate.MayDecide",
+                        "inlineOnTrigger": true
+                    },
+                    "then": {
+                        "type": "BecomeCreature",
+                        "power": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "toughness": {
+                            "type": "Fixed",
+                            "amount": 3
+                        },
+                        "keywords": [
+                            "FLYING"
+                        ],
+                        "creatureTypes": [
+                            "Angel"
+                        ],
+                        "addTypes": [
+                            "CREATURE"
+                        ],
+                        "colors": [
+                            "WHITE"
+                        ]
+                    },
+                    "descriptionOverride": "You may have Angel's Tomb become a 3/3 white Angel artifact creature with flying until end of turn"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "211",
+        "rarity": "UNCOMMON",
+        "artist": "Dan Murayama Scott",
+        "flavorText": "\"Faith can quicken the stones themselves with life.\"\n—Writings of Mikaeus",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/8/28226303-7e67-4b88-adae-2386aff033ec.jpg?1783940655"
+    },
+    "colorIdentityOverride": []
+}
+
 // Avacyn, Angel of Hope
 {
     "name": "Avacyn, Angel of Hope",

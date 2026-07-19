@@ -3845,6 +3845,18 @@ staticAbility {
   (`attachedCreature()`, `source()`) resolve correctly; a `Battlefield`-scope filter matches every
   attacker. No separate "while attacking" gate is needed — must-be-blocked only bites while the
   creature attacks.
+- `CantBeBlockedBy(blockerFilter, filter = GroupFilter.source())` — evasion: the affected creature
+  can't be blocked by creatures matching `blockerFilter` (Juggernaut's "can't be blocked by Walls",
+  Steel Leaf Champion's "power 2 or less"). Resolved by `CantBeBlockedByRule`, which reads three
+  sources: the attacker's own **printed** self-scoped statics, **granted** ones in
+  `GameState.grantedStaticAbilities` (`Effects.GrantStaticAbility`, e.g. Cavern Stomper), and
+  **host-scoped** ones projected from a *different* battlefield permanent through `filter` — an
+  Equipment or Aura whose clause lives on the attachment rather than on the attacker
+  (`GroupFilter.attachedCreature()`; Blazing Torch's "equipped creature can't be blocked by Vampires
+  or Zombies", Artifact Ward's "enchanted creature can't be blocked by artifact creatures"). The
+  host-scoped scan mirrors the `MustBeBlocked` one above: `AttachedTo` resolves to the attachment's
+  host, `Specific` to the bound entity, `Battlefield` matches every attacker, and the attacker must
+  also satisfy the filter's base filter (evaluated with the host as predicate source).
 - `CantBeBlockedByMoreThan(maxBlockers)` — static cap on how many creatures may block the source (CR
   509.1b). For the **turn-scoped, granted** form (Glorfindel, Dauntless Rescuer: "can't be blocked by
   more than one creature each combat this turn"), grant `AbilityFlag.CANT_BE_BLOCKED_BY_MORE_THAN_ONE`
