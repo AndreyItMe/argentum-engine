@@ -2198,6 +2198,62 @@
     ]
 }
 
+// Monstrous Rage
+{
+    "name": "Monstrous Rage",
+    "manaCost": "{R}",
+    "typeLine": "Instant",
+    "oracleText": "Target creature gets +2/+0 until end of turn. Create a Monster Role token attached to it. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1 and has trample.)",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 2
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 0
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "CreateRoleToken",
+                    "roleName": "Monster Role",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "142",
+        "rarity": "UNCOMMON",
+        "artist": "Borja Pindado",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/e/eef5a0ae-5907-42c9-a097-3f973737e392.jpg?1783915091"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Moonshaker Cavalry
 {
     "name": "Moonshaker Cavalry",
@@ -2432,6 +2488,43 @@
     ]
 }
 
+// Regal Bunnicorn
+{
+    "name": "Regal Bunnicorn",
+    "manaCost": "{1}{W}",
+    "typeLine": "Creature — Rabbit Unicorn",
+    "oracleText": "Regal Bunnicorn's power and toughness are each equal to the number of nonland permanents you control.",
+    "creatureStats": {
+        "power": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Battlefield",
+                "filter": "nonland permanent"
+            }
+        },
+        "toughness": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "You",
+                "zone": "Battlefield",
+                "filter": "nonland permanent"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "25",
+        "rarity": "RARE",
+        "artist": "Ilse Gort",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/3/03c7d409-90e7-44d7-a8c6-4eda35fbcc83.jpg?1783915128"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Rimefur Reindeer
 {
     "name": "Rimefur Reindeer",
@@ -2648,6 +2741,53 @@
         "imageUri": "https://cards.scryfall.io/normal/front/3/d/3dc08461-bec6-4a18-b782-da4c92abb789.jpg"
     },
     "colorIdentityOverride": []
+}
+
+// Skewer Slinger
+{
+    "name": "Skewer Slinger",
+    "manaCost": "{1}{R}",
+    "typeLine": "Creature — Dwarf Knight",
+    "oracleText": "Reach\nWhenever this creature blocks or becomes blocked by a creature, this creature deals 1 damage to that creature.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "REACH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "BlocksOrBecomesBlockedByEvent",
+                    "partnerFilter": {
+                        "cardPredicates": [
+                            "IsCreature"
+                        ]
+                    }
+                },
+                "effect": {
+                    "type": "DealDamage",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "TriggeringEntity",
+                    "damageSource": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "149",
+        "artist": "Edgar Sánchez Hidalgo",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/7/e78e50ca-d27b-45db-91fa-7fef3cad16d0.jpg?1783915089"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
 }
 
 // Sleep-Cursed Faerie
@@ -2906,6 +3046,52 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Stormkeld Prowler
+{
+    "name": "Stormkeld Prowler",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Rogue",
+    "oracleText": "Whenever you cast a spell with mana value 5 or greater, put two +1/+1 counters on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            {
+                                "type": "ManaValueAtLeast",
+                                "min": 5
+                            }
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 2,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "71",
+        "artist": "Zara Alfonso",
+        "flavorText": "To the giants, it was one little gem among thousands. But to Kylene, it was a haul that would feed her family for years.",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/f/ff065dbf-77e3-45a8-bcca-aff9eaeb151f.jpg?1783915114"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

@@ -337,6 +337,31 @@ object PredefinedTokens {
     }
 
     /**
+     * Monster Role — Enchantment — Aura Role token (Wilds of Eldraine).
+     * "Enchanted creature gets +1/+1 and has trample."
+     */
+    val MonsterRole = card("Monster Role") {
+        typeLine = "Enchantment — Aura Role"
+        oracleText = "Enchant creature\nEnchanted creature gets +1/+1 and has trample."
+
+        auraTarget = Targets.Creature
+
+        staticAbility {
+            ability = ModifyStats(+1, +1, Filters.EnchantedCreature)
+        }
+
+        staticAbility {
+            ability = GrantKeyword(Keyword.TRAMPLE, Filters.EnchantedCreature)
+        }
+
+        metadata {
+            // "Monster // Sorcerer" flip token: Monster is the upright (front) face — no rotation.
+            imageUri = "https://cards.scryfall.io/normal/front/6/b/6b8a810b-8538-41c3-a792-dbd1a1845faa.jpg?1694737457"
+            artist = "Rovina Cai"
+        }
+    }
+
+    /**
      * Royal Role — Enchantment — Aura Role token (Wilds of Eldraine).
      * "Enchanted creature gets +1/+1 and has ward {1}."
      */
@@ -582,6 +607,7 @@ object PredefinedTokens {
         Cragflame,
         Mutavault,
         SorcererRole,
+        MonsterRole,
         RoyalRole,
         CursedRole,
         Incubator,
