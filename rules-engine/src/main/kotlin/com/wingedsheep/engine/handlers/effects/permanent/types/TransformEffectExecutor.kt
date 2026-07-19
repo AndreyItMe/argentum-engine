@@ -148,20 +148,21 @@ internal fun buildCardComponentForDfcFace(
 )
 
 /**
- * Flip a double-faced entity that is currently **in exile** to [destinationFace] and return it to
- * the battlefield as a new object under its owner's control.
+ * Flip a double-faced entity that is currently in a non-battlefield zone (exile or graveyard) to
+ * [destinationFace] and return it to the battlefield as a new object under its owner's control.
  *
- * The face swap is applied while the entity is still in exile so the EXILE → BATTLEFIELD move
+ * The face swap is applied while the entity is still in its source zone so the → BATTLEFIELD move
  * registers the destination face's static abilities and (for a Saga face) the lore-counter entry
  * setup cleanly. Per Rule 712.8a the front face's [CardComponent] is stashed on the
  * [DoubleFacedComponent] when going to the back face, so the restore-on-leave path can swap back
  * without a registry lookup.
  *
  * Shared by [ReturnSelfFromExileTransformedExecutor] (CR 702.167a Craft return — always to the
- * back face) and [ExileAndReturnTransformedExecutor] (FIN Dominant / eikon — either direction).
- * The caller is responsible for having already moved the entity into exile.
+ * back face), [ExileAndReturnTransformedExecutor] (FIN Dominant / eikon — either direction), and
+ * [ReturnSelfFromZoneTransformedExecutor] (graveyard return — LCI god cycle). The caller is
+ * responsible for the entity already being in the zone it is to be returned from.
  */
-internal fun returnDfcFaceFromExile(
+internal fun returnDfcFace(
     state: GameState,
     cardRegistry: CardRegistry,
     entityId: EntityId,

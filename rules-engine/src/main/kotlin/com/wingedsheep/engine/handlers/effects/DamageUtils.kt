@@ -366,7 +366,11 @@ object DamageUtils {
         // (Temple of Power's transform gate — TurnTracker.RED_NONCOMBAT_DAMAGE_DEALT). A red
         // spell/ability carries no ControllerComponent, so fall back to its caster.
         if (sourceId != null && !isCombatDamage && effectiveAmount > 0) {
-            val sourceIsRed = state.getEntity(sourceId)?.get<CardComponent>()?.colors?.contains(Color.RED) == true
+            // Combine projected colors (battlefield permanents, so a granted-red source counts) with
+            // base card colors (spells on the stack, which have no projection).
+            val sourceColors = projected.getColors(sourceId) +
+                (state.getEntity(sourceId)?.get<CardComponent>()?.colors?.map { it.name } ?: emptyList())
+            val sourceIsRed = Color.RED.name in sourceColors
             if (sourceIsRed) {
                 val sourceControllerId = projected.getController(sourceId)
                     ?: state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId

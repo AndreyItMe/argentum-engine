@@ -53,7 +53,7 @@ import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.EntersAsCopy
 import com.wingedsheep.engine.handlers.effects.EntersWithReplacements
-import com.wingedsheep.engine.handlers.effects.permanent.types.returnDfcFaceFromExile
+import com.wingedsheep.engine.handlers.effects.permanent.types.returnDfcFace
 import com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils
 import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.EntersWithChoice
@@ -2044,7 +2044,7 @@ class StackResolver(
      * exile is invisible — no effect keys on it — so the stack → battlefield move is done directly.
      *
      * Per the official ruling, a card that is not double-faced (or whose back face is not a permanent)
-     * "will not enter at all"; [returnDfcFaceFromExile] no-ops in that case and the caller must fall
+     * "will not enter at all"; [returnDfcFace] no-ops in that case and the caller must fall
      * back to the normal graveyard/exile destination.
      */
     private fun resolveSelfToBattlefieldTransformed(
@@ -2075,11 +2075,11 @@ class StackResolver(
 
         // "Exile it, then put it onto the battlefield transformed": the resolving spell was already
         // popped off the stack (it is in no zone), so place it in its owner's exile — the source
-        // zone [returnDfcFaceFromExile] is built to flip-and-return from.
+        // zone [returnDfcFace] is built to flip-and-return from.
         working = working.addToZone(ZoneKey(ownerId, Zone.EXILE), spellId)
 
         // A DFC spell on the stack carries no DoubleFacedComponent yet (it's stamped on ETB); add
-        // one on its front face so returnDfcFaceFromExile can flip it to the back face.
+        // one on its front face so returnDfcFace can flip it to the back face.
         if (working.getEntity(spellId)?.get<DoubleFacedComponent>() == null) {
             working = working.updateEntity(spellId) { c ->
                 c.with(
@@ -2092,7 +2092,7 @@ class StackResolver(
             }
         }
 
-        val transition = returnDfcFaceFromExile(working, cardRegistry, spellId, DoubleFacedComponent.Face.BACK)
+        val transition = returnDfcFace(working, cardRegistry, spellId, DoubleFacedComponent.Face.BACK)
         working = transition.state
         events.addAll(transition.events)
 
