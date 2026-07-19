@@ -1641,6 +1641,78 @@
     ]
 }
 
+// Gnawing Crescendo
+{
+    "name": "Gnawing Crescendo",
+    "manaCost": "{2}{R}",
+    "typeLine": "Instant",
+    "oracleText": "Creatures you control get +2/+0 until end of turn. Whenever a nontoken creature you control dies this turn, create a 1/1 black Rat creature token with \"This token can't block.\"",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Group",
+                        "filter": {
+                            "baseFilter": "creature ctrl:you"
+                        }
+                    },
+                    "body": {
+                        "type": "ModifyStats",
+                        "powerModifier": {
+                            "type": "Fixed",
+                            "amount": 2
+                        },
+                        "toughnessModifier": {
+                            "type": "Fixed",
+                            "amount": 0
+                        },
+                        "target": "Self"
+                    }
+                },
+                {
+                    "type": "CreateDelayedTrigger",
+                    "effect": {
+                        "type": "CreateToken",
+                        "power": 1,
+                        "toughness": 1,
+                        "colors": [
+                            "BLACK"
+                        ],
+                        "creatureTypes": [
+                            "Rat"
+                        ],
+                        "imageUri": "https://cards.scryfall.io/normal/front/1/e/1e0205f2-25c1-403b-b408-56e3f2d63b4d.jpg?1783915000",
+                        "staticAbilities": [
+                            "CantBlock"
+                        ]
+                    },
+                    "trigger": {
+                        "event": {
+                            "type": "ZoneChangeEvent",
+                            "filter": "creature nontoken ctrl:you",
+                            "from": "Battlefield",
+                            "to": "Graveyard"
+                        },
+                        "binding": "ANY"
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "131",
+        "artist": "Alexey Kruglov",
+        "flavorText": "Totentanz's song had no lyrics, but the rats understood it nonetheless. \"You own this land,\" it said. \"You deserve to feast.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/5/254fc64a-9734-44a6-8869-ab03512f1a99.jpg?1783915094"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ]
+}
+
 // Harried Spearguard
 {
     "name": "Harried Spearguard",
@@ -1924,6 +1996,57 @@
     },
     "colorIdentityOverride": [
         "RED"
+    ]
+}
+
+// Knight of Doves
+{
+    "name": "Knight of Doves",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Knight",
+    "oracleText": "Whenever an enchantment you control is put into a graveyard from the battlefield, create a 1/1 white Bird creature token with flying.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "enchantment ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "WHITE"
+                    ],
+                    "creatureTypes": [
+                        "Bird"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/4/b/4b0c59f8-b407-47e7-8885-8c968f4ceecf.jpg?1783914993"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "19",
+        "rarity": "UNCOMMON",
+        "artist": "Volkan Baǵa",
+        "flavorText": "So many birds, yet the air was still and empty of song. Part of Syr Damon knew something wasn't right, but it was a far-off worry, unimportant and soon forgotten.",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/4/b4f33617-ad19-4d42-ab94-6f21a7fb3dd4.jpg?1783915132"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
     ]
 }
 

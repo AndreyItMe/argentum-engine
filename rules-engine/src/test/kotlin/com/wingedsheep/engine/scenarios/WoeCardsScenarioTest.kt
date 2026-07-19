@@ -24,6 +24,8 @@ import io.kotest.matchers.shouldNotBe
  *  - **Cursed Courtier** — ETB Cursed Role on itself, dropping it to a 1/1 lifelinker.
  *  - **Voracious Vermin** — ETB Rat, and the "another creature you control dies" +1/+1 counter.
  *  - **Wicked Visitor** — an enchantment you control hitting the graveyard drains each opponent.
+ *  - **Knight of Doves** — an enchantment you control hitting the graveyard makes a 1/1 white flying Bird.
+ *  - **Gnawing Crescendo** — team +2/+0, and a turn-long delayed trigger that Rats each nontoken death.
  */
 class WoeCardsScenarioTest : ScenarioTestBase() {
 
@@ -423,6 +425,93 @@ class WoeCardsScenarioTest : ScenarioTestBase() {
 
                 withClue("sacrificing the enchantment feeds Wicked Visitor's drain") {
                     game.getLifeTotal(2) shouldBe opponentLife - 1
+                }
+            }
+        }
+
+        context("Knight of Doves") {
+
+            test("an enchantment you control hitting the graveyard makes a 1/1 white flying Bird") {
+                val game = scenario()
+                    .withPlayers()
+                    .withCardOnBattlefield(1, "Knight of Doves")
+                    .withCardOnBattlefield(1, "Hopeless Nightmare")
+                    .withLandsOnBattlefield(1, "Swamp", 3)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                val nightmare = game.findPermanent("Hopeless Nightmare")!!
+                game.execute(
+                    ActivateAbility(
+                        playerId = game.player1Id,
+                        sourceId = nightmare,
+                        abilityId = nightmareSacrificeAbility
+                    )
+                ).error shouldBe null
+                game.resolveStack()
+
+                val bird = game.findPermanent("Bird Token")
+                withClue("sacrificing the enchantment should feed the Knight's trigger") {
+                    bird shouldNotBe null
+                }
+                val projected = projector.project(game.state)
+                withClue("the Bird is a 1/1 flier") {
+                    projected.getPower(bird!!) shouldBe 1
+                    projected.getToughness(bird) shouldBe 1
+                    projected.hasKeyword(bird, Keyword.FLYING) shouldBe true
+                }
+            }
+        }
+
+        context("Gnawing Crescendo") {
+
+            test("gives your creatures +2/+0 until end of turn") {
+                val game = scenario()
+                    .withPlayers()
+                    .withCardInHand(1, "Gnawing Crescendo")
+                    .withCardOnBattlefield(1, "Grizzly Bears")
+                    .withLandsOnBattlefield(1, "Mountain", 3)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Gnawing Crescendo").error shouldBe null
+                game.resolveStack()
+
+                val bears = game.findPermanent("Grizzly Bears")!!
+                val projected = projector.project(game.state)
+                withClue("2/2 Grizzly Bears becomes 4/2") {
+                    projected.getPower(bears) shouldBe 4
+                    projected.getToughness(bears) shouldBe 2
+                }
+            }
+
+            test("a nontoken creature you control dying this turn creates a Rat that can't block") {
+                val game = scenario()
+                    .withPlayers()
+                    .withCardInHand(1, "Gnawing Crescendo")
+                    .withCardOnBattlefield(1, "Grizzly Bears")
+                    .withCardInHand(1, "Shock")
+                    .withLandsOnBattlefield(1, "Mountain", 4)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                game.castSpell(1, "Gnawing Crescendo").error shouldBe null
+                game.resolveStack()
+
+                withClue("no creature has died yet, so no Rat") {
+                    game.findPermanent("Rat Token") shouldBe null
+                }
+
+                // +2/+0 leaves Grizzly Bears at 4/2, so Shock's 2 damage is still lethal.
+                val bears = game.findPermanent("Grizzly Bears")!!
+                game.castSpell(1, "Shock", targetId = bears).error shouldBe null
+                game.resolveStack()
+
+                withClue("the death this turn fires the delayed trigger → a Rat token") {
+                    game.isInGraveyard(1, "Grizzly Bears") shouldBe true
+                    val rat = game.findPermanent("Rat Token")
+                    rat shouldNotBe null
+                    game.state.projectedState.cantBlock(rat!!) shouldBe true
                 }
             }
         }
