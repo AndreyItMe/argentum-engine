@@ -1726,6 +1726,102 @@
     ]
 }
 
+// Drake Hatcher
+{
+    "name": "Drake Hatcher",
+    "manaCost": "{1}{U}",
+    "typeLine": "Creature — Human Wizard",
+    "oracleText": "Vigilance, prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nWhenever this creature deals combat damage to a player, put that many incubation counters on it.\nRemove three incubation counters from this creature: Create a 2/2 blue Drake creature token with flying.",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "VIGILANCE",
+        "PROWESS"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "SpellCastEvent",
+                    "spellFilter": {
+                        "cardPredicates": [
+                            "IsNoncreature"
+                        ]
+                    }
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": "Self"
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer"
+                },
+                "effect": {
+                    "type": "AddDynamicCounters",
+                    "counterType": "incubation",
+                    "amount": {
+                        "type": "ContextProperty",
+                        "key": "TRIGGER_DAMAGE_AMOUNT"
+                    },
+                    "target": "Self"
+                }
+            }
+        ],
+        "activatedAbilities": [
+            {
+                "id": "ability_3",
+                "cost": {
+                    "type": "CostRemoveCounterFromSelf",
+                    "counterType": "incubation",
+                    "count": 3
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 2,
+                    "toughness": 2,
+                    "colors": [
+                        "BLUE"
+                    ],
+                    "creatureTypes": [
+                        "Drake"
+                    ],
+                    "keywords": [
+                        "FLYING"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/f/4/f4a73034-e20f-4e7e-ac15-3460b1e9c69b.jpg?1782727481"
+                },
+                "descriptionOverride": "Remove three incubation counters: Create a 2/2 blue Drake creature token with flying."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "35",
+        "rarity": "RARE",
+        "artist": "Chris Rallis",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/c/bcaf4196-6bf3-47fa-b5c7-0e77f45cf820.jpg?1782689235"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Dreadwing Scavenger
 {
     "name": "Dreadwing Scavenger",
@@ -3369,6 +3465,38 @@
         "artist": "Xabi Gaztelua",
         "flavorText": "\"Ah, the conquering hero returns! What trials did you face, little one?\"\n—Basri Ket",
         "imageUri": "https://cards.scryfall.io/normal/front/1/b/1b9a0e91-80b5-428f-8f08-931d0631be14.jpg"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
+// Herald of Eternal Dawn
+{
+    "name": "Herald of Eternal Dawn",
+    "manaCost": "{4}{W}{W}{W}",
+    "typeLine": "Creature — Angel",
+    "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\nYou can't lose the game and your opponents can't win the game.",
+    "creatureStats": {
+        "power": 6,
+        "toughness": 6
+    },
+    "keywords": [
+        "FLASH",
+        "FLYING"
+    ],
+    "script": {
+        "staticAbilities": [
+            "GrantCantLoseGame",
+            "GrantOpponentsCantWinGame"
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "17",
+        "rarity": "MYTHIC",
+        "artist": "Martina Fačková",
+        "flavorText": "\"I am the light that breaks the darkness.\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/c/9/c9fdfebf-98e0-4718-bac3-6eee1cd0623d.jpg?1782689249"
     },
     "colorIdentityOverride": [
         "WHITE"
@@ -6228,6 +6356,49 @@
     },
     "colorIdentityOverride": [
         "BLACK"
+    ]
+}
+
+// Starlight Snare
+{
+    "name": "Starlight Snare",
+    "manaCost": "{2}{U}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step.",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "TapUntap",
+                    "target": "EnchantedCreature"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantKeyword",
+                "keyword": "DOESNT_UNTAP"
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "creature"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "514",
+        "artist": "Borja Pindado",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/4/74fb19b2-4f6c-4cbd-8756-a7eb5c7c9ef6.jpg?1782688818"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
     ]
 }
 

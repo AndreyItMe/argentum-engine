@@ -715,6 +715,17 @@ data class GrantsControllerProtectionComponent(
 data object GrantsCantLoseGameComponent : Component
 
 /**
+ * Marks a permanent as granting "your opponents can't win the game" from its controller.
+ * Used for Herald of Eternal Dawn: "your opponents can't win the game."
+ * Read by the win path ([com.wingedsheep.engine.handlers.effects.player.WinGameExecutor] via
+ * [com.wingedsheep.engine.mechanics.sba.player.playerCantWinGame]): an effect that would make an
+ * opponent of this permanent's controller win the game does nothing.
+ * When the permanent leaves the battlefield, the component goes with it — no cleanup needed.
+ */
+@Serializable
+data object GrantsOpponentsCantWinGameComponent : Component
+
+/**
  * Marks a permanent as granting "you don't lose the game for having 0 or less life" to its
  * controller — the narrow sibling of [GrantsCantLoseGameComponent]. Read only by the 704.5a
  * life-loss state-based action (Marina Vendrell's Grimoire); poison / empty-library / effect

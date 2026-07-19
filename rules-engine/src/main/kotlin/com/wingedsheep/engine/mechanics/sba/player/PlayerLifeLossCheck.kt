@@ -8,6 +8,7 @@ import com.wingedsheep.engine.mechanics.sba.StateBasedActionCheck
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.GrantsCantLoseGameComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsCantLoseGameFromLifeComponent
+import com.wingedsheep.engine.state.components.battlefield.GrantsOpponentsCantWinGameComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.player.LossReason
@@ -76,3 +77,18 @@ internal fun playerCantLoseGameFromLife(state: GameState, playerId: EntityId): B
         container.has<GrantsCantLoseGameFromLifeComponent>() &&
             container.get<ControllerComponent>()?.playerId == playerId
     }
+
+/**
+ * True when [playerId] can't win the game because one of its opponents controls a permanent
+ * granting "your opponents can't win the game" (Herald of Eternal Dawn). Consulted by the win
+ * path so an effect that would make [playerId] win does nothing. [GameState.getOpponents] is
+ * team-aware, so a teammate of [playerId] never counts as the source of this restriction.
+ */
+internal fun playerCantWinGame(state: GameState, playerId: EntityId): Boolean {
+    val opponents = state.getOpponents(playerId).toHashSet()
+    return state.getBattlefield().any { entityId ->
+        val container = state.getEntity(entityId) ?: return@any false
+        container.has<GrantsOpponentsCantWinGameComponent>() &&
+            container.get<ControllerComponent>()?.playerId in opponents
+    }
+}

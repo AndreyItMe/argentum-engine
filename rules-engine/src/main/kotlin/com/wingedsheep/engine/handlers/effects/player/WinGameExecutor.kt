@@ -31,6 +31,13 @@ class WinGameExecutor : EffectExecutor<WinGameEffect> {
         val winnerId = context.resolvePlayerTarget(effect.target)
             ?: return EffectResult.error(state, "No target player for WinGameEffect")
 
+        // "Your opponents can't win the game" (Herald of Eternal Dawn): if an opponent of the
+        // prospective winner controls such a grant, the win effect does nothing at all — so it also
+        // doesn't collaterally eliminate the winner's other opponents.
+        if (com.wingedsheep.engine.mechanics.sba.player.playerCantWinGame(state, winnerId)) {
+            return EffectResult.success(state)
+        }
+
         // CR 810.8a — "if either player on a team wins, the entire team wins": only players on
         // opposing teams lose, never the winner's teammate. getOpponents is team-aware (excludes the
         // winner's whole team); in a non-team game it is every other player as before. The defeated

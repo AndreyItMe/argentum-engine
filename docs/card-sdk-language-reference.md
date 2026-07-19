@@ -3878,6 +3878,12 @@ staticAbility {
   (Lich's Mastery, Platinum Angel). Suppresses *all* loss conditions for that player (0-or-less life,
   poison, empty-library draw, effect losses); opponents can still win via "you win the game" effects.
   Projected to `GrantsCantLoseGameComponent`, read by every player-loss SBA via `playerCantLoseGame`.
+- `GrantOpponentsCantWinGame` — the complementary half: an effect that would make an *opponent* of this
+  permanent's controller win the game does nothing at all (Herald of Eternal Dawn, "You can't lose the
+  game and your opponents can't win the game" — pair it with `GrantCantLoseGame` for the full lock).
+  The win fizzles outright, so it also doesn't collaterally eliminate that opponent's other opponents.
+  Projected to `GrantsOpponentsCantWinGameComponent`, read by `WinGameExecutor` via `playerCantWinGame`
+  (team-aware: a teammate's permanent never restricts you).
 - `GrantCantLoseGameFromLife` — the narrow sibling: controller "doesn't lose the game for having 0 or
   less life" (CR 704.5a) only. Poison, empty-library, and effect-based losses still apply — including a
   card's own `Effects.LoseGame`. Marina Vendrell's Grimoire ("…and don't lose the game for having 0 or
@@ -6257,6 +6263,10 @@ substitution.
   `conqueror` (`Counters.CONQUEROR`): TLA — Zhao, the Moon Slayer (a `{7}` ability accumulates one; a
   `ConditionalStaticAbility` gated on `Conditions.SourceCounterCountAtLeast(Counters.CONQUEROR, 1)` switches on a
   `SetLandTypesForGroup` making all nonbasic lands Mountains) — another pure passive counter with no inherent rule.
+  `incubation` (`Counters.INCUBATION`): FDN — Drake Hatcher (a `DealsCombatDamageToPlayer` trigger accumulates
+  "that many" via `AddDynamicCounters(Counters.INCUBATION, DynamicAmount.ContextProperty(TRIGGER_DAMAGE_AMOUNT), Self)`;
+  an activated ability spends three via `Costs.RemoveCounterFromSelf(Counters.INCUBATION, 3)` to hatch a Drake token) —
+  a pure passive resource counter with no inherent rule. Not MTG's Incubate/incubator-token mechanic.
 - `stun` — CR 122.1d, a built-in replacement: "If a permanent with a stun counter on it would become untapped,
   instead remove a stun counter from it." Engine-wired through `untapOrConsumeStun` (`rules-engine/core/UntapHelpers.kt`),
   which is invoked from the untap step (`BeginningPhaseManager`), from `TapUntapExecutor`'s untap branch, and from the
