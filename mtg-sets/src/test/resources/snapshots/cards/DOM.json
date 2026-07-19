@@ -3270,7 +3270,11 @@
             },
             {
                 "type": "GrantSubtype",
-                "subtype": "Knight"
+                "subtype": "Knight",
+                "filter": {
+                    "baseFilter": "permanent",
+                    "scope": "AttachedTo"
+                }
             }
         ],
         "auraTarget": {

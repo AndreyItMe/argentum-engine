@@ -120,6 +120,60 @@
     ]
 }
 
+// Fynn, the Fangbearer
+{
+    "name": "Fynn, the Fangbearer",
+    "manaCost": "{1}{G}",
+    "typeLine": "Legendary Creature — Human Warrior",
+    "oracleText": "Deathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\nWhenever a creature you control with deathtouch deals combat damage to a player, that player gets two poison counters. (A player with ten or more poison counters loses the game.)",
+    "creatureStats": {
+        "power": 1,
+        "toughness": 3
+    },
+    "keywords": [
+        "DEATHTOUCH"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "DealsDamageEvent",
+                    "damageType": "DamageCombat",
+                    "recipient": "AnyPlayer",
+                    "sourceFilter": "creature kw:deathtouch ctrl:you"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "poison",
+                    "count": 2,
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "TriggeringPlayer"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "170",
+        "rarity": "UNCOMMON",
+        "artist": "Lie Setiawan",
+        "flavorText": "\"Come, Koma, and reclaim what you lost! Or does the great serpent fear a rematch?\"",
+        "imageUri": "https://cards.scryfall.io/normal/front/7/d/7d7a8a90-13c1-4b0c-ab2e-fc8d91ccefd9.jpg?1783928214",
+        "rulings": [
+            {
+                "date": "2021-02-05",
+                "text": "Losing the game because a player (preferably an opponent) has ten or more poison counters is a rule of the game. Fynn doesn't have to still be on the battlefield when someone (preferably an opponent) gets their tenth poison counter."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Goldvein Pick
 {
     "name": "Goldvein Pick",

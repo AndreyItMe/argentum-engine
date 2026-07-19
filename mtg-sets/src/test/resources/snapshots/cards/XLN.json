@@ -498,6 +498,81 @@
     ]
 }
 
+// New Horizons
+{
+    "name": "New Horizons",
+    "manaCost": "{2}{G}",
+    "typeLine": "Enchantment — Aura",
+    "oracleText": "Enchant land\nWhen this Aura enters, put a +1/+1 counter on target creature you control.\nEnchanted land has \"{T}: Add two mana of any one color.\"",
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "creature"
+                    }
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature ctrl:you"
+                    },
+                    "id": "creature"
+                }
+            }
+        ],
+        "staticAbilities": [
+            {
+                "type": "GrantActivatedAbility",
+                "ability": {
+                    "id": "ability_2",
+                    "cost": "CostTap",
+                    "effect": {
+                        "type": "AddManaOfChoice",
+                        "amount": {
+                            "type": "Fixed",
+                            "amount": 2
+                        }
+                    }
+                }
+            }
+        ],
+        "auraTarget": {
+            "type": "TargetObject",
+            "filter": {
+                "baseFilter": "land"
+            }
+        }
+    },
+    "metadata": {
+        "collectorNumber": "198",
+        "artist": "Noah Bradley",
+        "imageUri": "https://cards.scryfall.io/normal/front/1/5/15b12c75-1248-4c81-90cf-28e341a885cf.jpg?1783935723",
+        "rulings": [
+            {
+                "date": "2019-05-03",
+                "text": "You can cast New Horizons even if you control no creatures."
+            },
+            {
+                "date": "2019-05-03",
+                "text": "If the land this Aura would enchant is an illegal target by the time New Horizons resolves, the entire spell doesn't resolve. It won't enter the battlefield, so its ability won't trigger."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}
+
 // Pirate's Cutlass
 {
     "name": "Pirate's Cutlass",

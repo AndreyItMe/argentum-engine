@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.dom.cards
 
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -32,7 +33,9 @@ val Dub = card("Dub") {
     }
 
     staticAbility {
-        ability = GrantSubtype("Knight")
+        // GrantSubtype defaults its filter to the source, unlike ModifyStats/GrantKeyword
+        // (which default to the attached creature) — an Aura must say so explicitly.
+        ability = GrantSubtype("Knight", Filters.EnchantedCreature)
     }
 
     metadata {

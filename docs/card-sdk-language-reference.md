@@ -3737,7 +3737,10 @@ staticAbility {
   remove a card type (e.g. `"CREATURE"`). `RemoveCardType` backs Impending's "isn't a creature while it has a time
   counter" (wrapped in a `ConditionalStaticAbility`); reuse it for any "it's no longer a [type]" effect.
 - `GrantSubtype(subtype, filter)` — Layer 4 type-changing static that adds a **fixed** creature subtype to the group,
-  in addition to their other types ("is a Knight in addition to its other types"). (Dub)
+  in addition to their other types ("is a Knight in addition to its other types"). (Dub, Angelic Destiny)
+  **`filter` defaults to the source, not the attached creature** — unlike `ModifyStats` / `GrantKeyword`, which
+  default to `attachedCreature()`. An Aura must pass `Filters.EnchantedCreature` explicitly or it silently makes
+  *itself* the Knight and leaves the enchanted creature alone.
 - `GrantChosenSubtype(filter, includeControlledSpells = false, includeOwnedCardsOutsideBattlefield = false)` — Layer 4
   type-changing static that adds the creature type **chosen as the source entered** (read from the source's
   `CastChoicesComponent`) to the group, in addition to their other types. Chosen-value counterpart to `GrantSubtype`,

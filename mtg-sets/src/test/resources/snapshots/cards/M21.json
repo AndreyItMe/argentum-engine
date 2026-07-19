@@ -343,3 +343,68 @@
         "BLACK"
     ]
 }
+
+// Wildwood Scourge
+{
+    "name": "Wildwood Scourge",
+    "manaCost": "{X}{G}",
+    "typeLine": "Creature — Hydra",
+    "oracleText": "This creature enters with X +1/+1 counters on it.\nWhenever one or more +1/+1 counters are put on another non-Hydra creature you control, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 0,
+        "toughness": 0
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "CountersPlacedEvent",
+                    "counterType": "+1/+1",
+                    "filter": {
+                        "cardPredicates": [
+                            "IsCreature",
+                            {
+                                "type": "NotSubtype",
+                                "subtype": "Hydra"
+                            }
+                        ],
+                        "controllerPredicate": "ControlledByYou"
+                    }
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ],
+        "replacementEffects": [
+            {
+                "type": "EntersWithDynamicCounters",
+                "count": "XValue"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "214",
+        "rarity": "UNCOMMON",
+        "artist": "Bryan Sola",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/6/46ff0b33-d153-4b0e-ac48-7e5ed70dea09.jpg?1783930664",
+        "rulings": [
+            {
+                "date": "2024-11-08",
+                "text": "Abilities that trigger when counters are put on a creature trigger when a creature enters with counters and when a player puts counters on a creature."
+            },
+            {
+                "date": "2024-11-08",
+                "text": "Wildwood Scourge gets just one +1/+1 counter when its last ability resolves, no matter how many counters were put on the non-Hydra creature."
+            }
+        ]
+    },
+    "colorIdentityOverride": [
+        "GREEN"
+    ]
+}

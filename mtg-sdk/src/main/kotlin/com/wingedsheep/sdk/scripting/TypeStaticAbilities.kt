@@ -7,13 +7,19 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Grants a creature subtype to the target (typically the enchanted creature for Auras).
+ * Grants a creature subtype to a group of permanents.
  * Used for Dub: "Enchanted creature is a Knight in addition to its other types."
  *
  * This is a Layer 4 (type-changing) continuous effect that adds a subtype.
  *
+ * NOTE: [filter] defaults to the **source**, unlike [ModifyStats] and [GrantKeyword], which
+ * default to the attached creature. An Aura granting a subtype to the creature it enchants
+ * MUST pass `Filters.EnchantedCreature` explicitly, or it will silently grant the subtype to
+ * itself and leave the enchanted creature untouched — the failure is invisible without a
+ * scenario test that asserts the subtype on the *host*.
+ *
  * @property subtype The creature subtype to add (e.g., "Knight")
- * @property filter What this ability applies to (typically SourceCreature for Auras → enchanted creature)
+ * @property filter What this ability applies to; defaults to the source, NOT the enchanted creature
  */
 @SerialName("GrantSubtype")
 @Serializable
