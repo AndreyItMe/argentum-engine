@@ -829,6 +829,47 @@
     ]
 }
 
+// Cursed Courtier
+{
+    "name": "Cursed Courtier",
+    "manaCost": "{2}{W}",
+    "typeLine": "Creature — Human Noble",
+    "oracleText": "Lifelink\nWhen this creature enters, create a Cursed Role token attached to it. (Enchanted creature is 1/1.)",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 3
+    },
+    "keywords": [
+        "LIFELINK"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateRoleToken",
+                    "roleName": "Cursed Role",
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "9",
+        "rarity": "UNCOMMON",
+        "artist": "Tuan Duong Chu",
+        "flavorText": "It was the first and last time anyone attempted to levy a tax on the witches of Dunbarrow.",
+        "imageUri": "https://cards.scryfall.io/normal/front/3/d/3d2d5a71-d6e1-4c96-9a53-0e370047a56e.jpg?1783915134"
+    },
+    "colorIdentityOverride": [
+        "WHITE"
+    ]
+}
+
 // Dutiful Griffin
 {
     "name": "Dutiful Griffin",
@@ -2452,6 +2493,70 @@
     ]
 }
 
+// Rat Out
+{
+    "name": "Rat Out",
+    "manaCost": "{B}",
+    "typeLine": "Instant",
+    "oracleText": "Up to one target creature gets -1/-1 until end of turn. You create a 1/1 black Rat creature token with \"This token can't block.\"",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "ModifyStats",
+                    "powerModifier": {
+                        "type": "Fixed",
+                        "amount": -1
+                    },
+                    "toughnessModifier": {
+                        "type": "Fixed",
+                        "amount": -1
+                    },
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target"
+                    }
+                },
+                {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Rat"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/1/e/1e0205f2-25c1-403b-b408-56e3f2d63b4d.jpg?1783915000",
+                    "staticAbilities": [
+                        "CantBlock"
+                    ]
+                }
+            ]
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "optional": true,
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "103",
+        "artist": "Michele Giorgi",
+        "flavorText": "\"Hold this for me.\"\n—Totentanz, swarm piper",
+        "imageUri": "https://cards.scryfall.io/normal/front/f/2/f2c42755-bf91-4c75-95c6-d2a60ba3492a.jpg?1783915104"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Redcap Thief
 {
     "name": "Redcap Thief",
@@ -3543,6 +3648,69 @@
     ]
 }
 
+// Voracious Vermin
+{
+    "name": "Voracious Vermin",
+    "manaCost": "{2}{B}",
+    "typeLine": "Creature — Rat",
+    "oracleText": "When this creature enters, create a 1/1 black Rat creature token with \"This token can't block.\"\nWhenever another creature you control dies, put a +1/+1 counter on this creature.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "CreateToken",
+                    "power": 1,
+                    "toughness": 1,
+                    "colors": [
+                        "BLACK"
+                    ],
+                    "creatureTypes": [
+                        "Rat"
+                    ],
+                    "imageUri": "https://cards.scryfall.io/normal/front/1/e/1e0205f2-25c1-403b-b408-56e3f2d63b4d.jpg?1783915000",
+                    "staticAbilities": [
+                        "CantBlock"
+                    ]
+                }
+            },
+            {
+                "id": "ability_2",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "creature ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "OTHER",
+                "effect": {
+                    "type": "AddCounters",
+                    "counterType": "+1/+1",
+                    "count": 1,
+                    "target": "Self"
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "116",
+        "artist": "Milivoj Ćeran",
+        "flavorText": "Lord Skitter promised the starving rats of Edgewall that they would never go hungry again.",
+        "imageUri": "https://cards.scryfall.io/normal/front/8/0/8059be65-3c73-49bb-a3b6-c346ce2f9fa4.jpg?1783915099"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Warehouse Tabby
 {
     "name": "Warehouse Tabby",
@@ -3604,6 +3772,52 @@
         "artist": "Steve Prescott",
         "flavorText": "For every rat she kills, ten more take its place.",
         "imageUri": "https://cards.scryfall.io/normal/front/d/5/d500ad81-9659-4a00-8f99-8be7c23587e8.jpg?1783915100"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
+// Wicked Visitor
+{
+    "name": "Wicked Visitor",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Nightmare",
+    "oracleText": "Whenever an enchantment you control is put into a graveyard from the battlefield, each opponent loses 1 life.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 2
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "filter": "enchantment ctrl:you",
+                    "from": "Battlefield",
+                    "to": "Graveyard"
+                },
+                "binding": "ANY",
+                "effect": {
+                    "type": "LoseLife",
+                    "amount": {
+                        "type": "Fixed",
+                        "amount": 1
+                    },
+                    "target": {
+                        "type": "PlayerRef",
+                        "player": "EachOpponent"
+                    }
+                }
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "118",
+        "artist": "Nicholas Gregory",
+        "flavorText": "Amalgamations of many childhood nightmares stalked the realm of dreams, feeding on the collective terror of all those trapped in the Wicked Slumber.",
+        "imageUri": "https://cards.scryfall.io/normal/front/e/2/e26ec4b8-0012-48c4-9ccb-0f062df0c250.jpg?1783915099"
     },
     "colorIdentityOverride": [
         "BLACK"
