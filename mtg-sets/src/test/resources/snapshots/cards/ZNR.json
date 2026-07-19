@@ -178,6 +178,66 @@
     ]
 }
 
+// Nullpriest of Oblivion
+{
+    "name": "Nullpriest of Oblivion",
+    "manaCost": "{1}{B}",
+    "typeLine": "Creature — Vampire Cleric",
+    "oracleText": "Kicker {3}{B} (You may pay an additional {3}{B} as you cast this spell.)\nLifelink\nMenace (This creature can't be blocked except by two or more creatures.)\nWhen this creature enters, if it was kicked, return target creature card from your graveyard to the battlefield.",
+    "creatureStats": {
+        "power": 2,
+        "toughness": 1
+    },
+    "keywords": [
+        "LIFELINK",
+        "MENACE"
+    ],
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{3}{B}"
+        }
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "MoveToZone",
+                    "target": {
+                        "type": "BoundVariable",
+                        "name": "target creature card from your graveyard"
+                    },
+                    "destination": "Battlefield"
+                },
+                "targetRequirement": {
+                    "type": "TargetObject",
+                    "filter": {
+                        "baseFilter": "creature own:you",
+                        "zone": "Graveyard"
+                    },
+                    "id": "target creature card from your graveyard"
+                },
+                "triggerCondition": "WasKicked",
+                "descriptionOverride": "When this creature enters, if it was kicked, return target creature card from your graveyard to the battlefield."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "118",
+        "rarity": "RARE",
+        "artist": "Yongjae Choi",
+        "imageUri": "https://cards.scryfall.io/normal/front/0/8/086fc7fb-efcf-4676-8455-39b63edaec6a.jpg?1783929369"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Spitfire Lagac
 {
     "name": "Spitfire Lagac",
