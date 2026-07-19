@@ -197,6 +197,62 @@
     ]
 }
 
+// Bellowing Bruiser
+{
+    "name": "Bellowing Bruiser",
+    "manaCost": "{4}{R}",
+    "typeLine": "Creature — Ogre",
+    "oracleText": "Haste",
+    "creatureStats": {
+        "power": 4,
+        "toughness": 4
+    },
+    "keywords": [
+        "HASTE"
+    ],
+    "metadata": {
+        "collectorNumber": "121",
+        "artist": "Kai Carpenter",
+        "flavorText": "You can't give an ogre the runaround.",
+        "imageUri": "https://cards.scryfall.io/normal/front/2/6/26ece013-f3ef-4c12-9dea-b2789f61f8a0.jpg?1783915098"
+    },
+    "colorIdentityOverride": [
+        "RED"
+    ],
+    "layout": "ADVENTURE",
+    "cardFaces": [
+        {
+            "name": "Beat a Path",
+            "manaCost": "{2}{R}",
+            "typeLine": "Sorcery — Adventure",
+            "oracleText": "Up to two target creatures can't block this turn. (Then exile this card. You may cast the creature later from exile.)",
+            "script": {
+                "spellEffect": {
+                    "type": "ForEach",
+                    "space": "IterationSpace.Targets",
+                    "body": {
+                        "type": "CantBlockTargetCreatures",
+                        "target": {
+                            "type": "ContextTarget",
+                            "index": 0
+                        }
+                    }
+                },
+                "targetRequirements": [
+                    {
+                        "type": "TargetObject",
+                        "count": 2,
+                        "optional": true,
+                        "filter": {
+                            "baseFilter": "creature"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 // Beluna's Gatekeeper
 {
     "name": "Beluna's Gatekeeper",
