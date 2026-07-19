@@ -615,6 +615,65 @@
     ]
 }
 
+// Rite of Replication
+{
+    "name": "Rite of Replication",
+    "manaCost": "{2}{U}{U}",
+    "typeLine": "Sorcery",
+    "oracleText": "Kicker {5} (You may pay an additional {5} as you cast this spell.)\nCreate a token that's a copy of target creature. If this spell was kicked, create five of those tokens instead.",
+    "keywordAbilities": [
+        {
+            "type": "Kicker",
+            "manaCost": "{5}"
+        }
+    ],
+    "script": {
+        "spellEffect": {
+            "type": "Gated",
+            "gate": {
+                "type": "Gate.WhenCondition",
+                "condition": "WasKicked"
+            },
+            "then": {
+                "type": "CreateTokenCopyOfTarget",
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                },
+                "count": {
+                    "type": "Fixed",
+                    "amount": 5
+                }
+            },
+            "otherwise": {
+                "type": "CreateTokenCopyOfTarget",
+                "target": {
+                    "type": "BoundVariable",
+                    "name": "target"
+                }
+            }
+        },
+        "targetRequirements": [
+            {
+                "type": "TargetObject",
+                "filter": {
+                    "baseFilter": "creature"
+                },
+                "id": "target"
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "61",
+        "rarity": "RARE",
+        "artist": "Matt Cavotta",
+        "imageUri": "https://cards.scryfall.io/normal/front/4/5/4530fe45-8a3d-48e9-a7a5-abf8fb1485e3.jpg?1783942162"
+    },
+    "colorIdentityOverride": [
+        "BLUE"
+    ]
+}
+
 // Vampire Nighthawk
 {
     "name": "Vampire Nighthawk",
