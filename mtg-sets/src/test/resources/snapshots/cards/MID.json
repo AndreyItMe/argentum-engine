@@ -127,6 +127,97 @@
     ]
 }
 
+// Bloodtithe Collector
+{
+    "name": "Bloodtithe Collector",
+    "manaCost": "{4}{B}",
+    "typeLine": "Creature — Vampire Noble",
+    "oracleText": "Flying\nWhen this creature enters, if an opponent lost life this turn, each opponent discards a card.",
+    "creatureStats": {
+        "power": 3,
+        "toughness": 4
+    },
+    "keywords": [
+        "FLYING"
+    ],
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": {
+                    "type": "ZoneChangeEvent",
+                    "to": "Battlefield"
+                },
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherCards",
+                                "source": {
+                                    "type": "FromZone",
+                                    "zone": "Hand"
+                                },
+                                "storeAs": "hand"
+                            },
+                            {
+                                "type": "SelectFromCollection",
+                                "from": "hand",
+                                "selection": {
+                                    "type": "ChooseExactly",
+                                    "count": {
+                                        "type": "Fixed",
+                                        "amount": 1
+                                    }
+                                },
+                                "storeSelected": "discarded"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "discarded",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                },
+                                "moveType": "Discard"
+                            }
+                        ]
+                    }
+                },
+                "triggerCondition": {
+                    "type": "Compare",
+                    "left": {
+                        "type": "TurnTracking",
+                        "player": "EachOpponent",
+                        "tracker": "LIFE_LOST"
+                    },
+                    "operator": "GTE",
+                    "right": {
+                        "type": "Fixed",
+                        "amount": 1
+                    }
+                },
+                "descriptionOverride": "When this creature enters, if an opponent lost life this turn, each opponent discards a card."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "90",
+        "rarity": "UNCOMMON",
+        "artist": "Maria Zolotukhina",
+        "flavorText": "For the more refined vampire, breaking a victim's will is far more satisfying than simply taking their blood.",
+        "imageUri": "https://cards.scryfall.io/normal/front/5/7/57d5e536-7774-4949-8127-727ae4d8fc80.jpg?1783925623"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Cathar Commando
 {
     "name": "Cathar Commando",
