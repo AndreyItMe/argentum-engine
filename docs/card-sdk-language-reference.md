@@ -2242,6 +2242,13 @@ This is the player-arm prerequisite for the planned composable mixed `TargetUnio
 - `Filters.PlainsCard` / `IslandCard` / `SwampCard` / `MountainCard` / `ForestCard` — specific basics.
 - `Filters.Instant` — instant card.
 - `Filters.Sorcery` — sorcery card.
+- `Filters.HasAdventure` — card that has an Adventure (adventurer card), regardless of which face it
+  currently shows (`CardPredicate.HasAdventure`, backed by `CardComponent.hasAdventure`). A static,
+  whole-card characteristic evaluated the same way in every zone.
+- `Filters.InstantSorceryOrAdventure` (= `GameObjectFilter.InstantSorceryOrAdventure`) — instant,
+  sorcery, or a card that has an Adventure. Backs Frantic Firebolt's "cards in your graveyard that
+  are instant cards, sorcery cards, and/or have an Adventure" tally (a single membership test, so a
+  card that satisfies more than one clause is counted once).
 - `Filters.Permanent` — permanent card.
 - `Filters.NonlandPermanent` — nonland permanent.
 - `Filters.WithSubtype(subtype)` — card of a given subtype.
