@@ -3,12 +3,15 @@ package com.wingedsheep.engine.scenarios
 import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
+import com.wingedsheep.engine.view.ClientStateTransformer
 import com.wingedsheep.mtg.sets.definitions.atq.cards.Ornithopter
 import com.wingedsheep.mtg.sets.definitions.lci.cards.ShipwreckSentry
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.model.Deck
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -85,6 +88,58 @@ class ShipwreckSentryScenarioTest : FunSpec({
         }
         withClue("Sentry is now an attacker") {
             driver.state.getEntity(sentry)?.get<AttackingComponent>().shouldNotBeNull()
+        }
+    }
+
+    // The client "can attack despite defender" badge (ClientCardEffect on the ClientCard) shares
+    // DefenderBypass with the attack-legality rule, so it appears exactly when the Sentry could be
+    // declared — and, crucially, already in the main phase after the artifact resolves, before the
+    // declare-attackers step. That early reveal is the whole point: the player sees the Defender can
+    // now attack right after playing an artifact.
+    fun hasCanAttackBadge(driver: GameTestDriver, viewer: com.wingedsheep.sdk.model.EntityId, card: com.wingedsheep.sdk.model.EntityId): Boolean =
+        ClientStateTransformer(driver.cardRegistry).transform(driver.state, viewer)
+            .cards[card]?.activeEffects
+            ?.any { it.description == "Can attack despite defender" } ?: false
+
+    test("no 'can attack despite defender' badge when no artifact entered this turn") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 40), skipMulligans = true)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+        val you = driver.activePlayer!!
+
+        val sentry = driver.putCreatureOnBattlefield(you, "Shipwreck Sentry")
+        driver.removeSummoningSickness(sentry)
+
+        withClue("Defender with no artifact having entered shows no can-attack badge") {
+            hasCanAttackBadge(driver, you, sentry).shouldBeFalse()
+        }
+    }
+
+    test("badge reveals the Sentry can attack in the main phase, right after an artifact enters") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 40), skipMulligans = true)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+        val you = driver.activePlayer!!
+        val opponent = driver.state.turnOrder.first { it != you }
+
+        val sentry = driver.putCreatureOnBattlefield(you, "Shipwreck Sentry")
+        driver.removeSummoningSickness(sentry)
+
+        withClue("No badge before any artifact enters") {
+            hasCanAttackBadge(driver, you, sentry).shouldBeFalse()
+        }
+
+        val thopter = driver.putCardInHand(you, "Ornithopter")
+        driver.castSpell(you, thopter).isSuccess shouldBe true
+        driver.bothPass() // resolve Ornithopter — an artifact enters under your control this turn
+
+        // Still the precombat main phase — the reveal happens here, not only at declare-attackers.
+        driver.state.step shouldBe Step.PRECOMBAT_MAIN
+        withClue("Badge appears for you once an artifact entered this turn") {
+            hasCanAttackBadge(driver, you, sentry).shouldBeTrue()
+        }
+        withClue("The bypass is public information, so the opponent sees the badge too") {
+            hasCanAttackBadge(driver, opponent, sentry).shouldBeTrue()
         }
     }
 })

@@ -1055,6 +1055,12 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   turn as though it didn't have defender. Adds a transient `CanAttackDespiteDefenderThisTurnComponent`
   honored by the defender attack-restriction rule and cleaned up at end of turn. The
   activated/temporary counterpart to the static `CanAttackDespiteDefender` ability (Krotiq Nestguard).
+  Both the static ability and this transient grant are read directly by the attack-restriction rule
+  (via the shared `DefenderBypass` helper), never through the layer system — so while a Defender's
+  restriction is lifted, `ClientStateTransformer` surfaces a "Can attack despite defender"
+  `activeEffects` badge on the card (mirroring how Akawalli's descend-8 block restriction is shown),
+  letting the player see the creature can attack the moment the condition is met (e.g. after an
+  artifact enters for Shipwreck Sentry / Mechan Shieldmate).
 - `Effects.Goad(target = ContextTarget(0))` (`GoadEffect`) — goad target creature (CR 701.15).
   Tags the creature with `GoadedComponent(goaderIds: Set<EntityId>)`; the effect's controller at
   resolution is recorded as the goader. While goaded the creature (a) must attack each combat if able

@@ -3,6 +3,7 @@ package com.wingedsheep.engine.view
 import com.wingedsheep.sdk.core.AbilityFlag
 import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.engine.mechanics.combat.rules.DefenderBypass
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Subtype
@@ -2692,6 +2693,30 @@ class ClientStateTransformer(
                         )
                     }
                 }
+            }
+        }
+
+        // Printed "can attack despite defender" (Shipwreck Sentry, Mechan Shieldmate, …) and the
+        // temporary Krotiq-style grant are read directly by AttackRestrictionRules, never through the
+        // layer system, so they never reach the projected keyword set / abilityFlags. Surface a badge
+        // while the creature actually has Defender AND the restriction is currently lifted, so the
+        // player can see a Defender that can presently attack (e.g. after an artifact entered this
+        // turn). Shares DefenderBypass with the attack-legality rule so the badge shows exactly when
+        // the attack would be allowed.
+        if (restrictionController != null &&
+            state.projectedState.hasKeyword(entityId, Keyword.DEFENDER) &&
+            DefenderBypass.isActive(state, entityId, restrictionController, cardRegistry)
+        ) {
+            val description = "Can attack despite defender"
+            if (seenGrantDescriptions.add(description)) {
+                effects.add(
+                    ClientCardEffect(
+                        effectId = "can_attack_despite_defender",
+                        name = "Can Attack",
+                        description = description,
+                        icon = "can-attack"
+                    )
+                )
             }
         }
 
