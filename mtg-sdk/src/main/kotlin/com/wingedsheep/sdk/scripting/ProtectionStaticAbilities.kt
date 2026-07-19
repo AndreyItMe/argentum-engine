@@ -300,6 +300,23 @@ data object GrantCantLoseGame : StaticAbility {
 }
 
 /**
+ * Your opponents can't win the game.
+ * Grants the "opponents can't win the game" effect from the permanent's controller.
+ * Used for Herald of Eternal Dawn, etc.
+ *
+ * When active, any effect that would cause an opponent of the controller to win the game
+ * (e.g. an alternate "you win the game" win condition) does nothing at all — so it also
+ * doesn't collaterally eliminate the winner's *other* opponents. This is distinct from, and
+ * complementary to, [GrantCantLoseGame] on the same permanent: can't-lose protects the
+ * controller from being made to lose, while this clause fizzles the opponent's win outright.
+ */
+@SerialName("GrantOpponentsCantWinGame")
+@Serializable
+data object GrantOpponentsCantWinGame : StaticAbility {
+    override val description: String = "Your opponents can't win the game"
+}
+
+/**
  * Grants the controller "you don't lose the game for having 0 or less life" — the *narrow*
  * sibling of [GrantCantLoseGame].
  *

@@ -66,7 +66,8 @@ enum class CounterType {
     NET,
     LANDMARK,
     DREAD,
-    SPORE;
+    SPORE,
+    INCUBATION;
 
     companion object {
         /**
@@ -264,6 +265,15 @@ object Counters {
      * NOT a keyword counter, so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
      */
     const val DREAD = "dread"
+
+    /**
+     * Incubation counter (FDN — Drake Hatcher). Passive storage counter with no inherent rule; the
+     * card's own abilities accumulate it (a combat-damage trigger adds one per point of damage) and
+     * spend it (remove three as an activation cost to hatch a Drake token). NOT a keyword counter,
+     * so it is intentionally absent from `StateProjector.KEYWORD_COUNTER_MAP`.
+     * Not MTG's Incubate/incubator-token mechanic.
+     */
+    const val INCUBATION = "incubation"
 
     /**
      * Wildcard sentinel for triggers/events that fire on counters of *any* type, e.g.
