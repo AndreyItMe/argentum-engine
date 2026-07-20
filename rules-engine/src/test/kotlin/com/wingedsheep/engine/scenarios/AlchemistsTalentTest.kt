@@ -150,12 +150,12 @@ class AlchemistsTalentTest : ScenarioTestBase() {
                 }
 
                 // Mana abilities resolve immediately (no stack). Treasure should be
-                // sacrificed, treasureMana counter should be at 2, and red pool at 2.
+                // sacrificed, both mana units tagged as Treasure-subtype provenance, and red pool at 2.
                 val poolAfter = game.state.getEntity(game.player1Id)?.get<ManaPoolComponent>()
                 poolAfter.shouldNotBeNull()
                 withClue("Two red mana should have been added") { poolAfter.red shouldBe 2 }
                 withClue("Both units should be tagged as Treasure mana") {
-                    poolAfter.treasureMana shouldBe 2
+                    poolAfter.manaBySubtype[com.wingedsheep.sdk.core.Subtype.TREASURE] shouldBe 2
                 }
                 withClue("Treasure should no longer be on the battlefield (sacrificed)") {
                     game.findPermanent("Treasure") shouldBe null
@@ -183,7 +183,10 @@ class AlchemistsTalentTest : ScenarioTestBase() {
                 // level 3 trigger.
                 game.state = game.state.updateEntity(game.player1Id) { container ->
                     container.with(
-                        ManaPoolComponent(red = 1, treasureMana = 1)
+                        ManaPoolComponent(
+                            red = 1,
+                            manaBySubtype = mapOf(com.wingedsheep.sdk.core.Subtype.TREASURE to 1)
+                        )
                     )
                 }
 

@@ -479,6 +479,23 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     }
 
     /**
+     * The number of mana units produced by a source with [subtype] that were spent to cast the
+     * current spell — e.g. Bat Colony's "create a 1/1 black Bat with flying for each mana from a
+     * Cave spent to cast it" is `ManaSpentFromSubtype(Subtype.CAVE)`.
+     *
+     * Evaluated against the source entity's recorded payment (via `ManaSpentReader`), so it resolves
+     * correctly whether read while the spell is still on the stack or as the permanent enters and its
+     * enters-the-battlefield ability resolves. A permanent put onto the battlefield without being
+     * cast spent no mana, so this is 0 for it. The subtype is snapshotted at production, so a
+     * Treasure sacrificed for its own mana still counts.
+     */
+    @SerialName("ManaSpentFromSubtype")
+    @Serializable
+    data class ManaSpentFromSubtype(val subtype: com.wingedsheep.sdk.core.Subtype) : DynamicAmount {
+        override val description: String = "the amount of mana from a ${subtype.value} spent to cast this"
+    }
+
+    /**
      * The number of distinct *colors* of mana spent to cast the source spell (0–5).
      *
      * Backs the **Converge** ability word — "Converge — … for each color of mana spent to

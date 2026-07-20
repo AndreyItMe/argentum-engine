@@ -1521,8 +1521,8 @@ class ConditionEvaluator(
         context: EffectContext
     ): Boolean {
         val records = state.spellsCastThisTurnByPlayer[context.controllerId] ?: return false
-        return records.count { it.paidWithTreasureMana } == 1 &&
-            records.lastOrNull()?.paidWithTreasureMana == true
+        return records.count { com.wingedsheep.sdk.core.Subtype.TREASURE in it.spentManaSubtypes } == 1 &&
+            records.lastOrNull()?.spentManaSubtypes?.contains(com.wingedsheep.sdk.core.Subtype.TREASURE) == true
     }
 
     private fun evaluateSourceAbilityResolvedNTimes(

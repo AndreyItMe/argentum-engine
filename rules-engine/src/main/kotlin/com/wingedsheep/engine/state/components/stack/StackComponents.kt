@@ -75,6 +75,14 @@ data class SpellOnStackComponent(
     val manaSpentGreen: Int = 0,
     val manaSpentColorless: Int = 0,
     /**
+     * Producing-source subtype → count of mana carrying that subtype spent to cast this spell.
+     * Read at resolution (and after it resolves onto the battlefield, via [ManaSpentReader]) by
+     * `DynamicAmount.ManaSpentFromSubtype` — e.g. Bat Colony's "a 1/1 Bat for each mana from a Cave
+     * spent to cast it". Empty when no tagged mana was spent. See
+     * [com.wingedsheep.engine.state.components.player.ManaPoolComponent.manaBySubtype].
+     */
+    val manaSpentBySubtype: Map<com.wingedsheep.sdk.core.Subtype, Int> = emptyMap(),
+    /**
      * Per-color mana spent on the `{X}` portion of this spell, for a color-restricted X
      * (e.g. Soul Burn's "spend only black and/or red mana on X"). Read at resolution via
      * `DynamicAmount.ManaSpentOnX`. Empty when X was unrestricted or the spell has no X.

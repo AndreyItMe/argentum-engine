@@ -54,4 +54,18 @@ object ManaSpentReader {
      */
     fun distinctColorsSpent(state: GameState, entityId: EntityId): Int =
         coloredBuckets(state, entityId).count { it > 0 }
+
+    /**
+     * How many mana units carrying producing-source [subtype] were spent to cast [entityId]. Reads
+     * the live spell-on-stack tally while the entity is still a spell, otherwise the [CastRecordComponent]
+     * snapshot stamped when it resolved onto the battlefield; 0 if it wasn't cast or no tagged mana
+     * was spent. Backs `DynamicAmount.ManaSpentFromSubtype` (Bat Colony's "a Bat for each mana from a
+     * Cave spent to cast it").
+     */
+    fun subtypeSpent(state: GameState, entityId: EntityId, subtype: com.wingedsheep.sdk.core.Subtype): Int {
+        val container = state.getEntity(entityId) ?: return 0
+        container.get<SpellOnStackComponent>()?.let { return it.manaSpentBySubtype[subtype] ?: 0 }
+        container.get<CastRecordComponent>()?.let { return it.manaSpentBySubtype[subtype] ?: 0 }
+        return 0
+    }
 }

@@ -2867,7 +2867,7 @@ class CastSpellHandler(
                 manaValue = cardComponent.manaValue,
                 colors = cardComponent.colors,
                 isFaceDown = action.castFaceDown,
-                paidWithTreasureMana = paymentResult.paidWithTreasureMana,
+                spentManaSubtypes = paymentResult.spentManaProvenance.bySubtype.keys.filter { (paymentResult.spentManaProvenance.bySubtype[it] ?: 0) > 0 }.toSet(),
                 // The cast card moves to the stack keeping its entity id, so this matches the
                 // resolving spell's EffectContext.sourceId (used by SpellsCastThisTurn excludeSelf).
                 sourceEntityId = action.cardId,
@@ -2980,7 +2980,7 @@ class CastSpellHandler(
             manaSpentColorless = manaSpentEvent?.colorless ?: 0,
             manaSpentOnXByColor = paymentResult.xManaSpentByColor,
             faceIndex = action.faceIndex,
-            paidWithTreasureMana = paymentResult.paidWithTreasureMana,
+            spentManaProvenance = paymentResult.spentManaProvenance,
             castTimeFlags = castTimeFlags
         )
 

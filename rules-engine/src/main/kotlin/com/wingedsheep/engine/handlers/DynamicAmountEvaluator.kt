@@ -156,6 +156,9 @@ class DynamicAmountEvaluator(
             is DynamicAmount.DistinctColorsManaSpent ->
                 context.sourceId?.let { ManaSpentReader.distinctColorsSpent(state, it) } ?: 0
 
+            is DynamicAmount.ManaSpentFromSubtype ->
+                context.sourceId?.let { ManaSpentReader.subtypeSpent(state, it, amount.subtype) } ?: 0
+
             is DynamicAmount.ManaSpentOnX -> context.manaSpentOnXByColor[amount.color] ?: 0
 
             is DynamicAmount.YourLifeTotal -> {

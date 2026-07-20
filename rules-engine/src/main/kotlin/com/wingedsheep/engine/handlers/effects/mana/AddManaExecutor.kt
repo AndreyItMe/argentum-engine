@@ -49,7 +49,7 @@ class AddManaExecutor(
 
         // Treasure tagging only applies to ordinary, plain-counter mana (the `add` branch above).
         if (effect.restriction == null && effect.expiry == ManaExpiry.END_OF_TURN) {
-            newState = TreasureManaTracker.tagAddedMana(newState, context.controllerId, context.sourceId, amount)
+            newState = ManaProvenanceTracker.tagAddedMana(newState, context.controllerId, context.sourceId, amount)
         }
 
         return EffectResult.success(newState)

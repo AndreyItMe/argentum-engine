@@ -69,7 +69,8 @@ enum class CounterType {
     DREAD,
     SPORE,
     INCUBATION,
-    FELLOWSHIP;
+    FELLOWSHIP,
+    BORE;
 
     companion object {
         /**
@@ -292,6 +293,15 @@ object Counters {
      * `StateProjector.KEYWORD_COUNTER_MAP`.
      */
     const val FELLOWSHIP = "fellowship"
+
+    /**
+     * Bore counter (LCI — Brass's Tunnel-Grinder). Passive named counter with no inherent rule of
+     * its own — Brass's Tunnel-Grinder adds one at its end step if you descended this turn and reads
+     * the count (via `Conditions.SourceCounterCountAtLeast(...)`) to remove three and transform into
+     * Tecutlan, the Searing Rift. NOT a keyword counter, so it is intentionally absent from
+     * `StateProjector.KEYWORD_COUNTER_MAP`.
+     */
+    const val BORE = "bore"
 
     /**
      * Wildcard sentinel for triggers/events that fire on counters of *any* type, e.g.

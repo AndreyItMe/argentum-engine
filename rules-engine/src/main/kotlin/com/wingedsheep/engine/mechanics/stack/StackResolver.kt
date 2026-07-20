@@ -138,7 +138,8 @@ class StackResolver(
         manaSpentColorless: Int = 0,
         manaSpentOnXByColor: Map<Color, Int> = emptyMap(),
         faceIndex: Int? = null,
-        paidWithTreasureMana: Boolean = false,
+        spentManaProvenance: com.wingedsheep.engine.mechanics.mana.SpentManaProvenance =
+            com.wingedsheep.engine.mechanics.mana.SpentManaProvenance(),
         castTimeFlags: Set<String> = emptySet()
     ): ExecutionResult {
         val container = state.getEntity(cardId)
@@ -205,6 +206,7 @@ class StackResolver(
                 manaSpentRed = manaSpentRed,
                 manaSpentGreen = manaSpentGreen,
                 manaSpentColorless = manaSpentColorless,
+                manaSpentBySubtype = spentManaProvenance.bySubtype,
                 manaSpentOnXByColor = manaSpentOnXByColor,
                 faceIndex = faceIndex,
                 castTimeFlags = castTimeFlags
@@ -341,7 +343,8 @@ class StackResolver(
                 totalManaSpent = totalManaSpent,
                 distinctColorsSpent =
                     com.wingedsheep.engine.handlers.ManaSpentReader.distinctColorsSpent(newState, cardId),
-                paidWithTreasureMana = paidWithTreasureMana,
+                spentManaSubtypes = spentManaProvenance.bySubtype.keys.filter { (spentManaProvenance.bySubtype[it] ?: 0) > 0 }.toSet(),
+                spentManaSourceIds = spentManaProvenance.sourceIds,
                 chosenModesCount = reportedChosenModesCount,
                 manaValue = cardComponent.manaValue
             )
@@ -1255,17 +1258,20 @@ class StackResolver(
                 )
             }
 
-            // Record mana colors spent to cast (for mana-spent-gated triggers)
+            // Record mana colors and provenance spent to cast (for mana-spent-gated triggers and
+            // enters-the-battlefield "for each mana from a [subtype] spent to cast it" payoffs).
             if (spellComponent.manaSpentWhite > 0 || spellComponent.manaSpentBlue > 0 ||
                 spellComponent.manaSpentBlack > 0 || spellComponent.manaSpentRed > 0 ||
-                spellComponent.manaSpentGreen > 0 || spellComponent.manaSpentColorless > 0) {
+                spellComponent.manaSpentGreen > 0 || spellComponent.manaSpentColorless > 0 ||
+                spellComponent.manaSpentBySubtype.isNotEmpty()) {
                 updated = updated.with(com.wingedsheep.engine.state.components.battlefield.CastRecordComponent(
                     whiteSpent = spellComponent.manaSpentWhite,
                     blueSpent = spellComponent.manaSpentBlue,
                     blackSpent = spellComponent.manaSpentBlack,
                     redSpent = spellComponent.manaSpentRed,
                     greenSpent = spellComponent.manaSpentGreen,
-                    colorlessSpent = spellComponent.manaSpentColorless
+                    colorlessSpent = spellComponent.manaSpentColorless,
+                    manaSpentBySubtype = spellComponent.manaSpentBySubtype
                 ))
             }
 

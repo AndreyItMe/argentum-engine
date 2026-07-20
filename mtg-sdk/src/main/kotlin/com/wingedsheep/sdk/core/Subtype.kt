@@ -197,6 +197,7 @@ value class Subtype(val value: String) {
         // Nonbasic land types
         val DESERT = Subtype("Desert")
         val GATE = Subtype("Gate")
+        val CAVE = Subtype("Cave")
 
         // Enchantment subtypes
         val AURA = Subtype("Aura")

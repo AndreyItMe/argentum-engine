@@ -238,7 +238,14 @@ data class CastRecordComponent(
     val blackSpent: Int = 0,
     val redSpent: Int = 0,
     val greenSpent: Int = 0,
-    val colorlessSpent: Int = 0
+    val colorlessSpent: Int = 0,
+    /**
+     * Producing-source subtype → count of mana carrying that subtype spent to cast this permanent.
+     * Snapshotted from [com.wingedsheep.engine.state.components.stack.SpellOnStackComponent.manaSpentBySubtype]
+     * when the spell resolved, so an enters-the-battlefield payoff (Bat Colony's "a Bat for each mana
+     * from a Cave spent to cast it") can read it after the spell object is gone. See [ManaSpentReader].
+     */
+    val manaSpentBySubtype: Map<com.wingedsheep.sdk.core.Subtype, Int> = emptyMap()
 ) : Component
 
 /**

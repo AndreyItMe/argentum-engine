@@ -441,15 +441,27 @@ sealed interface SpellCastPredicate {
     }
 
     /**
-     * Mana produced by a permanent with this subtype was spent on the cast.
-     * Covers Treasure today; the engine matcher will resolve other token
-     * subtypes (Food / Clue / Blood / Powerstone / Map) once the mana-pool
-     * tracker generalizes beyond the current Treasure-only boolean.
+     * Mana produced by a permanent with this subtype was spent on the cast — Treasure
+     * (Alchemist's Talent, Rain of Riches), Cave, or any other producing-source subtype. The
+     * subtype is snapshotted when the mana is produced, so a Treasure sacrificed to tap for its own
+     * mana still counts.
      */
     @SerialName("SpellPaidWithManaFromSubtype")
     @Serializable
     data class PaidWithManaFromSubtype(val subtype: Subtype) : SpellCastPredicate {
         override val description = "using mana from a ${subtype.value}"
+    }
+
+    /**
+     * Mana produced by the trigger's own source permanent was spent on the cast — "Whenever you cast
+     * a … spell using mana produced by [this]" (Tecutlan, the Searing Rift / Barracks of the Thousand
+     * / The Myriad Pools). Matched against the source that produced the mana, not a subtype, so it
+     * fires only for the specific land whose ability made the mana.
+     */
+    @SerialName("SpellPaidWithManaFromSource")
+    @Serializable
+    data object PaidWithManaFromSource : SpellCastPredicate {
+        override val description = "using mana produced by this"
     }
 
     /**

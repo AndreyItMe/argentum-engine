@@ -1412,12 +1412,10 @@ class TriggerMatcher(
      * cast-time fact. The matcher is conjunctive — every predicate the
      * trigger declares must hold.
      *
-     * Note on [SpellCastPredicate.PaidWithManaFromSubtype]: the SDK exposes
-     * any token subtype, but the engine currently only tracks Treasure-sourced
-     * mana (via [SpellCastEvent.paidWithTreasureMana] / `ManaPoolComponent.treasureMana`).
-     * Other subtypes resolve to `false` so triggers silently don't fire until
-     * the mana-pool tracker is generalized to a `Set<Subtype>`; card
-     * definitions can already declare them forward-compatibly.
+     * [SpellCastPredicate.PaidWithManaFromSubtype] matches against
+     * [SpellCastEvent.spentManaSubtypes] (any producing-source subtype, snapshotted at production);
+     * [SpellCastPredicate.PaidWithManaFromSource] matches the trigger's own source against
+     * [SpellCastEvent.spentManaSourceIds]. See [ManaPoolComponent.manaBySubtype].
      */
     /**
      * "Whenever you activate an ability that targets [a creature or player]" — true when the
@@ -1529,10 +1527,8 @@ class TriggerMatcher(
             from != null && from != predicate.zone
         }
         SpellCastPredicate.WasKicked -> event.wasKicked
-        is SpellCastPredicate.PaidWithManaFromSubtype -> when (predicate.subtype) {
-            Subtype.TREASURE -> event.paidWithTreasureMana
-            else -> false
-        }
+        is SpellCastPredicate.PaidWithManaFromSubtype -> predicate.subtype in event.spentManaSubtypes
+        is SpellCastPredicate.PaidWithManaFromSource -> sourceId in event.spentManaSourceIds
         SpellCastPredicate.IsModal -> event.chosenModesCount > 0
         SpellCastPredicate.HasXInCost ->
             state.getEntity(event.spellEntityId)?.get<CardComponent>()?.manaCost?.hasX == true

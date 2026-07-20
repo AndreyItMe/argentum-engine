@@ -90,6 +90,31 @@ fun ManaRestriction.isSatisfiedBy(context: SpellPaymentContext): Boolean = when 
         else allowSpells && (cardType in context.cardTypes) != negated
 }
 
+/**
+ * The provenance of the mana actually consumed by a single payment: for each producing-source
+ * subtype, how many mana units carrying that subtype were spent ([bySubtype]); and the set of
+ * producing-source entity ids whose mana was spent ([sourceIds]).
+ *
+ * Generalizes the old boolean "paid with Treasure mana" tag: Treasure is just one entry
+ * (`bySubtype[Subtype.TREASURE]`). Drives:
+ *  - `DynamicAmount.ManaSpentFromSubtype` (Bat Colony: "a Bat for each mana from a Cave spent to
+ *    cast it") via the per-subtype counts stamped onto the resolving spell/permanent,
+ *  - `SpellCastPredicate.PaidWithManaFromSubtype` (Alchemist's Talent: "paid with Treasure mana"),
+ *  - `SpellCastPredicate.PaidWithManaFromSource` (Tecutlan / Barracks / Myriad Pools: "cast … using
+ *    mana produced by this land").
+ *
+ * Counts are proportional approximations (mirroring the legacy Treasure counter): a mana unit from
+ * a source with several subtypes contributes to each of them, so the per-subtype counts need not sum
+ * to the total mana spent.
+ */
+@Serializable
+data class SpentManaProvenance(
+    val bySubtype: Map<com.wingedsheep.sdk.core.Subtype, Int> = emptyMap(),
+    val sourceIds: Set<com.wingedsheep.sdk.model.EntityId> = emptySet()
+) {
+    val isEmpty: Boolean get() = bySubtype.isEmpty() && sourceIds.isEmpty()
+}
+
 @Serializable
 data class ManaPool(
     val white: Int = 0,
@@ -100,10 +125,11 @@ data class ManaPool(
     val colorless: Int = 0,
     val restrictedMana: List<RestrictedManaEntry> = emptyList(),
     /**
-     * Count of mana in the pool added by a permanent with the Treasure
-     * subtype. See [com.wingedsheep.engine.state.components.player.ManaPoolComponent.treasureMana].
+     * Provenance of the unrestricted mana currently floating in the pool. See
+     * [com.wingedsheep.engine.state.components.player.ManaPoolComponent.manaBySubtype].
      */
-    val treasureMana: Int = 0
+    val manaBySubtype: Map<com.wingedsheep.sdk.core.Subtype, Int> = emptyMap(),
+    val manaBySource: Map<com.wingedsheep.sdk.model.EntityId, Int> = emptyMap()
 ) {
     /**
      * Get amount of mana for a specific color.
@@ -574,6 +600,35 @@ data class ManaPool(
                 colorless = colorlessSpent
             )
         )
+    }
+
+    /**
+     * Consume mana provenance tags proportional to [unrestrictedSpent] — the count of unrestricted
+     * floating mana pulled from the pool by a payment. Each subtype / source counter is reduced by
+     * `min(count, unrestrictedSpent)` (the same greedy, proportional rule the legacy Treasure
+     * counter used), and the consumed amounts are returned as a [SpentManaProvenance] so the caller
+     * can stamp the spell/event. Restricted mana never carries provenance, so it never contributes.
+     */
+    fun consumeProvenance(unrestrictedSpent: Int): Pair<ManaPool, SpentManaProvenance> {
+        if (unrestrictedSpent <= 0 || (manaBySubtype.isEmpty() && manaBySource.isEmpty())) {
+            return this to SpentManaProvenance()
+        }
+        val consumedSubtypes = mutableMapOf<com.wingedsheep.sdk.core.Subtype, Int>()
+        val newSubtype = manaBySubtype.mapNotNull { (subtype, count) ->
+            val consumed = minOf(count, unrestrictedSpent)
+            if (consumed > 0) consumedSubtypes[subtype] = consumed
+            val remaining = count - consumed
+            if (remaining > 0) subtype to remaining else null
+        }.toMap()
+        val consumedSources = mutableSetOf<com.wingedsheep.sdk.model.EntityId>()
+        val newSource = manaBySource.mapNotNull { (sourceId, count) ->
+            val consumed = minOf(count, unrestrictedSpent)
+            if (consumed > 0) consumedSources.add(sourceId)
+            val remaining = count - consumed
+            if (remaining > 0) sourceId to remaining else null
+        }.toMap()
+        return copy(manaBySubtype = newSubtype, manaBySource = newSource) to
+            SpentManaProvenance(consumedSubtypes, consumedSources)
     }
 
     /**

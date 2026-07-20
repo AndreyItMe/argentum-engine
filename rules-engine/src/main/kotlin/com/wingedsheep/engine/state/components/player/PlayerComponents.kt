@@ -26,16 +26,25 @@ data class ManaPoolComponent(
     val colorless: Int = 0,
     val restrictedMana: List<RestrictedManaEntry> = emptyList(),
     /**
-     * Count of mana units currently in the pool that were added by a permanent
-     * with the Treasure subtype (Treasure tokens, etc.). Treasure mana is
-     * fungible — `treasureMana` does not track color or position in the pool,
-     * only the count. When mana is spent for a spell, [CastPaymentProcessor]
-     * consumes from this counter proportional to the total mana taken from the
-     * pool and flags the spell as "paid with Treasure mana" if any was
-     * consumed. Powers Alchemist's Talent level 3. The counter is cleared
-     * whenever the pool empties.
+     * Provenance of the unrestricted mana currently floating in the pool, tracked so payoffs can
+     * ask "which kind of source produced the mana spent to cast this?".
+     *
+     * [manaBySubtype] maps each producing-source subtype to how many floating mana units carry it
+     * (a Treasure token adds to `Subtype.TREASURE`, a Cave land to `Subtype.CAVE`, …); [manaBySource]
+     * maps each producing source's entity id to how many floating units it produced. Both are
+     * snapshotted at production ([ManaProvenanceTracker]) — a Treasure sacrificed to pay its own
+     * `{T}, Sacrifice` cost is gone by the time the mana is spent, so the tag can't be re-derived
+     * later. Both are fungible counts (no color/position); when mana is spent for a spell,
+     * [CastPaymentProcessor] consumes from them proportional to the unrestricted mana taken from the
+     * pool and records what was consumed on the spell (`SpentManaProvenance`). A single unit from a
+     * multi-subtype source contributes to each of its subtypes, so a subtype count can exceed the
+     * total floating mana. Both maps clear whenever the pool empties.
+     *
+     * Generalizes the legacy Treasure-only counter: `manaBySubtype[Subtype.TREASURE]` is the old
+     * `treasureMana`. Powers Alchemist's Talent level 3, Bat Colony, and the LCI mana-source lands.
      */
-    val treasureMana: Int = 0
+    val manaBySubtype: Map<com.wingedsheep.sdk.core.Subtype, Int> = emptyMap(),
+    val manaBySource: Map<EntityId, Int> = emptyMap()
 ) : Component {
     /**
      * Add mana of a specific color.
@@ -93,10 +102,24 @@ data class ManaPoolComponent(
     val total: Int get() = white + blue + black + red + green + colorless + restrictedMana.size
 
     /**
-     * Check if pool is empty. Includes the `treasureMana` counter so a stale
-     * tag without backing mana still triggers the end-of-step pool reset.
+     * Add mana provenance tags for [amount] units produced by [sourceId] carrying [subtypes].
+     * Increments the per-source counter and each per-subtype counter. See [ManaProvenanceTracker].
      */
-    val isEmpty: Boolean get() = total == 0 && treasureMana == 0
+    fun withProvenance(sourceId: EntityId, subtypes: Set<com.wingedsheep.sdk.core.Subtype>, amount: Int): ManaPoolComponent {
+        if (amount <= 0) return this
+        val newBySource = manaBySource + (sourceId to ((manaBySource[sourceId] ?: 0) + amount))
+        val newBySubtype = if (subtypes.isEmpty()) manaBySubtype else buildMap {
+            putAll(manaBySubtype)
+            subtypes.forEach { put(it, (get(it) ?: 0) + amount) }
+        }
+        return copy(manaBySubtype = newBySubtype, manaBySource = newBySource)
+    }
+
+    /**
+     * Check if pool is empty. Includes the provenance tags so a stale tag without backing mana
+     * still triggers the end-of-step pool reset.
+     */
+    val isEmpty: Boolean get() = total == 0 && manaBySubtype.isEmpty() && manaBySource.isEmpty()
 
     /**
      * Add restricted mana to the pool.
@@ -165,8 +188,8 @@ data class ManaPoolComponent(
         val lostRestricted = restrictedMana.filter { it.expiry != ManaExpiry.END_OF_COMBAT }
         return when {
             convertToRed -> {
-                // Count the would-be-lost mana the way `total` does (the treasure counter is a tag on
-                // already-counted colour mana, not extra mana); the treasure tag doesn't carry over.
+                // Count the would-be-lost mana the way `total` does (provenance tags are markers on
+                // already-counted colour mana, not extra mana); the tags don't carry over.
                 val lostTotal = white + blue + black + red + green + colorless + lostRestricted.size
                 ManaPoolComponent(red = lostTotal, restrictedMana = preserved)
             }
@@ -177,8 +200,8 @@ data class ManaPoolComponent(
                 red = if (Color.RED in retain) red else 0,
                 green = if (Color.GREEN in retain) green else 0,
                 colorless = 0,
-                restrictedMana = preserved + lostRestricted.filter { it.color != null && it.color in retain },
-                treasureMana = 0
+                restrictedMana = preserved + lostRestricted.filter { it.color != null && it.color in retain }
+                // Provenance tags do not survive a mana-loss boundary.
             )
             else -> ManaPoolComponent(restrictedMana = preserved)
         }

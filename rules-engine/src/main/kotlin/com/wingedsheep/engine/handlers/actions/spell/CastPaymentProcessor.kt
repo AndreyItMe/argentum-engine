@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.SpellPaymentContext
+import com.wingedsheep.engine.mechanics.mana.SpentManaProvenance
 import com.wingedsheep.engine.mechanics.mana.isSatisfiedBy
 import com.wingedsheep.engine.state.components.player.RestrictedManaEntry
 import com.wingedsheep.sdk.scripting.effects.ManaSpellRider
@@ -31,14 +32,17 @@ data class PaymentResult(
     val error: String?,
     val consumedRiders: Set<ManaSpellRider> = emptySet(),
     /**
-     * True when any of the mana spent on this payment was tagged as having
-     * come from a Treasure permanent (see
-     * [com.wingedsheep.engine.state.components.player.ManaPoolComponent.treasureMana]).
-     * Powers Alchemist's Talent level 3 — the cast handler propagates the flag
-     * onto the engine [com.wingedsheep.engine.core.SpellCastEvent] so triggers
-     * filtering on "paid with Treasure mana" can fire.
+     * Provenance of the mana actually spent on this payment — which producing-source subtypes and
+     * which producing sources contributed (see [SpentManaProvenance]). Combines mana pulled from the
+     * floating pool (tags snapshotted at production) with mana freshly tapped by the solver during
+     * this payment. The cast handler propagates it onto the engine
+     * [com.wingedsheep.engine.core.SpellCastEvent] and the resolving permanent's
+     * [com.wingedsheep.engine.state.components.battlefield.CastRecordComponent], driving
+     * `SpellCastPredicate.PaidWithManaFromSubtype` / `PaidWithManaFromSource` triggers and the
+     * `DynamicAmount.ManaSpentFromSubtype` count (Bat Colony). Treasure is just
+     * `spentManaProvenance.bySubtype[Subtype.TREASURE]` (Alchemist's Talent level 3).
      */
-    val paidWithTreasureMana: Boolean = false,
+    val spentManaProvenance: SpentManaProvenance = SpentManaProvenance(),
     /**
      * For a color-restricted `{X}` cost ("spend only [colors] on X"), the per-color
      * breakdown of mana spent on the X portion. The cast handler stores this on the spell's
@@ -65,7 +69,8 @@ class CastPaymentProcessor(
         green = component.green,
         colorless = component.colorless,
         restrictedMana = component.restrictedMana,
-        treasureMana = component.treasureMana
+        manaBySubtype = component.manaBySubtype,
+        manaBySource = component.manaBySource
     )
 
     private fun toComponent(pool: ManaPool) = ManaPoolComponent(
@@ -76,8 +81,40 @@ class CastPaymentProcessor(
         green = pool.green,
         colorless = pool.colorless,
         restrictedMana = pool.restrictedMana,
-        treasureMana = pool.treasureMana
+        manaBySubtype = pool.manaBySubtype,
+        manaBySource = pool.manaBySource
     )
+
+    /**
+     * Provenance of mana freshly tapped by the solver during a payment (AutoPay / Explicit). The
+     * floating-pool tags don't cover it — this mana never entered the pool — so we read each tapped
+     * source's subtypes from state and pair them with the source id. Combined with the pool's
+     * consumed provenance to form the full [SpentManaProvenance] for the payment.
+     */
+    private fun tappedSourceProvenance(state: GameState, manaProduced: Map<EntityId, com.wingedsheep.engine.mechanics.mana.ManaProduction>): SpentManaProvenance {
+        if (manaProduced.isEmpty()) return SpentManaProvenance()
+        val bySubtype = mutableMapOf<com.wingedsheep.sdk.core.Subtype, Int>()
+        val sourceIds = mutableSetOf<EntityId>()
+        for ((sourceId, production) in manaProduced) {
+            val amount = production.amount + production.colorless
+            if (amount <= 0) continue
+            sourceIds.add(sourceId)
+            val subtypes = state.getEntity(sourceId)
+                ?.get<com.wingedsheep.engine.state.components.identity.CardComponent>()
+                ?.typeLine?.subtypes ?: emptySet()
+            for (subtype in subtypes) bySubtype[subtype] = (bySubtype[subtype] ?: 0) + amount
+        }
+        return SpentManaProvenance(bySubtype, sourceIds)
+    }
+
+    /** Merge two provenance snapshots (summing subtype counts, unioning source ids). */
+    private fun mergeProvenance(a: SpentManaProvenance, b: SpentManaProvenance): SpentManaProvenance {
+        if (a.isEmpty) return b
+        if (b.isEmpty) return a
+        val bySubtype = a.bySubtype.toMutableMap()
+        for ((subtype, count) in b.bySubtype) bySubtype[subtype] = (bySubtype[subtype] ?: 0) + count
+        return SpentManaProvenance(bySubtype, a.sourceIds + b.sourceIds)
+    }
 
     fun processPayment(
         state: GameState,
@@ -203,15 +240,14 @@ class CastPaymentProcessor(
             return PaymentResult(state, emptyList(), "Insufficient mana in pool for X cost")
         }
 
-        // Consume `treasureMana` proportional to mana actually pulled from the
-        // pool. Restricted mana doesn't participate (treasure tokens always add
-        // unrestricted mana).
+        // Consume provenance tags proportional to unrestricted mana pulled from the pool.
+        // Restricted mana doesn't participate (tagged mana is always unrestricted). Everything is
+        // paid from the pool here, so there is no freshly-tapped-source provenance to add.
         val unrestrictedSpent = (whiteSpent + blueSpent + blackSpent + redSpent + greenSpent + colorlessSpent) - restrictedSpent
-        val treasureConsumed = minOf(pool.treasureMana, maxOf(0, unrestrictedSpent))
-        val poolWithTreasureUpdated = poolAfterPayment.copy(treasureMana = pool.treasureMana - treasureConsumed)
+        val (poolWithProvenanceUpdated, spentProvenance) = poolAfterPayment.consumeProvenance(maxOf(0, unrestrictedSpent))
 
         val newState = state.updateEntity(playerId) { container ->
-            container.with(toComponent(poolWithTreasureUpdated))
+            container.with(toComponent(poolWithProvenanceUpdated))
         }
 
         val event = ManaSpentEvent(
@@ -231,7 +267,7 @@ class CastPaymentProcessor(
             listOf(event),
             null,
             consumedRiders,
-            paidWithTreasureMana = treasureConsumed > 0,
+            spentManaProvenance = spentProvenance,
             xManaSpentByColor = xSpentByColor
         )
     }
@@ -322,11 +358,10 @@ class CastPaymentProcessor(
             xRemainingToPay--
         }
 
-        // Consume `treasureMana` proportional to unrestricted mana pulled from
-        // the pool during the floating-mana phase. AutoPay does not currently
-        // tap Treasures directly (their `{T}, Sacrifice` ability is filtered
-        // out of the solver), so only the floating-mana path contributes here.
-        val poolRestrictedSpentTotal = poolComponent.restrictedMana.size - poolAfterPayment.restrictedMana.size
+        // Consume provenance tags proportional to unrestricted mana pulled from the pool during the
+        // floating-mana phase. Freshly-tapped sources (below) contribute their own provenance —
+        // unlike the legacy Treasure counter, general provenance covers solver-tapped mana too
+        // (Caves and the LCI mana-source lands are tapped directly, not filtered out like Treasure).
         val poolUnrestrictedSpent = maxOf(
             0,
             (poolComponent.white - poolAfterPayment.white) +
@@ -336,11 +371,11 @@ class CastPaymentProcessor(
                 (poolComponent.green - poolAfterPayment.green) +
                 (poolComponent.colorless - poolAfterPayment.colorless)
         )
-        val treasureConsumedFromPool = minOf(pool.treasureMana, poolUnrestrictedSpent)
-        val poolWithTreasureUpdated = poolAfterPayment.copy(treasureMana = pool.treasureMana - treasureConsumedFromPool)
+        val (poolWithProvenanceUpdated, poolProvenance) = poolAfterPayment.consumeProvenance(poolUnrestrictedSpent)
+        var spentProvenance = poolProvenance
 
         currentState = currentState.updateEntity(playerId) { container ->
-            container.with(toComponent(poolWithTreasureUpdated))
+            container.with(toComponent(poolWithProvenanceUpdated))
         }
 
         // Tap lands for remaining cost (using xRemainingToPay instead of full xValue)
@@ -349,6 +384,9 @@ class CastPaymentProcessor(
             val solution = manaSolver.solve(currentState, playerId, remainingCost, xRemainingToPay, excludeSources = excludeSources, spellContext = spellContext, xManaRestriction = xManaRestriction)
                 ?: return PaymentResult(currentState, events, "Not enough mana to auto-pay")
             solutionConsumedRiders = solution.consumedRiders
+            // Mana tapped directly for this payment carries the provenance of its source (read from
+            // the pre-payment [state], where every tapped source still exists with its type line).
+            spentProvenance = mergeProvenance(spentProvenance, tappedSourceProvenance(state, solution.manaProduced))
             // Fold the X portion the solver tapped (allowed colors only) into the X-by-color tally.
             for ((color, amount) in solution.xRestrictedManaSpent) {
                 xSpentByColor[color] = (xSpentByColor[color] ?: 0) + amount
@@ -429,7 +467,7 @@ class CastPaymentProcessor(
             events,
             null,
             consumedRiders,
-            paidWithTreasureMana = treasureConsumedFromPool > 0,
+            spentManaProvenance = spentProvenance,
             xManaSpentByColor = xSpentByColor
         )
     }

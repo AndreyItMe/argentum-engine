@@ -40,7 +40,7 @@ class AddColorlessManaExecutor(
         }
 
         if (effect.restriction == null) {
-            newState = TreasureManaTracker.tagAddedMana(newState, context.controllerId, context.sourceId, amount)
+            newState = ManaProvenanceTracker.tagAddedMana(newState, context.controllerId, context.sourceId, amount)
         }
 
         return EffectResult.success(newState)

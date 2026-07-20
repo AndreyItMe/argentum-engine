@@ -444,12 +444,18 @@ data class SpellCastEvent(
      */
     val distinctColorsSpent: Int = 0,
     /**
-     * True when any of the mana spent on this cast was tagged as Treasure
-     * mana (see [com.wingedsheep.engine.state.components.player.ManaPoolComponent.treasureMana]).
-     * Drives SDK triggers built with
-     * `Triggers.youCastSpell(requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(Subtype.TREASURE)))`.
+     * Producing-source subtypes of the mana spent on this cast (`Subtype.TREASURE` when any came
+     * from a Treasure, `Subtype.CAVE` from a Cave, …). Drives SDK triggers built with
+     * `Triggers.youCastSpell(requires = setOf(SpellCastPredicate.PaidWithManaFromSubtype(subtype)))`.
+     * See [com.wingedsheep.engine.state.components.player.ManaPoolComponent.manaBySubtype].
      */
-    val paidWithTreasureMana: Boolean = false,
+    val spentManaSubtypes: Set<com.wingedsheep.sdk.core.Subtype> = emptySet(),
+    /**
+     * Entity ids of the sources whose mana was spent on this cast. Drives
+     * `SpellCastPredicate.PaidWithManaFromSource` ("cast … using mana produced by this land" —
+     * Tecutlan, Barracks of the Thousand, The Myriad Pools).
+     */
+    val spentManaSourceIds: Set<EntityId> = emptySet(),
     /**
      * Number of mode picks recorded on this cast (size of
      * [com.wingedsheep.engine.state.components.stack.SpellOnStackComponent.chosenModes]).

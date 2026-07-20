@@ -824,7 +824,8 @@ Atomic effect factories. For library/zone manipulation, prefer the pipelines in 
   wiring (`PASSIVE_COUNTER_TYPES`, `passiveCounterBadgeStyle`, `counterManaClass`, `CounterTypeDisplayNames`);
   keep it out of `StateProjector.KEYWORD_COUNTER_MAP` since it grants no keyword. Recent examples:
   `Counters.LANDMARK` (Treasure Map — three flip it into Treasure Cove), `Counters.DREAD` (Grasping Shadows —
-  three flip it into Shadows' Lair), `Counters.NET`, `Counters.FIRE`, `Counters.CONQUEROR`.
+  three flip it into Shadows' Lair), `Counters.BORE` (Brass's Tunnel-Grinder — three flip it into Tecutlan),
+  `Counters.NET`, `Counters.FIRE`, `Counters.CONQUEROR`.
 - `DistributeCountersFromSelf(type?, count?)` — split source's counters among creatures you control.
 - `DistributeCountersAmongTargets(total, type?, minPerTarget?)` — divvy N counters among chosen targets.
 - `DistributeCountersAmongFiltered(total, type?, filter, minPerTarget?)` — distribute N **new** counters among permanents matching `filter`, chosen at resolution (not the spell's targets); `minPerTarget = 0` models "among any number of". Unlike `DistributeCountersFromSelf` nothing is removed from a source. Crashing Wave: `DistributeCountersAmongFiltered(3, Counters.STUN, Filters.Creature.tapped().opponentControls())` — "distribute three stun counters among any number of tapped creatures your opponents control."
@@ -3198,11 +3199,15 @@ matcher branch — `SpellCastEvent` does not grow a new field per axis.
   don't.
 - `SpellCastPredicate.WasKicked` — spell was cast with kicker (CR 702.32). Used for
   Hallar / Bloodstone Goblin.
-- `SpellCastPredicate.PaidWithManaFromSubtype(subtype)` — mana from a permanent of this
-  subtype was spent on the cast. Resolves Treasure today (Rain of Riches, Alchemist's
-  Talent); engine matcher accepts other token subtypes as the shape, but only Treasure
-  actually fires until the mana-pool tracker generalizes beyond its current Treasure-only
-  boolean.
+- `SpellCastPredicate.PaidWithManaFromSubtype(subtype)` — mana produced by a permanent of this
+  subtype was spent on the cast (Treasure — Rain of Riches, Alchemist's Talent; Cave; …). The
+  producing-source subtype is snapshotted when the mana is produced (`ManaProvenanceTracker`), so a
+  Treasure sacrificed to tap for its own mana still counts. Matches `SpellCastEvent.spentManaSubtypes`.
+- `SpellCastPredicate.PaidWithManaFromSource` — mana produced by the trigger's own source permanent
+  was spent on the cast ("Whenever you cast a … spell using mana produced by this" — Tecutlan, the
+  Searing Rift / Barracks of the Thousand / The Myriad Pools). Matched against the source that made
+  the mana (`SpellCastEvent.spentManaSourceIds`), not a subtype, so it fires only for that specific
+  land. See also `DynamicAmount.ManaSpentFromSubtype` for the count form (Bat Colony).
 - `SpellCastPredicate.IsModal` — spell was cast with at least one chosen mode (rules
   700.2). Matches `SpellCastEvent.chosenModesCount > 0`, where the count is the size of
   `SpellOnStackComponent.chosenModes` (so Spree picking the same mode twice counts as
@@ -5760,6 +5765,13 @@ Numbers computed at resolution time.
   `CastRecordComponent` afterward), so it reads correctly both at resolution and as the permanent enters
   (the common use: feeding `EntersWithDynamicCounters`). Facade: `DynamicAmounts.colorsOfManaSpent()`.
   A permanent put onto the battlefield without being cast spent no mana, so this is 0 for it.
+- `ManaSpentFromSubtype(subtype)` — how many mana units produced by a source with `subtype` were spent
+  to cast the current spell. Bat Colony's "create a 1/1 black Bat with flying **for each mana from a
+  Cave spent to cast it**" is `ManaSpentFromSubtype(Subtype.CAVE)`. Like `DistinctColorsManaSpent`, it
+  resolves off the source entity's recorded provenance (live `SpellOnStackComponent.manaSpentBySubtype`
+  on the stack, the resolved permanent's `CastRecordComponent.manaSpentBySubtype` as it enters), so an
+  enters-the-battlefield payoff reads it correctly. The subtype is snapshotted at production. 0 for a
+  permanent that wasn't cast. See `SpellCastPredicate.PaidWithManaFromSubtype` for the boolean form.
 - `DevotionTo(colors, player = You)` — a player's **devotion** to one or more colors (CR 700.5):
   the number of mana symbols of those colors among the mana costs of permanents the player controls.
   One color = "devotion to red"; several = devotion to that combination ("white and black"), where a
