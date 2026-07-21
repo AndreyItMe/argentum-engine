@@ -63,5 +63,49 @@ class WhiskervaleForerunnerScenarioTest : ScenarioTestBase() {
             game.isOnBattlefield("Grizzly Bears") shouldBe true
             game.state.stack.single() shouldBe polliwallop
         }
+
+        test("Valiant shows all five cards when none can be selected") {
+            val game = scenario()
+                .withPlayers()
+                .withCardInHand(1, "Polliwallop")
+                .withCardOnBattlefield(1, "Whiskervale Forerunner")
+                .withCardOnBattlefield(2, "Craw Wurm")
+                .withLandsOnBattlefield(1, "Forest", 4)
+                .withCardInLibrary(1, "Forest")
+                .withCardInLibrary(1, "Forest")
+                .withCardInLibrary(1, "Forest")
+                .withCardInLibrary(1, "Forest")
+                .withCardInLibrary(1, "Forest")
+                .withActivePlayer(1)
+                .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                .build()
+
+            val forerunner = game.findPermanent("Whiskervale Forerunner")!!
+            val opponentCreature = game.findPermanent("Craw Wurm")!!
+            val polliwallop = game.findCardsInHand(1, "Polliwallop").single()
+
+            game.execute(
+                CastSpell(
+                    playerId = game.player1Id,
+                    cardId = polliwallop,
+                    targets = listOf(
+                        ChosenTarget.Permanent(forerunner),
+                        ChosenTarget.Permanent(opponentCreature)
+                    )
+                )
+            ).error shouldBe null
+
+            game.resolveStack()
+
+            val decision = game.getPendingDecision() as SelectCardsDecision
+            decision.options shouldBe emptyList()
+            decision.nonSelectableOptions.size shouldBe 5
+            decision.maxSelections shouldBe 0
+
+            game.selectCards(emptyList()).error shouldBe null
+
+            game.state.stack.single() shouldBe polliwallop
+            game.findCardsInLibrary(1, "Forest").size shouldBe 5
+        }
     }
 }
