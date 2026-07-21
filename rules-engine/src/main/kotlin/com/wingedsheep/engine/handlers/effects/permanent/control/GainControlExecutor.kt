@@ -12,6 +12,7 @@ import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComp
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.sdk.core.AbilityFlag
+import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.effects.GainControlEffect
 import kotlin.reflect.KClass
 
@@ -60,7 +61,7 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
         // Source the floating effect from the triggering attachment so
         // [Duration.WhileSourceAttachedToAffected] reads the right attachment's AttachedToComponent.
         val floatingContext =
-            if (effect.duration == com.wingedsheep.sdk.scripting.Duration.WhileSourceAttachedToAffected) {
+            if (effect.duration == Duration.WhileSourceAttachedToAffected) {
                 context.copy(sourceId = context.triggeringEntityId ?: context.sourceId)
             } else context
 
@@ -71,8 +72,9 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
               targetId in floating.effect.affectedEntities)
         }
 
-        // Rule 302.6: new controller hasn't had this permanent since their most recent turn began.
-        val newState = state.copy(floatingEffects = filteredEffects)
+        val shouldStampSummoningSickness = effect.duration !is Duration.WhileSourceTappedAndAffectedPowerAtMostSource
+
+        val stateWithControlEffect = state.copy(floatingEffects = filteredEffects)
             .addFloatingEffect(
                 layer = Layer.CONTROL,
                 modification = SerializableModification.ChangeController(newControllerId),
@@ -80,7 +82,17 @@ class GainControlExecutor : EffectExecutor<GainControlEffect> {
                 duration = effect.duration,
                 context = floatingContext
             )
-            .updateEntity(targetId) { it.with(SummoningSicknessComponent) }
+
+        // Ordinary control changes make the creature unable to attack/tap this turn. Old Man of
+        // the Sea's duration is the long-lived exception in this engine: keeping the source tapped
+        // preserves the stolen creature as usable under the new controller.
+        val stateWithSickness = if (shouldStampSummoningSickness) {
+            stateWithControlEffect.updateEntity(targetId) { it.with(SummoningSicknessComponent) }
+        } else {
+            stateWithControlEffect
+        }
+
+        val newState = stateWithSickness
             .let { clearRingBearerOnControlChange(it, targetId, newControllerId) }
 
         val events = listOf(

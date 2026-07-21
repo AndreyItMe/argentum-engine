@@ -7,6 +7,7 @@ import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.mechanics.layers.addFloatingEffect
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
+import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
@@ -69,6 +70,37 @@ class OldManOfTheSeaScenarioTest : FunSpec({
 
         val projected = projector.project(driver.state)
         projected.getController(target) shouldBe activePlayer
+    }
+
+    test("Creature stolen by Old Man of the Sea can attack that turn") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 40), startingLife = 20)
+
+        val activePlayer = driver.activePlayer!!
+        val opponent = driver.getOpponent(activePlayer)
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val oldMan = driver.putCreatureOnBattlefield(activePlayer, "Old Man of the Sea")
+        driver.removeSummoningSickness(oldMan)
+        val target = driver.putCreatureOnBattlefield(opponent, "Elvish Warrior")
+        driver.removeSummoningSickness(target)
+
+        val result = driver.submit(
+            ActivateAbility(
+                playerId = activePlayer,
+                sourceId = oldMan,
+                abilityId = abilityId,
+                targets = listOf(ChosenTarget.Permanent(target))
+            )
+        )
+        result.isSuccess shouldBe true
+
+        driver.bothPass()
+        projector.project(driver.state).getController(target) shouldBe activePlayer
+        driver.state.getEntity(target)?.has<SummoningSicknessComponent>() shouldBe false
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(activePlayer, listOf(target), opponent).error shouldBe null
     }
 
     test("Cannot target a creature with power greater than source's power") {
@@ -310,6 +342,7 @@ class OldManOfTheSeaScenarioTest : FunSpec({
         val oldMan = driver.putCreatureOnBattlefield(activePlayer, "Old Man of the Sea")
         driver.removeSummoningSickness(oldMan)
         val target = driver.putCreatureOnBattlefield(opponent, "Elvish Warrior")  // 2/3
+        driver.removeSummoningSickness(target)
 
         driver.submit(
             ActivateAbility(
@@ -322,9 +355,7 @@ class OldManOfTheSeaScenarioTest : FunSpec({
         driver.bothPass()
         projector.project(driver.state).getController(target) shouldBe activePlayer
 
-        // The stolen Warrior is no longer summoning-sick once Alice controls it. Clear it
-        // explicitly to mirror what a real "since your last turn began" check would say.
-        driver.removeSummoningSickness(target)
+        driver.state.getEntity(target)?.has<SummoningSicknessComponent>() shouldBe false
 
         // Advance to declare attackers and attack with the stolen Warrior.
         driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
