@@ -21847,8 +21847,10 @@
                             "filter": "creature mv<=3",
                             "storeSelected": "kept",
                             "storeRemainder": "rest",
+                            "prompt": "You may reveal a creature card with mana value 3 or less",
                             "selectedLabel": "Reveal",
-                            "remainderLabel": "Put on bottom"
+                            "remainderLabel": "Put on bottom",
+                            "showAllCards": true
                         },
                         {
                             "type": "MoveCollection",
@@ -21857,7 +21859,8 @@
                                 "type": "ToZone",
                                 "zone": "Library",
                                 "placement": "Bottom"
-                            }
+                            },
+                            "order": "Random"
                         },
                         {
                             "type": "Gated",

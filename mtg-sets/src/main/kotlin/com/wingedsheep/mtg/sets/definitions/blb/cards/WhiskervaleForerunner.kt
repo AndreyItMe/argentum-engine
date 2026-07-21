@@ -7,6 +7,7 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.conditions.IsYourTurn
 import com.wingedsheep.sdk.scripting.effects.CardDestination
+import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
@@ -55,13 +56,16 @@ val WhiskervaleForerunner = card("Whiskervale Forerunner") {
                 filter = GameObjectFilter.Creature.manaValueAtMost(3),
                 storeSelected = "kept",
                 storeRemainder = "rest",
+                prompt = "You may reveal a creature card with mana value 3 or less",
                 selectedLabel = "Reveal",
-                remainderLabel = "Put on bottom"
+                remainderLabel = "Put on bottom",
+                showAllCards = true
             ),
             // Rest on bottom in random order
             MoveCollectionEffect(
                 from = "rest",
-                destination = CardDestination.ToZone(Zone.LIBRARY, placement = ZonePlacement.Bottom)
+                destination = CardDestination.ToZone(Zone.LIBRARY, placement = ZonePlacement.Bottom),
+                order = CardOrder.Random
             ),
             // If your turn: choose to put on battlefield or hand
             // If not your turn: put in hand
