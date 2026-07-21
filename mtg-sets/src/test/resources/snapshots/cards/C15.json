@@ -1,3 +1,79 @@
+// Dread Summons
+{
+    "name": "Dread Summons",
+    "manaCost": "{X}{B}{B}",
+    "typeLine": "Sorcery",
+    "oracleText": "Each player mills X cards. For each creature card put into a graveyard this way, you create a tapped 2/2 black Zombie creature token.",
+    "script": {
+        "spellEffect": {
+            "type": "Composite",
+            "effects": [
+                {
+                    "type": "Composite",
+                    "effects": [
+                        {
+                            "type": "GatherCards",
+                            "source": {
+                                "type": "TopOfLibrary",
+                                "count": "XValue",
+                                "player": "Each",
+                                "isMill": true
+                            },
+                            "storeAs": "milled"
+                        },
+                        {
+                            "type": "MoveCollection",
+                            "from": "milled",
+                            "destination": {
+                                "type": "ToZone",
+                                "zone": "Graveyard",
+                                "player": "Each"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "SelectFromCollection",
+                    "from": "milled",
+                    "selection": "SelectAll",
+                    "filter": "creature",
+                    "storeSelected": "milledCreatures"
+                },
+                {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Collection",
+                        "collection": "milledCreatures"
+                    },
+                    "body": {
+                        "type": "CreateToken",
+                        "power": 2,
+                        "toughness": 2,
+                        "colors": [
+                            "BLACK"
+                        ],
+                        "creatureTypes": [
+                            "Zombie"
+                        ],
+                        "imageUri": "https://cards.scryfall.io/normal/front/8/f/8ffaa67e-32fa-4843-8858-feed2ebb40df.jpg?1783938021",
+                        "tapped": true
+                    }
+                }
+            ]
+        }
+    },
+    "metadata": {
+        "collectorNumber": "20",
+        "rarity": "RARE",
+        "artist": "Izzy",
+        "flavorText": "\"Did you have a nice nap?\"\n—Liliana Vess",
+        "imageUri": "https://cards.scryfall.io/normal/front/b/2/b2c20cb1-3e3d-4fea-b617-bd6d796c8d10.jpg?1783938113"
+    },
+    "colorIdentityOverride": [
+        "BLACK"
+    ]
+}
+
 // Oreskos Explorer
 {
     "name": "Oreskos Explorer",

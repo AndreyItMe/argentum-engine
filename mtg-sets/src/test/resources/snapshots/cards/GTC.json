@@ -264,6 +264,82 @@
     ]
 }
 
+// Consuming Aberration
+{
+    "name": "Consuming Aberration",
+    "manaCost": "{3}{U}{B}",
+    "typeLine": "Creature — Horror",
+    "oracleText": "Consuming Aberration's power and toughness are each equal to the number of cards in your opponents' graveyards.\nWhenever you cast a spell, each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard.",
+    "creatureStats": {
+        "power": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "EachOpponent",
+                "zone": "Graveyard"
+            }
+        },
+        "toughness": {
+            "type": "Dynamic",
+            "source": {
+                "type": "Count",
+                "player": "EachOpponent",
+                "zone": "Graveyard"
+            }
+        }
+    },
+    "script": {
+        "triggeredAbilities": [
+            {
+                "id": "ability_1",
+                "trigger": "SpellCastEvent",
+                "binding": "ANY",
+                "effect": {
+                    "type": "ForEach",
+                    "space": {
+                        "type": "IterationSpace.Players",
+                        "players": "EachOpponent"
+                    },
+                    "body": {
+                        "type": "Composite",
+                        "effects": [
+                            {
+                                "type": "GatherUntilMatch",
+                                "filter": "land",
+                                "storeMatch": "revealedLand",
+                                "storeRevealed": "allRevealed"
+                            },
+                            {
+                                "type": "RevealCollection",
+                                "from": "allRevealed"
+                            },
+                            {
+                                "type": "MoveCollection",
+                                "from": "allRevealed",
+                                "destination": {
+                                    "type": "ToZone",
+                                    "zone": "Graveyard"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "descriptionOverride": "Whenever you cast a spell, each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard."
+            }
+        ]
+    },
+    "metadata": {
+        "collectorNumber": "152",
+        "rarity": "RARE",
+        "artist": "Karl Kopinski",
+        "imageUri": "https://cards.scryfall.io/normal/front/6/3/6354de66-f7f8-4e33-98d0-52624d3d7828.jpg?1783940111"
+    },
+    "colorIdentityOverride": [
+        "BLUE",
+        "BLACK"
+    ]
+}
+
 // Court Street Denizen
 {
     "name": "Court Street Denizen",
