@@ -2,7 +2,7 @@
 // Complete render — no manual wiring needed. Still review the rules text and add a passing
 // scenario test before relying on it.
 
-package com.wingedsheep.mtg.sets.definitions.con.cards
+package com.wingedsheep.mtg.sets.definitions.conflux.cards
 
 import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Effects

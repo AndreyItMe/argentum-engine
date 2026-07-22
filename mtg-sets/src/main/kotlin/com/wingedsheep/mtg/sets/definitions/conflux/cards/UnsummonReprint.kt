@@ -1,4 +1,4 @@
-package com.wingedsheep.mtg.sets.definitions.con.cards
+package com.wingedsheep.mtg.sets.definitions.conflux.cards
 
 import com.wingedsheep.sdk.model.Printing
 import com.wingedsheep.sdk.model.Rarity

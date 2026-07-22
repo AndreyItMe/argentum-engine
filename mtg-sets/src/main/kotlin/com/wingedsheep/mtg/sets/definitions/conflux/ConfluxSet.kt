@@ -1,4 +1,4 @@
-package com.wingedsheep.mtg.sets.definitions.con
+package com.wingedsheep.mtg.sets.definitions.conflux
 
 import com.wingedsheep.mtg.sets.definitions.por.PortalSet
 import com.wingedsheep.mtg.sets.discovery.CardDiscovery
@@ -29,5 +29,5 @@ object ConfluxSet : MtgSet {
         CardDiscovery.findPrintingsIn(CARDS_PACKAGE)
     }
 
-    private const val CARDS_PACKAGE = "com.wingedsheep.mtg.sets.definitions.con.cards"
+    private const val CARDS_PACKAGE = "com.wingedsheep.mtg.sets.definitions.conflux.cards"
 }
